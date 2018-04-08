@@ -41,12 +41,13 @@ public class ProdModule {
 
     @UserPermission(ignore = true)
     public Result getMallFloorProd(AppContext appContext) {
+//    public Result getMallFloorProd() {
         List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
         JSONObject jsonObject = new JSONObject();
         if (mallFloorVOList != null && mallFloorVOList.size() > 0) {
             List<ProdVO> prodVOList = new ArrayList<>();
             SearchResponse response = ProdESUtil.searchProdWithMallFloor("128", 1, 100);
-            if (response == null || response.getHits().totalHits <= 0) {
+            if (response == null || response.getHits().totalHits <= 10) {
                 response = ProdESUtil.searchProdWithMallFloor("", 1, 100);
             }
             List<ProdVO> prodList = new ArrayList<>();
@@ -82,7 +83,7 @@ public class ProdModule {
     @UserPermission(ignore = true)
     public Result getConditionByFullTextSearch(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
-        String keyword = json.get("keyword").getAsString();
+        String keyword = json.has("keyword") ? json.get("keyword").getAsString() : "";
         int spu = json.has("spu") ? json.get("spu").getAsInt() : 0;
         if(StringUtils.isEmpty(keyword) && spu <=0){
             return new Result().success(null);
@@ -100,7 +101,7 @@ public class ProdModule {
     @UserPermission(ignore = true)
     public Result fullTextsearchProdMall(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
-        String keyword = json.get("keyword").getAsString();
+        String keyword = json.has("keyword") ? json.get("keyword").getAsString() : "";
         long spu = json.has("spu") ? json.get("spu").getAsLong() : 0;
         JsonArray specArray = json.has("specArray") ? json.get("specArray").getAsJsonArray() : null;
         JsonArray manuArray = json.has("manuArray") ? json.get("manuArray").getAsJsonArray() : null;
@@ -166,7 +167,7 @@ public class ProdModule {
     @UserPermission(ignore = true)
     public Result fullTextsearchProd(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
-        String keyword = json.get("keyword").getAsString();
+        String keyword = json.has("keyword") ? json.get("keyword").getAsString() : "";
         JsonArray specArray = json.get("specArray").getAsJsonArray();
         JsonArray manuArray = json.get("manuArray").getAsJsonArray();
         List<String> specList = new ArrayList<>();
@@ -218,15 +219,15 @@ public class ProdModule {
                 newProdList.add(prodVO);
             }
         }
-        if (newProdList.size() <= 0) {
-            int i = 10;
+        if (newProdList.size() <= 20) {
+            int i = newProdList.size();
             for (ProdVO prodVO : prodList) {
-                if (i++ > 10) {
-                    break;
+                if(i++<=20){
+                    newProdList.add(prodVO);
                 }
-                newProdList.add(prodVO);
             }
         }
+        System.out.println("230 line:"+newProdList.size());
         return newProdList;
     }
 
