@@ -277,11 +277,12 @@ public class ProdModule {
             }
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
-                    prodVO.setBuynum(0);
+                    prodVO.setBuynum(1);
                     prodVO.setStartnum(0);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
                     prodVO.setActprize(prodVO.getVatp() * minoff / 100);
+                    if(prodVO.getRulestatus() > 0) prodVO.setActprod(true);
                 }
             }
             GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(actCodeList, timeMap).invoke();
@@ -353,13 +354,14 @@ public class ProdModule {
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(0);
-                    prodVO.setStartnum(0);
+                    prodVO.setStartnum(1);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
                     ProdPriceEntity priceEntity = new ProdPriceEntity();
                     priceEntity.setSku(prodVO.getSku());
                     priceEntity.setVatp(prodVO.getVatp());
                     priceEntities.add(priceEntity);
+                    if(prodVO.getRulestatus() > 0) prodVO.setActprod(true);
                 }
             }
 
@@ -448,7 +450,7 @@ public class ProdModule {
             List<ProdPriceEntity> priceEntities = new ArrayList<>();
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
-                    prodVO.setBuynum(0);
+                    prodVO.setBuynum(1);
                     prodVO.setStartnum(0);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
@@ -456,6 +458,8 @@ public class ProdModule {
                     priceEntity.setSku(prodVO.getSku());
                     priceEntity.setVatp(prodVO.getVatp());
                     priceEntities.add(priceEntity);
+                    if(prodVO.getRulestatus() > 0) prodVO.setActprod(true);
+                    prodVO.setActcode(actCodeList.get(0));
                 }
             }
 
@@ -476,6 +480,7 @@ public class ProdModule {
         result.put("edate", edate);
         result.put("list", prodVOList);
         result.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+        result.put("actcode", actCodeList.get(0));
 
         return new Result().success(result);
     }
@@ -561,11 +566,13 @@ public class ProdModule {
             }
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
-                    prodVO.setBuynum(0);
+                    prodVO.setBuynum(1);
                     prodVO.setStartnum(1);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
                     prodVO.setActprize(prodVO.getVatp() * minoff / 100);
+                    if(prodVO.getRulestatus() > 0) prodVO.setActprod(true);
+                    prodVO.setActcode(actCodeList.get(0));
                 }
             }
         }
@@ -575,6 +582,7 @@ public class ProdModule {
         result.put("edate", edate);
         result.put("list", prodVOList);
         result.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+        result.put("actcode", actCodeList.get(0));
 
 //        result.put("")
         return new Result().success(result);
@@ -801,6 +809,8 @@ public class ProdModule {
 
             prodList.add(prodVO);
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
+            int rulestatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_RULESTATUS).toString());
+            prodVO.setRulestatus(rulestatus);
             try{
                 DictStore.translate(prodVO);
             }catch(Exception e){
