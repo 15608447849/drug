@@ -22,7 +22,6 @@ import com.onek.util.prod.ProdActPriceUtil;
 import com.onek.util.prod.ProdPriceEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.IceRemoteUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -34,8 +33,6 @@ import util.StringUtils;
 import util.TimeUtils;
 
 import java.util.*;
-
-import static global.IceRemoteUtil.calcMultiProdActPrize;
 
 
 @SuppressWarnings("unchecked")
@@ -367,7 +364,7 @@ public class ProdModule {
             }
 
             if(priceEntities != null && priceEntities.size() > 0){
-                ProdPriceEntity[] entities = IceRemoteUtil.calcMultiProdActPrize(actCodeList.get(0), priceEntities);
+                List<ProdPriceEntity> entities = ProdActPriceUtil.getActPrizeByMutiSku(actCodeList.get(0), priceEntities);
                 for(ProdVO prodVO : prodVOList){
                     for(ProdPriceEntity calcEntity: entities){
                         if(prodVO.getSku() == calcEntity.getSku()){
@@ -463,7 +460,7 @@ public class ProdModule {
             }
 
             if(priceEntities != null && priceEntities.size() > 0){
-                ProdPriceEntity[] entities = IceRemoteUtil.calcMultiProdActPrize(actCodeList.get(0), priceEntities);
+                List<ProdPriceEntity> entities = ProdActPriceUtil.getActPrizeByMutiSku(actCodeList.get(0), priceEntities);
                 for(ProdVO prodVO : prodVOList){
                     for(ProdPriceEntity calcEntity: entities){
                         if(prodVO.getSku() == calcEntity.getSku()){
