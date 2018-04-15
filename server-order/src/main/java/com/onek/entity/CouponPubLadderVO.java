@@ -1,4 +1,4 @@
-package com.onek.discount.entity;
+package com.onek.entity;
 
 /**
  * @author Administrator
@@ -48,6 +48,10 @@ public class CouponPubLadderVO {
         this.ladnum = ladnum;
     }
 
+    public void setOffercode(int offercode) {
+        this.offercode = offercode;
+    }
+
     public double getOffer() {
         return offer;
     }
@@ -59,10 +63,4 @@ public class CouponPubLadderVO {
     public int getOffercode() {
         return offercode;
     }
-
-    public void setOffercode(int offercode) {
-        this.offercode = offercode;
-    }
-
-
 }
