@@ -1,5 +1,6 @@
 package dao;
 
+import constant.DSMConst;
 import org.hyrdpf.dao.DAOException;
 import org.hyrdpf.dao.FacadeProxy;
 import org.hyrdpf.dao.jdbc.AbstractJdbcSessionMgr;
@@ -61,6 +62,10 @@ public class SynDbData implements Callable<Object> {
                 return updateAndGPKTransNative();
             case 4:
                 return updateBatchNative();
+            case 5:
+                return updateNativeBk();
+            case 6:
+                return updateTransNativeBk();
         }
         return null;
     }
@@ -231,6 +236,61 @@ public class SynDbData implements Callable<Object> {
         }
         return result;
     }
+
+
+
+    public int[] updateTransNativeBk(){
+        int[] result = new int[nativeSQL.length];
+        AbstractJdbcSessionMgr sessionMgr = baseDao.getBackupSessionMgr(0,
+                DSMConst.TD_BK_TRAN_ORDER,false);
+        List<Object[]> bkParm = new ArrayList<>();
+        List<String[]> bkResultSql = new ArrayList<>();
+        for (int i = 0; i < nativeSQL.length; i++){
+            String[] resultSQL = baseDao.getNativeReplaceSQL(nativeSQL[i],tbSharding);
+            int tabInx = Integer.parseInt(resultSQL[0]);
+            if(tabInx == DSMConst.TD_TRAN_ORDER || tabInx == DSMConst.TD_TRAN_GOODS){
+                bkResultSql.add(resultSQL);
+                bkParm.add(params.get(i));
+            }
+        }
+        try {
+            FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
+                @Override
+                public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
+                    for (int i = 0; i < bkResultSql.size(); i++) {
+                        result[i] = baseDao.updateNativeInCallBKSharding(sharding,tbSharding,bkResultSql.get(i),bkParm.get(i));
+                    }
+                }
+            });
+        } catch (DAOException e) {
+            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
+            e.printStackTrace();
+            int dbs = master;
+            SynDbLog.updateTransNative(getNativeSQL(),getParams(),
+                    getSharding(),getTbSharding(),dbs,false);
+        }
+        return result;
+    }
+
+
+    public int updateNativeBk(){
+        int result = 0;
+        String[] resultSQL = baseDao.getNativeReplaceSQL(nativeSQL[0],tbSharding);
+        JdbcBaseDao jdbcBaseDao = null;
+        try {
+            jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
+            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,DSMConst.TD_BK_TRAN_ORDER,false));
+            result = jdbcBaseDao.update(resultSQL[1], param);
+        } catch (DAOException e) {
+            e.printStackTrace();
+            int dbs = master;
+            List<Object[]> paramList = new ArrayList<>();
+            paramList.add(getParam());
+            SynDbLog.updateTransNative(getNativeSQL(),paramList,0,0,dbs,false);
+        }
+        return result;
+    }
+
 
 
     public  int[] updateAndGPKTransNative(){
