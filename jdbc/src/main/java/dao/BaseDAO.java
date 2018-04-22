@@ -170,16 +170,13 @@ public class BaseDAO {
 	private String getTableName(final int table,int tbSharding)
 	{
 		StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
-		//按公司模型切分表
-		if((DSMConst.SEG_TABLE_RULE[table] & 1) > 0){
-			strSql.append(DSMConst._UNDERLINE);
-			if(tbSharding == 0){
-				Calendar date = Calendar.getInstance();
-				strSql.append(date.get(Calendar.YEAR));
-			}else{
-				strSql.append(tbSharding);
-			}
-		}
+        strSql.append(DSMConst._UNDERLINE);
+        if(tbSharding == 0){
+            Calendar date = Calendar.getInstance();
+            strSql.append(date.get(Calendar.YEAR));
+        }else{
+            strSql.append(tbSharding);
+        }
 		LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
 		return strSql.toString();
 	}
