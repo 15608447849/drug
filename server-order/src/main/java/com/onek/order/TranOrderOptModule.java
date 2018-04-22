@@ -74,7 +74,7 @@ public class TranOrderOptModule {
 
     //更新优惠券领取表
     private static final String UPD_COUENT_SQL = "update {{?" + DSMConst.TD_PROM_COUENT + "}} set "
-            + "cststus=cstatus|64 where cstatus&1=0 and coupno=? ";
+            + "cstatus=cstatus|64 where cstatus&1=0 and unqid=? ";
 
     // 确认发货
     private static final String UPDATE_DELIVERY =
