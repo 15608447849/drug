@@ -1,6 +1,7 @@
 package com.onek.interceptors;
 
 import com.onek.context.AppContext;
+import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
@@ -42,6 +43,12 @@ public class UserInterceptor implements IServerInterceptor {
                 UserSession userSession = appContext.getUserSession();
                 if(userSession == null){
                     return new Result().intercept("用户未登录");
+                }
+                if(up.compAuth()){
+                    StoreBasicInfo storeInfo = userSession.comp;
+                    if(storeInfo == null ||  (storeInfo.authenticationStatus & 256) <= 0){
+                         return new Result().intercept("企业没有认证");
+                    }
                 }
                 if (up != null){
                     long[] roleArr = up.role();

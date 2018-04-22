@@ -4,22 +4,24 @@ import com.hsf.framework.api.cstruct.UserParam;
 import com.hsf.framework.order.OrderICE;
 import com.hsf.framework.order.OrderServicePrx;
 import com.onek.entity.TranOrder;
+import com.onek.property.LccProperties;
+import org.hyrdpf.ds.AppConfig;
 
 public class LccOrderUtil {
 
-    public static void addLccOrder(TranOrder tranOrder,String consignee,String consphone,String arriaddr) {
+    public static String addLccOrder(TranOrder tranOrder,String consignee,String consphone,String arriaddr) {
 
         OrderICE orderIce = new OrderICE();
 
-        orderIce.pubercompid = tranOrder.getBusno()+"";
-        orderIce.puberid = "";
+        orderIce.pubercompid = LccProperties.INSTANCE.pubercompid + "";
+        orderIce.puberid = LccProperties.INSTANCE.puberid + "";
 
         orderIce.phone1 = "";
         orderIce.phone2 = "";
         orderIce.billno = tranOrder.getOrderno();
 
-        orderIce.startc = ""; // todo
-        orderIce.startaddr = ""; // todo
+        orderIce.startc = LccProperties.INSTANCE.startc + "";
+        orderIce.startaddr = LccProperties.INSTANCE.startaddr;
         orderIce.arriarc = tranOrder.getRvaddno() + "";
         orderIce.arriaddr = arriaddr;
 
@@ -59,10 +61,27 @@ public class LccOrderUtil {
         System.out.println(result);
 
         UserParam robbParam = new UserParam();
-        robbParam.uid = ""; // Todo
-        robbParam.compid = ""; // Todo
-        orderServicePrx.robbingOrder(robbParam, new String[] {orderIce.orderno, orderIce.pubercompid});
+        robbParam.uid = LccProperties.INSTANCE.robbid + "";
+        robbParam.compid = LccProperties.INSTANCE.robbcompid + "";
+        result = orderServicePrx.robbingOrder(robbParam, new String[] {orderIce.orderno, orderIce.pubercompid});
 
+        System.out.println(result);
 
+        return result;
+
+    }
+
+    static {
+        AppConfig.initLogger("log4j2.xml");
+        AppConfig.initialize();
+    }
+
+    public static void main(String[] args) {
+        TranOrder tranOrder = new TranOrder();
+        tranOrder.setFreight(20);
+        tranOrder.setRvaddno(10130803);
+        tranOrder.setPdnum(2);
+        tranOrder.setOrderno("1904180003102000");
+        LccOrderUtil.addLccOrder(tranOrder, "小李", "14598763465","北京市天安门");
     }
 }
