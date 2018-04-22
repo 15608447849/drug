@@ -1,23 +1,35 @@
 package com.onek.global;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.annotation.UserPermission;
+import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.global.area.AreaStore;
 import com.onek.global.produce.ProduceStore;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.area.AreaUtil;
+import com.onek.util.dict.DictEntity;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProdEntity;
+import constant.DSMConst;
+import dao.BaseDAO;
 import util.GsonUtils;
 import util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: leeping
  * @Date: 2019/4/10 19:24
  */
 public class CommonModule {
+
+    private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
     @UserPermission(ignore = true)
     // 获取子类
@@ -103,7 +115,7 @@ public class CommonModule {
 
     @UserPermission(ignore = true)
     public Result getDicts(AppContext appContext){
-        JSONObject j = DictStore.getAllDict();
+        JSONObject j = getAllDict();
         return new Result().success(j.toJSONString());
     }
 
@@ -131,6 +143,41 @@ public class CommonModule {
             sb.append(areas[i]);
         }
         return new Result().success(sb.toString());
+    }
+
+    public  static JSONObject getAllDict(){
+        JSONObject j = new JSONObject();
+        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0");
+        DictEntity[] dicts = new DictEntity[result.size()];
+        baseDao.convToEntity(result, dicts, DictEntity.class);
+        if(dicts != null && dicts.length > 0){
+            Map<String, List<DictEntity>> dictMap = new HashMap<>();
+            for(DictEntity dictVo : dicts){
+                List<DictEntity> subList = dictMap.get(dictVo.getType());
+                if(subList == null) subList = new ArrayList<>();
+                if((dictVo.getCstatus() & CSTATUS.DELETE) > 0){
+                    continue;
+                }
+                subList.add(dictVo);
+                dictMap.put(dictVo.getType(), subList);
+            }
+
+            for (String type : dictMap.keySet()){
+                JSONArray dictArr = new JSONArray();
+                List<DictEntity> subList = dictMap.get(type);
+                for(DictEntity dictVo : subList){
+                    JSONObject obj = new JSONObject();
+                    obj.put("value", dictVo.getDictc());
+                    obj.put("text", dictVo.getText());
+                    obj.put("label", dictVo.getText());
+                    obj.put("remark", dictVo.getText());
+                    obj.put("customc", dictVo.getCustomc());
+                    dictArr.add(obj);
+                }
+                j.put(type, dictArr);
+            }
+        }
+        return j;
     }
 
 }
