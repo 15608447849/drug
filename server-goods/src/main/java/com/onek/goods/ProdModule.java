@@ -797,7 +797,7 @@ public class ProdModule {
         int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), actCode);
         prodVO.setBuynum(initStock - surplusStock);
         prodVO.setStartnum(prodVO.getMedpacknum());
-        prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
+        prodVO.setActlimit(dataMap.containsKey(prodVO.getSku()) ? dataMap.get(prodVO.getSku())[0]: 0);
         prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
         prodVO.setActinitstock(initStock);
         prodVO.setSurplusstock(surplusStock);
@@ -817,7 +817,7 @@ public class ProdModule {
         int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), actCode);
         prodVO.setBuynum(initStock - surplusStock);
         prodVO.setStartnum(prodVO.getMedpacknum());
-        prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
+        prodVO.setActlimit(dataMap.containsKey(prodVO.getSku()) ? dataMap.get(prodVO.getSku())[0]: 0);
         prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
         prodVO.setActinitstock(initStock);
         prodVO.setSurplusstock(surplusStock);
