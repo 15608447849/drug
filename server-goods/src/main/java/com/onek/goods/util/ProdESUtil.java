@@ -300,7 +300,7 @@ public class ProdESUtil {
                 MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
-//            MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+//            MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
 //            boolQuery.must(builder);
             if(spu > 0){
                 String start = "1"+addZeroForNum(spu+"", 6) +"00000";
