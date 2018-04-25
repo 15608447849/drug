@@ -46,7 +46,7 @@ public class SecKillModule {
 
     private AccessLimitService accessLimitService = new AccessLimitServiceImpl();
 
-    @UserPermission(ignore = false)
+    @UserPermission(ignore = false, needAuthenticated = true)
     public Result beforeSecKill(AppContext appContext) {
         UserSession userSession = appContext.getUserSession();
         int compid = userSession != null ? userSession.compId : 0;
@@ -83,7 +83,7 @@ public class SecKillModule {
     }
 
 
-    @UserPermission(ignore = false)
+    @UserPermission(ignore = false, needAuthenticated = true)
     public Result attendSecKill(AppContext appContext) {
         UserSession userSession = appContext.getUserSession();
         int compid = userSession != null ? userSession.compId : 0;
