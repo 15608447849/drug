@@ -102,10 +102,11 @@ public class PayModule {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime"});
 
+            double freight = result[0].getFreight() > 0 ? MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue() : 0;
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
 
             JSONObject r = new JSONObject();
-            r.put("payamt", payamt);
+            r.put("payamt", MathUtil.exactAdd(payamt, freight));
             r.put("odate", result[0].getOdate());
             r.put("otime", result[0].getOtime());
             r.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
@@ -160,10 +161,12 @@ public class PayModule {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime"});
 
+            double freight = result[0].getFreight() > 0 ? MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue() : 0;
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
+            double money = MathUtil.exactAdd(payamt, freight).doubleValue();
 
             try{
-                String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
+                String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", money, orderno,
                         "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
 
                 return new Result().success(r);
@@ -395,7 +398,7 @@ public class PayModule {
         params.add(new Object[]{1,1,tradeDate,tradeTime,orderno,0});
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
-        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
                 thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
 //        + "(unqid,compid,payno,eventdesc,resultdesc,"
 //                + "completedate,completetime,cstatus)"
@@ -438,7 +441,7 @@ public class PayModule {
 //        + "(unqid,compid,orderno,payno,payprice,payway,paysource,paystatus,"
 //                + "payorderno,tppno,paydate,paytime,completedate,completetime,cstatus)"
         sqlList.add(INSERT_TRAN_TRANS);
-        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0,  MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
                 thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
 //        + "(unqid,compid,payno,eventdesc,resultdesc,"
 //                + "completedate,completetime,cstatus)"
@@ -466,7 +469,7 @@ public class PayModule {
         List<Object[]> params = new ArrayList<>();
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
-        params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0,  MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
                 thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
 //        + "(unqid,compid,payno,eventdesc,resultdesc,"
 //                + "completedate,completetime,cstatus)"
@@ -497,7 +500,7 @@ public class PayModule {
 //        + "(unqid,compid,orderno,payno,payprice,payway,paysource,paystatus,"
 //                + "payorderno,tppno,paydate,paytime,completedate,completetime,cstatus)"
         sqlList.add(INSERT_TRAN_TRANS);
-        params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0,  MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
                 thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
 //        + "(unqid,compid,payno,eventdesc,resultdesc,"
 //                + "completedate,completetime,cstatus)"
