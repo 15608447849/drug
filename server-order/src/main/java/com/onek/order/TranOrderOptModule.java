@@ -526,7 +526,11 @@ public class TranOrderOptModule {
         if (res > 0) {
             TranOrderGoods[] tranOrderGoods = getGoodsArr(orderNo, cusno);
             for (TranOrderGoods tranOrderGood : tranOrderGoods) {
-                RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
+                if(tranOrderGood.getActCode() > 0){
+                    RedisStockUtil.addActStock(tranOrderGood.getPdno(), tranOrderGood.getActCode(), tranOrderGood.getPnum());
+                }else{
+                    RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
+                }
                 params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
             }
             baseDao.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
@@ -535,13 +539,13 @@ public class TranOrderOptModule {
     }
 
     static TranOrderGoods[] getGoodsArr(String orderNo, int cusno) {
-        String selectGoodsSql = "select pdno, pnum, payamt from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
+        String selectGoodsSql = "select pdno, pnum, payamt,actcode from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
                 + " and orderno=" + orderNo;
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, selectGoodsSql);
         TranOrderGoods[] tranOrderGoods = new TranOrderGoods[queryResult.size()];
         baseDao.convToEntity(queryResult, tranOrderGoods, TranOrderGoods.class, new String[]{
-                "pdno", "pnum", "payamt"
+                "pdno", "pnum", "payamt", "actCode"
         });
         return tranOrderGoods;
     }
