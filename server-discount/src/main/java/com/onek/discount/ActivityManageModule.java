@@ -833,6 +833,12 @@ public class ActivityManageModule {
                 ret = baseDao.updateNative(CLOSE_ACT,actcode);
                 break;
         }
+        if(ret > 0){
+            ActivityManageServer activityManageServer = new ActivityManageServer();
+            activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
+
+            activityManageServer.actUpdate(actcode);
+        }
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
     }
 
