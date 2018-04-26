@@ -437,7 +437,11 @@ public class TranOrderOptModule {
      **/
     private void stockRecovery(List<TranOrderGoods> goodsList) {
         for (TranOrderGoods aGoodsList : goodsList) {
-            RedisStockUtil.addStock(aGoodsList.getPdno(), aGoodsList.getPnum());
+            if (aGoodsList.getActCode() > 0) {
+                RedisStockUtil.addActStock(aGoodsList.getPdno(), aGoodsList.getActCode(), aGoodsList.getPnum());
+            }else{
+                RedisStockUtil.addStock(aGoodsList.getPdno(), aGoodsList.getPnum());
+            }
         }
     }
 
