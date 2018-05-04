@@ -90,7 +90,7 @@ public class HigherProfitsTask extends TimerTask {
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
 
             SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
-                    .setQuery(boolQuery);
+                    .setQuery(boolQuery).setSize(skuList.size());
 
 
             response = requestBuilder
@@ -102,11 +102,11 @@ public class HigherProfitsTask extends TimerTask {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                     long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
                     int skucstatus = sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS) != null ? Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS).toString()): 0;
-                    sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, skucstatus&~512);
+                    sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, (skucstatus&~512));
                     bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
                 }
-                BulkResponse bulkResponse = bulkRequest.get();
+                BulkResponse bulkResponse =  bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for(BulkItemResponse item : bulkResponse.getItems()){
                         System.out.println(item.getFailureMessage());
@@ -138,23 +138,26 @@ public class HigherProfitsTask extends TimerTask {
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
 
             SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
-                    .setQuery(boolQuery);
+                    .setQuery(boolQuery).setSize(skuList.size());
 
 
             response = requestBuilder
                     .execute().actionGet();
 
             BulkRequestBuilder bulkRequest = client.prepareBulk();
+//            System.out.println("@@@@"+ response.getHits().totalHits);
             if(response != null && response.getHits().totalHits > 0){
                 for (SearchHit searchHit : response.getHits()) {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                     long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
                     int skucstatus = sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS) != null ? Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS).toString()): 0;
-                    sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, skucstatus|512);
+                    sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, (skucstatus|512));
                     bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
+//                    System.out.println("++++ sku:" + sku + ";" + skucstatus);
 
                 }
-                BulkResponse bulkResponse = bulkRequest.get();
+
+                BulkResponse bulkResponse =  bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for(BulkItemResponse item : bulkResponse.getItems()){
                         System.out.println(item.getFailureMessage());

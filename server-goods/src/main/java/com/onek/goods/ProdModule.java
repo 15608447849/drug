@@ -111,9 +111,10 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        List<ProdVO> newProdList = getFilterProdsCommon(result, "",2, pageIndex, pageSize);
+        Map<String, Object> resultMap= getFilterProdsCommon(result, "",2, pageIndex, pageSize);
+        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
 
-        return new Result().success(newProdList);
+        return new Result().success(prodList);
     }
 
     @UserPermission(ignore = true)
@@ -128,7 +129,8 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        List<ProdVO> prodList = getFilterProdsCommon(result1,  "",1, pageIndex, pageSize);
+        Map<String, Object> resultMap  = getFilterProdsCommon(result1,  "",1, pageIndex, pageSize);
+        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
 
         return new Result().success(prodList);
     }
@@ -139,7 +141,8 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        List<ProdVO> hotProdList = getFilterHotProds("",  pageIndex, pageSize);
+        Map<String, Object> resultMap = getFilterHotProds("",  pageIndex, pageSize);
+        List<ProdVO> hotProdList = (List<ProdVO>)resultMap.get("prodList");
 
         return new Result().success(hotProdList);
     }
@@ -358,16 +361,18 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        List<ProdVO> newProdList = getFilterProdsCommon(result, keyword, 2, pageIndex, pageSize);
+        Map<String, Object> resultMap = getFilterProdsCommon(result, keyword, 2, pageIndex, pageSize);
+        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
+        SearchResponse response = (SearchResponse)resultMap.get("response");
 
         Result r = new Result();
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
-        page.totalItems = newProdList != null  ? (int) newProdList.size() : 0;
+        page.totalItems = response != null  && response.getHits() != null ?  (int)response.getHits().getTotalHits() : 0;
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
-        return r.setQuery(newProdList, pageHolder);
+        return r.setQuery(prodList, pageHolder);
     }
 
     @UserPermission(ignore = true)
@@ -379,16 +384,18 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        List<ProdVO> hotProdList = getFilterHotProds(keyword,  pageIndex, pageSize);
+        Map<String, Object> resultMap = getFilterHotProds(keyword,  pageIndex, pageSize);
+        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
+        SearchResponse response = (SearchResponse)resultMap.get("response");
 
         Result r = new Result();
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
-        page.totalItems = hotProdList != null  ? (int) hotProdList.size() : 0;
+        page.totalItems = response != null  && response.getHits() != null ?  (int)response.getHits().getTotalHits() : 0;
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
-        return r.setQuery(hotProdList, pageHolder);
+        return r.setQuery(prodList, pageHolder);
     }
 
     @UserPermission(ignore = true)
@@ -403,6 +410,7 @@ public class ProdModule {
         String day = TimeUtils.date_Md_2String(new Date());
         List<Object[]> list = BASE_DAO.queryNative(NEWMEMBER_ACT_PROD_SQL, new Object[]{day});
         List<ProdVO> prodVOList = new ArrayList<>();
+        SearchResponse response  = null;
         if (list != null && list.size() > 0) {
             List<Long> skuList = new ArrayList<>();
             Map<Long, Integer> dataMap = new HashMap<>();
@@ -415,7 +423,7 @@ public class ProdModule {
 
             }
 
-            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, keyword, pageIndex, pageSize);
+            response = ProdESUtil.searchProdBySpuList(skuList, keyword, pageIndex, pageSize);
 
             if (response != null && response.getHits().totalHits > 0) {
                 assembleData(response, prodVOList);
@@ -432,7 +440,7 @@ public class ProdModule {
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
-        page.totalItems = prodVOList != null  ? (int) prodVOList.size() : 0;
+        page.totalItems = response != null  && response.getHits() != null ?  (int)response.getHits().getTotalHits() : 0;
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
         return r.setQuery(prodVOList, pageHolder);
@@ -453,13 +461,15 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        List<ProdVO> prodList = getFilterProdsCommon(result1,  keyword,1, pageIndex, pageSize);
+        Map<String, Object> resultMap = getFilterProdsCommon(result1,  keyword,1, pageIndex, pageSize);
+        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
+        SearchResponse response = (SearchResponse)resultMap.get("response");
 
         Result r = new Result();
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
-        page.totalItems = prodList != null  ? (int) prodList.size() : 0;
+        page.totalItems = response != null  && response.getHits() != null ?  (int)response.getHits().getTotalHits() : 0;
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
         return r.setQuery(prodList, pageHolder);
@@ -789,7 +799,8 @@ public class ProdModule {
         return newProdList;
     }
 
-    private static List<ProdVO> getFilterHotProds(String keyword, int pageNum, int pageSize) {
+    private static Map<String, Object> getFilterHotProds(String keyword, int pageNum, int pageSize) {
+        Map<String, Object> resultMap = new HashMap<>();
         SearchResponse response = ProdESUtil.searchHotProd(keyword, pageNum, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
@@ -799,10 +810,13 @@ public class ProdModule {
             }
         }
 
-        return prodList;
+        resultMap.put("response", response);
+        resultMap.put("prodList", prodList);
+        return resultMap;
     }
 
-    private static List<ProdVO> getFilterProdsCommon(Set<Integer> result, String keyword, int sort,int pageNum, int pageSize) {
+    private static Map<String, Object> getFilterProdsCommon(Set<Integer> result, String keyword, int sort,int pageNum, int pageSize) {
+        Map<String, Object> resultMap = new HashMap<>();
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, keyword, sort, pageNum, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
@@ -811,23 +825,9 @@ public class ProdModule {
                 assembleData(response, prodList);
             }
         }
-
-        return prodList;
-    }
-
-    private static List<ProdVO> getFilterProds(Set<Integer> result, int sort) {
-        SearchResponse response = ProdESUtil.searchProdWithStatusList(result, "", sort, 1, 100);
-        List<ProdVO> prodList = new ArrayList<>();
-        if (response == null || response.getHits().totalHits <= 10) {
-            SearchHits hits = response.getHits();
-            if (hits.totalHits > 0) {
-                assembleData(response, prodList);
-            }
-            response = ProdESUtil.searchProdWithStatusList(null,"", sort, 1, 100);
-        }
-
-        assembleData(response, prodList);
-        return prodList;
+        resultMap.put("response", response);
+        resultMap.put("prodList", prodList);
+        return resultMap;
     }
 
     private static void assembleData(SearchResponse response, List<ProdVO> prodList) {
