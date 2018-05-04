@@ -42,7 +42,15 @@ public class MemberStore {
         return 0;
     }
 
-    public static void main(String[] args) {
-        System.out.println(MemberStore.getLevelByCompid(536862722));
+    public static int addPoint(int compid, int point){
+
+        if(compid > 0) {
+            return memProxy.add(compid, point);
+        }
+        return 0;
     }
+//
+//    public static void main(String[] args) {
+//        System.out.println(MemberStore.getLevelByCompid(536862722));
+//    }
 }
