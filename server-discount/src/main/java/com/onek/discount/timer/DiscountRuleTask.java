@@ -3,8 +3,10 @@ package com.onek.discount.timer;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdDiscountObserver;
+import com.onek.util.RedisGlobalKeys;
 import constant.DSMConst;
 import dao.BaseDAO;
+import redis.util.RedisUtil;
 import util.TimeUtils;
 
 import java.util.*;
@@ -46,6 +48,10 @@ public class DiscountRuleTask extends TimerTask {
                 }
                 list.add(jsonObject.toJSONString());
                 map.put(rulecode, list);
+
+                if(rulecode == 1113){
+                    RedisUtil.getSetProvide().delete(RedisGlobalKeys.SECKILLPREFIX + gcode);
+                }
             }
 
             for(Integer rulecode : map.keySet()){
