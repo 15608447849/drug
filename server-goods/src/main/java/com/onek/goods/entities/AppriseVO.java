@@ -19,6 +19,7 @@ public class AppriseVO {
     private int compid;//企业码
     private long sku;//sku
     private String compName;//企业名称
+    private double compEval;//综合评价
 
     public long getUnqid() {
         return unqid;
@@ -114,5 +115,13 @@ public class AppriseVO {
 
     public void setCompName(String compName) {
         this.compName = compName;
+    }
+
+    public double getCompEval() {
+        return compEval;
+    }
+
+    public void setCompEval(double compEval) {
+        this.compEval = compEval;
     }
 }
