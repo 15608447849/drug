@@ -32,7 +32,7 @@ public class RedisOrderUtil {
      *
      */
     public static long addActBuyNum(int compid, long sku, long actCode,int num){
-        return RedisUtil.getStringProvide().increase(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + SEP + compid + SEP + sku + SEP + actCode, num);
+        return RedisUtil.getStringProvide().increase(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + SEP + actCode + SEP + sku + SEP + compid , num);
     }
 
     /**
@@ -45,7 +45,15 @@ public class RedisOrderUtil {
      * @return
      */
     public static long subtractActBuyNum(int compid, long sku, long actCode,int num){
-        return RedisUtil.getStringProvide().decrease(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + SEP + compid + SEP + sku + SEP + actCode, num);
+        return RedisUtil.getStringProvide().decrease(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + SEP + actCode + SEP + sku + SEP + compid, num);
+    }
+
+    /**
+     * 重置活动购买量
+     *
+     */
+    public static void resetActBuyNum(long sku, long actCode){
+        RedisUtil.getStringProvide().deleteRedisKeyStartWith(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + SEP + actCode + SEP + sku);
     }
 
     /**
@@ -57,7 +65,7 @@ public class RedisOrderUtil {
      * @return
      */
     public static int getActBuyNum(int compid, long sku, long actCode){
-        String buyNum  = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + SEP + compid + SEP + sku + SEP + actCode);
+        String buyNum  = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + SEP + actCode + SEP + sku  + SEP + compid );
         if (StringUtils.isEmpty(buyNum)) {
             return 0;
         }
