@@ -86,13 +86,15 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
             val accupoints = memberVO.accupoints
             val balpoints = memberVO.balpoints
 
-            val updateMemberVO = MemberEntity()
-            updateMemberVO.compid = companyId
-            updateMemberVO.accupoints = accupoints + point
-            updateMemberVO.balpoints = balpoints + point
-            val r = memProxy.update(companyId, updateMemberVO)
-            if(r > 0){
-                IceRemoteUtil.addIntegralDetail(companyId, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
+            if(balpoints <= 0){ // 积分余额为0代表第一次注册
+                val updateMemberVO = MemberEntity()
+                updateMemberVO.compid = companyId
+                updateMemberVO.accupoints = accupoints + point
+                updateMemberVO.balpoints = balpoints + point
+                val r = memProxy.update(companyId, updateMemberVO)
+                if(r > 0){
+                    IceRemoteUtil.addIntegralDetail(companyId, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
+                }
             }
         } catch (e: Exception) {
         }
