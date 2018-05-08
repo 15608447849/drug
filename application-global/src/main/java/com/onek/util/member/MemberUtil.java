@@ -40,7 +40,7 @@ public class MemberUtil implements IRedisPartCache {
 
     @Override
     public int update(Object id, Object obj) {
-        return 0;
+        return IceRemoteUtil.reducePoint((int)id, (int)obj);
     }
 
 }
