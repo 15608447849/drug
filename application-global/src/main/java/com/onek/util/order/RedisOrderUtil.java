@@ -6,6 +6,7 @@ import util.StringUtils;
 
 public class RedisOrderUtil {
 
+    private static String SUCCESS = "OK";
     private static String SEP = "|"; // 分隔符
 
     public static void addOrderNumByCompid(int compid){
@@ -64,5 +65,36 @@ public class RedisOrderUtil {
             return 0;
         }
         return Integer.parseInt(buyNum);
+    }
+
+    /**
+     * 设活动限购量 1:设置成功 0:设置失败
+     *
+     * @param sku
+     * @param actCode
+     * @param limitnum
+     * @return
+     */
+    public static int setActLimit(long sku, long actCode, int limitnum) {
+        String result = RedisUtil.getStringProvide().set(RedisGlobalKeys.ACT_LIMIT_NUM_PREFIX + SEP + sku + SEP + actCode, String.valueOf(limitnum));
+        return SUCCESS.equals(result) ? 1 : 0;
+    }
+
+    /**
+     * 获取活动限购量
+     *
+     * @param sku
+     * @param actCode
+     * @return
+     */
+    public static int getActLimit(long sku, long actCode) {
+        String limitNum  = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACT_LIMIT_NUM_PREFIX + SEP + sku + SEP + actCode);
+        if (StringUtils.isEmpty(limitNum)) {
+            return 0;
+        }
+        if (Integer.parseInt(limitNum) <= 0) {
+            return 0;
+        }
+        return Integer.parseInt(limitNum);
     }
 }

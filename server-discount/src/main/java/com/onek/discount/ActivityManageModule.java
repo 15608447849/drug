@@ -742,6 +742,7 @@ public class ActivityManageModule {
             jsonObject.put("discount", 1);
             jsonObject.put("gcode", 0);
             jsonObject.put("cstatus", "0");
+            jsonObject.put("limitnum", 0);
             jsonObject.put("rulecode", rulecode);
             proList.add(jsonObject.toJSONString());
         } else {
@@ -754,6 +755,7 @@ public class ActivityManageModule {
                     jsonObject.put("rulecode", rulecode);
                     jsonObject.put("actcode", goodsVO.getActcode());
                     jsonObject.put("stock", goodsVO.getActstock());
+                    jsonObject.put("limitnum", goodsVO.getLimitnum());
                     proList.add(jsonObject.toJSONString());
                 }
             }

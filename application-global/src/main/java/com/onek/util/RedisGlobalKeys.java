@@ -59,6 +59,9 @@ public class RedisGlobalKeys {
     // 活动购买量前缀
     public static final String ACT_BUY_NUM_PREFIX = "ACT_BUY_NUM";
 
+    // 活动限购量前缀
+    public static final String ACT_LIMIT_NUM_PREFIX = "ACT_LIMIT_NUM";
+
     /**
      * 获取用户ID
      */
