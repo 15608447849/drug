@@ -125,7 +125,7 @@ public class OrderUtil {
                 Double code = (Double) resultMap.get("code");
                 String tradeStatus = "0";
                 if(code == 10000){
-                    tradeStatus = "1";
+                    tradeStatus = "-3";
                 }else{
                     tradeStatus = "-2";
                 }
