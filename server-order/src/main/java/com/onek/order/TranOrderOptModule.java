@@ -29,12 +29,13 @@ import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
-import redis.util.RedisUtil;
 import util.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+
+import static com.onek.order.PayModule.CANCEL_XXJF;
 
 /**
  * @author 11842
@@ -43,13 +44,13 @@ import java.util.List;
  * @time 2019/4/16 16:01
  **/
 public class TranOrderOptModule {
-    private static final DelayedHandler<TranOrder> CANCEL_DELAYED =
+    public static final DelayedHandler<TranOrder> CANCEL_DELAYED =
             new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
                     (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
                     DelayedHandler.TIME_TYPE.MINUTES);
 
     private static final DelayedHandler<DelayedBase> TAKE_DELAYED =
-            new RedisDelayedHandler<>("_TAKE_ORDERS", 48,
+            new RedisDelayedHandler<>("_TAKE_ORDERS", 120,
                     (d) -> new TranOrderOptModule().takeDelivery(d.getOrderNo(), d.getCompid()),
                     DelayedHandler.TIME_TYPE.HOUR);
 
@@ -600,51 +601,135 @@ public class TranOrderOptModule {
      * @time 2019/4/17 17:00
      * @version 1.1.1
      **/
-    @UserPermission(ignore = true)
+    @UserPermission(ignore = false)
     public Result cancelOrder(AppContext appContext) {
         Result result = new Result();
-//        List<String> sqlList = new ArrayList<>();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         String orderNo = jsonObject.get("orderno").getAsString();//订单号
         int cusno = jsonObject.get("cusno").getAsInt(); //企业码
-//        sqlList.add(UPD_ORDER_STATUS);
-//        params.add(new Object[]{-4, orderNo});
-
-//        String[] sqlNative = new String[sqlList.size()];
-//        sqlNative = sqlList.toArray(sqlNative);
         boolean b = cancelOrder(orderNo, cusno);
-
         if (b) {
             CANCEL_DELAYED.removeByKey(orderNo);
         }
-
         return b ? result.success("取消成功") : result.fail("取消失败");
     }
 
     public boolean cancelOrder(String orderNo, int cusno) {
-        List<Object[]> params = new ArrayList<>();
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         int res = baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, -4, orderNo, 0);
         if (res > 0) {
-            TranOrderGoods[] tranOrderGoods = getGoodsArr(orderNo, cusno);
-            for (TranOrderGoods tranOrderGood : tranOrderGoods) {
-                String actCodeStr = tranOrderGood.getActcode();
-                List<Long> list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
-                for (Long actcode: list) {
-                    if (actcode > 0) {
-                        RedisStockUtil.addActStock(tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
-                        RedisOrderUtil.subtractActBuyNum(tranOrderGood.getCompid(), tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
-                    } else {
-                        RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
-                    }
-                }
-                params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
-            }
-            baseDao.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
+            recoverGoodsStock(orderNo, cusno);
         }
         return res > 0;
+    }
+
+    private void recoverGoodsStock(String orderNo, int cusno) {
+        List<Object[]> params = new ArrayList<>();
+        TranOrderGoods[] tranOrderGoods = getGoodsArr(orderNo, cusno);
+        for (TranOrderGoods tranOrderGood : tranOrderGoods) {
+            String actCodeStr = tranOrderGood.getActcode();
+            List<Long> list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
+            for (Long actcode: list) {
+                if (actcode > 0) {
+                    RedisStockUtil.addActStock(tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
+                    RedisOrderUtil.subtractActBuyNum(tranOrderGood.getCompid(), tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
+                } else {
+                    RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
+                }
+            }
+            params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
+        }
+        baseDao.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
+    }
+
+
+    /**
+     * @description 线下即付、线下到付门店取消
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/5/10 17:38
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result cancelOffLineOrder(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.get("orderno").getAsString();//订单号
+        int cusno = jsonObject.get("cusno").getAsInt(); //企业码
+        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+        String selectSQL = "select payway from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? "
+                + "and (payway=4 and ostatus=0) or (payway=5 and ostatus=1) and (current_timestamp - unix_timestamp())<30*60*1000";
+        String updateSQL =  "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
+                + " where cstatus&1=0 and orderno=? ";
+        List<Object[]> list = baseDao.queryNativeSharding(cusno, TimeUtils.getCurrentYear(), selectSQL, orderNo);
+        if(list != null && list.size() > 0) {
+            int code;
+            int payway = (int) list.get(0)[0];//支付方式
+            if (payway == 4) {//线下即付（待付款状态）30分钟内可取消
+                updateSQL = updateSQL + " and payway=4 and ostatus=0";
+            } else {//线下到付（待发货状态）30分钟内可取消
+                updateSQL = updateSQL + " and payway=5 and ostatus=1";
+            }
+            code = baseDao.updateNativeSharding(cusno, year, updateSQL, -4, orderNo, 0);
+            if (code > 0) {
+                if (payway == 4) {//取消线下即付一小时轮询
+                    CANCEL_XXJF.removeByKey(orderNo);
+                }
+                //库存操作(库存返还)
+                recoverGoodsStock(orderNo, cusno);
+            }
+        } else {
+            return result.fail("订单提交已超过30分钟，取消失败");
+        }
+        return result;
+    }
+
+
+    /* *
+     * @description 客服取消订单
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/5/10 16:33
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result cancelBackOrder(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.get("orderno").getAsString();//订单号
+        int cusno = jsonObject.get("cusno").getAsInt(); //企业码
+        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+        String selectSQL = "select payway, balamt,payamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
+        List<Object[]> list = baseDao.queryNativeSharding(cusno, TimeUtils.getCurrentYear(), selectSQL, orderNo);
+        if(list != null && list.size() > 0) {
+            int payway = (int)list.get(0)[0];//支付方式
+            int balamt = (int)list.get(0)[1];//订单使用的余额
+            int payamt = (int)list.get(0)[2];//订单支付金额
+            int res = baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, -4, orderNo, 1);
+            if (res > 0) {//退款
+                if (payway == 4 || payway == 5) {//线下即付退款???
+                    return result.success("订单取消成功，订单为线下支付订单");
+                } else {//线上支付退款
+                    if (balamt > 0) {//退回余额
+
+                    }
+                    if (payamt > 0) {//退回微信或者支付宝
+
+                    }
+                }
+            }
+        }
+        return result;
     }
 
     static TranOrderGoods[] getGoodsArr(String orderNo, int cusno) {
@@ -741,30 +826,87 @@ public class TranOrderOptModule {
     }
 
     /**
-     * 收货
-     *
+     * 确认收款
      * @param appContext
      * @return
      */
-
     @UserPermission(ignore = true)
     public Result takeDelivery(AppContext appContext) {
+        boolean b = false;
         String[] params = appContext.param.arrays;
-
         if (ArrayUtil.isEmpty(params)) {
             return new Result().fail("参数为空");
         }
-
         String orderNo = params[1];
         int compid = getCompid(orderNo);
+        int year = Integer.parseInt("20" + orderNo.substring(0,2));
 
         if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
         }
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> paramsObj = new ArrayList<>();
+        String selectSQL = "select payamt,payway,balamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
+        //线下到付确认收款  将订单结算状态改为已结算
+        String updateXxdfSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set settstatus=?, settdate=CURRENT_DATE,"
+                + "setttime=CURRENT_TIME where cstatus&1=0 and orderno=? and payway=5 and ostatus=2";
+        //线下即付确认收款
+        String updateXxjfSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=1, settstatus=?, settdate=CURRENT_DATE,"
+                + "setttime=CURRENT_TIME where cstatus&1=0 and orderno=? and payway=4 and ostatus=0";
+        //插入支付记录
+        String insertPayerSQL = "insert into {{?" + DSMConst.TD_TRAN_PAYREC + "}} "
+                + "(unqid,compid,payno,eventdesc,resultdesc,"
+                + "completedate,completetime,cstatus)"
+                + " values(?,?,?,?,?,"
+                + "CURRENT_DATE,CURRENT_TIME,0)";
 
-        boolean result = takeDelivery(orderNo, compid);
+        //插入交易记录
+        String insertTransSQL = "insert into {{?" + DSMConst.TD_TRAN_TRANS + "}} "
+                + "(unqid,compid,orderno,payno,payprice,payway,paysource,paystatus,"
+                + "payorderno,tppno,paydate,paytime,completedate,completetime,cstatus)"
+                + " values(?,?,?,?,?,"
+                + "?,?,?,?,?,"
+                + "CURRENT_DATE,CURRENT_TIME,CURRENT_DATE,CURRENT_TIME,?)";
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), selectSQL, orderNo);
+        if(list != null && list.size() > 0) {
+            TranOrder[] tranOrders = new TranOrder[list.size()];
+            BaseDAO.getBaseDAO().convToEntity(list, tranOrders, TranOrder.class, new String[]{"payamt", "payway","balamt"});
+            double payamt = tranOrders[0].getPayamt();
+            double bal = tranOrders[0].getBalamt();
+            int paytype = Integer.parseInt(tranOrders[0].getPayway().trim());
+            if (paytype == 4) {
+                sqlList.add(updateXxjfSQL);
+            } else {
+                sqlList.add(updateXxdfSQL);
+            }
+            paramsObj.add(new Object[]{1, orderNo});
+            if (bal > 0) {
+                sqlList.add(insertPayerSQL);
+                paramsObj.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, "{}", "{}"});
+                sqlList.add(insertTransSQL);
+                paramsObj.add(new Object[]{GenIdUtil.getUnqId(), compid, orderNo, 0,  MathUtil.exactMul(bal, 100), 0,
+                        0, 1, GenIdUtil.getUnqId(), 0, 0});
+            }
+            if (payamt > 0) {
+                sqlList.add(insertTransSQL);
+                paramsObj.add(new Object[]{GenIdUtil.getUnqId(), compid, orderNo, 0,  MathUtil.exactMul(payamt, 100), paytype,
+                        0, 1, GenIdUtil.getUnqId(), 0, 0});
+            }
+            String[] sqlNative = new String[sqlList.size()];
+            sqlNative = sqlList.toArray(sqlNative);
+            b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, paramsObj));
+            if (b) {
+                if (paytype == 4) {//取消线下即付一小时轮询
+                    CANCEL_XXJF.removeByKey(orderNo);
+                }
+                //更新销量
+                
 
-        return result ? new Result().success("已签收") : new Result().fail("操作失败");
+            }
+        }
+//        boolean result = takeDelivery(orderNo, compid);
+
+        return b ? new Result().success("操作成功") : new Result().fail("操作失败");
     }
 
     class GoodsStock {
