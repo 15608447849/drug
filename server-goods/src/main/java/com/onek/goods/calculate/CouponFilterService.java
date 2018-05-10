@@ -21,18 +21,18 @@ public class CouponFilterService extends BaseDiscountFilterService {
 
     private static final String GET_COUPON =
             " SELECT oid, unqid, coupno, compid, startdate, "
-                    + " starttime, enddate, endtime, brulecode, rulename, "
-                    + " goods, ladder, glbno, ctype, cstatus, reqflag "
-                    + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
-                    + " WHERE cstatus = 0 "
-                    + " AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
-                    + " AND unqid = ? ";
+            + " starttime, enddate, endtime, brulecode, rulename, "
+            + " goods, ladder, glbno, ctype, cstatus, reqflag "
+            + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
+            + " WHERE cstatus = 0 "
+            + " AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
+            + " AND unqid = ? ";
 
     private static final String CHECK_SKU =
             " SELECT COUNT(0) "
-                    + " FROM {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
-                    + " WHERE cstatus&1 = 0 "
-                    + " AND actcode = ? AND gcode IN (?, ? , 0) ";
+            + " FROM {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
+            + " WHERE cstatus&1 = 0 "
+            + " AND actcode = ? AND gcode IN (?, ? , 0) ";
 
     public CouponFilterService(
             long couponUnqid,
@@ -81,8 +81,8 @@ public class CouponFilterService extends BaseDiscountFilterService {
         }
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                this.compid, TimeUtils.getCurrentYear(),
-                GET_COUPON, this.couentUnqid);
+                        this.compid, TimeUtils.getCurrentYear(),
+                        GET_COUPON, this.couentUnqid);
 
         if (queryResult.isEmpty()) {
             this.noway = true;

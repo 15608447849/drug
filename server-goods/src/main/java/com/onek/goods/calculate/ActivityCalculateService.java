@@ -1,7 +1,7 @@
 package com.onek.goods.calculate;
 
-import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.entity.Gift;
+import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.service.calculate.BaseDiscountCalculateService;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -13,14 +13,14 @@ import java.util.List;
 public class ActivityCalculateService extends BaseDiscountCalculateService {
     private static final String GET_LADOFF =
             " SELECT lad.* "
-                    + " FROM {{?" + DSMConst.TD_PROM_LADOFF + "}} lad"
-                    + " INNER JOIN {{?" + DSMConst.TD_PROM_RELA + "}} rela "
-                    + " ON lad.cstatus&1 = 0 AND rela.cstatus&1 = 0 "
-                    + " AND lad.unqid = rela.ladid AND rela.actcode = ? "
-                    + " WHERE 1 = 1 ";
+            + " FROM {{?" + DSMConst.TD_PROM_LADOFF + "}} lad"
+            + " INNER JOIN {{?" + DSMConst.TD_PROM_RELA + "}} rela "
+            + " ON lad.cstatus&1 = 0 AND rela.cstatus&1 = 0 "
+            + " AND lad.unqid = rela.ladid AND rela.actcode = ? "
+            + " WHERE 1 = 1 ";
 
     private static final String GET_GIFT =
-            " SELECT * "
+            " SELECT gift.unqid, gift.giftname, gift.giftdesc "
                     + " FROM {{?" + DSMConst.TD_PROM_GIFT + "}} gift "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_ASSGIFT + "}} ass "
                     + " ON gift.unqid = ass.assgiftno AND ass.offercode = ? "
@@ -36,7 +36,8 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
 
             Gift[] gArray = new Gift[queryResult.size()];
 
-            BaseDAO.getBaseDAO().convToEntity(queryResult, gArray, Gift.class);
+            BaseDAO.getBaseDAO().convToEntity(queryResult, gArray, Gift.class,
+                    new String[] { "id", "giftName", "giftDesc" });
 
             result.addAll(Arrays.asList(gArray));
         }
