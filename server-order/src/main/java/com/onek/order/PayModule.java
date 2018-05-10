@@ -672,6 +672,17 @@ public class PayModule {
         }
     }
 
+    @UserPermission(ignore = true)
+    public Result refund(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderno = jsonObject.get("orderno").getAsString();
+        int compid = jsonObject.get("compid").getAsInt();
+
+        Map<String,String> r = OrderUtil.refund(compid, orderno);
+        return new Result().success(r);
+    }
 
     public static int getOrderServerNo(int compid){
         return compid /  GLOBALConst._DMNUM % GLOBALConst._SMALLINTMAX;

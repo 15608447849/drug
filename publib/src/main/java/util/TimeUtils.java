@@ -202,6 +202,18 @@ public class TimeUtils {
         return "1900-01-01";
     }
 
+    /**
+     * 获取当前时间
+     */
+    public static String getCurrentTime(){
+        try {
+            return new SimpleDateFormat("HH:mm:ss").format(new Date());
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return "00:00:00";
+    }
+
 
     /**
      * 格式为"HH:mm:ss"

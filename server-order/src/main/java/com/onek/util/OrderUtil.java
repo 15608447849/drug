@@ -7,7 +7,9 @@ import com.onek.consts.ESConstant;
 import com.onek.consts.IntegralConstant;
 import com.onek.consts.MessageEvent;
 import com.onek.entity.TranOrder;
+import com.onek.entity.TranTransVO;
 import com.onek.util.area.AreaEntity;
+import com.onek.util.fs.FileServerUtils;
 import com.onek.util.member.MemberStore;
 import com.onek.util.order.RedisOrderUtil;
 import constant.DSMConst;
@@ -17,9 +19,12 @@ import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.rest.RestStatus;
 import util.MathUtil;
+import util.ModelUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
+import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +32,9 @@ import java.util.Map;
 public class OrderUtil {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
+
+    public static final String PAY_TYPE_ALI = "alipay";
+    public static final String PAY_TYPE_WX = "wxpay";
 
     private static String INSERT_INTEGRAL_DETAIL_SQL = "insert into {{?"+ DSMConst.TD_INTEGRAL_DETAIL + "}} " +
             "(unqid,compid,istatus,integral,busid,createdate,createtime,cstatus) values(?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";
@@ -39,6 +47,26 @@ public class OrderUtil {
             " where g.orderno = o.orderno and o.orderno = ? and o.cusno = ?";
 
     private static final String UPDATE_SKU_SALES = "update {{?" + DSMConst.TD_PROD_SKU + "}} set sales = sales + ? where sku = ?";
+
+    //订单交易表新增
+    private static final String INSERT_TRAN_TRANS = "insert into {{?" + DSMConst.TD_TRAN_TRANS + "}} "
+            + "(unqid,compid,orderno,payno,payprice,payway,paysource,paystatus,"
+            + "payorderno,tppno,paydate,paytime,completedate,completetime,cstatus)"
+            + " values(?,?,?,?,?,"
+            + "?,?,?,?,?,"
+            + "?,?,?,?,?)";
+
+    //支付记录
+    private static final String INSERT_TRAN_PAYREC = "insert into {{?" + DSMConst.TD_TRAN_PAYREC + "}} "
+            + "(unqid,compid,payno,eventdesc,resultdesc,"
+            + "completedate,completetime,cstatus)"
+            + " values(?,?,?,?,?,"
+            + "?,?,0)";
+
+    // 查询订单交易表
+    private static final String SELECT_TRAN_TRANS = "select unqid,compid,orderno,payno,payprice,payway,paysource,paystatus," +
+            "payorderno,tppno,paydate,paytime,completedate,completetime,cstatus  from {{?" + DSMConst.TD_TRAN_TRANS + "}} where cstatus&1=0 and orderno=? and compid=? and paystatus=1 and payway in (1,2) " +
+            "order by completedate desc,completetime desc";
 
     /**
      * 支付成功调用发送消息
@@ -71,6 +99,54 @@ public class OrderUtil {
      */
     public static void updateSales(int compid,String orderno){
         new UpdateSalesThread(compid, orderno);
+    }
+
+    public static Map<String,String> refund(int compid, String orderno){
+
+        int paysource = 0;
+        Map<String,String> map = new HashMap<>();
+        boolean success = false;
+        String message = "";
+        List<Object[]> queryList = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), SELECT_TRAN_TRANS, new Object[]{orderno, compid});
+        if(queryList != null && queryList.size() > 0){
+            TranTransVO [] transVOS = new TranTransVO[queryList.size()];
+            baseDao.convToEntity(queryList, transVOS, TranTransVO.class, new String[]{
+                    "unqid","compid","orderno","payno","payprice","payway","paysource","paystatus",
+                            "payorderno","tppno","paydate","paytime","completedate","completetime","cstatus"});
+            String tppno = transVOS[0].getTppno(); // 第三方支付流水
+            int payWay = transVOS[0].getPayway();
+            double payprice = transVOS[0].getPayprice();
+            double prize = MathUtil.exactDiv(payprice, 100)
+                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            long refundno = GenIdUtil.getUnqId();
+            if(payWay == 1 || payWay == 2){ // 支付宝、微信
+                String type = payWay == 1 ? PAY_TYPE_WX : PAY_TYPE_ALI;
+                HashMap<String,Object> resultMap = FileServerUtils.refund(type, refundno + "", tppno, prize);
+                Double code = (Double) resultMap.get("code");
+                String tradeStatus = "0";
+                if(code == 10000){
+                    tradeStatus = "1";
+                }else{
+                    tradeStatus = "-2";
+                }
+                message = resultMap.get("message").toString();
+                List<String> sqlList = new ArrayList<>();
+                List<Object[]> params = new ArrayList<>();
+                sqlList.add(INSERT_TRAN_TRANS);
+                params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, refundno,  transVOS[0].getPayprice(), type, paysource, tradeStatus, GenIdUtil.getUnqId(),
+                        0, TimeUtils.getCurrentDate(), TimeUtils.getCurrentTime(),TimeUtils.getCurrentDate(), TimeUtils.getCurrentTime(),0});
+                sqlList.add(INSERT_TRAN_PAYREC);
+                params.add(new Object[]{GenIdUtil.getUnqId(),compid, refundno, "{}", "{}", TimeUtils.getCurrentDate(), TimeUtils.getCurrentTime()});
+                int year = Integer.parseInt("20" + orderno.substring(0,2));
+                String[] sqlNative = new String[sqlList.size()];
+                sqlNative = sqlList.toArray(sqlNative);
+                success = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
+
+            }
+        }
+        map.put("result", success == true ? "1": "0");
+        map.put("message", message);
+        return map;
     }
 
     static class SendMsgThread extends Thread{
