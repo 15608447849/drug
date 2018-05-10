@@ -98,7 +98,7 @@ public class OrderUtil {
      * @param orderno
      */
     public static void updateSales(int compid,String orderno){
-        new UpdateSalesThread(compid, orderno);
+        new UpdateSalesThread(compid, orderno).start();
     }
 
     public static Map<String,String> refund(int compid, String orderno){
