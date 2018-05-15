@@ -632,7 +632,7 @@ public class TranOrderOptModule {
         if (b) {
             CANCEL_DELAYED.removeByKey(orderNo);
             int year = Integer.parseInt("20" + orderNo.substring(0, 2));
-            List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, QUERY_ORDER_BAL, orderNo, 0);
+            List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, QUERY_ORDER_BAL, orderNo, -4);
             if(queryResult != null && !queryResult.isEmpty()){
                 int bal = Integer.parseInt(queryResult.get(0)[0].toString());
                 IceRemoteUtil.updateCompBal(cusno,bal);

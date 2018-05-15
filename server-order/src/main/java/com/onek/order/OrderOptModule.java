@@ -427,6 +427,11 @@ public class OrderOptModule {
             //退货失败
             int ostatus = 3;
             int gstatus = 4;
+
+            int compid = Integer.parseInt(queryRet.get(0)[1].toString());
+            String specifyStorePhone = IceRemoteUtil.getSpecifyStorePhone(compid);
+
+
             if(ckstatus == 1){
                 //1退款退货 2 仅退款
                 if(astype == 1 || astype == 2){
@@ -438,17 +443,18 @@ public class OrderOptModule {
                         double subbal = MathUtil.exactMul(asnum,balamt).
                                 setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                         subbal = MathUtil.exactMul(subbal,100). setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                        IceRemoteUtil.updateCompBal(userSession.compId,new Double(subbal).intValue());
+                        IceRemoteUtil.updateCompBal(Integer.parseInt(queryRet.get(0)[1].toString()),new Double(subbal).intValue());
                     }
 
                 }
 
+
                 ostatus = -2;
                 gstatus = 3;
-                SmsTempNo.sendMessageToSpecify(userSession.compId,userSession.phone,
+                SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
                         SmsTempNo.AFTER_SALE_AUDIT_PASSED,queryRet.get(0)[0].toString());
             }else{
-                SmsTempNo.sendMessageToSpecify(userSession.compId,userSession.phone,
+                SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
                         SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,queryRet.get(0)[0].toString(),ckdesc);
             }
             int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
