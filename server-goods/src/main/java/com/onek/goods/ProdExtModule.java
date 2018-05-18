@@ -18,7 +18,8 @@ public class ProdExtModule {
 
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
     private static final String QUERY_PROD = "select sku from {{?" + DSMConst.TD_PROD_SKU +"}} where cstatus&1=0 and prodstatus = 1";
-    private static final String QUERY_PRODBRAND = " SELECT oid, brandno, brandname, cstatus  FROM {{?" + DSMConst.TD_PROD_BRAND + "}} WHERE cstatus&1 = 0 ";
+    private static final String QUERY_PRODBRAND = "  SELECT b.brandno, b.brandname  FROM {{?" + DSMConst.TD_PROD_BRAND +"}} b, {{?" + DSMConst.TD_PROD_SPU +"}} spu, {{?" + DSMConst.TD_PROD_SKU +"}} sku WHERE b.cstatus&1 = 0 " +
+            "and spu.cstatus&1 = 0 and sku.cstatus&1 = 0 and sku.prodstatus = 1 and b.brandno = spu.brandno and spu.spu = sku.spu group by b.brandno, b.brandname";
 
     @UserPermission(ignore = true)
     public List<Long> getSkuListByCondition(AppContext appContext){
@@ -55,11 +56,11 @@ public class ProdExtModule {
         List<Object> paramList = new ArrayList<>();
         PageHolder pageHolder = new PageHolder(page);
         List<Object[]> queryResult = BASE_DAO.queryNative(
-                pageHolder, page, QUERY_PRODBRAND, paramList.toArray());
+                    pageHolder, page, "sku.sales desc", QUERY_PRODBRAND, paramList.toArray());
         ProdBrandVO[] result = new ProdBrandVO[queryResult.size()];
 
         if (result.length > 0) {
-            BASE_DAO.convToEntity(queryResult, result, ProdBrandVO.class);
+            BASE_DAO.convToEntity(queryResult, result, ProdBrandVO.class, new String[]{"brandno", "brandname"});
         }
 
         return new Result().setQuery(result, pageHolder);
