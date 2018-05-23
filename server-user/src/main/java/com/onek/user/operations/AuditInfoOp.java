@@ -50,7 +50,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 sb.append(" AND ").append("b.cstatus&"+status+">0");//状态查询
             }
             if (!StringUtils.isEmpty(cursorId)){
-                sb.append(" AND ").append("b.inviter&"+status+">0");//根据客服专员查询
+                sb.append(" AND ").append("b.inviter&"+cursorId+">0");//根据客服专员查询
             }
             if (!StringUtils.isEmpty(addressCode)){
                 try {
