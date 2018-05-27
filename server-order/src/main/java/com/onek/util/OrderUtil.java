@@ -225,7 +225,7 @@ public class OrderUtil {
                 }
 
                 if(StringUtils.isEmpty(arriarc) && tranOrder.getRvaddno() > 0){
-                    arriarc = "10" + String.valueOf(tranOrder.getRvaddno()).substring(0,7);
+                    arriarc = "10" + String.valueOf(tranOrder.getRvaddno()).substring(0,6);
                 }
 
                 if(StringUtils.isEmpty(arriarc)){
