@@ -249,13 +249,6 @@ public class TranOrderOptModule {
         tranOrder.setPdnum(pdnum);
         List<GoodsStock> goodsStockList = new ArrayList<>();
         if (orderType == 0) {
-            //库存判断
-            boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
-            if (b) {
-                //库存不足处理
-                stockRecovery(goodsStockList);
-                return result.fail("商品库存发生改变！");
-            }
             //订单费用计算（费用分摊以及总费用计算）
             try {
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格开始");
@@ -263,15 +256,33 @@ public class TranOrderOptModule {
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格结束");
             } catch (Exception e) {
                 e.printStackTrace();
-                stockRecovery(goodsStockList);
+//                stockRecovery(goodsStockList);
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格失败");
                 return result.fail("下单失败");
+            }
+            //库存判断
+            boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
+            if (b) {
+                //库存不足处理
+                stockRecovery(goodsStockList);
+                return result.fail("商品库存发生改变！");
             }
         } else if (orderType == 1) { // 秒杀
             //库存判断
             long actcode = 0;
             if (jsonObject.containsKey("actcode") && !jsonObject.getString("actcode").isEmpty()) {
                 actcode = jsonObject.getLong("actcode");
+            }
+            //订单费用计算（费用分摊以及总费用计算）
+            try {
+                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格开始");
+                calculatePrice(tranOrderGoods, tranOrder, unqid);
+                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格结束");
+            } catch (Exception e) {
+                e.printStackTrace();
+//                stockRecovery(goodsStockList);
+                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格失败");
+                return result.fail("下单失败");
             }
             List<TranOrderGoods> goodsList = secKillStockIsEnough(actcode, tranOrderGoods);
             if (goodsList.size() != tranOrderGoods.size()) {
@@ -284,8 +295,6 @@ public class TranOrderOptModule {
             if(num > 0 && limitNum > 0 && (limitNum - (num + tranOrderGoods.get(0).getPnum())) < 0){
                 return new Result().fail("秒杀商品下单数量过多或秒杀次数过于频繁!");
             }
-            //订单费用计算（费用分摊以及总费用计算）
-            calculatePrice(tranOrderGoods, tranOrder, unqid);
         }
         double payamt = tranOrder.getPayamt();
         double bal = 0;

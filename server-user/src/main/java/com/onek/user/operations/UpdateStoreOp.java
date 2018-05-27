@@ -33,7 +33,9 @@ public class UpdateStoreOp implements IOperation<AppContext> {
     @Override
     public Result execute(AppContext context) {
         UserSession session = context.getUserSession();
+
         if (session == null || session.userId < 0) return new Result().fail("用户信息异常");
+
        if (StringUtils.isEmpty(storeName,address))  return new Result().fail("门店或地址未填写");
 
         //根据企业营业执照地址查询是否存在相同已认证的企业
@@ -70,7 +72,8 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                     longitude,
                     128 //新增企业-未认证
             );
-            if (i<=0) return new Result().fail("注册失败,无法保存门店信息");
+            if (i<=0) return new Result().fail("注册失败,无法添加门店信息");
+
             //用户关联门店
             String updateSql = "UPDATE {{?" + TB_SYSTEM_USER +"}} SET cid=? WHERE cstatus&1=0 AND uid=?";
             i = BaseDAO.getBaseDAO().updateNative(updateSql,compid,session.userId);
@@ -81,12 +84,9 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                     //发送短信提醒
                     SmsUtil.sendSmsBySystemTemp(session.phone, SmsTempNo.REGISTERED_SUCCESSFULLY);
                 }
-                return new Result().success("新增门店信息,关联成功").setHashMap("compid",compid); //带入公司码到前台- 前端跳转到下一步 资质上传
+                return new Result().success("添加门店信息,关联成功").setHashMap("compid",compid); //带入公司码到前台- 前端跳转到下一步 资质上传
             }else{
-                //删除用户信息
-                String deleteSql = "DELETE FROM {{?" +TB_SYSTEM_USER+"}} WHERE uid=?";
-                BaseDAO.getBaseDAO().updateNative(deleteSql,session.userId);
-                return new Result().fail("无法关联门店信息");
+                return new Result().fail("此用户无法关联门店信息");
             }
         }
         //修改门店信息
