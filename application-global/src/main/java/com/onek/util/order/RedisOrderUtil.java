@@ -12,6 +12,10 @@ public class RedisOrderUtil {
         RedisUtil.getStringProvide().increase(RedisGlobalKeys.ORDER_NUM_PREFIX + SEP + compid);
     }
 
+    public static void reduceOrderNumByCompid(int compid){
+        RedisUtil.getStringProvide().decrease(RedisGlobalKeys.ORDER_NUM_PREFIX + SEP + compid);
+    }
+
     /**
      * 根据企业码获取订单数
      *

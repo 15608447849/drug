@@ -291,10 +291,6 @@ public class OrderUtil {
                     }
                 }
 
-                try{
-                    RedisOrderUtil.addOrderNumByCompid(compid);
-                }catch (Exception e){}
-
                 for(Object[] obj : list) {
                     int promtype = Integer.parseInt(obj[2].toString());
                     String actCodeStr = obj[3].toString();
