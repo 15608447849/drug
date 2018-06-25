@@ -76,7 +76,7 @@ public class HttpRequestUtil {
         return result;
     }
 
-    public static String postJson(String url, String jsonString) {
+    public static String postJson(String url, String jsonString) throws IOException{
         CloseableHttpResponse response = null;
         BufferedReader in = null;
         String result = "";
@@ -98,7 +98,8 @@ public class HttpRequestUtil {
             in.close();
             result = sb.toString();
         } catch (IOException e) {
-            e.printStackTrace();
+            e.printStackTrace() ;
+            throw e;
         } finally {
             try {
                 if (null != response) {
@@ -106,6 +107,7 @@ public class HttpRequestUtil {
                 }
             } catch (IOException e) {
                 e.printStackTrace();
+                throw e;
             }
         }
         return result;
