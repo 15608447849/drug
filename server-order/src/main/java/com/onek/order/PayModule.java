@@ -474,7 +474,11 @@ public class PayModule {
                 TranTransVO[] tranTransVOS = new TranTransVO[trans.size()];
                 baseDao.convToEntity(trans, tranTransVOS, TranTransVO.class,
                         new String[]{"payprice", "payway", "payno", "orderno", "paysource", "paystatus", "paydate", "paytime", "completedate", "completetime"});
-                jsonResult.put("paystatus", tranTransVOS[0].getPaystatus());
+                if(tranTransVOS.length > 0){
+                    jsonResult.put("paystatus", tranTransVOS[0].getPaystatus());
+                }else{
+                    jsonResult.put("paystatus", 0);
+                }
             }else{
                 jsonResult.put("paystatus", 0);
             }
