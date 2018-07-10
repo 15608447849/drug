@@ -25,6 +25,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import util.GsonUtils;
 import util.StringUtils;
 import util.TimeUtils;
 
@@ -93,6 +94,7 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
             data.put(ESConstant.PROD_COLUMN_TIME, TimeUtils.date_yMd_Hms_2String(new Date()));
+            ElasticSearchProvider.deleteDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             IndexResponse response = ElasticSearchProvider.addDocument(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             if(response == null || RestStatus.CREATED != response.status()) {
                 return -1;
@@ -100,6 +102,7 @@ public class ProdESUtil {
             return 0;
         }catch (Exception e){
             e.printStackTrace();
+            System.out.println("es error:" + e.getMessage());
             return -1;
         }
     }
