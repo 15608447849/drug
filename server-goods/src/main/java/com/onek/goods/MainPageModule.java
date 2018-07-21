@@ -597,7 +597,7 @@ public class MainPageModule {
                 brandMaNuList.add(barndManu);
             }
         }
-        System.out.println(GsonUtils.javaBeanToJson(brandMaNuList));
+//        System.out.println(GsonUtils.javaBeanToJson(brandMaNuList));
         return brandMaNuList;
     }
 
