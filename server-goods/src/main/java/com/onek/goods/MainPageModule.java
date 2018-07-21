@@ -584,8 +584,6 @@ public class MainPageModule {
             Terms agg = response.getAggregations().get("agg");
             for (Terms.Bucket bucket : agg.getBuckets()) {
                 long brandNo = Long.valueOf(bucket.getKey().toString());
-//                List<BarndManu.Manu> maNuList = new ArrayList<>();
-                /*Set<Long> manuNoSet = new HashSet<>();*/
                 TopHits topHits = bucket.getAggregations().get("top");
                 SearchHit[] maNuHits = topHits.getHits().getHits();
                 String brandName = maNuHits[0].getSourceAsMap().get("brandname").toString();
@@ -594,14 +592,8 @@ public class MainPageModule {
                     Map<String, Object> sMap = hit.getSourceAsMap();
                     long maNuNo = Long.valueOf(sMap.get("manuno").toString());
                     String maNuName = sMap.get("manuname").toString();
-                    /*if (!manuNoSet.contains(maNuNo)) {
-                        BarndManu.Manu manu = new BarndManu.Manu(maNuNo, maNuName);
-                        maNuList.add(manu);
-                    }
-                    manuNoSet.add(maNuNo);*/
                     barndManu.add(maNuNo, maNuName);
                 }
-//                barndManu.manuList = maNuList;
                 brandMaNuList.add(barndManu);
             }
         }
