@@ -251,6 +251,15 @@ public class SyncCustomerInfoModule {
         return updSyncCState(syncid);
     }
 
+    @UserPermission(ignore = true)
+    public int updMidSyncCState(AppContext appContext) {
+        long syncid = Long.parseLong(appContext.param.arrays[0]);
+        long syncfrom = Long.parseLong(appContext.param.arrays[1]);
+        String updSQL = "update {{?" + DSMConst.TD_SYNC_ERROR + "}} set cstatus=cstatus|1 where "
+                + " cstatus&1=0 and syncid=? and syncfrom=?";
+        return baseDao.updateNative(updSQL, syncid, syncfrom);
+    }
+
     private static int insertOrUpdSyncErr(SyncErrVO syncErrVO) {
         assert syncErrVO != null;
         String selectSQL = "select unqid from {{?" + DSMConst.TD_SYNC_ERROR + "}} where cstatus&1=0 "
