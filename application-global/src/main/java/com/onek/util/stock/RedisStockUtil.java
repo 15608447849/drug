@@ -25,7 +25,7 @@ public class RedisStockUtil {
      * @return
      */
     public static int setStock(long sku, int initStock) {
-        if(initStock > 0){
+        if(initStock >= 0){
             Long result = RedisUtil.getHashProvide().putElement(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, initStock);
             return result.intValue();
         }
