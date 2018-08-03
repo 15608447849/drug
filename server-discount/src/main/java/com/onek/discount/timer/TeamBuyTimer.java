@@ -11,7 +11,7 @@ public class TeamBuyTimer {
     static {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.HOUR_OF_DAY, 16); //凌晨2点
-        calendar.set(Calendar.MINUTE, 0);
+        calendar.set(Calendar.MINUTE, 10);
         calendar.set(Calendar.SECOND, 0);
         calendar.set(Calendar.MILLISECOND, 1);
         Date date  =calendar.getTime(); //第一次执行定时任务的时间
