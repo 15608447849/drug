@@ -1054,7 +1054,7 @@ public class OrderOptModule {
                 jsonArray.add(j);
             }
         }
-        return new Result().success(jsonArray);
+        return new Result().success(jsonArray.toJSONString());
     }
 
 

@@ -63,7 +63,7 @@ public class TeamBuyTask extends TimerTask {
                         }
                     }
 
-                    ArrayList array = IceRemoteUtil.queryTeamBuyOrder(sdate,edate, actCode);
+                    JSONArray array = IceRemoteUtil.queryTeamBuyOrder(sdate,edate, actCode);
 
                     LogUtil.getDefaultLogger().info("++++++ TeamBuyTask execute array:[" + array.size() + "] +++++++");
 
@@ -86,12 +86,12 @@ public class TeamBuyTask extends TimerTask {
                         if(offer > 0){
                             Map<Integer, Integer> dataMap = new HashMap<>();
                             List<TeamBuyMsgBody> msgBodyList = new ArrayList<>();
-                            for(Object o : array){
-                                LinkedTreeMap map = ((LinkedTreeMap) o);
-                                String orderno = map.get("orderno").toString();
-                                String compid = map.get("compid").toString();
-                                String payamt = map.get("payamt").toString();
-                                String pnum = map.get("pnum").toString();
+                            for(int k = 0 ; k < array.size(); k++){
+                                JSONObject map = array.getJSONObject(k);
+                                String orderno = map.getString("orderno");
+                                String compid = map.getString("compid");
+                                String payamt = map.getString("payamt");
+                                String pnum = map.getString("pnum");
                                 double f2 = new BigDecimal((float)(offer) /10).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                                 double f1 = new BigDecimal((float)(10 -offer) /10).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                                 int money = (int)(Integer.parseInt(payamt) * f2);

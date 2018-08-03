@@ -1,6 +1,7 @@
 package com.onek.util;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
@@ -380,7 +381,7 @@ public class IceRemoteUtil {
      * @author jiangwenguang
      * @since 1.0
      */
-    public static ArrayList queryTeamBuyOrder(String sdate,String edate,String actno){
+    public static JSONArray queryTeamBuyOrder(String sdate,String edate,String actno){
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("sdate", sdate);
@@ -391,8 +392,7 @@ public class IceRemoteUtil {
         String json = ic.setServerAndRequest("orderServer"+index,"OrderOptModule","queryTeamBuyOrder")
                 .settingParam(jsonObject.toJSONString()).execute();
         Result ret = GsonUtils.jsonToJavaBean(json,Result.class);
-        ArrayList jsonArray = (ArrayList) ret.data;
-        return jsonArray;
+        return  JSONArray.parseArray(ret.data.toString());
     }
 
     /**
