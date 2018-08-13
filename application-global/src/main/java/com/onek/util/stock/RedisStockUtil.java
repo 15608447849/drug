@@ -118,13 +118,13 @@ public class RedisStockUtil {
             for(long actCode : actCodes){
                 String key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
                 String currentStock = RedisUtil.getHashProvide().getValByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key);
-                if(ALL.equals(currentStock)){ // 活动库存为ALL,不需要判断活动库存
-                    continue;
-                }
                 Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key, -stock);
                 if (num < 0) {
                     RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key, stock);
                     return false;
+                }
+                if(ALL.equals(currentStock)){ // 活动库存为ALL,不需要判断活动库存
+                    continue;
                 }
             }
             RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, -stock);
