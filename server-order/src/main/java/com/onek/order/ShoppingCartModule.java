@@ -1895,6 +1895,8 @@ public class ShoppingCartModule {
                 int invnum = shoppingCartVO.getInventory();
                 int actnum = shoppingCartVO.getActstock();
                 int limitsub = shoppingCartVO.getLimitsub();
+                LogUtil.getDefaultLogger().debug("invnum:"+invnum+",  actnum:"+actnum+"," +
+                        "limitsub:"+limitsub +",limit:"+shoppingCartVO.getLimitnum());
                 int cbuy = 0 ;
                 if(shoppingCartVO.getLimitnum() == 0){
                     cbuy = Math.min(invnum, actnum);
