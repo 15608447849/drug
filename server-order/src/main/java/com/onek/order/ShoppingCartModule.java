@@ -83,6 +83,10 @@ public class ShoppingCartModule {
     private final String REAL_DEL_SHOPCART_SQL = "delete  from {{?" + DSMConst.TD_TRAN_GOODS + "}}  "
             + " where cstatus&1=0 and unqid=? or pdno=? and orderno=0 ";
 
+    //删除购物车信息
+    private final String REAL_DEL_PC_SHOPCART_SQL = "delete  from {{?" + DSMConst.TD_TRAN_GOODS + "}}  "
+            + " where cstatus&1=0 and unqid=? and orderno=0 ";
+
     //远程调用
     private static final String QUERY_PROD_BASE =
             " SELECT ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
@@ -1770,8 +1774,8 @@ public class ShoppingCartModule {
         if (idList != null && idList.length > 0) {
             for (String unqid : idList) {
                 if (StringUtils.isInteger(unqid)) {
-                    shopParm.add(new Object[]{Long.parseLong(unqid),Long.parseLong(unqid)});
-                    sqlList.add(REAL_DEL_SHOPCART_SQL);
+                    shopParm.add(new Object[]{Long.parseLong(unqid)});
+                    sqlList.add(REAL_DEL_PC_SHOPCART_SQL);
                 }
             }
         }
@@ -1856,6 +1860,7 @@ public class ShoppingCartModule {
             if ((resultConsell & controlCode) != resultConsell) {
                 return result.fail("存在控销商品，您无权购买！");
             }
+            //if(ShoppingCartVO shoppingCartVO : shopCart)
         }
 
 
@@ -1883,6 +1888,43 @@ public class ShoppingCartModule {
                 getGifts(shopCart, shoppingCartDTOS.get(0).getCompid());
 
         List<ShoppingCartVO> giftVOS = new ArrayList<>();
+
+        //判断库存
+        for (ShoppingCartVO shoppingCartVO : shopCart){
+            if(shoppingCartVO.getPdno() > 0){
+                int invnum = shoppingCartVO.getInventory();
+                int actnum = shoppingCartVO.getActstock();
+                int limitsub = shoppingCartVO.getLimitsub();
+                int cbuy = 0 ;
+                if(shoppingCartVO.getLimitnum() == 0){
+                    cbuy = Math.min(invnum, actnum);
+                }else{
+                    cbuy = Math.min(Math.min(invnum, actnum),limitsub);
+                }
+
+                if(shoppingCartVO.getNum() > cbuy){
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("商品：【");
+                    sb.append(shoppingCartVO.getPtitle());
+                    sb.append("】");
+                    sb.append("库存不足，当前可用库存数量为：");
+                    sb.append(cbuy);
+                    sb.append("  ");
+                    if(!StringUtils.isEmpty(shoppingCartVO.getVerdor())){
+                        sb.append(" 厂商：【");
+                        sb.append(shoppingCartVO.getVerdor());
+                        sb.append("】");
+                    }
+
+                    if(!StringUtils.isEmpty(shoppingCartVO.getSpec())){
+                        sb.append(" 规格：【");
+                        sb.append(shoppingCartVO.getSpec());
+                        sb.append("】");
+                    }
+                    return new Result().fail(sb.toString());
+                }
+            }
+        }
 
         ShoppingCartVO giftVO;
         for (Gift gift : giftList) {
