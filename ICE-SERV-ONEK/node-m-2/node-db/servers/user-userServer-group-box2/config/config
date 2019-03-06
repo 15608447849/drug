@@ -1,0 +1,15 @@
+# Configuration file (03/06/19 14:33:03.192)
+
+# Server configuration
+Ice.Admin.ServerId=user-userServer-group-box2
+Ice.Admin.Endpoints=tcp -h localhost
+Ice.ProgramName=user-userServer-group-box2
+IceBox.Service.userService_2=com.onek.server.infimp.ServerIceBoxImp --Ice.Config='C:\Users\user\Desktop\ICE-SERV-ONEK\node-m-2/./node-db/servers/user-userServer-group-box2/config/config_userService_2'
+IceBox.LoadOrder=userService_2
+# Server descriptor properties
+Ice.PrintStackTraces=1
+Ice.Trace.Retry=2
+Ice.Trace.Network=2
+Ice.Trace.ThreadPool=2
+Ice.Trace.Locator=2
+Ice.Default.Locator=DemoIceGrid/Locator:tcp -h localhost -p 4061:ws -h localhost -p 4062

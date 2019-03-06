@@ -1,0 +1,7 @@
+# Configuration file (03/06/19 14:56:53.378)
+
+# Object adapter userService_1
+userService_1.Endpoints=tcp:ws
+userService_1.AdapterId=userService_1
+userService_1.ReplicaGroupId=userServer-group
+Ice.Default.Locator=DemoIceGrid/Locator:tcp -h localhost -p 4061:ws -h localhost -p 4062

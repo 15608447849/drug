@@ -1,0 +1,15 @@
+# Configuration file (03/05/19 15:27:43.635)
+
+# Server configuration
+Ice.Admin.ServerId=osBox3-repA
+Ice.Admin.Endpoints=tcp -h localhost
+Ice.ProgramName=osBox3-repA
+IceBox.Service.os3=bottle.imps.OrderServerIceBoxServer --Ice.Config='C:\Users\user\Desktop\ICE-SERV\ICE-SERV\node-m-3/./node-db/servers/osBox3-repA/config/config_os3'
+IceBox.LoadOrder=os3
+# Server descriptor properties
+Ice.PrintStackTraces=1
+Ice.Trace.Retry=2
+Ice.Trace.Network=2
+Ice.Trace.ThreadPool=2
+Ice.Trace.Locator=2
+Ice.Default.Locator=DemoIceGrid/Locator:tcp -h localhost -p 4061:ws -h localhost -p 4062
