@@ -1,0 +1,5 @@
+rootProject.name = 'drug'
+include 'iceserver'
+include 'publib'
+include 'server-user'
+
