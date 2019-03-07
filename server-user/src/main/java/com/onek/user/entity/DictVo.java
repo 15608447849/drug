@@ -1,7 +1,5 @@
 package com.onek.user.entity;
 
-import redis.annation.RedisKey;
-
 public class DictVo {
 	private Integer dictc;
 	private String type;

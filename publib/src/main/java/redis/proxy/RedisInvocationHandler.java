@@ -2,14 +2,11 @@ package redis.proxy;
 
 import redis.IRedisCache;
 import redis.annation.CacheInvoke;
-import redis.annation.RedisCache;
-import redis.annation.RedisKey;
 import redis.provide.RedisListProvide;
 import redis.provide.RedisStringProvide;
 import util.GsonUtils;
 import util.StringUtils;
 
-import java.lang.annotation.Annotation;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
@@ -18,7 +15,6 @@ import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.CRC32;
 
 
 public class RedisInvocationHandler<T> implements InvocationHandler {
@@ -220,14 +216,12 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 		if (result != null) {
 			Integer num = (Integer)result;
 			if(num > 0) {
-				Class<?> clazz = null;
 
                 String keycolum = "";
                 IRedisCache t = (IRedisCache)(target);
                 keycolum = t.getKey();
                 String prefix = "";
                 prefix = t.getPrefix();
-                clazz = t.getReturnType();
 
 				if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
 				    stringProvide.deleteRedisKeyStartWith(prefix);
