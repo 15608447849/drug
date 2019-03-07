@@ -1,15 +1,11 @@
 package dao;
 
-import java.lang.reflect.Field;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import db.constant.BUSConst;
-import db.constant.DSMConst;
-import db.global.Placeholder;
+import constant.BUSConst;
+import constant.DSMConst;
+import global.GlobalTransCondition;
+import global.Placeholder;
 import org.hyrdpf.dao.DAOException;
 import org.hyrdpf.dao.FacadeProxy;
 import org.hyrdpf.dao.Transaction;
@@ -20,13 +16,20 @@ import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.KV;
 import org.hyrdpf.util.LogUtil;
 
+import java.lang.reflect.Field;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+
+
 /**
  * Copyright © 2018空间折叠【FOLDING SPACE】. All rights reserved.
  * @ClassName: BaseService
  * @Description: TODO 业务服务DAO基类，主要实现同数据库操作、切分服务器、库、表的封装
  * @version: V1.0
  */
-public class BaseDAO{
+public class BaseDAO {
 	/**原生态SQL查询时，指定的查询表对象固定格式的前缀字符串。*/
 	public static final String PREFIX_REGEX = "{{?";
 	/**原生态SQL查询时，指定的查询表对象固定格式的后缀字符串。*/
@@ -34,46 +37,102 @@ public class BaseDAO{
 	/**原生态SQL查询时，指定的查询表对象固定格式的前缀字符串与后缀字符串，对应的正则表达式的字符串*/
 	private static final StringBuffer PREFIX_REGEX_SB = new StringBuffer("\\{\\{\\?");
 	private static final StringBuffer SUFFIX_REGEX_SB = new StringBuffer("\\}\\}");
-	
 	private static final BaseDAO BASEDAO = new BaseDAO();
-	
 	/**私有化其构造函数，防止随便乱创建此对象。*/
 	private BaseDAO(){};
-	
+
 	public static BaseDAO getBaseDAO(){
 		return BASEDAO;
 	}
-	
+
 	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
 	private AbstractJdbcSessionMgr getSessionMgr(final int table){
 		/**公共库只有一个连接,是不需要切分服务器与库及表的。公共库服务器索引是所有数据源的最后一个，库的索引值固定为0*/
 		int dbs = AppConfig.getDBSNum() - BUSConst._ONE;
 		int db = 0;
-		
-		if (DSMConst.SEG_TABLE_RULE[table] != 0) {// 按公司模型切分表
-			/** 取得数据库服务器的编号 */
-			dbs = (int) Math.floor(AppConfig.getCompid() / BUSConst._DMNUM)
-					% BUSConst._SMALLINTMAX;
-			/** 取得数据库服务器上数据库的编号 */
-			db = AppConfig.getCompid() % BUSConst._MODNUM_EIGHT;
-		}
+		LogUtil.getDefaultLogger().debug("dbs="+dbs);
+//
+//		if (DSMConst.SEG_TABLE_RULE[table] != 0) {// 按公司模型切分表
+//			/** 取得数据库服务器的编号 */
+//			dbs = (int) Math.floor(AppConfig.getCompid() / BUSConst._DMNUM)
+//					% BUSConst._SMALLINTMAX;
+//			/** 取得数据库服务器上数据库的编号 */
+//			db = AppConfig.getCompid() % BUSConst._MODNUM_EIGHT;
+//		}
 		/**返回对应的数据库连接池供用户使用*/
 		return AppConfig.getSessionManager(dbs,db);
 	}
-	
+
+	public AbstractJdbcSessionMgr getMySessionByTable(final int table){
+		return getSessionMgr(table);
+	}
+
+	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
+	private AbstractJdbcSessionMgr getSessionMgr(int sharding, final int table){
+		/**公共库只有一个连接,是不需要切分服务器与库及表的。公共库服务器索引是所有数据源的最后一个，库的索引值固定为0*/
+		int dbs = AppConfig.getDBSNum() - BUSConst._ONE;
+		int db = 0;
+		if (DSMConst.SEG_TABLE_RULE[table] != 0) {// 按公司模型切分表
+			/** 取得数据库服务器的编号 */
+			dbs = sharding / BUSConst._DMNUM  % BUSConst._SMALLINTMAX;
+			/** 取得数据库服务器上数据库的编号 */
+			db = sharding % BUSConst._DMNUM  % BUSConst._MODNUM_EIGHT;
+		}
+		/**返回对应的数据库连接池供用户使用*/
+		LogUtil.getDefaultLogger().debug("分片字段："+sharding);
+		LogUtil.getDefaultLogger().debug("服务器编号："+dbs);
+		LogUtil.getDefaultLogger().debug("数据库编号："+db);
+		return AppConfig.getSessionManager(dbs,db);
+	}
+
+	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
+	public boolean isSameDb(int compid,int tcompid) {
+		boolean isSameDb = false;
+		int dbs = compid / BUSConst._DMNUM % BUSConst._SMALLINTMAX;
+		int db = compid % BUSConst._DMNUM % BUSConst._MODNUM_EIGHT;
+
+		int tdbs = tcompid / BUSConst._DMNUM % BUSConst._SMALLINTMAX;
+		int tdb = tcompid % BUSConst._DMNUM % BUSConst._MODNUM_EIGHT;
+
+		if(dbs == tdbs && db == tdb){
+			isSameDb = true;
+		}
+		return isSameDb;
+	}
+
 	/**切分表实现,table：是要操作那个基本表，基本表就是没有切分前的表*/
 	private String getTableName(final int table)
 	{
 		StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
-		if(DSMConst.SEG_TABLE_RULE[table] != 0){//按公司模型切分表
-			int segTableNo = AppConfig.getCompid()%BUSConst._MODNUM_FIVE;
-			strSql.append(DSMConst._UNDERLINE).append(segTableNo);			
-		}
+//		if(DSMConst.SEG_TABLE_RULE[table] != 0){//按公司模型切分表
+//			Calendar date = Calendar.getInstance();
+//			strSql.append(DSMConst._UNDERLINE).append(date.get(Calendar.YEAR));
+//		}
+		LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
 		return strSql.toString();
 	}
-	
+
+	/**切分表实现,table：是要操作那个基本表，基本表就是没有切分前的表*/
+	private String getTableName(final int table,int year)
+	{
+		StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
+		//按公司模型切分表
+		if(DSMConst.SEG_TABLE_RULE[table] != 0){
+			strSql.append(DSMConst._UNDERLINE);
+			if(year == 0){
+				Calendar date = Calendar.getInstance();
+				strSql.append(date.get(Calendar.YEAR));
+			}else{
+				strSql.append(year);
+			}
+
+		}
+		LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
+		return strSql.toString();
+	}
+
 	/**
-	* @version 版本：1.0 
+	* @version 版本：1.0
 	* @parameter  输入参数：带固定格式"{{?d}}"的原生态查询SQL语句。
 	* @return  返回值：索引为0的返回值代表要使用的数据源id，索引为1的返回值代表是原生态查询SQL语句字符串，
 	 */
@@ -83,7 +142,7 @@ public class BaseDAO{
 		int startIndex = 0;
 		//查询指定的子字符串终止的位置值
 		int endIndex = nativeSQL.lastIndexOf(SUFFIX_REGEX);
-		
+
 		while (startIndex < endIndex) {
             //查找原生态查询语句中第一个表对象固定格式的前缀所在的起始位置值。
 			startIndex = nativeSQL.indexOf(PREFIX_REGEX, startIndex);
@@ -102,8 +161,42 @@ public class BaseDAO{
 		result[1] = nativeSQL;
 		return result;
 	}
+
+
 	/**
-	* @version 版本：1.0 
+	 * @version 版本：1.0
+	 * @parameter  输入参数：带固定格式"{{?d}}"的原生态查询SQL语句。
+	 * @return  返回值：索引为0的返回值代表要使用的数据源id，索引为1的返回值代表是原生态查询SQL语句字符串，
+	 */
+	private String[] getNativeSQL(String nativeSQL,int year){
+		String[] result = new String[2];
+		//默认从第一个字符串开始查询指定的子字符串
+		int startIndex = 0;
+		//查询指定的子字符串终止的位置值
+		int endIndex = nativeSQL.lastIndexOf(SUFFIX_REGEX);
+
+		while (startIndex < endIndex) {
+			//查找原生态查询语句中第一个表对象固定格式的前缀所在的起始位置值。
+			startIndex = nativeSQL.indexOf(PREFIX_REGEX, startIndex);
+			//查找原生态查询语句中第一个表对象固定格式的后缀所在的起始位置值。
+			endIndex = nativeSQL.indexOf(SUFFIX_REGEX, startIndex + BUSConst._FOUR);
+			//指定第二次查找子字符串时的起始查找点的位置值
+			if(startIndex == endIndex) break;
+			//取得原生态查询语句中表对象在DSMConst.DB_TABLES常量里索引值，需要在表对象固定格式的前缀所在的起始位置值加上固定格式“{{?”三位长度。
+			result[0] = nativeSQL.substring(startIndex + BUSConst._THREE,endIndex);
+			int tableIndex = Integer.parseInt(result[0]);
+			//正则表达式
+			String regex = PREFIX_REGEX_SB.toString() + tableIndex + SUFFIX_REGEX_SB;
+			//取和数据库里真正的要查询的表名
+			nativeSQL = nativeSQL.replaceAll(regex.toString(),getTableName(tableIndex,year));
+		}
+		result[1] = nativeSQL;
+		return result;
+	}
+
+
+	/**
+	* @version 版本：1.0
 	* @param autoGPK 同一事务中刚新增记录的自增长字段的值集合。
 	* @param params　同一事务中需要新增记录，同时该记录中需要插入上一个刚插入的自增长字段的值的表需要插入的记录值参数对象数组。
 	* @return　用同一事务中刚插入的记录的自增字段值取代了占位符类的值的参数对象数组。
@@ -119,7 +212,7 @@ public class BaseDAO{
 		return params;
 	}
 	/**
-	* @version 版本：1.0 
+	* @version 版本：1.0
 	* @param nativeSQL：原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
 	* @param params：原生态SQL查询语句中“?”的参数值；
 	* @return：查询结果列表；
@@ -130,15 +223,96 @@ public class BaseDAO{
 	public List<Object[]> queryNative(String nativeSQL,final Object... params){
 		List<Object[]> resultList = null;
 		String[] result = getNativeSQL(nativeSQL);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
+//		 LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
+		System.out.println("【Debug】Native SQL：" + result[1]);
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		baseDao.setManager(getSessionMgr(Integer.parseInt(result[0])));
 		resultList = baseDao.query(result[1], params);
 		return resultList;
 	}
-	
+
+
 	/**
-	* @version 版本：1.0 
+	 * @version 版本：1.0
+	 * @param sharding ：分片字段
+	 * @param year : 查询年份
+	 * @param nativeSQL：原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params：原生态SQL查询语句中“?”的参数值；
+	 * @return：查询结果列表；
+	 * 查询方法。特别注意：多表查询时，请确保多表都是需要切分或都不要切分。也就是说，基本数据库里表，请从内存里拿，不要通过SQL关联来查询，
+	 * 因为基本数据表同业务切分表是在不同的服务器上。
+	 */
+	@Transaction(false)
+	public List<Object[]> queryNativeSharding(int sharding,int year,String nativeSQL,final Object... params){
+		List<Object[]> resultList = null;
+		String[] result = getNativeSQL(nativeSQL,year);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
+		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(result[0])));
+		System.out.println("params:---------- " + Arrays.toString(params));
+		resultList = baseDao.query(result[1], params);
+		return resultList;
+	}
+
+	/**
+	 * @version 版本：1.0
+	 * 全局查询
+	 * @param year : 查询年份
+	 * @param dbs 服务器坐标
+	 * @param db 数据库坐标
+	 * @param nativeSQL：原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params：原生态SQL查询语句中“?”的参数值；
+	 * @return：查询结果列表；
+	 * 查询方法。特别注意：多表查询时，请确保多表都是需要切分或都不要切分。也就是说，基本数据库里表，请从内存里拿，不要通过SQL关联来查询，
+	 * 因为基本数据表同业务切分表是在不同的服务器上。
+	 */
+	@Transaction(false)
+	public List<Object[]> queryNativeGlobal(int year,int dbs,int db,String nativeSQL,final Object... params){
+		List<Object[]> resultList = null;
+		String[] result = getNativeSQL(nativeSQL,year);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
+		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+		baseDao.setManager(AppConfig.getSessionManager(dbs,db));
+		System.out.println("params:---------- " + Arrays.toString(params));
+		resultList = baseDao.query(result[1], params);
+		return resultList;
+	}
+
+	/**
+	 * 全局查询汇总
+	 * @param year
+	 * @param nativeSQL
+	 * @param params
+	 * @return
+	 */
+	public List<Object[]> queryGlobalCollect(int year,String nativeSQL,final Object... params){
+		int dbs = AppConfig.getDBSNum() - BUSConst._ONE;
+		//
+		ExecutorService executor=(ExecutorService) Executors.newFixedThreadPool(dbs);
+		List<Object[]> queryResultList = null;
+		List<GlobalQuery> queryThreads = new ArrayList<>();
+		for (int i = 0; i < dbs; i++){
+			queryThreads.add(new GlobalQuery(i,year,nativeSQL,params));
+		}
+        //接受处理返回的结果集
+		List<Future<List<Object[]>>> results = null;
+		//执行线程处理
+		try {
+			results = executor.invokeAll(queryThreads);
+			queryResultList = new ArrayList<Object[]>();
+			for(Future<List<Object[]>> future : results){
+				queryResultList.addAll((List<Object[]>)future.get());
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			LogUtil.getDefaultLogger().info("全局查询失败");
+		}
+		return queryResultList;
+	}
+
+
+	/**
+	* @version 版本：1.0
 	* @param nativeSQL　原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
 	* @param params　原生态SQL查询语句中“?”的参数值；
 	* @return　成功更新的记录数
@@ -153,14 +327,35 @@ public class BaseDAO{
 		result = baseDao.update(resultSQL[1], params);
 		return result;
 	}
+
+
 	/**
-	* @version 版本：1.0 
-	* @param nativeSQL 原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
-	* @param params 原生态SQL查询语句中“?”的参数值；
-	* @return Key成功更新的记录数；Value自增的字段值集合。
-	* 单表新增并返回自增主键键。
+	 * @version 版本：1.0
+	 * @param sharding 分片字段
+	 * @param year 查询年份
+	 * @param nativeSQL　原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params　原生态SQL查询语句中“?”的参数值；
+	 * @return　成功更新的记录数
+	 * 单表新增、修改、删除方法。
 	 */
-	public KV<Integer, List<Object>> updateAndGPKNative(String nativeSQL,final Object... params){
+	public int updateNativeSharding(int sharding,int year,String nativeSQL,final Object... params){
+		int result = 0;
+		String[] resultSQL = getNativeSQL(nativeSQL,year);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+		result = baseDao.update(resultSQL[1], params);
+		return result;
+	}
+
+	/**
+	 * @version 版本：1.0
+	 * @param nativeSQL 原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params 原生态SQL查询语句中“?”的参数值；
+	 * @return Key成功更新的记录数；Value自增的字段值集合。
+	 * 单表新增并返回自增主键键。
+	 */
+	public KV<Integer, List<Object>> updateAndGPKNative(String nativeSQL, final Object... params){
 		KV<Integer,List<Object>> keys;
 		String[] resultSQL = getNativeSQL(nativeSQL);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
@@ -169,9 +364,28 @@ public class BaseDAO{
 		keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		return keys;
 	}
-	
+
+
 	/**
-	* @version 版本：1.0 
+	* @version 版本：1.0
+	 * @param sharding 分片字段
+	* @param nativeSQL 原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	* @param params 原生态SQL查询语句中“?”的参数值；
+	* @return Key成功更新的记录数；Value自增的字段值集合。
+	* 单表新增并返回自增主键键。
+	 */
+	public KV<Integer, List<Object>> updateAndGPKNativeSharding(int sharding, int year, String nativeSQL, final Object... params){
+		KV<Integer,List<Object>> keys;
+		String[] resultSQL = getNativeSQL(nativeSQL,year);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+		keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
+		return keys;
+	}
+
+	/**
+	* @version 版本：1.0
 	* @param nativeSQL 原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
 	* @param params　原生态SQL查询语句中“?”的参数值数组；
 	* @return 每一个表影响的记录数
@@ -179,27 +393,131 @@ public class BaseDAO{
 	 */
 	public int[] updateTransNative(String[] nativeSQL,final List<Object[]> params){
 		int[] result = new int[nativeSQL.length];
-		String[] resultSQL = getNativeSQL(nativeSQL[0]);		
+		String[] resultSQL = getNativeSQL(nativeSQL[0]);
 		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(Integer.parseInt(resultSQL[0]));
 		try {
 			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
 			    @Override
 				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
 			        for (int i = 0; i < nativeSQL.length; i++) {
-				        result[i] = updateNative(nativeSQL[i],params.get(i));
-				    }
+						result[i] = updateNative(nativeSQL[i],params.get(i));
+					}
 				}
 			});
 		} catch (DAOException e) {
-			e.printStackTrace();
 			LogUtil.getDefaultLogger().error(e.getStackTrace());
             return null;
 		}
 		return result;
 	}
-	
+
+
+
+
 	/**
-	* @version 版本：1.0 
+	 * @version 版本：1.0
+	 * @param sharding 分片字段
+	 * @param nativeSQL 原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params　原生态SQL查询语句中“?”的参数值数组；
+	 * @return 每一个表影响的记录数
+	 * 多表事务更新
+	 */
+	public int[] updateTransNativeSharding(int sharding,int year,String[] nativeSQL,final List<Object[]> params){
+		int[] result = new int[nativeSQL.length];
+		String[] resultSQL = getNativeSQL(nativeSQL[0]);
+		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(sharding,Integer.parseInt(resultSQL[0]));
+		try {
+			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
+				@Override
+				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
+					for (int i = 0; i < nativeSQL.length; i++) {
+						result[i] = updateNativeSharding(sharding,year,nativeSQL[i],params.get(i));
+					}
+				}
+			});
+		} catch (DAOException e) {
+			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(e.getStackTrace());
+			return null;
+		}
+		return result;
+	}
+
+	/**
+	 * @version 版本：1.0
+	 * @param conditionList 条件集合（sharding 分片字段，nativeSQL  执行SQL，params SQL参数）
+	 * @param year 年份，为0 则默认当年
+	 * 多表事务更新
+	 */
+	public boolean updateMaualTransNativeGlobal(List<GlobalTransCondition> conditionList, int year){
+		Set<AbstractJdbcSessionMgr> mgrSet = new HashSet();
+		boolean isSuccess = true;
+		boolean isCommit = true;
+		try {
+			for(GlobalTransCondition ct: conditionList){
+                AbstractJdbcSessionMgr sessionMgr = getSessionMgr(ct.getSharding(),
+                        Integer.parseInt(getNativeSQL(ct.getNativeSQL()[0])[0]));
+                sessionMgr.setInvoking(true);
+				sessionMgr.beginTransaction();
+				mgrSet.add(sessionMgr);
+                if(!updateMaualTransNative(sessionMgr,year,ct.getNativeSQL(),ct.getParams())){
+                    isCommit = false;
+                    break;
+                }
+            }
+
+            if(mgrSet.isEmpty()){
+			    return false;
+            }
+
+			if(isCommit){
+                for (AbstractJdbcSessionMgr mgr : mgrSet){
+                    mgr.commit();
+                }
+            }else{
+                for (AbstractJdbcSessionMgr mgr : mgrSet){
+                    mgr.rollback();
+                }
+				isSuccess = false;
+            }
+		} catch (Exception e) {
+			isSuccess = false;
+			for (AbstractJdbcSessionMgr mgr : mgrSet){
+				mgr.rollback();
+			}
+			e.printStackTrace();
+		} finally {
+			for (AbstractJdbcSessionMgr mgr : mgrSet){
+				mgr.setInvoking(false);
+				mgr.closeSession();
+			}
+		}
+		return isSuccess;
+	}
+
+	private boolean updateMaualTransNative(AbstractJdbcSessionMgr sessionMgr, int year, String[] nativeSQL, final List<Object[]> params){
+		boolean isUpdate = true;
+		String[] resultSQL = getNativeSQL(nativeSQL[0]);
+		try {
+			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(sessionMgr);
+			for (int i = 0; i < nativeSQL.length; i++) {
+				baseDao.update(getNativeSQL(nativeSQL[i],year)[1], params.get(i));
+			}
+		} catch (Exception e) {
+			isUpdate = false;
+			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(e.getStackTrace());
+		}
+		return isUpdate;
+	}
+
+	public boolean updateManalTransNativeEx(AbstractJdbcSessionMgr sessionMgr, String[] nativeSQL, final List<Object[]> params){
+		return updateMaualTransNative(sessionMgr,0,nativeSQL,params);
+	}
+
+	/**
+	* @version 版本：1.0
 	* @param GPKNativeSQL 需要返回自增长字段值的更新SQL集合对象。
 	* @param nativeSQL 需要插入刚产生的自增长字段值的更新SQL集合对象，
 	* @param params GPKNativeSQL和nativeSQL中带"?"参数的参数值集合。
@@ -230,15 +548,57 @@ public class BaseDAO{
 		} catch (DAOException e) {
 			e.printStackTrace();
             return null;
-		}		
+		}
 		return result;
 	}
+
+
+
+
+	/**
+	 * @version 版本：1.0
+	 * @param sharding 分片字段
+	 * @param GPKNativeSQL 需要返回自增长字段值的更新SQL集合对象。
+	 * @param nativeSQL 需要插入刚产生的自增长字段值的更新SQL集合对象，
+	 * @param params GPKNativeSQL和nativeSQL中带"?"参数的参数值集合。
+	 * @return Key成功更新的记录数；Value自增的字段值集合。
+	 * 多表事务更新，并需要返回部分表的自增主键作为另一更新语句的参数值。
+	 */
+	public  int[] updateAndGPKTransNativeSharding(int sharding,int year,String[] GPKNativeSQL,String[] nativeSQL,final List<Object[]> params){
+		int[] result = new int[GPKNativeSQL.length + nativeSQL.length];
+		String[] resultSQL = getNativeSQL(nativeSQL[0]);
+		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(sharding,Integer.parseInt(resultSQL[0]));
+		try {
+			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
+				@Override
+				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
+					List<Object[]> autoGPK = new ArrayList<Object[]>();
+					for (int i = 0; i < GPKNativeSQL.length; i++) {
+						KV<Integer,List<Object>> keys = updateAndGPKNativeSharding(sharding,year,GPKNativeSQL[i],params.get(i));
+						autoGPK.add(keys.getValue().toArray());//返回类型为[4,5],代表插入了两行，产生了两个自增长值，分别为4和5
+						result[i] = keys.getKey();//自增值个数，也就是行数（同时插入多行记录）
+					}
+					Object[] paramsTrue;
+					for (int i = 0 ; i < nativeSQL.length; i++) {
+						paramsTrue = getTrueParams(autoGPK,params.get(i + GPKNativeSQL.length));
+						result[i + GPKNativeSQL.length] = updateNativeSharding(sharding,year,nativeSQL[i],paramsTrue);
+					}
+				}
+			});
+		} catch (DAOException e) {
+			e.printStackTrace();
+			return null;
+		}
+		return result;
+	}
+
+
 	/**
 	 * @Title: updateBatchNative
 	 * @Description: TODO 单表批量更新
 	 * @param nativeSQL 原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
 	 * @param params 原生态SQL查询语句中“?”的参数值数组集合，每个数组为一条语句赋值；
-	 * @Description batchSize多少条语句组成一个批量执行。
+	 * @param batchSize 多少条语句组成一个批量执行。
 	 * @return: int更新的记录数
 	 */
 	public int[] updateBatchNative(String nativeSQL, List<Object[]> params, int batchSize){
@@ -249,22 +609,59 @@ public class BaseDAO{
 		int[] result = baseDao.updateBatch(resultSQL[1], params, batchSize);
 		return result;
 	}
+
+
+	/**
+	 * @Title: updateBatchNativeSharding
+	 * @Description: TODO 单表批量更新
+	 * @param  sharding 分片字段
+	 * @param nativeSQL 原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params 原生态SQL查询语句中“?”的参数值数组集合，每个数组为一条语句赋值；
+	 * @param batchSize 多少条语句组成一个批量执行。
+	 * @return: int更新的记录数
+	 */
+	public int[] updateBatchNativeSharding(int sharding,int year,String nativeSQL, List<Object[]> params, int batchSize){
+		String[] resultSQL = getNativeSQL(nativeSQL,year);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+		int[] result = baseDao.updateBatch(resultSQL[1], params, batchSize);
+		return result;
+	}
 	/*=====================分页相关方法开始===================================*/
-	public List<Object[]> queryNative(PageHolder pageOut, Page paged, String nativeSQL, final Object... params) {
+	public List<Object[]> queryNative(PageHolder pageOut, Page paged,String nativeSQL, final Object... params) {
         return queryNative(pageOut, paged, "", nativeSQL, params);
     }
 
-    public List<Object[]> queryNativeC(PageHolder pageOut, Page paged,String nativeSQL, final Object... params) {
-        return queryNativeC(pageOut, paged, null, nativeSQL, null, params);
+
+    public List<Object[]> queryNativeSharding(int sharding,int year,PageHolder pageOut, Page paged,String nativeSQL, final Object... params) {
+        return queryNativeSharding(sharding,year,pageOut, paged, "", nativeSQL, params);
     }
 
-    public List<Object[]> queryNative(PageHolder pageOut, Page paged,String sortBy, String nativeSQL, final Object... params) {
+    public List<Object[]> queryNativeC(PageHolder pageOut, Page paged,String nativeSQL, final Object... params) {
+        return queryNativeC(pageOut, paged, null, nativeSQL, params);
+    }
+
+	public List<Object[]> queryNativecSharding(int sharding,int year,PageHolder pageOut, Page paged,String nativeSQL, final Object... params) {
+		return queryNativecSharding(sharding,year,pageOut, paged, null, nativeSQL, params);
+	}
+
+    public List<Object[]> queryNative(PageHolder pageOut, Page paged, String sortBy, String nativeSQL, final Object... params) {
         return queryNative(pageOut, paged, sortBy, null, nativeSQL, params);
     }
 
-    public List<Object[]> queryNativeC(PageHolder pageOut, Page paged,String sortBy, String nativeSQL, final Object... params) {
-        return queryNativeC(pageOut, paged, sortBy, null, nativeSQL, params);
+    public List<Object[]> queryNativeSharding(int sharding,int year,PageHolder pageOut, Page paged,String sortBy, String nativeSQL, final Object... params) {
+        return queryNativeSharding(sharding,year,pageOut, paged, sortBy, null, nativeSQL, params);
     }
+
+	public List<Object[]> queryNativeC(PageHolder pageOut, Page paged, String sortBy, String nativeSQL, final Object... params) {
+		return queryNativeC(pageOut, paged, sortBy, null, nativeSQL, params);
+	}
+
+	public List<Object[]> queryNativecSharding(int sharding, int year, PageHolder pageOut, Page paged, String sortBy, String nativeSQL, final Object... params) {
+		return queryNativecSharding(sharding,year,pageOut, paged, sortBy, null, nativeSQL, params);
+	}
+
 
     public List<Object[]> queryNative(PageHolder pageOut, Page paged,String sortBy, Object[] countParams, String nativeSQL,final Object... params) {
         String sql = nativeSQL;
@@ -272,6 +669,15 @@ public class BaseDAO{
         List<Object[]> result = list.getList();
         if (pageOut != null)
             pageOut.value = queryPage(list);
+        return result;
+    }
+
+    public List<Object[]> queryNativeSharding(int sharding,int year,PageHolder pageOut, Page paged,String sortBy, Object[] countParams, String nativeSQL,final Object... params) {
+        String sql = nativeSQL;
+        PagedList list = new PagedListI(false, paged, sortBy, sql, countParams,params);
+        List<Object[]> result = list.getList(sharding,year);
+        if (pageOut != null)
+            pageOut.value = queryPageSharding(sharding,year,list);
         return result;
     }
 
@@ -283,6 +689,15 @@ public class BaseDAO{
             pageOut.value = queryPage(list);
         return result;
     }
+
+	public List<Object[]> queryNativecSharding(int sharding,int year,PageHolder pageOut, Page paged,String sortBy, Object[] countParams, String nativeSQL,final Object... params) {
+		String sql = nativeSQL;
+		PagedList list = new PagedListI(true, paged, sortBy, sql, countParams,params);
+		List<Object[]> result = list.getList(sharding,year);
+		if (pageOut != null)
+			pageOut.value = queryPageSharding(sharding,year,list);
+		return result;
+	}
     
     public Page queryPage(PagedList pagedList) {
         Page page = new Page();
@@ -292,6 +707,15 @@ public class BaseDAO{
         page.totalPageCount = pagedList.getTotalPageCount();
         return page;
     }
+
+	public Page queryPageSharding(int sharding,int year,PagedList pagedList) {
+		Page page = new Page();
+		page.pageIndex = pagedList.getPageIndex();
+		page.pageSize = pagedList.getPageSize();
+		page.totalItems = pagedList.getTotalRowCount(sharding,year);
+		page.totalPageCount = pagedList.getTotalPageCount();
+		return page;
+	}
     /*=====================分页相关方法结束===================================*/
 	/**
      * @Title: convToEntity shanben-CN
@@ -479,7 +903,7 @@ public class BaseDAO{
     /**
 	 * @Title: getDelRange
 	 * @Description: TODO 批量删除时，根据用户传进来的多个ID值进行连续的ID值只产生一条删除SQL语句。
-	 * @Description ids用户需要删除的多条记录的ID值数组。
+	 * @param ids 用户需要删除的多条记录的ID值数组。
 	 * @return: List<int[]>要产生的删除SQL的条数及每条删除语句id的最小值及最大值。List的size对应删除语句的条数，int[]里，索引为0的代表最小值，索引为1的代表最大值。
 	 */
 	public List<Object[]> getDelRange(int[] ids){
@@ -513,7 +937,7 @@ public class BaseDAO{
     /**
      * @Title: getDelRange
      * @Description: TODO 批量删除时，根据用户传进来的多个ID值进行连续的ID值只产生一条删除SQL语句。
-     * @Description ids用户需要删除的多条记录的ID值数组
+     * @param ids 用户需要删除的多条记录的ID值数组
      *            。
      * @return: 
      *          List<int[]>要产生的删除SQL的条数及每条删除语句id的最小值及最大值。List的size对应删除语句的条数，int[]
@@ -547,4 +971,6 @@ public class BaseDAO{
         }
         return result;
     }
+
+
 }

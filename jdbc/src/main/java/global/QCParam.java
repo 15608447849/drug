@@ -1,4 +1,4 @@
-package db.global;
+package global;
 /**
  * Copyright © 2018空间折叠物流科技【FSPACE】. All rights reserved.
  * @ClassName: QCParam

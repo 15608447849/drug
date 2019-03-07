@@ -1,4 +1,4 @@
-package db.global;
+package global;
 
 /** 
  * @version 版本：1.0 

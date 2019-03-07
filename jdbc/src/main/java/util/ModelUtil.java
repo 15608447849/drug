@@ -16,11 +16,11 @@ import java.util.Map;
 
 import dao.BaseDAO;
 import db.constant.FormatConst;
-import db.global.QCParam;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.BoolMessage;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import global.QCParam;
 import org.apache.commons.lang.ArrayUtils;
 
 /**
