@@ -1,14 +1,15 @@
-package org.proxy;
+package redis.proxy;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 
-import sql.Cache;
-public class ProxyInstance {
+import redis.IRedisCache;
+
+public class CacheProxyInstance {
 	
-	public static Cache createInstance(Object target) {
+	public static IRedisCache createInstance(Object target) {
 		InvocationHandler inv = new RedisInvocationHandler<>(target);
-		Cache proxy = (Cache)Proxy.newProxyInstance(Cache.class.getClassLoader(), new Class<?>[] {Cache.class}, inv);
+		IRedisCache proxy = (IRedisCache)Proxy.newProxyInstance(IRedisCache.class.getClassLoader(), new Class<?>[] {IRedisCache.class}, inv);
 		return proxy;
 	}
 }
