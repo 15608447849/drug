@@ -2,7 +2,6 @@ package com.onek.user.entity;
 
 import redis.annation.RedisKey;
 
-@RedisKey(prefix = "dict_", key = "dictc")
 public class DictVo {
 	private Integer dictc;
 	private String type;
@@ -49,5 +48,6 @@ public class DictVo {
 	public void setRemark(String remark) {
 		this.remark = remark;
 	}
+
 
 }

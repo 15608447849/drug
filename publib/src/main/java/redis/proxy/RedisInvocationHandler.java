@@ -1,5 +1,6 @@
 package redis.proxy;
 
+import redis.IRedisCache;
 import redis.annation.CacheInvoke;
 import redis.annation.RedisCache;
 import redis.annation.RedisKey;
@@ -41,43 +42,28 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
 		System.out.println("############ redis inocation invoke ###############");
-		boolean isEmpty = target.getClass().isAnnotationPresent(RedisCache.class);
-		if(!isEmpty) {
-			return method.invoke(target, args);
-		}
         CacheInvoke cacheInvoke =method.getAnnotation(CacheInvoke.class);
         if(cacheInvoke == null) {
             return method.invoke(target, args);
         }
 
         String m = cacheInvoke.method();
-        Method invokeMethod = getClass().getDeclaredMethod(m, Method.class, Object[].class);
-        return invokeMethod.invoke(this, method, args);
+        Method invokeMethod = getClass().getDeclaredMethod(m, Method.class, Object.class, Object[].class);
+        return invokeMethod.invoke(this, method, target, args);
 
 	}
 
-	private Object loadCacheObject(Method method, Object[] args) throws IllegalAccessException, InvocationTargetException {
-		Annotation[] annotation = null;
+	private Object loadCacheObject(Method method, Object target,Object[] args) throws IllegalAccessException, InvocationTargetException {
 		Class<?> clazz = null;
 		String type = null;
 
-        annotation = target.getClass().getAnnotations();// 获取注解接口中的
-        for (Annotation a : annotation) {
-            RedisCache my = (RedisCache) a;// 强制转换成RedisCache类型
-            clazz = my.clazz();
-            type = my.type();
-        }
+        String keycolum = "";
+        IRedisCache t = (IRedisCache)(target);
+        keycolum = t.getKey();
+        String prefix = "";
+        prefix = t.getPrefix();
+        clazz = t.getReturnType();
 
-		String keycolum = "";
-		String prefix = "";
-		if(clazz != null) {
-			RedisKey key = clazz.getDeclaredAnnotation(RedisKey.class);
-			if(key != null) {
-				System.out.println("### key: "+key);
-				prefix = key.prefix();
-				keycolum = key.key();
-			}
-		}
 		Object cacheObj = null;
 		String keyval = "";
 		if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
@@ -110,28 +96,18 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 		}
 	}
 
-    private Object loadAllCache(Method method, Object[] args) throws IllegalAccessException, InvocationTargetException {
-        Annotation[] annotation = null;
+    private Object loadAllCache(Method method, Object target,Object[] args) throws IllegalAccessException, InvocationTargetException {
+
         Class<?> clazz = null;
         String type = null;
+
         String keycolum = "";
+        IRedisCache t = (IRedisCache)(target);
+        keycolum = t.getKey();
         String prefix = "";
+        prefix = t.getPrefix();
+        clazz = t.getReturnType();
 
-        annotation = target.getClass().getAnnotations();// 获取注解接口中的
-        for (Annotation a : annotation) {
-            RedisCache my = (RedisCache) a;// 强制转换成RedisCache类型
-            clazz = my.clazz();
-            type = my.type();
-        }
-
-        if(clazz != null) {
-            RedisKey key = clazz.getDeclaredAnnotation(RedisKey.class);
-            if(key != null) {
-                System.out.println("### key: "+key);
-                prefix = key.prefix();
-                keycolum = key.key();
-            }
-        }
         Object cacheObj = null;
         if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
             List<String> list = listProvide.getAllElements(prefix + PREFIX_ALL);
@@ -177,33 +153,22 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
         }
     }
 
-    private Object loadCacheList(Method method, Object[] args) throws IllegalAccessException, InvocationTargetException {
-        Annotation[] annotation = null;
+    private Object loadCacheList(Method method, Object target,Object[] args) throws IllegalAccessException, InvocationTargetException,NoSuchMethodException {
+
         Class<?> clazz = null;
-        String type = null;
         Object cacheObj = null;
         String [] strings = (String []) args[0];
 
-        annotation = target.getClass().getAnnotations();// 获取注解接口中的
-        for (Annotation a : annotation) {
-            RedisCache my = (RedisCache) a;// 强制转换成RedisCache类型
-            clazz = my.clazz();
-            type = my.type();
-        }
-
         String keycolum = "";
+        IRedisCache t = (IRedisCache)(target);
+        keycolum = t.getKey();
         String prefix = "";
-        if(clazz != null) {
-            RedisKey key = clazz.getDeclaredAnnotation(RedisKey.class);
-            if(key != null) {
-                System.out.println("### key: "+key);
-                prefix = key.prefix();
-                keycolum = key.key();
-            }
-        }
+        prefix = t.getPrefix();
+        clazz = t.getReturnType();
 
         String key = String.join(",", strings);
         String hash = md5(key);
+        System.out.println("##### hash: "+hash + "#######");
 
         if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
 
@@ -250,35 +215,23 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
         }
     }
 
-	private Object flushCache(Method method, Object[] args) throws IllegalAccessException, InvocationTargetException {
+	private Object flushCache(Method method, Object target,Object[] args) throws IllegalAccessException, InvocationTargetException {
 		Object result = method.invoke(target, args);
 		if (result != null) {
 			Integer num = (Integer)result;
 			if(num > 0) {
-				Annotation[] annotation = null;
 				Class<?> clazz = null;
-				String type = null;
-                annotation = target.getClass().getAnnotations();// 获取注解接口中的
-                for (Annotation a : annotation) {
-                    RedisCache my = (RedisCache) a;// RedisCache
-                    clazz = my.clazz();
-                    type = my.type();
-                }
 
-				String keycolum = "";
-				String prefix = "";
-				if(clazz != null) {
-					RedisKey key = clazz.getDeclaredAnnotation(RedisKey.class);
-					if(key != null) {
-						System.out.println("### key: "+key);
-						prefix = key.prefix();
-						keycolum = key.key();
-					}
-				}
+                String keycolum = "";
+                IRedisCache t = (IRedisCache)(target);
+                keycolum = t.getKey();
+                String prefix = "";
+                prefix = t.getPrefix();
+                clazz = t.getReturnType();
+
 				if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
-					if(type.equals("string")) {
-						 stringProvide.deleteRedisKeyStartWith(prefix);
-					}
+				    stringProvide.deleteRedisKeyStartWith(prefix);
+
 				}
 			}
 			return result;

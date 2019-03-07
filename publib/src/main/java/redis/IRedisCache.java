@@ -15,16 +15,31 @@ import java.util.List;
  */
 public interface IRedisCache {
 
+    /**
+     * Redis存在缓存键的前缀
+     *
+     * @return
+     */
+    String getPrefix();
+
+    /**
+     * 此字段用来通过反射来获取对象字段值,所以需要与getReturnType()对象字段名一致
+     * @return
+     */
+    String getKey();
+
+    Class<?> getReturnType();
+
     @CacheInvoke(method = "loadCacheObject")
     Object getId(Object id);
 
-    @CacheInvoke(method = "clearCache")
+    @CacheInvoke(method = "flushCache")
     int del(Object id);
 
-    @CacheInvoke(method = "clearCache")
+    @CacheInvoke(method = "flushCache")
     int add(Object obj);
 
-    @CacheInvoke(method = "clearCache")
+    @CacheInvoke(method = "flushCache")
     int update(Object obj);
 
     @CacheInvoke(method = "loadAllCache")
@@ -32,5 +47,4 @@ public interface IRedisCache {
 
     @CacheInvoke(method = "loadCacheList")
     List<?> queryByParams(String [] params);
-
 }

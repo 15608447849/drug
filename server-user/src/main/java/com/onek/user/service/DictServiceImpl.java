@@ -13,13 +13,28 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import redis.IRedisCache;
 import redis.annation.RedisCache;
-@RedisCache(clazz = DictVo.class)
+
 public class DictServiceImpl implements IRedisCache{
 
 	private static BaseDAO baseDao = BaseDAO.getBaseDAO();
-	
+
 	@Override
-	public Object getId(Object id) {
+	public String getPrefix() {
+		return "dict_";
+	}
+
+	@Override
+	public String getKey() {
+		return "dictc";
+	}
+
+	@Override
+	public Class<?> getReturnType() {
+		return DictVo.class;
+	}
+
+	@Override
+	public DictVo getId(Object id) {
 		List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.LC_GLOBAL_DICT +"}} where cstatus&1= 0 and dictc = ?", new Object[] {id});
 		DictVo[] dicts = new DictVo[result.size()];
 		baseDao.convToEntity(result, dicts, DictVo.class);
