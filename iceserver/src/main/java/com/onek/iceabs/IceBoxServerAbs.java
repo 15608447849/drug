@@ -27,14 +27,15 @@ public abstract class IceBoxServerAbs implements Service {
     }
 
     private void relationID(Ice.Object object,Communicator communicator) {
+
         Identity identity = communicator.stringToIdentity(_serverName);
-        _adapter.add(object,identity);
+        _adapter.add(IceServiceDispatchInterceptor.getInstance().addIceObject(identity,object),identity);
         //查询是否存在组配置信息 (暂时只能 一个服务关联到一个 rpc组 ,理论上 一个服务可关联到多个组, 暂不实现)
         String name = AppProperties.INSTANCE.repSrvMap.get(_serverName);
         if (name == null) return;
         identity = communicator.stringToIdentity(name);
-        _adapter.add(object,identity);
-        logger.print("关联负载均衡组: " + name);
+        _adapter.add(IceServiceDispatchInterceptor.getInstance().addIceObject(identity,object),identity);
+        logger.print(_serverName +" 加入负载均衡组 " + name);
     }
 
     protected abstract Object specificServices(String[] args);
