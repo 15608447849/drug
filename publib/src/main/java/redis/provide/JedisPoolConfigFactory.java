@@ -1,7 +1,6 @@
-package com.redis.provide;
+package redis.provide;
 
 
-import IceUtilInternal.StringUtil;
 import properties.abs.ApplicationPropertiesBase;
 import properties.annotations.PropertiesFilePath;
 import properties.annotations.PropertiesName;
@@ -11,7 +10,8 @@ import util.StringUtils;
 @PropertiesFilePath("/redis.properties")
 public class JedisPoolConfigFactory extends ApplicationPropertiesBase {
 
-	private JedisPoolConfigFactory factory = new JedisPoolConfigFactory();
+	public static JedisPoolConfigFactory factory = new JedisPoolConfigFactory();
+
 	@PropertiesName("redis.hosts")
 	public String pro_hosts ;
 	@PropertiesName("redis.maxTotal")

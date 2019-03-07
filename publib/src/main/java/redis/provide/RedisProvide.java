@@ -1,7 +1,11 @@
-package com.redis.provide;
+package redis.provide;
 
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPoolConfig;
+import redis.clients.jedis.ScanParams;
+import redis.clients.jedis.ScanResult;
+
+import java.util.List;
 
 /**
  * Redis通用提供类
@@ -16,7 +20,7 @@ public class RedisProvide{
 	protected JedisCluster jedisCluster;
 	
 	public RedisProvide() {
-		JedisPoolConfig config = JedisPoolConfigFactory.getConfig();
+		JedisPoolConfig config = JedisPoolConfigFactory.factory.getConfig();
 		String [] hosts = JedisPoolConfigFactory.getHosts();
 		JedisClusterFactory clusterFactory = new JedisClusterFactory(config, hosts);
 		jedisCluster = clusterFactory.getJedisCluster();
@@ -87,6 +91,20 @@ public class RedisProvide{
 	public String typeOf(String key) {
 		return jedisCluster.type(key);
 	}
-	
-	
+
+	/**
+	 * 删除前缀为keyStartWith的所有键
+	 *
+	 * @param keyStartWith
+	 */
+	public void deleteRedisKeyStartWith(String keyStartWith){
+		ScanParams scanParams = new ScanParams();
+		scanParams.match(keyStartWith+"*");
+		ScanResult<String> result = jedisCluster.scan("0", scanParams);
+		List<String> keys = result.getResult();
+		for (String key : keys){
+			System.out.println(key);
+		}
+		jedisCluster.del(keys.toArray(new String[keys.size()]));
+	}
 }

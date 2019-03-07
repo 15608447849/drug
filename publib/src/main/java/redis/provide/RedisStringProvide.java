@@ -1,4 +1,4 @@
-package com.redis.provide;
+package redis.provide;
 
 /**
  * Redis 字符串数据类型的相关命令用于管理 redis字符串值

@@ -1,4 +1,4 @@
-package com.redis.provide;
+package redis.provide;
 
 import java.util.Set;
 
