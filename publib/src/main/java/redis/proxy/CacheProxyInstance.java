@@ -7,7 +7,7 @@ import redis.IRedisCache;
 
 public class CacheProxyInstance {
 	
-	public static IRedisCache createInstance(Object target) {
+	public static IRedisCache createInstance(IRedisCache target) {
 		InvocationHandler inv = new RedisInvocationHandler<>(target);
 		IRedisCache proxy = (IRedisCache)Proxy.newProxyInstance(IRedisCache.class.getClassLoader(), new Class<?>[] {IRedisCache.class}, inv);
 		return proxy;
