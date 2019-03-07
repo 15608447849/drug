@@ -1,11 +1,9 @@
 package redis.provide;
 
-import redis.clients.jedis.JedisCluster;
-import redis.clients.jedis.JedisPoolConfig;
-import redis.clients.jedis.ScanParams;
-import redis.clients.jedis.ScanResult;
+import redis.clients.jedis.*;
+import redis.clients.util.JedisClusterCRC16;
 
-import java.util.List;
+import java.util.*;
 
 /**
  * Redis通用提供类
@@ -98,13 +96,41 @@ public class RedisProvide{
 	 * @param keyStartWith
 	 */
 	public void deleteRedisKeyStartWith(String keyStartWith){
-		ScanParams scanParams = new ScanParams();
-		scanParams.match(keyStartWith+"*");
-		ScanResult<String> result = jedisCluster.scan("0", scanParams);
-		List<String> keys = result.getResult();
-		for (String key : keys){
-			System.out.println(key);
+		Map<String, JedisPool> clusterNodes = jedisCluster.getClusterNodes();
+		for (Map.Entry<String, JedisPool> entry : clusterNodes.entrySet()) {
+			Jedis jedis = entry.getValue().getResource();
+			// 判断非从节点(因为若主从复制，从节点会跟随主节点的变化而变化)
+			if (!jedis.info("replication").contains("role:slave")) {
+				Set<String> keys = jedis.keys(keyStartWith + "*");
+				if (keys.size() > 0) {
+					Map<Integer, List<String>> map = new HashMap<>();
+					for (String key : keys) {
+						// cluster模式执行多key操作的时候，这些key必须在同一个slot上，不然会报:JedisDataException:
+						// CROSSSLOT Keys in request don't hash to the same slot
+						int slot = JedisClusterCRC16.getSlot(key);
+						// 按slot将key分组，相同slot的key一起提交
+						if (map.containsKey(slot)) {
+							map.get(slot).add(key);
+						} else {
+							List<String> list = new ArrayList<>();
+							list.add(key);
+							map.put(slot, list);
+						}
+					}
+					for (Map.Entry<Integer, List<String>> integerListEntry : map.entrySet()) {
+						jedis.del(integerListEntry.getValue().toArray(new String[integerListEntry.getValue().size()]));
+					}
+				}
+			}
 		}
-		jedisCluster.del(keys.toArray(new String[keys.size()]));
+
+//		ScanParams scanParams = new ScanParams();
+//		scanParams.match("*{"+keyStartWith+"}*");
+//		ScanResult<String> result = jedisCluster.scan("0", scanParams);
+//		List<String> keys = result.getResult();
+//		for (String key : keys){
+//			System.out.println(key);
+//		}
+//		jedisCluster.del(keys.toArray(new String[keys.size()]));
 	}
 }

@@ -11,6 +11,7 @@ import java.util.List;
  *
  */
 public interface IRedisCache {
+
     Object getId(Object id);
 
     int del(Object id);
@@ -21,6 +22,6 @@ public interface IRedisCache {
 
     List<Object> queryAll();
 
-    List<Object> queryByParams(Object... params);
+    List<Object> queryByParams(String params);
 
 }
