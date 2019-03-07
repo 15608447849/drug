@@ -1,7 +1,6 @@
-package org.entity;
+package com.onek.user.entity;
 
-import org.annation.RedisKey;
-
+import redis.annation.RedisKey;
 
 @RedisKey(prefix = "dict_", key = "dictc")
 public class DictVo {

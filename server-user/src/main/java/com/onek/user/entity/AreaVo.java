@@ -1,6 +1,6 @@
 package com.onek.user.entity;
 
-import org.annation.RedisKey;
+import redis.annation.RedisKey;
 
 @RedisKey(prefix = "area_", key = "areac")
 public class AreaVo {
