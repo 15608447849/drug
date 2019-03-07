@@ -34,8 +34,7 @@ public class ElasticSearchProvider {
 //		EsClientPoolFactory esClientPoolFactory = new EsClientPoolFactory();// 要池化的对象的工厂类，这个是我们要实现的类
 //		clientPool = new GenericObjectPool<>(esClientPoolFactory, poolConfig);// 利用对象工厂类和配置类生成对象池
 //	}
-	
-	static TransportClient client = ElasticSearchClientFactory.getClientInstance();
+
 	
 	/**
 	 * 添加索引和索引类型 指定索引类型字段的名字和类型
@@ -47,18 +46,18 @@ public class ElasticSearchProvider {
 	 * @version V1.0.0.2018082701 JiangWG 异常情况返回空对象 20180824
 	 */
 	public static CreateIndexResponse addIndex(String index, String type, XContentBuilder mapping) {
-
+		TransportClient client = ElasticSearchClientFactory.getClientInstance();
 		try {
 //			client = clientPool.borrowObject(); 
 			IndicesExistsRequest inExistsRequest = new IndicesExistsRequest(index);
 			IndicesExistsResponse inExistsResponse = client.admin().indices().exists(inExistsRequest).actionGet();
 
-			LogUtil.getDefaultLogger().info("index ["+ index +"] is exist :" + inExistsResponse.isExists());
+			System.out.println("index ["+ index +"] is exist :" + inExistsResponse.isExists());
 			if (!inExistsResponse.isExists()) {
 				CreateIndexRequestBuilder cib = client.admin().indices().prepareCreate(index);
 				cib.addMapping(type, mapping);
 				CreateIndexResponse response = cib.execute().actionGet();
-				LogUtil.getDefaultLogger().info("add index isAcknowledged: " + response.isAcknowledged() + "; index :" + response.index());
+				System.out.println("add index isAcknowledged: " + response.isAcknowledged() + "; index :" + response.index());
 				return response;
 			}
 			
@@ -72,7 +71,7 @@ public class ElasticSearchProvider {
 	
 	/**
 	 * 删除索引
-	 * 
+	 *
 	 * @param index 索引名
 	 * @param type 索引类型
 	 * @return
@@ -85,10 +84,10 @@ public class ElasticSearchProvider {
 			IndicesExistsRequest inExistsRequest = new IndicesExistsRequest(index);
 			IndicesExistsResponse inExistsResponse = client.admin().indices().exists(inExistsRequest).actionGet();
 
-			LogUtil.getDefaultLogger().info("index ["+ index +"] is exist :" + inExistsResponse.isExists());
+			System.out.println("index ["+ index +"] is exist :" + inExistsResponse.isExists());
 			if (inExistsResponse.isExists()) {
 				DeleteIndexResponse dResponse = client.admin().indices().prepareDelete(index).execute().actionGet();
-				LogUtil.getDefaultLogger().info("index ["+ index +"] delete status :" + dResponse.isAcknowledged());
+				System.out.println("index ["+ index +"] delete status :" + dResponse.isAcknowledged());
 				return dResponse.isAcknowledged();
 			} else {
 				return false;
@@ -98,13 +97,13 @@ public class ElasticSearchProvider {
 			e.printStackTrace();
 			return false;
 
-		} 
-		
+		}
+
 	}
 
 	/**
 	 * 添加文档
-	 * 
+	 *
 	 * @param object 文档对象 JSON格式
 	 * @param index 索引名
 	 * @param type 索引类型
@@ -121,13 +120,13 @@ public class ElasticSearchProvider {
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
-		} 
-		
+		}
+
 	}
-	
+
 	/**
 	 * 添加文档
-	 * 
+	 *
 	 * @param object 文档对象 键值对格式
 	 * @param index 索引名
 	 * @param type 索引类型
@@ -138,20 +137,20 @@ public class ElasticSearchProvider {
 	public static IndexResponse addDocument(Map<String, Object> object, String index, String type, String id) {
 
 		TransportClient client = ElasticSearchClientFactory.getClientInstance();
-		try { 
+		try {
 			IndexResponse response = client.prepareIndex(index, type).setSource(object).setId(id).get();
 			return response;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
 
-		}  
-		
+		}
+
 	}
-	
+
 	/**
 	 * 根据文档id修改文档  JSON格式
-	 * 
+	 *
 	 * @param object 修改文档对象 JSON格式
 	 * @param index 索引名
 	 * @param type 索引类型
@@ -161,18 +160,18 @@ public class ElasticSearchProvider {
 	 */
 	public static UpdateResponse updateDocumentById(JSONObject object, String index, String type, String id) {
 		try {
-        	UpdateResponse response = client.prepareUpdate(index, type, id).setDoc(object, XContentType.JSON).get();
+        	UpdateResponse response = ElasticSearchClientFactory.getClientInstance().prepareUpdate(index, type, id).setDoc(object, XContentType.JSON).get();
         	return response;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
-        } 
-		
+        }
+
     }
-	
+
 	/**
 	 * 根据文档id修改文档对象  键值对格式
-	 * 
+	 *
 	 * @param object 修改文档对象  键值对格式
 	 * @param index 索引类型
 	 * @param type 索引类型
@@ -182,18 +181,18 @@ public class ElasticSearchProvider {
 	 */
 	public static UpdateResponse updateDocumentById(Map<String, Object> object, String index, String type, String id) {
 		try {
-        	UpdateResponse response = client.prepareUpdate(index, type, id).setDoc(object).get();
+        	UpdateResponse response = ElasticSearchClientFactory.getClientInstance().prepareUpdate(index, type, id).setDoc(object).get();
         	return response;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
-        } 
-		
+        }
+
     }
 
 	/**
 	 * 根据文档id删除文档对象 键值对格式
-	 * 
+	 *
 	 * @param index 索引类型
 	 * @param type 索引类型
 	 * @param id 文档id
@@ -202,18 +201,18 @@ public class ElasticSearchProvider {
 	 */
 	public static DeleteResponse deleteDocumentById(String index, String type, String id) {
 		try {
-        	DeleteResponse response = client.prepareDelete(index, type, id).get();
+        	DeleteResponse response = ElasticSearchClientFactory.getClientInstance().prepareDelete(index, type, id).get();
         	return response;
         } catch (Exception e) {
             e.printStackTrace();
             return null;
-        } 
-		
+        }
+
     }
 
 	/**
 	 * 根据文档id获取文档对象 键值对格式
-	 * 
+	 *
 	 * @param index 索引类型
 	 * @param type 索引类型
 	 * @param id 文档id
@@ -222,14 +221,14 @@ public class ElasticSearchProvider {
 	 */
 	public static GetResponse getDocumentById(String index, String type, String id) {
 		try {
-        	GetResponse response = client.prepareGet(index, type, id).get();
+        	GetResponse response = ElasticSearchClientFactory.getClientInstance().prepareGet(index, type, id).get();
         	return response;
         } catch (Exception e) {
             //e.printStackTrace();
         	LogUtil.getDefaultLogger().warn("index ["+ index +"] id ["+ id +"] : get document fail");
             return null;
         }
-		
+
     }
-	
+
 }
