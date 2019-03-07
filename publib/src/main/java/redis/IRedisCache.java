@@ -1,5 +1,8 @@
 package redis;
 
+import properties.annotations.PropertiesName;
+import redis.annation.CacheInvoke;
+
 import java.util.List;
 
 /**
@@ -12,16 +15,22 @@ import java.util.List;
  */
 public interface IRedisCache {
 
+    @CacheInvoke(method = "loadCacheObject")
     Object getId(Object id);
 
+    @CacheInvoke(method = "clearCache")
     int del(Object id);
 
+    @CacheInvoke(method = "clearCache")
     int add(Object obj);
 
+    @CacheInvoke(method = "clearCache")
     int update(Object obj);
 
-    List<Object> queryAll();
+    @CacheInvoke(method = "loadAllCache")
+    List<?> queryAll();
 
-    List<Object> queryByParams(String params);
+    @CacheInvoke(method = "loadCacheList")
+    List<?> queryByParams(String [] params);
 
 }
