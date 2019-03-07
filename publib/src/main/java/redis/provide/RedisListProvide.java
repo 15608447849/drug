@@ -1,5 +1,6 @@
 package redis.provide;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -125,5 +126,6 @@ public class RedisListProvide<T> extends RedisProvide {
 	public Long size(String colname) {
 		return jedisCluster.llen(colname);
 	}
+
 
 }

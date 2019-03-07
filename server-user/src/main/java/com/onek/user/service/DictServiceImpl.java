@@ -44,7 +44,7 @@ public class DictServiceImpl implements IRedisCache{
 	}
 
 	@Override
-	public List<Object> queryByParams(Object... params) {
+	public List<Object> queryByParams(String params) {
 		return null;
 	}
 
