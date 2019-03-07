@@ -1,4 +1,4 @@
-package com.redis;
+package com.redis.provide;
 
 import com.hsf.framework.util.PropertiesUtil;
 import com.hsf.framework.util.StringUtil;

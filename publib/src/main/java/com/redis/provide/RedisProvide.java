@@ -1,4 +1,4 @@
-package com.redis;
+package com.redis.provide;
 
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPoolConfig;
