@@ -67,9 +67,6 @@ public class JedisPoolConfigFactory extends ApplicationPropertiesBase {
 
 	static {
 
-
-		
-
 	}
 	
 	public static JedisPoolConfig getConfig() {
