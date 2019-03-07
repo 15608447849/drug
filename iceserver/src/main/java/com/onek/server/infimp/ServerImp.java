@@ -2,6 +2,7 @@ package com.onek.server.infimp;
 
 import Ice.Current;
 import Ice.Logger;
+import IceInternal.Ex;
 import com.onek.prop.AppProperties;
 import com.onek.server.inf.IParam;
 import com.onek.server.inf.IRequest;
@@ -12,6 +13,7 @@ import objectref.ObjectRefUtil;
 import util.GsonUtils;
 import util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 
 /**
@@ -19,6 +21,8 @@ import java.util.Arrays;
  * 接口实现
  */
 public class ServerImp extends _InterfacesDisp {
+
+    private ArrayList<IServerInterceptor> interceptorList;
 
     private String serverName;
 
@@ -30,15 +34,40 @@ public class ServerImp extends _InterfacesDisp {
         this.serverName = serverName;
         this.logger = logger;
         pkgPath = AppProperties.INSTANCE.pkgSrvMap.get(serverName);
-        logger.print(serverName + " - " + pkgPath);
+        initInterceptorList();
+    }
+
+    private void initInterceptorList() {
+        interceptorList = new ArrayList<>();
+        for (String path : AppProperties.INSTANCE.getInterceptList()){
+            //反射构建类
+            IServerInterceptor iServerInterceptor = createInterceptor(path);
+            if (iServerInterceptor!=null) {
+                interceptorList.add(iServerInterceptor);
+            }
+        }
+    }
+
+    //创建拦截器
+    private IServerInterceptor createInterceptor(String path) {
+        try {
+            Object obj = ObjectRefUtil.createObject(path,null,null);
+            if (obj instanceof  IServerInterceptor){
+                return (IServerInterceptor) obj;
+            }
+        } catch (Exception e) {
+            logger.print("创建拦截器失败,path = " + path+" ,error: "+ e);
+        }
+        return  null;
     }
 
     private void printInfo(IRequest request, Current __current) {
         try {
-            logger.print("服务名:"+serverName +" ,连接信息: " + __current.con._toString() +" ,参数信息: " + request.cls +"-"+request.method+":\n"+
-                    "json = " + request.param.json +"\n" +
-                    "array = " + Arrays.toString(request.param.arrays)+"\n" +
-                    "page info = "+ request.param.pageIndex +" , " +request.param.pageNumber
+            logger.print(
+                    "定位: " +pkgPath +" - " + request.cls +" - "+request.method+"\n"+
+                    "json数据: " + request.param.json +"\n" +
+                    "array数据: " + Arrays.toString(request.param.arrays)+"\n" +
+                    "分页信息: "+ request.param.pageIndex +" , " +request.param.pageNumber
             );
         } catch (Exception e) {
             e.printStackTrace();
@@ -67,10 +96,13 @@ public class ServerImp extends _InterfacesDisp {
 
     @Override
     public String accessService(IRequest request, Current __current) {
-        printInfo(request,__current);
+
         Object result;
         try {
             check(request);
+            printInfo(request,__current);
+            interceptor(serverName,request,__current);
+
             result = callObjectMethod(pkgPath,request.cls,request.method,__current,request.param);
         } catch (Exception e) {
             e.printStackTrace();
@@ -80,7 +112,11 @@ public class ServerImp extends _InterfacesDisp {
         return GsonUtils.javaBeanToJson(result);
     }
 
-
+    private void interceptor(String serverName, IRequest request, Current current) throws Exception {
+        for (IServerInterceptor iServerInterceptor : interceptorList){
+            if (iServerInterceptor.interceptor(serverName,request,current)) throw new Exception("拒绝访问");
+        }
+    }
 
 
 }
