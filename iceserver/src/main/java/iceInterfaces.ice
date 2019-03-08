@@ -17,6 +17,8 @@ module inf{
           byteArray bytes;
           int pageIndex;
           int pageNumber;
+          string extend;
+          string token;
       };
 
       /** 接口调用结构体 */

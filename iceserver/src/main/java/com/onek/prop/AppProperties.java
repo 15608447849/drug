@@ -19,6 +19,8 @@ public class AppProperties extends ApplicationPropertiesBase {
   public String repSrv ;
   @PropertiesName("ice.server.interceptor.list")
   public String intercept ;
+  @PropertiesName("ice.app.context.imp")
+  public String contextImp;
 
   //rep 列表 k = 服务名 v = 组名
   public HashMap<String,String> repSrvMap;

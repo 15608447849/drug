@@ -1,4 +1,4 @@
-package global;
+package com.onek;
 
 import java.io.Serializable;
 

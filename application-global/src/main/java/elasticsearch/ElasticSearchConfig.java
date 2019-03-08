@@ -3,7 +3,6 @@ package elasticsearch;
 import properties.abs.ApplicationPropertiesBase;
 import properties.annotations.PropertiesFilePath;
 import properties.annotations.PropertiesName;
-import util.StringUtils;
 
 @PropertiesFilePath("/elasticsearch.properties")
 public class ElasticSearchConfig extends ApplicationPropertiesBase {

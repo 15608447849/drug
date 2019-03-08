@@ -30,12 +30,17 @@ public class ServerImp extends _InterfacesDisp {
 
     private String pkgPath;
 
+    //上下文实例
+    private Class contextCls = IApplicationContext.class;
+
     public ServerImp(String serverName, Logger logger) {
         this.serverName = serverName;
         this.logger = logger;
         pkgPath = AppProperties.INSTANCE.pkgSrvMap.get(serverName);
         initInterceptorList();
+        initContextClass();
     }
+
 
     private void initInterceptorList() {
         interceptorList = new ArrayList<>();
@@ -45,6 +50,14 @@ public class ServerImp extends _InterfacesDisp {
             if (iServerInterceptor!=null) {
                 interceptorList.add(iServerInterceptor);
             }
+        }
+    }
+
+    private void initContextClass() {
+        if (StringUtils.isEmpty(AppProperties.INSTANCE.contextImp)) return;
+        try {
+            contextCls = Class.forName(AppProperties.INSTANCE.contextImp);
+        } catch (ClassNotFoundException ignored) {
         }
     }
 
@@ -84,14 +97,14 @@ public class ServerImp extends _InterfacesDisp {
         if (StringUtils.isEmpty(request.method)) throw new Exception("没有指定相关服务方法");
     }
 
-    private Object callObjectMethod(String packagePath, String classPath, String method, Current current, IParam params) throws Exception{
+    private Object callObjectMethod(String packagePath, String classPath, String method,IApplicationContext iApplicationContext) throws Exception{
         Object obj = ObjectPoolManager.get().getObject(classPath);
         if (obj == null){
             //创建
             obj = ObjectRefUtil.createObject(packagePath+"."+classPath,null,null);
             //使用完毕之后再放入池中
         }
-        return  ObjectRefUtil.callMethod(obj,method,new Class[]{Current.class, Logger.class,IParam.class},current,logger,params);
+        return  ObjectRefUtil.callMethod(obj,method,new Class[]{contextCls},iApplicationContext);
     }
 
     @Override
@@ -102,14 +115,27 @@ public class ServerImp extends _InterfacesDisp {
             check(request);
             printInfo(request,__current);
             interceptor(serverName,request,__current);
-
-            result = callObjectMethod(pkgPath,request.cls,request.method,__current,request.param);
+            //产生Application上下文
+            IApplicationContext context = genApplicationContext(__current,request.param);
+            result = callObjectMethod(pkgPath,request.cls,request.method,context);
         } catch (Exception e) {
             e.printStackTrace();
             logger.print(__current.con._toString().split("\\n")[1]+"->"+e);
             result = new Result().message(e.toString());
         }
         return GsonUtils.javaBeanToJson(result);
+    }
+
+    //产生平台上下文对象
+    private IApplicationContext genApplicationContext(Current current, IParam param) {
+        try{
+            Object obj = ObjectRefUtil.createObject(contextCls,
+                    new Class[]{Current.class,Logger.class,IParam.class,},
+                    new Object[]{current,logger,param});
+            if (obj instanceof IApplicationContext) return (IApplicationContext) obj;
+        }catch (Exception ignored){
+        }
+        return new IApplicationContext(current,logger,param);
     }
 
     private void interceptor(String serverName, IRequest request, Current current) throws Exception {

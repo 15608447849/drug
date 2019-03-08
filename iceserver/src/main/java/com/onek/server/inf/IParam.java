@@ -35,18 +35,26 @@ public class IParam implements java.lang.Cloneable, java.io.Serializable
 
     public int pageNumber;
 
+    public String extend;
+
+    public String token;
+
     public IParam()
     {
         json = "";
+        extend = "";
+        token = "";
     }
 
-    public IParam(String json, String[] arrays, byte[] bytes, int pageIndex, int pageNumber)
+    public IParam(String json, String[] arrays, byte[] bytes, int pageIndex, int pageNumber, String extend, String token)
     {
         this.json = json;
         this.arrays = arrays;
         this.bytes = bytes;
         this.pageIndex = pageIndex;
         this.pageNumber = pageNumber;
+        this.extend = extend;
+        this.token = token;
     }
 
     public boolean
@@ -87,6 +95,20 @@ public class IParam implements java.lang.Cloneable, java.io.Serializable
             {
                 return false;
             }
+            if(extend != _r.extend)
+            {
+                if(extend == null || _r.extend == null || !extend.equals(_r.extend))
+                {
+                    return false;
+                }
+            }
+            if(token != _r.token)
+            {
+                if(token == null || _r.token == null || !token.equals(_r.token))
+                {
+                    return false;
+                }
+            }
 
             return true;
         }
@@ -104,6 +126,8 @@ public class IParam implements java.lang.Cloneable, java.io.Serializable
         __h = IceInternal.HashUtil.hashAdd(__h, bytes);
         __h = IceInternal.HashUtil.hashAdd(__h, pageIndex);
         __h = IceInternal.HashUtil.hashAdd(__h, pageNumber);
+        __h = IceInternal.HashUtil.hashAdd(__h, extend);
+        __h = IceInternal.HashUtil.hashAdd(__h, token);
         return __h;
     }
 
@@ -130,6 +154,8 @@ public class IParam implements java.lang.Cloneable, java.io.Serializable
         byteArrayHelper.write(__os, bytes);
         __os.writeInt(pageIndex);
         __os.writeInt(pageNumber);
+        __os.writeString(extend);
+        __os.writeString(token);
     }
 
     public void
@@ -140,6 +166,8 @@ public class IParam implements java.lang.Cloneable, java.io.Serializable
         bytes = byteArrayHelper.read(__is);
         pageIndex = __is.readInt();
         pageNumber = __is.readInt();
+        extend = __is.readString();
+        token = __is.readString();
     }
 
     static public void
@@ -168,5 +196,5 @@ public class IParam implements java.lang.Cloneable, java.io.Serializable
     
     private static final IParam __nullMarshalValue = new IParam();
 
-    public static final long serialVersionUID = 1558203069L;
+    public static final long serialVersionUID = 1706528032L;
 }

@@ -14,8 +14,9 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
+import constant.FormatConst;
 import dao.BaseDAO;
-import db.constant.FormatConst;
+
 
 import cn.hy.otms.rpcproxy.comm.cstruct.BoolMessage;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;

@@ -2,8 +2,8 @@
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.12'
     implementation project(':iceserver')
-    implementation project(':publib')
     implementation project(':jdbc')
+    implementation project(':application-global')
 }
 
 shadowJar {

@@ -32,13 +32,15 @@
      * 方法参数
      **/
     inf.IParam = Slice.defineStruct(
-        function(json, arrays, bytes, pageIndex, pageNumber)
+        function(json, arrays, bytes, pageIndex, pageNumber, extend, token)
         {
             this.json = json !== undefined ? json : "";
             this.arrays = arrays !== undefined ? arrays : null;
             this.bytes = bytes !== undefined ? bytes : null;
             this.pageIndex = pageIndex !== undefined ? pageIndex : 0;
             this.pageNumber = pageNumber !== undefined ? pageNumber : 0;
+            this.extend = extend !== undefined ? extend : "";
+            this.token = token !== undefined ? token : "";
         },
         true,
         function(__os)
@@ -48,6 +50,8 @@
             inf.byteArrayHelper.write(__os, this.bytes);
             __os.writeInt(this.pageIndex);
             __os.writeInt(this.pageNumber);
+            __os.writeString(this.extend);
+            __os.writeString(this.token);
         },
         function(__is)
         {
@@ -56,8 +60,10 @@
             this.bytes = inf.byteArrayHelper.read(__is);
             this.pageIndex = __is.readInt();
             this.pageNumber = __is.readInt();
+            this.extend = __is.readString();
+            this.token = __is.readString();
         },
-        11, 
+        13, 
         false);
 
     /**
@@ -86,7 +92,7 @@
             this.method = __is.readString();
             this.param = inf.IParam.read(__is, this.param);
         },
-        14, 
+        16, 
         false);
 
     /**

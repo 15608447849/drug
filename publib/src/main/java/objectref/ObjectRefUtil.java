@@ -14,6 +14,12 @@ public class ObjectRefUtil {
 
     private ObjectRefUtil(){ }
 
+    public static Object createObject(Class cls,Class[] parameterTypes,Object[] parameters) throws Exception{
+        Constructor constructor = cls.getConstructor(parameterTypes);
+        Object obj =constructor.newInstance(parameters);
+        return obj;
+    }
+
     /**
      * 反射创建对象
      * @param classPath 全类名
@@ -23,9 +29,7 @@ public class ObjectRefUtil {
      */
     public static Object createObject(String classPath,Class[] parameterTypes,Object[] parameters) throws Exception{
             Class cls = Class.forName(classPath);
-            Constructor constructor = cls.getConstructor(parameterTypes);
-            Object obj =constructor.newInstance(parameters);
-            return obj;
+            return createObject(cls,parameterTypes,parameterTypes);
     }
 
     /**

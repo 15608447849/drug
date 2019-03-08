@@ -1,6 +1,5 @@
 package redis;
 
-import properties.annotations.PropertiesName;
 import redis.annation.CacheInvoke;
 
 import java.util.List;

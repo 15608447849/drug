@@ -3,4 +3,5 @@ include 'iceserver'
 include 'publib'
 include 'server-user'
 include 'jdbc'
+include 'application-global'
 
