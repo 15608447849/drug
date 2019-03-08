@@ -114,9 +114,9 @@ public class ServerImp extends _InterfacesDisp {
         try {
             check(request);
             printInfo(request,__current);
-            interceptor(serverName,request,__current);
             //产生Application上下文
             IApplicationContext context = genApplicationContext(__current,request.param);
+            interceptor(serverName,request,context);
             result = callObjectMethod(pkgPath,request.cls,request.method,context);
         } catch (Exception e) {
             e.printStackTrace();
@@ -138,9 +138,9 @@ public class ServerImp extends _InterfacesDisp {
         return new IApplicationContext(current,logger,param);
     }
 
-    private void interceptor(String serverName, IRequest request, Current current) throws Exception {
+    private void interceptor(String serverName, IRequest request, IApplicationContext context) throws Exception {
         for (IServerInterceptor iServerInterceptor : interceptorList){
-            if (iServerInterceptor.interceptor(serverName,request,current)) throw new Exception("拒绝访问");
+            if (iServerInterceptor.interceptor(serverName,request,context)) throw new Exception("拒绝访问");
         }
     }
 

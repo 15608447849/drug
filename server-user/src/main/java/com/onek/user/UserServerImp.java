@@ -25,6 +25,7 @@ public class UserServerImp {
            u.setToken(token);
            String json = GsonUtils.javaBeanToJson(u);
            RedisUtil.getStringProvide().set(token, json);
+           RedisUtil.getStringProvide().expire(token, appContext.SESSION_EFFECTIVE_SESSIONS);
        }
        return new Result().success("登陆成功");
     }

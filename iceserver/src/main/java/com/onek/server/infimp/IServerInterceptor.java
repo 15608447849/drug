@@ -15,5 +15,5 @@ public interface IServerInterceptor {
      * current 中可以获取客户端IP信息 进行拦截
      * request 中可以获取参数信息进行拦截
      */
-    boolean interceptor(String serverName, IRequest request, Current current);
+    boolean interceptor(String serverName, IRequest request, IApplicationContext context) throws Exception;
 }
