@@ -1,4 +1,4 @@
-package db.constant;
+package constant;
 
 public class FormatConst {
 
