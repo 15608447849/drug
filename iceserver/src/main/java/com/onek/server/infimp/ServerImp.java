@@ -15,6 +15,7 @@ import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * ice bind type = ::inf::Interfaces
@@ -116,8 +117,9 @@ public class ServerImp extends _InterfacesDisp {
             printInfo(request,__current);
             //产生Application上下文
             IApplicationContext context = genApplicationContext(__current,request.param);
-            interceptor(serverName,request,context);
-            result = callObjectMethod(pkgPath,request.cls,request.method,context);
+            result = interceptor(serverName,request,context);
+            logger.print("拦截结果: "+ result);
+            if (result == null) result = callObjectMethod(pkgPath,request.cls,request.method,context);
         } catch (Exception e) {
             e.printStackTrace();
             logger.print(__current.con._toString().split("\\n")[1]+"->"+e);
@@ -138,10 +140,14 @@ public class ServerImp extends _InterfacesDisp {
         return new IApplicationContext(current,logger,param);
     }
 
-    private void interceptor(String serverName, IRequest request, IApplicationContext context) throws Exception {
-        for (IServerInterceptor iServerInterceptor : interceptorList){
-            if (iServerInterceptor.interceptor(serverName,request,context)) throw new Exception("拒绝访问");
+    private Result interceptor(String serverName, IRequest request, IApplicationContext context) throws Exception {
+        Result result = null;
+        Iterator<IServerInterceptor> it = interceptorList.iterator();
+        while (it.hasNext()){
+            result = it.next().interceptor(serverName,request,context);
+            if (result != null) break;
         }
+        return result;
     }
 
 

@@ -8,12 +8,14 @@ public class Result {
 
    interface CODE{
       int FAIL = -1;
+      int INTERCEPT = -2;
       int SUCCESS = 200;
    }
 
    interface MESSAGE{
-      String FAIL = "fail";
-      String SUCCESS = "success";
+      String FAIL = "调用失败";
+      String SUCCESS = "调用成功";
+      String INTERCEPT = "拒绝访问";
    }
 
    public int code = CODE.FAIL;
@@ -42,6 +44,13 @@ public class Result {
       this.code = CODE.SUCCESS;
       this.message = MESSAGE.SUCCESS;
       this.data = data;
+      return this;
+   }
+
+   public Result intercept(Object data){
+      this.code = CODE.INTERCEPT;
+      this.message = MESSAGE.INTERCEPT;
+      this.data = data = data;
       return this;
    }
 
