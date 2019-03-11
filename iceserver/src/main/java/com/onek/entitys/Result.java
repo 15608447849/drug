@@ -6,8 +6,6 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 
 public class Result {
 
-
-
    interface CODE{
       int FAIL = -1;
       int SUCCESS = 200;

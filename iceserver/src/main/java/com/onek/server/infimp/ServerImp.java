@@ -69,7 +69,7 @@ public class ServerImp extends _InterfacesDisp {
                 return (IServerInterceptor) obj;
             }
         } catch (Exception e) {
-            logger.print("创建拦截器失败,path = " + path+" ,error: "+ e);
+            logger.print("创建拦截器失败,path = " + path);
         }
         return  null;
     }
