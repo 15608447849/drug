@@ -12,10 +12,11 @@ import com.onek.server.inf.IRequest;
 
 public interface IServerInterceptor {
     /**
+     * packagePath 包名
      * serverName 对服务名进行拦截
      * current 中可以获取客户端IP信息 进行拦截
      * request 中可以获取参数信息进行拦截
      * 如果拦截返回结果,否则NULL
      */
-    Result interceptor(String serverName, IRequest request, IApplicationContext context) throws Exception;
+    Result interceptor(String packagePath,String serverName, IRequest request, IApplicationContext context) throws Exception;
 }

@@ -117,7 +117,7 @@ public class ServerImp extends _InterfacesDisp {
             printInfo(request,__current);
             //产生Application上下文
             IApplicationContext context = genApplicationContext(__current,request.param);
-            result = interceptor(serverName,request,context);
+            result = interceptor(pkgPath,serverName,request,context);
             logger.print("拦截结果: "+ result);
             if (result == null) result = callObjectMethod(pkgPath,request.cls,request.method,context);
         } catch (Exception e) {
@@ -140,11 +140,11 @@ public class ServerImp extends _InterfacesDisp {
         return new IApplicationContext(current,logger,param);
     }
 
-    private Result interceptor(String serverName, IRequest request, IApplicationContext context) throws Exception {
+    private Result interceptor(String packagePath,String serverName, IRequest request, IApplicationContext context) throws Exception {
         Result result = null;
         Iterator<IServerInterceptor> it = interceptorList.iterator();
         while (it.hasNext()){
-            result = it.next().interceptor(serverName,request,context);
+            result = it.next().interceptor(packagePath, serverName,request,context);
             if (result != null) break;
         }
         return result;
