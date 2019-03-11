@@ -1,6 +1,7 @@
 package com.onek.prop;
 
 import properties.abs.ApplicationPropertiesBase;
+import properties.annotations.PropertiesFilePath;
 import properties.annotations.PropertiesName;
 
 import java.util.ArrayList;
@@ -8,6 +9,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
+@PropertiesFilePath("/iceapplication.properties")
 public class AppProperties extends ApplicationPropertiesBase {
 
   public static AppProperties INSTANCE = new AppProperties();

@@ -68,7 +68,8 @@ public class DictServiceImpl implements IRedisCache{
 
 	@Override
 	public List<?> queryByParams(String [] params) {
-		List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.LC_GLOBAL_DICT +"}} where cstatus&1= 0 and type= ? and text like CONCAT('%',?,'%')", params);
+		Object [] paraArra = params;
+		List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.LC_GLOBAL_DICT +"}} where cstatus&1= 0 and type= ? and text like CONCAT('%',?,'%')", paraArra);
 		DictVo[] dicts = new DictVo[result.size()];
 		baseDao.convToEntity(result, dicts, DictVo.class);
 		return Arrays.asList(dicts	);
