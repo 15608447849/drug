@@ -2,9 +2,9 @@ package com.onek;
 
 import Ice.Current;
 import Ice.Logger;
-import com.google.gson.Gson;
 import com.onek.server.inf.IParam;
-import com.onek.server.infimp.IApplicationContext;
+import com.onek.server.inf.IRequest;
+import com.onek.server.infimp.IceContext;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.StringUtils;
@@ -12,7 +12,7 @@ import util.StringUtils;
 /**
  * 平台上下文对象
  */
-public class AppContext extends IApplicationContext {
+public class AppContext extends IceContext {
 
     /**
      * session有效时间 以秒为单位
@@ -21,14 +21,17 @@ public class AppContext extends IApplicationContext {
 
     private UserSession userSession;
 
-    public AppContext(Current current, Logger logger, IParam param) {
-        super(current, logger, param);
+    public AppContext(Current current, IRequest request) {
+        super(current, request);
+    }
+
+    @Override
+    protected void initialization() {
         String token = param.token;
         if(!StringUtils.isEmpty(token)){
             String json = RedisUtil.getStringProvide().get(token);
             if(!StringUtils.isEmpty(json)){
-                UserSession userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
-                this.userSession = userSession;
+                this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
             }
         }
     }

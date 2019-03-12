@@ -50,7 +50,7 @@ public class Result {
    public Result intercept(Object data){
       this.code = CODE.INTERCEPT;
       this.message = MESSAGE.INTERCEPT;
-      this.data = data = data;
+      this.data = data;
       return this;
    }
 

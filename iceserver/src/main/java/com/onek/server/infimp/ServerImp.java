@@ -2,9 +2,7 @@ package com.onek.server.infimp;
 
 import Ice.Current;
 import Ice.Logger;
-import IceInternal.Ex;
-import com.onek.prop.AppProperties;
-import com.onek.server.inf.IParam;
+import Ice.Request;
 import com.onek.server.inf.IRequest;
 import com.onek.server.inf._InterfacesDisp;
 import com.onek.entitys.Result;
@@ -23,29 +21,33 @@ import java.util.Iterator;
  */
 public class ServerImp extends _InterfacesDisp {
 
+    //拦截器
     private ArrayList<IServerInterceptor> interceptorList;
 
+    //服务名
     private String serverName;
 
+    //日志
     private Logger logger;
 
+    //服务对象的反射包路径
     private String pkgPath;
 
-    //上下文实例
-    private Class contextCls = IApplicationContext.class;
+    //上下文实例 - 默认
+    private Class contextCls = IceContext.class;
 
-    public ServerImp(String serverName, Logger logger) {
+    ServerImp(String serverName, Logger logger) {
         this.serverName = serverName;
         this.logger = logger;
-        pkgPath = AppProperties.INSTANCE.pkgSrvMap.get(serverName);
+        pkgPath = IceProperties.INSTANCE.pkgSrvMap.get(serverName);
         initInterceptorList();
         initContextClass();
     }
 
-
+    //初始化拦截器
     private void initInterceptorList() {
         interceptorList = new ArrayList<>();
-        for (String path : AppProperties.INSTANCE.getInterceptList()){
+        for (String path : IceProperties.INSTANCE.getInterceptList()){
             //反射构建类
             IServerInterceptor iServerInterceptor = createInterceptor(path);
             if (iServerInterceptor!=null) {
@@ -54,10 +56,11 @@ public class ServerImp extends _InterfacesDisp {
         }
     }
 
+    //初始化上下文对象
     private void initContextClass() {
-        if (StringUtils.isEmpty(AppProperties.INSTANCE.contextImp)) return;
+        if (StringUtils.isEmpty(IceProperties.INSTANCE.contextImp)) return;
         try {
-            contextCls = Class.forName(AppProperties.INSTANCE.contextImp);
+            contextCls = Class.forName(IceProperties.INSTANCE.contextImp);
         } catch (ClassNotFoundException ignored) {
         }
     }
@@ -75,30 +78,36 @@ public class ServerImp extends _InterfacesDisp {
         return  null;
     }
 
-    private void printInfo(IRequest request, Current __current) {
+    //打印参数
+    private void printParam(IRequest request, Current __current) {
         try {
             logger.print(
-                    "定位: " +pkgPath +" - " + request.cls +" - "+request.method+"\n"+
-                    "json数据: " + request.param.json +"\n" +
-                    "array数据: " + Arrays.toString(request.param.arrays)+"\n" +
-                    "分页信息: "+ request.param.pageIndex +" , " +request.param.pageNumber
+                    "->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n" +
+                    "call:\t" + request.pkg +"_" + request.cls +"_"+request.method+"\n"+
+                    "token:\t"+ request.param.token+"\n"     +
+                    "json:\t" + request.param.json +"\n" +
+                    "array:\t" + Arrays.toString(request.param.arrays)+"\n" +
+                    "Paging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber
             );
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
+    //检测,查询配置的包路径 - 优先 客户端指定的全路径
     private void check(IRequest request) throws Exception {
-        //查询配置的包路径
-        if (StringUtils.isEmpty(pkgPath)) {
-            if (StringUtils.isEmpty(request.pkg)) throw new Exception("没有指定相关服务包路径");
-            pkgPath = request.pkg;
-        }
-        if (StringUtils.isEmpty(request.cls)) throw new Exception("没有指定相关服务类路径");
+
         if (StringUtils.isEmpty(request.method)) throw new Exception("没有指定相关服务方法");
+
+        if (StringUtils.isEmpty(request.cls)) throw new Exception("没有指定相关服务类路径");
+
+        if (StringUtils.isEmpty(request.pkg)){
+            if (StringUtils.isEmpty(pkgPath)) throw new Exception("没有指定相关服务包路径");
+            request.pkg = pkgPath;
+        }
     }
 
-    private Object callObjectMethod(String packagePath, String classPath, String method,IApplicationContext iApplicationContext) throws Exception{
+    private Object callObjectMethod(String packagePath, String classPath, String method, IceContext iApplicationContext) throws Exception{
         Object obj = ObjectPoolManager.get().getObject(classPath);
         if (obj == null){
             //创建
@@ -108,47 +117,54 @@ public class ServerImp extends _InterfacesDisp {
         return  ObjectRefUtil.callMethod(obj,method,new Class[]{contextCls},iApplicationContext);
     }
 
-    @Override
-    public String accessService(IRequest request, Current __current) {
-
-        Object result;
-        try {
-            check(request);
-            printInfo(request,__current);
-            //产生Application上下文
-            IApplicationContext context = genApplicationContext(__current,request.param);
-            result = interceptor(pkgPath,serverName,request,context);
-            logger.print("拦截结果: "+ result);
-            if (result == null) result = callObjectMethod(pkgPath,request.cls,request.method,context);
-        } catch (Exception e) {
-            e.printStackTrace();
-            logger.print(__current.con._toString().split("\\n")[1]+"->"+e);
-            result = new Result().message(e.toString());
-        }
-        return GsonUtils.javaBeanToJson(result);
-    }
-
     //产生平台上下文对象
-    private IApplicationContext genApplicationContext(Current current, IParam param) {
+    private IceContext generateContext(Current current, IRequest request) {
         try{
             Object obj = ObjectRefUtil.createObject(contextCls,
-                    new Class[]{Current.class,Logger.class,IParam.class,},
-                    new Object[]{current,logger,param});
-            if (obj instanceof IApplicationContext) return (IApplicationContext) obj;
-        }catch (Exception ignored){
-        }
-        return new IApplicationContext(current,logger,param);
+                    new Class[]{Current.class, IRequest.class},
+                    new Object[]{current,request});
+            if (obj instanceof IceContext) return (IceContext) obj;
+        }catch (Exception ignored){ }
+        return new IceContext(current,request);
     }
 
-    private Result interceptor(String packagePath,String serverName, IRequest request, IApplicationContext context) throws Exception {
+    private Result interceptor(IceContext context) throws Exception {
         Result result = null;
         Iterator<IServerInterceptor> it = interceptorList.iterator();
         while (it.hasNext()){
-            result = it.next().interceptor(packagePath, serverName,request,context);
+            result = it.next().interceptor(context);
             if (result != null) break;
         }
         return result;
     }
+
+    private String printResult(Object result) {
+        String resultString = GsonUtils.javaBeanToJson(result);
+        logger.print(
+                resultString+"\n"+
+                "-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n");
+        return resultString;
+    }
+
+    //客户端 - 接入服务
+    @Override
+    public String accessService(IRequest request, Current __current) {
+        Object result;
+        try {
+            check(request);
+            printParam(request,__current);
+            //产生Application上下文
+            IceContext context = generateContext(__current,request);
+            result = interceptor(context);
+            if (result == null) result = callObjectMethod(context.refPkg,context.refCls,context.refMed,context);
+        } catch (Exception e) {
+            e.printStackTrace();
+            logger.print(__current.con._toString().split("\\n")[1]+"\t"+e);
+            result = new Result().message(e.toString());
+        }
+        return printResult(result);
+    }
+
 
 
 }
