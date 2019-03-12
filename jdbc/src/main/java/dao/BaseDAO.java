@@ -86,7 +86,7 @@ public class BaseDAO {
 	}
 
 	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
-	public AbstractJdbcSessionMgr getBackupSessionMgr(int sharding, final int table){
+	protected AbstractJdbcSessionMgr getBackupSessionMgr(int sharding, final int table){
 		/**公共库只有一个连接,是不需要切分服务器与库及表的。公共库服务器索引是所有数据源的最后一个，库的索引值固定为0*/
 		int dbs = master == 0 ? 1 : 0;
 		int db = 0;
@@ -362,12 +362,16 @@ public class BaseDAO {
 	 * @return　成功更新的记录数
 	 * 单表新增、修改、删除方法。
 	 */
-	public int updateNativeInCall(String nativeSQL,final Object... params){
+	protected int updateNativeInCall(String nativeSQL,int synFlag,final Object... params){
 		int result = 0;
 		String[] resultSQL = getNativeSQL(nativeSQL);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
+		if(synFlag == 0){
+			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
+		}else{
+			baseDao.setManager(getBackupSessionMgr(0,Integer.parseInt(resultSQL[0])));
+		}
 		result = baseDao.update(resultSQL[1], params);
 		return result;
 	}
@@ -401,7 +405,7 @@ public class BaseDAO {
 		} catch (DAOException e) {
 			//master = (master == 0 ? 1: 0);
 			SQLException ourCause = (SQLException)e.getCause().getCause();
-			System.out.println("JDBC 异常测试 "
+			System.out.println("1111  JDBC 异常测试 错误码"
 					+ ourCause.getErrorCode());
 			e.printStackTrace();
 		}
@@ -418,12 +422,16 @@ public class BaseDAO {
 	 * @return　成功更新的记录数
 	 * 单表新增、修改、删除方法。
 	 */
-	public int updateNativeInCallSharding(int sharding,int year,String nativeSQL,final Object... params){
+	protected int updateNativeInCallSharding(int sharding,int year,String nativeSQL,int synFlag,final Object... params){
 		int result = 0;
 		String[] resultSQL = getNativeSQL(nativeSQL,year);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+		if(synFlag == 0){
+			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+		}else{
+			baseDao.setManager(getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+		}
 		result = baseDao.update(resultSQL[1], params);
 		return result;
 	}
@@ -499,12 +507,16 @@ public class BaseDAO {
 	 * @return Key成功更新的记录数；Value自增的字段值集合。
 	 * 单表新增并返回自增主键键。
 	 */
-	public KV<Integer, List<Object>> updateAndGPKNativeInCall(String nativeSQL,final Object... params){
+	protected KV<Integer, List<Object>> updateAndGPKNativeInCall(String nativeSQL,int synFlag,final Object... params){
 		KV<Integer,List<Object>> keys;
 		String[] resultSQL = getNativeSQL(nativeSQL);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
+		if(synFlag == 0){
+			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
+		}else{
+			baseDao.setManager(getBackupSessionMgr(0,Integer.parseInt(resultSQL[0])));
+		}
 		keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		return keys;
 	}
@@ -518,12 +530,16 @@ public class BaseDAO {
 	 * @return Key成功更新的记录数；Value自增的字段值集合。
 	 * 单表新增并返回自增主键键。
 	 */
-	public KV<Integer, List<Object>> updateAndGPKNativeInCallSharding(int sharding,int year,String nativeSQL,final Object... params){
+	protected KV<Integer, List<Object>> updateAndGPKNativeInCallSharding(int sharding,int year,String nativeSQL,int synFlag,final Object... params){
 		KV<Integer,List<Object>> keys;
 		String[] resultSQL = getNativeSQL(nativeSQL,year);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+		if(synFlag == 0){
+			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+		}else{
+			baseDao.setManager(getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+		}
 		keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		return keys;
 	}
@@ -554,7 +570,7 @@ public class BaseDAO {
 			    @Override
 				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
 			        for (int i = 0; i < nativeSQL.length; i++) {
-						result[i] = updateNativeInCall(nativeSQL[i],params.get(i));
+						result[i] = updateNativeInCall(nativeSQL[i],0,params.get(i));
 					}
 				}
 			});
@@ -594,7 +610,7 @@ public class BaseDAO {
 				@Override
 				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
 					for (int i = 0; i < nativeSQL.length; i++) {
-						result[i] = updateNativeInCallSharding(sharding,year,nativeSQL[i],params.get(i));
+						result[i] = updateNativeInCallSharding(sharding,year,nativeSQL[i],0,params.get(i));
 					}
 				}
 			});
@@ -706,14 +722,16 @@ public class BaseDAO {
 				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
 			    	List<Object[]> autoGPK = new ArrayList<Object[]>();
 			        for (int i = 0; i < GPKNativeSQL.length; i++) {
-			        	KV<Integer,List<Object>> keys = updateAndGPKNativeInCall(GPKNativeSQL[i],params.get(i));
-			        	autoGPK.add(keys.getValue().toArray());//返回类型为[4,5],代表插入了两行，产生了两个自增长值，分别为4和5
-			        	result[i] = keys.getKey();//自增值个数，也就是行数（同时插入多行记录）
+			        	KV<Integer,List<Object>> keys = updateAndGPKNativeInCall(GPKNativeSQL[i],0,params.get(i));
+						//返回类型为[4,5],代表插入了两行，产生了两个自增长值，分别为4和5
+			        	autoGPK.add(keys.getValue().toArray());
+						//自增值个数，也就是行数（同时插入多行记录）
+			        	result[i] = keys.getKey();
 				    }
 			        Object[] paramsTrue;
 			        for (int i = 0 ; i < nativeSQL.length; i++) {
 			        	paramsTrue = getTrueParams(autoGPK,params.get(i + GPKNativeSQL.length));
-				        result[i + GPKNativeSQL.length] = updateNativeInCall(nativeSQL[i],paramsTrue);
+				        result[i + GPKNativeSQL.length] = updateNativeInCall(nativeSQL[i],0,paramsTrue);
 				    }
 				}
 			});
@@ -755,14 +773,16 @@ public class BaseDAO {
 				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
 					List<Object[]> autoGPK = new ArrayList<Object[]>();
 					for (int i = 0; i < GPKNativeSQL.length; i++) {
-						KV<Integer,List<Object>> keys = updateAndGPKNativeInCallSharding(sharding,year,GPKNativeSQL[i],params.get(i));
-						autoGPK.add(keys.getValue().toArray());//返回类型为[4,5],代表插入了两行，产生了两个自增长值，分别为4和5
-						result[i] = keys.getKey();//自增值个数，也就是行数（同时插入多行记录）
+						KV<Integer,List<Object>> keys = updateAndGPKNativeInCallSharding(sharding,year,GPKNativeSQL[i],0,params.get(i));
+						//返回类型为[4,5],代表插入了两行，产生了两个自增长值，分别为4和5
+						autoGPK.add(keys.getValue().toArray());
+						//自增值个数，也就是行数（同时插入多行记录）
+						result[i] = keys.getKey();
 					}
 					Object[] paramsTrue;
 					for (int i = 0 ; i < nativeSQL.length; i++) {
 						paramsTrue = getTrueParams(autoGPK,params.get(i + GPKNativeSQL.length));
-						result[i + GPKNativeSQL.length] = updateNativeInCallSharding(sharding,year,nativeSQL[i],paramsTrue);
+						result[i + GPKNativeSQL.length] = updateNativeInCallSharding(sharding,year,nativeSQL[i],0,paramsTrue);
 					}
 				}
 			});

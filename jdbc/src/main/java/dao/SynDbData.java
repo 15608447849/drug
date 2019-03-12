@@ -202,9 +202,9 @@ public class SynDbData implements Callable<Object> {
                 public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
                     for (int i = 0; i < nativeSQL.length; i++) {
                         if(sharding != 0){
-                            result[i] = baseDao.updateNativeInCallSharding(sharding,year,nativeSQL[i],params.get(i));
+                            result[i] = baseDao.updateNativeInCallSharding(sharding,year,nativeSQL[i],1,params.get(i));
                         }else{
-                            result[i] = baseDao.updateNativeInCall(nativeSQL[i],params.get(i));
+                            result[i] = baseDao.updateNativeInCall(nativeSQL[i],1,params.get(i));
                         }
                     }
                 }
@@ -230,9 +230,9 @@ public class SynDbData implements Callable<Object> {
                     for (int i = 0; i < GPKNativeSQL.length; i++) {
                         KV<Integer,List<Object>> keys = null;
                         if(sharding != 0){
-                            keys = baseDao.updateAndGPKNativeInCallSharding(sharding,year,GPKNativeSQL[i],params.get(i));
+                            keys = baseDao.updateAndGPKNativeInCallSharding(sharding,year,GPKNativeSQL[i],1,params.get(i));
                         }else{
-                            keys = baseDao.updateAndGPKNativeInCall(GPKNativeSQL[i],params.get(i));
+                            keys = baseDao.updateAndGPKNativeInCall(GPKNativeSQL[i],1,params.get(i));
                         }
                         //返回类型为[4,5],代表插入了两行，产生了两个自增长值，分别为4和5
                         autoGPK.add(keys.getValue().toArray());
@@ -243,9 +243,9 @@ public class SynDbData implements Callable<Object> {
                     for (int i = 0 ; i < nativeSQL.length; i++) {
                         paramsTrue = baseDao.getTrueParams(autoGPK,params.get(i + GPKNativeSQL.length));
                         if(sharding != 0){
-                            result[i + GPKNativeSQL.length] = baseDao.updateNativeInCallSharding(sharding,year,nativeSQL[i],paramsTrue);
+                            result[i + GPKNativeSQL.length] = baseDao.updateNativeInCallSharding(sharding,year,nativeSQL[i],1,paramsTrue);
                         }else{
-                            result[i + GPKNativeSQL.length] = baseDao.updateNativeInCall(nativeSQL[i],paramsTrue);
+                            result[i + GPKNativeSQL.length] = baseDao.updateNativeInCall(nativeSQL[i],1,paramsTrue);
                         }
 
                     }
