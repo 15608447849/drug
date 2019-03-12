@@ -12,6 +12,4 @@ import java.lang.annotation.Target;
 public @interface UserPermission {
     boolean ignore() default false; // 默认不忽略
     PermissionStatus mode() default PermissionStatus.ALREADY_LOGGED;
-
-
 }

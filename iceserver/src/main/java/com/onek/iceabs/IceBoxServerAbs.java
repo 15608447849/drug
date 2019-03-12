@@ -3,7 +3,7 @@ package com.onek.iceabs;
 import Ice.Object;
 import Ice.*;
 import IceBox.Service;
-import com.onek.prop.AppProperties;
+import com.onek.server.infimp.IceProperties;
 
 import java.util.Arrays;
 
@@ -31,7 +31,7 @@ public abstract class IceBoxServerAbs implements Service {
         Identity identity = communicator.stringToIdentity(_serverName);
         _adapter.add(IceServiceDispatchInterceptor.getInstance().addIceObject(identity,object),identity);
         //查询是否存在组配置信息 (暂时只能 一个服务关联到一个 rpc组 ,理论上 一个服务可关联到多个组, 暂不实现)
-        String name = AppProperties.INSTANCE.repSrvMap.get(_serverName);
+        String name = IceProperties.INSTANCE.repSrvMap.get(_serverName);
         if (name == null) return;
         identity = communicator.stringToIdentity(name);
         _adapter.add(IceServiceDispatchInterceptor.getInstance().addIceObject(identity,object),identity);

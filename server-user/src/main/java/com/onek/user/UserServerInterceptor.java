@@ -5,8 +5,7 @@ import com.onek.UserSession;
 import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
 import com.onek.permission.PermissionStatus;
-import com.onek.server.inf.IRequest;
-import com.onek.server.infimp.IApplicationContext;
+import com.onek.server.infimp.IceContext;
 import com.onek.server.infimp.IServerInterceptor;
 
 import java.lang.reflect.Method;
@@ -19,32 +18,35 @@ import java.util.Map;
  */
 public class UserServerInterceptor implements IServerInterceptor {
 
-    private static Map<String, UserPermission> permissionStatusMap = new HashMap<>();
+    //缓存列表
+    private final static Map<String, UserPermission> permissionStatusMap = new HashMap<>();
 
     @Override
-    public Result interceptor(String packagePath,String serverName, IRequest request, IApplicationContext context)  {
-
+    public Result interceptor( IceContext context)  {
         try {
-            String classpath = packagePath + "." +request.cls;
-            String method = request.method;
-            //System.out.println("30 line : "+classpath + "--"+method);
-            UserPermission up = null;
-            if(permissionStatusMap.containsKey(classpath + method)){
-                up = permissionStatusMap.get(classpath + method);
+
+            AppContext appContext =  context.convert();
+            String classpath = context.refPkg + "." +context.refCls;
+            String method = context.refMed;
+            String key = classpath + method;
+
+            UserPermission up;
+            if(permissionStatusMap.containsKey(key)){
+                up = permissionStatusMap.get(key);
             }else{
                 Class<?> clazz = Class.forName(classpath);
-                Method m = clazz.getMethod(method, new Class[]{ AppContext.class});
+                Method m = clazz.getMethod(method, appContext.getClass());
                 up = m.getAnnotation(UserPermission.class);
-                permissionStatusMap.put(classpath + method, up);
+                permissionStatusMap.put(key, up); //存
             }
-            //System.out.println("40 line : "+up);
-            if(up != null && up.ignore() == false && up.mode() == PermissionStatus.ALREADY_LOGGED){
-                AppContext appContext =  (AppContext) context;
+
+            if(up != null && !up.ignore() && up.mode() == PermissionStatus.ALREADY_LOGGED){
                 UserSession userSession = appContext.getUserSession();
                 if(userSession == null){
-                    return new Result().intercept("用户未登录!");
+                    return new Result().intercept("用户未登录");
                 }
             }
+
         }catch(Exception e){
             e.printStackTrace();
         }

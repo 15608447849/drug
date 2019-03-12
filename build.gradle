@@ -34,6 +34,8 @@ subprojects {
     tasks.withType(Javadoc) {
         options.addStringOption('Xdoclint:none', '-quiet')
         options.addStringOption('encoding', 'UTF-8')
+        options.addStringOption('-Xlint', 'unchecked')
+        options.addStringOption('deprecation', 'true')
     }
 
     dependencies {

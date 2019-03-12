@@ -1,4 +1,4 @@
-package com.onek.prop;
+package com.onek.server.infimp;
 
 import properties.abs.ApplicationPropertiesBase;
 import properties.annotations.PropertiesFilePath;
@@ -10,9 +10,9 @@ import java.util.HashMap;
 import java.util.List;
 
 @PropertiesFilePath("/iceapplication.properties")
-public class AppProperties extends ApplicationPropertiesBase {
+public class IceProperties extends ApplicationPropertiesBase {
 
-  public static AppProperties INSTANCE = new AppProperties();
+  public static IceProperties INSTANCE = new IceProperties();
 
 
   @PropertiesName("ice.server.package.map")
