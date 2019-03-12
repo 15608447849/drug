@@ -15,6 +15,7 @@ import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 
 /**
  * ice bind type = ::inf::Interfaces
@@ -69,7 +70,7 @@ public class ServerImp extends _InterfacesDisp {
                 return (IServerInterceptor) obj;
             }
         } catch (Exception e) {
-            logger.print("创建拦截器失败,path = " + path+" ,error: "+ e);
+            logger.print("创建拦截器失败,path = " + path);
         }
         return  null;
     }
@@ -114,10 +115,11 @@ public class ServerImp extends _InterfacesDisp {
         try {
             check(request);
             printInfo(request,__current);
-            interceptor(serverName,request,__current);
             //产生Application上下文
             IApplicationContext context = genApplicationContext(__current,request.param);
-            result = callObjectMethod(pkgPath,request.cls,request.method,context);
+            result = interceptor(pkgPath,serverName,request,context);
+            logger.print("拦截结果: "+ result);
+            if (result == null) result = callObjectMethod(pkgPath,request.cls,request.method,context);
         } catch (Exception e) {
             e.printStackTrace();
             logger.print(__current.con._toString().split("\\n")[1]+"->"+e);
@@ -138,10 +140,14 @@ public class ServerImp extends _InterfacesDisp {
         return new IApplicationContext(current,logger,param);
     }
 
-    private void interceptor(String serverName, IRequest request, Current current) throws Exception {
-        for (IServerInterceptor iServerInterceptor : interceptorList){
-            if (iServerInterceptor.interceptor(serverName,request,current)) throw new Exception("拒绝访问");
+    private Result interceptor(String packagePath,String serverName, IRequest request, IApplicationContext context) throws Exception {
+        Result result = null;
+        Iterator<IServerInterceptor> it = interceptorList.iterator();
+        while (it.hasNext()){
+            result = it.next().interceptor(packagePath, serverName,request,context);
+            if (result != null) break;
         }
+        return result;
     }
 
 
