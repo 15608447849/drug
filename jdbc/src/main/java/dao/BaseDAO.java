@@ -11,12 +11,14 @@ import org.hyrdpf.dao.FacadeProxy;
 import org.hyrdpf.dao.Transaction;
 import org.hyrdpf.dao.jdbc.AbstractJdbcSessionMgr;
 import org.hyrdpf.dao.jdbc.JdbcBaseDao;
+import org.hyrdpf.dao.jdbc.JdbcException;
 import org.hyrdpf.dao.jdbc.JdbcTransaction;
 import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.KV;
 import org.hyrdpf.util.LogUtil;
 
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -37,9 +39,14 @@ public class BaseDAO {
 	/**原生态SQL查询时，指定的查询表对象固定格式的前缀字符串与后缀字符串，对应的正则表达式的字符串*/
 	private static final StringBuffer PREFIX_REGEX_SB = new StringBuffer("\\{\\{\\?");
 	private static final StringBuffer SUFFIX_REGEX_SB = new StringBuffer("\\}\\}");
+
+	private static final ExecutorService ASYN_THREAD = Executors.newFixedThreadPool(2);
+
+	public static volatile int master = 0;
+
 	private static final BaseDAO BASEDAO = new BaseDAO();
 	/**私有化其构造函数，防止随便乱创建此对象。*/
-	private BaseDAO(){};
+	private BaseDAO(){}
 
 	public static BaseDAO getBaseDAO(){
 		return BASEDAO;
@@ -48,17 +55,9 @@ public class BaseDAO {
 	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
 	private AbstractJdbcSessionMgr getSessionMgr(final int table){
 		/**公共库只有一个连接,是不需要切分服务器与库及表的。公共库服务器索引是所有数据源的最后一个，库的索引值固定为0*/
-		int dbs = AppConfig.getDBSNum() - BUSConst._ONE;
+		int dbs = master;
 		int db = 0;
 		LogUtil.getDefaultLogger().debug("dbs="+dbs);
-//
-//		if (DSMConst.SEG_TABLE_RULE[table] != 0) {// 按公司模型切分表
-//			/** 取得数据库服务器的编号 */
-//			dbs = (int) Math.floor(AppConfig.getCompid() / BUSConst._DMNUM)
-//					% BUSConst._SMALLINTMAX;
-//			/** 取得数据库服务器上数据库的编号 */
-//			db = AppConfig.getCompid() % BUSConst._MODNUM_EIGHT;
-//		}
 		/**返回对应的数据库连接池供用户使用*/
 		return AppConfig.getSessionManager(dbs,db);
 	}
@@ -70,11 +69,12 @@ public class BaseDAO {
 	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
 	private AbstractJdbcSessionMgr getSessionMgr(int sharding, final int table){
 		/**公共库只有一个连接,是不需要切分服务器与库及表的。公共库服务器索引是所有数据源的最后一个，库的索引值固定为0*/
-		int dbs = AppConfig.getDBSNum() - BUSConst._ONE;
+		int dbs = master;
 		int db = 0;
-		if (DSMConst.SEG_TABLE_RULE[table] != 0) {// 按公司模型切分表
+		// 按公司模型切分表
+		if (DSMConst.SEG_TABLE_RULE[table] != 0) {
 			/** 取得数据库服务器的编号 */
-			dbs = sharding / BUSConst._DMNUM  % BUSConst._SMALLINTMAX;
+			//dbs = sharding / BUSConst._DMNUM  % BUSConst._SMALLINTMAX;
 			/** 取得数据库服务器上数据库的编号 */
 			db = sharding % BUSConst._DMNUM  % BUSConst._MODNUM_EIGHT;
 		}
@@ -86,8 +86,27 @@ public class BaseDAO {
 	}
 
 	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
+	public AbstractJdbcSessionMgr getBackupSessionMgr(int sharding, final int table){
+		/**公共库只有一个连接,是不需要切分服务器与库及表的。公共库服务器索引是所有数据源的最后一个，库的索引值固定为0*/
+		int dbs = master == 0 ? 1 : 0;
+		int db = 0;
+		// 按公司模型切分表
+		if (DSMConst.SEG_TABLE_RULE[table] != 0 && sharding != 0) {
+			/** 取得数据库服务器的编号 */
+			//dbs = sharding / BUSConst._DMNUM  % BUSConst._SMALLINTMAX;
+			/** 取得数据库服务器上数据库的编号 */
+			db = sharding % BUSConst._DMNUM  % BUSConst._MODNUM_EIGHT;
+		}
+		/**返回对应的数据库连接池供用户使用*/
+		LogUtil.getDefaultLogger().debug("分片字段："+sharding);
+		LogUtil.getDefaultLogger().debug("服务器编号："+dbs);
+		LogUtil.getDefaultLogger().debug("数据库编号："+db);
+		return AppConfig.getSessionManager(dbs,db);
+	}
+
+
+	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
 	public boolean isSameDb(int compid,int tcompid) {
-		boolean isSameDb = false;
 		int dbs = compid / BUSConst._DMNUM % BUSConst._SMALLINTMAX;
 		int db = compid % BUSConst._DMNUM % BUSConst._MODNUM_EIGHT;
 
@@ -95,19 +114,15 @@ public class BaseDAO {
 		int tdb = tcompid % BUSConst._DMNUM % BUSConst._MODNUM_EIGHT;
 
 		if(dbs == tdbs && db == tdb){
-			isSameDb = true;
+			return true;
 		}
-		return isSameDb;
+		return false;
 	}
 
 	/**切分表实现,table：是要操作那个基本表，基本表就是没有切分前的表*/
 	private String getTableName(final int table)
 	{
 		StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
-//		if(DSMConst.SEG_TABLE_RULE[table] != 0){//按公司模型切分表
-//			Calendar date = Calendar.getInstance();
-//			strSql.append(DSMConst._UNDERLINE).append(date.get(Calendar.YEAR));
-//		}
 		LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
 		return strSql.toString();
 	}
@@ -202,7 +217,7 @@ public class BaseDAO {
 	* @return　用同一事务中刚插入的记录的自增字段值取代了占位符类的值的参数对象数组。
 	* {@code} 用自增长字段的值替代占位符，形成最终需要保存的参数对象数组。
 	 */
-	private Object[] getTrueParams(List<Object[]> autoGPK,Object[] params){
+	public Object[] getTrueParams(List<Object[]> autoGPK,Object[] params){
 		for(int i = 0 ; i < params.length ; i++){
 			if(params[i] instanceof Placeholder){
 				Placeholder placeholder = (Placeholder)params[i];
@@ -223,8 +238,7 @@ public class BaseDAO {
 	public List<Object[]> queryNative(String nativeSQL,final Object... params){
 		List<Object[]> resultList = null;
 		String[] result = getNativeSQL(nativeSQL);
-//		 LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
-		System.out.println("【Debug】Native SQL：" + result[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		baseDao.setManager(getSessionMgr(Integer.parseInt(result[0])));
 		resultList = baseDao.query(result[1], params);
@@ -287,8 +301,7 @@ public class BaseDAO {
 	 */
 	public List<Object[]> queryGlobalCollect(int year,String nativeSQL,final Object... params){
 		int dbs = AppConfig.getDBSNum() - BUSConst._ONE;
-		//
-		ExecutorService executor=(ExecutorService) Executors.newFixedThreadPool(dbs);
+		ExecutorService executor= Executors.newFixedThreadPool(dbs);
 		List<Object[]> queryResultList = null;
 		List<GlobalQuery> queryThreads = new ArrayList<>();
 		for (int i = 0; i < dbs; i++){
@@ -321,7 +334,38 @@ public class BaseDAO {
 	public int updateNative(String nativeSQL,final Object... params){
 		int result = 0;
 		String[] resultSQL = getNativeSQL(nativeSQL);
-		 LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+
+		//异步同步到备份库中
+		SynDbData synDbData = new SynDbData(resultSQL,params,master,0);
+		synDbData.setSharding(0);
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+
+		JdbcBaseDao baseDao = null;
+		try{
+			baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
+			result = baseDao.update(resultSQL[1], params);
+		}catch (DAOException e) {
+			//master = (master == 0 ? 1: 0);
+			LogUtil.getDefaultLogger().debug("JDBC 异常测试 "+ e.getCause());
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+
+	/**
+	 * @version 版本：1.0
+	 * @param nativeSQL　原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params　原生态SQL查询语句中“?”的参数值；
+	 * @return　成功更新的记录数
+	 * 单表新增、修改、删除方法。
+	 */
+	public int updateNativeInCall(String nativeSQL,final Object... params){
+		int result = 0;
+		String[] resultSQL = getNativeSQL(nativeSQL);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
 		result = baseDao.update(resultSQL[1], params);
@@ -342,6 +386,42 @@ public class BaseDAO {
 		int result = 0;
 		String[] resultSQL = getNativeSQL(nativeSQL,year);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+
+		//异步同步到备份库
+		SynDbData synDbData = new SynDbData(resultSQL,params,master,0);
+		synDbData.setSharding(sharding);
+		synDbData.setYear(year);
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+
+		JdbcBaseDao baseDao = null;
+		try {
+			baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+			result = baseDao.update(resultSQL[1], params);
+		} catch (DAOException e) {
+			//master = (master == 0 ? 1: 0);
+			SQLException ourCause = (SQLException)e.getCause().getCause();
+			System.out.println("JDBC 异常测试 "
+					+ ourCause.getErrorCode());
+			e.printStackTrace();
+		}
+		return result;
+	}
+
+
+	/**
+	 * @version 版本：1.0
+	 * @param sharding 分片字段
+	 * @param year 查询年份
+	 * @param nativeSQL　原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params　原生态SQL查询语句中“?”的参数值；
+	 * @return　成功更新的记录数
+	 * 单表新增、修改、删除方法。
+	 */
+	public int updateNativeInCallSharding(int sharding,int year,String nativeSQL,final Object... params){
+		int result = 0;
+		String[] resultSQL = getNativeSQL(nativeSQL,year);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 		result = baseDao.update(resultSQL[1], params);
@@ -356,14 +436,27 @@ public class BaseDAO {
 	 * 单表新增并返回自增主键键。
 	 */
 	public KV<Integer, List<Object>> updateAndGPKNative(String nativeSQL, final Object... params){
-		KV<Integer,List<Object>> keys;
+		KV<Integer,List<Object>> keys = null;
 		String[] resultSQL = getNativeSQL(nativeSQL);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
-		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
-		keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
+		//异步同步到备份库
+		SynDbData synDbData = new SynDbData(resultSQL,params,master,2);
+		synDbData.setSharding(0);
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+
+		JdbcBaseDao baseDao = null;
+		try{
+			baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
+			keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
+		}catch (DAOException e) {
+			//master = (master == 0 ? 1: 0);
+			System.out.println("JDBC 异常测试 "+ e.getCause());
+			e.printStackTrace();
+		}
 		return keys;
 	}
+
 
 
 	/**
@@ -375,6 +468,57 @@ public class BaseDAO {
 	* 单表新增并返回自增主键键。
 	 */
 	public KV<Integer, List<Object>> updateAndGPKNativeSharding(int sharding, int year, String nativeSQL, final Object... params){
+		KV<Integer,List<Object>> keys = null;
+		String[] resultSQL = getNativeSQL(nativeSQL,year);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+
+		//异步同步到备份库
+		SynDbData synDbData = new SynDbData(resultSQL,params,master,2);
+		synDbData.setYear(year);
+		synDbData.setSharding(sharding);
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+
+		JdbcBaseDao baseDao = null;
+		try{
+			baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+			keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
+		}catch (DAOException e) {
+			//master = (master == 0 ? 1: 0);
+			System.out.println("JDBC 异常测试 "+ e.getCause());
+			e.printStackTrace();
+		}
+		return keys;
+	}
+
+
+	/**
+	 * @version 版本：1.0
+	 * @param nativeSQL 原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params 原生态SQL查询语句中“?”的参数值；
+	 * @return Key成功更新的记录数；Value自增的字段值集合。
+	 * 单表新增并返回自增主键键。
+	 */
+	public KV<Integer, List<Object>> updateAndGPKNativeInCall(String nativeSQL,final Object... params){
+		KV<Integer,List<Object>> keys;
+		String[] resultSQL = getNativeSQL(nativeSQL);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+		baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
+		keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
+		return keys;
+	}
+
+
+	/**
+	 * @version 版本：1.0
+	 * @param sharding 分片字段
+	 * @param nativeSQL 原生态SQL查询语句；但是所有表名用“{{?^\\d+$}}”,如：{{?0}}代替，"?"后面的数字，请同DSMConst中DB_TABLES的索引一一对应。
+	 * @param params 原生态SQL查询语句中“?”的参数值；
+	 * @return Key成功更新的记录数；Value自增的字段值集合。
+	 * 单表新增并返回自增主键键。
+	 */
+	public KV<Integer, List<Object>> updateAndGPKNativeInCallSharding(int sharding,int year,String nativeSQL,final Object... params){
 		KV<Integer,List<Object>> keys;
 		String[] resultSQL = getNativeSQL(nativeSQL,year);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
@@ -383,6 +527,8 @@ public class BaseDAO {
 		keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		return keys;
 	}
+
+
 
 	/**
 	* @version 版本：1.0
@@ -395,12 +541,20 @@ public class BaseDAO {
 		int[] result = new int[nativeSQL.length];
 		String[] resultSQL = getNativeSQL(nativeSQL[0]);
 		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(Integer.parseInt(resultSQL[0]));
+
+		//异步同步到备份库
+		SynDbData synDbData = new SynDbData(resultSQL,null,master,2);
+		synDbData.setNativeSQL(nativeSQL);
+		synDbData.setParams(params);
+		synDbData.setSharding(0);
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+
 		try {
 			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
 			    @Override
 				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
 			        for (int i = 0; i < nativeSQL.length; i++) {
-						result[i] = updateNative(nativeSQL[i],params.get(i));
+						result[i] = updateNativeInCall(nativeSQL[i],params.get(i));
 					}
 				}
 			});
@@ -426,12 +580,21 @@ public class BaseDAO {
 		int[] result = new int[nativeSQL.length];
 		String[] resultSQL = getNativeSQL(nativeSQL[0]);
 		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(sharding,Integer.parseInt(resultSQL[0]));
+
+		//异步同步到备份库
+		SynDbData synDbData = new SynDbData(resultSQL,null,master,2);
+		synDbData.setNativeSQL(nativeSQL);
+		synDbData.setParams(params);
+		synDbData.setSharding(sharding);
+		synDbData.setYear(year);
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+
 		try {
 			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
 				@Override
 				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
 					for (int i = 0; i < nativeSQL.length; i++) {
-						result[i] = updateNativeSharding(sharding,year,nativeSQL[i],params.get(i));
+						result[i] = updateNativeInCallSharding(sharding,year,nativeSQL[i],params.get(i));
 					}
 				}
 			});
@@ -528,20 +691,29 @@ public class BaseDAO {
 		int[] result = new int[GPKNativeSQL.length + nativeSQL.length];
         String[] resultSQL = getNativeSQL(nativeSQL[0]);
 		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(Integer.parseInt(resultSQL[0]));
+
+		SynDbData synDbData = new SynDbData(resultSQL,null,master,3);
+		synDbData.setGPKNativeSQL(GPKNativeSQL);
+		synDbData.setParams(params);
+		synDbData.setNativeSQL(nativeSQL);
+		synDbData.setSharding(0);
+
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+
 		try {
 			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
 			    @Override
 				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
 			    	List<Object[]> autoGPK = new ArrayList<Object[]>();
 			        for (int i = 0; i < GPKNativeSQL.length; i++) {
-			        	KV<Integer,List<Object>> keys = updateAndGPKNative(GPKNativeSQL[i],params.get(i));
+			        	KV<Integer,List<Object>> keys = updateAndGPKNativeInCall(GPKNativeSQL[i],params.get(i));
 			        	autoGPK.add(keys.getValue().toArray());//返回类型为[4,5],代表插入了两行，产生了两个自增长值，分别为4和5
 			        	result[i] = keys.getKey();//自增值个数，也就是行数（同时插入多行记录）
 				    }
 			        Object[] paramsTrue;
 			        for (int i = 0 ; i < nativeSQL.length; i++) {
 			        	paramsTrue = getTrueParams(autoGPK,params.get(i + GPKNativeSQL.length));
-				        result[i + GPKNativeSQL.length] = updateNative(nativeSQL[i],paramsTrue);
+				        result[i + GPKNativeSQL.length] = updateNativeInCall(nativeSQL[i],paramsTrue);
 				    }
 				}
 			});
@@ -568,20 +740,29 @@ public class BaseDAO {
 		int[] result = new int[GPKNativeSQL.length + nativeSQL.length];
 		String[] resultSQL = getNativeSQL(nativeSQL[0]);
 		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(sharding,Integer.parseInt(resultSQL[0]));
+
+		SynDbData synDbData = new SynDbData(resultSQL,null,master,3);
+		synDbData.setGPKNativeSQL(GPKNativeSQL);
+		synDbData.setParams(params);
+		synDbData.setNativeSQL(nativeSQL);
+		synDbData.setYear(year);
+		synDbData.setSharding(sharding);
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+
 		try {
 			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
 				@Override
 				public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
 					List<Object[]> autoGPK = new ArrayList<Object[]>();
 					for (int i = 0; i < GPKNativeSQL.length; i++) {
-						KV<Integer,List<Object>> keys = updateAndGPKNativeSharding(sharding,year,GPKNativeSQL[i],params.get(i));
+						KV<Integer,List<Object>> keys = updateAndGPKNativeInCallSharding(sharding,year,GPKNativeSQL[i],params.get(i));
 						autoGPK.add(keys.getValue().toArray());//返回类型为[4,5],代表插入了两行，产生了两个自增长值，分别为4和5
 						result[i] = keys.getKey();//自增值个数，也就是行数（同时插入多行记录）
 					}
 					Object[] paramsTrue;
 					for (int i = 0 ; i < nativeSQL.length; i++) {
 						paramsTrue = getTrueParams(autoGPK,params.get(i + GPKNativeSQL.length));
-						result[i + GPKNativeSQL.length] = updateNativeSharding(sharding,year,nativeSQL[i],paramsTrue);
+						result[i + GPKNativeSQL.length] = updateNativeInCallSharding(sharding,year,nativeSQL[i],paramsTrue);
 					}
 				}
 			});
@@ -603,10 +784,20 @@ public class BaseDAO {
 	 */
 	public int[] updateBatchNative(String nativeSQL, List<Object[]> params, int batchSize){
 		String[] resultSQL = getNativeSQL(nativeSQL);
-		 LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
-		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
-		int[] result = baseDao.updateBatch(resultSQL[1], params, batchSize);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		int[] result = null;
+		SynDbData synDbData = new SynDbData(resultSQL,null,master,4);
+		synDbData.setBatchSize(batchSize);
+		synDbData.setParams(params);
+		synDbData.setSharding(0);
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+		try{
+			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
+			result = baseDao.updateBatch(resultSQL[1], params, batchSize);
+		}catch (DAOException e) {
+			e.printStackTrace();
+		}
 		return result;
 	}
 
@@ -623,9 +814,21 @@ public class BaseDAO {
 	public int[] updateBatchNativeSharding(int sharding,int year,String nativeSQL, List<Object[]> params, int batchSize){
 		String[] resultSQL = getNativeSQL(nativeSQL,year);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
-		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
-		int[] result = baseDao.updateBatch(resultSQL[1], params, batchSize);
+		int[] result = null;
+
+		SynDbData synDbData = new SynDbData(resultSQL,null,master,4);
+		synDbData.setBatchSize(batchSize);
+		synDbData.setParams(params);
+		synDbData.setSharding(sharding);
+		synDbData.setYear(year);
+		Future<Object> future = ASYN_THREAD.submit(synDbData);
+		try{
+			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+			result = baseDao.updateBatch(resultSQL[1], params, batchSize);
+		}catch (DAOException e){
+			e.printStackTrace();
+		}
 		return result;
 	}
 	/*=====================分页相关方法开始===================================*/
