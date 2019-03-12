@@ -27,13 +27,17 @@ public class AppContext extends IceContext {
 
     @Override
     protected void initialization() {
-        String token = param.token;
-        if(!StringUtils.isEmpty(token)){
-            String json = RedisUtil.getStringProvide().get(token);
+        String key = param.token + "@" + remoteIp;
+        String value = RedisUtil.getStringProvide().get(key);
+        logger.print(" key = "+ key + " value = " + value);
+        if(!StringUtils.isEmpty(value)){
+            String json = RedisUtil.getStringProvide().get(value);
+            logger.print(" user json = " + json);
             if(!StringUtils.isEmpty(json)){
                 this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
             }
         }
+
     }
 
     public UserSession getUserSession() {

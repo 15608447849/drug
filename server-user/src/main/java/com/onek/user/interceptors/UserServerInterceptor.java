@@ -1,4 +1,4 @@
-package com.onek.user;
+package com.onek.user.interceptors;
 
 import com.onek.AppContext;
 import com.onek.UserSession;
