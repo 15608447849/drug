@@ -38,7 +38,6 @@ public class DictServiceImpl implements IRedisCache{
 		DictVo[] dicts = new DictVo[result.size()];
 		baseDao.convToEntity(result, dicts, DictVo.class);
 		return dicts[0];
-
 	}
 
 	@Override

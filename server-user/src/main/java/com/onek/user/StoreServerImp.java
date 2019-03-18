@@ -11,11 +11,6 @@ import util.GsonUtils;
 
 public class StoreServerImp {
 
-    static {
-        AppConfig.initLogger();
-        AppConfig.initialize();
-    }
-
     /**
      * 校验手机号码是否存在
      */
