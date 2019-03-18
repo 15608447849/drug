@@ -17,13 +17,6 @@ import java.util.Properties;
  */
 public class LoadDbConfig {
 
-    static {
-        /** 初始化LOG4J2日志环境 */
-        AppConfig.initLogger("log4j2.xml");
-        /** 初始化应用程序环境，如数据源等 */
-        AppConfig.initialize();
-    }
-
     public static void initConfig(){}
 
     public static int getDbMasterNum() {
