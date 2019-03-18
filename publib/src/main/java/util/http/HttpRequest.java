@@ -8,7 +8,7 @@ import java.util.*;
  * 配合ftc文件服务器使用
  * lzp
  */
-public class HttpResult extends HttpUtil.CallbackAbs  {
+public class HttpRequest extends HttpUtil.CallbackAbs  {
 
     private String text;
 
@@ -23,7 +23,7 @@ public class HttpResult extends HttpUtil.CallbackAbs  {
         sb.deleteCharAt(sb.length()-1);
     }
 
-    public HttpResult accessUrl(String url){
+    public HttpRequest accessUrl(String url){
         new HttpUtil.Request(url,this)
                 .setReadTimeout(1000)
                 .setConnectTimeout(1000)
@@ -40,7 +40,7 @@ public class HttpResult extends HttpUtil.CallbackAbs  {
     /**
      * 上传文件
      */
-    public HttpResult addFile(File file,String remotePath,String remoteFileName){
+    public HttpRequest addFile(File file, String remotePath, String remoteFileName){
         if (remotePath==null) remotePath = "/java/";
         if (remoteFileName==null) remoteFileName = file.getName();
         pathList.add(remotePath);
@@ -52,7 +52,7 @@ public class HttpResult extends HttpUtil.CallbackAbs  {
     /**
      * 上传流
      */
-    public HttpResult addStream(InputStream stream, String remotePath, String remoteFileName){
+    public HttpRequest addStream(InputStream stream, String remotePath, String remoteFileName){
         if (remotePath==null) remotePath = "/java/";
         if (remoteFileName==null) throw new NullPointerException("需要上传的远程文件名不可以为空");
         pathList.add(remotePath);
@@ -73,7 +73,7 @@ public class HttpResult extends HttpUtil.CallbackAbs  {
     /**
      * 文件上传地址
      */
-    public HttpResult fileUploadUrl(String url){
+    public HttpRequest fileUploadUrl(String url){
         HashMap<String,String> headParams = new HashMap<>();
         headParams.put("specify-path",join(pathList,";"));
         headParams.put("specify-filename",join(nameList,";"));
@@ -88,7 +88,7 @@ public class HttpResult extends HttpUtil.CallbackAbs  {
     /**
      * 获取文件列表
      */
-    public HttpResult getTargetDirFileList(String url,String dirPath,boolean isSub){
+    public HttpRequest getTargetDirFileList(String url, String dirPath, boolean isSub){
         HashMap<String,String> headParams = new HashMap<>();
         headParams.put("specify-path",dirPath);
         headParams.put("ergodic-sub",isSub+"");

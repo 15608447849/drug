@@ -118,13 +118,17 @@ public class ServerImp extends _InterfacesDisp {
     }
 
     //产生平台上下文对象
-    private IceContext generateContext(Current current, IRequest request) {
-        try{
-            Object obj = ObjectRefUtil.createObject(contextCls,
+    private IceContext generateContext(Current current, IRequest request)  {
+        try {
+            Object obj = ObjectRefUtil.createObject(
+                    contextCls,
                     new Class[]{Current.class, IRequest.class},
-                    new Object[]{current,request});
+                    new Object[]{current,request}
+                    );
             if (obj instanceof IceContext) return (IceContext) obj;
-        }catch (Exception ignored){ }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return new IceContext(current,request);
     }
 

@@ -2,6 +2,7 @@ package com.onek;
 
 import Ice.Current;
 import Ice.Logger;
+import IceInternal.Ex;
 import com.onek.server.inf.IParam;
 import com.onek.server.inf.IRequest;
 import com.onek.server.infimp.IceContext;
@@ -21,19 +22,23 @@ public class AppContext extends IceContext {
 
     private UserSession userSession;
 
-    public AppContext(Current current, IRequest request) {
+    public AppContext(Current current, IRequest request)  {
         super(current, request);
     }
 
     @Override
-    protected void initialization() {
-        String token = param.token;
-        if(!StringUtils.isEmpty(token)){
-            String json = RedisUtil.getStringProvide().get(token);
+    protected void initialization(){
+        String key = param.token + "@" + remoteIp;
+        String value = RedisUtil.getStringProvide().get(key);
+        logger.print(" key = "+ key + " value = " + value);
+        if(!StringUtils.isEmpty(value)){
+            String json = RedisUtil.getStringProvide().get(value);
+            logger.print(" user json = " + json);
             if(!StringUtils.isEmpty(json)){
                 this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
             }
         }
+
     }
 
     public UserSession getUserSession() {
