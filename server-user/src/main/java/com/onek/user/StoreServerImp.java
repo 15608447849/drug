@@ -10,7 +10,6 @@ import org.hyrdpf.ds.AppConfig;
 import util.GsonUtils;
 
 public class StoreServerImp {
-
     /**
      * 校验手机号码是否存在
      */
@@ -23,7 +22,7 @@ public class StoreServerImp {
     }
 
     /**
-     *用户注册
+     *门店用户注册
      */
     public Result register(AppContext appContext){
         String json = appContext.param.json;

@@ -16,6 +16,7 @@ public abstract class IceBoxServerAbs implements Service {
 
     @Override
     public void start(String name, Communicator communicator, String[] args) {
+
         logger = communicator.getLogger();
         _serverName = name;
         _adapter = communicator.createObjectAdapter(_serverName);

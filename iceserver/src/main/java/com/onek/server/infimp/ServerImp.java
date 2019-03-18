@@ -1,5 +1,6 @@
 package com.onek.server.infimp;
 
+import Ice.Communicator;
 import Ice.Current;
 import Ice.Logger;
 import Ice.Request;
