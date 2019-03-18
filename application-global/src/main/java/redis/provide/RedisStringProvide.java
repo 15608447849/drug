@@ -92,7 +92,6 @@ public class RedisStringProvide extends RedisProvide{
 	    return jedisCluster.set(key, obj.toString());
 	}
 
-	
 	/**
 	 * 只有在 key 不存在时设置 key的值。
 	 * 

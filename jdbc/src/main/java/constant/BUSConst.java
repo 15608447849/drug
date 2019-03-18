@@ -1,4 +1,7 @@
 package constant;
+
+import org.hyrdpf.ds.AppConfig;
+
 /**
  * Copyright © 2018空间折叠【FOLDING SPACE】. All rights reserved.
  * @ClassName: BUSConst
@@ -6,6 +9,9 @@ package constant;
  * @version: V1.0
  */
 public class BUSConst {
+
+
+
 	/**代码中用到的数字常量，避免魔术数字的出现*/
 	public static final int _ZERO = 0;
 	public static final int _ONE = 1;

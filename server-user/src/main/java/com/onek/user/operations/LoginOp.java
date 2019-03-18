@@ -4,9 +4,15 @@ import com.onek.AppContext;
 import com.onek.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
+import constant.DSMConst;
+import dao.BaseDAO;
+import org.hyrdpf.ds.AppConfig;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
+import util.StringUtils;
+
+import java.util.List;
 
 /**
  * @Author: leeping
@@ -14,9 +20,11 @@ import util.GsonUtils;
  */
 public class LoginOp  implements IOperation<AppContext> {
 
-    String username;
+    String phone;
     String password;
+    String key;
     String verification;
+
 
 
     @Override
@@ -71,14 +79,26 @@ public class LoginOp  implements IOperation<AppContext> {
     }
 
     private boolean checkSqlAndUserExist() {
-        if (username.equals("admin") || password.equals("admin")){
-            return true;
+        if (StringUtils.isEmpty(phone)) return false;
+        String selectSql = "SELECT uid,upw,times FROM {{?" + DSMConst.D_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND uphone = ?";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
+        if (lines.size()>0){
+            Object[] objects = lines.get(0);
+            if (objects[1].equals(password)) {
+                //密码正确
+
+//                String updateSql = "UPDATE uid,upw,times FROM {{?" + DSMConst.D_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND uphone = ?";
+            }
+            System.out.println(objects[0]+" "+ objects[1]+" "+objects[2] );
         }
         return false;
     }
 
+    //检测图形验证码
     private boolean checkVerification() {
-        return true;
+        if (StringUtils.isEmpty(key) || StringUtils.isEmpty(verification)) return false;
+        String code = RedisUtil.getStringProvide().get(key);
+        return verification.equals(code);
     }
 
 

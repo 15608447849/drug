@@ -23,7 +23,7 @@ public class IceContext {
     public String refMed;
     public IParam param;
 
-    public IceContext(Current current, IRequest request){
+    public IceContext(Current current, IRequest request)  {
         this.serverName = current.id.name;
         this.current = current;
         String[] arr = current.con._toString().split("\\n")[1].split("=")[1].trim().split(":");
@@ -38,7 +38,7 @@ public class IceContext {
     }
 
     /**初始化*/
-    protected void initialization() {
+    protected void initialization()  {
 
     }
 
