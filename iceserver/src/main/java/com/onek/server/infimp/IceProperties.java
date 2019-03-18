@@ -23,6 +23,8 @@ public class IceProperties extends ApplicationPropertiesBase {
   public String intercept ;
   @PropertiesName("ice.app.context.imp")
   public String contextImp;
+  @PropertiesName("ice.system.initialization")
+  public String appInitializationImp;
 
   //rep 列表 k = 服务名 v = 组名
   public HashMap<String,String> repSrvMap;

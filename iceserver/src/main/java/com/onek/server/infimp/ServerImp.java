@@ -36,12 +36,32 @@ public class ServerImp extends _InterfacesDisp {
     //上下文实例 - 默认
     private Class contextCls = IceContext.class;
 
-    ServerImp(String serverName, Logger logger) {
+    ServerImp(String serverName, Logger logger,String[] args) {
         this.serverName = serverName;
         this.logger = logger;
-        pkgPath = IceProperties.INSTANCE.pkgSrvMap.get(serverName);
+        this.pkgPath = IceProperties.INSTANCE.pkgSrvMap.get(serverName);
         initInterceptorList();
         initContextClass();
+        initApplication(args);
+    }
+
+    //初始化 系统应用
+    private void initApplication(String[] args) {
+        if (StringUtils.isEmpty(IceProperties.INSTANCE.appInitializationImp)) return;
+        Object initObj = null;
+        try {
+            initObj = ObjectRefUtil.createObject(IceProperties.INSTANCE.appInitializationImp,null,null);
+        } catch (Exception ignored) {
+            logger.print("创建初始化器失败,path = " + IceProperties.INSTANCE.appInitializationImp);
+        }
+        if (initObj!=null){
+            try {
+                ObjectRefUtil.callMethod(initObj,"startUp",new Class[]{String.class,String[].class},serverName,args);
+            } catch (Exception e) {
+                logger.print("无法调用初始化器方法startUp,原因: " + e);
+            }
+        }
+
     }
 
     //初始化拦截器
