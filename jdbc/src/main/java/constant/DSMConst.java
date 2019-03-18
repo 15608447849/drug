@@ -18,6 +18,8 @@ public interface DSMConst extends UDAConst {
             //索引0对应表名，从索引1开始对应这个表的列名，表名与列名必须同数据库一致！
             {"d_system_user"}, // 用户表
             {"lc_global_dict"}, // 用户表
+            {"d_system_role"}, // 角色表
+            {"d_system_resource"}, // 资源表
 
     };
 
@@ -25,6 +27,8 @@ public interface DSMConst extends UDAConst {
     //TODO 系统-用户表 0
     public final static int D_SYSTEM_USER = 0;
     public final static int LC_GLOBAL_DICT = 1;
+    public final static int D_SYSTEM_ROLE = 2;
+    public final static int D_SYSTEM_RESOURCE = 3;
 
 
 
