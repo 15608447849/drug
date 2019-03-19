@@ -10,7 +10,7 @@ public class UserInfoVo {
     private int oid;
     private int uid;
     private long uphone;
-    private String uname;
+    private String uaccount;
     private String urealname;
     private String upw;
     private int roleid;
@@ -49,12 +49,12 @@ public class UserInfoVo {
         this.uphone = uphone;
     }
 
-    public String getUname() {
-        return uname;
+    public String getUaccount() {
+        return uaccount;
     }
 
-    public void setUname(String uname) {
-        this.uname = uname;
+    public void setUaccount(String uaccount) {
+        this.uaccount = uaccount;
     }
 
     public String getUrealname() {

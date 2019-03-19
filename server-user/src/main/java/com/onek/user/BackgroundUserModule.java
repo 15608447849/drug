@@ -24,8 +24,8 @@ import java.util.List;
 public class BackgroundUserModule {
     private static final BaseDAO baseDao = BaseDAO.getBaseDAO();
 
-    public Result insertOrUpdUser(IRequest iRequest) {
-        String json = iRequest.param.json;
+    public Result insertOrUpdUser(AppContext appContext) {
+        String json = appContext.param.json;
         UserInfoVo userInfoVo = GsonUtils.jsonToJavaBean(json, UserInfoVo.class);
         if (userInfoVo != null) {
             if (checkUser(userInfoVo)) return new Result().fail("该用户已存在！");
@@ -35,15 +35,15 @@ public class BackgroundUserModule {
             int code = 0;
             if (userInfoVo.getUid() <= 0) {
                 String insertSQL = "insert into {{?" + DSMConst.D_SYSTEM_USER + "}} "
-                        + "(uid,uphone,uname,urealname,upw,roleid,adddate,addtime)"
+                        + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime)"
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME)";
                 code = baseDao.updateNative(insertSQL, RedisUtil.getStringProvide().increase("USER_TAB_UID"),
-                        userInfoVo.getUphone(), userInfoVo.getUname(), userInfoVo.getUrealname(),
+                        userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
                         userInfoVo.getUpw(), userInfoVo.getRoleid());
             } else {
-                String updSQL = "update {{?" + DSMConst.D_SYSTEM_USER + "}} set uphone=?,uname=?,"
+                String updSQL = "update {{?" + DSMConst.D_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
                         + "urealname=?, roleid=? where cstatus&1=0 and uid=? ";
-                code = baseDao.updateNative(updSQL, userInfoVo.getUphone(),userInfoVo.getUname(),
+                code = baseDao.updateNative(updSQL, userInfoVo.getUphone(),userInfoVo.getUaccount(),
                         userInfoVo.getUrealname(),userInfoVo.getRoleid(),userInfoVo.getUid());
             }
             if (code > 0) {
@@ -99,7 +99,7 @@ public class BackgroundUserModule {
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject);
-        String selectSQL = "select uid,uphone,uname,urealname,upw,u.roleid,adddate,addtime"
+        String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,adddate,addtime"
                 + ",offdate,offtime,ip,logindate,logintime,times,u.cstatus, rname from {{?"
                 + DSMConst.D_SYSTEM_USER + "}} u left join {{?" + DSMConst.D_SYSTEM_ROLE + "}} r "
                 + " on u.roleid=r.roleid and u.cstatus&1=0";
@@ -112,7 +112,7 @@ public class BackgroundUserModule {
     }
 
     private StringBuilder getgetParamsDYSQL(StringBuilder sqlBuilder, JsonObject jsonObject) {
-        String uname = jsonObject.get("uname").getAsString();
+        String uname = jsonObject.get("uaccount").getAsString();
         String urealname = jsonObject.get("urealname").getAsString();
         int roleid = jsonObject.get("roleid").getAsInt();
         long uphone = jsonObject.get("uphone").getAsLong();
@@ -144,7 +144,7 @@ public class BackgroundUserModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int uid = jsonObject.get("uid").getAsInt();
-        String sql = "select uid,uphone,uname,urealname,upw,u.roleid,adddate,addtime"
+        String sql = "select uid,uphone,uaccount,urealname,upw,u.roleid,adddate,addtime"
                 + ",offdate,offtime,ip,logindate,logintime,times,u.cstatus, rname from {{?"
                 + DSMConst.D_SYSTEM_USER + "}} u left join {{?" + DSMConst.D_SYSTEM_ROLE + "}} r "
                 + " on u.roleid=r.roleid and u.cstatus&1=0 and uid=?";
