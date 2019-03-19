@@ -11,15 +11,5 @@ public class SystemInitialize {
     public void startUp(String serverName,String[] args){
         AppConfig.initLogger();
         AppConfig.initialize();
-        System.out.println("-------------------------");
-        System.out.println("-------------------------");
-        System.out.println("-------------------------");
-        System.out.println("-------------------------");
-        System.out.println("-------------------------");
-        System.out.println("-------------------------");
-        System.out.println("-------------------------");
-        System.out.println("-------------------------");
-        System.out.println("-------------------------");
-        System.out.println("-------------------------");
     }
 }

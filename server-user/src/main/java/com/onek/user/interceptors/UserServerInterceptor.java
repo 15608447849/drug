@@ -24,12 +24,10 @@ public class UserServerInterceptor implements IServerInterceptor {
     @Override
     public Result interceptor( IceContext context)  {
         try {
-
             AppContext appContext =  context.convert();
             String classpath = context.refPkg + "." +context.refCls;
             String method = context.refMed;
             String key = classpath + method;
-
             UserPermission up;
             if(permissionStatusMap.containsKey(key)){
                 up = permissionStatusMap.get(key);
@@ -39,7 +37,6 @@ public class UserServerInterceptor implements IServerInterceptor {
                 up = m.getAnnotation(UserPermission.class);
                 permissionStatusMap.put(key, up); //存
             }
-
             if(up != null && !up.ignore() && up.mode() == PermissionStatus.ALREADY_LOGGED){
                 UserSession userSession = appContext.getUserSession();
                 if(userSession == null){

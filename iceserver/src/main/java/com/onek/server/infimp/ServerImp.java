@@ -1,5 +1,6 @@
 package com.onek.server.infimp;
 
+import Ice.Communicator;
 import Ice.Current;
 import Ice.Logger;
 import Ice.Request;
@@ -101,14 +102,22 @@ public class ServerImp extends _InterfacesDisp {
     //打印参数
     private void printParam(IRequest request, Current __current) {
         try {
-            logger.print(
-                    "->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n" +
-                    "call:\t" + request.pkg +"_" + request.cls +"_"+request.method+"\n"+
-                    "token:\t"+ request.param.token+"\n"     +
-                    "json:\t" + request.param.json +"\n" +
-                    "array:\t" + Arrays.toString(request.param.arrays)+"\n" +
-                    "Paging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber
-            );
+            logger.print("\n->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-");
+            StringBuilder sb = new StringBuilder();
+            sb.append("call:\t" + request.pkg +" -> " + request.cls +" -> "+request.method+"\n");
+            if(!StringUtils.isEmpty(request.param.token)){
+                sb.append( "token:\t"+ request.param.token+"\n");
+            }
+            if(!StringUtils.isEmpty(request.param.json)){
+                sb.append("json:\t" + request.param.json +"\n");
+            }
+            if(request.param.arrays!=null &&request.param.arrays.length>0){
+                sb.append("array:\t" + Arrays.toString(request.param.arrays)+"\n");
+            }
+            if(request.param.pageIndex > 0 && request.param.pageNumber > 0){
+                sb.append("Paging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
+            }
+            logger.print(sb.toString());
         } catch (Exception e) {
             e.printStackTrace();
         }

@@ -20,6 +20,8 @@ public interface DSMConst extends UDAConst {
             {"lc_global_dict"}, // 用户表
             {"d_system_role"}, // 角色表
             {"d_system_resource"}, // 资源表
+            {"d_order_base"},
+            {"d_order_product"},
 
     };
 
@@ -29,6 +31,8 @@ public interface DSMConst extends UDAConst {
     public final static int LC_GLOBAL_DICT = 1;
     public final static int D_SYSTEM_ROLE = 2;
     public final static int D_SYSTEM_RESOURCE = 3;
+    public final static int D_ORDER_BASE = 4;
+    public final static int D_ORDER_PRODUCT = 5;
 
 
 
@@ -39,8 +43,8 @@ public interface DSMConst extends UDAConst {
     // TODO　切分表的规则数组 ：0 代表不需要切分，1 代表按公司模型切分表。
     // 索引必须同_DB_TABLES里的索引对应
     public final static int[] SEG_TABLE_RULE = {
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 1,
+            1, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,

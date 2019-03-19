@@ -100,7 +100,7 @@ public abstract class ApplicationPropertiesBase {
                 String key = name.value();
                 String value = properties.getProperty(key);
                 if (value==null || value.length()==0) {
-                    System.err.println("找不到属性名:"+key);
+//                    System.err.println("找不到属性名:"+key);
                     continue;
                 }
                 //获取属性类型
@@ -119,7 +119,7 @@ public abstract class ApplicationPropertiesBase {
 
     protected void initialization(){
         Field[] fields = getClass().getDeclaredFields();
-        System.out.println("读取配置文件:");
+//        System.out.println("读取配置文件:");
         for(Field field:fields){
             field.setAccessible(true); // 设置些属性是可以访问的
             PropertiesName name = field.getAnnotation(PropertiesName.class);
@@ -127,7 +127,7 @@ public abstract class ApplicationPropertiesBase {
             try {
                 Object k = name.value();
                 Object v = field.get(this);
-                System.out.println( "\t" + k + " = "  + v);
+//                System.out.println( "\t" + k + " = "  + v);
             } catch (IllegalAccessException ignored) {
             }
         }

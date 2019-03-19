@@ -67,4 +67,31 @@ public class TimeUtils {
         return null;
     }
 
+    /**
+     * 毫秒数-> x天x小时x分x秒
+     * @author lzp
+     */
+    public static String formatDuring(long mss) {
+        long days = mss / (1000 * 60 * 60 * 24);
+        long hours = (mss % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60);
+        long minutes = (mss % (1000 * 60 * 60)) / (1000 * 60);
+        long seconds = (mss % (1000 * 60)) / 1000;
+        StringBuilder sb = new StringBuilder();
+        if (days > 0){
+            sb.append(days + "天");
+        }
+        if (hours > 0){
+            sb.append(hours + "小时");
+        }
+        if (minutes > 0){
+            sb.append(minutes + "分钟");
+        }
+        if (seconds > 0){
+            sb.append(seconds + "秒");
+        }
+        return sb.toString();
+    }
+
+
+
 }

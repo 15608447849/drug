@@ -63,7 +63,7 @@ public class RegisterOp implements IOperation<AppContext> {
         return Pattern.matches(pattern, password);
     }
 
-    // 提交
+    // 提交 *角色码需要使用正确角色码
     private Result submit() {
         String insertSql = "INSERT INTO {{?" + DSMConst.D_SYSTEM_USER + "}} " +
                 "(uid , uphone , upw , roleid ,adddate , addtime) " +
@@ -73,14 +73,13 @@ public class RegisterOp implements IOperation<AppContext> {
                 RedisUtil.getStringProvide().increase("USER_TAB_UID"),
                 phone ,
                 EncryptUtils.encryption(password),
-                0);
-        if (i > 0) {
-            return new Result().success("注册成功");
-        }
+                2 //门店角色码
+        );
+        if (i > 0) return new Result().success("注册成功");
         return new Result().fail("注册失败");
     }
 
-    //发送短信验证码
+    //发送短信验证码 *等待接入短信接口
     private Result sendSmsCode() {
         return new Result().success("手机号:"+ phone+" 注意查收短信(测试验证码 000000)");
     }
@@ -91,7 +90,6 @@ public class RegisterOp implements IOperation<AppContext> {
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
         if (lines.size()>0) return new Result().fail("已注册");
             else return new Result().success("未注册");
-
     }
 
 
