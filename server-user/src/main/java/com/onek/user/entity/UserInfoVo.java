@@ -7,7 +7,7 @@ package com.onek.user.entity;
  * @time 2019/3/18 15:16
  **/
 public class UserInfoVo {
-    private int oid;
+//    private int oid;
     private int uid;
     private long uphone;
     private String uaccount;
@@ -21,17 +21,16 @@ public class UserInfoVo {
     private String ip;
     private String logindate;
     private String logintime;
-    private int times;
     private int cstatus;
     private String rname;
 
-    public int getOid() {
-        return oid;
-    }
-
-    public void setOid(int oid) {
-        this.oid = oid;
-    }
+//    public int getOid() {
+//        return oid;
+//    }
+//
+//    public void setOid(int oid) {
+//        this.oid = oid;
+//    }
 
     public int getUid() {
         return uid;
@@ -135,14 +134,6 @@ public class UserInfoVo {
 
     public void setLogintime(String logintime) {
         this.logintime = logintime;
-    }
-
-    public int getTimes() {
-        return times;
-    }
-
-    public void setTimes(int times) {
-        this.times = times;
     }
 
     public int getCstatus() {

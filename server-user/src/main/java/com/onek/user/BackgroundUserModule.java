@@ -11,8 +11,12 @@ import com.onek.user.entity.UserInfoVo;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
+import sun.security.provider.MD5;
+import util.EncryptUtils;
 import util.GsonUtils;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 /**
@@ -37,9 +41,11 @@ public class BackgroundUserModule {
                 String insertSQL = "insert into {{?" + DSMConst.D_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime)"
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME)";
+
+                String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
                 code = baseDao.updateNative(insertSQL, RedisUtil.getStringProvide().increase("USER_TAB_UID"),
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
-                        userInfoVo.getUpw(), userInfoVo.getRoleid());
+                        pwd, userInfoVo.getRoleid());
             } else {
                 String updSQL = "update {{?" + DSMConst.D_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
                         + "urealname=?, roleid=? where cstatus&1=0 and uid=? ";
@@ -99,12 +105,12 @@ public class BackgroundUserModule {
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
         sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject);
-        String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,adddate,addtime"
-                + ",offdate,offtime,ip,logindate,logintime,times,u.cstatus, rname from {{?"
+        String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
+                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, rname from {{?"
                 + DSMConst.D_SYSTEM_USER + "}} u left join {{?" + DSMConst.D_SYSTEM_ROLE + "}} r "
                 + " on u.roleid=r.roleid and u.cstatus&1=0";
         sqlBuilder.append(selectSQL);
-        List<Object[]> queryResult = baseDao.queryNative(sqlBuilder.toString());
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
         if (queryResult == null || queryResult.isEmpty()) return result;
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class);
@@ -118,7 +124,7 @@ public class BackgroundUserModule {
         long uphone = jsonObject.get("uphone").getAsLong();
         int state = jsonObject.get("cstatus").getAsInt();
         if (uname != null && !uname.isEmpty()) {
-            sqlBuilder.append(" and uname like '%").append(uname).append("%'");
+            sqlBuilder.append(" and uaccount like '%").append(uname).append("%'");
         }
         if (urealname != null && !urealname.isEmpty()) {
             sqlBuilder.append(" and urealname like '%").append(urealname).append("%'");
@@ -144,8 +150,8 @@ public class BackgroundUserModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int uid = jsonObject.get("uid").getAsInt();
-        String sql = "select uid,uphone,uaccount,urealname,upw,u.roleid,adddate,addtime"
-                + ",offdate,offtime,ip,logindate,logintime,times,u.cstatus, rname from {{?"
+        String sql = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
+                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, rname from {{?"
                 + DSMConst.D_SYSTEM_USER + "}} u left join {{?" + DSMConst.D_SYSTEM_ROLE + "}} r "
                 + " on u.roleid=r.roleid and u.cstatus&1=0 and uid=?";
         List<Object[]> queryResult = baseDao.queryNative(sql, uid);
@@ -153,6 +159,15 @@ public class BackgroundUserModule {
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class);
         return result.success(userInfoVos[0]);
+    }
+
+    public Result updatePwd(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+
+        return result;
     }
 
 }
