@@ -28,27 +28,24 @@ public class AppContext extends IceContext {
 
     @Override
     protected void initialization(){
-        String key = param.token + "@" + remoteIp;
         try {
+            String key = param.token + "@" + remoteIp;
             String value = RedisUtil.getStringProvide().get(key);
-            logger.print(" key = "+ key + " value = " + value);
-            if(!StringUtils.isEmpty(value)){
-                String json = RedisUtil.getStringProvide().get(value);
-                logger.print(" user json = " + json);
-                if(!StringUtils.isEmpty(json)){
-                    this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
-                }
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
+            if(StringUtils.isEmpty(value)) return;
 
+            String json = RedisUtil.getStringProvide().get(value);
+            if(StringUtils.isEmpty(json)) return;
+
+            logger.print(key+" <-> Redis存在用户信息:\n" + json);
+            this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
+
+        } catch (Exception ignored) { }
     }
 
     public UserSession getUserSession() {
         return userSession;
     }
-
+        //登录时设置
     public void setUserSession(UserSession userSession) {
         this.userSession = userSession;
     }

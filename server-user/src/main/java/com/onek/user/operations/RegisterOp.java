@@ -73,10 +73,9 @@ public class RegisterOp implements IOperation<AppContext> {
                 RedisUtil.getStringProvide().increase("USER_TAB_UID"),
                 phone ,
                 EncryptUtils.encryption(password),
-                0);
-        if (i > 0) {
-            return new Result().success("注册成功");
-        }
+                2 //门店角色码
+        );
+        if (i > 0) return new Result().success("注册成功");
         return new Result().fail("注册失败");
     }
 

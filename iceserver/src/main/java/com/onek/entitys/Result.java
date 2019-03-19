@@ -4,7 +4,11 @@ package com.onek.entitys;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 
+import java.util.HashMap;
+
 public class Result {
+
+
 
    interface CODE{
       int FAIL = -1;
@@ -23,6 +27,8 @@ public class Result {
 
    public Object data ;
 
+   public HashMap<String,Object> map;
+
    private Integer pageNo;
 
    private Integer pageSize;
@@ -40,6 +46,28 @@ public class Result {
       return this;
    }
 
+   public Result fail(String message,Object data){
+      this.code = CODE.FAIL;
+      this.message = message;
+      this.data = data;
+      return this;
+   }
+
+
+
+   public Result setHashMap(String key,Object value){
+      if (map == null) map = new HashMap<>();
+      map.put(key,value);
+      return this;
+   }
+
+   public Result success(String message,Object data) {
+      this.code = CODE.SUCCESS;
+      this.message = message;
+      this.data = data;
+      return this;
+   }
+
    public Result success(Object data) {
       this.code = CODE.SUCCESS;
       this.message = MESSAGE.SUCCESS;
@@ -53,6 +81,8 @@ public class Result {
       this.data = data;
       return this;
    }
+
+
 
    public Result setQuery(Object data, PageHolder pageHolder) {
       success(data);
