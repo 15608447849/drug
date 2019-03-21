@@ -22,7 +22,9 @@ public interface DSMConst extends UDAConst {
             {"d_system_resource"}, // 资源表
             {"d_order_base"},
             {"d_order_product"},
-            {"d_comp"} //企业表
+            {"d_comp"}, //企业表
+            {"d_sms_template"},//短信模板
+            {"d_comp_ship_info"},//收货人
     };
 
     //TODO 表名=表在_DB_TABLES常量里固定位置值 ，目的是为了开发人员写代码方便可读性
@@ -34,6 +36,8 @@ public interface DSMConst extends UDAConst {
     public final static int D_ORDER_BASE = 4;
     public final static int D_ORDER_PRODUCT = 5;
     public final static int D_COMP = 6;
+    public final static int D_SMS_TEMPLATE = 7;
+    public final static int D_COMP_SHIP_INFO = 8;
 
 
 
@@ -43,8 +47,10 @@ public interface DSMConst extends UDAConst {
 
     // TODO　切分表的规则数组 ：0 代表不需要切分，1 代表按公司模型切分表。
     // 索引必须同_DB_TABLES里的索引对应
+    // 索引必须同_DB_TABLES里的索引对应
     public final static int[] SEG_TABLE_RULE = {
             0, 0, 0, 0, 1,
+            1, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
@@ -60,6 +66,7 @@ public interface DSMConst extends UDAConst {
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0};
+            0, 0, 0, 0, 0
+    };
+
 }
