@@ -57,17 +57,14 @@ public class LoginBackOp implements IOperation<AppContext> {
 
         if (lines.size()>0){
             Object[] objects = lines.get(0);
-            communicator().getLogger().print("管理员登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1]);
+            communicator().getLogger().print("管理员登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1]+" ,姓名:"+objects[5]);
             if (objects[2].toString().equalsIgnoreCase(password)) { //忽略MD5大小写
-                //密码正确
-                //记录登陆时间 IP
+                //密码正确 - 记录登陆时间 IP
                 String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} " +
                         "SET ip = ?,logindate = CURRENT_DATE,logintime = CURRENT_TIME " +
                         "WHERE cstatus&1 = 0 AND uid = ?";
-
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql, context.remoteIp,objects[0]);
                 if (i > 0){
-
                     userSession = new UserSession();
                     userSession.userId = (int) objects[0];
                     userSession.roleCode = (long) objects[1];
@@ -76,7 +73,6 @@ public class LoginBackOp implements IOperation<AppContext> {
                     userSession.userName = objects[5].toString();
                     userSession.password = password;
                     userSession.lastIp = context.remoteIp;
-
                     return true;
                 }
             }

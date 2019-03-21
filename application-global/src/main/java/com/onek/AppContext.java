@@ -64,7 +64,7 @@ public class AppContext extends IceContext {
         //创建token标识
         String key = createKey();
         String json = GsonUtils.javaBeanToJson(userSession);
-        logger.print("缓存用户信息: "+ json);
+        logger.print("缓存用户信息:\n"+ json);
         String res = RedisUtil.getStringProvide().set(key,json );
         if (res.equals("OK")){
             res = RedisUtil.getStringProvide().set(param.token , key);

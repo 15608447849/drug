@@ -43,7 +43,6 @@ public class UserServerInterceptor implements IServerInterceptor {
                     return new Result().intercept("用户未登录");
                 }
             }
-
         }catch(Exception e){
             e.printStackTrace();
         }

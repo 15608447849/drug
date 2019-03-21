@@ -72,11 +72,12 @@ public class LoginStoreOp implements IOperation<AppContext> {
         return context.relationTokenUserSession();
     }
 
-
     //检查用户是否正确
     private boolean checkSqlAndUserExist(AppContext context) {
 
-        String selectSql = "SELECT uid,roleid,upw,cid FROM {{?" + DSMConst.D_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND roleid&2>0 AND uphone = ?";
+        String selectSql = "SELECT uid,roleid,upw,cid " +
+                "FROM {{?" + DSMConst.D_SYSTEM_USER + "}} " +
+                "WHERE cstatus&1 = 0 AND roleid&2>0 AND uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
 
         if (lines.size()>0){
@@ -84,12 +85,10 @@ public class LoginStoreOp implements IOperation<AppContext> {
             communicator().getLogger().print("门店登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1] +" 企业码:" + objects[3]);
             //忽略MD5大小写
             if (objects[2].toString().equalsIgnoreCase(password)) {
-                //密码正确
-                //记录登陆时间 IP
+                //密码正确 - 记录登陆时间 IP
                 String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} " +
                         "SET ip = ?,logindate = CURRENT_DATE,logintime = CURRENT_TIME " +
                         "WHERE cstatus&1 = 0 AND uid = ?";
-
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql, context.remoteIp,objects[0]);
                 if (i > 0){
                         userSession = new UserSession();
@@ -102,32 +101,33 @@ public class LoginStoreOp implements IOperation<AppContext> {
                     return true;
                 }
             }else{
-                //密码错误 记录次数 - 缓存
-                //当次数到达指定次数 , 锁定账户, 指定时间
-                String indexStr = RedisUtil.getStringProvide().get("USER-"+phone);
-                if (StringUtils.isEmpty(indexStr)) indexStr = "0"; //初始化
-                failIndex = Integer.parseInt(indexStr);
-                failIndex++;
-                communicator().getLogger().print("失败次数---------------------------------------" + failIndex);
-                if (failIndex > USProperties.INSTANCE.sLoginNumMax) {
-                    communicator().getLogger().print("锁定用户 - "+phone);
-                    //移除下标记录
-                    RedisUtil.getStringProvide().delete("USER-"+phone);
-                    //锁定用户
-                    RedisUtil.getStringProvide().set("USER-LOCK-"+phone,"LOCK");
-                    //设置时效性 1 小时
-                    RedisUtil.getStringProvide().expire("USER-LOCK-"+phone,  USProperties.INSTANCE.sLoginLockTime);
-                }else{
-                    communicator().getLogger().print("记录次数 - "+ failIndex);
-                    //记录次数
-                    RedisUtil.getStringProvide().set("USER-"+phone,String.valueOf(failIndex));
-                    //30分钟后失效
-                    RedisUtil.getStringProvide().expire("USER--"+phone, USProperties.INSTANCE.sLoginIndexTime);
-                }
+              loginFailHandle();
             }
         }
-
         return false;
+    }
+
+    //用户-登陆失败处理
+    private void loginFailHandle() {
+        //密码错误 记录次数 - 缓存
+        //当次数到达指定次数 , 锁定账户, 指定时间
+        String indexStr = RedisUtil.getStringProvide().get("USER-"+phone);
+        if (StringUtils.isEmpty(indexStr)) indexStr = "0"; //初始化
+        failIndex = Integer.parseInt(indexStr);
+        failIndex++;
+        if (failIndex > USProperties.INSTANCE.sLoginNumMax) {
+            //移除下标记录
+            RedisUtil.getStringProvide().delete("USER-"+phone);
+            //锁定用户
+            RedisUtil.getStringProvide().set("USER-LOCK-"+phone,"LOCK");
+            //设置时效性 1 小时
+            RedisUtil.getStringProvide().expire("USER-LOCK-"+phone,  USProperties.INSTANCE.sLoginLockTime);
+        }else{
+            //记录次数
+            RedisUtil.getStringProvide().set("USER-"+phone,String.valueOf(failIndex));
+            //30分钟后失效
+            RedisUtil.getStringProvide().expire("USER--"+phone, USProperties.INSTANCE.sLoginIndexTime);
+        }
     }
 
     //检测图形验证码

@@ -26,12 +26,24 @@ import static util.ImageVerificationUtils.getRandomCode;
  */
 public class VerificationOp implements IOperation<AppContext> {
     public int type = 0;
+    public String phone; //手机号
+
+    public VerificationOp setPhone(String phone) {
+        this.phone = phone;
+        return this;
+    }
+
+    public VerificationOp setType(int type) {
+        this.type = type;
+        return this;
+    }
+
     @Override
     public Result execute(AppContext context) {
         if (type == 1) return generateImageCode();//获取图形验证码
+        if (type == 2) return sendSmsCode();
         return new Result().fail("未知的操作类型");
     }
-
     private Result generateImageCode() {
         try {
             String code = getRandomCode(4);
@@ -57,5 +69,9 @@ public class VerificationOp implements IOperation<AppContext> {
             e.printStackTrace();
         }
         return new Result().fail("无法生成验证图片");
+    }
+    //发送短信验证码 *等待接入短信接口
+    private Result sendSmsCode() {
+        return new Result().success("手机号:"+ phone+" 注意查收短信(测试验证码 000000)");
     }
 }

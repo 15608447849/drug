@@ -36,9 +36,11 @@ public class RegisterOp implements IOperation<AppContext> {
 
         if (StringUtils.isEmpty(phone) || phone.length() != 11) return new Result().fail("无效的手机号码");
         if (type == 1) return checkPhoneIsExist();
-        if (type == 2) return sendSmsCode();
+        if (type == 2) {
+            return new VerificationOp().setType(type).setPhone(phone).execute(context);
+        }
         if (type == 3) {
-            if (!validSmsCode()) return new Result().fail("验证码不正确");
+            if (!validSmsCode()) return new Result().fail("短信验证码不正确");
             if (!validPassword()) return new Result().fail("不符合密码安全性要求:\n" +
                     "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符");
             if (StringUtils.isEmpty(password2) || !password.equals(password2)) return new Result().fail("两次密码输入不一致");
@@ -46,12 +48,15 @@ public class RegisterOp implements IOperation<AppContext> {
         }
         return new Result().fail("未知的操作类型");
     }
+
+    //效验短信验证码
     private boolean validSmsCode() {
         if (StringUtils.isEmpty(smsCode)) return false;
         if (!smsCode.equals("000000")) return false;
         return true;
     }
 
+    //正则匹配密码规则
     private boolean validPassword(){
         if (StringUtils.isEmpty(password)) return false;
         String pattern  = "^" +
@@ -84,11 +89,6 @@ public class RegisterOp implements IOperation<AppContext> {
                 return new Result().success("注册成功");
             }
         return new Result().fail("注册失败");
-    }
-
-    //发送短信验证码 *等待接入短信接口
-    private Result sendSmsCode() {
-        return new Result().success("手机号:"+ phone+" 注意查收短信(测试验证码 000000)");
     }
 
     //验证手机是否存在
