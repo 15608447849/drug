@@ -6,17 +6,13 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.AppContext;
 import com.onek.entitys.Result;
-import com.onek.server.inf.IRequest;
 import com.onek.user.entity.UserInfoVo;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
-import sun.security.provider.MD5;
 import util.EncryptUtils;
 import util.GsonUtils;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.List;
 
 /**
