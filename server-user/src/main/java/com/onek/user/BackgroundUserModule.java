@@ -6,14 +6,12 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.AppContext;
 import com.onek.entitys.Result;
-import com.onek.server.inf.IRequest;
 import com.onek.user.entity.UserInfoVo;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
-import util.StringUtils;
 
 import java.util.List;
 
@@ -95,21 +93,21 @@ public class BackgroundUserModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int pageSize = jsonObject.get("pageSize").getAsInt();
-        int pageIndex = jsonObject.get("pageNo").getAsInt();
+        int pageIndex = jsonObject.get("pageIndex").getAsInt();
         Page page = new Page();
         page.pageSize = pageSize;
         page.pageIndex = pageIndex;
         PageHolder pageHolder = new PageHolder(page);
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject);
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
-                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, GROUP_CONCAT(rname) as rname from {{?"
+                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, rname from {{?"
                 + DSMConst.D_SYSTEM_USER + "}} u left join {{?" + DSMConst.D_SYSTEM_ROLE + "}} r "
-                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0";
+                + " on u.roleid=r.roleid and u.cstatus&1=0";
         sqlBuilder.append(selectSQL);
-        sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by uid desc");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+        if (queryResult == null || queryResult.isEmpty()) return result;
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class);
         return result.setQuery(userInfoVos,pageHolder);
@@ -118,8 +116,8 @@ public class BackgroundUserModule {
     private StringBuilder getgetParamsDYSQL(StringBuilder sqlBuilder, JsonObject jsonObject) {
         String uname = jsonObject.get("uaccount").getAsString();
         String urealname = jsonObject.get("urealname").getAsString();
-        long roleid = jsonObject.get("roleid").getAsLong()  ;
-        String uphone = jsonObject.get("uphone").getAsString();
+        int roleid = jsonObject.get("roleid").getAsInt();
+        long uphone = jsonObject.get("uphone").getAsLong();
         int state = jsonObject.get("cstatus").getAsInt();
         if (uname != null && !uname.isEmpty()) {
             sqlBuilder.append(" and uaccount like '%").append(uname).append("%'");
@@ -128,10 +126,9 @@ public class BackgroundUserModule {
             sqlBuilder.append(" and urealname like '%").append(urealname).append("%'");
         }
         if (roleid > 0) {
-            sqlBuilder.append(" and u.roleid&").append(roleid).append(">0");
+            sqlBuilder.append(" and u.roleid=").append(roleid);
         }
-
-        if (!StringUtils.isEmpty(uphone) && Long.parseLong(uphone) > 0) {
+        if (uphone > 0) {
             sqlBuilder.append(" and uphone=").append(uphone);
         }
         if (state == 0) {
@@ -154,7 +151,7 @@ public class BackgroundUserModule {
                 + DSMConst.D_SYSTEM_USER + "}} u left join {{?" + DSMConst.D_SYSTEM_ROLE + "}} r "
                 + " on u.roleid=r.roleid and u.cstatus&1=0 and uid=?";
         List<Object[]> queryResult = baseDao.queryNative(sql, uid);
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+        if (queryResult == null || queryResult.isEmpty()) return result;
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class);
         return result.success(userInfoVos[0]);
@@ -167,18 +164,6 @@ public class BackgroundUserModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
 
         return result;
-    }
-
-    public Result resetPwd(AppContext appContext) {
-        Result result = new Result();
-        String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int uid = jsonObject.get("uid").getAsInt();
-        String updateSQL = "update {{?" + DSMConst.D_SYSTEM_USER + "}} set upw=md5(SUBSTR(uphone,6)) "
-                + " where cstatus&1=0 and uid=" + uid;
-        int code = baseDao.updateNative(updateSQL);
-        return code > 0 ? result.success("操作成功") : result.fail("操作失败") ;
     }
 
 }

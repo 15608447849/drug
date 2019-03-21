@@ -25,7 +25,6 @@ public class LoginBackOp implements IOperation<AppContext> {
     String password;
     private UserSession userSession = null;
 
-
     @Override
     public Result execute(AppContext context) {
         try {
@@ -43,20 +42,10 @@ public class LoginBackOp implements IOperation<AppContext> {
     }
 
     private boolean relationTokenUserSession(AppContext context) {
-        //创建token标识
-        String token = createToken(context);
-        String res = RedisUtil.getStringProvide().set(token, GsonUtils.javaBeanToJson(userSession));
-        if (res.equals("OK")){
-            res = RedisUtil.getStringProvide().set(context.param.token ,token);
-            return res.equals("OK");
-        }
-       return false;
+        context.setUserSession(userSession);
+        return context.relationTokenUserSession();
     }
 
-    private String createToken(AppContext context) {
-        context.param.token = context.param.token + "@" + context.remoteIp;
-        return EncryptUtils.encryption(context.param.token);
-    }
 
     //检查用户是否正确
     private boolean checkSqlAndUserExist(AppContext context) {

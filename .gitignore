@@ -15,5 +15,3 @@ server-user/src/main/resources/
 application-global/out/
 server-user/src/test/
 logs/
-application-global/build/
-server-user/build/

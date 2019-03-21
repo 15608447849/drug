@@ -127,7 +127,7 @@ public abstract class ApplicationPropertiesBase {
             try {
                 Object k = name.value();
                 Object v = field.get(this);
-//                System.out.println( "\t" + k + " = "  + v);
+                System.out.println( "\t" + k + " = "  + v);
             } catch (IllegalAccessException ignored) {
             }
         }
