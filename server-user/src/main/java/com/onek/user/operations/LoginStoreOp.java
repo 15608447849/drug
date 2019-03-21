@@ -4,6 +4,7 @@ import com.onek.AppContext;
 import com.onek.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
+import com.onek.user.service.USProperties;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
@@ -26,7 +27,6 @@ public class LoginStoreOp implements IOperation<AppContext> {
     String password;
     String key;//图形验证码KEY
     String verification; //图形验证码
-    boolean isSave = false;
 
     private int failIndex = -1;//剩余次数
 
@@ -48,9 +48,10 @@ public class LoginStoreOp implements IOperation<AppContext> {
             if (!checkSqlAndUserExist(context)) {
                 StringBuilder sb = new StringBuilder();
                 sb.append("用户名或密码不正确");
-                if ( failIndex >= 3 && failIndex< 5){
-                    sb.append(",再输入错误"+ (5-failIndex) +"次将锁定账户");
-                }else if (failIndex >= 5){
+                if ( failIndex >= USProperties.INSTANCE.sLoginNumMin
+                        && failIndex< USProperties.INSTANCE.sLoginNumMax){
+                    sb.append(",再输入错误"+ (USProperties.INSTANCE.sLoginNumMax -failIndex) +"次将锁定账户");
+                }else if (failIndex >= USProperties.INSTANCE.sLoginNumMax){
                     sb = new StringBuilder("账户已锁定");
                 }
                 return new Result().fail(sb.toString()).setHashMap("index",failIndex);
@@ -66,36 +67,21 @@ public class LoginStoreOp implements IOperation<AppContext> {
         return new Result().fail("登陆失败");
     }
 
-
-
-    //创建用户会话到缓存
     private boolean relationTokenUserSession(AppContext context) {
-        if (userSession == null) return false;
-        //创建token标识
-        String token = createToken(context);
-        String res = RedisUtil.getStringProvide().set(token, GsonUtils.javaBeanToJson(userSession));
-        if (res.equals("OK")){
-            res = RedisUtil.getStringProvide().set(context.param.token ,token);
-            return res.equals("OK");
-        }
-       return false;
-    }
-
-    private String createToken(AppContext context) {
-        context.param.token = context.param.token + "@" + context.remoteIp;
-        return EncryptUtils.encryption(context.param.token);
+        context.setUserSession(userSession);
+        return context.relationTokenUserSession();
     }
 
 
     //检查用户是否正确
     private boolean checkSqlAndUserExist(AppContext context) {
 
-        String selectSql = "SELECT uid,roleid,upw FROM {{?" + DSMConst.D_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND roleid&2>0 AND uphone = ?";
+        String selectSql = "SELECT uid,roleid,upw,cid FROM {{?" + DSMConst.D_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND roleid&2>0 AND uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
 
         if (lines.size()>0){
             Object[] objects = lines.get(0);
-            communicator().getLogger().print("门店登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1]);
+            communicator().getLogger().print("门店登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1] +" 企业码:" + objects[3]);
             //忽略MD5大小写
             if (objects[2].toString().equalsIgnoreCase(password)) {
                 //密码正确
@@ -106,14 +92,13 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql, context.remoteIp,objects[0]);
                 if (i > 0){
-                    if (isSave){
                         userSession = new UserSession();
                         userSession.userId = (int) objects[0];
                         userSession.roleCode = (long) objects[1];
                         userSession.phone = phone;
                         userSession.password = password;
                         userSession.lastIp = context.remoteIp;
-                    }
+                        userSession.compId = StringUtils.checkObjectNull(objects[3],0);
                     return true;
                 }
             }else{
@@ -124,20 +109,20 @@ public class LoginStoreOp implements IOperation<AppContext> {
                 failIndex = Integer.parseInt(indexStr);
                 failIndex++;
                 communicator().getLogger().print("失败次数---------------------------------------" + failIndex);
-                if (failIndex > 5) {
+                if (failIndex > USProperties.INSTANCE.sLoginNumMax) {
                     communicator().getLogger().print("锁定用户 - "+phone);
                     //移除下标记录
                     RedisUtil.getStringProvide().delete("USER-"+phone);
                     //锁定用户
                     RedisUtil.getStringProvide().set("USER-LOCK-"+phone,"LOCK");
                     //设置时效性 1 小时
-                    RedisUtil.getStringProvide().expire("USER-LOCK-"+phone,  60 * 60);
+                    RedisUtil.getStringProvide().expire("USER-LOCK-"+phone,  USProperties.INSTANCE.sLoginLockTime);
                 }else{
                     communicator().getLogger().print("记录次数 - "+ failIndex);
                     //记录次数
                     RedisUtil.getStringProvide().set("USER-"+phone,String.valueOf(failIndex));
                     //30分钟后失效
-                    RedisUtil.getStringProvide().expire("USER--"+phone, 30 * 60);
+                    RedisUtil.getStringProvide().expire("USER--"+phone, USProperties.INSTANCE.sLoginIndexTime);
                 }
             }
         }
@@ -147,7 +132,6 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
     //检测图形验证码
     private boolean checkVerification() {
-
         if (StringUtils.isEmpty(key)) return false;
         if (key.equals("uncheck")) return true;
         if (StringUtils.isEmpty(verification)) return false;

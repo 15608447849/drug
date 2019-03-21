@@ -1,10 +1,11 @@
 package com.onek.user.operations;
 
-import Ice.Application;
 import com.google.gson.reflect.TypeToken;
 import com.onek.AppContext;
+import com.onek.FileServerUtils;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
+import com.onek.user.service.USProperties;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
@@ -16,7 +17,6 @@ import java.io.InputStream;
 import java.util.HashMap;
 import java.util.List;
 
-import static Ice.Application.communicator;
 import static util.ImageVerificationUtils.getRandomCode;
 
 /**
@@ -40,7 +40,7 @@ public class VerificationOp implements IOperation<AppContext> {
             String key = EncryptUtils.encryption(code); //k = code 的MD5 ,v = code, 存入redis
 
             String json = result.addStream(inputStream,EncryptUtils.encryption("image_verification_code"),key+".png")
-                    .fileUploadUrl("http://192.168.1.241:8888/upload")
+                    .fileUploadUrl(FileServerUtils.fileUploadAddress())
                     .getRespondContent(); // k作为文件名 文件链接传递到前端
             List<HashMap<String,String>> list = GsonUtils.jsonToJavaBean(json, new TypeToken<List<HashMap<String,String>>>(){}.getType());
             assert list != null;
@@ -50,7 +50,7 @@ public class VerificationOp implements IOperation<AppContext> {
 
             String res = RedisUtil.getStringProvide().set(key,code);
             if (res.equals("OK")){
-                RedisUtil.getStringProvide().expire(key, 3 * 60 ); // 3分钟内有效
+                RedisUtil.getStringProvide().expire(key, USProperties.INSTANCE.vciSurviveTime); // 3分钟内有效
             }
            return new Result().success(GsonUtils.javaBeanToJson(map));
         } catch (IOException e) {

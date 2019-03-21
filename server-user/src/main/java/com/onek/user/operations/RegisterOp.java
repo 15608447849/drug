@@ -12,6 +12,8 @@ import util.StringUtils;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import static com.onek.RedisGlobalKeys.*;
+
 /**
  * @Author: leeping
  * @Date: 2019/3/13 13:51
@@ -63,19 +65,24 @@ public class RegisterOp implements IOperation<AppContext> {
         return Pattern.matches(pattern, password);
     }
 
-    // 提交 *角色码需要使用正确角色码
+    // 提交
     private Result submit() {
-        String insertSql = "INSERT INTO {{?" + DSMConst.D_SYSTEM_USER + "}} " +
-                "(uid , uphone , upw , roleid ,adddate , addtime) " +
-                "VALUES" +
-                "(? , ? , ? , ? , CURRENT_DATE,CURRENT_TIME)";
-        int i = BaseDAO.getBaseDAO().updateNative(insertSql,
-                RedisUtil.getStringProvide().increase("USER_TAB_UID"),
-                phone ,
-                EncryptUtils.encryption(password),
-                2 //门店角色码
-        );
-        if (i > 0) return new Result().success("注册成功");
+        //获取角色码
+        long userId = getUserCode();
+            //添加角色
+           String insertSql = "INSERT INTO {{?" + DSMConst.D_SYSTEM_USER + "}} " +
+                    "(uid,uphone,upw,roleid,adddate,addtime) " +
+                    "VALUES(? , ? , ? , ? , CURRENT_DATE,CURRENT_TIME)";
+
+            int i = BaseDAO.getBaseDAO().updateNative(insertSql,
+                    userId,
+                    phone ,
+                    EncryptUtils.encryption(password), //MD5加密
+                    2
+            );
+            if (i > 0) {
+                return new Result().success("注册成功");
+            }
         return new Result().fail("注册失败");
     }
 

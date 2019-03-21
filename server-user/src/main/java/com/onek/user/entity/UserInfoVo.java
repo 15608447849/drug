@@ -13,7 +13,7 @@ public class UserInfoVo {
     private String uaccount;
     private String urealname;
     private String upw;
-    private long roleid;
+    private int roleid;
     private String adddate;
     private String addtime;
     private String offdate;
@@ -72,11 +72,11 @@ public class UserInfoVo {
         this.upw = upw;
     }
 
-    public long getRoleid() {
+    public int getRoleid() {
         return roleid;
     }
 
-    public void setRoleid(long roleid) {
+    public void setRoleid(int roleid) {
         this.roleid = roleid;
     }
 

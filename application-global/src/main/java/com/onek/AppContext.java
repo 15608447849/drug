@@ -7,6 +7,7 @@ import com.onek.server.inf.IParam;
 import com.onek.server.inf.IRequest;
 import com.onek.server.infimp.IceContext;
 import redis.util.RedisUtil;
+import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
 
@@ -36,7 +37,7 @@ public class AppContext extends IceContext {
             String json = RedisUtil.getStringProvide().get(value);
             if(StringUtils.isEmpty(json)) return;
 
-            logger.print(key+" <-> Redis存在用户信息:\n" + json);
+            logger.print(key+" - Redis存在用户信息:\n" + json);
             this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
 
         } catch (Exception ignored) { }
@@ -49,5 +50,29 @@ public class AppContext extends IceContext {
     public void setUserSession(UserSession userSession) {
         this.userSession = userSession;
     }
+
+
+    //创建用户会话KRY
+    private String createKey() {
+        param.token = param.token + "@" + remoteIp;
+        return EncryptUtils.encryption(param.token);
+    }
+
+    //创建用户会话到缓存
+    public boolean relationTokenUserSession() {
+        if (userSession == null) return false;
+        //创建token标识
+        String key = createKey();
+        String json = GsonUtils.javaBeanToJson(userSession);
+        logger.print("缓存用户信息: "+ json);
+        String res = RedisUtil.getStringProvide().set(key,json );
+        if (res.equals("OK")){
+            res = RedisUtil.getStringProvide().set(param.token , key);
+            return res.equals("OK");
+        }
+        return false;
+    }
+
+
 
 }

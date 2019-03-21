@@ -10,8 +10,13 @@ public class StringUtils {
         if(text == null || "".equals(text)) {
             return text;
         }
-
         return text.trim();
+    }
+
+    //判断对象是否为null 设置默认值
+    public static <T> T checkObjectNull(Object object,T def){
+        if (object == null) return def;
+        return (T) object;
     }
 
 }
