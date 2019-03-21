@@ -22,6 +22,8 @@ public interface DSMConst extends UDAConst {
             {"d_system_resource"}, // 资源表
             {"d_order_base"},
             {"d_order_product"},
+            {"d_sms_template"},//短信模板
+            {"d_comp_ship_info"},//收货人
 
     };
 
@@ -33,6 +35,8 @@ public interface DSMConst extends UDAConst {
     public final static int D_SYSTEM_RESOURCE = 3;
     public final static int D_ORDER_BASE = 4;
     public final static int D_ORDER_PRODUCT = 5;
+    public final static int D_SMS_TEMPLATE = 6;
+    public final static int D_COMP_SHIP_INFO = 7;
 
 
 
