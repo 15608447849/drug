@@ -20,7 +20,7 @@ public class TreeUtil {
 
             // 赋予孩子节点
             for (ITreeNode node2 : list) {
-                if (node2.getParentId() == node.getSelfId()) {
+                if (node.getSelfId().equals(node2.getParentId())) {
                     node.addChild(node2);
                 }
             }

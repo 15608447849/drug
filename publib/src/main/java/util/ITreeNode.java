@@ -12,7 +12,7 @@ public interface ITreeNode<T> {
     /** 是否为树根 **/
     boolean isRoot();
     /** 获取父级 **/
-    int getParentId();
+    String getParentId();
     /** 获取本ID **/
-    int getSelfId();
+    String getSelfId();
 }

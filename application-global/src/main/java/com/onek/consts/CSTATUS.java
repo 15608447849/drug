@@ -6,5 +6,5 @@ public interface CSTATUS {
     int CLOSE  = 1 << 5; // 停用 32
     /* 全局标记 END */
 
-    int ROLE_NOT_DELETE = 1 << 1; // 不可删除 2
+    int ROLE_NOT_HANDLEABLE = 1 << 1; // 不可停用 2
 }

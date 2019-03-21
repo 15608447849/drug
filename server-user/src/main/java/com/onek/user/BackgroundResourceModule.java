@@ -16,6 +16,7 @@ import util.TreeUtil;
 import java.util.*;
 
 public class BackgroundResourceModule {
+
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
 
     private static final String QUERY_RESOURCE_BASE =

@@ -8,4 +8,6 @@ dependencies {
     implementation 'org.elasticsearch.client:transport:6.3.0'
     implementation 'org.elasticsearch:elasticsearch:6.3.0'
     implementation 'org.elasticsearch:elasticsearch-analysis-ik:6.1.1'
+    implementation 'org.apache.httpcomponents:fluent-hc:4.5'
+    implementation project(':jdbc')
 }
