@@ -24,8 +24,8 @@ public interface DSMConst extends UDAConst {
             {"d_order_product"},
             {"d_sms_template"},//短信模板
             {"d_comp_ship_info"},//收货人
-            {"d_comp"}
-
+            {"d_comp"},
+            {"d_global_area"}, // 地区
     };
 
     //TODO 表名=表在_DB_TABLES常量里固定位置值 ，目的是为了开发人员写代码方便可读性
@@ -39,6 +39,7 @@ public interface DSMConst extends UDAConst {
     public final static int D_SMS_TEMPLATE = 6;
     public final static int D_COMP_SHIP_INFO = 7;
     public final static int D_COMP = 8;
+    public final static int D_GLOBAL_AREA = 9;
 
 
 
