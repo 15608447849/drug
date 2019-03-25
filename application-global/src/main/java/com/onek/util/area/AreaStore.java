@@ -86,17 +86,19 @@ public class AreaStore {
         int indexCode = AreaUtil.getCodeByLayer(areac, layer);
         AreaEntity result = null;
         for (AreaEntity area : areas) {
-            if (area.getAreac() == indexCode) {
-                if (areac == area.getAreac()) {
-                    result = area;
-                    break;
-                }
+            if (area.getAreac() != indexCode) {
+                continue;
+            }
 
-                result = findArea(area.getChildren(), areac, layer + 1);
+            if (areac == area.getAreac()) {
+                result = area;
+                break;
+            }
 
-                if (result != null) {
-                    break;
-                }
+            result = findArea(area.getChildren(), areac, layer + 1);
+
+            if (result != null) {
+                break;
             }
         }
 
