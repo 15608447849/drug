@@ -60,7 +60,7 @@ public class MyInvoiceModule {
             }
         } catch (Exception e) {
             e.printStackTrace();
-            new Result().fail("参数错误！");
+            return new Result().fail("参数错误！");
         }
 
         InvoiceVO[] query = (InvoiceVO[]) getInvoice(appContext).data;
@@ -69,12 +69,12 @@ public class MyInvoiceModule {
             // insert
             BaseDAO.getBaseDAO().updateNative(INSERT_INVOICE, compId,
                     frontVO.getTaxpayer(), frontVO.getBankers(),
-                    frontVO.getAccount(), frontVO.getTel(), compId);
+                    frontVO.getAccount (), frontVO.getTel(), compId);
         } else {
             // update
             BaseDAO.getBaseDAO().updateNative(UPDATE_INVOICE,
                     frontVO.getTaxpayer(), frontVO.getBankers(),
-                    frontVO.getAccount(), frontVO.getTel(), compId);
+                    frontVO.getAccount (), frontVO.getTel(), compId);
         }
 
         return new Result().success("操作成功");
