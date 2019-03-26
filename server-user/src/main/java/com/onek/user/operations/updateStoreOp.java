@@ -62,10 +62,11 @@ public class updateStoreOp implements IOperation<AppContext> {
                 }else if ((status&1024) == 1024){
                     status = 1024; //停用
                 }
+
                 //修改 门店信息
                 String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} " +
-                        "SET cname=?,cnamehash=crc32(?),caddr=?,caddrcode=?,lat=?,lng=?,cstatus=cstatus&~?|128 " +
-                        "WHERE cstatus&1=0 AND ctype=0 AND compid=?";
+                        "SET cname=?,cnamehash=crc32(?),caddr=?,caddrcode=?,lat=?,lng=?,cstatus=cstatus&~?|128,submitdate=CURRENT_DATE,submittime=CURRENT_TIME" +
+                        " WHERE cstatus&1=0 AND ctype=0 AND compid=?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql,
                         storeName,
                         storeName,
@@ -84,8 +85,8 @@ public class updateStoreOp implements IOperation<AppContext> {
             //新增企业信息
             long compId = getCompanyCode();
             String insertSql = "INSERT INTO {{?"+ DSMConst.D_COMP +"}} " +
-                    "(cid,cname,cnamehash,ctype,caddr,caddrcode,lat,lng,cstatus,createdate, createtime) " +
-                    "VALUES(?,?,crc32(?),?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME)";
+                    "(cid,cname,cnamehash,ctype,caddr,caddrcode,lat,lng,cstatus,createdate, createtime,submitdate,submittime) " +
+                    "VALUES(?,?,crc32(?),?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,CURRENT_DATE,CURRENT_TIME)";
             int i = BaseDAO.getBaseDAO().updateNative(insertSql,
                     compId,
                     storeName,

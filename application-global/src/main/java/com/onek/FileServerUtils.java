@@ -16,4 +16,12 @@ public class FileServerUtils {
         return "http://" + GlobalProperties.INSTANCE.fileServerAddress ;
     }
 
+    public static final int MOD = 500;
+
+    //企业码生成 企业相关文件路径
+    public static String getCompanyPath(int compid) {
+        int comidMod = compid % MOD; //取模
+        return "/" +comidMod + "/" + compid;
+    }
+
 }

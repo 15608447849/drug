@@ -78,4 +78,6 @@ public class LoginRegistrationModule {
         RedisUtil.getStringProvide().delete(key);
         return new Result().success("登出成功");
     }
+
+
 }

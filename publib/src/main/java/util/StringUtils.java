@@ -19,4 +19,8 @@ public class StringUtils {
         return (T) object;
     }
 
+    public static String obj2Str(Object object,String def){
+        if (object == null) return def;
+        return  object.toString();
+    }
 }
