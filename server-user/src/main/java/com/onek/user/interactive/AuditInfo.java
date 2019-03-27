@@ -13,8 +13,6 @@ public class AuditInfo {
     public String auditDate; //审核日期
     public String auditTime; //审核时间
     public String status; //状态
-    public String auditer;//审核人
-
     //需要返回:
     public String companyId; //公司码
     public String createDate; //创建日期

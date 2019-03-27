@@ -1,7 +1,6 @@
 
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
     implementation project(':iceserver')
     implementation 'redis.clients:jedis:2.9.0'
     implementation 'com.alibaba:fastjson:1.2.47'
@@ -11,3 +10,4 @@ dependencies {
     implementation 'org.apache.httpcomponents:fluent-hc:4.5'
     implementation project(':jdbc')
 }
+

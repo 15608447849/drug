@@ -3,7 +3,7 @@ package com.onek.user;
 import com.onek.AppContext;
 import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
-import com.onek.user.operations.updateStoreOp;
+import com.onek.user.operations.UpdateStoreOp;
 import util.GsonUtils;
 
 /**
@@ -19,7 +19,7 @@ public class StoreManageModule {
     @UserPermission
     public Result updateStoreInfo(AppContext appContext){
         String json = appContext.param.json;
-        updateStoreOp op = GsonUtils.jsonToJavaBean(json, updateStoreOp.class);
+        UpdateStoreOp op = GsonUtils.jsonToJavaBean(json, UpdateStoreOp.class);
         assert op!=null;
         return op.execute(appContext);
     }

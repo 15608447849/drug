@@ -16,7 +16,7 @@ import static com.onek.RedisGlobalKeys.getCompanyCode;
  * @Author: leeping
  * @Date: 2019/3/20 14:36
  */
-public class updateStoreOp implements IOperation<AppContext> {
+public class UpdateStoreOp implements IOperation<AppContext> {
 
     String storeName;
     String address; //根据地址 自动采集经纬度信息

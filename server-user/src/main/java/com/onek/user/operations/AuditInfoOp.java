@@ -11,6 +11,8 @@ import util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import static util.StringUtils.checkObjectNull;
+
 /**
  * @Author: leeping
  * @Date: 2019/3/26 14:36
@@ -46,7 +48,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
             if (!StringUtils.isEmpty(status)){
                 try {
                     int istatus = Integer.parseInt(status);
-                    sb.append(" AND cstatus="+istatus);
+                    sb.append(" AND cstatus&"+istatus+"="+istatus);
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
@@ -61,7 +63,6 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                     return new Result().success(list);
                 }
             }
-
         }
         return new Result().fail("无数据");
     }
@@ -113,8 +114,15 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         AuditInfo info;
         for (Object[] arr : lines){
             try {
+                //获取企业账号
+                String selectSql = "SELECT uphone FROM {{?" + DSMConst.D_SYSTEM_USER +"}} WHERE cid = "+ arr[0];
+
+                List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
+                if (lines2.size() != 1) continue;
+
                 info = new AuditInfoOp();
 
+                info.phone = StringUtils.obj2Str(lines2.get(0)[0],"");
                 info.companyId = StringUtils.obj2Str(arr[0],"");
                 info.company = StringUtils.obj2Str(arr[1],"");
 
@@ -128,7 +136,20 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 info.auditTime = StringUtils.obj2Str(arr[7],"");
 
                 info.examine = StringUtils.obj2Str(arr[8],"");
-                info.status = StringUtils.obj2Str(arr[9],"");
+
+                int status = (int)arr[9];
+                if ((status&64) == 64){
+                    status = 64; //待认证
+                }else if ( (status&128) == 128 ){
+                    status = 128; //审核中
+                }else if ((status&256) == 256){
+                    status = 256; //已认证
+                }else if ((status&512) == 512){
+                    status = 512; //认证失败
+                }else if ((status&1024) == 1024){
+                    status = 1024; //停用
+                }
+                info.status = StringUtils.obj2Str(status,"");
 
                 list.add(info);
             } catch (Exception e) {

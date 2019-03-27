@@ -15,6 +15,7 @@ import static util.StringUtils.checkObjectNull;
 /**
  * @Author: leeping
  * @Date: 2019/3/20 16:30
+ * 企业信息
  */
 public class StoreBasicInfoOp implements IOperation<AppContext> {
     @Override

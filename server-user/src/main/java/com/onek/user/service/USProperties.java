@@ -15,6 +15,9 @@ public class USProperties extends ApplicationPropertiesBase {
     @PropertiesName("verification.code.image.survive.time")
     public int vciSurviveTime;
 
+    @PropertiesName("verification.code.sms.survive.time")
+    public int smsSurviveTime;
+
     @PropertiesName("store.login.fail.num.min")
     public int sLoginNumMin;
 

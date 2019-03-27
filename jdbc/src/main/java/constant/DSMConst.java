@@ -24,9 +24,10 @@ public interface DSMConst extends UDAConst {
             {"d_order_product"},
             {"d_sms_template"},//短信模板
             {"d_comp_ship_info"},//收货人
-            {"d_comp"},
+            {"d_comp"},//企业表
             {"d_global_area"}, // 地区
             {"d_comp_invoice"}, // 发票
+            {"d_comp_aptitude"} //企业资质表
     };
 
     //TODO 表名=表在_DB_TABLES常量里固定位置值 ，目的是为了开发人员写代码方便可读性
@@ -37,11 +38,14 @@ public interface DSMConst extends UDAConst {
     public final static int D_SYSTEM_RESOURCE = 3;
     public final static int D_ORDER_BASE = 4;
     public final static int D_ORDER_PRODUCT = 5;
+
     public final static int D_SMS_TEMPLATE = 6;
     public final static int D_COMP_SHIP_INFO = 7;
     public final static int D_COMP = 8;
     public final static int D_GLOBAL_AREA = 9;
     public final static int D_COMP_INVOICE = 10;
+
+    public final static int D_COMP_APTITUDE = 11;
 
 
 

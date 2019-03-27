@@ -20,7 +20,7 @@ import static com.onek.RedisGlobalKeys.*;
  * 用户注册
  *
  */
-public class RegisterOp implements IOperation<AppContext> {
+public class StoreRegisterOp implements IOperation<AppContext> {
 
     // 1 效验手机号是否存在
     // 2 获取短信验证码

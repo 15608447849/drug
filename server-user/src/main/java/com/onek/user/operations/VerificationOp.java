@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import static util.ImageVerificationUtils.getRandomCode;
+import static util.ImageVerificationUtils.getRandomCodeByNum;
 
 /**
  * @Author: leeping
@@ -41,9 +42,10 @@ public class VerificationOp implements IOperation<AppContext> {
     @Override
     public Result execute(AppContext context) {
         if (type == 1) return generateImageCode();//获取图形验证码
-        if (type == 2) return sendSmsCode();
+        if (type == 2) return sendSmsCode();//获取短信验证码
         return new Result().fail("未知的操作类型");
     }
+
     private Result generateImageCode() {
         try {
             String code = getRandomCode(4);
@@ -70,8 +72,17 @@ public class VerificationOp implements IOperation<AppContext> {
         }
         return new Result().fail("无法生成验证图片");
     }
-    //发送短信验证码 *等待接入短信接口
+
+    //发送短信验证码-等待接入短信接口
     private Result sendSmsCode() {
-        return new Result().success("手机号:"+ phone+" 注意查收短信(测试验证码 000000)");
+        String code = getRandomCodeByNum(6);
+        //存入缓存
+        String res = RedisUtil.getStringProvide().set(phone,code);
+        if (res.equals("OK")){
+            RedisUtil.getStringProvide().expire(phone, USProperties.INSTANCE.smsSurviveTime); // 5分钟内有效
+            //发送短信
+            return new Result().success("手机号:"+ phone+",测试验证码:"+code);
+        }
+        return new Result().fail("获取短信验证码失败");
     }
 }

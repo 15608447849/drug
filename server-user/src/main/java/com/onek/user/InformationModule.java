@@ -4,12 +4,7 @@ import com.onek.AppContext;
 import com.onek.FileServerUtils;
 import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
-import com.onek.user.operations.AuditInfoOp;
-import com.onek.user.operations.ChangeInfoOp;
 import com.onek.user.operations.StoreBasicInfoOp;
-import util.GsonUtils;
-
-import java.util.HashMap;
 
 import static com.onek.FileServerUtils.getCompanyPath;
 
@@ -45,33 +40,5 @@ public class InformationModule {
     public Result basicInfo(AppContext appContext){
         return new StoreBasicInfoOp().execute(appContext);
     }
-
-    /**
-     * 修改门店登陆手机号
-     */
-    @UserPermission
-    public Result changeUserInfo(AppContext appContext){
-        String json = appContext.param.json;
-        ChangeInfoOp op = GsonUtils.jsonToJavaBean(json, ChangeInfoOp.class);
-        assert op!=null;
-        return op.execute(appContext);
-    }
-
-    /**
-     * 修改门店登陆密码
-     */
-
-    /**
-     * 管理后台查询
-     * 查询字段 : 1.申请账号 2.企业名 3.提交审核时间 4.审核时间
-     */
-    public Result queryAuditInfo(AppContext appContext){
-        String json = appContext.param.json;
-        AuditInfoOp op = GsonUtils.jsonToJavaBean(json, AuditInfoOp.class);
-        assert op!=null;
-        return op.execute(appContext);
-    }
-
-
 
 }

@@ -46,7 +46,6 @@ public class LoginBackOp implements IOperation<AppContext> {
         return context.relationTokenUserSession();
     }
 
-
     //检查用户是否正确
     private boolean checkSqlAndUserExist(AppContext context) {
 
