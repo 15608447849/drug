@@ -61,12 +61,12 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
             Current current = request.getCurrent();
             Identity identity = request.getCurrent().id;
 
-            logger.print(
-                    current.con._toString().split("\\n")[1] +
-                    " ,服务名:"+identity.name +
-                    " ,方法名:" + current.operation
-            );
 
+//            logger.print(
+//                    current.con._toString().split("\\n")[1] +
+//                    " ,服务名:"+identity.name +
+//                    " ,方法名:" + current.operation
+//            );
             DispatchStatus status = map.get(identity).ice_dispatch(request);
 //            logger.print("DispatchStatus = " + status);
 //            if (status == DispatchStatus.DispatchOK){
@@ -76,7 +76,8 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
 //            }else if (status == DispatchStatus.DispatchUserException){
 //                logger.print("调用错误" );
 //            }
-            logger.print("调用状态"+ status + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms" );
+            if ( current.operation .equals("accessService"))
+                logger.print("调用状态"+ status + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms" );
             return status;
         }catch(Exception e){
             logger.print(e.toString());

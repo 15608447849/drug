@@ -36,7 +36,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
 
         if (!StringUtils.isEmpty(oldPassword,newPassword)){
             String curPassword = session.password;
-            if (EncryptUtils.encryption(oldPassword).equals(curPassword)){
+            if (EncryptUtils.encryption(oldPassword).equalsIgnoreCase(curPassword)){
                 changUserByUid("upw="+ EncryptUtils.encryption(newPassword),"uid = "+ uid);
             }
         }

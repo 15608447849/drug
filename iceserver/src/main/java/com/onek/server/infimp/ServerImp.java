@@ -37,17 +37,17 @@ public class ServerImp extends _InterfacesDisp {
     //上下文实例 - 默认
     private Class contextCls = IceContext.class;
 
-    ServerImp(String serverName, Logger logger,String[] args) {
+    ServerImp(String serverName, Logger logger) {
         this.serverName = serverName;
         this.logger = logger;
         this.pkgPath = IceProperties.INSTANCE.pkgSrvMap.get(serverName);
         initInterceptorList();
         initContextClass();
-        initApplication(args);
+        initApplication();
     }
 
     //初始化 系统应用
-    private void initApplication(String[] args) {
+    private void initApplication() {
         if (StringUtils.isEmpty(IceProperties.INSTANCE.appInitializationImp)) return;
         Object initObj = null;
         try {
@@ -57,7 +57,7 @@ public class ServerImp extends _InterfacesDisp {
         }
         if (initObj!=null){
             try {
-                ObjectRefUtil.callMethod(initObj,"startUp",new Class[]{String.class,String[].class},serverName,args);
+                ObjectRefUtil.callMethod(initObj,"startUp",new Class[]{String.class,String[].class},serverName);
             } catch (Exception e) {
                 logger.print("无法调用初始化器方法startUp,原因: " + e);
             }
@@ -102,7 +102,7 @@ public class ServerImp extends _InterfacesDisp {
     //打印参数
     private void printParam(IRequest request, Current __current) {
         try {
-            logger.print("\n->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-");
+            logger.print("\n->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-");
             StringBuilder sb = new StringBuilder();
             sb.append("call:\t" + request.pkg +" -> " + request.cls +" -> "+request.method+"\n");
             if(!StringUtils.isEmpty(request.param.token)){
@@ -175,7 +175,7 @@ public class ServerImp extends _InterfacesDisp {
         String resultString = GsonUtils.javaBeanToJson(result);
         logger.print(
                 resultString+"\n"+
-                "-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n");
+                "-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n");
         return resultString;
     }
 

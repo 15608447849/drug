@@ -1,0 +1,12 @@
+
+
+dependencies {
+    implementation project(':iceserver')
+    implementation project(':jdbc')
+    implementation project(':application-global')
+}
+shadowJar {
+    baseName = 'global'
+   classifier = null
+    version = null
+}

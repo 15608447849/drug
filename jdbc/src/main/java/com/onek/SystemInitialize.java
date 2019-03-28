@@ -8,7 +8,7 @@ import org.hyrdpf.ds.AppConfig;
  */
 public class SystemInitialize {
 
-    public void startUp(String serverName,String[] args){
+    public void startUp(String serverName){
         AppConfig.initLogger();
         AppConfig.initialize();
     }

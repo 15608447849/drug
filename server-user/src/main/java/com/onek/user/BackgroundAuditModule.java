@@ -4,6 +4,7 @@ import com.onek.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.operations.AuditInfoOp;
 
+import com.onek.user.operations.UpdateAuditOp;
 import util.GsonUtils;
 
 /**
@@ -25,10 +26,10 @@ public class BackgroundAuditModule {
     /**
      * 管理后台审核
      */
-//    public Result updateAudit(AppContext appContext){
-//        String json = appContext.param.json;
-//        UpdateAuditOp op =  GsonUtils.jsonToJavaBean(json, UpdateAuditOp.class);
-//        assert op!=null;
-//        return op.execute(appContext);
-//    }
+    public Result updateAudit(AppContext appContext){
+        String json = appContext.param.json;
+        UpdateAuditOp op =  GsonUtils.jsonToJavaBean(json, UpdateAuditOp.class);
+        assert op!=null;
+        return op.execute(appContext);
+    }
 }
