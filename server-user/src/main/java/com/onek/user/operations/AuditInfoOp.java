@@ -1,6 +1,8 @@
 package com.onek.user.operations;
 
-import com.onek.AppContext;
+import cn.hy.otms.rpcproxy.comm.cstruct.Page;
+import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.onek.context.AppContext;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.user.interactive.AuditInfo;
@@ -11,23 +13,25 @@ import util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static util.StringUtils.checkObjectNull;
-
 /**
  * @Author: leeping
  * @Date: 2019/3/26 14:36
  */
 public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
-
+    private Page page = new Page();
+    private PageHolder pageHolder = new PageHolder(page);
     @Override
-    public Result execute(AppContext context) {
+    public Result execute(AppContext appContext) {
+
+        page.pageIndex = appContext.param.pageIndex;
+        page.pageSize  = appContext.param.pageNumber;
 
         Result result = null;
         //根据手机号码查询企业审核信息
         if(!StringUtils.isEmpty(phone))
             result = queryByPhone();
 
-        if (result == null){
+        if (StringUtils.isEmpty(phone) && result == null){
             //根据所选条件查询
             StringBuilder sb = new StringBuilder();
             if (!StringUtils.isEmpty(company)){
@@ -56,15 +60,15 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
 
             String selectSql = generationAuditSelectSql(sb.toString());
 
-            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(pageHolder, page, selectSql);
             if (lines.size() > 0) {
                 List<AuditInfo> list = filterObject2Result(lines);
                 if (list!=null){
-                    return new Result().success(list);
+                    return new Result().setQuery(list,pageHolder);
                 }
             }
         }
-        return new Result().fail("无数据");
+        return new Result().setQuery(new ArrayList<>(),pageHolder);
     }
 
     //根据手机账号查询
@@ -80,7 +84,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         if (lines.size() > 0) {
             List<AuditInfo> list = filterObject2Result(lines);
             if (list!=null){
-                return new Result().success(list);
+                return new Result().setQuery(list,pageHolder);
             }
         }
         return  null;
@@ -117,7 +121,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 //获取企业账号
                 String selectSql = "SELECT uphone FROM {{?" + DSMConst.D_SYSTEM_USER +"}} WHERE cid = "+ arr[0];
 
-                List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
+                List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql);
                 if (lines2.size() != 1) continue;
 
                 info = new AuditInfoOp();

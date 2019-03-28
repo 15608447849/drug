@@ -1,0 +1,10 @@
+
+
+dependencies {
+    implementation project(':application-global')
+}
+shadowJar {
+    baseName = 'global'
+   classifier = null
+    version = null
+}

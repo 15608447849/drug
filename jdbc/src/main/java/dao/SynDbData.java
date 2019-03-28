@@ -163,7 +163,6 @@ public class SynDbData implements Callable<Object> {
             result = jdbcBaseDao.update(resultSQL[1], param);
         } catch (DAOException e) {
             // master = (master == 0 ? 1: 0);
-            System.out.println("JDBC 异常测试 "+ e.getCause());
             e.printStackTrace();
         }
         return result;
@@ -183,7 +182,6 @@ public class SynDbData implements Callable<Object> {
             keys = jdbcBaseDao.updateAndGenerateKeys(resultSQL[1], param);
         }catch (DAOException e) {
             //master = (master == 0 ? 1: 0);
-            System.out.println("JDBC 异常测试 "+ e.getCause());
             e.printStackTrace();
         }
         return keys;
@@ -210,9 +208,7 @@ public class SynDbData implements Callable<Object> {
                 }
             });
         } catch (DAOException e) {
-            System.out.println("JDBC 异常测试 "+ e.getCause());
             e.printStackTrace();
-            LogUtil.getDefaultLogger().error(e.getStackTrace());
             return null;
         }
         return result;
@@ -269,7 +265,6 @@ public class SynDbData implements Callable<Object> {
             result = jdbcBaseDao.updateBatch(resultSQL[1], params,batchSize);
         } catch (DAOException e) {
             // master = (master == 0 ? 1: 0);
-            System.out.println("JDBC 异常测试 "+ e.getCause());
             e.printStackTrace();
         }
         return result;

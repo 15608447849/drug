@@ -1,8 +1,7 @@
 package com.onek.user.operations;
 
-import com.onek.AppContext;
-import com.onek.RedisGlobalKeys;
-import com.onek.UserSession;
+import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import constant.DSMConst;
@@ -10,7 +9,7 @@ import dao.BaseDAO;
 
 import java.util.List;
 
-import static com.onek.RedisGlobalKeys.getCompanyCode;
+import static com.onek.util.RedisGlobalKeys.getCompanyCode;
 
 /**
  * @Author: leeping
@@ -24,31 +23,45 @@ public class UpdateStoreOp implements IOperation<AppContext> {
     public double longitude;//营业执照地址纬度
     public double latitude;//营业执照地址经度
 
+
     @Override
     public Result execute(AppContext context) {
-        UserSession session = context.getUserSession();
 
-        //根据传递的企业名称查询是否存在
-        String selectSql = "SELECT cid FROM {{?" + DSMConst.D_COMP +"}} WHERE cstatus&1 = 0 AND ctype=0 AND cname = ?";
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,storeName);
-        if (lines.size()>0){
-            if (session.compId > 0) return new Result().fail("修改失败,存在相同门店名");
-            int compid = (int) lines.get(0)[0];
-            //用户关联企业码
-            String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} SET cid = ? WHERE uid = ?";
-            int i = BaseDAO.getBaseDAO().updateNative(updateSql,compid,session.userId);
-            if (i <= 0){
-                return new Result().fail("无法关联门店信息");
+
+
+        UserSession session = context.getUserSession();
+        boolean isRelated = false; //是否关联
+        if (session.compId == 0){ //当前用户没有关联任何企业
+            //根据传递的企业名称查询是否存在采集企业
+            String selectSql = "SELECT cid FROM {{?" + DSMConst.D_COMP +"}} WHERE cstatus&1 = 0 AND ctype=0 AND cname = ?";
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,storeName);
+            if (lines.size()>0){
+                if (session.compId > 0) return new Result().fail("修改失败,存在相同门店名");
+                int compid = (int) lines.get(0)[0];
+                //用户关联企业码
+                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} SET cid = ? WHERE uid = ?";
+                int i = BaseDAO.getBaseDAO().updateNative(updateSql,compid,session.userId);
+                if (i <= 0){
+                    return new Result().fail("无法关联门店信息");
+                }
+                session.compId = compid;
+                context.relationTokenUserSession();//重新保存用户信息
+                isRelated = true;
             }
-            session.compId = compid;
-            context.relationTokenUserSession();
+        }
+
+        if (!isRelated){
+            //判断是否存在相同企业名
+            String selectSql = "SELECT cid FROM {{?" +DSMConst.D_COMP+"}} WHERE cstatus&1 = 0 AND ctype=0 AND cid=? AND cname=? ";
+            List<Object[]>lines = BaseDAO.getBaseDAO().queryNative(selectSql,session.compId,storeName);
+            if (lines.size() > 0) return new Result().fail("存在相同门店名,无法修改");
         }
 
         if (session.compId > 0 ){
-            //查询出当前状态
-            selectSql = "SELECT cstatus FROM {{?" + DSMConst.D_COMP +"}} WHERE cstatus&1 = 0 AND ctype=0 AND cid = ?";
 
-            lines = BaseDAO.getBaseDAO().queryNative(selectSql,session.compId);
+            //查询出当前状态
+            String selectSql = "SELECT cstatus FROM {{?" + DSMConst.D_COMP +"}} WHERE cstatus&1 = 0 AND ctype=0 AND cid = ?";
+            List<Object[]>lines = BaseDAO.getBaseDAO().queryNative(selectSql,session.compId);
             if (lines.size() > 0){
                 int status = (int) lines.get(0)[0]; //状态
                 if ((status&64) == 64){
@@ -64,9 +77,9 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 }
 
                 //修改 门店信息
-                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} " +
+                String updateSql = "UPDATE {{?" + DSMConst.D_COMP + "}} " +
                         "SET cname=?,cnamehash=crc32(?),caddr=?,caddrcode=?,lat=?,lng=?,cstatus=cstatus&~?|128,submitdate=CURRENT_DATE,submittime=CURRENT_TIME" +
-                        " WHERE cstatus&1=0 AND ctype=0 AND compid=?";
+                        " WHERE cstatus&1=0 AND ctype=0 AND cid=?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql,
                         storeName,
                         storeName,
@@ -102,7 +115,6 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 return new Result().success("新增门店信息,关联成功");
             }
         }
-
         return new Result().fail("关联异常");
     }
 }

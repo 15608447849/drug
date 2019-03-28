@@ -2,7 +2,7 @@ package com.onek.user;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.onek.AppContext;
+import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.entity.ConsigneeVO;
 import com.onek.user.service.MyConsigneeImpl;

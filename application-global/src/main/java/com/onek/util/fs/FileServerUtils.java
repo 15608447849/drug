@@ -1,6 +1,6 @@
-package com.onek;
+package com.onek.util.fs;
 
-import util.StringUtils;
+import com.onek.prop.GlobalProperties;
 
 /**
  * @Author: leeping
