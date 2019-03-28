@@ -9,7 +9,6 @@ import com.onek.entitys.Result;
 import com.onek.user.entity.UserInfoVo;
 import constant.DSMConst;
 import dao.BaseDAO;
-import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
