@@ -16,7 +16,7 @@ import util.StringUtils;
 
 import java.util.List;
 
-import static com.onek.RedisGlobalKeys.getUserCode;
+import static com.onek.util.RedisGlobalKeys.getUserCode;
 
 /**
  * @author cyq
