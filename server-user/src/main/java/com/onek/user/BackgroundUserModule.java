@@ -17,6 +17,8 @@ import util.StringUtils;
 
 import java.util.List;
 
+import static com.onek.RedisGlobalKeys.getUserCode;
+
 /**
  * @author cyq
  * @version 1.1.1
@@ -41,7 +43,7 @@ public class BackgroundUserModule {
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME)";
 
                 String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
-                code = baseDao.updateNative(insertSQL, RedisUtil.getStringProvide().increase("USER_TAB_UID"),
+                code = baseDao.updateNative(insertSQL, getUserCode(),
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
                         pwd, userInfoVo.getRoleid());
             } else {
