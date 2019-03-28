@@ -1,4 +1,4 @@
-package com.onek;
+package com.onek.util;
 
 import redis.util.RedisUtil;
 

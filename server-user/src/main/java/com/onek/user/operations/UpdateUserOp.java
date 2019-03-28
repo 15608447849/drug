@@ -1,7 +1,7 @@
 package com.onek.user.operations;
 
-import com.onek.AppContext;
-import com.onek.UserSession;
+import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import constant.DSMConst;

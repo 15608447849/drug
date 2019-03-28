@@ -1,8 +1,7 @@
 package com.onek.user.operations;
 
-import com.onek.AppContext;
-import com.onek.RedisGlobalKeys;
-import com.onek.UserSession;
+import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import constant.DSMConst;
@@ -10,7 +9,7 @@ import dao.BaseDAO;
 
 import java.util.List;
 
-import static com.onek.RedisGlobalKeys.getCompanyCode;
+import static com.onek.util.RedisGlobalKeys.getCompanyCode;
 
 /**
  * @Author: leeping

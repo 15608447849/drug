@@ -1,10 +1,9 @@
 package com.onek.user.operations
 
-import com.onek.AppContext
-import com.onek.RedisGlobalKeys
+import com.onek.context.AppContext
+import com.onek.util.RedisGlobalKeys
 import com.onek.entitys.IOperation
 import com.onek.entitys.Result
-import com.sun.org.apache.xpath.internal.operations.Bool
 import constant.DSMConst
 import dao.BaseDAO
 

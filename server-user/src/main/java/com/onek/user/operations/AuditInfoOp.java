@@ -2,7 +2,7 @@ package com.onek.user.operations;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.onek.AppContext;
+import com.onek.context.AppContext;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.user.interactive.AuditInfo;
@@ -12,8 +12,6 @@ import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import static util.StringUtils.checkObjectNull;
 
 /**
  * @Author: leeping

@@ -1,4 +1,4 @@
-package com.onek;
+package com.onek.init;
 
 import org.hyrdpf.ds.AppConfig;
 

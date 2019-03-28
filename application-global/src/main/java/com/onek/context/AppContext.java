@@ -1,9 +1,6 @@
-package com.onek;
+package com.onek.context;
 
 import Ice.Current;
-import Ice.Logger;
-import IceInternal.Ex;
-import com.onek.server.inf.IParam;
 import com.onek.server.inf.IRequest;
 import com.onek.server.infimp.IceContext;
 import redis.util.RedisUtil;
@@ -31,6 +28,7 @@ public class AppContext extends IceContext {
     @Override
     protected void initialization(){
         try {
+
             String key = param.token + "@" + remoteIp;
             String value = RedisUtil.getStringProvide().get(key);
             if(StringUtils.isEmpty(value)) return;
