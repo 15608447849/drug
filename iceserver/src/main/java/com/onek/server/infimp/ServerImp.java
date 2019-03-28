@@ -57,7 +57,7 @@ public class ServerImp extends _InterfacesDisp {
         }
         if (initObj!=null){
             try {
-                ObjectRefUtil.callMethod(initObj,"startUp",new Class[]{String.class,String[].class},serverName);
+                ObjectRefUtil.callMethod(initObj,"startUp",new Class[]{String.class},serverName);
             } catch (Exception e) {
                 logger.print("无法调用初始化器方法startUp,原因: " + e);
             }
