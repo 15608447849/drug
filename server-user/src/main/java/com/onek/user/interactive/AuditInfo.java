@@ -19,4 +19,5 @@ public class AuditInfo {
     public String createTime; //创建时间
     public String examine;//审核失败原因
 
+    public AptitudeInfo cardInfo = new AptitudeInfo();
 }

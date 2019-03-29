@@ -27,8 +27,6 @@ public class UpdateStoreOp implements IOperation<AppContext> {
     @Override
     public Result execute(AppContext context) {
 
-
-
         UserSession session = context.getUserSession();
         boolean isRelated = false; //是否关联
         if (session.compId == 0){ //当前用户没有关联任何企业
@@ -54,7 +52,11 @@ public class UpdateStoreOp implements IOperation<AppContext> {
             //判断是否存在相同企业名
             String selectSql = "SELECT cid FROM {{?" +DSMConst.D_COMP+"}} WHERE cstatus&1 = 0 AND ctype=0 AND cid=? AND cname=? ";
             List<Object[]>lines = BaseDAO.getBaseDAO().queryNative(selectSql,session.compId,storeName);
-            if (lines.size() > 0) return new Result().fail("存在相同门店名,无法修改");
+            if (lines.size() > 0) {
+                if((int)lines.get(0)[0] != session.compId){
+                    return new Result().fail("存在相同门店名,无法修改");
+                }
+            }
         }
 
         if (session.compId > 0 ){

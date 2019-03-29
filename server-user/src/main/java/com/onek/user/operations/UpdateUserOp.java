@@ -5,6 +5,7 @@ import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import constant.DSMConst;
+import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.StringUtils;
@@ -30,21 +31,23 @@ public class UpdateUserOp implements IOperation<AppContext> {
         if ( !StringUtils.isEmpty(oldPhone,newPhone,smsCode)){
             String code = RedisUtil.getStringProvide().get(oldPhone);
             if (code.equals(smsCode) && !newPhone.equals(oldPhone)){
-                changUserByUid("uphone="+newPhone, "uid = "+ uid);
+                return changUserByUid("uphone="+newPhone, "uid = "+ uid);
             }
         }
 
         if (!StringUtils.isEmpty(oldPassword,newPassword)){
             String curPassword = session.password;
             if (EncryptUtils.encryption(oldPassword).equalsIgnoreCase(curPassword)){
-                changUserByUid("upw="+ EncryptUtils.encryption(newPassword),"uid = "+ uid);
+                return changUserByUid("upw='"+ EncryptUtils.encryption(newPassword)+"'","uid = "+ uid);
             }
         }
         return new Result().fail("修改失败");
     }
 
-    private void changUserByUid(String param ,String ifs) {
+    private Result changUserByUid(String param ,String ifs) {
         String sql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER +"}} SET " + param + " WHERE "+ifs;
-
+        int i = BaseDAO.getBaseDAO().updateNative(sql);
+        if (i>0) return new Result().success("修改成功");
+        return new Result().fail("修改失败," +sql);
     }
 }

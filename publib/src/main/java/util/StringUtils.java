@@ -23,8 +23,13 @@ public class StringUtils {
 
     //判断对象是否为null 设置默认值
     public static <T> T checkObjectNull(Object object,T def){
-        if (object == null) return def;
-        return (T) object;
+        try {
+            if (object == null) return def;
+            return (T) object;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return def;
     }
 
     public static String obj2Str(Object object,String def){
