@@ -1,9 +1,6 @@
-package com.onek;
+package com.onek.context;
 
 import Ice.Current;
-import Ice.Logger;
-import IceInternal.Ex;
-import com.onek.server.inf.IParam;
 import com.onek.server.inf.IRequest;
 import com.onek.server.infimp.IceContext;
 import redis.util.RedisUtil;
@@ -27,17 +24,18 @@ public class AppContext extends IceContext {
         super(current, request);
     }
 
+    //初始化用户信息 lzp
     @Override
     protected void initialization(){
         try {
+
             String key = param.token + "@" + remoteIp;
             String value = RedisUtil.getStringProvide().get(key);
             if(StringUtils.isEmpty(value)) return;
 
             String json = RedisUtil.getStringProvide().get(value);
             if(StringUtils.isEmpty(json)) return;
-
-            logger.print(key+" - Redis存在用户信息:\n" + json);
+            //logger.print(key+" - Redis存在用户信息:\n" + json);
             this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
 
         } catch (Exception ignored) { }
@@ -52,13 +50,13 @@ public class AppContext extends IceContext {
     }
 
 
-    //创建用户会话KRY
+    //创建用户会话KRY lzp
     private String createKey() {
         param.token = param.token + "@" + remoteIp;
         return EncryptUtils.encryption(param.token);
     }
 
-    //创建用户会话到缓存
+    //创建用户会话到缓存 lzp
     public boolean relationTokenUserSession() {
         if (userSession == null) return false;
         //创建token标识

@@ -1,6 +1,6 @@
 package com.onek.user.operations;
 
-import com.onek.AppContext;
+import com.onek.context.AppContext;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.user.interactive.StoreBasicInfo;
@@ -15,6 +15,7 @@ import static util.StringUtils.checkObjectNull;
 /**
  * @Author: leeping
  * @Date: 2019/3/20 16:30
+ * 企业信息
  */
 public class StoreBasicInfoOp implements IOperation<AppContext> {
     @Override

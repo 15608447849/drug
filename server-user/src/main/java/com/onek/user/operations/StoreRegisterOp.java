@@ -1,18 +1,17 @@
 package com.onek.user.operations;
 
-import com.onek.AppContext;
+import com.onek.context.AppContext;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
-import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.StringUtils;
 
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.onek.RedisGlobalKeys.*;
+import static com.onek.util.RedisGlobalKeys.*;
 
 /**
  * @Author: leeping
@@ -20,7 +19,7 @@ import static com.onek.RedisGlobalKeys.*;
  * 用户注册
  *
  */
-public class RegisterOp implements IOperation<AppContext> {
+public class StoreRegisterOp implements IOperation<AppContext> {
 
     // 1 效验手机号是否存在
     // 2 获取短信验证码

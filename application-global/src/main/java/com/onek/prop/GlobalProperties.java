@@ -1,4 +1,4 @@
-package com.onek;
+package com.onek.prop;
 
 import properties.abs.ApplicationPropertiesBase;
 import properties.annotations.PropertiesFilePath;

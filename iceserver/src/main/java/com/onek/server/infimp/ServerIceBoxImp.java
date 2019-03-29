@@ -8,7 +8,7 @@ import com.onek.iceabs.IceBoxServerAbs;
  */
 public class ServerIceBoxImp extends IceBoxServerAbs {
     @Override
-    protected Object specificServices(String[] args) {
-        return new ServerImp(_serverName,logger,args);
+    protected Object specificServices() {
+        return new ServerImp(_serverName,logger);
     }
 }

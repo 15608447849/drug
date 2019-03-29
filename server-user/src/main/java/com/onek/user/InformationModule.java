@@ -1,16 +1,17 @@
 package com.onek.user;
 
-import com.onek.AppContext;
-import com.onek.FileServerUtils;
+import com.onek.context.AppContext;
+import com.onek.util.fs.FileServerUtils;
 import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
 import com.onek.user.operations.StoreBasicInfoOp;
 
+import static com.onek.util.fs.FileServerUtils.getCompanyPath;
+
 /**
  * @Author: leeping
  * @Date: 2019/3/19 14:26
- * 门店使用
- * 信息获取
+ *信息获取
  */
 public class InformationModule {
 
@@ -25,14 +26,19 @@ public class InformationModule {
     }
 
     /**
+     *  获取企业文件路径 前缀
+     */
+    @UserPermission
+    public Result companyFilePathPrev(AppContext appContext){
+        return new Result().success("企业文件路径前缀").setHashMap("companyFileDir",getCompanyPath(appContext.getUserSession().compId));
+    }
+
+    /**
      * 获取门店用户基础信息
      */
     @UserPermission
     public Result basicInfo(AppContext appContext){
         return new StoreBasicInfoOp().execute(appContext);
     }
-
-
-
 
 }

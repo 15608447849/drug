@@ -583,7 +583,6 @@ public class ModelUtil {
 		Object[] params = null;
 		try {
 			params = getUpdateSQL(tableInt, t, sql, filter, nFields);
-//			System.out.println("------------ " + sql.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -1308,7 +1307,7 @@ public class ModelUtil {
 
 				age = nyear - byear - ((nmon < bmon) ? 1 : 0);
 			} catch (ParseException e) {
-//				System.out.println("出生日期异常!");
+				e.printStackTrace();
 			}
 		}
 		return age > 0 ? age : 0;

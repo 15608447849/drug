@@ -171,7 +171,7 @@ public class BaseDAO {
             //正则表达式
 			String regex = PREFIX_REGEX_SB.toString() + tableIndex + SUFFIX_REGEX_SB;
 			//取和数据库里真正的要查询的表名
-			nativeSQL = nativeSQL.replaceAll(regex.toString(),getTableName(tableIndex));
+			nativeSQL = nativeSQL.replaceAll(regex,getTableName(tableIndex));
 		}
 		result[1] = nativeSQL;
 		return result;
@@ -236,9 +236,9 @@ public class BaseDAO {
 	 */
 	@Transaction(false)
 	public List<Object[]> queryNative(String nativeSQL,final Object... params){
-		List<Object[]> resultList = null;
+		List<Object[]> resultList;
 		String[] result = getNativeSQL(nativeSQL);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		baseDao.setManager(getSessionMgr(Integer.parseInt(result[0])));
 		resultList = baseDao.query(result[1], params);
@@ -260,10 +260,9 @@ public class BaseDAO {
 	public List<Object[]> queryNativeSharding(int sharding,int year,String nativeSQL,final Object... params){
 		List<Object[]> resultList = null;
 		String[] result = getNativeSQL(nativeSQL,year);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(result[0])));
-		System.out.println("params:---------- " + Arrays.toString(params));
 		resultList = baseDao.query(result[1], params);
 		return resultList;
 	}
@@ -284,10 +283,9 @@ public class BaseDAO {
 	public List<Object[]> queryNativeGlobal(int year,int dbs,int db,String nativeSQL,final Object... params){
 		List<Object[]> resultList = null;
 		String[] result = getNativeSQL(nativeSQL,year);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		baseDao.setManager(AppConfig.getSessionManager(dbs,db));
-		System.out.println("params:---------- " + Arrays.toString(params));
 		resultList = baseDao.query(result[1], params);
 		return resultList;
 	}
@@ -317,8 +315,7 @@ public class BaseDAO {
 				queryResultList.addAll((List<Object[]>)future.get());
 			}
 		} catch (Exception e) {
-			e.printStackTrace();
-			LogUtil.getDefaultLogger().info("全局查询失败");
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 		}
 		return queryResultList;
 	}
@@ -334,7 +331,7 @@ public class BaseDAO {
 	public int updateNative(String nativeSQL,final Object... params){
 		int result = 0;
 		String[] resultSQL = getNativeSQL(nativeSQL);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 
 		//异步同步到备份库中
 		SynDbData synDbData = new SynDbData(resultSQL,params,master,0);
@@ -347,9 +344,7 @@ public class BaseDAO {
 			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
 			result = baseDao.update(resultSQL[1], params);
 		}catch (DAOException e) {
-			//master = (master == 0 ? 1: 0);
-			LogUtil.getDefaultLogger().debug("JDBC 异常测试 "+ e.getCause());
-			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 		}
 		return result;
 	}
@@ -365,7 +360,7 @@ public class BaseDAO {
 	protected int updateNativeInCall(String nativeSQL,int synFlag,final Object... params){
 		int result = 0;
 		String[] resultSQL = getNativeSQL(nativeSQL);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		if(synFlag == 0){
 			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
@@ -389,7 +384,7 @@ public class BaseDAO {
 	public int updateNativeSharding(int sharding,int year,String nativeSQL,final Object... params){
 		int result = 0;
 		String[] resultSQL = getNativeSQL(nativeSQL,year);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 
 		//异步同步到备份库
 		SynDbData synDbData = new SynDbData(resultSQL,params,master,0);
@@ -403,11 +398,7 @@ public class BaseDAO {
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 			result = baseDao.update(resultSQL[1], params);
 		} catch (DAOException e) {
-			//master = (master == 0 ? 1: 0);
-			SQLException ourCause = (SQLException)e.getCause().getCause();
-			System.out.println("1111  JDBC 异常测试 错误码"
-					+ ourCause.getErrorCode());
-			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 		}
 		return result;
 	}
@@ -425,7 +416,7 @@ public class BaseDAO {
 	protected int updateNativeInCallSharding(int sharding,int year,String nativeSQL,int synFlag,final Object... params){
 		int result = 0;
 		String[] resultSQL = getNativeSQL(nativeSQL,year);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		if(synFlag == 0){
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
@@ -446,21 +437,19 @@ public class BaseDAO {
 	public KV<Integer, List<Object>> updateAndGPKNative(String nativeSQL, final Object... params){
 		KV<Integer,List<Object>> keys = null;
 		String[] resultSQL = getNativeSQL(nativeSQL);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 		//异步同步到备份库
 		SynDbData synDbData = new SynDbData(resultSQL,params,master,2);
 		synDbData.setSharding(0);
 		Future<Object> future = ASYN_THREAD.submit(synDbData);
 
-		JdbcBaseDao baseDao = null;
+		JdbcBaseDao baseDao;
 		try{
 			baseDao = FacadeProxy.create(JdbcBaseDao.class);
 			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
 			keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		}catch (DAOException e) {
-			//master = (master == 0 ? 1: 0);
-			System.out.println("JDBC 异常测试 "+ e.getCause());
-			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 		}
 		return keys;
 	}
@@ -492,9 +481,7 @@ public class BaseDAO {
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 			keys = baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		}catch (DAOException e) {
-			//master = (master == 0 ? 1: 0);
-			System.out.println("JDBC 异常测试 "+ e.getCause());
-			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 		}
 		return keys;
 	}
@@ -510,7 +497,7 @@ public class BaseDAO {
 	protected KV<Integer, List<Object>> updateAndGPKNativeInCall(String nativeSQL,int synFlag,final Object... params){
 		KV<Integer,List<Object>> keys;
 		String[] resultSQL = getNativeSQL(nativeSQL);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		if(synFlag == 0){
 			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
@@ -533,7 +520,7 @@ public class BaseDAO {
 	protected KV<Integer, List<Object>> updateAndGPKNativeInCallSharding(int sharding,int year,String nativeSQL,int synFlag,final Object... params){
 		KV<Integer,List<Object>> keys;
 		String[] resultSQL = getNativeSQL(nativeSQL,year);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		if(synFlag == 0){
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
@@ -575,7 +562,7 @@ public class BaseDAO {
 				}
 			});
 		} catch (DAOException e) {
-			LogUtil.getDefaultLogger().error(e.getStackTrace());
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
             return null;
 		}
 		return result;
@@ -615,8 +602,7 @@ public class BaseDAO {
 				}
 			});
 		} catch (DAOException e) {
-			e.printStackTrace();
-			LogUtil.getDefaultLogger().error(e.getStackTrace());
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 			return null;
 		}
 		return result;
@@ -664,7 +650,7 @@ public class BaseDAO {
 			for (AbstractJdbcSessionMgr mgr : mgrSet){
 				mgr.rollback();
 			}
-			e.printStackTrace();
+			
 		} finally {
 			for (AbstractJdbcSessionMgr mgr : mgrSet){
 				mgr.setInvoking(false);
@@ -684,9 +670,7 @@ public class BaseDAO {
 				baseDao.update(getNativeSQL(nativeSQL[i],year)[1], params.get(i));
 			}
 		} catch (Exception e) {
-			isUpdate = false;
-			e.printStackTrace();
-			LogUtil.getDefaultLogger().error(e.getStackTrace());
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 		}
 		return isUpdate;
 	}
@@ -736,7 +720,7 @@ public class BaseDAO {
 				}
 			});
 		} catch (DAOException e) {
-			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
             return null;
 		}
 		return result;
@@ -787,7 +771,7 @@ public class BaseDAO {
 				}
 			});
 		} catch (DAOException e) {
-			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 			return null;
 		}
 		return result;
@@ -816,7 +800,7 @@ public class BaseDAO {
 			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
 			result = baseDao.updateBatch(resultSQL[1], params, batchSize);
 		}catch (DAOException e) {
-			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 		}
 		return result;
 	}
@@ -847,7 +831,7 @@ public class BaseDAO {
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 			result = baseDao.updateBatch(resultSQL[1], params, batchSize);
 		}catch (DAOException e){
-			e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 		}
 		return result;
 	}
@@ -994,7 +978,7 @@ public class BaseDAO {
                 arraryIndex++;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
         }
     }
 
@@ -1034,7 +1018,7 @@ public class BaseDAO {
                 arraryIndex++;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
         }
     }
     
@@ -1067,8 +1051,8 @@ public class BaseDAO {
                 tArray[arraryIndex] = (T)obj;
               	arraryIndex++;
             }     
-        } catch (Exception e) {  
-            e.printStackTrace();  
+        } catch (Exception e) {
+			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
         } 
     }  
 	/**
@@ -1141,7 +1125,6 @@ public class BaseDAO {
 		    if(preValue == ids[i] - 1) {
 		    	maxRange[index] = ids[i];
 			    preValue++;
-		    	continue;
 		    }else{
 		    	preValue = ids[i];
 		    	index++;
@@ -1178,7 +1161,6 @@ public class BaseDAO {
             if (preValue == ids[i] - 1) {
                 maxRange[index] = ids[i];
                 preValue++;
-                continue;
             } else {
                 preValue = ids[i];
                 index++;
@@ -1194,6 +1176,5 @@ public class BaseDAO {
         }
         return result;
     }
-
 
 }

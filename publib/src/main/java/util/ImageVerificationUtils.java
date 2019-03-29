@@ -14,6 +14,16 @@ import java.util.Random;
  */
 public class ImageVerificationUtils {
 
+    public static String getRandomCodeByNum(int length) {
+        StringBuilder sb = new StringBuilder();
+        Random random = new Random();
+        int i = 0;
+        while (i < length) {
+            sb.append( random.nextInt(10));
+            i++;
+        }
+        return sb.toString();
+    }
     /**
      * 生成随机验证码 String
      */
@@ -28,7 +38,6 @@ public class ImageVerificationUtils {
                 i++;
             }
         }
-        System.out.println(sb);
         return sb.toString();
     }
     /**

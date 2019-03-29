@@ -6,6 +6,14 @@ public class StringUtils {
         return str == null || str.trim().length() == 0 ;
     }
 
+    //判断一组字符串都不为空
+    public static boolean isEmpty(String... arr){
+        for (String str : arr){
+            if (isEmpty(str)) return true;
+        }
+        return false;
+    }
+
     public static String trim(String text) {
         if(text == null || "".equals(text)) {
             return text;
@@ -15,8 +23,17 @@ public class StringUtils {
 
     //判断对象是否为null 设置默认值
     public static <T> T checkObjectNull(Object object,T def){
-        if (object == null) return def;
-        return (T) object;
+        try {
+            if (object == null) return def;
+            return (T) object;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return def;
     }
 
+    public static String obj2Str(Object object,String def){
+        if (object == null) return def;
+        return  String.valueOf(object);
+    }
 }

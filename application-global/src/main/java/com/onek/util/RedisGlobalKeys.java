@@ -1,4 +1,4 @@
-package com.onek;
+package com.onek.util;
 
 import redis.util.RedisUtil;
 
@@ -17,14 +17,28 @@ public class RedisGlobalKeys {
     //企业表 企业码compid  自增键
     public static final String COMP_TAB_COMPID = "COMP_TAB_COMPID";
 
+    //企业资质表 资质id 自增键
+    public static final String COMP_APT_TAB_APTID = "COMP_APT_TAB_APTID";
 
-
+    /**
+     * 获取用户ID
+     */
     public static long getUserCode(){
         return RedisUtil.getStringProvide().increase(USER_TAB_UID);
     }
 
+    /**
+     * 获取企业ID
+     */
     public static long getCompanyCode(){
         return  RedisUtil.getStringProvide().increase(COMP_TAB_COMPID,1) + COMP_INIT_VAR;
+    }
+
+    /**
+     * 获取企业资质ID
+     */
+    public static long getCompanyAptCode(){
+        return  RedisUtil.getStringProvide().increase(COMP_APT_TAB_APTID,1);
     }
 
 }

@@ -1,7 +1,7 @@
-package com.onek.user.interceptors;
+package com.onek.interceptors;
 
-import com.onek.AppContext;
-import com.onek.UserSession;
+import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
 import com.onek.permission.PermissionStatus;
@@ -15,8 +15,9 @@ import java.util.Map;
 /**
  * @Author: leeping
  * @Date: 2019/3/7 14:28
+ * 用户是否登陆拦截器 - 单点登陆实现
  */
-public class UserServerInterceptor implements IServerInterceptor {
+public class UserInterceptor implements IServerInterceptor {
 
     //缓存列表
     private final static Map<String, UserPermission> permissionStatusMap = new HashMap<>();

@@ -34,7 +34,7 @@ public class DictServiceImpl implements IRedisCache{
 
 	@Override
 	public DictVo getId(Object id) {
-		List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.LC_GLOBAL_DICT +"}} where cstatus&1= 0 and dictc = ?", new Object[] {id});
+		List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0 and dictc = ?", new Object[] {id});
 		DictVo[] dicts = new DictVo[result.size()];
 		baseDao.convToEntity(result, dicts, DictVo.class);
 		return dicts[0];
@@ -58,7 +58,7 @@ public class DictServiceImpl implements IRedisCache{
 	@Override
 	public List<?> queryAll() {
 
-		List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.LC_GLOBAL_DICT +"}} where cstatus&1= 0", new Object[] {});
+		List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0", new Object[] {});
 		DictVo[] dicts = new DictVo[result.size()];
 		baseDao.convToEntity(result, dicts, DictVo.class);
 		return Arrays.asList(dicts	);
@@ -68,7 +68,7 @@ public class DictServiceImpl implements IRedisCache{
 	@Override
 	public List<?> queryByParams(String [] params) {
 		Object [] paraArra = params;
-		List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.LC_GLOBAL_DICT +"}} where cstatus&1= 0 and type= ? and text like CONCAT('%',?,'%')", paraArra);
+		List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0 and type= ? and text like CONCAT('%',?,'%')", paraArra);
 		DictVo[] dicts = new DictVo[result.size()];
 		baseDao.convToEntity(result, dicts, DictVo.class);
 		return Arrays.asList(dicts	);

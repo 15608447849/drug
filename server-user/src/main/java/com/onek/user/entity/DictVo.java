@@ -2,6 +2,7 @@ package com.onek.user.entity;
 
 public class DictVo {
 	private Integer dictc;
+	private Integer customc;
 	private String type;
 	private String text;
 	private int cstatus;
@@ -13,6 +14,14 @@ public class DictVo {
 
 	public void setDictc(Integer dictc) {
 		this.dictc = dictc;
+	}
+
+	public Integer getCustomc() {
+		return customc;
+	}
+
+	public void setCustomc(Integer customc) {
+		this.customc = customc;
 	}
 
 	public String getType() {

@@ -5,23 +5,24 @@ import Ice.*;
 import IceBox.Service;
 import com.onek.server.infimp.IceProperties;
 
+import java.lang.Exception;
 import java.util.Arrays;
 
 public abstract class IceBoxServerAbs implements Service {
 
     //服务名
     protected String _serverName;
-    protected ObjectAdapter _adapter;
+    private ObjectAdapter _adapter;
     protected Logger logger;
+
 
     @Override
     public void start(String name, Communicator communicator, String[] args) {
-
-        logger = communicator.getLogger();
         _serverName = name;
+        logger = communicator.getLogger();
         _adapter = communicator.createObjectAdapter(_serverName);
         //创建servant并激活
-        Ice.Object object = specificServices(args);
+        Ice.Object object = specificServices();
         relationID(object,communicator);
         _adapter.activate();
         logger.print("成功启动服务:" + _serverName + " 参数集:"+ Arrays.toString(args) );
@@ -39,7 +40,7 @@ public abstract class IceBoxServerAbs implements Service {
         logger.print(_serverName +" 加入负载均衡组 " + name);
     }
 
-    protected abstract Object specificServices(String[] args);
+    protected abstract Object specificServices();
 
     @Override
     public void stop() {

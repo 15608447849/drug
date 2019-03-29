@@ -1,12 +1,9 @@
 package com.onek.user;
 
-import com.onek.AppContext;
+import com.onek.context.AppContext;
 import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
-import com.onek.user.operations.LoginBackOp;
-import com.onek.user.operations.LoginStoreOp;
-import com.onek.user.operations.RegisterOp;
-import com.onek.user.operations.VerificationOp;
+import com.onek.user.operations.*;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 
@@ -21,7 +18,7 @@ public class LoginRegistrationModule {
      */
     public Result checkPhoneExist(AppContext appContext){
         String json = appContext.param.json;
-        RegisterOp op = GsonUtils.jsonToJavaBean(json, RegisterOp.class);
+        StoreRegisterOp op = GsonUtils.jsonToJavaBean(json, StoreRegisterOp.class);
         assert op!=null;
         op.type = 1;
         return op.execute(appContext);
@@ -32,13 +29,15 @@ public class LoginRegistrationModule {
      */
     public Result register(AppContext appContext){
         String json = appContext.param.json;
-        RegisterOp op = GsonUtils.jsonToJavaBean(json, RegisterOp.class);
+        StoreRegisterOp op = GsonUtils.jsonToJavaBean(json, StoreRegisterOp.class);
         assert op!=null;
         return op.execute(appContext);
     }
 
     /**
      * 获取验证码
+     * 1 图形
+     * 2 短信
      */
     public Result obtainVerificationCode(AppContext appContext){
         String json = appContext.param.json;
@@ -68,6 +67,19 @@ public class LoginRegistrationModule {
     }
 
     /**
+     * 修改门店
+     *  登陆手机号
+     *  登陆密码
+     */
+    @UserPermission
+    public Result changeUserInfo(AppContext appContext){
+        String json = appContext.param.json;
+        UpdateUserOp op = GsonUtils.jsonToJavaBean(json, UpdateUserOp.class);
+        assert op!=null;
+        return op.execute(appContext);
+    }
+
+    /**
      * 登出
      */
     @UserPermission
@@ -78,4 +90,6 @@ public class LoginRegistrationModule {
         RedisUtil.getStringProvide().delete(key);
         return new Result().success("登出成功");
     }
+
+
 }

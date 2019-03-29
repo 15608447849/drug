@@ -5,7 +5,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.onek.AppContext;
+import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.entity.ResourceVO;
 import constant.DSMConst;

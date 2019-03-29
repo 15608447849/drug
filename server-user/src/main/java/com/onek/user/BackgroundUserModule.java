@@ -4,18 +4,18 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.onek.AppContext;
+import com.onek.context.AppContext;
 import com.onek.entitys.Result;
-import com.onek.server.inf.IRequest;
 import com.onek.user.entity.UserInfoVo;
 import constant.DSMConst;
 import dao.BaseDAO;
-import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
 
 import java.util.List;
+
+import static com.onek.util.RedisGlobalKeys.getUserCode;
 
 /**
  * @author cyq
@@ -41,7 +41,7 @@ public class BackgroundUserModule {
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME)";
 
                 String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
-                code = baseDao.updateNative(insertSQL, RedisUtil.getStringProvide().increase("USER_TAB_UID"),
+                code = baseDao.updateNative(insertSQL, getUserCode(),
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
                         pwd, userInfoVo.getRoleid());
             } else {

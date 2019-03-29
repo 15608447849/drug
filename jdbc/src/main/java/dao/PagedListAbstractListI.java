@@ -106,10 +106,8 @@ public abstract class PagedListAbstractListI implements PagedList{
 			 sql = sql+" order by "+sortBy;
 		}
 		if(page==null || page.pageIndex<=0||page.pageSize<=0){
-			System.out.println("===========bufenye====");
 			return baseDao.queryNativeSharding(sharding,year,sql, params);
 		}else{			
-			System.out.println("===========fenye====");
 			int start = (page.pageIndex-1)*page.pageSize;
 			int end = page.pageSize;			
 			String nativeSQL = sql+" limit ?,?";
@@ -127,10 +125,8 @@ public abstract class PagedListAbstractListI implements PagedList{
 			sql = sql+" order by "+sortBy;
 		}
 		if(page==null || page.pageIndex<=0||page.pageSize<=0){
-			System.out.println("===========bufenye====");
 			return baseDao.queryNative(sql, params);
 		}else{
-			System.out.println("===========fenye====");
 			int start = (page.pageIndex-1)*page.pageSize;
 			int end = page.pageSize;
 			String nativeSQL = sql+" limit ?,?";
