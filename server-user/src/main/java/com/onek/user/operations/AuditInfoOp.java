@@ -5,6 +5,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.onek.context.AppContext;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
+import com.onek.user.interactive.AptitudeInfo;
 import com.onek.user.interactive.AuditInfo;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -120,8 +121,8 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
             try {
                 //获取企业账号
                 String selectSql = "SELECT uphone FROM {{?" + DSMConst.D_SYSTEM_USER +"}} WHERE cid = "+ arr[0];
-
                 List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql);
+
                 if (lines2.size() != 1) continue;
 
                 info = new AuditInfoOp();
@@ -153,13 +154,34 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 }else if ((status&1024) == 1024){
                     status = 1024; //停用
                 }
+                queryAptitude(info.cardInfo,arr[0]);
                 info.status = StringUtils.obj2Str(status,"");
-
                 list.add(info);
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }
         return list;
+    }
+
+    private void queryAptitude(AptitudeInfo cardInfo, Object compid) {
+        String selectSql = "SELECT atype,certificateno,validitys,validitye FROM {{?" + DSMConst.D_COMP_APTITUDE + "}} WHERE compid=?";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,compid);
+        for (Object[] row : lines){
+            int type = StringUtils.checkObjectNull(row[0],0);
+            if (type == 10){
+                cardInfo.businessId = StringUtils.obj2Str(row[1],"");
+                cardInfo.businessIdStart = StringUtils.obj2Str(row[2],"");
+                cardInfo.businessIdEnd = StringUtils.obj2Str(row[3],"");
+            }else if (type == 11){
+                cardInfo.permitId = StringUtils.obj2Str(row[1],"");
+                cardInfo.permitIdStart = StringUtils.obj2Str(row[2],"");
+                cardInfo.permitIdEnd = StringUtils.obj2Str(row[3],"");
+            }else if (type == 12){
+                cardInfo.gspId = StringUtils.obj2Str(row[1],"");
+                cardInfo.gspIdStart = StringUtils.obj2Str(row[2],"");
+                cardInfo.gspIdEnd = StringUtils.obj2Str(row[3],"");
+            }
+        }
     }
 }

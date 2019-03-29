@@ -4,6 +4,7 @@ import com.onek.context.AppContext
 import com.onek.util.RedisGlobalKeys
 import com.onek.entitys.IOperation
 import com.onek.entitys.Result
+import com.onek.user.interactive.AptitudeInfo
 import constant.DSMConst
 import dao.BaseDAO
 
@@ -12,20 +13,21 @@ import dao.BaseDAO
  * @Date: 2019/3/27 11:25
  * glacier2router --Glacier2.Client.Endpoints="tcp -h 38.108.85.159 -p 50000" --Glacier2.PermissionsVerifier=Glacier2/NullPermissionsVerifier
  */
-class UpdateAuditOp : IOperation<AppContext> {
+class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
     var companyId:String? = null; //公司码
-    var businessId:String? = null; //营业执照
-    var businessIdStart:String? = null; //营业执照 有效开始
-    var businessIdEnd:String? = null; //营业执照 有效结束
 
-    var permitId:String? = null; //经营许可证
-    var permitIdStart:String? = null; //经营许可证
-    var permitIdEnd:String? = null; //经营许可证
-
-    var gspId:String? = null; //gsp
-    var gspIdStart:String? = null; //gsp
-    var gspIdEnd:String? = null; //gsp
+//    var businessId:String? = null; //营业执照
+//    var businessIdStart:String? = null; //营业执照 有效开始
+//    var businessIdEnd:String? = null; //营业执照 有效结束
+//
+//    var permitId:String? = null; //经营许可证
+//    var permitIdStart:String? = null; //经营许可证
+//    var permitIdEnd:String? = null; //经营许可证
+//
+//    var gspId:String? = null; //gsp
+//    var gspIdStart:String? = null; //gsp
+//    var gspIdEnd:String? = null; //gsp
 
     var auditCause:String? = null //审核失败原因
     var auditStatus:Int = 0; //审核状态
@@ -53,12 +55,13 @@ class UpdateAuditOp : IOperation<AppContext> {
             } else if (status and 1024 == 1024) {
                 status = 1024 //停用
             }
-        if (auditStatus == status) return Result().fail("请改变审核状态再保存提交")
 
-        var isOK = updateIds(companyId!!,businessId!!,businessIdStart!!,businessIdEnd!!,10)
-        if (isOK) isOK = updateIds(companyId!!,permitId!!,permitIdStart!!,permitIdEnd!!,11)
-        if (isOK) isOK = updateIds(companyId!!,gspId!!,gspIdStart!!,gspIdEnd!!,12)
-            if (!isOK) return Result().fail("资质信息保存失败")
+            if(auditStatus == 256){ //审核通过
+                var isOK = updateIds(companyId!!,businessId!!,businessIdStart!!,businessIdEnd!!,10)
+                if (isOK) isOK = updateIds(companyId!!,permitId!!,permitIdStart!!,permitIdEnd!!,11)
+                if (isOK) isOK = updateIds(companyId!!,gspId!!,gspIdStart!!,gspIdEnd!!,12)
+                if (!isOK) return Result().fail("资质信息保存失败")
+            }
 
             //修改 门店信息
             val updateSql = "UPDATE {{?" + DSMConst.D_COMP + "}} SET cstatus=cstatus&~$status|$auditStatus,examine=?,auditdate=CURRENT_DATE,audittime=CURRENT_TIME WHERE cstatus&1=0 AND cid=?"
@@ -71,26 +74,29 @@ class UpdateAuditOp : IOperation<AppContext> {
     }
 
     private fun updateIds(companyId: String, id: String, idStartTime: String, idEndTime: String, type:Int) :Boolean{
-        val selectSql = "SELECT aptid FROM {{?${DSMConst.D_COMP_APTITUDE}}} WHERE compid = $companyId"
-        val lines = BaseDAO.getBaseDAO().queryNative(selectSql);
-        if (lines.size == 0){
-            //新增
-            val aptid = RedisGlobalKeys.getCompanyAptCode()
-            val insertSql = "INSERT INTO {{?${DSMConst.D_COMP_APTITUDE}}} (aptid,compid,atype,certificateno,validitys,validitye) VALUES (?,?,?,?,?,?)"
-            val i = BaseDAO.getBaseDAO().updateNative(insertSql,
-                    aptid,
-                    companyId,
-                    type,
-                    id,
-                    idStartTime,
-                    idEndTime
-            )
-            if (i > 0) return true
-        }else{
-            //修改
-
-        }
-
+        try {
+            val selectSql = "SELECT aptid FROM {{?${DSMConst.D_COMP_APTITUDE}}} WHERE compid = $companyId AND atype = $type"
+            val lines = BaseDAO.getBaseDAO().queryNative(selectSql);
+            if (lines.size == 0){
+                //新增
+                val aptid = RedisGlobalKeys.getCompanyAptCode()
+                val insertSql = "INSERT INTO {{?${DSMConst.D_COMP_APTITUDE}}} (aptid,compid,atype,certificateno,validitys,validitye) VALUES (?,?,?,?,?,?)"
+                val i = BaseDAO.getBaseDAO().updateNative(insertSql,
+                        aptid,
+                        companyId,
+                        type,
+                        id,
+                        idStartTime,
+                        idEndTime
+                )
+                if (i > 0) return true
+            }else{
+                //修改
+                val updateSql = "UPDATE {{?${DSMConst.D_COMP_APTITUDE}}} SET certificateno=$id,validitys='$idStartTime',validitye='$idEndTime' WHERE aptid =${lines[0][0]}"
+                val i = BaseDAO.getBaseDAO().updateNative(updateSql)
+                if (i > 0) return true
+            }
+        } catch (e: Exception) { }
         return false
     }
 }
