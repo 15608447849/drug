@@ -47,6 +47,44 @@ public class DictStore{
         return j;
     }
 
+    public static Object translate(Object obj) throws Exception{
+        if(obj != null) {
+            Field[] fields = obj.getClass().getDeclaredFields();
+            Map<Field, CacheField> cacheFieldMap = new HashMap<>();
+            for(Field f : fields) {
+                CacheField cache = f.getDeclaredAnnotation(CacheField.class);
+                if(cache != null) {
+                    cacheFieldMap.put(f, cache);
+                }
+            }
+            Set<Field> fieldKeys = cacheFieldMap.keySet();
+            for(Field field : fieldKeys) {
+                CacheField cacheField = cacheFieldMap.get(field);
+                String col = cacheField.cachecolumn();
+                String refcol = cacheField.reflectcolumn();
+                String key = cacheField.key();
+                String prefix = cacheField.prefix();
+
+                field.setAccessible(true);
+                Object id = field.get(obj);
+                Field f = obj.getClass().getDeclaredField(refcol);
+                f.setAccessible(true);
+                if(prefix.equals("dict_")) {
+                    DictEntity dictVo = (DictEntity)dictProxy.getId(id);
+                    Field ff = dictVo.getClass().getDeclaredField(col);
+                    ff.setAccessible(true);
+                    Object value = ff.get(dictVo);
+                    f.set(obj, value);
+                }
+
+
+            }
+
+        }
+
+        return obj;
+    }
+
     public static List<?> translate(List<?> list) throws Exception{
         if(list != null && list.size() > 0) {
             Field[] fields = list.get(0).getClass().getDeclaredFields();
