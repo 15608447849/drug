@@ -10,11 +10,11 @@ public interface PagedList {
 
 	    List<Object[]> getList();
 
-		List<Object[]> getList(int sharding, int year);
+		List<Object[]> getList(int sharding, int tbSharding);
 
 	    int getTotalRowCount();
 
-	    int getTotalRowCount(int sharding, int year);
+	    int getTotalRowCount(int sharding, int tbSharding);
 
 	    int getTotalPageCount();
 

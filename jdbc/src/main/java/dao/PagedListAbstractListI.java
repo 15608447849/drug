@@ -101,12 +101,13 @@ public abstract class PagedListAbstractListI implements PagedList{
 	}
 	
 	@Override
-	public List<Object[]> getList(int sharding,int year) {
+	public List<Object[]> getList(int sharding,int tbSharding) {
 		 if(!ParameterUtil.isNull(sortBy)){
 			 sql = sql+" order by "+sortBy;
 		}
 		if(page==null || page.pageIndex<=0||page.pageSize<=0){
-			return baseDao.queryNativeSharding(sharding,year,sql, params);
+			System.out.println("===========bufenye====");
+			return baseDao.queryNativeSharding(sharding,tbSharding,sql, params);
 		}else{			
 			int start = (page.pageIndex-1)*page.pageSize;
 			int end = page.pageSize;			
@@ -115,11 +116,11 @@ public abstract class PagedListAbstractListI implements PagedList{
 			System.arraycopy(params, 0, paramsPage, 0, params.length);				
 			paramsPage[paramsPage.length-2] = start;
 			paramsPage[paramsPage.length-1] = end;
-			return baseDao.queryNativeSharding(sharding,year,nativeSQL, paramsPage);
+			return baseDao.queryNativeSharding(sharding,tbSharding,nativeSQL, paramsPage);
 		}					
 	}
 
-
+	@Override
 	public List<Object[]> getList() {
 		if(!ParameterUtil.isNull(sortBy)){
 			sql = sql+" order by "+sortBy;
