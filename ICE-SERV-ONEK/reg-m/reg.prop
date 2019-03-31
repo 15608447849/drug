@@ -2,9 +2,9 @@
 IceGrid.InstanceName=DemoIceGrid
  
 #客户端通过测Endpoints访问注册表
-IceGrid.Registry.Client.Endpoints=tcp -h localhost -p 4061:ws -h localhost -p 4062
-IceGrid.Registry.Server.Endpoints=tcp -h localhost
-IceGrid.Registry.Internal.Endpoints=tcp -h localhost
+IceGrid.Registry.Client.Endpoints=tcp -h 192.168.3.2 -p 4061:ws -h 192.168.3.2 -p 4062
+IceGrid.Registry.Server.Endpoints=tcp -h 192.168.3.2
+IceGrid.Registry.Internal.Endpoints=tcp -h 192.168.3.2
 #持久化文件存放目录，需要手工创建目录
 IceGrid.Registry.Data=./reg-db
 #动态部署
