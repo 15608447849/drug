@@ -33,7 +33,18 @@ public interface DSMConst extends UDAConst {
             {"td_prod_manu"}, //生产厂商表 14
             {"td_prod_sku"}, //产品SKU表 15
             {"td_prod_spu"}, //产品SPU表 16
-            {"d_syn_log"}, //17
+            {"d_syn_log"}, //17 日志表
+            {"td_prom_act"}, //18 活动表
+            {"td_prom_rule"}, //19 活动规则表
+            {"td_prom_ladoff"}, //20 规则阶梯优惠表
+            {"td_prom_assgift"}, //21 优惠赠换商品表
+            {"td_prom_gift"}, //22 赠换商品表
+            {"td_prom_coupon"}, //23 优惠券表
+            {"td_prom_assdrug"}, //24 活动商品关联表
+            {"td_prom_time"}, //25 活动场次表
+            {"td_prom_group"}, //26 组团情况表
+            {"td_prom_couent"} //27 优惠券领取表
+
     };
 
 
@@ -50,15 +61,23 @@ public interface DSMConst extends UDAConst {
     public final static int D_COMP = 8;
     public final static int D_GLOBAL_AREA = 9;
     public final static int D_COMP_INVOICE = 10;
-
     public final static int D_COMP_APTITUDE = 11;
     public final static int D_PRODUCE_CLASS = 12;
-
     public final static int TD_PROD_BRAND = 13;
     public final static int TD_PROD_MANU = 14;
     public final static int TD_PROD_SKU = 15;
     public final static int TD_PROD_SPU = 16;
     public final static int D_SYN_LOG = 17;
+    public final static int TD_PROM_ACT = 18;
+    public final static int TD_PROM_RULE = 19;
+    public final static int TD_PROM_LADOFF = 20;
+    public final static int TD_PROM_ASSGIFT = 21;
+    public final static int TD_PROM_GIFT = 22;
+    public final static int TD_PROM_COUPON = 23;
+    public final static int TD_PROM_ASSDRUG = 24;
+    public final static int TD_PROM_TIME = 25;
+    public final static int TD_PROM_GROUP = 26;
+    public final static int TD_PROM_COUENT = 27;
 
 
 
