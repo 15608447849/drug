@@ -48,6 +48,7 @@ public class BackgroundResourceModule {
                 switch (i) {
                     case 0:
                         sql.append(" AND sname LIKE ? ");
+                        param = "%" + param + "%";
                         break;
                     case 1:
                         sql.append(" AND roleid & ? > 0 ");
