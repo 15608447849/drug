@@ -1,7 +1,0 @@
-# Configuration file (03/05/19 15:27:43.635)
-
-# Object adapter os3
-os3.Endpoints=tcp:ws
-os3.AdapterId=os3
-os3.ReplicaGroupId=osRepA
-Ice.Default.Locator=DemoIceGrid/Locator:tcp -h localhost -p 4061:ws -h localhost -p 4062
