@@ -70,6 +70,7 @@ public class BackgroundRoleModule {
                 switch (i) {
                     case 0:
                         sql.append(" AND rname LIKE ? ");
+                        param = "%" + param + "%";
                         break;
                     case 1:
                         if (Integer.parseInt(param) == 0) {

@@ -17,3 +17,6 @@ logs/
 application-global/build/
 server-user/build/
 Z_SERVERSTART/
+server-goods/out/
+server-discount/out/
+server-user/src/main/resources/

@@ -14,16 +14,10 @@ public class TreeUtil {
 
         for (ITreeNode node : list) {
             // 找到根节点
-            if (node.isRoot()) {
-                tree.add(node);
-            }
+            if (node.isRoot()) { tree.add(node); }
 
             // 赋予孩子节点
-            for (ITreeNode node2 : list) {
-                if (node.getSelfId().equals(node2.getParentId())) {
-                    node.addChild(node2);
-                }
-            }
+            for (ITreeNode node2 : list) { if (node.getSelfId().equals(node2.getParentId())) { node.addChild(node2); } }
         }
 
         return tree;
