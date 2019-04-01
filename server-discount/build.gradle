@@ -1,0 +1,10 @@
+
+dependencies {
+    implementation project(':application-global')
+}
+
+shadowJar {
+    baseName = 'discount'//活动优惠券
+    classifier = null
+    version = null
+}
