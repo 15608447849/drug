@@ -28,7 +28,11 @@ public interface DSMConst extends UDAConst {
             {"d_global_area"}, // 地区
             {"d_comp_invoice"}, // 发票
             {"d_comp_aptitude"}, //企业资质表
-            {"d_produce_class"}, //企业资质表
+            {"d_produce_class"}, //产品类别表
+            {"td_prod_brand"}, //药品品牌表
+            {"td_prod_manu"}, //生产厂商表
+            {"td_prod_sku"}, //产品SKU表
+            {"td_prod_spu"}, //产品SPU表
     };
 
     //TODO 表名=表在_DB_TABLES常量里固定位置值 ，目的是为了开发人员写代码方便可读性
@@ -48,6 +52,11 @@ public interface DSMConst extends UDAConst {
 
     public final static int D_COMP_APTITUDE = 11;
     public final static int D_PRODUCE_CLASS = 12;
+
+    public final static int TD_PROD_BRAND = 13;
+    public final static int TD_PROD_MANU = 14;
+    public final static int TD_PROD_SKU = 15;
+    public final static int TD_PROD_SPU = 16;
 
 
 
