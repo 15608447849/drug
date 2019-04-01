@@ -25,7 +25,7 @@ public class SynDbData implements Callable<Object> {
     private BaseDAO baseDao = BaseDAO.getBaseDAO();
 
     private int sharding;
-    private int year;
+    private int tbSharding;
     private String[] nativeSQL;
     private List<Object[]> params;
     private JdbcBaseDao jdbcBaseDao = null;
@@ -81,12 +81,12 @@ public class SynDbData implements Callable<Object> {
         this.sharding = sharding;
     }
 
-    public int getYear() {
-        return year;
+    public int getTbSharding() {
+        return tbSharding;
     }
 
-    public void setYear(int year) {
-        this.year = year;
+    public void setTbSharding(int tbSharding) {
+        this.tbSharding = tbSharding;
     }
 
     public String[] getNativeSQL() {
@@ -159,11 +159,17 @@ public class SynDbData implements Callable<Object> {
         JdbcBaseDao jdbcBaseDao = null;
         try {
             jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false));
             result = jdbcBaseDao.update(resultSQL[1], param);
         } catch (DAOException e) {
-            // master = (master == 0 ? 1: 0);
             e.printStackTrace();
+            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
+                return 0;
+            }
+            int dbs = (master == 0 ? 1 : 0);
+            List<Object[]> paramList = new ArrayList<>();
+            paramList.add(getParam());
+            SynDbLog.updateTransNative(getNativeSQL(),paramList,0,0,dbs,false);
         }
         return result;
     }
@@ -178,11 +184,18 @@ public class SynDbData implements Callable<Object> {
         JdbcBaseDao jdbcBaseDao = null;
         try{
             jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false));
             keys = jdbcBaseDao.updateAndGenerateKeys(resultSQL[1], param);
         }catch (DAOException e) {
-            //master = (master == 0 ? 1: 0);
+            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
             e.printStackTrace();
+            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
+                return null;
+            }
+            int dbs = (master == 0 ? 1 : 0);
+            List<Object[]> paramList = new ArrayList<>();
+            paramList.add(getParam());
+            SynDbLog.updateTransNative(getNativeSQL(),paramList,getSharding(),getTbSharding(),dbs,false);
         }
         return keys;
     }
@@ -193,14 +206,14 @@ public class SynDbData implements Callable<Object> {
     public int[] updateTransNative(){
 
         int[] result = new int[nativeSQL.length];
-        AbstractJdbcSessionMgr sessionMgr = baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]));
+        AbstractJdbcSessionMgr sessionMgr = baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false);
         try {
             FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
                 @Override
                 public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
                     for (int i = 0; i < nativeSQL.length; i++) {
                         if(sharding != 0){
-                            result[i] = baseDao.updateNativeInCallSharding(sharding,year,nativeSQL[i],1,params.get(i));
+                            result[i] = baseDao.updateNativeInCallSharding(sharding,tbSharding,nativeSQL[i],1,params.get(i));
                         }else{
                             result[i] = baseDao.updateNativeInCall(nativeSQL[i],1,params.get(i));
                         }
@@ -208,8 +221,13 @@ public class SynDbData implements Callable<Object> {
                 }
             });
         } catch (DAOException e) {
+            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
             e.printStackTrace();
-            return null;
+            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
+                return null;
+            }
+            int dbs = (master == 0 ? 1 : 0);
+            SynDbLog.updateTransNative(getNativeSQL(),getParams(),getSharding(),getTbSharding(),dbs,false);
         }
         return result;
     }
@@ -217,7 +235,7 @@ public class SynDbData implements Callable<Object> {
 
     public  int[] updateAndGPKTransNative(){
         int[] result = new int[GPKNativeSQL.length + nativeSQL.length];
-        AbstractJdbcSessionMgr sessionMgr = baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]));
+        AbstractJdbcSessionMgr sessionMgr = baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false);
         try {
             FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
                 @Override
@@ -226,7 +244,7 @@ public class SynDbData implements Callable<Object> {
                     for (int i = 0; i < GPKNativeSQL.length; i++) {
                         KV<Integer,List<Object>> keys = null;
                         if(sharding != 0){
-                            keys = baseDao.updateAndGPKNativeInCallSharding(sharding,year,GPKNativeSQL[i],1,params.get(i));
+                            keys = baseDao.updateAndGPKNativeInCallSharding(sharding,tbSharding,GPKNativeSQL[i],1,params.get(i));
                         }else{
                             keys = baseDao.updateAndGPKNativeInCall(GPKNativeSQL[i],1,params.get(i));
                         }
@@ -239,7 +257,7 @@ public class SynDbData implements Callable<Object> {
                     for (int i = 0 ; i < nativeSQL.length; i++) {
                         paramsTrue = baseDao.getTrueParams(autoGPK,params.get(i + GPKNativeSQL.length));
                         if(sharding != 0){
-                            result[i + GPKNativeSQL.length] = baseDao.updateNativeInCallSharding(sharding,year,nativeSQL[i],1,paramsTrue);
+                            result[i + GPKNativeSQL.length] = baseDao.updateNativeInCallSharding(sharding,tbSharding,nativeSQL[i],1,paramsTrue);
                         }else{
                             result[i + GPKNativeSQL.length] = baseDao.updateNativeInCall(nativeSQL[i],1,paramsTrue);
                         }
@@ -248,8 +266,13 @@ public class SynDbData implements Callable<Object> {
                 }
             });
         } catch (DAOException e) {
+            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
             e.printStackTrace();
-            return null;
+            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
+                return null;
+            }
+            int dbs = (master == 0 ? 1 : 0);
+            SynDbLog.updateTransNative(getNativeSQL(),getParams(),getSharding(),getTbSharding(),dbs,false);
         }
         return result;
     }
@@ -261,11 +284,16 @@ public class SynDbData implements Callable<Object> {
         JdbcBaseDao jdbcBaseDao = null;
         try {
             jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
+            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false));
             result = jdbcBaseDao.updateBatch(resultSQL[1], params,batchSize);
         } catch (DAOException e) {
-            // master = (master == 0 ? 1: 0);
+            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
             e.printStackTrace();
+            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
+                return null;
+            }
+            int dbs = (master == 0 ? 1 : 0);
+            SynDbLog.updateTransNative(getNativeSQL(),getParams(),getSharding(),getTbSharding(),dbs,true);
         }
         return result;
     }

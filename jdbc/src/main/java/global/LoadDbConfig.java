@@ -17,12 +17,14 @@ import java.util.Properties;
  */
 public class LoadDbConfig {
 
-    public static void initConfig(){}
 
     public static int getDbMasterNum() {
         Properties props = new Properties();
         try {
             props.load(GeneralHelper.getClassResourceAsStream(JdbcPoolSessionMgr.class, "Segmentation.cfg.properties"));
+            if(props.getProperty("master") == null) {
+                return 0;
+            }
             return Integer.parseInt(props.getProperty("master"));
         } catch (IOException e) {
             e.printStackTrace();

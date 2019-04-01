@@ -1,4 +1,4 @@
-package com.onek.util.produce;
+package com.onek.util.prod;
 
 import util.StringUtils;
 

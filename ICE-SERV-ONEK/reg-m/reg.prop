@@ -1,0 +1,20 @@
+# The IceGrid instance name.
+IceGrid.InstanceName=DemoIceGrid
+ 
+#客户端通过测Endpoints访问注册表
+IceGrid.Registry.Client.Endpoints=tcp -h localhost -p 4061:ws -h localhost -p 4062
+IceGrid.Registry.Server.Endpoints=tcp -h localhost
+IceGrid.Registry.Internal.Endpoints=tcp -h localhost
+#持久化文件存放目录，需要手工创建目录
+IceGrid.Registry.Data=./reg-db
+#动态部署
+IceGrid.Registry.DynamicRegistration=1
+ 
+IceGrid.Registry.PermissionsVerifier=DemoIceGrid/NullPermissionsVerifier
+IceGrid.Registry.AdminPermissionsVerifier=DemoIceGrid/NullPermissionsVerifier
+IceGrid.Registry.SSLPermissionsVerifier=DemoIceGrid/NullSSLPermissionsVerifier
+IceGrid.Registry.AdminSSLPermissionsVerifier=DemoIceGrid/NullSSLPermissionsVerifier
+ 
+# Dummy username and password for icegridadmin.
+IceGridAdmin.Username=admin	
+IceGridAdmin.Password=admin

@@ -15,7 +15,7 @@
 		<parameter name="index"/>
 		<parameter name="group"/>
 
-		<icebox id = "user-${group}-box${index}" exe="java" activation="on-demand">
+		<icebox id = "user-${group}-box${index}" exe="java" activation="always">
 
 			<properties>
 				<properties refid="MultiThreaded"/>
@@ -36,10 +36,15 @@
 		</icebox>
 	</server-template>
 
-	<replica-group id ="userServer-group">
+	<replica-group id ="userServer-group_0">
 		<load-balancing type="adaptive" n-replicas="0"/>
-			<object identity="userServer" type="::inf::Interfaces" />
+			<object identity="userServer_0" type="::inf::Interfaces" />
 	</replica-group>
+
+	 <replica-group id ="userServer-group_1">
+		 <load-balancing type="adaptive" n-replicas="0"/>
+		 <object identity="userServer_1" type="::inf::Interfaces" />
+	 </replica-group>
 
 
 	<replica-group id ="orderServer-group">
@@ -48,11 +53,11 @@
 	</replica-group>
 
 	 <node name="node1">
-   		<server-instance template="user-temp"  index="1" group="userServer-group"/>
+   		<server-instance template="user-temp"  index="0" group="userServer-group_0"/>
      </node>
 
 	<node name="node2">
-   		<server-instance template="user-temp"  index="2" group="userServer-group"/>
+   		<server-instance template="user-temp"  index="1" group="userServer-group_1"/>
     </node>
 
 	

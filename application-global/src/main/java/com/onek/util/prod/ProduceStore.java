@@ -1,10 +1,11 @@
-package com.onek.util.produce;
+package com.onek.util.prod;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
 import constant.DSMConst;
 import dao.BaseDAO;
+import elasticsearch.ElasticSearchProvider;
 import util.TreeUtil;
 
 import java.util.Arrays;
@@ -92,6 +93,11 @@ public class ProduceStore {
         }
 
         return result;
+    }
+
+    public static int addProduce(){
+//        ElasticSearchProvider.addDocument();
+        return 0;
     }
 
 }

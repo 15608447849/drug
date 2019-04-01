@@ -1,6 +1,5 @@
-package com.onek.util.produce;
+package com.onek.util.prod;
 
-import com.onek.util.area.AreaEntity;
 import util.ITreeNode;
 
 import java.util.ArrayList;
