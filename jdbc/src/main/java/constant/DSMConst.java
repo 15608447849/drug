@@ -17,7 +17,7 @@ public interface DSMConst extends UDAConst {
     public final static String[][] DB_TABLES = {
             //索引0对应表名，从索引1开始对应这个表的列名，表名与列名必须同数据库一致！
             {"d_system_user"}, // 用户表  0
-            {"lc_global_dict"}, // 用户表 1
+            {"d_global_dict"}, // 用户表 1
             {"d_system_role"}, // 角色表 2
             {"d_system_resource"}, // 资源表 3
             {"d_order_base"}, // 4
@@ -40,7 +40,7 @@ public interface DSMConst extends UDAConst {
     //TODO 表名=表在_DB_TABLES常量里固定位置值 ，目的是为了开发人员写代码方便可读性
     //TODO 系统-用户表 0
     public final static int D_SYSTEM_USER = 0;
-    public final static int LC_GLOBAL_DICT = 1;
+    public final static int D_GLOBAL_DICT = 1;
     public final static int D_SYSTEM_ROLE = 2;
     public final static int D_SYSTEM_RESOURCE = 3;
     public final static int D_ORDER_BASE = 4;
