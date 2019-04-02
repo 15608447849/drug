@@ -1,5 +1,7 @@
 package util;
 
+import com.google.gson.JsonParser;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -61,6 +63,16 @@ public class StringUtils {
     public static boolean isDateFormatter(String str) {
         try {
             new SimpleDateFormat("yyyy-MM-dd").parse(str);
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static boolean isJsonFormatter(String str) {
+        try {
+            new JsonParser().parse(str);
         } catch (Exception e) {
             return false;
         }

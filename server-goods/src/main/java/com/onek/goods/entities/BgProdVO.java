@@ -1,6 +1,7 @@
 package com.onek.goods.entities;
 
 import redis.annation.CacheField;
+import redis.annation.DictCacheField;
 
 public class BgProdVO {
     /* ----------- 商品SPU表 ------------- */
@@ -13,10 +14,10 @@ public class BgProdVO {
     private long manuNo;
     private String manuName;
 
-    @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="rxName")
+    @DictCacheField(reflectcolumn ="rxName")
     private int rx;
 
-    @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="insuranceName")
+    @DictCacheField(reflectcolumn ="insuranceName")
     private int insurance;
 
     private int gspGMS;
@@ -35,14 +36,13 @@ public class BgProdVO {
     private String prodedate;
 
     private int store;
-    private int freezestore;
     private int activitystore;
     private int limits;
     private int sales;
     private int wholenum;
     private int medpacknum;
 
-    @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="unitName")
+    @DictCacheField(reflectcolumn ="unitName")
     private int unit;
 
     private String ondate;
@@ -57,7 +57,8 @@ public class BgProdVO {
 
     private long classNo;
     private String className;
-    @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="formName")
+
+    @DictCacheField(reflectcolumn ="formName", type = "dosageform")
     private int form;
     private String formName;
     private String rxName;
@@ -262,14 +263,6 @@ public class BgProdVO {
 
     public void setStore(int store) {
         this.store = store;
-    }
-
-    public int getFreezestore() {
-        return freezestore;
-    }
-
-    public void setFreezestore(int freezestore) {
-        this.freezestore = freezestore;
     }
 
     public int getActivitystore() {
