@@ -42,6 +42,10 @@ public class BackgroundProdManuModule {
             if (prodManuVO == null) {
                 throw new IllegalArgumentException("VO is NULL");
             }
+
+            if (StringUtils.isEmpty(prodManuVO.getManuname())) {
+                throw new IllegalArgumentException("manuname is empty");
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return new Result().fail("参数错误");
@@ -83,7 +87,7 @@ public class BackgroundProdManuModule {
                         sql.append(" AND manuname LIKE ? ");
                         param = "%" + param + "%";
                         break;
-                    case 2:
+                    case 1:
                         sql.append(" AND areac = ? ");
                         break;
                 }

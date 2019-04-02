@@ -1,8 +1,6 @@
 package com.onek.util.prod;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchProvider;
@@ -10,6 +8,7 @@ import util.TreeUtil;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Iterator;
 import java.util.List;
 
 public class ProduceStore {
@@ -34,7 +33,7 @@ public class ProduceStore {
         JsonArray temp = new JsonParser()
                 .parse(new Gson().toJson(PRODUCE_TREE))
                 .getAsJsonArray();
-
+        handlerJson(temp);
         TREE_STR = temp.toString();
     }
 
@@ -93,6 +92,35 @@ public class ProduceStore {
         }
 
         return result;
+    }
+
+    private static void handlerJson(JsonElement element) {
+        if (element == null) {
+            return;
+        }
+
+        if (element.isJsonArray()) {
+            JsonArray jsonArray = element.getAsJsonArray();
+            Iterator<JsonElement> it = jsonArray.iterator();
+            while (it.hasNext()) {
+                handlerJson(it.next());
+            }
+        } else if (element.isJsonObject()) {
+            JsonObject jsonObject = element.getAsJsonObject();
+
+            jsonObject.remove("cstatus");
+            jsonObject.add("value", jsonObject.remove("classId"));
+            jsonObject.add("label", jsonObject.remove("className"));
+
+            JsonArray children = jsonObject.getAsJsonArray("children");
+
+            if (children.size() == 0) {
+                jsonObject.remove("children");
+            } else {
+                handlerJson(children);
+            }
+        }
+
     }
 
     public static int addProduce(){

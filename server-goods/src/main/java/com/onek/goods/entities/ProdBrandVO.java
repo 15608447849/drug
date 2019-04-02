@@ -2,7 +2,7 @@ package com.onek.goods.entities;
 
 public class ProdBrandVO {
     private int oid;
-    private int brandno;
+    private long brandno;
     private String brandname;
     private int cstatus;
 
@@ -14,11 +14,11 @@ public class ProdBrandVO {
         this.oid = oid;
     }
 
-    public int getBrandno() {
+    public long getBrandno() {
         return brandno;
     }
 
-    public void setBrandno(int brandno) {
+    public void setBrandno(long brandno) {
         this.brandno = brandno;
     }
 

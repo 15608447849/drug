@@ -1,6 +1,14 @@
 package util;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.logging.SimpleFormatter;
+import java.util.regex.Pattern;
+
 public class StringUtils {
+    private static final String INTEGER_REGEX = "0|-?([1-9]{1}[0-9]*)";
+
     //字符串不为空
     public static boolean isEmpty(String str){
         return str == null || str.trim().length() == 0 ;
@@ -36,4 +44,28 @@ public class StringUtils {
         if (object == null) return def;
         return  String.valueOf(object);
     }
+
+    /**
+     * 判定字符串是否为整数。
+     * @param str
+     * @return
+     */
+    public static boolean isInteger(String str) {
+        return !isEmpty(str) && Pattern.matches(INTEGER_REGEX, str);
+    }
+
+    public static boolean isBiggerZero(String str) {
+        return isInteger(str) && Long.parseLong(str) > 0;
+    }
+
+    public static boolean isDateFormatter(String str) {
+        try {
+            new SimpleDateFormat("yyyy-MM-dd").parse(str);
+        } catch (Exception e) {
+            return false;
+        }
+
+        return true;
+    }
+
 }

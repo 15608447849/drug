@@ -2,7 +2,7 @@ package com.onek.goods.entities;
 
 public class ProdManuVO {
     private int oid;
-    private int manuno;
+    private long manuno;
     private String manuname;
     private int areac;
     private String address;
@@ -18,11 +18,11 @@ public class ProdManuVO {
         this.oid = oid;
     }
 
-    public int getManuno() {
+    public long getManuno() {
         return manuno;
     }
 
-    public void setManuno(int manuno) {
+    public void setManuno(long manuno) {
         this.manuno = manuno;
     }
 

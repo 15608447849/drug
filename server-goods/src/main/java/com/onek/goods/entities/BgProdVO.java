@@ -8,27 +8,19 @@ public class BgProdVO {
     private String popname;
     private String prodname;
     private String standarNo;
-    private int brandNo;
+    private long brandNo;
     private String brandName;
-
-    private int manuNo;
+    private long manuNo;
     private String manuName;
+
     @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="rxName")
     private int rx;
-    private String rxName;
 
     @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="insuranceName")
     private int insurance;
-    private String insuranceName;
 
-    @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="gspGMSName")
     private int gspGMS;
-    private String gspGMSName;
-
-    @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="gspSCName")
     private int gspSC;
-    private String gspSCName;
-
     private String detail;
     private String spuCstatus;
 
@@ -49,9 +41,9 @@ public class BgProdVO {
     private int sales;
     private int wholenum;
     private int medpacknum;
+
     @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="unitName")
     private int unit;
-    private String unitName;
 
     private String ondate;
     private String ontime;
@@ -68,6 +60,9 @@ public class BgProdVO {
     @CacheField(prefix = "dict_", key = "dictc", cachecolumn = "text", reflectcolumn ="formName")
     private int form;
     private String formName;
+    private String rxName;
+    private String insuranceName;
+    private String unitName;
 
     public long getSpu() {
         return spu;
@@ -101,11 +96,11 @@ public class BgProdVO {
         this.standarNo = standarNo;
     }
 
-    public int getBrandNo() {
+    public long getBrandNo() {
         return brandNo;
     }
 
-    public void setBrandNo(int brandNo) {
+    public void setBrandNo(long brandNo) {
         this.brandNo = brandNo;
     }
 
@@ -117,11 +112,11 @@ public class BgProdVO {
         this.brandName = brandName;
     }
 
-    public int getManuNo() {
+    public long getManuNo() {
         return manuNo;
     }
 
-    public void setManuNo(int manuNo) {
+    public void setManuNo(long manuNo) {
         this.manuNo = manuNo;
     }
 
@@ -173,28 +168,12 @@ public class BgProdVO {
         this.gspGMS = gspGMS;
     }
 
-    public String getGspGMSName() {
-        return gspGMSName;
-    }
-
-    public void setGspGMSName(String gspGMSName) {
-        this.gspGMSName = gspGMSName;
-    }
-
     public int getGspSC() {
         return gspSC;
     }
 
     public void setGspSC(int gspSC) {
         this.gspSC = gspSC;
-    }
-
-    public String getGspSCName() {
-        return gspSCName;
-    }
-
-    public void setGspSCName(String gspSCName) {
-        this.gspSCName = gspSCName;
     }
 
     public String getDetail() {

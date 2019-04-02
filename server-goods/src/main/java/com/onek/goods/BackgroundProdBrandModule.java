@@ -28,7 +28,7 @@ public class BackgroundProdBrandModule {
                     + " WHERE brandnameh = CRC32(?) AND brandname = ? ) ";
 
     private static final String QUERY_PRODBRAND_BASE =
-            " SELECT oid, brandno, brandname, brandnameh, cstatus "
+            " SELECT oid, brandno, brandname, cstatus "
                     + " FROM {{?" + DSMConst.TD_PROD_BRAND + "}} "
                     + " WHERE cstatus&1 = 0 ";
 
@@ -41,6 +41,11 @@ public class BackgroundProdBrandModule {
             if (brandVO == null) {
                 throw new IllegalArgumentException("VO is NULL");
             }
+
+            if (StringUtils.isEmpty(brandVO.getBrandname())) {
+                throw new IllegalArgumentException("brandname is empty");
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
             return new Result().fail("参数错误");

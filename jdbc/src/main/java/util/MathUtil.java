@@ -124,7 +124,18 @@ public class MathUtil {
         
         return a1.multiply(b1);
     }
-    
+
+    /**
+     * 精准相乘。
+     * @return
+     */
+    public static BigDecimal exactMul(double a, long b) {
+        BigDecimal a1 = BigDecimal.valueOf(a);
+        BigDecimal b1 = BigDecimal.valueOf(b);
+
+        return a1.multiply(b1);
+    }
+
 
     /**
      * 精准相除。
@@ -144,7 +155,18 @@ public class MathUtil {
     public static BigDecimal exactDiv(double a, double b) {
         BigDecimal a1 = BigDecimal.valueOf(a);
         BigDecimal b1 = BigDecimal.valueOf(b);
-        
+
+        return a1.divide(b1);
+    }
+
+    /**
+     * 精准相除。
+     * @return
+     */
+    public static BigDecimal exactDiv(double a, long b) {
+        BigDecimal a1 = BigDecimal.valueOf(a);
+        BigDecimal b1 = BigDecimal.valueOf(b);
+
         return a1.divide(b1);
     }
 }
