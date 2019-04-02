@@ -67,6 +67,12 @@ public class ProduceStore {
         return produceEntity;
     }
 
+    public static String getProduceName(String pclass) {
+        ProduceEntity produceEntity = findArea(PRODUCE_TREE, pclass, 0);
+
+        return produceEntity == null ? "" : produceEntity.getClassName();
+    }
+
     private static ProduceEntity findArea(List<ProduceEntity> areas, String pclass, int layer) {
         if (areas == null || areas.isEmpty()) {
             return null;

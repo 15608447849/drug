@@ -59,6 +59,12 @@ public class DictStore{
         return null;
     }
 
+    public static String getDictNameByCustomc(int customc,String type) {
+        DictEntity dict = getDictyByCustomc(customc, type);
+
+        return dict == null ? "" : dict.getText();
+    }
+
     public static Object translate(Object obj) throws Exception{
         if(obj != null) {
             Field[] fields = obj.getClass().getDeclaredFields();
