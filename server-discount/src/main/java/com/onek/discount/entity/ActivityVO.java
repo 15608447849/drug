@@ -9,8 +9,7 @@ import java.util.List;
  * @time 2019/4/1 13:46
  **/
 public class ActivityVO {
-    private long unqid;//全局唯一
-    private long actcode;//活动码
+    private long unqid;//活动码
     private String actname;//活动名称
     private int incpriority;//互斥优先级
     private int cpriority;//兼容优先级
@@ -29,8 +28,9 @@ public class ActivityVO {
 
     private List<TimeVO> timeVOS;//活动场次
 
-    private List<AssGiftVO> assGiftVOS;//优惠商品赠换
+    private List<LadderVO> ladderVOS;//阶梯优惠
 
+    private List<AssGiftVO> assGiftVOS;//优惠商品赠换
 
     public long getUnqid() {
         return unqid;
@@ -38,14 +38,6 @@ public class ActivityVO {
 
     public void setUnqid(long unqid) {
         this.unqid = unqid;
-    }
-
-    public long getActcode() {
-        return actcode;
-    }
-
-    public void setActcode(long actcode) {
-        this.actcode = actcode;
     }
 
     public String getActname() {
@@ -174,5 +166,13 @@ public class ActivityVO {
 
     public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
         this.assGiftVOS = assGiftVOS;
+    }
+
+    public List<LadderVO> getLadderVOS() {
+        return ladderVOS;
+    }
+
+    public void setLadderVOS(List<LadderVO> ladderVOS) {
+        this.ladderVOS = ladderVOS;
     }
 }
