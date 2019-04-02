@@ -12,7 +12,6 @@ import util.GsonUtils;
  * 门店管理
  */
 public class StoreManageModule {
-
     /**
      * 新增门店企业信息
      */
@@ -23,8 +22,4 @@ public class StoreManageModule {
         assert op!=null;
         return op.execute(appContext);
     }
-
-
-
-
 }

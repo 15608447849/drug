@@ -1,5 +1,7 @@
 package com.onek.discount.entity;
 
+import java.util.List;
+
 /**
  * @author Administrator
  * @version V1.0
@@ -22,7 +24,7 @@ public class CouponVO {
     private int qlfno;
 
     //资格值
-    private String qlfval;
+    private int qlfval;
 
     //优惠券描述
     private String desc;
@@ -48,8 +50,49 @@ public class CouponVO {
     //综合状态
     private int cstatus;
 
+    //活动关联商品集合
+    private List<GoodsVO> assDrugVOS;
 
+    //活动场次
+    private List<TimeVO> timeVOS;
 
+    //优惠商品赠换
+    private List<AssGiftVO> assGiftVOS;
+
+    //阶梯
+    private List<LadderVO> ladderVOS;
+
+    public List<GoodsVO> getAssDrugVOS() {
+        return assDrugVOS;
+    }
+
+    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
+        this.assDrugVOS = assDrugVOS;
+    }
+
+    public List<TimeVO> getTimeVOS() {
+        return timeVOS;
+    }
+
+    public void setTimeVOS(List<TimeVO> timeVOS) {
+        this.timeVOS = timeVOS;
+    }
+
+    public List<AssGiftVO> getAssGiftVOS() {
+        return assGiftVOS;
+    }
+
+    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
+        this.assGiftVOS = assGiftVOS;
+    }
+
+    public List<LadderVO> getLadderVOS() {
+        return ladderVOS;
+    }
+
+    public void setLadderVOS(List<LadderVO> ladderVOS) {
+        this.ladderVOS = ladderVOS;
+    }
 
     public long getCoupno() {
         return coupno;
@@ -83,11 +126,11 @@ public class CouponVO {
         this.qlfno = qlfno;
     }
 
-    public String getQlfval() {
+    public int getQlfval() {
         return qlfval;
     }
 
-    public void setQlfval(String qlfval) {
+    public void setQlfval(int qlfval) {
         this.qlfval = qlfval;
     }
 
