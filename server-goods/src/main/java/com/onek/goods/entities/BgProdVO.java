@@ -2,6 +2,7 @@ package com.onek.goods.entities;
 
 import redis.annation.CacheField;
 import redis.annation.DictCacheField;
+import redis.annation.GetDictWay;
 
 public class BgProdVO {
     /* ----------- 商品SPU表 ------------- */
@@ -58,7 +59,7 @@ public class BgProdVO {
     private long classNo;
     private String className;
 
-    @DictCacheField(reflectcolumn ="formName", type = "dosageform")
+    @DictCacheField(reflectcolumn ="formName", type = "dosageform", dictWay = GetDictWay.CUSTOMC_AND_TYPE)
     private int form;
     private String formName;
     private String rxName;
