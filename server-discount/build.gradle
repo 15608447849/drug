@@ -1,6 +1,9 @@
 
 dependencies {
     implementation project(':application-global')
+    implementation 'org.elasticsearch.client:transport:6.3.0'
+    implementation 'org.elasticsearch:elasticsearch:6.3.0'
+    implementation 'org.elasticsearch:elasticsearch-analysis-ik:6.1.1'
 }
 
 shadowJar {
