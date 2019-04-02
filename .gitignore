@@ -21,3 +21,5 @@ server-goods/out/
 server-discount/out/
 server-user/src/main/resources/
 server-goods/build/
+server-goods/src/main/resources/
+server-goods/src/test/
