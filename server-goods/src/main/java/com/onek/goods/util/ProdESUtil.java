@@ -34,7 +34,7 @@ public class ProdESUtil {
         String keyword = prodVO.getBrandName() + "|" + prodVO.getPopname() + "|" + prodVO.getProdname()+"|"+prodVO.getManuName();
         String spec = prodVO.getSpec();
         long spu = prodVO.getSpu();
-        int manuno = prodVO.getManuNo();
+        long manuno = prodVO.getManuNo();
 
         Map<String, Object> data = new HashMap<>();
         data.put("sku", sku);
@@ -63,7 +63,7 @@ public class ProdESUtil {
         String keyword = prodVO.getBrandName() + "|" + prodVO.getPopname() + "|" + prodVO.getProdname()+"|"+prodVO.getManuName();
         String spec = prodVO.getSpec();
         long spu = prodVO.getSpu();
-        int manuno = prodVO.getManuNo();
+        long manuno = prodVO.getManuNo();
 
         Map<String, Object> data = new HashMap<>();
         data.put("sku", sku);

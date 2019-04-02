@@ -61,7 +61,11 @@ public class DictUtil implements IRedisCache {
 
     @Override
     public List<?> queryByParams(String [] params) {
-        return null;
+
+        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0 and customc = ? and type = ?", params);
+        DictEntity[] dicts = new DictEntity[result.size()];
+        baseDao.convToEntity(result, dicts, DictEntity.class);
+        return Arrays.asList(dicts	);
     }
 
 }
