@@ -9,9 +9,11 @@ package com.onek.discount.entity;
  */
 public class LadderVO {
 
+    //阶梯码
+    private long unqid;
 
     //优惠码
-    private long offerno;
+    private long actcode;
 
     //规则码
     private int ruleno;
@@ -28,12 +30,13 @@ public class LadderVO {
     //综合状态
     private int cstatus;
 
-    public long getOfferno() {
-        return offerno;
+
+    public long getActcode() {
+        return actcode;
     }
 
-    public void setOfferno(long offerno) {
-        this.offerno = offerno;
+    public void setActcode(long actcode) {
+        this.actcode = actcode;
     }
 
     public int getRuleno() {
@@ -74,5 +77,13 @@ public class LadderVO {
 
     public void setCstatus(int cstatus) {
         this.cstatus = cstatus;
+    }
+
+    public long getUnqid() {
+        return unqid;
+    }
+
+    public void setUnqid(long unqid) {
+        this.unqid = unqid;
     }
 }
