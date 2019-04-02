@@ -5,7 +5,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.onek.consts.CSTATUS;
 import redis.IRedisCache;
 import redis.annation.CacheField;
+import redis.annation.DictCacheField;
+import redis.annation.GetDictWay;
 import redis.proxy.CacheProxyInstance;
+import util.StringUtils;
 
 import java.lang.reflect.Field;
 import java.util.*;
@@ -59,34 +62,53 @@ public class DictStore{
         return null;
     }
 
+    public static String getDictNameByCustomc(int customc,String type) {
+        DictEntity dict = getDictyByCustomc(customc, type);
+
+        return dict == null ? "" : dict.getText();
+    }
+
     public static Object translate(Object obj) throws Exception{
         if(obj != null) {
             Field[] fields = obj.getClass().getDeclaredFields();
-            Map<Field, CacheField> cacheFieldMap = new HashMap<>();
+            Map<Field, DictCacheField> cacheFieldMap = new HashMap<>();
             for(Field f : fields) {
-                CacheField cache = f.getDeclaredAnnotation(CacheField.class);
+                DictCacheField cache = f.getDeclaredAnnotation(DictCacheField.class);
                 if(cache != null) {
                     cacheFieldMap.put(f, cache);
                 }
             }
             Set<Field> fieldKeys = cacheFieldMap.keySet();
             for(Field field : fieldKeys) {
-                CacheField cacheField = cacheFieldMap.get(field);
-                String col = cacheField.cachecolumn();
+                DictCacheField cacheField = cacheFieldMap.get(field);
+                String col = "text";
                 String refcol = cacheField.reflectcolumn();
-                String key = cacheField.key();
-                String prefix = cacheField.prefix();
 
-                field.setAccessible(true);
-                Object id = field.get(obj);
-                Field f = obj.getClass().getDeclaredField(refcol);
-                f.setAccessible(true);
-                if(prefix.equals("dict_")) {
-                    DictEntity dictVo = (DictEntity)dictProxy.getId(id);
-                    Field ff = dictVo.getClass().getDeclaredField(col);
-                    ff.setAccessible(true);
-                    Object value = ff.get(dictVo);
-                    f.set(obj, value);
+                if(cacheField != null && !StringUtils.isEmpty(refcol)) {
+                    field.setAccessible(true);
+                    Object val = field.get(obj);
+                    Field f = obj.getClass().getDeclaredField(refcol);
+                    f.setAccessible(true);
+                    GetDictWay dictWay = cacheField.dictWay();
+                    DictEntity dictVo = null;
+                    if(dictWay == GetDictWay.ID){
+                        dictVo = (DictEntity)dictProxy.getId(val);
+                    }else{
+                        String type = cacheField.type();
+                        if(!StringUtils.isEmpty(type)){
+                            List<DictEntity> dicts = (List<DictEntity>)dictProxy.queryByParams(new String[]{val.toString(), type});
+                            dictVo = dicts != null && dicts.size() > 0 ? dicts.get(0) : null;
+                        }
+
+                    }
+
+                    if(dictVo != null){
+                        Field ff = dictVo.getClass().getDeclaredField(col);
+                        ff.setAccessible(true);
+                        Object value = ff.get(dictVo);
+                        f.set(obj, value);
+                    }
+
                 }
 
 

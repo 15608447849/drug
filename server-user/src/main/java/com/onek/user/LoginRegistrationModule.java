@@ -91,5 +91,12 @@ public class LoginRegistrationModule {
         return new Result().success("登出成功");
     }
 
+    /**
+     * 获取门店用户基础信息
+     */
+    @UserPermission
+    public Result basicInfo(AppContext appContext){
+        return new StoreBasicInfoOp().execute(appContext);
+    }
 
 }
