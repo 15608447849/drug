@@ -47,6 +47,18 @@ public class DictStore{
         return j;
     }
 
+    public static DictEntity getDictById(int dictc){
+        return (DictEntity) dictProxy.getId(dictc);
+    }
+
+    public static DictEntity getDictyByCustomc(int customc,String type){
+        List<DictEntity> dicts = (List<DictEntity>)dictProxy.queryByParams(new String[]{customc+"", type});
+        if(dicts != null && dicts.size() > 0){
+            return dicts.get(0);
+        }
+        return null;
+    }
+
     public static Object translate(Object obj) throws Exception{
         if(obj != null) {
             Field[] fields = obj.getClass().getDeclaredFields();
