@@ -26,14 +26,12 @@ public class RedisGlobalKeys {
     public static long getUserCode(){
         return RedisUtil.getStringProvide().increase(USER_TAB_UID);
     }
-
     /**
      * 获取企业ID
      */
     public static long getCompanyCode(){
         return  RedisUtil.getStringProvide().increase(COMP_TAB_COMPID,1) + COMP_INIT_VAR;
     }
-
     /**
      * 获取企业资质ID
      */

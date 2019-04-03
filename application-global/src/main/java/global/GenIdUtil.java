@@ -120,8 +120,8 @@ public class GenIdUtil {
         String subSrvidtmp = System.getProperty("index");
         int srvid = 0;
         int subSrvid = 0;
-        if(!StringUtils.isEmpty(srvidtmp) && srvidtmp.contains("_")){
-            srvidtmp = srvidtmp.substring(srvidtmp.indexOf("_")+1);
+        if(!StringUtils.isEmpty(srvidtmp) && srvidtmp.contains("-")){
+            srvidtmp = srvidtmp.substring(srvidtmp.indexOf("-")+1);
             if(!StringUtils.isEmpty(srvidtmp)){
                 srvid = Integer.parseInt(srvidtmp);
             }

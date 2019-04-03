@@ -92,6 +92,18 @@ public class TimeUtils {
         return sb.toString();
     }
 
+    /**
+     * 获取当前年份
+     */
+    public static int getCurrentYear(){
+        try {
+            return Integer.parseInt(new SimpleDateFormat("yyyy").format(new Date()));
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return 1900;
+    }
+
 
 
 }

@@ -2,3 +2,8 @@
 dependencies {
     implementation project(':application-global')
 }
+shadowJar {
+    baseName = 'order'
+    classifier = null
+    version = null
+}
