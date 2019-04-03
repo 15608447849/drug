@@ -254,8 +254,7 @@ public class CouponManageModule {
      */
     public List<GoodsVO> getCoupGoods(long actcode){
 
-        List<Object[]> result = baseDao.queryNative(QUERY_PROM_GOODS_SQL,
-                new Object[]{actcode});
+        List<Object[]> result = baseDao.queryNative(QUERY_PROM_GOODS_SQL, actcode);
 
         if(result == null || result.isEmpty()){
             return null;
