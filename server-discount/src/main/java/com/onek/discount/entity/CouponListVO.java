@@ -1,15 +1,13 @@
 package com.onek.discount.entity;
 
-import java.util.List;
-
 /**
  * @author Administrator
  * @version V1.0
- * @ClassName CouponVO
+ * @ClassName CouponListVO
  * @Description TODO
- * @date 2019-04-02 8:58
+ * @date 2019-04-03 1:26
  */
-public class CouponVO {
+public class CouponListVO {
 
     //优惠券码
     private long coupno;
@@ -44,64 +42,11 @@ public class CouponVO {
     //优惠券规则码
     private int ruleno;
 
+    //规则名称
+    private String rulename;
 
     //综合状态
     private int cstatus;
-
-    //活动关联商品集合
-    private List<GoodsVO> assDrugVOS;
-
-    //活动场次
-    private List<TimeVO> timeVOS;
-
-    //优惠商品赠换
-    private List<AssGiftVO> assGiftVOS;
-
-    //阶梯
-    private List<LadderVO> ladderVOS;
-
-    //规则
-    private List<RulesVO>  rulesVOS;
-
-    public List<RulesVO> getRulesVOS() {
-        return rulesVOS;
-    }
-
-    public void setRulesVOS(List<RulesVO> rulesVOS) {
-        this.rulesVOS = rulesVOS;
-    }
-
-    public List<GoodsVO> getAssDrugVOS() {
-        return assDrugVOS;
-    }
-
-    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
-        this.assDrugVOS = assDrugVOS;
-    }
-
-    public List<TimeVO> getTimeVOS() {
-        return timeVOS;
-    }
-
-    public void setTimeVOS(List<TimeVO> timeVOS) {
-        this.timeVOS = timeVOS;
-    }
-
-    public List<AssGiftVO> getAssGiftVOS() {
-        return assGiftVOS;
-    }
-
-    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
-        this.assGiftVOS = assGiftVOS;
-    }
-
-    public List<LadderVO> getLadderVOS() {
-        return ladderVOS;
-    }
-
-    public void setLadderVOS(List<LadderVO> ladderVOS) {
-        this.ladderVOS = ladderVOS;
-    }
 
     public long getCoupno() {
         return coupno;
@@ -189,6 +134,14 @@ public class CouponVO {
 
     public void setRuleno(int ruleno) {
         this.ruleno = ruleno;
+    }
+
+    public String getRulename() {
+        return rulename;
+    }
+
+    public void setRulename(String rulename) {
+        this.rulename = rulename;
     }
 
     public int getCstatus() {

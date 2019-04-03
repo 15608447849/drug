@@ -12,6 +12,9 @@ public class GoodsVO {
     //商品类别名称
     private String classname;
 
+    //商品名称
+    private String prodname;
+
     //商品SKU
     private long gcode;
 
@@ -106,5 +109,14 @@ public class GoodsVO {
 
     public void setCstatus(int cstatus) {
         this.cstatus = cstatus;
+    }
+
+
+    public String getProdname() {
+        return prodname;
+    }
+
+    public void setProdname(String prodname) {
+        this.prodname = prodname;
     }
 }
