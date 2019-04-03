@@ -1,11 +1,9 @@
 
 dependencies {
-    implementation project(':iceserver')
-    compile 'org.apache.tomcat:tomcat-juli:8.5.3'
-    compile 'org.apache.tomcat:tomcat-jdbc:8.5.20'
-    compile 'org.apache.logging.log4j:log4j-core:2.9.1'
-    compile 'org.apache.logging.log4j:log4j-api:2.9.1'
-    compile 'mysql:mysql-connector-java:5.1.46'
+    implementation project(':publib')
+    implementation 'org.apache.tomcat:tomcat-juli:8.5.3'
+    implementation 'org.apache.tomcat:tomcat-jdbc:8.5.20'
+    implementation 'mysql:mysql-connector-java:5.1.46'
     implementation 'commons-logging:commons-logging:1.2'
     implementation 'commons-lang:commons-lang:2.6'
     implementation 'commons-io:commons-io:2.4'
