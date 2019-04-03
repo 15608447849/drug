@@ -91,12 +91,13 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     public Result queryActivities(AppContext appContext) {
+        Result result = new Result();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int ruleCode = jsonObject.get("rulecode").getAsInt();
         String actName = jsonObject.get("actname").getAsString();
-        
+        return result;
     }
 
 
