@@ -8,4 +8,5 @@ include 'server-global'
 include 'server-goods'
 include 'server-discount'
 include 'cache'
+include 'server-order'
 
