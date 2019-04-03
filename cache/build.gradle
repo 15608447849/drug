@@ -1,7 +1,8 @@
 
 dependencies {
     implementation project(':publib')
-    compile 'com.alibaba:fastjson:1.2.47'
+
+    compile 'redis.clients:jedis:2.9.0'
     compile 'org.elasticsearch.client:transport:6.3.0'
     compile 'org.elasticsearch:elasticsearch:6.3.0'
     compile 'org.elasticsearch:elasticsearch-analysis-ik:6.1.1'
