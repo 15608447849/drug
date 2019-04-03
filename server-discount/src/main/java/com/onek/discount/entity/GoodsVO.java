@@ -23,7 +23,7 @@ public class GoodsVO {
     private long gcode;
 
     //商品规格
-    private String desc;
+    private String spec;
 
     //限购数量
     private int limitnum;
@@ -68,14 +68,6 @@ public class GoodsVO {
 
     public void setGcode(long gcode) {
         this.gcode = gcode;
-    }
-
-    public String getDesc() {
-        return desc;
-    }
-
-    public void setDesc(String desc) {
-        this.desc = desc;
     }
 
     public int getLimitnum() {
@@ -149,5 +141,13 @@ public class GoodsVO {
 
     public void setActcode(long actcode) {
         this.actcode = actcode;
+    }
+
+    public String getSpec() {
+        return spec;
+    }
+
+    public void setSpec(String spec) {
+        this.spec = spec;
     }
 }
