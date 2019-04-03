@@ -4,6 +4,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
@@ -11,8 +12,10 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
 import util.GsonUtils;
+import util.ModelUtil;
 import util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -28,18 +31,18 @@ public class CouponManageModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
-
-    String selectActSQL = "select unqid,actname,incpriority,cpriority," +
-            "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-            "actcycle,sdate,edate,rulecode,cstatus from {{?" + DSMConst.TD_PROM_ACT + "}} "
-            + " where cstatus&1=0 ";
-
     //新增优惠券
     private final String INSERT_COUPON_SQL = "insert into {{?" + DSMConst.TD_PROM_COUPON + "}} "
             + "(unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype,"
-            + "periodday,startdate,enddate,ruleno,cstatus) "
+            + "periodday,startdate,enddate,ruleno,validday,validflag,cstatus) "
             + "values(?,?,?,?,?,"
-            + "?,?,?,?,?,?,?)";
+            + "?,?,?,?,?,?,?,?,?)";
+
+    //修改优惠券
+    private static final String UPDATE_COUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set coupname=?,"
+            + "glbno=?,qlfno=?,qlfval=?,coupdesc=?,periodtype=?,"
+            + "periodday=?,startdate=?,enddate=?,ruleno=?,validday=?,validflag=? where cstatus&1=0 "
+            + " and unqid=? ";
 
 
     //新增场次
@@ -47,15 +50,27 @@ public class CouponManageModule {
             + "(unqid,actcode,sdate,edate) "
             + " values(?,?,?,?)";
 
+    //删除场次
+    private static final String DEL_TIME_SQL = "update {{?" + DSMConst.TD_PROM_TIME + "}} set cstatus=cstatus|1 "
+            + " where cstatus&1=0 and actcode=?";
+
     //新增活动商品
     private final String INSERT_ASS_DRUG_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
-            + "(unqid,actcode,gcode,menucode,actstock,limitnum,cstatus) "
-            + " values(?,?,?,?,?,?,?)";
+            + "(unqid,actcode,gcode,menucode,actstock,limitnum) "
+            + " values(?,?,?,?,?,?)";
+
+    //删除商品
+    private static final String DEL_ASS_DRUG_SQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
+            + " where cstatus&1=0 and actcode=?";
 
     //优惠阶梯
     private final String INSERT_LAD_OFF_SQL = "insert into {{?" + DSMConst.TD_PROM_LADOFF + "}} "
             + "(unqid,actcode,ruleno,ladamt,ladnum,offer) "
             + " values(?,?,?,?,?,?)";
+
+    //删除阶梯
+    private static final String DEL_LAD_OFF__SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
+            + " where cstatus&1=0 and actcode=?";
 
     //优惠赠换商品
     private final String INSERT_ASS_GIFT_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSGIFT + "}} "
@@ -65,29 +80,48 @@ public class CouponManageModule {
     //查询优惠券详情
     private final String QUERY_COUPON_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
-            "ruleno from {{?"+ DSMConst.TD_PROM_COUPON +"}} where unqid = ? ";
+            "ruleno,validday,validflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} where cstatus&1=0 and unqid = ? ";
 
 
     //查询优惠券列表
     private final String QUERY_COUPON_LIST_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
             "ruleno,rulename,cop.cstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
-            " {{?"+ DSMConst.TD_PROM_RULE +"}}  ru on cop.ruleno = ru.rulecode  where 1 = 1 ";
+            " {{?"+ DSMConst.TD_PROM_RULE +"}}  ru on cop.ruleno = ru.rulecode  where cop.cstatus&1=0 ";
 
 
-    private final String QUERY_PROM_TIME_SQL = "select unqid,sdate,edate from {{?" + DSMConst.TD_PROM_TIME+"}} where actcode = ? ";
 
-    private final String QUERY_PROM_RULE_SQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE+"}} where rulecode like '2%' ";
+    private final String QUERY_PROM_TIME_SQL = "select unqid,sdate,edate from {{?" + DSMConst.TD_PROM_TIME+"}} where actcode = ? and cstatus&1=0";
 
-    private final String QUERY_PROM_LAD_SQL = "select unqid,ladamt,ladnum,offer from {{?" + DSMConst.TD_PROM_LADOFF+"}} where actcode = ? ";
+    private final String QUERY_PROM_RULE_SQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE+"}} where cstatus&1=0 ";
 
-    private final String QUERY_PROM_GOODS_SQL = "select `spec`,gcode,limitnum,manuname,standarno,prodname,classname " +
+    private final String QUERY_PROM_LAD_SQL = "select unqid,ladamt,ladnum,offer from {{?" + DSMConst.TD_PROM_LADOFF+"}} where actcode = ? and cstatus&1=0 ";
+
+    private final String QUERY_PROM_GOODS_SQL = "select `spec`,gcode,limitnum,manuname,standarno,prodname,classname,convert(vatp/100,decimal(10,2)) price " +
             " from {{?" + DSMConst.TD_PROM_ASSDRUG+"}} pdrug" +
             " left join {{?" + DSMConst.TD_PROD_SKU+"}} psku on pdrug.gcode = psku.sku " +
             " left join {{?" + DSMConst.TD_PROD_SPU+"}} pspu on psku.spu = pspu.spu "+
             " left join {{?" + DSMConst.TD_PROD_MANU+"}} pmun on pmun.manuno = pspu.manuno "+
             " left join {{?" + DSMConst.D_PRODUCE_CLASS+"}} dpr on pdrug.gcode = dpr.classid "+
-            " where actcode = ? ";
+            " where actcode = ? and pdrug.cstatus&1=0 ";
+
+    //启用
+    private static final String OPEN_COUPON =
+            " UPDATE {{?" + DSMConst.TD_PROM_COUPON + "}}"
+                    + " SET cstatus = cstatus & " + ~CSTATUS.CLOSE
+                    + " WHERE unqid = ? ";
+
+    //停用
+    private static final String CLOSE_COUPON =
+            " UPDATE {{?" + DSMConst.TD_PROM_COUPON + "}}"
+                    + " SET cstatus = cstatus | " + CSTATUS.CLOSE
+                    + " WHERE unqid = ? ";
+
+    //删除
+    private static final String DELETE_COUPON =
+            " UPDATE {{?" + DSMConst.TD_PROM_COUPON + "}}"
+                    + " SET cstatus = cstatus | " + CSTATUS.DELETE
+                    + " WHERE unqid = ? ";
 
 
 
@@ -106,47 +140,29 @@ public class CouponManageModule {
         CouponVO couponVO = GsonUtils.jsonToJavaBean(json, CouponVO.class);
         long unqid = GenIdUtil.getUnqId();
 
-        List<TimeVO> timeVOS = couponVO.getTimeVOS();
-
-        List<Object[]> timeParm = new ArrayList<>();
-
-        for (TimeVO timeVO : timeVOS){
-            timeParm.add(new Object[]{GenIdUtil.getUnqId(),unqid,timeVO.getSdate(),timeVO.getEdate()});
-        }
-        int [] timeResult = baseDao.updateBatchNative(INSERT_TIME_SQL,timeParm,timeParm.size()) ;
-
-
-        List<LadderVO> ladderVOS = couponVO.getLadderVOS();
-        List<Object[]> ladderParm = new ArrayList<>();
-        //优惠阶梯
-        for (LadderVO ladderVO : ladderVOS){
-            ladderParm.add(new Object[]{GenIdUtil.getUnqId(),unqid,couponVO.getRuleno(),
-                    ladderVO.getLadamt(),ladderVO.getLadnum(),ladderVO.getOffer() });
-        }
-
-        int [] laddrResult = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL,ladderParm,ladderParm.size()) ;
-
-        List<GoodsVO> goodsVOS = couponVO.getAssDrugVOS();
-        List<Object[]> goodsParm = new ArrayList<>();
-
-
-        for (GoodsVO goodsVO : goodsVOS){
-            goodsParm.add(new Object[]{GenIdUtil.getUnqId(),unqid,goodsVO.getGcode(),
-                    goodsVO.getMenucode(),goodsVO.getActstock(),goodsVO.getLimitnum(),0 });
-        }
-
-
-        int [] goodsResult = baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL,goodsParm,goodsParm.size()) ;
-
-
         int ret = baseDao.updateNative(INSERT_COUPON_SQL,new Object[]{
                 unqid,couponVO.getCoupname(),couponVO.getGlbno(),couponVO.getQlfno(),
                 couponVO.getQlfval(),couponVO.getDesc(),couponVO.getPeriodtype(),
                 couponVO.getPeriodday(),couponVO.getStartdate(),couponVO.getEnddate(),
-                couponVO.getRuleno(),0
+                couponVO.getRuleno(),couponVO.getValidday(),couponVO.getValidflag(),0
         });
-
-        return ret > 0 ? result.success("操作成功"): result.fail("操作失败！");
+        if (ret > 0) {
+            //新增活动场次
+            if (couponVO.getTimeVOS() != null && !couponVO.getTimeVOS().isEmpty()) {
+                insertTimes(couponVO.getTimeVOS(), unqid);
+            }
+            //新增阶梯
+            if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
+                insertLadOff(couponVO.getLadderVOS(), unqid);
+            }
+            //新增活动商品
+            if (couponVO.getAssDrugVOS() != null && !couponVO.getAssDrugVOS().isEmpty()) {
+                insertAssDrug(couponVO.getAssDrugVOS());
+            }
+        } else {
+            return result.fail("新增失败");
+        }
+        return result.success("新增成功");
     }
 
 
@@ -177,7 +193,7 @@ public class CouponManageModule {
         baseDao.convToEntity(coupResult, couponVOS, CouponVO.class,
                     new String[]{"coupno", "coupname", "glbno",
                             "qlfno", "qlfval", "desc", "periodtype", "periodday",
-                            "startdate", "enddate", "ruleno"});
+                            "startdate", "enddate", "ruleno","validday","validflag"});
 
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
         couponVOS[0].setRulesVOS(getCoupRule());
@@ -262,10 +278,60 @@ public class CouponManageModule {
 
         GoodsVO[] goodsVOS = new GoodsVO[result.size()];
 
+
         baseDao.convToEntity(result, goodsVOS, GoodsVO.class,
                 new String[]{"spec","gcode","limitnum",
-                        "manuname","standarno","prodname","classname"});
+                        "manuname","standarno","prodname","classname","price"});
         return Arrays.asList(goodsVOS);
+    }
+
+
+    /**
+     * 新增优惠券商品
+     * @param assDrugVOS
+     */
+    private void insertAssDrug(List<GoodsVO> assDrugVOS) {
+
+        List<Object[]> assDrugParams = new ArrayList<>();
+        for (GoodsVO assDrugVO : assDrugVOS) {
+            assDrugParams.add(new Object[]{GenIdUtil.getUnqId(), assDrugVO.getActcode(),assDrugVO.getGcode(),
+                    assDrugVO.getMenucode(),assDrugVO.getActstock(),assDrugVO.getLimitnum()});
+        }
+        int[] result = baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, assDrugParams, assDrugVOS.size());
+        boolean b = !ModelUtil.updateTransEmpty(result);
+    }
+
+
+    /**
+     * 新增阶梯
+     * @param ladderVOS
+     * @param actCode
+     */
+    private void insertLadOff(List<LadderVO> ladderVOS, long actCode) {
+
+        List<Object[]> ladOffParams = new ArrayList<>();
+        for (LadderVO ladderVO : ladderVOS) {
+            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ladderVO.getRuleno(),
+                    ladderVO.getLadamt(),ladderVO.getLadnum(),ladderVO.getOffer()});
+        }
+        int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
+        boolean b = !ModelUtil.updateTransEmpty(result);
+    }
+
+
+    /**
+     * 新增活动场次
+     * @param timeVOS
+     * @param actCode
+     */
+    private void insertTimes(List<TimeVO> timeVOS, long actCode) {
+        List<Object[]> timeParams = new ArrayList<>();
+        for (TimeVO timeVO : timeVOS) {
+            timeParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,
+                    timeVO.getSdate(), timeVO.getEdate()});
+        }
+        int[] result = baseDao.updateBatchNative(INSERT_TIME_SQL, timeParams, timeVOS.size());
+        boolean b = !ModelUtil.updateTransEmpty(result);
     }
 
     /**
@@ -314,5 +380,80 @@ public class CouponManageModule {
 
         return result.setQuery(couponListVOS, pageHolder);
     }
+
+
+    /**
+     * 优惠券修改
+     * @param appContext
+     * @return
+     */
+    private Result updateCoupon(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        CouponVO couponVO = GsonUtils.jsonToJavaBean(json, CouponVO.class);
+        long actCode = couponVO.getCoupno();
+        //新增活动
+
+        int ret = baseDao.updateNative(UPDATE_COUPON_SQL,new Object[]{couponVO.getCoupname(),
+        couponVO.getGlbno(),couponVO.getQlfno(),couponVO.getQlfval(),
+        couponVO.getDesc(),couponVO.getPeriodtype(),couponVO.getPeriodday(),
+        couponVO.getStartdate(),couponVO.getEnddate(),couponVO.getRuleno(),couponVO.getValidday(),
+                couponVO.getValidflag(),actCode});
+
+        if (ret > 0) {
+            //新增活动场次
+            if (couponVO.getTimeVOS() != null && !couponVO.getTimeVOS().isEmpty()) {
+                if (baseDao.updateNative(DEL_TIME_SQL,actCode) > 0) {
+                    insertTimes(couponVO.getTimeVOS(), actCode);
+                }
+            }
+            //新增阶梯
+            if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
+                if (baseDao.updateNative(DEL_LAD_OFF__SQL, actCode) > 0) {
+                    insertLadOff(couponVO.getLadderVOS(), actCode);
+                }
+            }
+            //新增活动商品
+            if (couponVO.getAssDrugVOS() != null && !couponVO.getAssDrugVOS().isEmpty()) {
+                if (baseDao.updateNative(DEL_ASS_DRUG_SQL,actCode) > 0) {
+                    insertAssDrug(couponVO.getAssDrugVOS());
+                }
+            }
+        } else {
+            result.fail("修改失败");
+        }
+        return result.success("修改成功");
+    }
+
+
+    /**
+     * 更新优惠券状态
+     * @param appContext 0 启用  32 停用  1 删除
+     * @return
+     */
+    public Result updateCouponStatus(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+
+        long actcode = jsonObject.get("actcode").getAsLong();
+        int cstatus = jsonObject.get("cstatus").getAsInt();
+        int ret = 0;
+        switch (cstatus){
+            case 0:
+                ret = baseDao.updateNative(OPEN_COUPON,actcode);
+                break;
+            case 1:
+                ret = baseDao.updateNative(DELETE_COUPON,actcode);
+                break;
+            case 32:
+                ret = baseDao.updateNative(CLOSE_COUPON,actcode);
+        }
+
+        return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
+
+    }
+
 
 }

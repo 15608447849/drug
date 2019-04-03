@@ -43,6 +43,17 @@ public class GoodsVO {
     //综合状态码
     private int cstatus;
 
+    //商品单价
+    private double price;
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
+
     public String getClassname() {
         return classname;
     }
