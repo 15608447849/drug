@@ -8,10 +8,19 @@ package com.onek.discount.entity;
  **/
 public class AssGiftVO {
 
-    private long unqid;
-    private long offerno;
-    private long assgiftno;
+    private long unqid;//编码
+    private long actcode;//活动码
+    private long assgiftno;//赠换商品码
     private int cstatus;
+    private String giftname;//商品名称
+
+    public String getGiftname() {
+        return giftname;
+    }
+
+    public void setGiftname(String giftname) {
+        this.giftname = giftname;
+    }
 
     public long getUnqid() {
         return unqid;
@@ -21,12 +30,12 @@ public class AssGiftVO {
         this.unqid = unqid;
     }
 
-    public long getOfferno() {
-        return offerno;
+    public long getActcode() {
+        return actcode;
     }
 
-    public void setOfferno(long offerno) {
-        this.offerno = offerno;
+    public void setActcode(long actcode) {
+        this.actcode = actcode;
     }
 
     public long getAssgiftno() {

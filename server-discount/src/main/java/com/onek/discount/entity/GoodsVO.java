@@ -9,8 +9,15 @@ package com.onek.discount.entity;
  */
 public class GoodsVO {
 
+    private long unqid;//全局唯一
+
+    private long actcode;//活动码
+
     //商品类别名称
     private String classname;
+
+    //商品名称
+    private String prodname;
 
     //商品SKU
     private long gcode;
@@ -106,5 +113,30 @@ public class GoodsVO {
 
     public void setCstatus(int cstatus) {
         this.cstatus = cstatus;
+    }
+
+
+    public String getProdname() {
+        return prodname;
+    }
+
+    public void setProdname(String prodname) {
+        this.prodname = prodname;
+    }
+
+    public long getUnqid() {
+        return unqid;
+    }
+
+    public void setUnqid(long unqid) {
+        this.unqid = unqid;
+    }
+
+    public long getActcode() {
+        return actcode;
+    }
+
+    public void setActcode(long actcode) {
+        this.actcode = actcode;
     }
 }

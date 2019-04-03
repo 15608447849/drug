@@ -23,14 +23,18 @@ public class ActivityVO {
     private String edate;//活动结束日期
     private int rulecode;//活动规则码
     private int cstatus;//综合状态码
+    private String ruleName;//规则名称
 
-    private List<AssDrugVO> assDrugVOS;//活动关联商品集合
+//    private List<AssDrugVO> assDrugVOS;//活动关联商品集合
 
     private List<TimeVO> timeVOS;//活动场次
 
     private List<LadderVO> ladderVOS;//阶梯优惠
 
     private List<AssGiftVO> assGiftVOS;//优惠商品赠换
+
+    //活动关联商品集合
+    private List<GoodsVO> assDrugVOS;
 
     public long getUnqid() {
         return unqid;
@@ -144,11 +148,11 @@ public class ActivityVO {
         this.cstatus = cstatus;
     }
 
-    public List<AssDrugVO> getAssDrugVOS() {
+    public List<GoodsVO> getAssDrugVOS() {
         return assDrugVOS;
     }
 
-    public void setAssDrugVOS(List<AssDrugVO> assDrugVOS) {
+    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
         this.assDrugVOS = assDrugVOS;
     }
 
@@ -174,5 +178,13 @@ public class ActivityVO {
 
     public void setLadderVOS(List<LadderVO> ladderVOS) {
         this.ladderVOS = ladderVOS;
+    }
+
+    public String getRuleName() {
+        return ruleName;
+    }
+
+    public void setRuleName(String ruleName) {
+        this.ruleName = ruleName;
     }
 }
