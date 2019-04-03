@@ -10,6 +10,7 @@ import util.StringUtils;
 
 import java.util.HashMap;
 
+import static Ice.Application.communicator;
 import static com.onek.util.fs.FileServerUtils.*;
 
 /**

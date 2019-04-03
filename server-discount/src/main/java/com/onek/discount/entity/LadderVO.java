@@ -12,7 +12,7 @@ public class LadderVO {
     //阶梯码
     private long unqid;
 
-    //优惠码
+    //活动码
     private long actcode;
 
     //规则码
@@ -24,11 +24,14 @@ public class LadderVO {
     //数量阶梯值
     private int ladnum;
 
+    private int offercode;//优惠码
+
     //优惠值
     private int offer;
 
     //综合状态
     private int cstatus;
+
 
 
     public long getActcode() {
@@ -85,5 +88,13 @@ public class LadderVO {
 
     public void setUnqid(long unqid) {
         this.unqid = unqid;
+    }
+
+    public int getOffercode() {
+        return offercode;
+    }
+
+    public void setOffercode(int offercode) {
+        this.offercode = offercode;
     }
 }

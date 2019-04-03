@@ -14,7 +14,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
-import constant.FormatConst;
 import dao.BaseDAO;
 
 
@@ -29,6 +28,8 @@ import org.apache.commons.lang.ArrayUtils;
  * @author ywkj
  */
 public class ModelUtil {
+	public static final String DEFAULT_DATE_TIME_FORMAT = "yyyy-MM-dd HH:mm:ss";
+	
 	/**
 	 * 操作类别 EQ 等于操作 LIKE 字符串模糊匹配 HASCODE 资源码特殊操作 是否有某个码值 BITOPERA 位操作
 	 * BIT_AND_ZERO name&?=0 BIT_OR_ZERO name|?=0 LT < GT > LE <= GE >=
@@ -1077,7 +1078,7 @@ public class ModelUtil {
 	 * @return
 	 */
 	public static String getDateAndTime(Date date) {
-		SimpleDateFormat sdFormat  = new SimpleDateFormat(FormatConst.DEFAULT_DATE_TIME_FORMAT);
+		SimpleDateFormat sdFormat  = new SimpleDateFormat(DEFAULT_DATE_TIME_FORMAT);
 		return sdFormat.format(date);
 	}
 	
@@ -1087,8 +1088,8 @@ public class ModelUtil {
 	 * @return
 	 */
 	public static String getTime(Date date) {
-		SimpleDateFormat sdFormat  = new SimpleDateFormat(FormatConst.DEFAULT_DATE_TIME_FORMAT);
-		DateTimeFormatter df = DateTimeFormatter.ofPattern(FormatConst.DEFAULT_DATE_TIME_FORMAT);
+		SimpleDateFormat sdFormat  = new SimpleDateFormat(DEFAULT_DATE_TIME_FORMAT);
+		DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT);
 		String dateString = sdFormat.format(date);
 		LocalDateTime ldt = LocalDateTime.parse(dateString, df);
 		return (ldt.getHour() + ":" + ldt.getMinute() + ":" + ldt.getSecond());
@@ -1101,8 +1102,8 @@ public class ModelUtil {
 	 * @return
 	 */
 	public static String getDate(Date date) {
-		SimpleDateFormat sdFormat  = new SimpleDateFormat(FormatConst.DEFAULT_DATE_TIME_FORMAT);
-		DateTimeFormatter df = DateTimeFormatter.ofPattern(FormatConst.DEFAULT_DATE_TIME_FORMAT);
+		SimpleDateFormat sdFormat  = new SimpleDateFormat(DEFAULT_DATE_TIME_FORMAT);
+		DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT);
 		String dateString = sdFormat.format(date);
 		LocalDateTime ldt = LocalDateTime.parse(dateString, df);
 		return (ldt.getYear() + "-" + ldt.getMonthValue() + "-" + ldt.getDayOfMonth());
@@ -1114,8 +1115,8 @@ public class ModelUtil {
 	 * @return
 	 */
 	public static int getYear(Date date) {
-		SimpleDateFormat sdFormat  = new SimpleDateFormat(FormatConst.DEFAULT_DATE_TIME_FORMAT);
-		DateTimeFormatter df = DateTimeFormatter.ofPattern(FormatConst.DEFAULT_DATE_TIME_FORMAT);
+		SimpleDateFormat sdFormat  = new SimpleDateFormat(DEFAULT_DATE_TIME_FORMAT);
+		DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT);
 		String dateString = sdFormat.format(date);
 		LocalDateTime ldt = LocalDateTime.parse(dateString, df);
 		return ldt.getYear();
@@ -1127,8 +1128,8 @@ public class ModelUtil {
 	 * @return
 	 */
 	public static int getMouth(Date date) {
-		SimpleDateFormat sdFormat  = new SimpleDateFormat(FormatConst.DEFAULT_DATE_TIME_FORMAT);
-		DateTimeFormatter df = DateTimeFormatter.ofPattern(FormatConst.DEFAULT_DATE_TIME_FORMAT);
+		SimpleDateFormat sdFormat  = new SimpleDateFormat(DEFAULT_DATE_TIME_FORMAT);
+		DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT);
 		String dateString = sdFormat.format(date);
 		LocalDateTime ldt = LocalDateTime.parse(dateString, df);
 		return ldt.getMonthValue();
@@ -1140,8 +1141,8 @@ public class ModelUtil {
 	 * @return
 	 */
 	public static int getDay(Date date) {
-		SimpleDateFormat sdFormat  = new SimpleDateFormat(FormatConst.DEFAULT_DATE_TIME_FORMAT);
-		DateTimeFormatter df = DateTimeFormatter.ofPattern(FormatConst.DEFAULT_DATE_TIME_FORMAT);
+		SimpleDateFormat sdFormat  = new SimpleDateFormat(DEFAULT_DATE_TIME_FORMAT);
+		DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT);
 		String dateString = sdFormat.format(date);
 		LocalDateTime ldt = LocalDateTime.parse(dateString, df);
 		return ldt.getDayOfMonth();
@@ -1153,7 +1154,7 @@ public class ModelUtil {
 	 * @return
 	 */
 	public static String getDate(String dateString) {
-		DateTimeFormatter df = DateTimeFormatter.ofPattern(FormatConst.DEFAULT_DATE_TIME_FORMAT);
+		DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT);
 		LocalDateTime ldt = LocalDateTime.parse(dateString, df);
 		return (ldt.getHour() + ":" + ldt.getMinute() + ":" + ldt.getSecond());
 	}
@@ -1165,7 +1166,7 @@ public class ModelUtil {
 	 * @return
 	 */
 	public static String getTime(String dateString) {
-		DateTimeFormatter df = DateTimeFormatter.ofPattern(FormatConst.DEFAULT_DATE_TIME_FORMAT);
+		DateTimeFormatter df = DateTimeFormatter.ofPattern(DEFAULT_DATE_TIME_FORMAT);
 		LocalDateTime ldt = LocalDateTime.parse(dateString, df);
 		return (ldt.getYear() + "-" + ldt.getMonthValue() + "-" + ldt.getDayOfMonth());
 	}

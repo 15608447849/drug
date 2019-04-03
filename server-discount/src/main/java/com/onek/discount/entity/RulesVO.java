@@ -8,18 +8,18 @@ package com.onek.discount.entity;
  **/
 public class RulesVO {
 
-    private long unqid;//规则码
+    private long rulecode;//规则码
     private String rulename;//规则名称
     private String desc;//规则描述
     private int cstatus;//综合状态码
 
 
-    public long getUnqid() {
-        return unqid;
+    public long getRulecode() {
+        return rulecode;
     }
 
-    public void setUnqid(long unqid) {
-        this.unqid = unqid;
+    public void setRulecode(long rulecode) {
+        this.rulecode = rulecode;
     }
 
     public String getRulename() {
