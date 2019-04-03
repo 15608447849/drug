@@ -30,7 +30,7 @@ public class MemberLevelImpl implements IRedisCache {
 
     @Override
     public MemberLevelVO getId(Object id) {
-        String selectSQL = "select * from {{?" + DSMConst.TD_MEMBER_LEVEL + "}} where cstatus&1=0 "
+        String selectSQL = "select unqid,lname,groval,cstatus from {{?" + DSMConst.TD_MEMBER_LEVEL + "}} where cstatus&1=0 "
                 + " and unqid=" + id + " and cstatus&1=0";
         List<Object[]> result = baseDao.queryNative(selectSQL);
         MemberLevelVO[] levels = new MemberLevelVO[result.size()];
@@ -55,7 +55,7 @@ public class MemberLevelImpl implements IRedisCache {
 
     @Override
     public List<?> queryAll() {
-        String selectSQL = "select * from {{?" + DSMConst.TD_MEMBER_LEVEL + "}} where cstatus&1=0";
+        String selectSQL = "select unqid,lname,groval,cstatus from {{?" + DSMConst.TD_MEMBER_LEVEL + "}} where cstatus&1=0";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         MemberLevelVO[] levels = new MemberLevelVO[queryResult.size()];
         baseDao.convToEntity(queryResult, levels, MemberLevelVO.class);

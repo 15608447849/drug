@@ -34,6 +34,7 @@ public class BackgroundMemberModule {
 
     private static IRedisCache memLevelProxy =(IRedisCache) CacheProxyInstance.createInstance(new MemberLevelImpl());
 
+    @SuppressWarnings("unchecked")
     public Result queryAllMemberLevel(AppContext appContext) {
         List<MemberLevelVO> levels = (List<MemberLevelVO>)memLevelProxy.queryAll();
         List<JSONObject> results = new ArrayList<>();
