@@ -1,5 +1,7 @@
 package com.onek.discount;
 
+import cn.hy.otms.rpcproxy.comm.cstruct.Page;
+import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.context.AppContext;
@@ -62,7 +64,7 @@ public class ActivityManageModule {
 
     //优惠阶梯
     private static final String INSERT_LAD_OFF_SQL = "insert into {{?" + DSMConst.TD_PROM_LADOFF + "}} "
-            + "(unqid,actcode,ruleno,ladamt,ladnum,offer) "
+            + "(unqid,actcode,ruleno,ladamt,ladnum,offercode,offer) "
             + " values(?,?,?,?,?,?)";
 
     private static final String DEL_LAD_OFF__SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
@@ -95,9 +97,36 @@ public class ActivityManageModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int ruleCode = jsonObject.get("rulecode").getAsInt();
+
+        int pageSize = jsonObject.get("pageSize").getAsInt();
+        int pageIndex = jsonObject.get("pageNo").getAsInt();
+        Page page = new Page();
+        page.pageSize = pageSize;
+        page.pageIndex = pageIndex;
+        PageHolder pageHolder = new PageHolder(page);
+        StringBuilder sqlBuilder = new StringBuilder();
+        sqlBuilder.append(SELECT_ACT_SQL);
+        sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject).append(" group by unqid desc");
+        List<Object[]> queryList = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
+        ActivityVO[] activityVOS = new ActivityVO[queryList.size()];
+        baseDao.convToEntity(queryList, activityVOS, ActivityVO.class);
+        return result.setQuery(activityVOS, pageHolder);
+    }
+
+
+    private StringBuilder getParamsDYSQL(StringBuilder sqlBuilder, JsonObject jsonObject) {
         String actName = jsonObject.get("actname").getAsString();
-        return result;
+        if (actName != null && !actName.isEmpty()) {
+            sqlBuilder.append(" and actname like '%").append(actName).append("%'");
+        }
+
+        if (jsonObject.get("rulecode") != null && !jsonObject.get("rulecode").getAsString().isEmpty()) {
+            int ruleCode = jsonObject.get("rulecode").getAsInt();
+            if (ruleCode > 0) {
+                sqlBuilder.append(" and rulecode=").append(ruleCode);
+            }
+        }
+        return sqlBuilder;
     }
 
 
@@ -120,9 +149,8 @@ public class ActivityManageModule {
         if (activityVO.getUnqid() > 0) {//修改
             return insertActivity(activityVO, cpt);
         } else {//新增
-
+            return updateActivity(activityVO, cpt);
         }
-        return result;
     }
 
     /**
@@ -136,6 +164,7 @@ public class ActivityManageModule {
      **/
     private Result insertActivity(ActivityVO activityVO, int cpt) {
         boolean b;
+        int ruleCode = activityVO.getRulecode();//规则码
         Result result = new Result();
         long actCode = GenIdUtil.getUnqId();//唯一码(活动码)
         //新增活动
@@ -165,7 +194,7 @@ public class ActivityManageModule {
                 insertLadOff(activityVO.getLadderVOS(), actCode);
             }
             //新增优惠赠换商品
-            if (activityVO.getAssGiftVOS() != null && !activityVO.getAssGiftVOS().isEmpty()) {
+            if (activityVO.getAssGiftVOS() != null && !activityVO.getAssGiftVOS().isEmpty() && ruleCode == 105) {
                 insertAssGift(activityVO.getAssGiftVOS(), actCode);
             }
             //新增活动商品
@@ -274,7 +303,7 @@ public class ActivityManageModule {
         List<Object[]> ladOffParams = new ArrayList<>();
         for (LadderVO ladderVO : ladderVOS) {
             ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ladderVO.getRuleno(),
-                    ladderVO.getLadamt(),ladderVO.getLadnum(),ladderVO.getOffer()});
+                    ladderVO.getLadamt(),ladderVO.getLadnum(),ladderVO.getOffercode(),ladderVO.getOffer()});
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
         boolean b = !ModelUtil.updateTransEmpty(result);
@@ -426,28 +455,6 @@ public class ActivityManageModule {
     }
 
     /* *
-     * @description 根据活动码获取商品
-     * @params []
-     * @return java.util.List<com.onek.discount.entity.AssDrugVO>
-     * @exception
-     * @author 11842
-     * @time  2019/4/2 19:40
-     * @version 1.1.1
-     **/
-//    private List<AssDrugVO> getAssDrugByCode(int actCode) {
-//        String sql = "select unqid,actcode,gcode,menucode,actstock,cstatus,limitnum from {{?"
-//                + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 and actcode=" + actCode;
-//        List<Object[]> queryResult = baseDao.queryNative(sql);
-//        AssDrugVO[] assDrugVOS = new AssDrugVO[queryResult.size()];
-//        baseDao.convToEntity(queryResult, assDrugVOS, AssDrugVO.class);
-//        for (int i = 0; i < assDrugVOS.length; i++) {
-//            assDrugVOS[i].setProdname();
-//        }
-//        return Arrays.asList(assDrugVOS);
-//    }
-
-
-    /* *
      * @description 根据活动码获取活动场次
      * @params [actCode]
      * @return java.util.List<com.onek.discount.entity.TimeVO>
@@ -467,8 +474,8 @@ public class ActivityManageModule {
 
 
     private List<LadderVO> getLadder(int actCode) {
-        String sql = "select unqid,ladno,ruleno,ladamt,ladnum,offer,cstatus from {{?" + DSMConst.TD_PROM_LADOFF
-                + "}} where cstatus&1=0 and actcode=" + actCode;
+        String sql = "select unqid,ladno,ruleno,ladamt,ladnum,offercode,offer,cstatus from {{?"
+                + DSMConst.TD_PROM_LADOFF + "}} where cstatus&1=0 and actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(sql);
         LadderVO[] ladderVOS = new LadderVO[queryResult.size()];
         baseDao.convToEntity(queryResult, ladderVOS, LadderVO.class);

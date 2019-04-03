@@ -51,10 +51,10 @@ public class CommonModule {
      **/
     public Result queryRules(AppContext appContext) {
         Result result = new Result();
-        String selectSQL = "select unqid,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0 ";
+        String selectSQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0 ";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
-        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"unqid", "rulename"});
+        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"rulecode", "rulename"});
         return result.success(rulesVOS);
     }
 

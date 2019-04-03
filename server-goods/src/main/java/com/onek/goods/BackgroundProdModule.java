@@ -6,7 +6,7 @@ import com.google.gson.Gson;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
-import com.onek.server.inf.IRequest;
+import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceStore;
 import constant.DSMConst;
@@ -64,6 +64,13 @@ public class BackgroundProdModule {
                     + " ?, ?, ?, ?, ?, "
                     + " CURRENT_DATE, CURRENT_TIME, ?) ";
 
+    private static final String QUERY_SPU_BASE =
+            " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
+            + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
+            + " spu.insurance, spu.gspGMS, spu.gspSC, spu.detail, spu.cstatus, "
+            + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
+            + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
+            + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b   ON b.cstatus&1 = 0 AND b.brandno = spu.brandno ";
 
     private static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -75,10 +82,114 @@ public class BackgroundProdModule {
             + " sku.ondate, sku.ontime, sku.offdate, sku.offtime, sku.spec, sku.prodstatus, "
             + " sku.imagestatus, sku.cstatus "
             + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
-            + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu) "
-            + " LEFT JOIN  {{?" + DSMConst.TD_PROD_MANU  + "}} m ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
-            + " LEFT JOIN  {{?" + DSMConst.TD_PROD_BRAND + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
+            + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
+            + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
+            + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b   ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
             + " WHERE 1=1 ";
+
+    private static final String UPDATE_PROD_BASE =
+            " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
+            + " SET vatp = ?, mp = ?, rrp = ?, unit = ?, spec = ?, "
+            + " vaildsdate = STR_TO_DATE(?, '%Y-%m-%d'), vaildedate = STR_TO_DATE(?, '%Y-%m-%d'), "
+            + " prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
+            + " store = ?, activitystore = ?, limits = ?, wholenum = ?, medpacknum = ? "
+            + " WHERE sku = ? ";
+
+    public Result updateProd(AppContext appContext) {
+        BgProdVO bgProdVO;
+        try {
+            bgProdVO = new Gson().fromJson(appContext.param.json, BgProdVO.class);
+
+            if (bgProdVO == null) {
+                throw new IllegalArgumentException("VO is NULL");
+            }
+
+            if (bgProdVO.getSku() <= 0) {
+                throw new IllegalArgumentException("缺少SKU");
+            }
+
+            if (!checkProd(bgProdVO)) {
+                throw new IllegalArgumentException();
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Result().fail("参数错误");
+        }
+
+        int esResult = ProdESUtil.updateProdDocument(bgProdVO);
+
+        if (esResult != 0) {
+            return new Result().fail("操作失败");
+        }
+
+        BASE_DAO.updateNative(UPDATE_PROD_BASE,
+                MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue(),
+                MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue(),
+                MathUtil.exactMul(bgProdVO.getRrp (), 100).intValue(),
+                bgProdVO.getUnit(), bgProdVO.getSpec(),
+                bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
+                bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
+                bgProdVO.getStore(), bgProdVO.getActivitystore(), bgProdVO.getLimits(),
+                bgProdVO.getWholenum(), bgProdVO.getMedpacknum(),
+                bgProdVO.getSku());
+
+        return new Result().success(null);
+    }
+
+    public Result getProd(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (params == null || params.length == 0) {
+            return new Result().fail("参数为空");
+        }
+
+        if (!StringUtils.isBiggerZero(params[0])) {
+            return new Result().fail("参数错误");
+        }
+
+        String sql = QUERY_PROD_BASE + " AND sku.sku = ? ";
+
+        List<Object[]> queryResult = BASE_DAO.queryNative(sql, params[0]);
+
+        if (queryResult.isEmpty()) {
+            return new Result().success(null);
+        }
+
+        BgProdVO[] returnResults = new BgProdVO[queryResult.size()];
+
+        BASE_DAO.convToEntity(queryResult, returnResults, BgProdVO.class);
+
+        convProds(returnResults);
+
+        return new Result().success(returnResults[0]);
+    }
+
+    public Result getSPUInfo(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (params == null || params.length == 0) {
+            return new Result().fail("参数为空");
+        }
+
+        if (!StringUtils.isBiggerZero(params[0])) {
+            return new Result().fail("参数错误");
+        }
+
+        List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_SPU_BASE, params[0]);
+
+        if (queryResult.isEmpty()) {
+            return new Result().success(null);
+        }
+
+        BgProdVO[] returnResults = new BgProdVO[queryResult.size()];
+
+        BASE_DAO.convToEntity(queryResult, returnResults, BgProdVO.class);
+
+        convProds(returnResults);
+
+        return new Result().success(returnResults[0]);
+    }
 
     public Result queryProds(AppContext appContext) {
         Page page = new Page();
@@ -96,18 +207,29 @@ public class BackgroundProdModule {
         for (int i = 0; i < params.length; i++) {
             param = params[i];
 
-            if (true || StringUtils.isEmpty(param)) {
+            if (StringUtils.isEmpty(param)) {
                 continue;
             }
 
             try {
                 switch (i) {
                     case 0:
-                        sql.append(" AND manuname LIKE ? ");
+                        sql.append(" AND spu.prodname LIKE ? ");
                         param = "%" + param + "%";
                         break;
+                    case 1:
+                        sql.append(" AND spu.manuno = ? ");
+                        break;
                     case 2:
-                        sql.append(" AND areac = ? ");
+                        sql.append(" AND sku.spec LIKE ? ");
+                        param = "%" + param + "%";
+                        break;
+                    case 3:
+                        sql.append(" AND spu.standarnoh = CRC32(?) AND spu.standarno = ? ");
+                        paramList.add(param);
+                        break;
+                    case 4:
+                        sql.append(" AND sku.vaildsdate < STR_TO_DATE(?, '%Y-%m-%d') ");
                         break;
                 }
             } catch (Exception e) {
@@ -119,30 +241,12 @@ public class BackgroundProdModule {
 
         List<Object[]> queryResult = BASE_DAO.queryNative(
                 pageHolder, page, sql.toString(), paramList.toArray());
+
         BgProdVO[] result = new BgProdVO[queryResult.size()];
 
         BASE_DAO.convToEntity(queryResult, result, BgProdVO.class);
-        String[] spuParser;
-        for (BgProdVO bgProdVO : result) {
-            bgProdVO.setVatp(MathUtil.exactDiv(bgProdVO.getVatp(), 100).doubleValue());
-            bgProdVO.setRrp (MathUtil.exactDiv(bgProdVO.getRrp (), 100).doubleValue());
-            bgProdVO.setMp  (MathUtil.exactDiv(bgProdVO.getMp  (), 100).doubleValue());
 
-            spuParser = parseSPU(bgProdVO.getSpu());
-
-            if (spuParser != null) {
-                bgProdVO.setClassNo(Long.parseLong(spuParser[0]));
-                bgProdVO.setForm(Integer.parseInt(spuParser[1]));
-                bgProdVO.setClassName(ProduceStore.getProduceName(spuParser[0]));
-//                bgProdVO.setFormName(DictStore.getDictNameByCustomc(
-//                        Integer.parseInt(spuParser[1]), "dosageform"
-//                ));
-            }
-
-            try {
-                DictStore.translate(bgProdVO);
-            } catch (Exception e) {e.printStackTrace();}
-        }
+        convProds(result);
 
         return new Result().setQuery(result, pageHolder);
     }
@@ -169,7 +273,7 @@ public class BackgroundProdModule {
 
         if (spu == null) {
             try {
-                spu = genSPU(bgProdVO.getStandarNo(), bgProdVO.getClassNo(), bgProdVO.getForm());
+                spu = getNextSPU(bgProdVO.getClassNo(), bgProdVO.getStandarNo(), bgProdVO.getForm());
             } catch (Exception e) {
                 return new Result().fail(e.getMessage());
             }
@@ -181,7 +285,7 @@ public class BackgroundProdModule {
 
         bgProdVO.setSpu(Long.parseLong(spu));
 
-        synchronized (this) {
+        synchronized (BackgroundProdModule.class) {
             long spu_crease = RedisUtil.getStringProvide().increase(spu);
 
             if (spu_crease > 99) {
@@ -231,18 +335,47 @@ public class BackgroundProdModule {
                     bgProdVO.getSpec()
             });
 
+
+            int esResult = ProdESUtil.addProdDocument(bgProdVO);
+
+            if (esResult != 0) {
+                return new Result().fail("操作失败");
+            }
+
             try {
                 BASE_DAO.updateTransNative(
                         new String[] {INSERT_PROD_SPU, INSERT_PROD_SKU},
                         params);
             } catch (Exception e) {
                 e.printStackTrace();
+                ProdESUtil.deleteProdDocument(Long.parseLong(sku));
                 RedisUtil.getStringProvide().decrease(spu);
                 return new Result().fail("SQL异常");
             }
         }
 
-        return new Result().success(null);
+        return new Result().success(bgProdVO);
+    }
+
+    private void convProds(BgProdVO[] bgProdVOs) {
+        String[] spuParser;
+        for (BgProdVO bgProdVO : bgProdVOs) {
+            bgProdVO.setVatp(MathUtil.exactDiv(bgProdVO.getVatp(), 100).doubleValue());
+            bgProdVO.setRrp (MathUtil.exactDiv(bgProdVO.getRrp (), 100).doubleValue());
+            bgProdVO.setMp  (MathUtil.exactDiv(bgProdVO.getMp  (), 100).doubleValue());
+
+            spuParser = parseSPU(bgProdVO.getSpu());
+
+            if (spuParser != null) {
+                bgProdVO.setClassNo(Long.parseLong(spuParser[0]));
+                bgProdVO.setForm(Integer.parseInt(spuParser[1]));
+                bgProdVO.setClassName(ProduceStore.getProduceName(spuParser[0]));
+            }
+
+            try {
+                DictStore.translate(bgProdVO);
+            } catch (Exception e) {e.printStackTrace();}
+        }
     }
 
     /**
@@ -291,7 +424,7 @@ public class BackgroundProdModule {
         return queryResult.get(0)[0].toString();
     }
 
-    private String genSPU(String standarNo, long classNo, int form) throws Exception {
+    private String getNextSPU(long classNo, String standarNo, int form) throws Exception {
         if (!MathUtil.isBetween(1, form, 99)
                 || String.valueOf(classNo).length() != 6) {
             return null;
@@ -303,12 +436,7 @@ public class BackgroundProdModule {
             throw new IllegalArgumentException("标准号不正确");
         }
 
-        String formatForm;
-        try {
-            formatForm = String.format("%02d", form);
-        } catch (Exception e) {
-            return null;
-        }
+        String formatForm = String.format("%02d", form);
 
         StringBuilder spuBase = new StringBuilder();
         spuBase.append(mc)
@@ -318,9 +446,10 @@ public class BackgroundProdModule {
 
         StringBuilder regexp =
                 new StringBuilder("^").append(spuBase).append("$");
+
         List<Object[]> queryResult;
 
-        synchronized(this) {
+        synchronized(BackgroundProdModule.class) {
             queryResult = BASE_DAO.queryNative(GET_MAX_SPU, regexp.toString());
         }
 
@@ -340,7 +469,7 @@ public class BackgroundProdModule {
     }
 
     /**
-     * 判定为批准文号还是注册证编号
+     * 判定是批准文号还是注册证编号
      * @param standarNo
      * @return
      *  0 非法参数
@@ -363,7 +492,7 @@ public class BackgroundProdModule {
      * 根据批准文号判定是否为中国产的药品
      * @param standarNo
      * @return
-     *  -1 非法参数
+     *  0 非法参数
      *  1 非进口
      *  2 进口
      */

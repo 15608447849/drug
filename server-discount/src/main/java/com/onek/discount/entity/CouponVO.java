@@ -44,6 +44,11 @@ public class CouponVO {
     //优惠券规则码
     private int ruleno;
 
+    //有效天数
+    private int validday;
+
+    //生效标记 0 即日生效 1 次日生效
+    private int validflag;
 
     //综合状态
     private int cstatus;
@@ -197,5 +202,21 @@ public class CouponVO {
 
     public void setCstatus(int cstatus) {
         this.cstatus = cstatus;
+    }
+
+    public int getValidday() {
+        return validday;
+    }
+
+    public void setValidday(int validday) {
+        this.validday = validday;
+    }
+
+    public int getValidflag() {
+        return validflag;
+    }
+
+    public void setValidflag(int validflag) {
+        this.validflag = validflag;
     }
 }

@@ -25,3 +25,5 @@ server-goods/src/main/resources/
 server-goods/src/test/
 server-discount/build/
 server-global/out/
+cache/build/
+cache/out/
