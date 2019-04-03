@@ -7,4 +7,5 @@ include 'application-global'
 include 'server-global'
 include 'server-goods'
 include 'server-discount'
+include 'cache'
 

@@ -1,1 +1,0 @@
-icegridadmin -u admin -p admin --Ice.Default.Locator="DemoIceGrid/Locator:tcp -h localhost -p 4061"
