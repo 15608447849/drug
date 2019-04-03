@@ -1,5 +1,6 @@
 package elasticsearch;
 
+import java.util.List;
 import java.util.Map;
 
 import com.alibaba.fastjson.JSONObject;
@@ -8,6 +9,8 @@ import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
 import org.elasticsearch.action.admin.indices.delete.DeleteIndexResponse;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsRequest;
 import org.elasticsearch.action.admin.indices.exists.indices.IndicesExistsResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
@@ -120,6 +123,38 @@ public class ElasticSearchProvider {
 		} catch (Exception e) {
 			e.printStackTrace();
 			return null;
+		}
+
+	}
+
+	/**
+	 * 添加文档集合
+	 *
+	 * @param objectList 文档对象对象 JSON格式
+	 * @param index 索引名
+	 * @param type 索引类型
+	 * @return
+	 * @version
+	 */
+	public static int addDocumentList(List<JSONObject> objectList, String index, String type) {
+
+		TransportClient client = ElasticSearchClientFactory.getClientInstance();
+		try {
+			BulkRequestBuilder bulkRequest = client.prepareBulk();
+			int count = 0;
+			for(JSONObject jsonObject: objectList) {
+				bulkRequest.add(client.prepareIndex(index, type).setSource(jsonObject).setId(jsonObject.getString("id")));
+				count++;
+			}
+			BulkResponse bulkResponse = bulkRequest.execute().actionGet();
+			if(bulkResponse.hasFailures()){
+				return -1;
+			}
+
+			return count;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return 0;
 		}
 
 	}
