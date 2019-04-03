@@ -7,10 +7,10 @@ package com.onek.discount.entity;
  * @time 2019/4/2 14:47
  **/
 public class TimeVO {
-    private long unqid;
-    private long actcode;
-    private String sdate;
-    private String edate;
+    private long unqid;//编码
+    private long actcode;//活动码
+    private String sdate;//开始时间 hh:mm:ss
+    private String edate;//结束时间 hh:mm:ss
     private int cstatus;
 
     public long getUnqid() {
