@@ -2,11 +2,14 @@ package com.onek.iceabs;
 
 import Ice.Object;
 import Ice.*;
+import IceBox.Server;
 import IceBox.Service;
 import com.onek.server.infimp.IceProperties;
 
 import java.lang.Exception;
 import java.util.Arrays;
+
+import static Ice.Application.communicator;
 
 public abstract class IceBoxServerAbs implements Service {
 
@@ -15,9 +18,10 @@ public abstract class IceBoxServerAbs implements Service {
     private ObjectAdapter _adapter;
     protected Logger logger;
 
-
     @Override
     public void start(String name, Communicator communicator, String[] args) {
+        initIceLogger(name,(CommunicatorI) communicator);
+
         _serverName = name;
         logger = communicator.getLogger();
         _adapter = communicator.createObjectAdapter(_serverName);
@@ -26,6 +30,14 @@ public abstract class IceBoxServerAbs implements Service {
         relationID(object,communicator);
         _adapter.activate();
         logger.print("成功启动服务:" + _serverName + " 参数集:"+ Arrays.toString(args) );
+    }
+
+    private void initIceLogger(String name,CommunicatorI ic) {
+        Logger logger = ic.getInstance().initializationData().logger;
+        if (!(logger instanceof IceLog4jLogger)){
+            ic.getInstance().initializationData().logger = new IceLog4jLogger(name);
+            initIceLogger(name, (CommunicatorI) communicator());
+        }
     }
 
     private void relationID(Ice.Object object,Communicator communicator) {
@@ -47,4 +59,5 @@ public abstract class IceBoxServerAbs implements Service {
         _adapter.destroy();
         logger.print("销毁服务:" + _serverName);
     }
+
 }

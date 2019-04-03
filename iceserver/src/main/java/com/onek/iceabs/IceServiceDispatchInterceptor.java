@@ -24,11 +24,10 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
     /**用来存放我们需要拦截的Ice服务对象，Key为服务ID，value为对应的Servant*/
     private Map<Identity, Object> map ;
 
-    private Logger logger;
+
 
     private IceServiceDispatchInterceptor() {
         map = new ConcurrentHashMap<>();
-        logger = communicator().getLogger();
     }
 
     public static IceServiceDispatchInterceptor getInstance(){
@@ -40,7 +39,7 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
      */
     public DispatchInterceptor addIceObject(Ice.Identity id, Ice.Object iceObj){
         map.put(id, iceObj);
-        logger.print("监听服务:" + id.name);
+        communicator().getLogger().print("监听服务:" + id.name);
         return this;
     }
 
@@ -55,35 +54,24 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
     @Override
     public DispatchStatus dispatch(Request request) {
         try{
-
             long time = System.currentTimeMillis();
-
             Current current = request.getCurrent();
             Identity identity = request.getCurrent().id;
-
-
-//            logger.print(
-//                    current.con._toString().split("\\n")[1] +
-//                    " ,服务名:"+identity.name +
-//                    " ,方法名:" + current.operation
-//            );
             DispatchStatus status = map.get(identity).ice_dispatch(request);
-//            logger.print("DispatchStatus = " + status);
-//            if (status == DispatchStatus.DispatchOK){
-//                logger.print("调用成功" );
-//            }else if (status == DispatchStatus.DispatchAsync){
-//                logger.print("异步派发" );
-//            }else if (status == DispatchStatus.DispatchUserException){
-//                logger.print("调用错误" );
-//            }
-            if ( current.operation .equals("accessService"))
-                logger.print("调用状态"+ status + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms" );
+            if ( current.operation .equals("accessService")) communicator().getLogger().print(
+                            "调用状态: "+ statusString(status) + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms");
             return status;
         }catch(Exception e){
-            logger.print(e.toString());
             e.printStackTrace();
+            communicator().getLogger().error(e.toString());
         }
-
         return null;
+    }
+
+    private String statusString(DispatchStatus status){
+        if (status == DispatchStatus.DispatchOK) return "调用成功";
+        if (status == DispatchStatus.DispatchAsync) return "异步派发";
+         if (status == DispatchStatus.DispatchUserException) return "调用错误";
+         return "未知状态";
     }
 }

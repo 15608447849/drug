@@ -102,7 +102,7 @@ public class ServerImp extends _InterfacesDisp {
     //打印参数
     private void printParam(IRequest request, Current __current) {
         try {
-            logger.print("\n->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-");
+
             StringBuilder sb = new StringBuilder();
             sb.append("call:\t" + request.pkg +" -> " + request.cls +" -> "+request.method+"\n");
             if(!StringUtils.isEmpty(request.param.token)){
@@ -117,7 +117,8 @@ public class ServerImp extends _InterfacesDisp {
             if(request.param.pageIndex > 0 && request.param.pageNumber > 0){
                 sb.append("Paging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
             }
-            logger.print(sb.toString());
+            logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString());
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -173,9 +174,7 @@ public class ServerImp extends _InterfacesDisp {
 
     private String printResult(Object result) {
         String resultString = GsonUtils.javaBeanToJson(result);
-        logger.print(
-                resultString+"\n"+
-                "-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n");
+        logger.print("-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n\t" + resultString+"\n");
         return resultString;
     }
 

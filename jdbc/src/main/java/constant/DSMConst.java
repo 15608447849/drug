@@ -17,7 +17,7 @@ public interface DSMConst extends UDAConst {
     public final static String[][] DB_TABLES = {
             //索引0对应表名，从索引1开始对应这个表的列名，表名与列名必须同数据库一致！
             {"d_system_user"}, // 用户表  0
-            {"d_global_dict"}, // 用户表 1
+            {"d_global_dict"}, // 字典 1
             {"d_system_role"}, // 角色表 2
             {"d_system_resource"}, // 资源表 3
             {"d_order_base"}, // 4
@@ -43,7 +43,9 @@ public interface DSMConst extends UDAConst {
             {"td_prom_assdrug"}, //24 活动商品关联表
             {"td_prom_time"}, //25 活动场次表
             {"td_prom_group"}, //26 组团情况表
-            {"td_prom_couent"} //27 优惠券领取表
+            {"td_prom_couent"}, //27 优惠券领取表
+            {"td_member_level"} //28 会员等级表
+            ,{"td_tran_colle"} //29 我的收藏表
 
     };
 
@@ -78,6 +80,8 @@ public interface DSMConst extends UDAConst {
     public final static int TD_PROM_TIME = 25;
     public final static int TD_PROM_GROUP = 26;
     public final static int TD_PROM_COUENT = 27;
+    public final static int TD_MEMBER_LEVEL = 28;
+    public final static int TD_TRAN_COLLE = 29;
 
 
 
@@ -85,12 +89,12 @@ public interface DSMConst extends UDAConst {
     // TODO　切分表的规则数组 ：0 代表不需要切分，1 代表按公司模型切分表,2 标识是否需要主从同步
     // 索引必须同_DB_TABLES里的索引对应
     public final static int[] SEG_TABLE_RULE = {
-            0, 0, 0, 0, 3,
-            1, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 3,//5
+            1, 0, 0, 0, 0,//10
+            0, 0, 0, 0, 0,//15
+            0, 0, 0, 0, 0,//20
+            0, 0, 0, 0, 0,//25
+            0, 0, 0, 1, 0,//30
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,

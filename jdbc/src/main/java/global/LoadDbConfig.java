@@ -1,7 +1,6 @@
 package global;
 
 import org.hyrdpf.dao.jdbc.JdbcPoolSessionMgr;
-import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.GeneralHelper;
 
 import java.io.FileOutputStream;
