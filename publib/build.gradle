@@ -2,7 +2,11 @@
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
+    //google json 依赖
     compile 'com.google.code.gson:gson:2.8.5'
     compile 'com.alibaba:fastjson:1.2.47'
+    //日志依赖
+    compile 'org.apache.logging.log4j:log4j-core:2.9.1'
+    compile 'org.apache.logging.log4j:log4j-api:2.9.1'
 }
 
