@@ -2,6 +2,8 @@ package com.onek.order;
 
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.util.prod.ProdEntity;
+import com.onek.util.prod.ProduceStore;
 import dao.BaseDAO;
 import util.GsonUtils;
 import util.StringUtils;
@@ -25,9 +27,9 @@ public class MyCollectModule {
         int promtype;
         int prize;
         long sku;
-        String prodname;
         String data;
         String time;
+        String prodname;
     }
     /**
      * 添加收藏
@@ -37,19 +39,33 @@ public class MyCollectModule {
         Param p = GsonUtils.jsonToJavaBean(json, Param.class);
         assert p != null;
         long id = getCompId();
-        String insertSql = "INSERT INTO {{?"+TD_TRAN_COLLE+"}} ( unqid, sku, prize, promtype, compid, prodname, createdate,createtime ) " +
+        String insertSql = "INSERT INTO {{?"+TD_TRAN_COLLE+"}} ( unqid, sku, prize, promtype, compid, createdate, createtime ) " +
                 "VALUES " +
-                "( ?, ?, ?, ?, ?, ?,CURRENT_DATE,CURRENT_TIME )";
+                "( ?, ?, ?, ?, ?, CURRENT_DATE,CURRENT_TIME )";
 
        int i = BaseDAO.getBaseDAO().updateNativeSharding(p.compid,getCurrentYear(),
                insertSql,
-               id, p.sku, p.prize, p.promtype, p.compid, p.prodname);
+               id, p.sku, p.prize, p.promtype, p.compid);
 
        if (i > 0){
+           //如果超过指定条数 ,删除时间最小的数据
+           String selectSql = "SELECT unqid FROM {{?"+TD_TRAN_COLLE+"}} WHERE compid=? ORDER BY createdate,createtime";
+           List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,p.compid);
+           assert lines!=null;
+           delOldData(lines,p.compid);
            return new Result().success("收藏成功");
        }
         return new Result().fail("收藏失败");
     }
+
+    private void delOldData(List<Object[]> lines,int compid) {
+        if (lines.size()>20){
+            Object[] arr = lines.remove(0);
+            int i = delDataById((long)arr[0],compid);
+            if (i > 0) delOldData(lines,compid);
+        }
+    }
+
     /**
      * 查询收藏
      */
@@ -61,8 +77,9 @@ public class MyCollectModule {
                "FROM {{?"+TD_TRAN_COLLE+"}} " +
                "WHERE compid = ?";
 
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,p.compid);
-       assert lines!=null ;
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(p.compid,getCurrentYear(),
+                selectSql,p.compid);
+       assert lines!=null;
         ArrayList<Param>  list = new ArrayList<>();
         Param data;
        for (Object[] arr: lines){
@@ -74,7 +91,10 @@ public class MyCollectModule {
            data.compid = StringUtils.checkObjectNull(arr[4],0);
            data.data = StringUtils.checkObjectNull(arr[5],"");
            data.time = StringUtils.checkObjectNull(arr[6],"");
-           data.prodname = StringUtils.checkObjectNull(arr[7],"");
+           ProdEntity entity = ProduceStore.getProdBySku(data.sku);
+           if (entity!=null && entity.getProdname()!=null){
+               data.prodname = entity.getProdname();
+           }
            list.add(data);
        }
         return new Result().success(list);
@@ -88,13 +108,17 @@ public class MyCollectModule {
         String json = appContext.param.json;
         Param p = GsonUtils.jsonToJavaBean(json,Param.class);
         assert p != null;
-        String delSql = "DELETE FROM {{?"+TD_TRAN_COLLE+"}} WHERE unqid = ? AND compid = ?";
-        int i = BaseDAO.getBaseDAO().updateNativeSharding(p.compid,getCurrentYear(),
-                delSql,
-                p.unqid, p.compid);
+        int i = delDataById(p.unqid,p.compid);
         if (i > 0){
             return new Result().success("删除成功");
         }
         return new Result().fail("删除失败");
+    }
+
+    private int delDataById(long unqid, int compid) {
+        String delSql = "DELETE FROM {{?"+TD_TRAN_COLLE+"}} WHERE unqid = ? AND compid = ?";
+        return BaseDAO.getBaseDAO().updateNativeSharding(compid,getCurrentYear(),
+                delSql,
+                unqid, compid);
     }
 }

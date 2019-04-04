@@ -2,6 +2,7 @@ package com.onek.user;
 
 import com.onek.context.AppContext;
 import com.onek.annotation.UserPermission;
+import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.user.operations.*;
 import redis.util.RedisUtil;
@@ -95,11 +96,23 @@ public class LoginRegistrationModule {
     }
 
     /**
-     * 获取门店用户基础信息
+     * 获取门店用户-门店基础信息
      */
     @UserPermission(role = {2})
     public Result basicInfo(AppContext appContext){
         return new StoreBasicInfoOp().execute(appContext);
     }
 
+    /**
+     * 获取用户信息
+     */
+    public Result getUserSession(AppContext appContext){
+        UserSession userSession = new UserSession();
+            userSession.roleCode = appContext.getUserSession().roleCode;
+            userSession.userId = appContext.getUserSession().userId;
+            userSession.userName = appContext.getUserSession().userName;
+            userSession.account = appContext.getUserSession().account;
+            userSession.phone = appContext.getUserSession().phone;
+        return new Result().success(userSession);
+    }
 }
