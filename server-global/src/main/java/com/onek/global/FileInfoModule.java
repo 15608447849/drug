@@ -37,6 +37,7 @@ public class FileInfoModule {
 
         HashMap<String,String> map = new HashMap<>();
             map.put("upUrl", fileUploadAddress());
+            map.put("ergodicUrl",fileErgodicAddress());
             map.put("downPrev",fileDownloadPrev());
             map.put("home",defaultHome());
 
@@ -55,5 +56,7 @@ public class FileInfoModule {
         }
         return new Result().success(map);
     }
+
+
 
 }

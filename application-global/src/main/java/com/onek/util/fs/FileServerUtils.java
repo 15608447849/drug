@@ -18,6 +18,10 @@ public class FileServerUtils {
         return "http://" + fsp.fileServerAddress +"/upload";
     }
 
+    public static String fileErgodicAddress() {
+        return "http://" + fsp.fileServerAddress +"/ergodic";
+    }
+
     // 文件下载地址 前缀 ,例如 下载文件 /目录/文件.png -> 下载前缀/目录/文件.png
     public static String fileDownloadPrev(){
 
