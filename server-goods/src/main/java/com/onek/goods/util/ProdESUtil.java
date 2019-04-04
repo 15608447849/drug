@@ -11,10 +11,7 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder;
-import org.elasticsearch.index.query.QueryBuilders;
-import org.elasticsearch.index.query.TermsQueryBuilder;
+import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.sort.SortOrder;
 import util.StringUtils;
@@ -74,7 +71,7 @@ public class ProdESUtil {
         data.put("spu", spu);
         data.put("manuno", manuno);
         data.put("prodstatus", prodVO.getProdstatus());
-        data.put("detail", JSON.toJSONString(prodVO));
+        data.put("detail", JSONObject.toJSON(prodVO));
         UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, "prod", "prod_type", sku+"");
         if(response == null || RestStatus.OK != response.status()) {
             return -1;
@@ -124,6 +121,39 @@ public class ProdESUtil {
             if(!StringUtils.isEmpty(keyword)){
                 MatchQueryBuilder matchQuery = QueryBuilders.matchQuery("content", keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
+            }
+            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+            int from = pagenum * pagesize - pagesize;
+            response = client.prepareSearch("prod")
+                    .setQuery(boolQuery)
+                    .setFrom(from)
+                    .setSize(pagesize)
+                    .execute().actionGet();
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        return response;
+    }
+
+
+    /**
+     * 根据条件全文检索商品
+     *
+     * @param status
+     * @param pagenum
+     * @param pagesize
+     * @return
+     */
+    public static SearchResponse searchProdWithMallFloor(String status,int pagenum,int pagesize){
+        SearchResponse response = null;
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            if(!StringUtils.isEmpty(status)){
+                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("cstatus");
+                rangeQuery.gt(status);
+                boolQuery.must(rangeQuery);
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;

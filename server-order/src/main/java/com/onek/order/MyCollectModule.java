@@ -25,7 +25,6 @@ public class MyCollectModule {
         int promtype;
         int prize;
         long sku;
-        String prodname;
         String data;
         String time;
     }
@@ -37,13 +36,13 @@ public class MyCollectModule {
         Param p = GsonUtils.jsonToJavaBean(json, Param.class);
         assert p != null;
         long id = getCompId();
-        String insertSql = "INSERT INTO {{?"+TD_TRAN_COLLE+"}} ( unqid, sku, prize, promtype, compid, prodname, createdate,createtime ) " +
+        String insertSql = "INSERT INTO {{?"+TD_TRAN_COLLE+"}} ( unqid, sku, prize, promtype, compid, createdate, createtime ) " +
                 "VALUES " +
-                "( ?, ?, ?, ?, ?, ?,CURRENT_DATE,CURRENT_TIME )";
+                "( ?, ?, ?, ?, ?, CURRENT_DATE,CURRENT_TIME )";
 
        int i = BaseDAO.getBaseDAO().updateNativeSharding(p.compid,getCurrentYear(),
                insertSql,
-               id, p.sku, p.prize, p.promtype, p.compid, p.prodname);
+               id, p.sku, p.prize, p.promtype, p.compid);
 
        if (i > 0){
            return new Result().success("收藏成功");
@@ -74,7 +73,7 @@ public class MyCollectModule {
            data.compid = StringUtils.checkObjectNull(arr[4],0);
            data.data = StringUtils.checkObjectNull(arr[5],"");
            data.time = StringUtils.checkObjectNull(arr[6],"");
-           data.prodname = StringUtils.checkObjectNull(arr[7],"");
+//           data.prodname = Produc
            list.add(data);
        }
         return new Result().success(list);

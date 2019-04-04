@@ -6,7 +6,6 @@ import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
 import com.onek.server.infimp.IceContext;
 import com.onek.server.infimp.IServerInterceptor;
-import com.sun.org.apache.regexp.internal.RE;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
