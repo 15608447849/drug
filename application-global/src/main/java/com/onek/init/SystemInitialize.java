@@ -1,5 +1,6 @@
 package com.onek.init;
 
+import Ice.Application;
 import org.hyrdpf.ds.AppConfig;
 
 /**
@@ -8,7 +9,11 @@ import org.hyrdpf.ds.AppConfig;
  */
 public class SystemInitialize {
     public void startUp(String serverName){
-        AppConfig.initLogger();
-        AppConfig.initialize();
+        try {
+            AppConfig.initLogger();
+            AppConfig.initialize();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

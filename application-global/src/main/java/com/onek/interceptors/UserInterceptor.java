@@ -38,7 +38,7 @@ public class UserInterceptor implements IServerInterceptor {
                 up = m.getAnnotation(UserPermission.class);
                 permissionStatusMap.put(key, up); //存
             }
-            if(up != null && !up.ignore() && up.mode() == PermissionStatus.ALREADY_LOGGED){
+            if(up == null || (!up.ignore() && up.mode() == PermissionStatus.ALREADY_LOGGED)){
                 UserSession userSession = appContext.getUserSession();
                 if(userSession == null){
                     return new Result().intercept("用户未登录");

@@ -43,27 +43,9 @@ public class ServerImp extends _InterfacesDisp {
         this.pkgPath = IceProperties.INSTANCE.pkgSrvMap.get(serverName);
         initInterceptorList();
         initContextClass();
-        initApplication();
     }
 
-    //初始化 系统应用
-    private void initApplication() {
-        if (StringUtils.isEmpty(IceProperties.INSTANCE.appInitializationImp)) return;
-        Object initObj = null;
-        try {
-            initObj = ObjectRefUtil.createObject(IceProperties.INSTANCE.appInitializationImp,null,null);
-        } catch (Exception ignored) {
-            logger.print("创建初始化器失败,path = " + IceProperties.INSTANCE.appInitializationImp);
-        }
-        if (initObj!=null){
-            try {
-                ObjectRefUtil.callMethod(initObj,"startUp",new Class[]{String.class},serverName);
-            } catch (Exception e) {
-                logger.print("无法调用初始化器方法startUp,原因: " + e);
-            }
-        }
 
-    }
 
     //初始化拦截器
     private void initInterceptorList() {
@@ -164,9 +146,8 @@ public class ServerImp extends _InterfacesDisp {
 
     private Result interceptor(IceContext context) throws Exception {
         Result result = null;
-        Iterator<IServerInterceptor> it = interceptorList.iterator();
-        while (it.hasNext()){
-            result = it.next().interceptor(context);
+        for (IServerInterceptor iServerInterceptor : interceptorList) {
+            result = iServerInterceptor.interceptor(context);
             if (result != null) break;
         }
         return result;
@@ -174,7 +155,9 @@ public class ServerImp extends _InterfacesDisp {
 
     private String printResult(Object result) {
         String resultString = GsonUtils.javaBeanToJson(result);
-        logger.print("-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n\t" + resultString+"\n");
+        if (resultString.length() < 100){
+            logger.print("-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n\t" + resultString +"\n");
+        }
         return resultString;
     }
 
