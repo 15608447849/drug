@@ -75,10 +75,12 @@ public class GsonUtils {
     public static <T> List<T> string2List(String json) {
         try {
             if (StringUtils.isEmpty(json)) return null;
-            return jsonToJavaBean(json, new TypeToken<List<T>>() {}.getType());
+            return jsonToJavaBean(json, new TypeToken<T>() {}.getType());
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
+
+
 }
