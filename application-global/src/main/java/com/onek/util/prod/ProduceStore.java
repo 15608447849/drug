@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+@SuppressWarnings("unchecked")
 public class ProduceStore {
     private static List<ProduceClassEntity> PRODUCE_TREE = null;
     private static String TREE_STR = null;

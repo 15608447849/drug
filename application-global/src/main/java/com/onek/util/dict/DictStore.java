@@ -13,6 +13,7 @@ import util.StringUtils;
 import java.lang.reflect.Field;
 import java.util.*;
 
+@SuppressWarnings("unchecked")
 public class DictStore{
 
     private static IRedisCache dictProxy =(IRedisCache) CacheProxyInstance.createInstance(new DictUtil());

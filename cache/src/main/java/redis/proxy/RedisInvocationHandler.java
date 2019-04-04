@@ -16,7 +16,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.List;
 
-
+@SuppressWarnings("unchecked")
 public class RedisInvocationHandler<T> implements InvocationHandler {
 
     public static String PREFIX_ALL  = "@a";
