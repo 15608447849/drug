@@ -121,8 +121,8 @@ public class GenIdUtil {
         int srvid = 0;
         int subSrvid = 0;
         if(!StringUtils.isEmpty(srvidtmp) && srvidtmp.contains("-")){
-            srvidtmp = srvidtmp.substring(srvidtmp.indexOf("-")+1);
-            if(!StringUtils.isEmpty(srvidtmp)){
+            srvidtmp = srvidtmp.substring(srvidtmp.lastIndexOf("-")+1);
+            if(!StringUtils.isEmpty(srvidtmp) && StringUtils.isInteger(srvidtmp)){
                 srvid = Integer.parseInt(srvidtmp);
             }
         }
@@ -136,21 +136,22 @@ public class GenIdUtil {
 
 
     public static void main(String[] args) throws InterruptedException {
-        ExecutorService poolExecutor = Executors.newFixedThreadPool(1000);
-        long start = System.nanoTime();
-        System.out.println(new Date());
-        for(int i = 0; i < 10000; i++){
-            poolExecutor.execute(new Runnable() {
-                @Override
-                public void run() {
-                    System.out.println(Thread.currentThread().getName()+"  "+ getUnqId());
-                }
-            });
-        }
-        poolExecutor.shutdown();
-        poolExecutor.awaitTermination(1, TimeUnit.MINUTES);
-        long time = System.nanoTime() - start;
-        System.out.printf("Tasks took %.3f ms to run%n", time/1e6);
+        System.out.println(getUnqId());
+//        ExecutorService poolExecutor = Executors.newFixedThreadPool(1000);
+//        long start = System.nanoTime();
+//        System.out.println(new Date());
+//        for(int i = 0; i < 10000; i++){
+//            poolExecutor.execute(new Runnable() {
+//                @Override
+//                public void run() {
+//                    System.out.println(Thread.currentThread().getName()+"  "+ getUnqId());
+//                }
+//            });
+//        }
+//        poolExecutor.shutdown();
+//        poolExecutor.awaitTermination(1, TimeUnit.MINUTES);
+//        long time = System.nanoTime() - start;
+//        System.out.printf("Tasks took %.3f ms to run%n", time/1e6);
 
     }
 
