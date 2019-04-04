@@ -54,7 +54,7 @@ public class CouponVO {
     private int cstatus;
 
     //活动关联商品集合
-    private List<GoodsVO> assDrugVOS;
+//    private List<GoodsVO> assDrugVOS;
 
     //活动场次
     private List<TimeVO> timeVOS;
@@ -76,13 +76,13 @@ public class CouponVO {
         this.rulesVOS = rulesVOS;
     }
 
-    public List<GoodsVO> getAssDrugVOS() {
-        return assDrugVOS;
-    }
-
-    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
-        this.assDrugVOS = assDrugVOS;
-    }
+//    public List<GoodsVO> getAssDrugVOS() {
+//        return assDrugVOS;
+//    }
+//
+//    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
+//        this.assDrugVOS = assDrugVOS;
+//    }
 
     public List<TimeVO> getTimeVOS() {
         return timeVOS;
