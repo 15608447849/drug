@@ -37,7 +37,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 if (session.compId > 0) return new Result().fail("修改失败,存在相同门店名");
                 int compid = (int) lines.get(0)[0];
                 //用户关联企业码
-                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} SET cid = ? WHERE uid = ?";
+                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} SET cid = ? WHERE cstatus&1 AND uid = ?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql,compid,session.userId);
                 if (i <= 0){
                     return new Result().fail("无法关联门店信息");
@@ -98,12 +98,12 @@ public class UpdateStoreOp implements IOperation<AppContext> {
             }
         }else{
             //新增企业信息
-            long compId = getCompanyCode();
+            long compid = getCompanyCode();
             String insertSql = "INSERT INTO {{?"+ DSMConst.D_COMP +"}} " +
                     "(cid,cname,cnamehash,ctype,caddr,caddrcode,lat,lng,cstatus,createdate, createtime,submitdate,submittime) " +
                     "VALUES(?,?,crc32(?),?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,CURRENT_DATE,CURRENT_TIME)";
             int i = BaseDAO.getBaseDAO().updateNative(insertSql,
-                    compId,
+                    compid,
                     storeName,
                     storeName,
                     0,
@@ -114,6 +114,14 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                     128 //新增企业-审核中
             );
             if (i>0){
+                //用户关联门店
+                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER +"}} SET cid = ? WHERE cstatus&1 AND uid = ?";
+                i = BaseDAO.getBaseDAO().updateNative(updateSql,compid,session.userId);
+                if (i <= 0){
+                    return new Result().fail("无法关联门店信息");
+                }
+                session.compId = (int)compid;
+                context.relationTokenUserSession();//重新保存用户信息
                 return new Result().success("新增门店信息,关联成功");
             }
         }

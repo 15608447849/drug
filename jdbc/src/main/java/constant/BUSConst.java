@@ -10,8 +10,6 @@ import org.hyrdpf.ds.AppConfig;
  */
 public class BUSConst {
 
-
-
 	/**代码中用到的数字常量，避免魔术数字的出现*/
 	public static final int _ZERO = 0;
 	public static final int _ONE = 1;

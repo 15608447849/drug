@@ -1,6 +1,8 @@
 package com.onek.goods.util;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonObject;
 import com.onek.goods.entities.BgProdVO;
 import elasticsearch.ElasticSearchClientFactory;
 import elasticsearch.ElasticSearchProvider;
@@ -43,7 +45,7 @@ public class ProdESUtil {
         data.put("spu", spu);
         data.put("manuno", manuno);
         data.put("prodstatus", prodVO.getProdstatus());
-        data.put("detail", JSON.toJSONString(prodVO));
+        data.put("detail", JSONObject.toJSON(prodVO));
         IndexResponse response = ElasticSearchProvider.addDocument(data, "prod", "prod_type", sku+"");
         if(response == null || RestStatus.CREATED != response.status()) {
             return -1;

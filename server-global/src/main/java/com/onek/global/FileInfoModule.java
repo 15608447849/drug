@@ -31,6 +31,7 @@ public class FileInfoModule {
      * 获取文件服务器
      * 上传列表/下载列表
      */
+    @UserPermission (ignore = true)
     public Result fileServerInfo(AppContext appContext){
         String json = appContext.param.json;
 
@@ -52,7 +53,6 @@ public class FileInfoModule {
                 map.put("goodsFilePath",goodsFilePath(queryParam.spu,queryParam.sku));
             }
         }
-        //获取用户信息
         return new Result().success(map);
     }
 

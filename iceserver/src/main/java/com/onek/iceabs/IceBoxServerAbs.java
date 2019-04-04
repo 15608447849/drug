@@ -5,6 +5,8 @@ import Ice.*;
 import IceBox.Server;
 import IceBox.Service;
 import com.onek.server.infimp.IceProperties;
+import objectref.ObjectRefUtil;
+import util.StringUtils;
 
 import java.lang.Exception;
 import java.util.Arrays;
@@ -20,8 +22,8 @@ public abstract class IceBoxServerAbs implements Service {
 
     @Override
     public void start(String name, Communicator communicator, String[] args) {
+        initApplication(name);
         initIceLogger(name,(CommunicatorI) communicator);
-
         _serverName = name;
         logger = communicator.getLogger();
         _adapter = communicator.createObjectAdapter(_serverName);
@@ -29,7 +31,18 @@ public abstract class IceBoxServerAbs implements Service {
         Ice.Object object = specificServices();
         relationID(object,communicator);
         _adapter.activate();
-        logger.print("成功启动服务:" + _serverName + " 参数集:"+ Arrays.toString(args) );
+        logger.print("\n成功启动服务:" + _serverName+"\n" );
+    }
+
+    //初始化 系统应用
+    private void initApplication(String serverName) {
+        if (StringUtils.isEmpty(IceProperties.INSTANCE.appInitializationImp)) return;
+        try {
+            java.lang.Object initObj = ObjectRefUtil.createObject(IceProperties.INSTANCE.appInitializationImp,null,null);
+            if (initObj!=null) ObjectRefUtil.callMethod(initObj,"startUp",new Class[]{String.class},serverName);
+        } catch (Exception ignored) {
+
+        }
     }
 
     private void initIceLogger(String name,CommunicatorI ic) {
@@ -49,7 +62,7 @@ public abstract class IceBoxServerAbs implements Service {
         if (name == null) return;
         identity = communicator.stringToIdentity(name);
         _adapter.add(IceServiceDispatchInterceptor.getInstance().addIceObject(identity,object),identity);
-        logger.print(_serverName +" 加入负载均衡组 " + name);
+        logger.print("服务: "+_serverName +" ,加入负载均衡组 " + name);
     }
 
     protected abstract Object specificServices();
