@@ -44,8 +44,9 @@ public interface DSMConst extends UDAConst {
             {"td_prom_time"}, //25 活动场次表
             {"td_prom_group"}, //26 组团情况表
             {"td_prom_couent"}, //27 优惠券领取表
-            {"td_member_level"} //28 会员等级表
-            ,{"td_tran_colle"} //29 我的收藏表
+            {"td_member_level"}, //28 会员等级表
+            {"td_tran_colle"}, //29 我的收藏表
+            {"tb_mall_floor"} //30 楼层表
 
     };
 
@@ -82,7 +83,7 @@ public interface DSMConst extends UDAConst {
     public final static int TD_PROM_COUENT = 27;
     public final static int TD_MEMBER_LEVEL = 28;
     public final static int TD_TRAN_COLLE = 29;
-
+    public final static int TB_MALL_FLOOR = 30;
 
 
 
