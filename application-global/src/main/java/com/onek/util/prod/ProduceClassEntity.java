@@ -5,14 +5,14 @@ import util.ITreeNode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ProduceEntity implements Cloneable, ITreeNode<ProduceEntity> {
+public class ProduceClassEntity implements Cloneable, ITreeNode<ProduceClassEntity> {
     private String classId;
     private String className;
     private int cstatus;
 
-    private List<ProduceEntity> children;
+    private List<ProduceClassEntity> children;
 
-    public ProduceEntity() {
+    public ProduceClassEntity() {
         children = new ArrayList<>();
     }
 
@@ -28,12 +28,12 @@ public class ProduceEntity implements Cloneable, ITreeNode<ProduceEntity> {
         return cstatus;
     }
 
-    public List<ProduceEntity> getChildren() {
+    public List<ProduceClassEntity> getChildren() {
         return children;
     }
 
     @Override
-    public void addChild(ProduceEntity child) {
+    public void addChild(ProduceClassEntity child) {
         children.add(child);
     }
 
