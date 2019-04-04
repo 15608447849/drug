@@ -1,11 +1,15 @@
 package com.onek.discount;
 
+import Ice.Current;
+import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.discount.entity.PromGiftVO;
 import com.onek.discount.entity.RulesVO;
 import com.onek.entitys.Result;
+import com.onek.server.inf.IRequest;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.ds.AppConfig;
 
 import java.util.HashMap;
 import java.util.List;
@@ -20,9 +24,10 @@ import java.util.Map;
  */
 public class CommonModule {
 
+
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
     /**
-     * @description 查询所有活动优惠券规则
+     * @description 查询赠品信息
      * @params [appContext]
      * @return com.onek.entitys.Result
      * @exception
@@ -30,7 +35,7 @@ public class CommonModule {
      * @time  2019/4/1 11:55
      * @version 1.1.1
      **/
-
+    @UserPermission(ignore = true)
     public Result queryPromGift(AppContext appContext) {
         Result result = new Result();
         String selectSQL = "select unqid giftno,giftname from {{?" + DSMConst.TD_PROM_GIFT + "}} where cstatus&1=0 ";
@@ -75,6 +80,17 @@ public class CommonModule {
         map.put(2, "会员等级");
         map.put(3, "特定区域会员会员");
         return result.success(map);
+    }
+
+    public static void main(String[] args) {
+        CommonModule commonModule = new CommonModule();
+        IRequest request = new IRequest();
+        Current current = new Current();
+        request.param.json = "";
+        AppContext appContext = new AppContext(current,request);
+
+        Result result = commonModule.queryPromGift(appContext);
+        System.out.println(result.toString());
     }
 
 

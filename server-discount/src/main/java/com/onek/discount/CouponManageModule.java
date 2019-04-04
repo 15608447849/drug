@@ -2,8 +2,8 @@ package com.onek.discount;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
+import com.onek.annotation.UserPermission;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.discount.entity.*;
@@ -32,12 +32,6 @@ public class CouponManageModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
-    static {
-        /** 初始化LOG4J2日志环境 */
-        AppConfig.initLogger();
-        /** 初始化应用程序环境，如数据源等 */
-        AppConfig.initialize();
-    }
 
     //新增优惠券
     private final String INSERT_COUPON_SQL = "insert into {{?" + DSMConst.TD_PROM_COUPON + "}} "
@@ -105,7 +99,7 @@ public class CouponManageModule {
 
     private final String QUERY_PROM_LAD_SQL = "select unqid,ladamt,ladnum,offer from {{?" + DSMConst.TD_PROM_LADOFF+"}} where actcode = ? and cstatus&1=0 ";
 
-    private final String QUERY_PROM_GOODS_SQL = "select `spec`,gcode,limitnum,,manuname,standarno,prodname,classname,convert(vatp/100,decimal(10,2)) price,actstock " +
+    private final String QUERY_PROM_GOODS_SQL = "select pdrug.unqid,pdrug.actcode,`spec`,gcode,limitnum,manuname,standarno,prodname,classname,convert(vatp/100,decimal(10,2)) price,actstock " +
             " from {{?" + DSMConst.TD_PROM_ASSDRUG+"}} pdrug" +
             " left join {{?" + DSMConst.TD_PROD_SKU+"}} psku on pdrug.gcode = psku.sku " +
             " left join {{?" + DSMConst.TD_PROD_SPU+"}} pspu on psku.spu = pspu.spu "+
@@ -141,6 +135,7 @@ public class CouponManageModule {
      * @time  2019/4/2 14:34
      * @version 1.1.1
      **/
+    @UserPermission(ignore = true)
     public Result insertCoupon(AppContext appContext) {
 
         Result result = new Result();
@@ -182,6 +177,7 @@ public class CouponManageModule {
      * @time  2019/4/2 14:34
      * @version 1.1.1
      **/
+    @UserPermission(ignore = true)
     public Result queryCoupon(AppContext appContext) {
 
         Result result = new Result();
@@ -347,6 +343,7 @@ public class CouponManageModule {
      * @param appContext
      * @return
      */
+    @UserPermission(ignore = true)
     public Result queryCouponList(AppContext appContext){
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
@@ -395,7 +392,8 @@ public class CouponManageModule {
      * @param appContext
      * @return
      */
-    private Result updateCoupon(AppContext appContext) {
+    @UserPermission(ignore = true)
+    public Result updateCoupon(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
         CouponVO couponVO = GsonUtils.jsonToJavaBean(json, CouponVO.class);
@@ -439,6 +437,7 @@ public class CouponManageModule {
      * @param appContext 0 启用  32 停用  1 删除
      * @return
      */
+    @UserPermission(ignore = true)
     public Result updateCouponStatus(AppContext appContext){
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
@@ -469,6 +468,7 @@ public class CouponManageModule {
      * @param appContext
      * @return
      */
+    @UserPermission(ignore = true)
     public Result queryGoodList(AppContext appContext){
 
         String json = appContext.param.json;
@@ -492,7 +492,7 @@ public class CouponManageModule {
         GoodsVO[] goodsVOS = new GoodsVO[queryResult.size()];
 
         baseDao.convToEntity(queryResult, goodsVOS, GoodsVO.class,
-                new String[]{"spec","gcode","limitnum",
+                new String[]{"unqid","actcode","spec","gcode","limitnum",
                         "manuname","standarno","prodname","classname","price","actstock"});
 
         return result.setQuery(goodsVOS, pageHolder);
@@ -503,12 +503,19 @@ public class CouponManageModule {
      * 新增修改商品
      * @param appContext
      */
-    private Result optGoods(AppContext appContext) {
+    @UserPermission(ignore = true)
+    public Result optGoods(AppContext appContext) {
 
         String json = appContext.param.json;
         Result result = new Result();
-
-        List<GoodsVO> assDrugVOS = GsonUtils.string2List(json);
+        JsonParser jsonParser = new JsonParser();
+        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+        List<GoodsVO> assDrugVOS = new ArrayList<>();
+        Gson gson = new Gson();
+        for (JsonElement goodvo : jsonArray){
+            GoodsVO goodsVO = gson.fromJson(goodvo, GoodsVO.class);
+            assDrugVOS.add(goodsVO);
+        }
 
         if (assDrugVOS == null || assDrugVOS.isEmpty()){
             return result.fail("操作失败");
