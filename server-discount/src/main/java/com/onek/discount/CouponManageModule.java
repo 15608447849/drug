@@ -11,6 +11,7 @@ import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
+import org.hyrdpf.ds.AppConfig;
 import util.GsonUtils;
 import util.ModelUtil;
 import util.StringUtils;
@@ -30,6 +31,13 @@ import java.util.List;
 public class CouponManageModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
+
+    static {
+        /** 初始化LOG4J2日志环境 */
+        AppConfig.initLogger();
+        /** 初始化应用程序环境，如数据源等 */
+        AppConfig.initialize();
+    }
 
     //新增优惠券
     private final String INSERT_COUPON_SQL = "insert into {{?" + DSMConst.TD_PROM_COUPON + "}} "
@@ -97,7 +105,7 @@ public class CouponManageModule {
 
     private final String QUERY_PROM_LAD_SQL = "select unqid,ladamt,ladnum,offer from {{?" + DSMConst.TD_PROM_LADOFF+"}} where actcode = ? and cstatus&1=0 ";
 
-    private final String QUERY_PROM_GOODS_SQL = "select `spec`,gcode,limitnum,manuname,standarno,prodname,classname,convert(vatp/100,decimal(10,2)) price " +
+    private final String QUERY_PROM_GOODS_SQL = "select `spec`,gcode,limitnum,,manuname,standarno,prodname,classname,convert(vatp/100,decimal(10,2)) price,actstock " +
             " from {{?" + DSMConst.TD_PROM_ASSDRUG+"}} pdrug" +
             " left join {{?" + DSMConst.TD_PROD_SKU+"}} psku on pdrug.gcode = psku.sku " +
             " left join {{?" + DSMConst.TD_PROD_SPU+"}} pspu on psku.spu = pspu.spu "+
@@ -156,9 +164,9 @@ public class CouponManageModule {
                 insertLadOff(couponVO.getLadderVOS(), unqid);
             }
             //新增活动商品
-            if (couponVO.getAssDrugVOS() != null && !couponVO.getAssDrugVOS().isEmpty()) {
-                insertAssDrug(couponVO.getAssDrugVOS());
-            }
+//            if (couponVO.getAssDrugVOS() != null && !couponVO.getAssDrugVOS().isEmpty()) {
+//                insertAssDrug(couponVO.getAssDrugVOS());
+//            }
         } else {
             return result.fail("新增失败");
         }
@@ -197,7 +205,7 @@ public class CouponManageModule {
 
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
         couponVOS[0].setRulesVOS(getCoupRule());
-        couponVOS[0].setAssDrugVOS(getCoupGoods(actcode));
+    //    couponVOS[0].setAssDrugVOS(getCoupGoods(actcode));
         couponVOS[0].setLadderVOS(getCoupLadder(actcode));
 
         return  result.success(couponVOS[0]);
@@ -290,7 +298,7 @@ public class CouponManageModule {
      * 新增优惠券商品
      * @param assDrugVOS
      */
-    private void insertAssDrug(List<GoodsVO> assDrugVOS) {
+    private boolean insertAssDrug(List<GoodsVO> assDrugVOS) {
 
         List<Object[]> assDrugParams = new ArrayList<>();
         for (GoodsVO assDrugVO : assDrugVOS) {
@@ -298,7 +306,7 @@ public class CouponManageModule {
                     assDrugVO.getMenucode(),assDrugVO.getActstock(),assDrugVO.getLimitnum()});
         }
         int[] result = baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, assDrugParams, assDrugVOS.size());
-        boolean b = !ModelUtil.updateTransEmpty(result);
+        return !ModelUtil.updateTransEmpty(result);
     }
 
 
@@ -414,11 +422,11 @@ public class CouponManageModule {
                 }
             }
             //新增活动商品
-            if (couponVO.getAssDrugVOS() != null && !couponVO.getAssDrugVOS().isEmpty()) {
-                if (baseDao.updateNative(DEL_ASS_DRUG_SQL,actCode) > 0) {
-                    insertAssDrug(couponVO.getAssDrugVOS());
-                }
-            }
+//            if (couponVO.getAssDrugVOS() != null && !couponVO.getAssDrugVOS().isEmpty()) {
+//                if (baseDao.updateNative(DEL_ASS_DRUG_SQL,actCode) > 0) {
+//                    insertAssDrug(couponVO.getAssDrugVOS());
+//                }
+//            }
         } else {
             result.fail("修改失败");
         }
@@ -455,5 +463,63 @@ public class CouponManageModule {
 
     }
 
+
+    /**
+     * 查询商品列表
+     * @param appContext
+     * @return
+     */
+    public Result queryGoodList(AppContext appContext){
+
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int pageSize = jsonObject.get("pageSize").getAsInt();
+        int pageIndex = jsonObject.get("pageNo").getAsInt();
+        Page page = new Page();
+        page.pageSize = pageSize;
+        page.pageIndex = pageIndex;
+        PageHolder pageHolder = new PageHolder(page);
+        Result result = new Result();
+
+        long actcode = jsonObject.get("actcode").getAsLong();
+
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, QUERY_PROM_GOODS_SQL,actcode);
+
+        if(queryResult == null || queryResult.isEmpty()){
+            return result.success(null);
+        }
+        GoodsVO[] goodsVOS = new GoodsVO[queryResult.size()];
+
+        baseDao.convToEntity(queryResult, goodsVOS, GoodsVO.class,
+                new String[]{"spec","gcode","limitnum",
+                        "manuname","standarno","prodname","classname","price","actstock"});
+
+        return result.setQuery(goodsVOS, pageHolder);
+    }
+
+
+    /**
+     * 新增修改商品
+     * @param appContext
+     */
+    private Result optGoods(AppContext appContext) {
+
+        String json = appContext.param.json;
+        Result result = new Result();
+
+        List<GoodsVO> assDrugVOS = GsonUtils.string2List(json);
+
+        if (assDrugVOS == null || assDrugVOS.isEmpty()){
+            return result.fail("操作失败");
+        }
+
+        baseDao.updateNative(DEL_ASS_DRUG_SQL,assDrugVOS.get(0).getActcode());
+
+        if(insertAssDrug(assDrugVOS)){
+            return result.success("操作成功");
+        }
+        return result.fail("操作失败");
+    }
 
 }
