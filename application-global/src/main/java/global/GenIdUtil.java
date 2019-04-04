@@ -122,7 +122,7 @@ public class GenIdUtil {
         int subSrvid = 0;
         if(!StringUtils.isEmpty(srvidtmp) && srvidtmp.contains("-")){
             srvidtmp = srvidtmp.substring(srvidtmp.lastIndexOf("-")+1);
-            if(!StringUtils.isEmpty(srvidtmp) && StringUtils.isInteger(srvidtmp)){
+            if(StringUtils.isInteger(srvidtmp)){
                 srvid = Integer.parseInt(srvidtmp);
             }
         }
