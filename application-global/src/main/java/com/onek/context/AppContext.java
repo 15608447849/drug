@@ -13,10 +13,6 @@ import util.StringUtils;
  */
 public class AppContext extends IceContext {
 
-    /**
-     * session有效时间 以秒为单位
-     */
-    public static final int SESSION_EFFECTIVE_SESSIONS = 60;
 
     private UserSession userSession;
 

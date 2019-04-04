@@ -155,7 +155,7 @@ public class ServerImp extends _InterfacesDisp {
 
     private String printResult(Object result) {
         String resultString = GsonUtils.javaBeanToJson(result);
-        if (resultString.length() < 100){
+        if (resultString.length() < 200){
             logger.print("-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n\t" + resultString +"\n");
         }
         return resultString;

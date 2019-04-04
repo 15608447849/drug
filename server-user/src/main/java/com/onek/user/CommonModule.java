@@ -1,6 +1,7 @@
 package com.onek.user;
 
 import com.alibaba.fastjson.JSONObject;
+import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.area.AreaStore;
@@ -9,15 +10,18 @@ import com.onek.util.prod.ProduceStore;
 
 public class CommonModule {
 
+    @UserPermission(ignore = true)
     public Result getAreas(AppContext appContext) {
         return new Result().success(AreaStore.getTreeJson());
     }
 
+    @UserPermission(ignore = true)
     public Result getDicts(AppContext appContext){
         JSONObject j = DictStore.getAllDict();
         return new Result().success(j.toJSONString());
     }
 
+    @UserPermission(ignore = true)
     public Result getProduceClasses(AppContext appContext) {
         return new Result().success(ProduceStore.getTreeJson());
     }

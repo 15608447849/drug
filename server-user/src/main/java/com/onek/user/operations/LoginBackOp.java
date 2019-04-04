@@ -46,7 +46,7 @@ public class LoginBackOp implements IOperation<AppContext> {
     //检查用户是否正确
     private boolean checkSqlAndUserExist(AppContext context) {
 
-        String selectSql = "SELECT uid,roleid,upw,account,uphone,urealname " +
+        String selectSql = "SELECT uid,roleid,upw,uaccount,uphone,urealname " +
                 "FROM {{?" + DSMConst.D_SYSTEM_USER + "}} " +
                 "WHERE cstatus&1 = 0 AND roleid&1 > 0 AND uaccount = ? OR uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,account,account);

@@ -16,6 +16,7 @@ public class LoginRegistrationModule {
     /**
      * 校验手机号码是否存在
      */
+    @UserPermission (ignore = true)
     public Result checkPhoneExist(AppContext appContext){
         String json = appContext.param.json;
         StoreRegisterOp op = GsonUtils.jsonToJavaBean(json, StoreRegisterOp.class);
@@ -27,6 +28,7 @@ public class LoginRegistrationModule {
     /**
      * 门店用户注册
      */
+    @UserPermission (ignore = true)
     public Result register(AppContext appContext){
         String json = appContext.param.json;
         StoreRegisterOp op = GsonUtils.jsonToJavaBean(json, StoreRegisterOp.class);
@@ -39,6 +41,7 @@ public class LoginRegistrationModule {
      * 1 图形
      * 2 短信
      */
+    @UserPermission (ignore = true)
     public Result obtainVerificationCode(AppContext appContext){
         String json = appContext.param.json;
         VerificationOp op = GsonUtils.jsonToJavaBean(json, VerificationOp.class);
@@ -49,6 +52,7 @@ public class LoginRegistrationModule {
     /**
      * 门店登陆平台系统
      */
+    @UserPermission (ignore = true)
     public Result loginStore(AppContext appContext){
         String json = appContext.param.json;
         LoginStoreOp op = GsonUtils.jsonToJavaBean(json, LoginStoreOp.class);
@@ -59,6 +63,7 @@ public class LoginRegistrationModule {
     /**
      * 管理员登陆后台系统
      */
+    @UserPermission (ignore = true)
     public Result loginBack(AppContext appContext){
         String json = appContext.param.json;
         LoginBackOp op = GsonUtils.jsonToJavaBean(json, LoginBackOp.class);
@@ -71,7 +76,6 @@ public class LoginRegistrationModule {
      *  登陆手机号
      *  登陆密码
      */
-    @UserPermission
     public Result changeUserInfo(AppContext appContext){
         String json = appContext.param.json;
         UpdateUserOp op = GsonUtils.jsonToJavaBean(json, UpdateUserOp.class);
@@ -82,7 +86,6 @@ public class LoginRegistrationModule {
     /**
      * 登出
      */
-    @UserPermission
     public Result logout(AppContext appContext){
         String key = appContext.param.token + "@" + appContext.remoteIp;
         String value = RedisUtil.getStringProvide().get(key);
@@ -94,7 +97,7 @@ public class LoginRegistrationModule {
     /**
      * 获取门店用户基础信息
      */
-    @UserPermission
+    @UserPermission(role = {2})
     public Result basicInfo(AppContext appContext){
         return new StoreBasicInfoOp().execute(appContext);
     }

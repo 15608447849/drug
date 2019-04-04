@@ -115,7 +115,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
             );
             if (i>0){
                 //用户关联门店
-                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER +"}} SET cid = ? WHERE cstatus&1 AND uid = ?";
+                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER +"}} SET cid = ? WHERE cstatus&1=0 AND uid = ?";
                 i = BaseDAO.getBaseDAO().updateNative(updateSql,compid,session.userId);
                 if (i <= 0){
                     return new Result().fail("无法关联门店信息");

@@ -4,9 +4,9 @@ import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
-import com.onek.permission.PermissionStatus;
 import com.onek.server.infimp.IceContext;
 import com.onek.server.infimp.IServerInterceptor;
+import com.sun.org.apache.regexp.internal.RE;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -38,14 +38,33 @@ public class UserInterceptor implements IServerInterceptor {
                 up = m.getAnnotation(UserPermission.class);
                 permissionStatusMap.put(key, up); //存
             }
-            if(up == null || (!up.ignore() && up.mode() == PermissionStatus.ALREADY_LOGGED)){
+            //判断接口是否对用户权限进行拦截
+            if(up == null || !up.ignore()){
                 UserSession userSession = appContext.getUserSession();
                 if(userSession == null){
                     return new Result().intercept("用户未登录");
                 }
+                if (up != null){
+                    long[] roleArr = up.role();
+                    //角色判断
+                    if (roleArr.length > 0){
+                        //允许访问的角色码
+                        boolean isAccess = false;
+                        for (long role : roleArr) {
+                            if ((userSession.roleCode & role) > 0) {
+                                //有这个角色
+                                isAccess = true;
+                                break;
+                            }
+                        }
+                        if (!isAccess) return new Result().intercept("用户角色拒绝");
+                    }
+                }
             }
         }catch(Exception e){
-            e.printStackTrace();
+            //e.printStackTrace();
+            context.logger.error("UserInterceptor.interceptor(),ERROR :\n"+e.toString());
+            return new Result().intercept(e);
         }
         return null;
     }

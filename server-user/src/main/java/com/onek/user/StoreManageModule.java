@@ -15,7 +15,7 @@ public class StoreManageModule {
     /**
      * 新增门店企业信息
      */
-    @UserPermission
+    @UserPermission(role = {2})
     public Result updateStoreInfo(AppContext appContext){
         String json = appContext.param.json;
         UpdateStoreOp op = GsonUtils.jsonToJavaBean(json, UpdateStoreOp.class);
