@@ -10,7 +10,7 @@ public class ObjectPool {
 
     private ReentrantLock lock = new ReentrantLock();
 
-    private final int maxNumber = 50; // 对象池最大的大小 ,当超过这个数量 删除对象
+    private final int maxNumber = 5000; // 对象池最大的大小 ,当超过这个数量 删除对象
 
     private Vector objects =  new Vector(); //存放对象池中对象的向量
 
@@ -27,7 +27,7 @@ public class ObjectPool {
                 return;
             }
             objects.addElement(obj);
-            System.out.println("putObject 当前大小 "+objects.size());
+
         }catch (Exception e){
             e.printStackTrace();
         }finally {
@@ -50,7 +50,7 @@ public class ObjectPool {
                 obj = enumerate.nextElement();
                 objects.removeElement(obj);
             }
-            System.out.println("getObject 当前大小 "+objects.size());
+
             return obj;
         }catch (Exception e){
             e.printStackTrace();
