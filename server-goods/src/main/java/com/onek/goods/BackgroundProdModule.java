@@ -7,6 +7,7 @@ import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.util.ProdESUtil;
+import com.onek.server.inf.IRequest;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceStore;
 import constant.DSMConst;
@@ -251,7 +252,7 @@ public class BackgroundProdModule {
         return new Result().setQuery(result, pageHolder);
     }
 
-    public Result addProd(AppContext appContext) {
+    public Result addProd(IRequest appContext) {
         BgProdVO bgProdVO;
         try {
             bgProdVO =
