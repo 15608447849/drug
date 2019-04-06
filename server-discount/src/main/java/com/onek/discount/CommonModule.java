@@ -1,6 +1,8 @@
 package com.onek.discount;
 
 import Ice.Current;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.discount.entity.PromGiftVO;
@@ -54,10 +56,20 @@ public class CommonModule {
      * @time  2019/4/1 11:55
      * @version 1.1.1
      **/
+    @UserPermission(ignore = true)
     public Result queryRules(AppContext appContext) {
         Result result = new Result();
-        String selectSQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0 ";
-        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int type = jsonObject.get("type").getAsInt();
+        int cstatus = 64;
+        if(type == 2){
+            cstatus = 128;
+        }
+
+        String selectSQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus & ? > 0 ";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL,cstatus);
         RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
         baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"rulecode", "rulename"});
         return result.success(rulesVOS);
