@@ -42,12 +42,12 @@ public class SynDbLog {
 
     public static boolean isBaseSqlError(Throwable e){
         if(e instanceof SQLException){
-            LogUtil.getDefaultLogger().debug("SQL异常！");
             SQLException sqlException = (SQLException) e;
             if(sqlException.getSQLState() != null
                     && ((sqlException.getSQLState()).startsWith("22")
                     || (sqlException.getSQLState()).startsWith("23")
                     ||(sqlException.getSQLState()).startsWith("42"))){
+                LogUtil.getDefaultLogger().debug("SQL异常！");
                 return true;
             }
         }
@@ -125,10 +125,9 @@ public class SynDbLog {
 
 
     public static boolean isSynBackDB(int tbidx){
-        System.out.println(tbidx);
         if((DSMConst.SEG_TABLE_RULE[tbidx]  & 2) > 0){
-            return true;
+            return false;
         }
-        return false;
+        return true;
     }
 }
