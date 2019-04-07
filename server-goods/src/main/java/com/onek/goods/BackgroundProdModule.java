@@ -7,6 +7,7 @@ import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.util.ProdESUtil;
+import com.onek.server.inf.IRequest;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceStore;
 import constant.DSMConst;
@@ -67,15 +68,15 @@ public class BackgroundProdModule {
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
             + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
-            + " spu.insurance, spu.gspGMS, spu.gspSC, spu.detail, spu.cstatus, "
+            + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus, "
             + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
-            + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
-            + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b   ON b.cstatus&1 = 0 AND b.brandno = spu.brandno ";
+            + " LEFT JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
+            + " LEFT JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno ";
 
     private static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
             + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
-            + " spu.insurance, spu.gspGMS, spu.gspSC, spu.detail, spu.cstatus,"
+            + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus,"
             + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.vaildsdate, sku.vaildedate,"
             + " sku.prodsdate, sku.prodedate, sku.store, sku.activitystore, "
             + " sku.limits, sku.sales, sku.wholenum, sku.medpacknum, sku.unit, "
@@ -240,7 +241,7 @@ public class BackgroundProdModule {
         }
 
         List<Object[]> queryResult = BASE_DAO.queryNative(
-                pageHolder, page, sql.toString(), paramList.toArray());
+                pageHolder, page, " sku.oid DESC ", sql.toString(), paramList.toArray());
 
         BgProdVO[] result = new BgProdVO[queryResult.size()];
 

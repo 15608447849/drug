@@ -1,6 +1,5 @@
 package com.onek.goods.entities;
 
-import redis.annation.CacheField;
 import redis.annation.DictCacheField;
 import redis.annation.GetDictWay;
 

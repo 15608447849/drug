@@ -24,11 +24,13 @@ import org.elasticsearch.search.SearchHit;
 import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
 import util.BeanMapUtils;
+import util.StringUtils;
 
 import java.util.*;
 
 import static com.onek.goods.util.ProdESUtil.searchProd;
 
+@SuppressWarnings("unchecked")
 public class ProdModule {
 
     private static IRedisCache mallFloorProxy = (IRedisCache) CacheProxyInstance.createInstance(new MallFloorImpl());
@@ -37,11 +39,9 @@ public class ProdModule {
     public static final Long HOT = 2L;
     public static final Long SECKILL = 3L;
 
-    @SuppressWarnings("unchecked")
     @UserPermission(ignore = true)
     public Result getMallFloorProd(AppContext appContext) {
         List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
-        Result r = new Result();
         JSONObject jsonObject = new JSONObject();
         if (mallFloorVOList != null && mallFloorVOList.size() > 0) {
             List<ProdVO> prodVOList = new ArrayList<>();
@@ -79,23 +79,88 @@ public class ProdModule {
         return new Result().success(jsonObject);
     }
 
-    private List<ProdVO> loadProd(List<ProdVO> prodList, int type) {
-        List<ProdVO> newProdList = new ArrayList<>();
-        for (ProdVO prodVO : prodList) {
-            if ((prodVO.getCstatus() & 256) > 0) {
-                newProdList.add(prodVO);
+    @UserPermission(ignore = true)
+    public Result getConditionByFullTextSearch(AppContext appContext) {
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        String keyword = json.get("keyword").getAsString();
+        int spu = json.has("spu") ? json.get("spu").getAsInt() : 0;
+        if(StringUtils.isEmpty(keyword) && spu <=0){
+            return new Result().success(null);
+        }
+        List<String> specList = ProdESUtil.getConditions(keyword, spu, "spec");
+        List<String> manunameList = ProdESUtil.getConditions(keyword, spu, "manuname");
+        List<String> brandnameList = ProdESUtil.getConditions(keyword, spu, "brandname");
+        Map<String, List<String>> map = new HashMap<>();
+        map.put("specList", specList);
+        map.put("manunameList", manunameList);
+        map.put("brandnameList", brandnameList);
+        return new Result().success(map);
+    }
+
+    @UserPermission(ignore = true)
+    public Result fullTextsearchProdMall(AppContext appContext) {
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        String keyword = json.get("keyword").getAsString();
+        long spu = json.has("spu") ? json.get("spu").getAsLong() : 0;
+        JsonArray specArray = json.has("specArray") ? json.get("specArray").getAsJsonArray() : null;
+        JsonArray manuArray = json.has("manuArray") ? json.get("manuArray").getAsJsonArray() : null;
+        JsonArray brandArray = json.has("brandArray") ? json.get("brandArray").getAsJsonArray() : null;
+        int sort = json.has("sort") ? json.get("sort").getAsInt() : 0;
+        List<String> specList = new ArrayList<>();
+        if (specArray != null && specArray.size() > 0) {
+            Iterator<JsonElement> it = specArray.iterator();
+            while (it.hasNext()) {
+                JsonElement elem = it.next();
+                specList.add(elem.getAsJsonObject().get("val").getAsString());
             }
         }
-        if (newProdList.size() <= 0) {
-            int i = 10;
-            for (ProdVO prodVO : prodList) {
-                if (i++ > 10) {
-                    break;
+
+        List<String> manunameList = new ArrayList<>();
+        if (manuArray != null && manuArray.size() > 0) {
+            Iterator<JsonElement> it = manuArray.iterator();
+            while (it.hasNext()) {
+                JsonElement elem = it.next();
+                manunameList.add(elem.getAsJsonObject().get("val").getAsString());
+            }
+        }
+
+        List<String> brandnameList = new ArrayList<>();
+        if (brandArray != null && brandArray.size() > 0) {
+            Iterator<JsonElement> it = brandArray.iterator();
+            while (it.hasNext()) {
+                JsonElement elem = it.next();
+                brandnameList.add(elem.getAsJsonObject().get("val").getAsString());
+            }
+        }
+
+        Result r = new Result();
+        SearchResponse response = ProdESUtil.searchProdMall(keyword, spu, specList, manunameList,brandnameList, sort,appContext.param.pageIndex, appContext.param.pageNumber);
+        //List<Map<String, Object>> resultList = new ArrayList<>();
+        List<ProdVO> prodList = new ArrayList<>();
+        if (response != null) {
+            for (SearchHit searchHit : response.getHits()) {
+                Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+                ProdVO prodVO = new ProdVO();
+                HashMap detail = (HashMap) sourceMap.get("detail");
+                BeanMapUtils.mapToBean(detail, prodVO);
+
+                prodList.add(prodVO);
+                try{
+                    DictStore.translate(prodVO);
+                }catch(Exception e){
+                    e.printStackTrace();
                 }
-                newProdList.add(prodVO);
             }
+
         }
-        return newProdList;
+        // r.success(resultList);
+        Page page = new Page();
+        page.pageSize = appContext.param.pageNumber;
+        page.pageIndex = appContext.param.pageIndex;
+        page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
+        PageHolder pageHolder = new PageHolder(page);
+        pageHolder.value = page;
+        return r.setQuery(prodList, pageHolder);
     }
 
     @UserPermission(ignore = true)
@@ -144,6 +209,25 @@ public class ProdModule {
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
         return r.setQuery(resultList, pageHolder);
+    }
+
+    private List<ProdVO> loadProd(List<ProdVO> prodList, int type) {
+        List<ProdVO> newProdList = new ArrayList<>();
+        for (ProdVO prodVO : prodList) {
+            if ((prodVO.getCstatus() & 256) > 0) {
+                newProdList.add(prodVO);
+            }
+        }
+        if (newProdList.size() <= 0) {
+            int i = 10;
+            for (ProdVO prodVO : prodList) {
+                if (i++ > 10) {
+                    break;
+                }
+                newProdList.add(prodVO);
+            }
+        }
+        return newProdList;
     }
 
 }

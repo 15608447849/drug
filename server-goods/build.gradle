@@ -1,8 +1,10 @@
 dependencies {
     implementation project(':application-global')
-    implementation 'org.elasticsearch.client:transport:6.3.0'
-    implementation 'org.elasticsearch:elasticsearch:6.3.0'
-    implementation 'org.elasticsearch:elasticsearch-analysis-ik:6.1.1'
+    compile 'org.apache.lucene:lucene-core:7.3.1'
+    compile 'org.elasticsearch.client:transport:6.3.0'
+    compile 'org.elasticsearch:elasticsearch:6.3.0'
+    compile 'org.elasticsearch:elasticsearch-analysis-ik:6.1.1'
+
 }
 
 shadowJar {
