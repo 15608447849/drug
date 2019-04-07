@@ -486,10 +486,11 @@ public class CouponManageModule {
 
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, QUERY_PROM_GOODS_SQL,actcode);
 
-        if(queryResult == null || queryResult.isEmpty()){
-            return result.success(null);
-        }
         GoodsVO[] goodsVOS = new GoodsVO[queryResult.size()];
+        if(queryResult == null || queryResult.isEmpty()){
+            return result.setQuery(goodsVOS, pageHolder);
+        }
+     //   GoodsVO[] goodsVOS = new GoodsVO[queryResult.size()];
 
         baseDao.convToEntity(queryResult, goodsVOS, GoodsVO.class,
                 new String[]{"unqid","actcode","spec","gcode","limitnum",
