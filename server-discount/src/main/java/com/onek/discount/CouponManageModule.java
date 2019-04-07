@@ -357,7 +357,7 @@ public class CouponManageModule {
         Result result = new Result();
 
         String coupname = jsonObject.get("coupname").getAsString();
-        String rulename = jsonObject.get("rulename").getAsString();
+        int rulecode = jsonObject.get("rulecode").getAsInt();
 
         StringBuilder sqlBuilder = new StringBuilder(QUERY_COUPON_LIST_SQL);
         if(!StringUtils.isEmpty(coupname)){
@@ -366,10 +366,9 @@ public class CouponManageModule {
             sqlBuilder.append("%' ");
         }
 
-        if(!StringUtils.isEmpty(rulename)){
-            sqlBuilder.append(" and rulename like '%");
-            sqlBuilder.append(rulename);
-            sqlBuilder.append("%' ");
+        if(rulecode != 0){
+            sqlBuilder.append(" and rulecode = ");
+            sqlBuilder.append(rulecode);
         }
 
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
@@ -378,7 +377,7 @@ public class CouponManageModule {
             return result.setQuery(couponListVOS, pageHolder);
         }
         baseDao.convToEntity(queryResult, couponListVOS, CouponListVO.class,
-                new String[]{"coupno","coupname","glbno","qlfno","qlfval","coupdesc",
+                new String[]{"coupno","coupname","glbno","qlfno","qlfval","desc",
                         "periodtype","periodday",
                         "startdate","enddate","ruleno","rulename","cstatus"});
 
