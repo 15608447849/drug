@@ -68,10 +68,11 @@ public class BackgroundProdModule {
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
             + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
-            + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus, "
-            + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
+            + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus "
+            + " FROM {{?" + DSMConst.TD_PROD_SPU + "}} spu "
             + " LEFT JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
-            + " LEFT JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno ";
+            + " LEFT JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
+            + " WHERE spu.spu = ? ";
 
     private static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
