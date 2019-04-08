@@ -32,85 +32,101 @@ public class ProdESUtil {
 
     /**
      * 添加商品数据到ES中
-     * @param prodVO 商品SKU表
+     * @param paramVo 商品SKU表
      * @return
      */
-    public static int addProdDocument(BgProdVO prodVO){
+    public static int addProdDocument(BgProdVO paramVo){
 
-        long sku = prodVO.getSku();
-        String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "")
+        try {
+            BgProdVO prodVO = (BgProdVO) paramVo.clone();
+            prodVO.setDetail("");
+            long sku = prodVO.getSku();
+            String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "")
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "")
                     + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "")
                     + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "");
-        String spec = prodVO.getSpec();
-        long spu = prodVO.getSpu();
-        long manuno = prodVO.getManuNo();
-        String manuname = StringUtils.checkObjectNull(prodVO.getManuName(),"");
-        long brandno = prodVO.getBrandNo();
-        String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"");
+            String spec = prodVO.getSpec();
+            long spu = prodVO.getSpu();
+            long manuno = prodVO.getManuNo();
+            String manuname = StringUtils.checkObjectNull(prodVO.getManuName(),"");
+            long brandno = prodVO.getBrandNo();
+            String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"");
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("sku", sku);
-        data.put("content", keyword);
-        data.put("spec", spec);
-        data.put("spu", spu);
-        data.put("manuno", manuno);
-        data.put("manuname", manuname);
-        data.put("brandno", brandno);
-        data.put("brandname", brandname);
-        data.put("prodstatus", prodVO.getProdstatus());
-        data.put("skucstatus", prodVO.getSkuCstatus());
-        data.put("vatp", prodVO.getVatp());
-        data.put("sales", prodVO.getSales());
-        data.put("rulestatus", 0);
-        data.put("detail", JSONObject.toJSON(prodVO));
-        IndexResponse response = ElasticSearchProvider.addDocument(data, "prod", "prod_type", sku+"");
-        if(response == null || RestStatus.CREATED != response.status()) {
+            Map<String, Object> data = new HashMap<>();
+            data.put("sku", sku);
+            data.put("content", keyword);
+            data.put("spec", spec);
+            data.put("spu", spu);
+            data.put("manuno", manuno);
+            data.put("manuname", manuname);
+            data.put("brandno", brandno);
+            data.put("brandname", brandname);
+            data.put("prodstatus", prodVO.getProdstatus());
+            data.put("skucstatus", prodVO.getSkuCstatus());
+            data.put("vatp", prodVO.getVatp());
+            data.put("sales", prodVO.getSales());
+            data.put("rulestatus", 0);
+            data.put("detail", JSONObject.toJSON(prodVO));
+            IndexResponse response = ElasticSearchProvider.addDocument(data, "prod", "prod_type", sku+"");
+            if(response == null || RestStatus.CREATED != response.status()) {
+                return -1;
+            }
+            return 0;
+        }catch (Exception e){
+            e.printStackTrace();
             return -1;
         }
-        return 0;
     }
 
     /**
      * 修改商品数据到ES中
      *
-     * @param prodVO 商品SKU对象
+     * @param paramVo 商品SKU对象
      * @return
      */
-    public static int updateProdDocument(BgProdVO prodVO){
+    public static int updateProdDocument(BgProdVO paramVo){
 
-        long sku = prodVO.getSku();
-        String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "")
-                + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "")
-                + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "")
-                + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "");
-        String spec = prodVO.getSpec();
-        long spu = prodVO.getSpu();
-        long manuno = prodVO.getManuNo();
-        String manuname = StringUtils.checkObjectNull(prodVO.getManuName(),"");
-        long brandno = prodVO.getBrandNo();
-        String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"");
+        try{
+            BgProdVO prodVO = (BgProdVO)paramVo.clone();
+            prodVO.setDetail("");
+            long sku = prodVO.getSku();
+            String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "")
+                    + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "")
+                    + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "")
+                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "");
+            String spec = prodVO.getSpec();
+            long spu = prodVO.getSpu();
+            long manuno = prodVO.getManuNo();
+            String manuname = StringUtils.checkObjectNull(prodVO.getManuName(),"");
+            long brandno = prodVO.getBrandNo();
+            String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"");
 
-        Map<String, Object> data = new HashMap<>();
-        data.put("sku", sku);
-        data.put("content", keyword);
-        data.put("spec", spec);
-        data.put("spu", spu);
-        data.put("manuno", manuno);
-        data.put("manuname", manuname);
-        data.put("brandno", brandno);
-        data.put("brandname", brandname);
-        data.put("prodstatus", prodVO.getProdstatus());
-        data.put("skucstatus", prodVO.getSkuCstatus());
-        data.put("vatp", prodVO.getVatp());
-        data.put("sales", prodVO.getSales());
-        data.put("rulestatus", 0);
-        data.put("detail", JSONObject.toJSON(prodVO));
-        UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, "prod", "prod_type", sku+"");
-        if(response == null || RestStatus.OK != response.status()) {
+            prodVO.clone();
+            Map<String, Object> data = new HashMap<>();
+            data.put("sku", sku);
+            data.put("content", keyword);
+            data.put("spec", spec);
+            data.put("spu", spu);
+            data.put("manuno", manuno);
+            data.put("manuname", manuname);
+            data.put("brandno", brandno);
+            data.put("brandname", brandname);
+            data.put("prodstatus", prodVO.getProdstatus());
+            data.put("skucstatus", prodVO.getSkuCstatus());
+            data.put("vatp", prodVO.getVatp());
+            data.put("sales", prodVO.getSales());
+            data.put("rulestatus", 0);
+            data.put("detail", JSONObject.toJSON(prodVO));
+            UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, "prod", "prod_type", sku+"");
+            if(response == null || RestStatus.OK != response.status()) {
+                return -1;
+            }
+            return 0;
+        }catch (Exception e){
+            e.printStackTrace();
             return -1;
         }
-        return 0;
+
     }
 
     /**
