@@ -161,7 +161,7 @@ public class CouponManageModule {
             }
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
-                insertLadOff(couponVO.getLadderVOS(), unqid);
+                insertLadOff(couponVO.getLadderVOS(), unqid,couponVO.getRuleno());
             }
         } else {
             return result.fail("新增失败");
@@ -311,11 +311,11 @@ public class CouponManageModule {
      * @param ladderVOS
      * @param actCode
      */
-    private void insertLadOff(List<LadderVO> ladderVOS, long actCode) {
+    private void insertLadOff(List<LadderVO> ladderVOS, long actCode,int ruleno) {
 
         List<Object[]> ladOffParams = new ArrayList<>();
         for (LadderVO ladderVO : ladderVOS) {
-            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ladderVO.getRuleno(),
+            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ruleno,
                     ladderVO.getLadamt(),ladderVO.getLadnum(),ladderVO.getOffer()});
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
@@ -414,7 +414,7 @@ public class CouponManageModule {
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
                 if (baseDao.updateNative(DEL_LAD_OFF__SQL, actCode) > 0) {
-                    insertLadOff(couponVO.getLadderVOS(), actCode);
+                    insertLadOff(couponVO.getLadderVOS(), actCode,couponVO.getRuleno());
                 }
             }
         } else {
