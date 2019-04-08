@@ -1,7 +1,7 @@
 package com.onek.init;
 
-import Ice.Application;
 import org.hyrdpf.ds.AppConfig;
+import static Ice.Application.communicator;
 
 /**
  * @Author: leeping
@@ -13,7 +13,8 @@ public class SystemInitialize {
             AppConfig.initLogger();
             AppConfig.initialize();
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
+            communicator().getLogger().error(serverName+" , 初始化错误: "+ e);
         }
     }
 }

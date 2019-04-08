@@ -1,5 +1,7 @@
 package com.onek.user.operations;
 
+import Ice.Application;
+import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.context.AppContext;
 import com.onek.util.fs.FileServerUtils;
@@ -14,6 +16,7 @@ import util.http.HttpRequest;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -56,18 +59,21 @@ public class VerificationOp implements IOperation<AppContext> {
             String json = result.addStream(inputStream,EncryptUtils.encryption("image_verification_code"),key+".png")
                     .fileUploadUrl(FileServerUtils.fileUploadAddress())
                     .getRespondContent(); // k作为文件名 文件链接传递到前端
-            List<HashMap<String,String>> list = GsonUtils.jsonToJavaBean(json, new TypeToken<List<HashMap<String,String>>>(){}.getType());
+
+
+            HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
+            ArrayList<LinkedTreeMap<String,Object>> list = (ArrayList<LinkedTreeMap<String, Object>>) maps.get("data");
             assert list != null;
             HashMap<String,String> map = new HashMap<>();
             map.put("key",key);//前端需要传递到后台系统,从而验证code
-            map.put("url",list.get(0).get("httpUrl"));
+            map.put("url",list.get(0).get("httpUrl").toString());
 
             String res = RedisUtil.getStringProvide().set(key,code);
             if (res.equals("OK")){
                 RedisUtil.getStringProvide().expire(key, USProperties.INSTANCE.vciSurviveTime); // 3分钟内有效
             }
            return new Result().success(GsonUtils.javaBeanToJson(map));
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return new Result().fail("无法生成验证图片");
