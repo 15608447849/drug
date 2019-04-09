@@ -58,12 +58,12 @@ public class BackgroundProdModule {
             + " vaildsdate, vaildedate, "
             + " prodsdate, prodedate, store, "
             + " activitystore, limits, wholenum, medpacknum, unit,"
-            + " ondate, ontime, spec) "
+            + " ondate, ontime, spec, cstatus) "
             + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, ?, "
-                    + " CURRENT_DATE, CURRENT_TIME, ?) ";
+                    + " CURRENT_DATE, CURRENT_TIME, ?, 256) ";
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -96,6 +96,57 @@ public class BackgroundProdModule {
             + " prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
             + " store = ?, activitystore = ?, limits = ?, wholenum = ?, medpacknum = ? "
             + " WHERE sku = ? ";
+
+    public Result onProd(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (params == null || params.length == 0) {
+            return new Result().fail("参数为空");
+        }
+        String sql = "UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} " +
+                " SET prodstatus = 1, ondate = CURRENT_DATE, ontime = CURRENT_TIME " +
+                "  WHERE sku = ? AND prodstatus = 0 ";
+
+        List<Object[]> p = new ArrayList<>();
+
+        try {
+            for (String ps : params) {
+                p.add(new Object[] { Long.parseLong(ps) });
+            }
+        } catch (Exception e) {
+            return new Result().fail("参数存在非法值");
+        }
+
+        BASE_DAO.updateBatchNative(sql, p, params.length);
+
+        return new Result().success(null);
+    }
+
+    public Result offProd(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (params == null || params.length == 0) {
+            return new Result().fail("参数为空");
+        }
+        String sql = "UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} " +
+                " SET prodstatus = 0, offdate = CURRENT_DATE, offtime = CURRENT_TIME " +
+                "  WHERE sku = ? AND prodstatus = 1 ";
+
+        List<Object[]> p = new ArrayList<>();
+
+        try {
+            for (String ps : params) {
+                p.add(new Object[] { Long.parseLong(ps) });
+            }
+        } catch (Exception e) {
+            return new Result().fail("参数存在非法值");
+        }
+
+        BASE_DAO.updateBatchNative(sql, p, params.length);
+
+        return new Result().success(null);
+    }
+
 
     public Result updateProd(AppContext appContext) {
         BgProdVO bgProdVO;
@@ -238,6 +289,9 @@ public class BackgroundProdModule {
                         break;
                     case 4:
                         sql.append(" AND sku.vaildsdate < STR_TO_DATE(?, '%Y-%m-%d') ");
+                        break;
+                    case 5:
+                        sql.append(" AND sku.prodstatus = ? ");
                         break;
                 }
             } catch (Exception e) {
