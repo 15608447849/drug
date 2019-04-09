@@ -16,7 +16,7 @@ public class TimeUtils {
     public static final long PERIOD_DAY = 24 * 60 * 60 * 1000;
 
     /**添加x天*/
-    private static Date addDay(Date date, int num) {
+    public static Date addDay(Date date, int num) {
         Calendar startDT = Calendar.getInstance();
         startDT.setTime(date);
         startDT.add(Calendar.DAY_OF_MONTH, num);
@@ -62,6 +62,32 @@ public class TimeUtils {
         try {
             return simpleDateFormat.parse(timeString);
         } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 例: 2017-11-11
+     */
+    public static Date str_yMd_2Date(String timeString){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            return simpleDateFormat.parse(timeString);
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 例: 2017-11-11
+     */
+    public static String date_yMd_2String(Date date){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            return simpleDateFormat.format(date);
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;

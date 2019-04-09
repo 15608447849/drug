@@ -17,6 +17,7 @@ import com.onek.goods.service.MallFloorImpl;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.dict.DictUtil;
+import com.onek.util.fs.FileServerUtils;
 import com.onek.util.prod.ProdEntity;
 import objectref.ObjectRefUtil;
 import org.elasticsearch.action.search.SearchResponse;
@@ -59,6 +60,7 @@ public class ProdModule {
                 BeanMapUtils.mapToBean(detail, prodVO);
 
                 prodList.add(prodVO);
+                prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
                 try{
                     DictStore.translate(prodVO);
                 }catch(Exception e){

@@ -36,6 +36,7 @@ public class ProdVO {
     @DictCacheField(reflectcolumn ="unitName")
     private int unit;
     private String unitName;
+    private String imageUrl;
 
     public long getSpu() {
         return spu;
@@ -243,5 +244,13 @@ public class ProdVO {
 
     public void setUnitName(String unitName) {
         this.unitName = unitName;
+    }
+
+    public String getImageUrl() {
+        return imageUrl;
+    }
+
+    public void setImageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
     }
 }
