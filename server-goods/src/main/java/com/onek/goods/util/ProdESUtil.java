@@ -153,7 +153,7 @@ public class ProdESUtil {
      * @param prodstatus 1:代表上架 0:代表下架
      * @return
      */
-    public int updateProdStatusDocList(List<Long> skuList,int prodstatus){
+    public static int updateProdStatusDocList(List<Long> skuList,int prodstatus){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();

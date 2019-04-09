@@ -108,16 +108,21 @@ public class BackgroundProdModule {
                 "  WHERE sku = ? AND prodstatus = 0 ";
 
         List<Object[]> p = new ArrayList<>();
+        List<Long> skuList = new ArrayList<>();
 
         try {
             for (String ps : params) {
                 p.add(new Object[] { Long.parseLong(ps) });
+                skuList.add(Long.parseLong(ps));
             }
         } catch (Exception e) {
             return new Result().fail("参数存在非法值");
         }
 
-        BASE_DAO.updateBatchNative(sql, p, params.length);
+        int status = ProdESUtil.updateProdStatusDocList(skuList, 0);
+        if(status > 0){
+            BASE_DAO.updateBatchNative(sql, p, params.length);
+        }
 
         return new Result().success(null);
     }
@@ -133,17 +138,21 @@ public class BackgroundProdModule {
                 "  WHERE sku = ? AND prodstatus = 1 ";
 
         List<Object[]> p = new ArrayList<>();
+        List<Long> skuList = new ArrayList<>();
 
         try {
             for (String ps : params) {
                 p.add(new Object[] { Long.parseLong(ps) });
+                skuList.add(Long.parseLong(ps));
             }
         } catch (Exception e) {
             return new Result().fail("参数存在非法值");
         }
 
-        BASE_DAO.updateBatchNative(sql, p, params.length);
-
+        int status = ProdESUtil.updateProdStatusDocList(skuList, 0);
+        if(status > 0){
+            BASE_DAO.updateBatchNative(sql, p, params.length);
+        }
         return new Result().success(null);
     }
 
