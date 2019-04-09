@@ -46,7 +46,8 @@ public interface DSMConst extends UDAConst {
             {"td_prom_couent"}, //27 优惠券领取表
             {"td_member_level"}, //28 会员等级表
             {"td_tran_colle"}, //29 我的收藏表
-            {"tb_mall_floor"} //30 楼层表
+            {"tb_mall_floor"}, //30 楼层表
+            {"td_footprint"}//31 我的足迹表
 
     };
 
@@ -84,19 +85,20 @@ public interface DSMConst extends UDAConst {
     public final static int TD_MEMBER_LEVEL = 28;
     public final static int TD_TRAN_COLLE = 29;
     public final static int TB_MALL_FLOOR = 30;
+    public final static int TD_FOOTPRINT = 31;
 
 
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
     // 索引必须同_DB_TABLES里的索引对应
     public final static int[] SEG_TABLE_RULE = {
-            0, 0, 0, 0, 3,//5
-            1, 0, 0, 0, 0,//10
-            0, 0, 0, 0, 0,//15
-            0, 0, 0, 0, 0,//20
-            0, 0, 0, 0, 0,//25
-            0, 0, 0, 0, 1,//30
-            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 3,// 0-4
+            1, 0, 0, 0, 0,//5-9
+            0, 0, 0, 0, 0,//10-14
+            0, 0, 0, 0, 0,//15-19
+            0, 0, 0, 0, 0,//20-24
+            0, 0, 0, 0, 1,//25-29
+            0, 1, 0, 0, 0,//30-34
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,

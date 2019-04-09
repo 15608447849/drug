@@ -28,7 +28,6 @@ public class FileInfoModule {
         ArrayList<QueryParam> list;
     }
 
-
     /**
      * 获取文件服务器
      * 上传列表/下载列表
@@ -68,7 +67,5 @@ public class FileInfoModule {
         }
         return new Result().success(map);
     }
-
-
 
 }
