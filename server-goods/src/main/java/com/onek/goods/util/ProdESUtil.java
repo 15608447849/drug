@@ -6,6 +6,9 @@ import com.google.gson.JsonObject;
 import com.onek.goods.entities.BgProdVO;
 import elasticsearch.ElasticSearchClientFactory;
 import elasticsearch.ElasticSearchProvider;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -14,6 +17,7 @@ import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -140,6 +144,60 @@ public class ProdESUtil {
         if (response != null && response.isExists()) {
             ElasticSearchProvider.deleteDocumentById("prod", "prod_type", sku+"");
         }
+    }
+
+    /**
+     * 批量修改商品状态
+     *
+     * @param skuList sku列表
+     * @param prodstatus 1:代表上架 0:代表下架
+     * @return
+     */
+    public int updateProdStatusDocList(List<Long> skuList,int prodstatus){
+        SearchResponse response = null;
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            if(skuList != null && skuList.size() > 0){
+                Long [] skuArray = new Long[skuList.size()];
+                skuArray = skuList.toArray(skuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
+                boolQuery.must(builder);
+            }
+
+            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+
+            SearchRequestBuilder requestBuilder = client.prepareSearch("prod")
+                    .setQuery(boolQuery);
+
+
+            response = requestBuilder
+                    .execute().actionGet();
+
+            BulkRequestBuilder bulkRequest = client.prepareBulk();
+            if(response != null && response.getHits().totalHits > 0){
+                for (SearchHit searchHit : response.getHits()) {
+                    Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+                    long sku = Long.parseLong(sourceMap.get("sku").toString());
+                    sourceMap.put("prodstatus", prodstatus);
+                    bulkRequest.add(client.prepareUpdate("prod", "prod_type", sku+"").setDoc(sourceMap));
+
+                }
+                BulkResponse bulkResponse = bulkRequest.get();
+                if (bulkResponse.hasFailures()) {
+                    for(BulkItemResponse item : bulkResponse.getItems()){
+                        System.out.println(item.getFailureMessage());
+                    }
+                    return -1;
+                }
+
+            }
+
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+        return 1;
+
     }
 
     /**
