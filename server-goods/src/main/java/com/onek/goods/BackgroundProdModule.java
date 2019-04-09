@@ -3,11 +3,11 @@ package com.onek.goods;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.Gson;
+import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.util.ProdESUtil;
-import com.onek.server.inf.IRequest;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceStore;
 import constant.DSMConst;
@@ -110,13 +110,10 @@ public class BackgroundProdModule {
                 throw new IllegalArgumentException("缺少SKU");
             }
 
-            if (!checkProd(bgProdVO)) {
-                throw new IllegalArgumentException();
-            }
-
+            checkProd(bgProdVO);
         } catch (Exception e) {
             e.printStackTrace();
-            return new Result().fail("参数错误");
+            return new Result().fail(e.getMessage());
         }
 
         int esResult = ProdESUtil.updateProdDocument(bgProdVO);
@@ -139,6 +136,7 @@ public class BackgroundProdModule {
         return new Result().success(null);
     }
 
+    @UserPermission(ignore = true)
     public Result getProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -163,6 +161,14 @@ public class BackgroundProdModule {
         BASE_DAO.convToEntity(queryResult, returnResults, BgProdVO.class);
 
         convProds(returnResults);
+
+        if (appContext.getUserSession() == null) {
+            for (BgProdVO returnResult : returnResults) {
+                returnResult.setRrp(0);
+                returnResult.setMp(0);
+                returnResult.setVatp(0);
+            }
+        }
 
         return new Result().success(returnResults[0]);
     }
@@ -262,13 +268,11 @@ public class BackgroundProdModule {
             if (bgProdVO == null) {
                 throw new IllegalArgumentException("VO is NULL");
             }
-            
-            if (!checkProd(bgProdVO)) {
-                throw new IllegalArgumentException();
-            }
+
+            checkProd(bgProdVO);
         } catch (Exception e) {
             e.printStackTrace();
-            return new Result().fail("参数错误");
+            return new Result().fail(e.getMessage());
         }
 
         String spu = containsSPU(bgProdVO);
@@ -401,16 +405,43 @@ public class BackgroundProdModule {
     }
 
     private boolean checkProd(BgProdVO prodVO) {
-        return prodVO != null
-                && prodVO.getManuNo() > 0
-                && !StringUtils.isEmpty(prodVO.getPopname())
-                && !StringUtils.isEmpty(prodVO.getProdname())
-                && !StringUtils.isEmpty(prodVO.getStandarNo())
-                && StringUtils.isDateFormatter(prodVO.getVaildedate())
-                && StringUtils.isDateFormatter(prodVO.getVaildsdate())
-                && StringUtils.isDateFormatter(prodVO.getProdsdate())
-                && StringUtils.isDateFormatter(prodVO.getProdedate())
-                && StringUtils.isJsonFormatter(prodVO.getDetail());
+        if (prodVO.getManuNo() <= 0) {
+            throw new IllegalArgumentException("厂商为空");
+        }
+
+        if (StringUtils.isEmpty(prodVO.getPopname())) {
+            throw new IllegalArgumentException("通用名为空");
+        }
+
+        if (StringUtils.isEmpty(prodVO.getProdname())) {
+            throw new IllegalArgumentException("产品名为空");
+        }
+
+        if (StringUtils.isEmpty(prodVO.getStandarNo())) {
+            throw new IllegalArgumentException("批准文号/注册证编号为空");
+        }
+
+        if (!StringUtils.isDateFormatter(prodVO.getVaildedate())) {
+            throw new IllegalArgumentException("有效结束日期格式不正确");
+        }
+
+        if (!StringUtils.isDateFormatter(prodVO.getVaildsdate())) {
+            throw new IllegalArgumentException("有效开始日期格式不正确");
+        }
+
+        if (!StringUtils.isDateFormatter(prodVO.getProdsdate())) {
+            throw new IllegalArgumentException("生成开始日期格式不正确");
+        }
+
+        if (!StringUtils.isDateFormatter(prodVO.getProdedate())) {
+            throw new IllegalArgumentException("生成结束日期格式不正确");
+        }
+
+        if (!StringUtils.isJsonFormatter(prodVO.getDetail())) {
+            throw new IllegalArgumentException("详情格式不正确");
+        }
+
+        return true;
     }
 
     private String containsSPU(BgProdVO prodVO) {
@@ -428,15 +459,18 @@ public class BackgroundProdModule {
     }
 
     private String getNextSPU(long classNo, String standarNo, int form) throws Exception {
-        if (!MathUtil.isBetween(1, form, 99)
-                || String.valueOf(classNo).length() != 6) {
-            return null;
+        if (!MathUtil.isBetween(1, form, 99)) {
+            throw new Exception("剂型不正确");
+        }
+
+        if (String.valueOf(classNo).length() != 6) {
+            throw new Exception("类别请选择到第三级");
         }
 
         int mc = isMadeInChina(standarNo);
 
         if (mc == 0) {
-            throw new IllegalArgumentException("标准号不正确");
+            throw new IllegalArgumentException("批准文号/注册证编号不正确");
         }
 
         String formatForm = String.format("%02d", form);
