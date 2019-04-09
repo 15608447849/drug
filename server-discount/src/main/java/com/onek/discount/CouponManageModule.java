@@ -79,13 +79,18 @@ public class CouponManageModule {
             + "(unqid,giftname,giftdesc)"
             + " values(?,?,?)";
 
-    //查询优惠券详情
+    /**
+     * 查询优惠券详情
+     */
     private final String QUERY_COUPON_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
-            "ruleno,validday,validflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} where cstatus&1=0 and unqid = ? ";
+            "ruleno,validday,validflag,rulename from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
+            "  {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.ruleno = ru.rulecode  where cop.cstatus&1=0 and unqid = ? ";
 
 
-    //查询优惠券列表
+    /**
+     * 查询优惠券列表
+     */
     private final String QUERY_COUPON_LIST_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
             "ruleno,rulename,cop.cstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
@@ -147,7 +152,7 @@ public class CouponManageModule {
                 unqid,couponVO.getCoupname(),couponVO.getGlbno(),couponVO.getQlfno(),
                 couponVO.getQlfval(),couponVO.getDesc(),couponVO.getPeriodtype(),
                 couponVO.getPeriodday(),couponVO.getStartdate(),couponVO.getEnddate(),
-                couponVO.getRuleno(),couponVO.getValidday(),couponVO.getValidflag(),0
+                couponVO.getRuleno(),couponVO.getValidday(),couponVO.getValidflag(),couponVO.getCstatus()
         });
         if (ret > 0) {
             //新增活动场次
@@ -156,12 +161,8 @@ public class CouponManageModule {
             }
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
-                insertLadOff(couponVO.getLadderVOS(), unqid);
+                insertLadOff(couponVO.getLadderVOS(), unqid,couponVO.getRuleno());
             }
-            //新增活动商品
-//            if (couponVO.getAssDrugVOS() != null && !couponVO.getAssDrugVOS().isEmpty()) {
-//                insertAssDrug(couponVO.getAssDrugVOS());
-//            }
         } else {
             return result.fail("新增失败");
         }
@@ -189,19 +190,18 @@ public class CouponManageModule {
         List<Object[]> coupResult = baseDao.queryNative(QUERY_COUPON_SQL,
                 new Object[]{actcode});
 
+        CouponVO[] couponVOS = new CouponVO[coupResult.size()];
         if(coupResult == null || coupResult.isEmpty()){
-            return  result.success(null);
+            return  result.success(couponVOS);
         }
 
-        CouponVO[] couponVOS = new CouponVO[coupResult.size()];
+
         baseDao.convToEntity(coupResult, couponVOS, CouponVO.class,
                     new String[]{"coupno", "coupname", "glbno",
                             "qlfno", "qlfval", "desc", "periodtype", "periodday",
-                            "startdate", "enddate", "ruleno","validday","validflag"});
+                            "startdate", "enddate", "ruleno","validday","validflag","rulename"});
 
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
-        couponVOS[0].setRulesVOS(getCoupRule());
-    //    couponVOS[0].setAssDrugVOS(getCoupGoods(actcode));
         couponVOS[0].setLadderVOS(getCoupLadder(actcode));
 
         return  result.success(couponVOS[0]);
@@ -311,11 +311,11 @@ public class CouponManageModule {
      * @param ladderVOS
      * @param actCode
      */
-    private void insertLadOff(List<LadderVO> ladderVOS, long actCode) {
+    private void insertLadOff(List<LadderVO> ladderVOS, long actCode,int ruleno) {
 
         List<Object[]> ladOffParams = new ArrayList<>();
         for (LadderVO ladderVO : ladderVOS) {
-            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ladderVO.getRuleno(),
+            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ruleno,
                     ladderVO.getLadamt(),ladderVO.getLadnum(),ladderVO.getOffer()});
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
@@ -357,7 +357,7 @@ public class CouponManageModule {
         Result result = new Result();
 
         String coupname = jsonObject.get("coupname").getAsString();
-        String rulename = jsonObject.get("rulename").getAsString();
+        int rulecode = jsonObject.get("rulecode").getAsInt();
 
         StringBuilder sqlBuilder = new StringBuilder(QUERY_COUPON_LIST_SQL);
         if(!StringUtils.isEmpty(coupname)){
@@ -366,20 +366,18 @@ public class CouponManageModule {
             sqlBuilder.append("%' ");
         }
 
-        if(!StringUtils.isEmpty(rulename)){
-            sqlBuilder.append(" and rulename like '%");
-            sqlBuilder.append(rulename);
-            sqlBuilder.append("%' ");
+        if(rulecode != 0){
+            sqlBuilder.append(" and rulecode = ");
+            sqlBuilder.append(rulecode);
         }
 
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
-
-
         CouponListVO[] couponListVOS = new CouponListVO[queryResult.size()];
-
+        if (queryResult == null || queryResult.isEmpty()) {
+            return result.setQuery(couponListVOS, pageHolder);
+        }
         baseDao.convToEntity(queryResult, couponListVOS, CouponListVO.class,
-                new String[]{"coupno","coupname","glbno","qlfno","qlfval","coupdesc",
+                new String[]{"coupno","coupname","glbno","qlfno","qlfval","desc",
                         "periodtype","periodday",
                         "startdate","enddate","ruleno","rulename","cstatus"});
 
@@ -416,15 +414,9 @@ public class CouponManageModule {
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
                 if (baseDao.updateNative(DEL_LAD_OFF__SQL, actCode) > 0) {
-                    insertLadOff(couponVO.getLadderVOS(), actCode);
+                    insertLadOff(couponVO.getLadderVOS(), actCode,couponVO.getRuleno());
                 }
             }
-            //新增活动商品
-//            if (couponVO.getAssDrugVOS() != null && !couponVO.getAssDrugVOS().isEmpty()) {
-//                if (baseDao.updateNative(DEL_ASS_DRUG_SQL,actCode) > 0) {
-//                    insertAssDrug(couponVO.getAssDrugVOS());
-//                }
-//            }
         } else {
             result.fail("修改失败");
         }
@@ -486,10 +478,11 @@ public class CouponManageModule {
 
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, QUERY_PROM_GOODS_SQL,actcode);
 
-        if(queryResult == null || queryResult.isEmpty()){
-            return result.success(null);
-        }
         GoodsVO[] goodsVOS = new GoodsVO[queryResult.size()];
+        if(queryResult == null || queryResult.isEmpty()){
+            return result.setQuery(goodsVOS, pageHolder);
+        }
+     //   GoodsVO[] goodsVOS = new GoodsVO[queryResult.size()];
 
         baseDao.convToEntity(queryResult, goodsVOS, GoodsVO.class,
                 new String[]{"unqid","actcode","spec","gcode","limitnum",

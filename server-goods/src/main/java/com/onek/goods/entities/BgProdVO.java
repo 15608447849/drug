@@ -3,7 +3,7 @@ package com.onek.goods.entities;
 import redis.annation.DictCacheField;
 import redis.annation.GetDictWay;
 
-public class BgProdVO {
+public class BgProdVO implements Cloneable{
     /* ----------- 商品SPU表 ------------- */
     private long spu;
     private String popname;
@@ -415,5 +415,10 @@ public class BgProdVO {
 
     public void setFormName(String formName) {
         this.formName = formName;
+    }
+
+    @Override
+    public Object clone() throws CloneNotSupportedException {
+        return super.clone();
     }
 }

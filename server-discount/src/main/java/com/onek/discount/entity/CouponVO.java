@@ -53,36 +53,15 @@ public class CouponVO {
     //综合状态
     private int cstatus;
 
-    //活动关联商品集合
-//    private List<GoodsVO> assDrugVOS;
+    //规则名称
+    private String rulename;
 
     //活动场次
     private List<TimeVO> timeVOS;
 
-    //优惠商品赠换
-    private List<AssGiftVO> assGiftVOS;
-
     //阶梯
     private List<LadderVO> ladderVOS;
 
-    //规则
-    private List<RulesVO>  rulesVOS;
-
-    public List<RulesVO> getRulesVOS() {
-        return rulesVOS;
-    }
-
-    public void setRulesVOS(List<RulesVO> rulesVOS) {
-        this.rulesVOS = rulesVOS;
-    }
-
-//    public List<GoodsVO> getAssDrugVOS() {
-//        return assDrugVOS;
-//    }
-//
-//    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
-//        this.assDrugVOS = assDrugVOS;
-//    }
 
     public List<TimeVO> getTimeVOS() {
         return timeVOS;
@@ -90,14 +69,6 @@ public class CouponVO {
 
     public void setTimeVOS(List<TimeVO> timeVOS) {
         this.timeVOS = timeVOS;
-    }
-
-    public List<AssGiftVO> getAssGiftVOS() {
-        return assGiftVOS;
-    }
-
-    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
-        this.assGiftVOS = assGiftVOS;
     }
 
     public List<LadderVO> getLadderVOS() {
@@ -218,5 +189,13 @@ public class CouponVO {
 
     public void setValidflag(int validflag) {
         this.validflag = validflag;
+    }
+
+    public String getRulename() {
+        return rulename;
+    }
+
+    public void setRulename(String rulename) {
+        this.rulename = rulename;
     }
 }
