@@ -35,6 +35,9 @@ public class StringUtils {
     public static <T> T checkObjectNull(Object object,T def){
         try {
             if (object == null) return def;
+            if (def instanceof String){
+                return (T) object.toString();
+            }
             return (T) object;
         } catch (Exception e) {
             e.printStackTrace();
