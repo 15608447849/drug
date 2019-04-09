@@ -86,7 +86,7 @@ public class ServerImp extends _InterfacesDisp {
         try {
 
             StringBuilder sb = new StringBuilder();
-            sb.append("call:\t" + request.pkg +" -> " + request.cls +" -> "+request.method+"\n");
+            sb.append("call:\t" +serverName+ " ->" + request.pkg +" -> " + request.cls +" -> "+request.method+"\n");
             if(!StringUtils.isEmpty(request.param.token)){
                 sb.append( "token:\t"+ request.param.token+"\n");
             }
@@ -155,7 +155,7 @@ public class ServerImp extends _InterfacesDisp {
 
     private String printResult(Object result) {
         String resultString = GsonUtils.javaBeanToJson(result);
-        if (resultString.length() < 200){
+        if (resultString.length() < 1000){
             logger.print("-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n\t" + resultString +"\n");
         }
         return resultString;

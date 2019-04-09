@@ -61,14 +61,15 @@ public class LoginBackOp implements IOperation<AppContext> {
                         "WHERE cstatus&1 = 0 AND uid = ?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql, context.remoteIp,objects[0]);
                 if (i > 0){
-                    userSession = new UserSession();
-                    userSession.userId = (int) objects[0];
-                    userSession.roleCode = (long) objects[1];
-                    userSession.account =  objects[3].toString();
-                    userSession.phone =  objects[4].toString();
-                    userSession.userName = objects[5].toString();
-                    userSession.password = password;
-                    userSession.lastIp = context.remoteIp;
+                    userSession = UserSession.createBackManagerUser(
+                            (int) objects[0],
+                            (long) objects[1],
+                            objects[4].toString(),
+                            context.remoteIp,
+                            password,
+                            objects[3].toString(),
+                            objects[5].toString()
+                    );
                     return true;
                 }
             }

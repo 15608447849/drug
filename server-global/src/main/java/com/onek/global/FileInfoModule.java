@@ -8,6 +8,7 @@ import org.apache.logging.log4j.core.util.JsonUtils;
 import util.GsonUtils;
 import util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 
 import static Ice.Application.communicator;
@@ -24,8 +25,8 @@ public class FileInfoModule {
         long orderid;
         long spu;
         long sku;
+        ArrayList<QueryParam> list;
     }
-
 
     /**
      * 获取文件服务器
@@ -35,7 +36,7 @@ public class FileInfoModule {
     public Result fileServerInfo(AppContext appContext){
         String json = appContext.param.json;
 
-        HashMap<String,String> map = new HashMap<>();
+        HashMap<String,Object> map = new HashMap<>();
             map.put("upUrl", fileUploadAddress());
             map.put("ergodicUrl",fileErgodicAddress());
             map.put("downPrev",fileDownloadPrev());
@@ -53,10 +54,18 @@ public class FileInfoModule {
             if (queryParam.spu > 0 && queryParam.sku > 0){
                 map.put("goodsFilePath",goodsFilePath(queryParam.spu,queryParam.sku));
             }
+            //多个spu,sku
+            if (queryParam.list!=null && queryParam.list.size()>0){
+                ArrayList<String> list = new ArrayList<>();
+                for (QueryParam qp: queryParam.list) {
+                    if (qp.spu > 0 && qp.sku > 0){
+                        list.add(goodsFilePath(qp.spu,qp.sku));
+                    }
+                }
+                map.put("goodsFilePathList",list);
+            }
         }
         return new Result().success(map);
     }
-
-
 
 }

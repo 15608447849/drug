@@ -107,12 +107,7 @@ public class LoginRegistrationModule {
      * 获取用户信息
      */
     public Result getUserSession(AppContext appContext){
-        UserSession userSession = new UserSession();
-            userSession.roleCode = appContext.getUserSession().roleCode;
-            userSession.userId = appContext.getUserSession().userId;
-            userSession.userName = appContext.getUserSession().userName;
-            userSession.account = appContext.getUserSession().account;
-            userSession.phone = appContext.getUserSession().phone;
+        UserSession userSession = appContext.getUserSession().cloneBackUserInfo();
         return new Result().success(userSession);
     }
 }

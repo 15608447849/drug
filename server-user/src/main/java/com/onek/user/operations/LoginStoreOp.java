@@ -89,13 +89,15 @@ public class LoginStoreOp implements IOperation<AppContext> {
                         "WHERE cstatus&1 = 0 AND uid = ?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql, context.remoteIp,objects[0]);
                 if (i > 0){
-                        userSession = new UserSession();
-                        userSession.userId = (int) objects[0];
-                        userSession.roleCode = (long) objects[1];
-                        userSession.phone = phone;
-                        userSession.password = password;
-                        userSession.lastIp = context.remoteIp;
-                        userSession.compId = StringUtils.checkObjectNull(objects[3],0);
+                    userSession = UserSession.createStoreUser(
+                            (int) objects[0],
+                            (long) objects[1],
+                            phone,
+                            context.remoteIp,
+                            password,
+                            StringUtils.checkObjectNull(objects[3],0)
+                            );
+
                     return true;
                 }
             }else{

@@ -15,6 +15,7 @@ public class FileServerUtils {
 
     //文件上传地址
     public static String fileUploadAddress(){
+        //分布式映射动态获取前缀
         return "http://" + fsp.fileServerAddress +"/upload";
     }
 
