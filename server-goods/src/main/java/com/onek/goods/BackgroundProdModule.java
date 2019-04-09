@@ -340,6 +340,7 @@ public class BackgroundProdModule {
             int esResult = ProdESUtil.addProdDocument(bgProdVO);
 
             if (esResult != 0) {
+                RedisUtil.getStringProvide().decrease(spu);
                 return new Result().fail("操作失败");
             }
 
