@@ -10,9 +10,14 @@ import com.onek.util.dict.DictStore;
 import com.onek.global.produce.ProduceStore;
 import com.onek.util.prod.ProdEntity;
 import util.GsonUtils;
-import com.onek.util.prod.ProduceStore;
 import util.StringUtils;
 
+import util.StringUtils;
+
+/**
+ * @Author: leeping
+ * @Date: 2019/4/10 19:24
+ */
 public class CommonModule {
 
     @UserPermission(ignore = true)
