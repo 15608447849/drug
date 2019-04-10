@@ -6,33 +6,16 @@ import util.MathUtil;
  * 地区工具类。
  */
 public class AreaUtil {
-    /* 省市区级最大位数基数 */
-    private static final int LAYER_BASE = 100;
-    /* 最小地区码 */
-    private static final int MIN_AREAC = 110000;
-    /* 最大地区码 */
-    private static final int MAX_AREAC = 820104;
-    /* 最大层级。省-0；市-1；区-2 */
-    private static final int MAX_LAYER = 2;
+    /* 最大层级。省-0；市-1；区-2；县-3；街-4 */
+    private static final int MAX_LAYER = 4;
     /* 按层级取余值仓库 */
-    private static final int[] MOD_LAYER_STORE = {
-            LAYER_BASE * LAYER_BASE * LAYER_BASE,
-            LAYER_BASE * LAYER_BASE,
-            LAYER_BASE,
+    private static final long[] MOD_LAYER_STORE = {
+            1000L * 1000 * 100 * 100 * 100,
+            1000L * 1000 * 100 * 100,
+            1000L * 1000 * 100,
+            1000L * 1000,
+            1000L,
     };
-
-    /**
-     * 是否存在血缘关系
-     * @param areac1
-     * @param areac2
-     * @return
-     */
-    public static boolean isRelationship(int areac1, int areac2) {
-        areacCheck(areac1);
-        areacCheck(areac2);
-
-        return getAncestorCode(areac1) == getAncestorCode(areac2);
-    }
 
     /**
      * 获取对应层级的码
@@ -40,7 +23,7 @@ public class AreaUtil {
      * @param layer
      * @return
      */
-    public static int getCodeByLayer(final int areac, final int layer) {
+    public static long getCodeByLayer(final long areac, final int layer) {
         areacCheck(areac);
 
         if (layer >= MAX_LAYER || layer < -1) {
@@ -50,10 +33,10 @@ public class AreaUtil {
         return areac - areac % MOD_LAYER_STORE[layer + 1];
     }
 
-    public static int[] getAllAncestorCodes(int areac) {
+    public static long[] getAllAncestorCodes(long areac) {
         areacCheck(areac);
 
-        int[] result = new int[getLayer(areac) + 1];
+        long[] result = new long[getLayer(areac) + 1];
 
         for (int i = 0; i < result.length; i++) {
             result[i] = getCodeByLayer(areac, i);
@@ -63,37 +46,25 @@ public class AreaUtil {
     }
 
     /**
-     * 获取祖先码。
-     * @param areac
-     * @return
-     */
-    public static int getAncestorCode(int areac) {
-        areacCheck(areac);
-
-        return getCodeByLayer(areac, 0);
-    }
-
-    /**
      * 地区码校验。验证不通过将抛出异常
      * @param areac
      */
-    public static void areacCheck(int areac) {
-        if (!MathUtil.isBetween(MIN_AREAC, areac, MAX_AREAC)) {
-            throw new IllegalArgumentException("The areac is Error, which is " + areac);
-        }
+    public static void areacCheck(long areac) {
     }
 
     /**
      * 获取地区码级数。
      * @return
      */
-    public static int getLayer(int areac) {
+    public static int getLayer(long areac) {
         areacCheck(areac);
 
         int currLayer = MAX_LAYER;
 
         while (currLayer > 0) {
-            if ((areac % MOD_LAYER_STORE[currLayer]) > 0) {
+            long a = MOD_LAYER_STORE[currLayer];
+            long r = (areac % a);
+            if (r > 0) {
                 break;
             }
 
@@ -107,7 +78,7 @@ public class AreaUtil {
      * 获取地区码父级。
      * @return
      */
-    public static int getParent(int areac) {
+    public static long getParent(long areac) {
         areacCheck(areac);
 
         int layer = getLayer(areac);
@@ -119,7 +90,7 @@ public class AreaUtil {
      * 判断是否为最大级。
      * @return
      */
-    public static boolean isRoot(int areac) {
+    public static boolean isRoot(long areac) {
         areacCheck(areac);
 
         return getLayer(areac) == 0;

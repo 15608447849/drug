@@ -1,5 +1,6 @@
 package com.onek.user;
 
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
@@ -7,12 +8,39 @@ import com.onek.entitys.Result;
 import com.onek.util.area.AreaStore;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceStore;
+import util.StringUtils;
 
 public class CommonModule {
 
     @UserPermission(ignore = true)
-    public Result getAreas(AppContext appContext) {
-        return new Result().success(AreaStore.getTreeJson());
+    // 获取子类
+    public Result getChildren(AppContext appContext) {
+        String[] array = appContext.param.arrays;
+
+        if (array == null || array.length == 0) {
+            return new Result().fail("参数为空");
+        }
+
+        if (!StringUtils.isInteger(array[0])) {
+            return new Result().fail("参数错误");
+        }
+
+        return new Result().success(AreaStore.getChildren(Long.parseLong(array[0])));
+    }
+
+    @UserPermission(ignore = true)
+    public Result getArea(AppContext appContext) {
+        String[] array = appContext.param.arrays;
+
+        if (array == null || array.length == 0) {
+            return new Result().fail("参数为空");
+        }
+
+        if (!StringUtils.isBiggerZero(array[0])) {
+            return new Result().fail("参数错误");
+        }
+
+        return new Result().success(AreaStore.getAreaByAreac(Long.parseLong(array[0])));
     }
 
     @UserPermission(ignore = true)
