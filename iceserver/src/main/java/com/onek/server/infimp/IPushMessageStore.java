@@ -1,6 +1,7 @@
 package com.onek.server.infimp;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: leeping
@@ -10,6 +11,6 @@ public interface IPushMessageStore {
 
     long storeMessageToDb(String identityName, String message) ;
     void changeMessageStateToDb(String identityName,long id) ;
-    List<String> checkOfflineMessageFromDbByIdentityName(String identityName);
+    Map<Long,String> checkOfflineMessageFromDbByIdentityName(String identityName);
 
 }

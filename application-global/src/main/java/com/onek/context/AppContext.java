@@ -27,12 +27,18 @@ public class AppContext extends IceContext {
 
             String key = param.token + "@" + remoteIp;
             String value = RedisUtil.getStringProvide().get(key);
+
+//            logger.print(key+" = " + value);
+
             if(StringUtils.isEmpty(value)) return;
 
             String json = RedisUtil.getStringProvide().get(value);
+//            logger.print(value+" = " + json);
+
             if(StringUtils.isEmpty(json)) return;
-            //logger.print(key+" - Redis存在用户信息:\n" + json);
+
             this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
+//            logger.print(key+" - Redis存在用户信息:\n" + userSession);
 
         } catch (Exception ignored) { }
     }
