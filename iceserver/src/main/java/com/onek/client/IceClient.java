@@ -52,7 +52,7 @@ public class IceClient {
         }
         return this;
     }
-    private InterfacesPrx curPrx;
+    public InterfacesPrx curPrx;
 
     public IceClient settingProxy(String serverName){
         InterfacesPrx prx = prxMaps.get(serverName);
@@ -110,6 +110,12 @@ public class IceClient {
             String result =executeSync();
             if (callback!=null) callback.callback(result);
         });
-
+    }
+    public void sendMessageToClient(String identity,String message){
+        if (curPrx!=null){
+//            pool.post(() -> {
+             curPrx.sendMessageToClient(identity,message);
+//            });
+        }
     }
 }

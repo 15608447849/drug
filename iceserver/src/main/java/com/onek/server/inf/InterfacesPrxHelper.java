@@ -198,6 +198,377 @@ public final class InterfacesPrxHelper extends Ice.ObjectPrxHelperBase implement
         __cb.response(__ret);
     }
 
+    private static final String __offline_name = "offline";
+
+    public void offline(String identityName)
+    {
+        offline(identityName, null, false);
+    }
+
+    public void offline(String identityName, java.util.Map<String, String> __ctx)
+    {
+        offline(identityName, __ctx, true);
+    }
+
+    private void offline(String identityName, java.util.Map<String, String> __ctx, boolean __explicitCtx)
+    {
+        end_offline(begin_offline(identityName, __ctx, __explicitCtx, true, null));
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName)
+    {
+        return begin_offline(identityName, null, false, false, null);
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName, java.util.Map<String, String> __ctx)
+    {
+        return begin_offline(identityName, __ctx, true, false, null);
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName, Ice.Callback __cb)
+    {
+        return begin_offline(identityName, null, false, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName, java.util.Map<String, String> __ctx, Ice.Callback __cb)
+    {
+        return begin_offline(identityName, __ctx, true, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName, Callback_Interfaces_offline __cb)
+    {
+        return begin_offline(identityName, null, false, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName, java.util.Map<String, String> __ctx, Callback_Interfaces_offline __cb)
+    {
+        return begin_offline(identityName, __ctx, true, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName, 
+                                         IceInternal.Functional_VoidCallback __responseCb, 
+                                         IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb)
+    {
+        return begin_offline(identityName, null, false, false, __responseCb, __exceptionCb, null);
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName, 
+                                         IceInternal.Functional_VoidCallback __responseCb, 
+                                         IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
+                                         IceInternal.Functional_BoolCallback __sentCb)
+    {
+        return begin_offline(identityName, null, false, false, __responseCb, __exceptionCb, __sentCb);
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName, 
+                                         java.util.Map<String, String> __ctx, 
+                                         IceInternal.Functional_VoidCallback __responseCb, 
+                                         IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb)
+    {
+        return begin_offline(identityName, __ctx, true, false, __responseCb, __exceptionCb, null);
+    }
+
+    public Ice.AsyncResult begin_offline(String identityName, 
+                                         java.util.Map<String, String> __ctx, 
+                                         IceInternal.Functional_VoidCallback __responseCb, 
+                                         IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
+                                         IceInternal.Functional_BoolCallback __sentCb)
+    {
+        return begin_offline(identityName, __ctx, true, false, __responseCb, __exceptionCb, __sentCb);
+    }
+
+    private Ice.AsyncResult begin_offline(String identityName, 
+                                          java.util.Map<String, String> __ctx, 
+                                          boolean __explicitCtx, 
+                                          boolean __synchronous, 
+                                          IceInternal.Functional_VoidCallback __responseCb, 
+                                          IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
+                                          IceInternal.Functional_BoolCallback __sentCb)
+    {
+        return begin_offline(identityName, 
+                             __ctx, 
+                             __explicitCtx, 
+                             __synchronous, 
+                             new IceInternal.Functional_OnewayCallback(__responseCb, __exceptionCb, __sentCb));
+    }
+
+    private Ice.AsyncResult begin_offline(String identityName, 
+                                          java.util.Map<String, String> __ctx, 
+                                          boolean __explicitCtx, 
+                                          boolean __synchronous, 
+                                          IceInternal.CallbackBase __cb)
+    {
+        IceInternal.OutgoingAsync __result = getOutgoingAsync(__offline_name, __cb);
+        try
+        {
+            __result.prepare(__offline_name, Ice.OperationMode.Normal, __ctx, __explicitCtx, __synchronous);
+            IceInternal.BasicStream __os = __result.startWriteParams(Ice.FormatType.DefaultFormat);
+            __os.writeString(identityName);
+            __result.endWriteParams();
+            __result.invoke();
+        }
+        catch(Ice.Exception __ex)
+        {
+            __result.abort(__ex);
+        }
+        return __result;
+    }
+
+    public void end_offline(Ice.AsyncResult __iresult)
+    {
+        __end(__iresult, __offline_name);
+    }
+
+    private static final String __online_name = "online";
+
+    public void online(Ice.Identity identity)
+    {
+        online(identity, null, false);
+    }
+
+    public void online(Ice.Identity identity, java.util.Map<String, String> __ctx)
+    {
+        online(identity, __ctx, true);
+    }
+
+    private void online(Ice.Identity identity, java.util.Map<String, String> __ctx, boolean __explicitCtx)
+    {
+        end_online(begin_online(identity, __ctx, __explicitCtx, true, null));
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity)
+    {
+        return begin_online(identity, null, false, false, null);
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity, java.util.Map<String, String> __ctx)
+    {
+        return begin_online(identity, __ctx, true, false, null);
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity, Ice.Callback __cb)
+    {
+        return begin_online(identity, null, false, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity, java.util.Map<String, String> __ctx, Ice.Callback __cb)
+    {
+        return begin_online(identity, __ctx, true, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity, Callback_Interfaces_online __cb)
+    {
+        return begin_online(identity, null, false, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity, java.util.Map<String, String> __ctx, Callback_Interfaces_online __cb)
+    {
+        return begin_online(identity, __ctx, true, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity, 
+                                        IceInternal.Functional_VoidCallback __responseCb, 
+                                        IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb)
+    {
+        return begin_online(identity, null, false, false, __responseCb, __exceptionCb, null);
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity, 
+                                        IceInternal.Functional_VoidCallback __responseCb, 
+                                        IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
+                                        IceInternal.Functional_BoolCallback __sentCb)
+    {
+        return begin_online(identity, null, false, false, __responseCb, __exceptionCb, __sentCb);
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity, 
+                                        java.util.Map<String, String> __ctx, 
+                                        IceInternal.Functional_VoidCallback __responseCb, 
+                                        IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb)
+    {
+        return begin_online(identity, __ctx, true, false, __responseCb, __exceptionCb, null);
+    }
+
+    public Ice.AsyncResult begin_online(Ice.Identity identity, 
+                                        java.util.Map<String, String> __ctx, 
+                                        IceInternal.Functional_VoidCallback __responseCb, 
+                                        IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
+                                        IceInternal.Functional_BoolCallback __sentCb)
+    {
+        return begin_online(identity, __ctx, true, false, __responseCb, __exceptionCb, __sentCb);
+    }
+
+    private Ice.AsyncResult begin_online(Ice.Identity identity, 
+                                         java.util.Map<String, String> __ctx, 
+                                         boolean __explicitCtx, 
+                                         boolean __synchronous, 
+                                         IceInternal.Functional_VoidCallback __responseCb, 
+                                         IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
+                                         IceInternal.Functional_BoolCallback __sentCb)
+    {
+        return begin_online(identity, 
+                            __ctx, 
+                            __explicitCtx, 
+                            __synchronous, 
+                            new IceInternal.Functional_OnewayCallback(__responseCb, __exceptionCb, __sentCb));
+    }
+
+    private Ice.AsyncResult begin_online(Ice.Identity identity, 
+                                         java.util.Map<String, String> __ctx, 
+                                         boolean __explicitCtx, 
+                                         boolean __synchronous, 
+                                         IceInternal.CallbackBase __cb)
+    {
+        IceInternal.OutgoingAsync __result = getOutgoingAsync(__online_name, __cb);
+        try
+        {
+            __result.prepare(__online_name, Ice.OperationMode.Normal, __ctx, __explicitCtx, __synchronous);
+            IceInternal.BasicStream __os = __result.startWriteParams(Ice.FormatType.DefaultFormat);
+            Ice.Identity.__write(__os, identity);
+            __result.endWriteParams();
+            __result.invoke();
+        }
+        catch(Ice.Exception __ex)
+        {
+            __result.abort(__ex);
+        }
+        return __result;
+    }
+
+    public void end_online(Ice.AsyncResult __iresult)
+    {
+        __end(__iresult, __online_name);
+    }
+
+    private static final String __sendMessageToClient_name = "sendMessageToClient";
+
+    public void sendMessageToClient(String identityName, String message)
+    {
+        sendMessageToClient(identityName, message, null, false);
+    }
+
+    public void sendMessageToClient(String identityName, String message, java.util.Map<String, String> __ctx)
+    {
+        sendMessageToClient(identityName, message, __ctx, true);
+    }
+
+    private void sendMessageToClient(String identityName, String message, java.util.Map<String, String> __ctx, boolean __explicitCtx)
+    {
+        end_sendMessageToClient(begin_sendMessageToClient(identityName, message, __ctx, __explicitCtx, true, null));
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, String message)
+    {
+        return begin_sendMessageToClient(identityName, message, null, false, false, null);
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, String message, java.util.Map<String, String> __ctx)
+    {
+        return begin_sendMessageToClient(identityName, message, __ctx, true, false, null);
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, String message, Ice.Callback __cb)
+    {
+        return begin_sendMessageToClient(identityName, message, null, false, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, String message, java.util.Map<String, String> __ctx, Ice.Callback __cb)
+    {
+        return begin_sendMessageToClient(identityName, message, __ctx, true, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, String message, Callback_Interfaces_sendMessageToClient __cb)
+    {
+        return begin_sendMessageToClient(identityName, message, null, false, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, String message, java.util.Map<String, String> __ctx, Callback_Interfaces_sendMessageToClient __cb)
+    {
+        return begin_sendMessageToClient(identityName, message, __ctx, true, false, __cb);
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, 
+                                                     String message, 
+                                                     IceInternal.Functional_VoidCallback __responseCb, 
+                                                     IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb)
+    {
+        return begin_sendMessageToClient(identityName, message, null, false, false, __responseCb, __exceptionCb, null);
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, 
+                                                     String message, 
+                                                     IceInternal.Functional_VoidCallback __responseCb, 
+                                                     IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
+                                                     IceInternal.Functional_BoolCallback __sentCb)
+    {
+        return begin_sendMessageToClient(identityName, message, null, false, false, __responseCb, __exceptionCb, __sentCb);
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, 
+                                                     String message, 
+                                                     java.util.Map<String, String> __ctx, 
+                                                     IceInternal.Functional_VoidCallback __responseCb, 
+                                                     IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb)
+    {
+        return begin_sendMessageToClient(identityName, message, __ctx, true, false, __responseCb, __exceptionCb, null);
+    }
+
+    public Ice.AsyncResult begin_sendMessageToClient(String identityName, 
+                                                     String message, 
+                                                     java.util.Map<String, String> __ctx, 
+                                                     IceInternal.Functional_VoidCallback __responseCb, 
+                                                     IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
+                                                     IceInternal.Functional_BoolCallback __sentCb)
+    {
+        return begin_sendMessageToClient(identityName, message, __ctx, true, false, __responseCb, __exceptionCb, __sentCb);
+    }
+
+    private Ice.AsyncResult begin_sendMessageToClient(String identityName, 
+                                                      String message, 
+                                                      java.util.Map<String, String> __ctx, 
+                                                      boolean __explicitCtx, 
+                                                      boolean __synchronous, 
+                                                      IceInternal.Functional_VoidCallback __responseCb, 
+                                                      IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
+                                                      IceInternal.Functional_BoolCallback __sentCb)
+    {
+        return begin_sendMessageToClient(identityName, 
+                                         message, 
+                                         __ctx, 
+                                         __explicitCtx, 
+                                         __synchronous, 
+                                         new IceInternal.Functional_OnewayCallback(__responseCb, __exceptionCb, __sentCb));
+    }
+
+    private Ice.AsyncResult begin_sendMessageToClient(String identityName, 
+                                                      String message, 
+                                                      java.util.Map<String, String> __ctx, 
+                                                      boolean __explicitCtx, 
+                                                      boolean __synchronous, 
+                                                      IceInternal.CallbackBase __cb)
+    {
+        IceInternal.OutgoingAsync __result = getOutgoingAsync(__sendMessageToClient_name, __cb);
+        try
+        {
+            __result.prepare(__sendMessageToClient_name, Ice.OperationMode.Normal, __ctx, __explicitCtx, __synchronous);
+            IceInternal.BasicStream __os = __result.startWriteParams(Ice.FormatType.DefaultFormat);
+            __os.writeString(identityName);
+            __os.writeString(message);
+            __result.endWriteParams();
+            __result.invoke();
+        }
+        catch(Ice.Exception __ex)
+        {
+            __result.abort(__ex);
+        }
+        return __result;
+    }
+
+    public void end_sendMessageToClient(Ice.AsyncResult __iresult)
+    {
+        __end(__iresult, __sendMessageToClient_name);
+    }
+
     /**
      * Contacts the remote server to verify that the object implements this type.
      * Raises a local exception if a communication error occurs.
