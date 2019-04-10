@@ -90,7 +90,7 @@ public class ProdDiscountObserver implements ProdObserver {
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             if(delList != null && delList.size() > 0){
-                Long [] skuArray = new Long[delList.size()];
+                Object [] skuArray = new Long[delList.size()];
                 skuArray = delList.toArray(skuArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
                 boolQuery.must(builder);
@@ -138,7 +138,7 @@ public class ProdDiscountObserver implements ProdObserver {
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             if(delList != null && delList.size() > 0){
-                Long [] skuArray = new Long[delList.size()];
+                Object [] skuArray = new Long[delList.size()];
                 skuArray = delList.toArray(skuArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
                 boolQuery.must(builder);

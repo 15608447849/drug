@@ -28,3 +28,6 @@ server-global/out/
 cache/build/
 cache/out/
 server-global/build/
+server-order/out/
+server-discount/src/test/
+server-discount/src/main/resources/
