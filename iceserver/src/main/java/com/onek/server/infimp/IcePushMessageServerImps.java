@@ -127,12 +127,24 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     }
 
     @Override
-    public List<String> checkOfflineMessageFromDbByIdentityName(String identityName) {
+    public Map<Long,String> checkOfflineMessageFromDbByIdentityName(String identityName) {
         if (iPushMessageStore!=null){
-            List<String> messageList = iPushMessageStore.checkOfflineMessageFromDbByIdentityName(identityName);
-            for (String message : messageList){
-                sendMessage(identityName,message);
-            }
+            Map<Long,String> messageMap = iPushMessageStore.checkOfflineMessageFromDbByIdentityName(identityName);
+
+            messageMap.forEach( (id,message) -> {
+                //获取客户端
+                PushMessageClientPrx clientPrx = _clientsMaps.get(identityName);
+                if (clientPrx!=null){
+                    try {
+                        clientPrx.receive(message);
+                        communicator.getLogger().print("send ok , '"+identityName+"' msg:"+message);
+                        changeMessageStateToDb(identityName,id);
+                    } catch (Exception e) {
+                        removeClient(identityName);
+                    }
+                }
+            });
+
         }
         return null;
     }
@@ -142,7 +154,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         //循环检测
         while (true){
             try {
-                Thread.sleep( 3* 60 * 1000);
+                Thread.sleep( 5 * 1000);
 
                 if (_clientsMaps.size() == 0) continue;
 

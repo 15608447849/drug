@@ -4,7 +4,9 @@ import com.onek.server.infimp.IPushMessageStore;
 import dao.BaseDAO;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static Ice.Application.communicator;
 import static constant.DSMConst.TD_PUSH_MSG;
@@ -61,25 +63,26 @@ public class PushMessageMySqlImps implements IPushMessageStore {
     }
 
     @Override
-    public List<String> checkOfflineMessageFromDbByIdentityName(String identityName) {
+    public Map<Long,String> checkOfflineMessageFromDbByIdentityName(String identityName) {
 
-        ArrayList<String> list = new ArrayList<>();
+        Map<Long,String> map = new HashMap<>();
         try {
             int compid = Integer.parseInt(identityName);
 
-            String selectSql = "SELECT message " +
+            String selectSql = "SELECT unqid,message " +
                     "FROM {{?"+TD_PUSH_MSG+"}} " +
                     "WHERE cstatus=0 AND identity = ? " +
                     "ORDER BY date,time"; //DESC
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compid,getCurrentYear(),
                     selectSql,compid);
             for (Object[] arr: lines){
-                list.add(arr[0].toString());
+                map.put((long)arr[0],arr[1].toString());
             }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
-        communicator().getLogger().print("查询-离线数据\t"+identityName+" - 条数:"+ list.size());
-        return list;
+        communicator().getLogger().print("查询-离线数据\t"+identityName+" - 条数:"+ map.size());
+        return map;
     }
 }
