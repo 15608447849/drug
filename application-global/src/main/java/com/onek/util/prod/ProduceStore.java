@@ -5,12 +5,11 @@ import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchProvider;
+import org.elasticsearch.action.get.GetResponse;
+import util.BeanMapUtils;
 import util.TreeUtil;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings("unchecked")
 public class ProduceStore {
@@ -85,19 +84,29 @@ public class ProduceStore {
     }
 
     public static ProdEntity getProdBySku(long sku){
-        String sql = QUERY_PROD_BASE + " AND sku.sku = ? ";
 
-        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(sql, sku);
-
-        if (queryResult.isEmpty()) {
-           return null;
+        ProdEntity entity = null;
+        GetResponse response = ElasticSearchProvider.getDocumentById("prod", "prod_type", sku+"");
+        if(response != null){
+            Map<String, Object> sourceMap = response.getSourceAsMap();
+            HashMap detail = (HashMap) sourceMap.get("detail");
+            entity = new ProdEntity();
+            BeanMapUtils.mapToBean(detail, entity);
         }
-
-        ProdEntity[] returnResults = new ProdEntity[queryResult.size()];
-
-        BaseDAO.getBaseDAO().convToEntity(queryResult, returnResults, ProdEntity.class);
-
-        return returnResults[0];
+//        String sql = QUERY_PROD_BASE + " AND sku.sku = ? ";
+//
+//        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(sql, sku);
+//
+//        if (queryResult.isEmpty()) {
+//           return null;
+//        }
+//
+//        ProdEntity[] returnResults = new ProdEntity[queryResult.size()];
+//
+//        BaseDAO.getBaseDAO().convToEntity(queryResult, returnResults, ProdEntity.class);
+//
+//        return returnResults[0];
+        return entity;
     }
 
     public static String getProduceName(String pclass) {
