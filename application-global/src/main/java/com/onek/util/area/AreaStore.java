@@ -135,6 +135,5 @@ public class AreaStore {
                 handlerJson(children);
             }
         }
-
     }
 }

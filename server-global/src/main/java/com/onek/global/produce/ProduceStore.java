@@ -1,7 +1,10 @@
-package com.onek.util.prod;
+package com.onek.global.produce;
 
 import com.google.gson.*;
 import com.onek.entitys.Result;
+import com.onek.util.prod.ProdEntity;
+import com.onek.util.prod.ProduceClassEntity;
+import com.onek.util.prod.ProduceClassUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchProvider;
@@ -84,29 +87,18 @@ public class ProduceStore {
     }
 
     public static ProdEntity getProdBySku(long sku){
+        String sql = QUERY_PROD_BASE + " AND sku.sku = ? ";
 
-        ProdEntity entity = null;
-        GetResponse response = ElasticSearchProvider.getDocumentById("prod", "prod_type", sku+"");
-        if(response != null){
-            Map<String, Object> sourceMap = response.getSourceAsMap();
-            HashMap detail = (HashMap) sourceMap.get("detail");
-            entity = new ProdEntity();
-            BeanMapUtils.mapToBean(detail, entity);
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(sql, sku);
+
+        if (queryResult.isEmpty()) {
+           return null;
         }
-//        String sql = QUERY_PROD_BASE + " AND sku.sku = ? ";
-//
-//        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(sql, sku);
-//
-//        if (queryResult.isEmpty()) {
-//           return null;
-//        }
-//
-//        ProdEntity[] returnResults = new ProdEntity[queryResult.size()];
-//
-//        BaseDAO.getBaseDAO().convToEntity(queryResult, returnResults, ProdEntity.class);
-//
-//        return returnResults[0];
-        return entity;
+
+        ProdEntity[] returnResults = new ProdEntity[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, returnResults, ProdEntity.class);
+        return returnResults[0];
     }
 
     public static String getProduceName(String pclass) {
