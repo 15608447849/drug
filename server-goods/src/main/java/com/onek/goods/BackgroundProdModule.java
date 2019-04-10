@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 public class BackgroundProdModule {
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
     private static final String PZWH = "^国药准字[H|B|S|T|F|J|Z]\\d{8}$";
-    private static final String ZCZBH = "^[\\u4e00-\\u9fa5]食药监械\\([准|进|许]\\)字\\d{4}第\\d{7}号$";
+//    private static final String ZCZBH = "^[\\u4e00-\\u9fa5]食药监械\\([准|进|许]\\)字\\d{4}第\\d{7}号$";
 
     private static final String GET_MAX_SPU =
             " SELECT SUBSTR(MAX(spu), 8, 3), COUNT(0)"
@@ -36,7 +36,7 @@ public class BackgroundProdModule {
             + " WHERE popnameh = CRC32(?) AND popname = ? "
             + " AND prodnameh = CRC32(?) AND prodname = ? "
             + " AND standarnoh = CRC32(?) AND standarno = ? "
-            + " AND manuno = ? ";
+            + " AND manuno = ? AND spu REGEXP ? ";
 
     private static final String INSERT_PROD_SPU =
             " INSERT INTO {{?" + DSMConst.TD_PROD_SPU + "}} "
@@ -508,11 +508,20 @@ public class BackgroundProdModule {
     }
 
     private String containsSPU(BgProdVO prodVO) {
+
+        StringBuilder regexp =
+                new StringBuilder("^")
+                    .append("[0-9]{1}")
+                    .append(prodVO.getClassNo())
+                    .append("[0-9]{3}")
+                    .append(String.format("%02d", prodVO.getForm()))
+                    .append("$");
+
         List<Object[]> queryResult = BASE_DAO.queryNative(CHECK_SAME_SPU,
                 prodVO.getPopname(), prodVO.getPopname(),
                 prodVO.getProdname(), prodVO.getProdname(),
                 prodVO.getStandarNo(), prodVO.getStandarNo(),
-                prodVO.getManuNo());
+                prodVO.getManuNo(), regexp.toString());
 
         if (queryResult.isEmpty()) {
             return null;
@@ -581,9 +590,9 @@ public class BackgroundProdModule {
             return 1;
         }
 
-        if (Pattern.matches(ZCZBH, standarNo)) {
-            return 2;
-        }
+//        if (Pattern.matches(ZCZBH, standarNo)) {
+//            return 2;
+//        }
 
         return 0;
     }
@@ -602,10 +611,8 @@ public class BackgroundProdModule {
         switch (type) {
             case 1  :
                 return standarNo.contains("J")  ? 2 : 1;
-            case 2  :
-                return standarNo.contains("准") ? 1 : 2;
             default :
-                return 0;
+                return standarNo.contains("准") ? 1 : 2;
         }
     }
 
