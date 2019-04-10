@@ -27,10 +27,9 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
 public class ProdESUtil {
 
@@ -227,7 +226,7 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(!StringUtils.isEmpty(keyword)){
-                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery("content", keyword).analyzer("ik_max_word");
+                MatchQueryBuilder matchQuery = matchQuery("content", keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
@@ -280,7 +279,7 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(!StringUtils.isEmpty(keyword)){
-                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery("content", keyword).analyzer("ik_max_word");
+                MatchQueryBuilder matchQuery = matchQuery("content", keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
             if(spu > 0){
@@ -333,19 +332,20 @@ public class ProdESUtil {
     /**
      * 根据条件全文检索商品
      *
-     * @param status
+     * @param statusSet
      * @param pagenum
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdWithMallFloor(String status,int pagenum,int pagesize){
+    public static SearchResponse searchProdWithMallFloor(Set<Integer> statusSet, int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-            if(!StringUtils.isEmpty(status)){
-                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("cstatus");
-                rangeQuery.gt(status);
-                boolQuery.must(rangeQuery);
+            if(statusSet!=null && statusSet.size() >0){
+                Integer [] resultArray = new Integer[statusSet.size()];
+                resultArray = statusSet.toArray(resultArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery("cstatus", resultArray);
+                boolQuery.must(builder);
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
@@ -353,6 +353,58 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
+                    .addSort("sku", SortOrder.DESC)
+                    .execute().actionGet();
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        return response;
+    }
+
+    /**
+     * 根据状态码列表和sku全文筛选商品
+     *
+     * @param statusSet
+     * @param pagenum
+     * @param pagesize
+     * @return
+     */
+    public static SearchResponse searchProdWithHotAndSpu(Set<Integer> statusSet, int spu,int pagenum, int pagesize){
+        SearchResponse response = null;
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            if(statusSet!=null && statusSet.size() >0){
+                Integer [] resultArray = new Integer[statusSet.size()];
+                resultArray = statusSet.toArray(resultArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery("cstatus", resultArray);
+                boolQuery.must(builder);
+            }
+            if(spu > 0){
+                String start = "1"+addZeroForNum(spu+"", 6) +"00000";
+                String end = "1"+addZeroForNum(spu+"", 6) +"99999";
+                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("spu");
+                rangeQuery.gt(start);
+                rangeQuery.lt(end);
+
+                String start1 = "2"+addZeroForNum(spu+"", 6) +"00000";
+                String end1 = "2"+addZeroForNum(spu+"", 6) +"99999";
+                RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery("spu");
+                rangeQuery1.gt(start1);
+                rangeQuery1.lt(end1);
+                org.elasticsearch.index.query.QueryBuilder postFilterBool =QueryBuilders.boolQuery()
+                        .should(rangeQuery)
+                        .should(rangeQuery1);
+                boolQuery.must(postFilterBool);
+            }
+            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+            int from = pagenum * pagesize - pagesize;
+            response = client.prepareSearch("prod")
+                    .setQuery(boolQuery)
+                    .setFrom(from)
+                    .setSize(pagesize)
+                    .addSort("sku", SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -366,7 +418,7 @@ public class ProdESUtil {
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
-            MatchQueryBuilder matchQuery = QueryBuilders.matchQuery("content", keyword).analyzer("ik_max_word");
+            MatchQueryBuilder matchQuery = matchQuery("content", keyword).analyzer("ik_max_word");
             boolQuery.must(matchQuery);
         }
 
