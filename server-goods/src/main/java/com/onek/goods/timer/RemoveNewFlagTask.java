@@ -49,7 +49,7 @@ public class RemoveNewFlagTask extends TimerTask {
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             if(skuList != null && skuList.size() > 0){
-                Long [] skuArray = new Long[skuList.size()];
+                Object [] skuArray = new Long[skuList.size()];
                 skuArray = skuList.toArray(skuArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
                 boolQuery.must(builder);
