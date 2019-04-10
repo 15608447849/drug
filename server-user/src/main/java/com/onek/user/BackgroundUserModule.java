@@ -4,6 +4,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.entity.UserInfoVo;
@@ -26,6 +27,7 @@ import static com.onek.util.RedisGlobalKeys.getUserCode;
 public class BackgroundUserModule {
     private static final BaseDAO baseDao = BaseDAO.getBaseDAO();
 
+    @UserPermission(ignore = true)
     public Result insertOrUpdUser(AppContext appContext) {
         String json = appContext.param.json;
         UserInfoVo userInfoVo = GsonUtils.jsonToJavaBean(json, UserInfoVo.class);
@@ -70,6 +72,7 @@ public class BackgroundUserModule {
         return count > 0;
     }
 
+    @UserPermission(ignore = true)
     public Result cancelOrFrozenUser(AppContext appContext){
         Result result = new Result();
         String json = appContext.param.json;
@@ -90,6 +93,7 @@ public class BackgroundUserModule {
         return result.fail("操作失败");
     }
 
+    @UserPermission(ignore = true)
     public Result queryUsers(AppContext appContext) {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
@@ -143,6 +147,7 @@ public class BackgroundUserModule {
         return sqlBuilder;
     }
 
+    @UserPermission(ignore = true)
     public Result getUserDetail(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
@@ -160,6 +165,7 @@ public class BackgroundUserModule {
         return result.success(userInfoVos[0]);
     }
 
+    @UserPermission(ignore = true)
     public Result updatePwd(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
@@ -169,6 +175,7 @@ public class BackgroundUserModule {
         return result;
     }
 
+    @UserPermission(ignore = true)
     public Result resetPwd(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;

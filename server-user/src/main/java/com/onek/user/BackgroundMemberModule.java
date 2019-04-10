@@ -5,6 +5,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.entity.MemberLevelVO;
@@ -34,7 +35,7 @@ public class BackgroundMemberModule {
 
     private static IRedisCache memLevelProxy =(IRedisCache) CacheProxyInstance.createInstance(new MemberLevelImpl());
 
-    @SuppressWarnings("unchecked")
+    @UserPermission(ignore = true)
     public Result queryAllMemberLevel(AppContext appContext) {
         List<MemberLevelVO> levels = (List<MemberLevelVO>)memLevelProxy.queryAll();
         List<JSONObject> results = new ArrayList<>();
