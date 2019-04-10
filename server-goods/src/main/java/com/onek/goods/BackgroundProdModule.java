@@ -480,7 +480,8 @@ public class BackgroundProdModule {
             throw new IllegalArgumentException("产品名为空");
         }
 
-        if (StringUtils.isEmpty(prodVO.getStandarNo())) {
+        if (!String.valueOf(prodVO.getClassNo()).startsWith("21")
+                && StringUtils.isEmpty(prodVO.getStandarNo())) {
             throw new IllegalArgumentException("批准文号/注册证编号为空");
         }
 

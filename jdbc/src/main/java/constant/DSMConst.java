@@ -48,7 +48,10 @@ public interface DSMConst extends UDAConst {
             {"td_tran_colle"}, //29 我的收藏表
             {"tb_mall_floor"}, //30 楼层表
             {"td_footprint"},//31 我的足迹表
-            {"td_push_msg"}//32 推送消息表
+            {"td_push_msg"}, //32 推送消息表
+            {"tb_area_pca"}, //33 省市区县表
+            {"tb_area_street"}, //34 街表
+            {"tb_area_villages"}, //35 村表
 
     };
 
@@ -88,6 +91,10 @@ public interface DSMConst extends UDAConst {
     public final static int TB_MALL_FLOOR = 30;
     public final static int TD_FOOTPRINT = 31;
     public final static int TD_PUSH_MSG = 32;
+
+    public final static int TB_AREA_PCA = 33;
+    public final static int TB_AREA_STREET = 34;
+    public final static int TB_AREA_VILLAGES = 35;
 
 
 

@@ -7,6 +7,7 @@ import util.BeanMapUtils;
 import java.util.HashMap;
 import java.util.Map;
 
+@SuppressWarnings("unchecked")
 public class ProdInfoStore {
     public static ProdEntity getProdBySku(long sku){
 

@@ -1,51 +1,66 @@
 package com.onek.util.area;
 
-import com.google.gson.*;
 import constant.DSMConst;
 import dao.BaseDAO;
-import util.TreeUtil;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 
 public class AreaStore {
-    private static List<AreaEntity> AREA_TREE = null;
-    private static String TREE_STR = null;
-    private static final String AREA_SELECT =
-            " SELECT areac, arean, lat, lng, cstatus "
-                    + " FROM {{?" + DSMConst.D_GLOBAL_AREA + "}} "
-                    + " WHERE cstatus&1 = 0 ";
+    private static final String AREA_SELECT_BASE = " SELECT areac, arean, cstatus ";
+    private static final String AREA_WHERE_BASE = " WHERE cstatus&1 = 0 AND areac = ? ";
+    private static final String AREA_WHERE_CHILDREN =
+            " WHERE cstatus&1 = 0 AND areac REGEXP ? ";
 
-    static {
-        init();
-    }
 
-    private static void init() {
-        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(AREA_SELECT);
-        AreaEntity[] areaEntities = new AreaEntity[queryResult.size()];
-        BaseDAO.getBaseDAO().convToEntity(queryResult, areaEntities, AreaEntity.class);
-        List treeList = TreeUtil.list2Tree(Arrays.asList(areaEntities));
-        AREA_TREE = Collections.unmodifiableList(treeList);
+    private static final String[] FROMS =
+            {
+                " FROM {{?" + DSMConst.TB_AREA_PCA + "}} ",
+                " FROM {{?" + DSMConst.TB_AREA_VILLAGES + "}} ",
+                " FROM {{?" + DSMConst.TB_AREA_STREET + "}} ",
+            };
 
-        JsonArray temp = new JsonParser()
-                        .parse(new Gson().toJson(AREA_TREE))
-                        .getAsJsonArray();
-        handlerJson(temp);
-        TREE_STR = temp.toString();
-    }
+    private static final String PCA =
+            AREA_SELECT_BASE
+            + FROMS[0]
+            + AREA_WHERE_BASE;
 
-    public static String getTreeJson() {
-        return TREE_STR;
-    }
+    private static final String PCA_C =
+            AREA_SELECT_BASE
+            + FROMS[0]
+            + AREA_WHERE_CHILDREN;
 
-    public static String[] getCompleteName(int areac) {
-        try {
-            AreaUtil.areacCheck(areac);
-        } catch (Exception ex) {
-            return new String[4];
-        }
+    private static final String STREET =
+            AREA_SELECT_BASE
+            + FROMS[2]
+            + AREA_WHERE_BASE;
+
+    private static final String STREET_C =
+            AREA_SELECT_BASE
+            + FROMS[2]
+            + AREA_WHERE_CHILDREN;
+
+    private static final String VILLAGES =
+            AREA_SELECT_BASE
+            + FROMS[1]
+            + AREA_WHERE_BASE;
+
+    private static final String VILLAGES_C =
+            AREA_SELECT_BASE
+            + FROMS[1]
+            + AREA_WHERE_CHILDREN;
+
+    private static final String[] SQLS =
+            { PCA, PCA, PCA, VILLAGES, STREET };
+
+    private static final String[] SQLCS =
+            { PCA_C, PCA_C, PCA_C, VILLAGES_C, STREET_C };
+
+    private static final String REG = "^${{HEAD}}[0-9]{${{ANYS}}}[1-9]{${{ANYE}}}[0]{${{ZERO}}}$";
+
+    private static final String REG_HEAD = "${{HEAD}}";
+    private static final String REG_ANYS = "${{ANYS}}";
+    private static final String REG_ANYE = "${{ANYE}}";
+    private static final String REG_ZERO = "${{ZERO}}";
 
         String[] result = new String[AreaUtil.getLayer(areac) + 1];
 
@@ -73,67 +88,32 @@ public class AreaStore {
             return null;
         }
 
-        AreaEntity areaEntity = findArea(AREA_TREE, areac, 0);
+        AreaEntity[] tArray = new AreaEntity[queryResult.size()];
+        BaseDAO.getBaseDAO().convToEntity(queryResult, tArray, AreaEntity.class);
 
-        return areaEntity;
+        return tArray[0];
     }
 
-    private static AreaEntity findArea(List<AreaEntity> areas, int areac, int layer) {
-        if (areas == null || areas.isEmpty()) {
-            return null;
+    private static String getChildrenRegexp(long areac) {
+        String head, anys, anye, zero;
+
+        int layer = areac == 0 ? 0 : AreaUtil.getLayer(areac) + 1;
+
+        if (layer >= REG_TIMES.length) {
+            throw new IllegalArgumentException("areac is error " + areac);
         }
 
-        int indexCode = AreaUtil.getCodeByLayer(areac, layer);
-        AreaEntity result = null;
-        for (AreaEntity area : areas) {
-            if (area.getAreac() != indexCode) {
-                continue;
-            }
+        int[] params = REG_TIMES[layer];
 
-            if (areac == area.getAreac()) {
-                result = area;
-                break;
-            }
+        head = String.valueOf(areac).substring(0, params[0]);
+        anys  = String.valueOf(params[1]);
+        anye = String.valueOf(params[2]);
+        zero = String.valueOf(params[3]);
 
-            result = findArea(area.getChildren(), areac, layer + 1);
-
-            if (result != null) {
-                break;
-            }
-        }
-
-        return result;
+        return REG.replace(REG_HEAD, head)
+                  .replace(REG_ANYS, anys)
+                  .replace(REG_ANYE, anye)
+                  .replace(REG_ZERO, zero);
     }
 
-    private static void handlerJson(JsonElement element) {
-        if (element == null) {
-            return;
-        }
-
-        if (element.isJsonArray()) {
-            JsonArray jsonArray = element.getAsJsonArray();
-            Iterator<JsonElement> it = jsonArray.iterator();
-            while (it.hasNext()) {
-                handlerJson(it.next());
-            }
-        } else if (element.isJsonObject()) {
-            JsonObject jsonObject = element.getAsJsonObject();
-
-            jsonObject.remove("lat");
-            jsonObject.remove("lng");
-            jsonObject.remove("cstatus");
-            jsonObject.add("label", jsonObject.remove("arean"));
-            JsonElement c = jsonObject.remove("areac");
-            jsonObject.add("value", c);
-            jsonObject.add("id", c);
-
-            JsonArray children = jsonObject.getAsJsonArray("children");
-
-            if (children.size() == 0) {
-                jsonObject.remove("children");
-            } else {
-                handlerJson(children);
-            }
-        }
-    }
 }
