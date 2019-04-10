@@ -25,5 +25,27 @@ package com.onek.server.inf;
  **/
 public interface _InterfacesOperations
 {
+    /**
+     * 前后台交互
+     * @param __current The Current object for the invocation.
+     **/
     String accessService(IRequest request, Ice.Current __current);
+
+    /**
+     * 消息推送-服务端 / 客户端上线
+     * @param __current The Current object for the invocation.
+     **/
+    void online(Ice.Identity identity, Ice.Current __current);
+
+    /**
+     * 消息推送-服务端 / 客户端下线
+     * @param __current The Current object for the invocation.
+     **/
+    void offline(String identityName, Ice.Current __current);
+
+    /**
+     * 消息推送-服务端 / 后端服务调用 - 向指定客户端发送消息
+     * @param __current The Current object for the invocation.
+     **/
+    void sendMessageToClient(String identityName, String message, Ice.Current __current);
 }

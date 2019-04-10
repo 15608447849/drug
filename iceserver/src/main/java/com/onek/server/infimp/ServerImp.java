@@ -20,7 +20,7 @@ import java.util.Iterator;
  * ice bind type = ::inf::Interfaces
  * 接口实现
  */
-public class ServerImp extends _InterfacesDisp {
+public class ServerImp extends IcePushMessageServerImps {
 
     //拦截器
     private ArrayList<IServerInterceptor> interceptorList;
@@ -37,9 +37,10 @@ public class ServerImp extends _InterfacesDisp {
     //上下文实例 - 默认
     private Class contextCls = IceContext.class;
 
-    ServerImp(String serverName, Logger logger) {
+    ServerImp(Communicator communicator,String serverName) {
+        super(communicator);
         this.serverName = serverName;
-        this.logger = logger;
+        this.logger = communicator.getLogger();
         this.pkgPath = IceProperties.INSTANCE.pkgSrvMap.get(serverName);
         initInterceptorList();
         initContextClass();
@@ -84,7 +85,6 @@ public class ServerImp extends _InterfacesDisp {
     //打印参数
     private void printParam(IRequest request, Current __current) {
         try {
-
             StringBuilder sb = new StringBuilder();
             sb.append("call:\t" +serverName+ " ->" + request.pkg +" -> " + request.cls +" -> "+request.method+"\n");
             if(!StringUtils.isEmpty(request.param.token)){

@@ -20,6 +20,9 @@ public class RedisGlobalKeys {
     //企业资质表 资质id 自增键
     public static final String COMP_APT_TAB_APTID = "COMP_APT_TAB_APTID";
 
+    //优惠码
+    public static final String OFFER_CODE = "OFFER_CODE";
+
     /**
      * 获取用户ID
      */
@@ -39,4 +42,10 @@ public class RedisGlobalKeys {
         return  RedisUtil.getStringProvide().increase(COMP_APT_TAB_APTID,1);
     }
 
+    /**
+     * 获取优惠码ID
+     */
+    public static int getOfferCode(){
+        return Math.toIntExact(RedisUtil.getStringProvide().increase(OFFER_CODE));
+    }
 }

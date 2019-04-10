@@ -21,27 +21,12 @@
 package com.onek.server.inf;
 
 /**
- * 服务接口 interface
+ * 消息推送-客户端 需要具体客户端实现
  **/
-public interface _InterfacesOperationsNC
+public interface PushMessageClient extends Ice.Object,
+                                           _PushMessageClientOperations, _PushMessageClientOperationsNC
 {
-    /**
-     * 前后台交互
-     **/
-    String accessService(IRequest request);
+    public static final String ice_staticId = "::inf::PushMessageClient";
 
-    /**
-     * 消息推送-服务端 / 客户端上线
-     **/
-    void online(Ice.Identity identity);
-
-    /**
-     * 消息推送-服务端 / 客户端下线
-     **/
-    void offline(String identityName);
-
-    /**
-     * 消息推送-服务端 / 后端服务调用 - 向指定客户端发送消息
-     **/
-    void sendMessageToClient(String identityName, String message);
+    public static final long serialVersionUID = 609825392L;
 }

@@ -31,10 +31,10 @@ public class ActivityVO {
 
     private List<LadderVO> ladderVOS;//阶梯优惠
 
-    private List<AssGiftVO> assGiftVOS;//优惠商品赠换
+//    private List<AssGiftVO> assGiftVOS;//优惠商品赠换
 
     //活动关联商品集合
-    private List<GoodsVO> assDrugVOS;
+//    private List<GoodsVO> assDrugVOS;
 
     public long getUnqid() {
         return unqid;
@@ -148,13 +148,13 @@ public class ActivityVO {
         this.cstatus = cstatus;
     }
 
-    public List<GoodsVO> getAssDrugVOS() {
-        return assDrugVOS;
-    }
-
-    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
-        this.assDrugVOS = assDrugVOS;
-    }
+//    public List<GoodsVO> getAssDrugVOS() {
+//        return assDrugVOS;
+//    }
+//
+//    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
+//        this.assDrugVOS = assDrugVOS;
+//    }
 
     public List<TimeVO> getTimeVOS() {
         return timeVOS;
@@ -164,13 +164,13 @@ public class ActivityVO {
         this.timeVOS = timeVOS;
     }
 
-    public List<AssGiftVO> getAssGiftVOS() {
-        return assGiftVOS;
-    }
-
-    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
-        this.assGiftVOS = assGiftVOS;
-    }
+//    public List<AssGiftVO> getAssGiftVOS() {
+//        return assGiftVOS;
+//    }
+//
+//    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
+//        this.assGiftVOS = assGiftVOS;
+//    }
 
     public List<LadderVO> getLadderVOS() {
         return ladderVOS;

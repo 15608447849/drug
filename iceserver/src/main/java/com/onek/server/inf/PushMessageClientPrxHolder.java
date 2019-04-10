@@ -20,15 +20,18 @@
 
 package com.onek.server.inf;
 
-/**
- * 前后台交互
- **/
-
-public abstract class Callback_Interfaces_accessService
-    extends IceInternal.TwowayCallback implements Ice.TwowayCallbackArg1<String>
+public final class PushMessageClientPrxHolder
 {
-    public final void __completed(Ice.AsyncResult __result)
+    public
+    PushMessageClientPrxHolder()
     {
-        InterfacesPrxHelper.__accessService_completed(this, __result);
     }
+
+    public
+    PushMessageClientPrxHolder(PushMessageClientPrx value)
+    {
+        this.value = value;
+    }
+
+    public PushMessageClientPrx value;
 }
