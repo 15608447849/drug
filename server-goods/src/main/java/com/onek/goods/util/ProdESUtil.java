@@ -157,7 +157,7 @@ public class ProdESUtil {
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             if(skuList != null && skuList.size() > 0){
-                Long [] skuArray = new Long[skuList.size()];
+                Object [] skuArray = new Long[skuList.size()];
                 skuArray = skuList.toArray(skuArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
                 boolQuery.must(builder);
@@ -342,7 +342,7 @@ public class ProdESUtil {
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             if(statusSet!=null && statusSet.size() >0){
-                Integer [] resultArray = new Integer[statusSet.size()];
+                Object [] resultArray = new Integer[statusSet.size()];
                 resultArray = statusSet.toArray(resultArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("cstatus", resultArray);
                 boolQuery.must(builder);
@@ -376,7 +376,7 @@ public class ProdESUtil {
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             if(statusSet!=null && statusSet.size() >0){
-                Integer [] resultArray = new Integer[statusSet.size()];
+                Object[] resultArray = new Integer[statusSet.size()];
                 resultArray = statusSet.toArray(resultArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("cstatus", resultArray);
                 boolQuery.must(builder);
@@ -471,7 +471,12 @@ public class ProdESUtil {
     }
 
     public static void main(String[] args) {
-        getConditions("", 10, "manuname");
+//        getConditions("", 10, "manuname");
+        Set<Integer> statusList = new HashSet<>();
+        statusList.add(0);
+//        statusList.add(256);
+        SearchResponse response = searchProdWithMallFloor(statusList,1,100);
+        System.out.println(response.getHits().totalHits);
     }
 
 }
