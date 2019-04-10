@@ -5,28 +5,28 @@ import redis.annation.GetDictWay;
 
 public class BgProdVO implements Cloneable{
     /* ----------- 商品SPU表 ------------- */
-    private long spu;
+    private Long spu;
     private String popname;
     private String prodname;
     private String standarNo;
-    private long brandNo;
+    private Long brandNo;
     private String brandName;
-    private long manuNo;
+    private Long manuNo;
     private String manuName;
 
     @DictCacheField(reflectcolumn ="rxName")
-    private int rx;
+    private Integer rx;
 
     @DictCacheField(reflectcolumn ="insuranceName")
-    private int insurance;
+    private Integer insurance;
 
-    private int gspGMS;
-    private int gspSC;
+    private Integer gspGMS;
+    private Integer gspSC;
     private String detail;
     private String spuCstatus;
 
     /* ----------- 商品SKU表 ------------- */
-    private long sku;
+    private Long sku;
     private double vatp;
     private double mp;
     private double rrp;
@@ -35,15 +35,15 @@ public class BgProdVO implements Cloneable{
     private String prodsdate;
     private String prodedate;
 
-    private int store;
-    private int activitystore;
-    private int limits;
-    private int sales;
-    private int wholenum;
-    private int medpacknum;
+    private Integer store;
+    private Integer activitystore;
+    private Integer limits;
+    private Integer sales;
+    private Integer wholenum;
+    private Integer medpacknum;
 
     @DictCacheField(reflectcolumn ="unitName")
-    private int unit;
+    private Integer unit;
 
     private String ondate;
     private String ontime;
@@ -51,25 +51,25 @@ public class BgProdVO implements Cloneable{
     private String offtime;
     private String spec;
 
-    private int prodstatus;
-    private int imagestatus;
-    private int skuCstatus;
+    private Integer prodstatus;
+    private Integer imagestatus;
+    private Integer skuCstatus;
 
-    private long classNo;
+    private Long classNo;
     private String className;
 
     @DictCacheField(reflectcolumn ="formName", type = "dosageform", dictWay = GetDictWay.CUSTOMC_AND_TYPE)
-    private int form;
+    private Integer form;
     private String formName;
     private String rxName;
     private String insuranceName;
     private String unitName;
 
-    public long getSpu() {
+    public Long getSpu() {
         return spu;
     }
 
-    public void setSpu(long spu) {
+    public void setSpu(Long spu) {
         this.spu = spu;
     }
 
@@ -97,11 +97,11 @@ public class BgProdVO implements Cloneable{
         this.standarNo = standarNo;
     }
 
-    public long getBrandNo() {
+    public Long getBrandNo() {
         return brandNo;
     }
 
-    public void setBrandNo(long brandNo) {
+    public void setBrandNo(Long brandNo) {
         this.brandNo = brandNo;
     }
 
@@ -113,11 +113,11 @@ public class BgProdVO implements Cloneable{
         this.brandName = brandName;
     }
 
-    public long getManuNo() {
+    public Long getManuNo() {
         return manuNo;
     }
 
-    public void setManuNo(long manuNo) {
+    public void setManuNo(Long manuNo) {
         this.manuNo = manuNo;
     }
 
@@ -129,11 +129,11 @@ public class BgProdVO implements Cloneable{
         this.manuName = manuName;
     }
 
-    public int getRx() {
+    public Integer getRx() {
         return rx;
     }
 
-    public void setRx(int rx) {
+    public void setRx(Integer rx) {
         this.rx = rx;
     }
 
@@ -145,11 +145,11 @@ public class BgProdVO implements Cloneable{
         this.rxName = rxName;
     }
 
-    public int getInsurance() {
+    public Integer getInsurance() {
         return insurance;
     }
 
-    public void setInsurance(int insurance) {
+    public void setInsurance(Integer insurance) {
         this.insurance = insurance;
     }
 
@@ -161,19 +161,19 @@ public class BgProdVO implements Cloneable{
         this.insuranceName = insuranceName;
     }
 
-    public int getGspGMS() {
+    public Integer getGspGMS() {
         return gspGMS;
     }
 
-    public void setGspGMS(int gspGMS) {
+    public void setGspGMS(Integer gspGMS) {
         this.gspGMS = gspGMS;
     }
 
-    public int getGspSC() {
+    public Integer getGspSC() {
         return gspSC;
     }
 
-    public void setGspSC(int gspSC) {
+    public void setGspSC(Integer gspSC) {
         this.gspSC = gspSC;
     }
 
@@ -193,11 +193,11 @@ public class BgProdVO implements Cloneable{
         this.spuCstatus = spuCstatus;
     }
 
-    public long getSku() {
+    public Long getSku() {
         return sku;
     }
 
-    public void setSku(long sku) {
+    public void setSku(Long sku) {
         this.sku = sku;
     }
 
@@ -257,59 +257,59 @@ public class BgProdVO implements Cloneable{
         this.prodedate = prodedate;
     }
 
-    public int getStore() {
+    public Integer getStore() {
         return store;
     }
 
-    public void setStore(int store) {
+    public void setStore(Integer store) {
         this.store = store;
     }
 
-    public int getActivitystore() {
+    public Integer getActivitystore() {
         return activitystore;
     }
 
-    public void setActivitystore(int activitystore) {
+    public void setActivitystore(Integer activitystore) {
         this.activitystore = activitystore;
     }
 
-    public int getLimits() {
+    public Integer getLimits() {
         return limits;
     }
 
-    public void setLimits(int limits) {
+    public void setLimits(Integer limits) {
         this.limits = limits;
     }
 
-    public int getSales() {
+    public Integer getSales() {
         return sales;
     }
 
-    public void setSales(int sales) {
+    public void setSales(Integer sales) {
         this.sales = sales;
     }
 
-    public int getWholenum() {
+    public Integer getWholenum() {
         return wholenum;
     }
 
-    public void setWholenum(int wholenum) {
+    public void setWholenum(Integer wholenum) {
         this.wholenum = wholenum;
     }
 
-    public int getMedpacknum() {
+    public Integer getMedpacknum() {
         return medpacknum;
     }
 
-    public void setMedpacknum(int medpacknum) {
+    public void setMedpacknum(Integer medpacknum) {
         this.medpacknum = medpacknum;
     }
 
-    public int getUnit() {
+    public Integer getUnit() {
         return unit;
     }
 
-    public void setUnit(int unit) {
+    public void setUnit(Integer unit) {
         this.unit = unit;
     }
 
@@ -361,35 +361,35 @@ public class BgProdVO implements Cloneable{
         this.spec = spec;
     }
 
-    public int getProdstatus() {
+    public Integer getProdstatus() {
         return prodstatus;
     }
 
-    public void setProdstatus(int prodstatus) {
+    public void setProdstatus(Integer prodstatus) {
         this.prodstatus = prodstatus;
     }
 
-    public int getImagestatus() {
+    public Integer getImagestatus() {
         return imagestatus;
     }
 
-    public void setImagestatus(int imagestatus) {
+    public void setImagestatus(Integer imagestatus) {
         this.imagestatus = imagestatus;
     }
 
-    public int getSkuCstatus() {
+    public Integer getSkuCstatus() {
         return skuCstatus;
     }
 
-    public void setSkuCstatus(int skuCstatus) {
+    public void setSkuCstatus(Integer skuCstatus) {
         this.skuCstatus = skuCstatus;
     }
 
-    public long getClassNo() {
+    public Long getClassNo() {
         return classNo;
     }
 
-    public void setClassNo(long classNo) {
+    public void setClassNo(Long classNo) {
         this.classNo = classNo;
     }
 
@@ -401,11 +401,11 @@ public class BgProdVO implements Cloneable{
         this.className = className;
     }
 
-    public int getForm() {
+    public Integer getForm() {
         return form;
     }
 
-    public void setForm(int form) {
+    public void setForm(Integer form) {
         this.form = form;
     }
 
