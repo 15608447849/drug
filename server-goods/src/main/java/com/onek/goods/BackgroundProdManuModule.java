@@ -40,15 +40,15 @@ public class BackgroundProdManuModule {
                     new Gson().fromJson(appContext.param.json, ProdManuVO.class);
 
             if (prodManuVO == null) {
-                throw new IllegalArgumentException("VO is NULL");
+                throw new IllegalArgumentException("对象为空");
             }
 
             if (StringUtils.isEmpty(prodManuVO.getManuname())) {
-                throw new IllegalArgumentException("manuname is empty");
+                throw new IllegalArgumentException("厂家名为空");
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            return new Result().fail("参数错误");
+//            e.printStackTrace();
+            return new Result().fail(e.getMessage());
         }
 
         long manuId = GenIdUtil.getUnqId();
