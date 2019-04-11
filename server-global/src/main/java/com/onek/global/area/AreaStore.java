@@ -1,5 +1,7 @@
-package com.onek.util.area;
+package com.onek.global.area;
 
+import com.onek.util.area.AreaEntity;
+import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 

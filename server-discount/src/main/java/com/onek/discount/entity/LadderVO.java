@@ -12,12 +12,6 @@ public class LadderVO {
     //阶梯码
     private long unqid;
 
-    //活动码
-    private long actcode;
-
-    //规则码
-    private int ruleno;
-
     //金额阶梯值
     private int ladamt;
 
@@ -35,23 +29,6 @@ public class LadderVO {
     private long assgiftno;//赠换商品码
 
     private String giftname;//商品名称
-
-
-    public long getActcode() {
-        return actcode;
-    }
-
-    public void setActcode(long actcode) {
-        this.actcode = actcode;
-    }
-
-    public int getRuleno() {
-        return ruleno;
-    }
-
-    public void setRuleno(int ruleno) {
-        this.ruleno = ruleno;
-    }
 
     public int getLadamt() {
         return ladamt;

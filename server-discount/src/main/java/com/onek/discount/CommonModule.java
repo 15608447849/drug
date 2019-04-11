@@ -62,18 +62,21 @@ public class CommonModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int type = jsonObject.get("type").getAsInt();
-        int cstatus = 64;
-        if(type == 2){
-            cstatus = 128;
-        }
+        int brulecode = jsonObject.get("type").getAsInt();
+//        String selectActSQL = " SELECT brulecode FROM {{?" + DSMConst.TD_PROM_ACT +"}} where cstatus&1=0 and "
+//                + " brulecode like '" + brulecode + "%' and edate>CURRENT_DATE" ;
+//        List<Object[]> queryActResult = baseDao.queryNative(selectActSQL);
+        String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}}  where cstatus&1=0 "
+                + " brulecode like '" + brulecode + "%' and brulecode not exits(select brulecode from {{?"
+                + DSMConst.TD_PROM_ACT +"}} where brulecode like '" + brulecode +"%' and edate>CURRENT_DATE)";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
 
-        String selectSQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus & ? > 0 ";
-        List<Object[]> queryResult = baseDao.queryNative(selectSQL,cstatus);
         RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
-        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"rulecode", "rulename"});
+        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
         return result.success(rulesVOS);
     }
+
+
 
     /**
      * @description 参加资格

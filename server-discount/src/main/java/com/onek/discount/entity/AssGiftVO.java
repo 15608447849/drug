@@ -9,7 +9,7 @@ package com.onek.discount.entity;
 public class AssGiftVO {
 
     private long unqid;//编码
-    private long actcode;//活动码
+    private int offercode;//优惠码
     private long assgiftno;//赠换商品码
     private int cstatus;
     private String giftname;//商品名称
@@ -30,12 +30,12 @@ public class AssGiftVO {
         this.unqid = unqid;
     }
 
-    public long getActcode() {
-        return actcode;
+    public int getOffercode() {
+        return offercode;
     }
 
-    public void setActcode(long actcode) {
-        this.actcode = actcode;
+    public void setOffercode(int offercode) {
+        this.offercode = offercode;
     }
 
     public long getAssgiftno() {

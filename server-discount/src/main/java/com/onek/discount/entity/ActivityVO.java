@@ -21,7 +21,7 @@ public class ActivityVO {
     private long actcycle;//活动周期
     private String sdate;//活动开始日期
     private String edate;//活动结束日期
-    private int rulecode;//活动规则码
+    private int brulecode;//活动规则码
     private int cstatus;//综合状态码
     private String ruleName;//规则名称
 
@@ -132,12 +132,12 @@ public class ActivityVO {
         this.edate = edate;
     }
 
-    public int getRulecode() {
-        return rulecode;
+    public int getBrulecode() {
+        return brulecode;
     }
 
-    public void setRulecode(int rulecode) {
-        this.rulecode = rulecode;
+    public void setBrulecode(int brulecode) {
+        this.brulecode = brulecode;
     }
 
     public int getCstatus() {

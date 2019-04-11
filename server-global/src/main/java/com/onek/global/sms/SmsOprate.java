@@ -1,9 +1,9 @@
-package sms;
+package com.onek.global.sms;
 
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
-import sms.entity.SmsTemplate;
+import com.onek.global.sms.entity.SmsTemplate;
 
 import java.io.IOException;
 import java.security.NoSuchAlgorithmException;

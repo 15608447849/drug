@@ -1,4 +1,4 @@
-package sms.entity;
+package com.onek.global.sms.entity;
 
 /**
  * @author 11842
