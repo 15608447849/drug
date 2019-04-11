@@ -26,6 +26,7 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.util.*;
 
@@ -69,6 +70,8 @@ public class ProdESUtil {
             data.put("vatp", prodVO.getVatp());
             data.put("sales", prodVO.getSales());
             data.put("rulestatus", 0);
+            data.put("storestatus", 0);
+            data.put("time", TimeUtils.date_yMd_Hms_2String(new Date()));
             data.put("detail", JSONObject.toJSON(prodVO));
             IndexResponse response = ElasticSearchProvider.addDocument(data, "prod", "prod_type", sku+"");
             if(response == null || RestStatus.CREATED != response.status()) {
@@ -119,7 +122,10 @@ public class ProdESUtil {
             data.put("vatp", prodVO.getVatp());
             data.put("sales", prodVO.getSales());
             data.put("rulestatus", 0);
+            data.put("storestatus", 0);
             data.put("detail", JSONObject.toJSON(prodVO));
+            GetResponse getResponse = ElasticSearchProvider.getDocumentById("prod", "prod_type", sku+"");
+            data.put("time", getResponse.getSourceAsMap().get("time").toString());
             UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, "prod", "prod_type", sku+"");
             if(response == null || RestStatus.OK != response.status()) {
                 return -1;
@@ -353,7 +359,7 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort("sku", SortOrder.DESC)
+                    .addSort("time", SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -383,7 +389,7 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort("sku", SortOrder.DESC)
+                    .addSort("time", SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -434,7 +440,7 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort("sku", SortOrder.DESC)
+                    .addSort("time", SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
