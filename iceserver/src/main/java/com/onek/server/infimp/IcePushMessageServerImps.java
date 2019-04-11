@@ -100,7 +100,8 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
             PushMessageClientPrx clientPrx = _clientsMaps.get(identityName);
             if (clientPrx!=null){
                 try {
-                    clientPrx.receive(message);
+
+                    clientPrx.receive(convertMessage(identityName,message));
                     communicator.getLogger().print("send ok , '"+identityName+"' msg:"+message);
                     changeMessageStateToDb(identityName,id);
                 } catch (Exception e) {
@@ -147,6 +148,14 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
 
         }
         return null;
+    }
+
+    @Override
+    public String convertMessage(String identityName, String message) {
+        if (iPushMessageStore!=null) {
+            return iPushMessageStore.convertMessage(identityName,message);
+        }
+        return message;
     }
 
     @Override

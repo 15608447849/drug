@@ -10,7 +10,6 @@ import java.util.Map;
 
 import static Ice.Application.communicator;
 import static constant.DSMConst.TD_PUSH_MSG;
-import static constant.DSMConst.TD_TRAN_COLLE;
 import static global.GenIdUtil.getUnqId;
 import static util.TimeUtils.getCurrentYear;
 
@@ -85,4 +84,11 @@ public class PushMessageMySqlImps implements IPushMessageStore {
         communicator().getLogger().print("查询-离线数据\t"+identityName+" - 条数:"+ map.size());
         return map;
     }
+
+    @Override
+    public String convertMessage(String identityName, String message) {
+        return message;
+    }
+
+
 }
