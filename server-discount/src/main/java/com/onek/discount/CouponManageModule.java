@@ -208,8 +208,13 @@ public class CouponManageModule {
                             "qlfno", "qlfval", "desc", "periodtype", "periodday",
                             "startdate", "enddate", "ruleno","validday","validflag","rulename"});
 
+        int rRuleCode = couponVOS[0].getRuleno();
+        String rType = rRuleCode + "";
+        couponVOS[0].setRuletype(Integer.parseInt(rType.substring(1,2)));
+        couponVOS[0].setPreWay(Integer.parseInt(rType.substring(2,3)));
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
         couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0].getRuleno()));
+        couponVOS[0].setActiveRule(getRules(rRuleCode));
 
         return  result.success(couponVOS[0]);
     }
@@ -540,6 +545,19 @@ public class CouponManageModule {
             return result.success("操作成功");
         }
         return result.fail("操作失败");
+    }
+
+
+    private List<RulesVO> getRules(int bRuleCode) {
+        int code = Integer.parseInt((bRuleCode + "").substring(0,3));
+        String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
+                + " and brulecode like '" + code + "%' and  NOT EXISTS(select brulecode from {{?"
+                + DSMConst.TD_PROM_COUPON +"}} b where cstatus&1=0 and a.brulecode = b.brulecode and brulecode like '"
+                + code +"%' and edate>CURRENT_DATE and a.brulecode<>"+bRuleCode+")";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
+        return Arrays.asList(rulesVOS);
     }
 
 
