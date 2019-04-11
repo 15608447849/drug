@@ -55,8 +55,23 @@ public class HigherProfitsTask extends TimerTask {
             }
 
             if(skuList.size() > 0){
-                int result = batchDelHighProfitNewFlag(skuList);
-                if(result > 0) BaseDAO.getBaseDAO().updateNative(UPDATE_ADD_HIGHPROFIT_SQL, new Object[]{});
+                int result = batchAddHighProfitNewFlag(skuList);
+                if(result > 0) {
+                    StringBuilder sql = new StringBuilder(UPDATE_ADD_HIGHPROFIT_SQL +" and sku in(");
+
+                    int index = 0;
+                    for (Long sku : skuList) {
+                        index++;
+                        sql.append(sku);
+                        if (index < skuList.size()) {
+                            sql.append(",");
+                        }
+                    }
+
+                    sql.append(") ");
+
+                    BaseDAO.getBaseDAO().updateNative(sql.toString(), new Object[]{});
+                }
             }
         }
     }

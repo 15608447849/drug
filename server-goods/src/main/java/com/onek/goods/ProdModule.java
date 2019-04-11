@@ -87,7 +87,7 @@ public class ProdModule {
         Set<Integer> result = new HashSet<>();
         NumUtil.arrangeAdd(256, bb, result);
 
-        List<ProdVO> newprodList = getFilterProds(result);
+        List<ProdVO> newprodList = getFilterProds(result, 1);
 
         List<ProdVO> filterProdList = loadProd(newprodList, 256);
 
@@ -102,7 +102,7 @@ public class ProdModule {
         Set<Integer> result1 = new HashSet<>();
         NumUtil.arrangeAdd(512, bb1, result1);
 
-        List<ProdVO> hotprodList = getFilterProds(result1);
+        List<ProdVO> hotprodList = getFilterProds(result1, 1);
         List<ProdVO> filterProdList = loadProd(hotprodList, 128);
 
         return new Result().success(filterProdList);
@@ -116,7 +116,7 @@ public class ProdModule {
         Set<Integer> result1 = new HashSet<>();
         NumUtil.arrangeAdd(128, bb1, result1);
 
-        List<ProdVO> hotprodList = getFilterProds(result1);
+        List<ProdVO> hotprodList = getFilterProds(result1, 2);
         List<ProdVO> filterProdList = loadProd(hotprodList, 128);
 
         return new Result().success(filterProdList);
@@ -548,15 +548,15 @@ public class ProdModule {
         return newProdList;
     }
 
-    private List<ProdVO> getFilterProds(Set<Integer> result) {
-        SearchResponse response = ProdESUtil.searchProdWithMallFloor(result, 1, 100);
+    private List<ProdVO> getFilterProds(Set<Integer> result,int sort) {
+        SearchResponse response = ProdESUtil.searchProdWithStatusList(result, sort,1, 100);
         List<ProdVO> prodList = new ArrayList<>();
         if (response == null || response.getHits().totalHits <= 10) {
             SearchHits hits = response.getHits();
             if(hits.totalHits > 0){
                 assembleData(response, prodList);
             }
-            response = ProdESUtil.searchProdWithMallFloor(null, 1, 100);
+            response = ProdESUtil.searchProdWithStatusList(null, sort,1, 100);
         }
 
         assembleData(response, prodList);

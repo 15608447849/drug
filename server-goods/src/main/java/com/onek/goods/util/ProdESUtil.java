@@ -337,11 +337,12 @@ public class ProdESUtil {
      * 根据条件全文检索商品
      *
      * @param statusSet
+     * @param  sort
      * @param pagenum
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdWithMallFloor(Set<Integer> statusSet, int pagenum, int pagesize){
+    public static SearchResponse searchProdWithStatusList(Set<Integer> statusSet, int sort,int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -353,11 +354,23 @@ public class ProdESUtil {
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
-            response = client.prepareSearch(ESConstant.PROD_INDEX)
+            FieldSortBuilder sortBuilder = null;
+            if(sort > 0){
+                if(sort == 1){ // 销量
+                    sortBuilder = SortBuilders.fieldSort("sales").order(SortOrder.DESC);
+                }else if(sort == 2){ // 时间
+                    sortBuilder = SortBuilders.fieldSort("time").order(SortOrder.DESC);
+                }
+
+            }
+            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
-                    .setSize(pagesize)
-                    .addSort("time", SortOrder.DESC)
+                    .setSize(pagesize);
+            if(sortBuilder != null){
+                requestBuilder.addSort(sortBuilder);
+            }
+            response = requestBuilder
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -366,6 +379,7 @@ public class ProdESUtil {
 
         return response;
     }
+
 
     /**
      * 根据条件全文检索商品
@@ -541,7 +555,7 @@ public class ProdESUtil {
         Set<Integer> statusList = new HashSet<>();
         statusList.add(0);
 //        statusList.add(256);
-        SearchResponse response = searchProdWithMallFloor(statusList,1,100);
+        SearchResponse response = searchProdWithStatusList(statusList,1, 1,100);
         System.out.println(response.getHits().totalHits);
     }
 
