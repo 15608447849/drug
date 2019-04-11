@@ -555,7 +555,7 @@ public class CouponManageModule {
         String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
                 + " and brulecode like '" + code + "%' and  NOT EXISTS(select brulecode from {{?"
                 + DSMConst.TD_PROM_COUPON +"}} b where cstatus&1=0 and a.brulecode = b.brulecode and brulecode like '"
-                + code +"%' and edate>CURRENT_DATE and a.brulecode<>"+bRuleCode+")";
+                + code +"%' and enddate>CURRENT_DATE and a.brulecode<>"+bRuleCode+")";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
         baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
