@@ -73,9 +73,6 @@ public class CommonModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int brulecode = jsonObject.get("type").getAsInt();
-//        String selectActSQL = " SELECT brulecode FROM {{?" + DSMConst.TD_PROM_ACT +"}} where cstatus&1=0 and "
-//                + " brulecode like '" + brulecode + "%' and edate>CURRENT_DATE" ;
-//        List<Object[]> queryActResult = baseDao.queryNative(selectActSQL);
         String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
                 + " and brulecode like '" + brulecode + "%' and  NOT EXISTS(select brulecode from {{?"
                 + DSMConst.TD_PROM_ACT +"}} b where cstatus&1=0 and a.brulecode = b.brulecode and brulecode like '"
@@ -115,7 +112,29 @@ public class CommonModule {
         return result.success(rulesVOS);
     }
 
-
+    /**
+     * @description 查询规则
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/4/1 11:55
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result queryRulesByType(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int type = jsonObject.get("type").getAsInt();
+        String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}}  where cstatus&1=0 "
+                + " and brulecode REGEXP '^" + type + "'";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
+        return result.success(rulesVOS);
+    }
 
 
 
