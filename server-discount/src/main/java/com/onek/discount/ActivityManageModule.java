@@ -68,7 +68,7 @@ public class ActivityManageModule {
             + " values(?,?,?,?,?)";
 
     private static final String DEL_LAD_OFF_SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and offercode like '?%'";
+            + " where cstatus&1=0 ";
 
     //优惠赠换商品
     private static final String INSERT_ASS_GIFT_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSGIFT + "}} "
@@ -76,7 +76,7 @@ public class ActivityManageModule {
             + " values(?,?,?)";
 
     private static final String DEL_ASS_GIFT_SQL = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and offercode like '?%'";
+            + " where cstatus&1=0 ";
 
     private static final String UPDATE_ACT_CP = "update {{?" + DSMConst.TD_PROM_ACT + "}} set cpriority=? "
             + " where cstatus&1=0 and incpriority=? and cpriority=?";
@@ -277,8 +277,8 @@ public class ActivityManageModule {
             }
             //新增阶梯
             if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty()) {
-                if (baseDao.updateNative(DEL_LAD_OFF_SQL, oldRuleCode) > 0) {
-                    baseDao.updateNative(DEL_ASS_GIFT_SQL, oldRuleCode);
+                if (baseDao.updateNative(DEL_LAD_OFF_SQL + "and offercode like '" + oldRuleCode + "%'") > 0) {
+                    baseDao.updateNative(DEL_ASS_GIFT_SQL + "and offercode like '" + oldRuleCode + "%'");
                     insertLadOff(activityVO.getLadderVOS(), bRuleCode, rCode);
                 }
             }
