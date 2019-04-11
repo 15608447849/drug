@@ -92,9 +92,9 @@ public class DictStore{
                     f.setAccessible(true);
                     GetDictWay dictWay = cacheField.dictWay();
                     DictEntity dictVo = null;
-                    if(dictWay == GetDictWay.ID){
+                    if(dictWay == GetDictWay.ID && Integer.parseInt(val.toString())>0){
                         dictVo = (DictEntity)dictProxy.getId(val);
-                    }else{
+                    }else if(dictWay == GetDictWay.CUSTOMC_AND_TYPE){
                         String type = cacheField.type();
                         if(!StringUtils.isEmpty(type)){
                             List<DictEntity> dicts = (List<DictEntity>)dictProxy.queryByParams(new String[]{val.toString(), type});
@@ -144,9 +144,9 @@ public class DictStore{
                         f.setAccessible(true);
                         GetDictWay dictWay = cacheField.dictWay();
                         DictEntity dictVo = null;
-                        if(dictWay == GetDictWay.ID){
+                        if(dictWay == GetDictWay.ID && Integer.parseInt(val.toString())>0){
                             dictVo = (DictEntity)dictProxy.getId(val);
-                        }else{
+                        }else if(dictWay == GetDictWay.CUSTOMC_AND_TYPE){
                             String type = cacheField.type();
                             if(!StringUtils.isEmpty(type)){
                                 List<DictEntity> dicts = (List<DictEntity>)dictProxy.queryByParams(new String[]{val.toString(), type});

@@ -26,6 +26,7 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.util.*;
 
@@ -69,6 +70,8 @@ public class ProdESUtil {
             data.put("vatp", prodVO.getVatp());
             data.put("sales", prodVO.getSales());
             data.put("rulestatus", 0);
+            data.put("storestatus", 0);
+            data.put("time", TimeUtils.date_yMd_Hms_2String(new Date()));
             data.put("detail", JSONObject.toJSON(prodVO));
             IndexResponse response = ElasticSearchProvider.addDocument(data, "prod", "prod_type", sku+"");
             if(response == null || RestStatus.CREATED != response.status()) {
@@ -119,7 +122,10 @@ public class ProdESUtil {
             data.put("vatp", prodVO.getVatp());
             data.put("sales", prodVO.getSales());
             data.put("rulestatus", 0);
+            data.put("storestatus", 0);
             data.put("detail", JSONObject.toJSON(prodVO));
+            GetResponse getResponse = ElasticSearchProvider.getDocumentById("prod", "prod_type", sku+"");
+            data.put("time", getResponse.getSourceAsMap().get("time").toString());
             UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, "prod", "prod_type", sku+"");
             if(response == null || RestStatus.OK != response.status()) {
                 return -1;
@@ -214,13 +220,13 @@ public class ProdESUtil {
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             if(specList != null && specList.size() > 0){
-                String [] specArray = new String[specList.size()];
+                Object [] specArray = new String[specList.size()];
                 specArray = specList.toArray(specArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("spec", specArray);
 			    boolQuery.must(builder);
             }
             if(manuNoList != null && manuNoList.size() > 0){
-                String [] manuNoArray = new String[manuNoList.size()];
+                Object [] manuNoArray = new String[manuNoList.size()];
                 manuNoArray = manuNoList.toArray(manuNoArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("manuno", manuNoArray);
                 boolQuery.must(builder);
@@ -261,19 +267,19 @@ public class ProdESUtil {
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             if(specList != null && specList.size() > 0){
-                String [] specArray = new String[specList.size()];
+                Object [] specArray = new String[specList.size()];
                 specArray = specList.toArray(specArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("spec", specArray);
                 boolQuery.must(builder);
             }
             if(manunameList != null && manunameList.size() > 0){
-                String [] manuNoArray = new String[manunameList.size()];
+                Object [] manuNoArray = new String[manunameList.size()];
                 manuNoArray = manunameList.toArray(manuNoArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("manuname", manuNoArray);
                 boolQuery.must(builder);
             }
             if(brandnameList != null && brandnameList.size() > 0){
-                String [] brandNameArray = new String[brandnameList.size()];
+                Object [] brandNameArray = new String[brandnameList.size()];
                 brandNameArray = brandnameList.toArray(brandNameArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery("brandname", brandNameArray);
                 boolQuery.must(builder);
@@ -353,7 +359,37 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort("sku", SortOrder.DESC)
+                    .addSort("time", SortOrder.DESC)
+                    .execute().actionGet();
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        return response;
+    }
+
+    /**
+     * 根据条件全文检索商品
+     *
+     * @param pagenum
+     * @param pagesize
+     * @return
+     */
+    public static SearchResponse searchProdHasBrand(int pagenum, int pagesize){
+        SearchResponse response = null;
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("brandno");
+            rangeQuery.gt(0);
+            boolQuery.must(rangeQuery);
+            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+            int from = pagenum * pagesize - pagesize;
+            response = client.prepareSearch("prod")
+                    .setQuery(boolQuery)
+                    .setFrom(from)
+                    .setSize(pagesize)
+                    .addSort("time", SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -404,7 +440,7 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort("sku", SortOrder.DESC)
+                    .addSort("time", SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -456,6 +492,38 @@ public class ProdESUtil {
             keys.add(bucket.getKey().toString());
         }
         return keys;
+    }
+
+    /**
+     * 根据sku列表检索商品
+     *
+     * @param skuList
+     * @return
+     */
+    public static SearchResponse searchProdBySpuList(List<Long> skuList,int pagenum, int pagesize){
+        SearchResponse response = null;
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            if(skuList != null && skuList.size() > 0){
+                Object [] spuArray = new Long[skuList.size()];
+                spuArray = skuList.toArray(spuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", spuArray);
+                boolQuery.must(builder);
+            }
+
+            int from = pagenum * pagesize - pagesize;
+            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+            response = client.prepareSearch("prod")
+                    .setQuery(boolQuery)
+                    .setFrom(from)
+                    .setSize(pagesize)
+                    .execute().actionGet();
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        return response;
     }
 
     public static String addZeroForNum(String str, int strLength) {
