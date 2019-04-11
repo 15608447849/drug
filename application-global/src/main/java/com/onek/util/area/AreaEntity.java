@@ -1,7 +1,5 @@
 package com.onek.util.area;
 
-import com.alibaba.fastjson.annotation.JSONPOJOBuilder;
-
 public class AreaEntity {
     private long areac;
     private String arean;
@@ -18,9 +16,9 @@ public class AreaEntity {
         return cstatus;
     }
 
-    public long[] getAncestors() {
-        return AreaUtil.getAllAncestorCodes(this.areac);
-    }
+//    public long[] getAncestors() {
+//        return AreaUtil.getAllAncestorCodes(this.areac);
+//    }
 
     public Object[] getLiuQi() {
         return liuQi;

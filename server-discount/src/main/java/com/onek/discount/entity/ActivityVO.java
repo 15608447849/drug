@@ -24,6 +24,9 @@ public class ActivityVO {
     private int brulecode;//活动规则码
     private int cstatus;//综合状态码
     private String ruleName;//规则名称
+    private int ruletype; // 活动类型
+    private int preWay; // 活动优惠方式
+    private int rulecomp;//优惠算法
 
 //    private List<AssDrugVO> assDrugVOS;//活动关联商品集合
 
@@ -186,5 +189,29 @@ public class ActivityVO {
 
     public void setRuleName(String ruleName) {
         this.ruleName = ruleName;
+    }
+
+    public int getRuletype() {
+        return ruletype;
+    }
+
+    public void setRuletype(int ruletype) {
+        this.ruletype = ruletype;
+    }
+
+    public int getPreWay() {
+        return preWay;
+    }
+
+    public void setPreWay(int preWay) {
+        this.preWay = preWay;
+    }
+
+    public int getRulecomp() {
+        return rulecomp;
+    }
+
+    public void setRulecomp(int rulecomp) {
+        this.rulecomp = rulecomp;
     }
 }

@@ -190,7 +190,8 @@ public class ActivityManageModule {
      **/
     private Result insertActivity(ActivityVO activityVO, int cpt) {
         boolean b;
-        int ruleCode = activityVO.getBrulecode();//规则码
+        int bruleCode = activityVO.getBrulecode();//规则码(前四位)
+        int rCode = Integer.parseInt(bruleCode + "" + activityVO.getRulecomp());//前五位码
         Result result = new Result();
         long actCode = GenIdUtil.getUnqId();//唯一码(活动码)
         //新增活动
@@ -198,7 +199,7 @@ public class ActivityManageModule {
            int re = baseDao.updateNative(INSERT_ACT_SQL,actCode, activityVO.getActname(),
                    activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                    activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                   activityVO.getEdate(), ruleCode);
+                   activityVO.getEdate(), bruleCode);
            b = re > 0;
         } else {
             List<Object[]> params = new ArrayList<>();
@@ -206,7 +207,7 @@ public class ActivityManageModule {
             params.add(new Object[]{actCode, activityVO.getActname(),
                     activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                    activityVO.getEdate(), ruleCode});
+                    activityVO.getEdate(), bruleCode});
             int[] actResult = baseDao.updateTransNative(new String[]{UPDATE_ACT_CP, INSERT_ACT_SQL}, params);
             b = !ModelUtil.updateTransEmpty(actResult);
         }
@@ -217,7 +218,7 @@ public class ActivityManageModule {
             }
             //新增阶梯
             if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty()) {
-                insertLadOff(activityVO.getLadderVOS(),ruleCode);
+                insertLadOff(activityVO.getLadderVOS(),bruleCode);
             }
             //新增活动商品
 //            if (activityVO.getAssDrugVOS() != null && !activityVO.getAssDrugVOS().isEmpty()) {
