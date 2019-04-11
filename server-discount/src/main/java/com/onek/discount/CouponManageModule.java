@@ -130,6 +130,8 @@ public class CouponManageModule {
                     + " SET cstatus = cstatus | " + CSTATUS.DELETE
                     + " WHERE unqid = ? ";
 
+    private static final String DEL_ASS_GIFT_SQL = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 "
+            + " where cstatus&1=0 and actcode=?";
 
 
     /**
@@ -161,7 +163,12 @@ public class CouponManageModule {
             }
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
-                insertLadOff(couponVO.getLadderVOS(), unqid,couponVO.getRuleno());
+                insertLadOff(couponVO.getLadderVOS(), unqid,couponVO.getRuleno(),couponVO.getRuleno()+""+couponVO.getAlgorithm());
+            }
+
+            //新增优惠赠换商品
+            if (couponVO.getAssGiftVOS() != null && !couponVO.getAssGiftVOS().isEmpty()) {
+                insertAssGift(couponVO.getAssGiftVOS(), unqid);
             }
         } else {
             return result.fail("新增失败");
@@ -311,12 +318,12 @@ public class CouponManageModule {
      * @param ladderVOS
      * @param actCode
      */
-    private void insertLadOff(List<LadderVO> ladderVOS, long actCode,int ruleno) {
+    private void insertLadOff(List<LadderVO> ladderVOS, long actCode,int ruleno,String laddrno) {
 
         List<Object[]> ladOffParams = new ArrayList<>();
         for (LadderVO ladderVO : ladderVOS) {
             ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ruleno,
-                    ladderVO.getLadamt(),ladderVO.getLadnum(),ladderVO.getOffer()});
+                    ladderVO.getLadamt(),ladderVO.getLadnum(),CommonModule.getLaderNo(laddrno)});
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
         boolean b = !ModelUtil.updateTransEmpty(result);
@@ -414,7 +421,15 @@ public class CouponManageModule {
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
                 if (baseDao.updateNative(DEL_LAD_OFF__SQL, actCode) > 0) {
-                    insertLadOff(couponVO.getLadderVOS(), actCode,couponVO.getRuleno());
+                    insertLadOff(couponVO.getLadderVOS(), actCode,couponVO.getRuleno(),
+                            couponVO.getRuleno()+""+couponVO.getAlgorithm());
+                }
+            }
+
+            //新增优惠赠换商品
+            if (couponVO.getAssGiftVOS() != null && !couponVO.getAssGiftVOS().isEmpty()) {
+                if (baseDao.updateNative(DEL_ASS_GIFT_SQL,actCode) > 0) {
+                    insertAssGift(couponVO.getAssGiftVOS(), actCode);
                 }
             }
         } else {
@@ -520,6 +535,16 @@ public class CouponManageModule {
             return result.success("操作成功");
         }
         return result.fail("操作失败");
+    }
+
+
+    private void insertAssGift(List<AssGiftVO> assGiftVOS, long actCode) {
+        List<Object[]> assGiftParams = new ArrayList<>();
+        for (AssGiftVO assGiftVO : assGiftVOS) {
+            assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, assGiftVO.getAssgiftno()});
+        }
+        int[] result = baseDao.updateBatchNative(INSERT_ASS_GIFT_SQL, assGiftParams, assGiftVOS.size());
+        boolean b = !ModelUtil.updateTransEmpty(result);
     }
 
 }

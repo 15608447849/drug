@@ -14,6 +14,7 @@ public class CouponVO {
     //优惠券码
     private long coupno;
 
+
     //优惠券名称
     private String coupname;
 
@@ -47,7 +48,7 @@ public class CouponVO {
     //有效天数
     private int validday;
 
-    //生效标记 0 即日生效 1 次日生效
+    //生效标记 0 即日生效 、1 次日生效
     private int validflag;
 
     //综合状态
@@ -59,8 +60,25 @@ public class CouponVO {
     //活动场次
     private List<TimeVO> timeVOS;
 
+    //算法位
+    private int algorithm;
+
     //阶梯
     private List<LadderVO> ladderVOS;
+
+    //优惠商品赠换
+    private List<AssGiftVO> assGiftVOS;
+
+
+    public List<AssGiftVO> getAssGiftVOS() {
+        return assGiftVOS;
+    }
+
+    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
+        this.assGiftVOS = assGiftVOS;
+    }
+
+
 
 
     public List<TimeVO> getTimeVOS() {
@@ -197,5 +215,13 @@ public class CouponVO {
 
     public void setRulename(String rulename) {
         this.rulename = rulename;
+    }
+
+    public int getAlgorithm() {
+        return algorithm;
+    }
+
+    public void setAlgorithm(int algorithm) {
+        this.algorithm = algorithm;
     }
 }
