@@ -4,7 +4,6 @@ import properties.abs.ApplicationPropertiesBase;
 import properties.annotations.PropertiesFilePath;
 import properties.annotations.PropertiesName;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -25,8 +24,8 @@ public class IceProperties extends ApplicationPropertiesBase {
   public String intercept ;
   @PropertiesName("ice.app.context.imp")
   public String contextImp;
-  @PropertiesName("ice.system.initialization")
-  public String appInitializationImp;
+  @PropertiesName("ice.system.initialization.list")
+  public String appInitialization;
   @PropertiesName("ice.push.message.store.imp")
   public String pmStoreImp;
 
@@ -64,7 +63,6 @@ public class IceProperties extends ApplicationPropertiesBase {
   }
 
   public List<String> getInterceptList() {
-    ArrayList<String> list = new ArrayList<>();
     String[] arr = new String[0];
     try {
       arr = intercept.split(";");
@@ -73,5 +71,13 @@ public class IceProperties extends ApplicationPropertiesBase {
     return Arrays.asList(arr);
   }
 
+  public List<String> getAppInitializationList(){
+    String[] arr = new String[0];
+    try {
+      arr = appInitialization.split(";");
+    } catch (Exception ignored) {
+    }
+    return Arrays.asList(arr);
+  }
 
 }

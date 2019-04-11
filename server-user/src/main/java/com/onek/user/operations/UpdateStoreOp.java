@@ -19,7 +19,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
 
     String storeName;
     String address; //根据地址 自动采集经纬度信息
-    int addressCode; //地区码
+    String addressCode; //地区码
     public double longitude;//营业执照地址纬度
     public double latitude;//营业执照地址经度
 
