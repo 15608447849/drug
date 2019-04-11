@@ -171,7 +171,6 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
 
         while (!communicator.isShutdown()){
             try {
-                communicator.getLogger().print("消息推送服务检测中");
                 Thread.sleep( 5 * 1000);
 
                 if (_clientsMaps.size() == 0) continue;

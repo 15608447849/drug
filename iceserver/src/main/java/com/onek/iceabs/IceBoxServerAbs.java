@@ -3,7 +3,7 @@ package com.onek.iceabs;
 import Ice.Object;
 import Ice.*;
 import IceBox.Service;
-import com.onek.server.infimp.IIceIceInitialize;
+import com.onek.server.infimp.IIceInitialize;
 import com.onek.server.infimp.IceProperties;
 import objectref.ObjectRefUtil;
 import threadpool.IOThreadPool;
@@ -44,12 +44,12 @@ public abstract class IceBoxServerAbs implements Service {
         long time = System.currentTimeMillis();
         IOThreadPool p = new IOThreadPool();
         ObjectRefUtil.scanJarAllClass(classPath -> {
-            if (classPath.endsWith("Initialize") && !classPath.equals(IIceIceInitialize.class.getName())){
+            if (classPath.endsWith("Initialize") && !classPath.equals(IIceInitialize.class.getName())){
                p.post(()->{
                    try {
                        java.lang.Object object = ObjectRefUtil.createObject(classPath,null,null);
-                       if (object instanceof IIceIceInitialize){
-                           ((IIceIceInitialize) object).startUp(serverName);
+                       if (object instanceof IIceInitialize){
+                           ((IIceInitialize) object).startUp(serverName);
                        }
                    } catch (Exception ignored) {
                    }
