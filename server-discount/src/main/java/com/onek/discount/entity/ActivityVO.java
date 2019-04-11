@@ -34,6 +34,8 @@ public class ActivityVO {
 
     private List<LadderVO> ladderVOS;//阶梯优惠
 
+    private List<RulesVO> activeRule;//规则
+
 //    private List<AssGiftVO> assGiftVOS;//优惠商品赠换
 
     //活动关联商品集合
@@ -213,5 +215,13 @@ public class ActivityVO {
 
     public void setRulecomp(int rulecomp) {
         this.rulecomp = rulecomp;
+    }
+
+    public List<RulesVO> getActiveRule() {
+        return activeRule;
+    }
+
+    public void setActiveRule(List<RulesVO> activeRule) {
+        this.activeRule = activeRule;
     }
 }
