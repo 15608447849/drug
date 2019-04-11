@@ -36,14 +36,14 @@ public class CouponManageModule {
     //新增优惠券
     private final String INSERT_COUPON_SQL = "insert into {{?" + DSMConst.TD_PROM_COUPON + "}} "
             + "(unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype,"
-            + "periodday,startdate,enddate,ruleno,validday,validflag,cstatus) "
+            + "periodday,startdate,enddate,brulecode,validday,validflag,cstatus) "
             + "values(?,?,?,?,?,"
             + "?,?,?,?,?,?,?,?,?)";
 
     //修改优惠券
     private static final String UPDATE_COUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set coupname=?,"
             + "glbno=?,qlfno=?,qlfval=?,coupdesc=?,periodtype=?,"
-            + "periodday=?,startdate=?,enddate=?,ruleno=?,validday=?,validflag=? where cstatus&1=0 "
+            + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=? where cstatus&1=0 "
             + " and unqid=? ";
 
 
@@ -67,8 +67,8 @@ public class CouponManageModule {
 
     //优惠阶梯
     private final String INSERT_LAD_OFF_SQL = "insert into {{?" + DSMConst.TD_PROM_LADOFF + "}} "
-            + "(unqid,actcode,ruleno,ladamt,ladnum,offer) "
-            + " values(?,?,?,?,?,?)";
+            + "(unqid,actcode,ladamt,ladnum,offer) "
+            + " values(?,?,?,?,?)";
 
     //删除阶梯
     private static final String DEL_LAD_OFF__SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
@@ -84,8 +84,8 @@ public class CouponManageModule {
      */
     private final String QUERY_COUPON_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
-            "ruleno,validday,validflag,rulename from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
-            "  {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.ruleno = ru.rulecode  where cop.cstatus&1=0 and unqid = ? ";
+            "brulecode,validday,validflag,rulename from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
+            "  {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.brulecode = ru.brulecode  where cop.cstatus&1=0 and unqid = ? ";
 
 
     /**
@@ -93,8 +93,8 @@ public class CouponManageModule {
      */
     private final String QUERY_COUPON_LIST_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
-            "ruleno,rulename,cop.cstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
-            " {{?"+ DSMConst.TD_PROM_RULE +"}}  ru on cop.ruleno = ru.rulecode  where cop.cstatus&1=0 ";
+            "brulecode,rulename,cop.cstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
+            " {{?"+ DSMConst.TD_PROM_RULE +"}}  ru on cop.brulecode = ru.brulecode  where cop.cstatus&1=0 ";
 
 
 
@@ -321,9 +321,11 @@ public class CouponManageModule {
     private void insertLadOff(List<LadderVO> ladderVOS, long actCode,int ruleno,String laddrno) {
 
         List<Object[]> ladOffParams = new ArrayList<>();
-        for (LadderVO ladderVO : ladderVOS) {
-            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ruleno,
-                    ladderVO.getLadamt(),ladderVO.getLadnum(),CommonModule.getLaderNo(laddrno)});
+        int [] ladernos = CommonModule.getLaderNo(laddrno, ladderVOS.size());
+
+        for (int i = 0; i < ladderVOS.size(); i++) {
+            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(),
+                    ladderVOS.get(i).getLadamt(),ladderVOS.get(i).getLadnum(),ladernos[i]});
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
         boolean b = !ModelUtil.updateTransEmpty(result);

@@ -139,26 +139,36 @@ public class CommonModule {
     }
 
 
-    public static int getLaderNo(String preLader){
+    public static int[] getLaderNo(String preLader,int size){
+        if(size <= 0){
+            return null;
+        }
         StringBuilder sb = new StringBuilder(SELECT_LADDER_NO);
         sb.append(" where offercode like '");
         sb.append(preLader);
         sb.append("%' and cstatus & 1 = 0 ");
         List<Object[]> queryResult = baseDao.queryNative(sb.toString());
         int ladernum = Integer.parseInt(queryResult.get(0)[0].toString());
-        ladernum = ladernum +1;
-        sb.setLength(0);
-        sb.append(preLader);
-        if(ladernum < 10){
-            sb.append("0");
+        int [] laddnumArray = new int[size];
+        for(int i = 0; i < laddnumArray.length; i++){
+            ladernum = ladernum +1;
+            sb.setLength(0);
+            sb.append(preLader);
+            if(ladernum < 10){
+                sb.append("0");
+            }
+            sb.append(ladernum);
+            laddnumArray[i] = Integer.parseInt(sb.toString());
         }
-        sb.append(ladernum);
-        return Integer.parseInt(sb.toString());
+        return laddnumArray;
     }
 
     public static void main(String[] args) {
         CommonModule commonModule = new CommonModule();
-        System.out.println(CommonModule.getLaderNo("11202"));
+        int lads[] = CommonModule.getLaderNo("11202",5);
+        for (int i = 0; i <lads.length; i++ ){
+            System.out.println(lads[i]);
+        }
 //        IRequest request = new IRequest();
 //        Current current = new Current();
 //        request.param.json = "";
