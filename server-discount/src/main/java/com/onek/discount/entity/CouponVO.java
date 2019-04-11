@@ -57,11 +57,39 @@ public class CouponVO {
     //规则名称
     private String rulename;
 
+    public int getRuletype() {
+        return ruletype;
+    }
+
+    public void setRuletype(int ruletype) {
+        this.ruletype = ruletype;
+    }
+
+    public int getPreWay() {
+        return preWay;
+    }
+
+    public void setPreWay(int preWay) {
+        this.preWay = preWay;
+    }
+
+    public int getRulecomp() {
+        return rulecomp;
+    }
+
+    public void setRulecomp(int rulecomp) {
+        this.rulecomp = rulecomp;
+    }
+
+    private int ruletype; // 活动类型
+    private int preWay; // 活动优惠方式
+    private int rulecomp;//优惠算法
+
+
+
     //活动场次
     private List<TimeVO> timeVOS;
 
-    //算法位
-    private int algorithm;
 
     //阶梯
     private List<LadderVO> ladderVOS;
@@ -217,11 +245,4 @@ public class CouponVO {
         this.rulename = rulename;
     }
 
-    public int getAlgorithm() {
-        return algorithm;
-    }
-
-    public void setAlgorithm(int algorithm) {
-        this.algorithm = algorithm;
-    }
 }

@@ -26,13 +26,6 @@ import java.util.Map;
  */
 public class CommonModule {
 
-
-    static{
-        AppConfig.initLogger();
-        AppConfig.initialize();
-
-    }
-
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
     private static final String SELECT_LADDER_NO = "select IFNULL(max(right(offercode,2)),0) from {{?" + DSMConst.TD_PROM_LADOFF + "}} ";
