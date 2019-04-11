@@ -4,11 +4,15 @@ import Ice.Application;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.context.AppContext;
+import com.onek.util.IOThreadUtils;
 import com.onek.util.fs.FileServerUtils;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.user.service.USProperties;
+import global.IceRemoteUtil;
+import global.SmsUtil;
 import redis.util.RedisUtil;
+import threadpool.IOThreadPool;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.ImageVerificationUtils;
@@ -83,11 +87,15 @@ public class VerificationOp implements IOperation<AppContext> {
     private Result sendSmsCode() {
         String code = getRandomCodeByNum(6);
         //存入缓存
-        String res = RedisUtil.getStringProvide().set(phone,code);
+        String res = RedisUtil.getStringProvide().set("SMS"+phone,code);
         if (res.equals("OK")){
-            RedisUtil.getStringProvide().expire(phone, USProperties.INSTANCE.smsSurviveTime); // 5分钟内有效
-            //发送短信
-            return new Result().success("手机号:"+ phone+",测试验证码:"+code);
+            RedisUtil.getStringProvide().expire("SMS"+phone, USProperties.INSTANCE.smsSurviveTime); // 5分钟内有效
+            //获取短信
+            String message = IceRemoteUtil.getMessageByNo("1",code);
+            IOThreadUtils.runTask(()->{
+                SmsUtil.sendMsg(phone,message);
+            });
+            return new Result().success("已发送手机短信验证码,请查收");
         }
         return new Result().fail("获取短信验证码失败");
     }

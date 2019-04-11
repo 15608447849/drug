@@ -24,17 +24,24 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     /**
      * 在线客户端
      */
-    private Map<String, PushMessageClientPrx> _clientsMaps = new ConcurrentHashMap<>();
-//    private Map<String, PushMessageClientPrx> _clientsMaps = new HashMap<>();
+    private Map<String, PushMessageClientPrx> _clientsMaps ;
 
-    protected IOThreadPool pool = new IOThreadPool();
+    protected IOThreadPool pool ;
 
     protected Communicator communicator;
 
     private IPushMessageStore iPushMessageStore;
 
-    public IcePushMessageServerImps(Communicator communicator) {
+    public IcePushMessageServerImps(Communicator communicator,String serverName) {
         this.communicator = communicator;
+        startPushMessageServer(serverName);
+    }
+
+    private void startPushMessageServer(String serverName){
+        if (StringUtils.isEmpty(IceProperties.INSTANCE.pmStoreImp)) return;
+        if (!IceProperties.INSTANCE.pmStoreImp.contains(serverName)) return;
+        pool = new IOThreadPool();
+        _clientsMaps = new ConcurrentHashMap<>();
         //注入消息存储实现
         createMessageStoreImps();
         new Thread(this).start();

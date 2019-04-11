@@ -15,6 +15,8 @@ public class IceProperties extends ApplicationPropertiesBase {
   public static IceProperties INSTANCE = new IceProperties();
 
 
+  @PropertiesName("ice.push.message.allow.server.name")
+  public String allowPushMessageServer;
   @PropertiesName("ice.server.package.map")
   public String pkgSrv ;
   @PropertiesName("ice.server.rep.group")

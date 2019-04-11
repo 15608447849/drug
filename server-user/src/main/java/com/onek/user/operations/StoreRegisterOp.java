@@ -5,6 +5,7 @@ import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
+import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.StringUtils;
 
@@ -51,8 +52,8 @@ public class StoreRegisterOp implements IOperation<AppContext> {
     //效验短信验证码
     private boolean validSmsCode() {
         if (StringUtils.isEmpty(smsCode)) return false;
-        if (!smsCode.equals("000000")) return false;
-        return true;
+        String _smsCode =  RedisUtil.getStringProvide().get("SMS"+phone);
+        return smsCode.equals(_smsCode);
     }
 
     //正则匹配密码规则

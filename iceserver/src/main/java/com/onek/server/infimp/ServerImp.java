@@ -38,7 +38,7 @@ public class ServerImp extends IcePushMessageServerImps {
     private Class contextCls = IceContext.class;
 
     ServerImp(Communicator communicator,String serverName) {
-        super(communicator);
+        super(communicator,serverName);
         this.serverName = serverName;
         this.logger = communicator.getLogger();
         this.pkgPath = IceProperties.INSTANCE.pkgSrvMap.get(serverName);
