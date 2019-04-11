@@ -1,7 +1,13 @@
 package objectref;
 
+import java.io.File;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
+import java.util.jar.JarEntry;
+import java.util.jar.JarFile;
 
 /**
  * 对象反射工具
@@ -47,6 +53,33 @@ public class ObjectRefUtil {
            Method method = holder.getClass().getMethod(methodName,parameterTypes);
        return method.invoke(holder,parameters);//调用对象的方法
    }
+
+   public interface IClassScan{
+       void callback(String classPath);
+   }
+
+   //扫描所有class 文件
+    public static void scanJarAllClass(IClassScan is){
+        try {
+            File file = new File(ObjectRefUtil.class.getProtectionDomain().getCodeSource().getLocation().getFile());
+            JarFile jarFile = new JarFile(file);
+            List<JarEntry> jarEntryList = new ArrayList<>();
+
+            Enumeration<JarEntry> enumeration = jarFile.entries();
+            while (enumeration.hasMoreElements()) {
+                JarEntry entry = enumeration.nextElement();
+                // 过滤我们出满足我们需求的东西
+                if (!entry.isDirectory() && entry.getName().endsWith(".class")) {
+                    if (is!=null){
+                        is.callback(entry.getName().replace("/",".").replace(".class",""));
+                    }
+                }
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
 
 

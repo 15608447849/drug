@@ -3,15 +3,15 @@ package com.onek.server.infimp;
 import Ice.Communicator;
 import Ice.Current;
 import Ice.Identity;
-import Ice.Logger;
-import com.onek.server.inf.*;
+import com.onek.server.inf.IRequest;
+import com.onek.server.inf.PushMessageClientPrx;
+import com.onek.server.inf.PushMessageClientPrxHelper;
+import com.onek.server.inf._InterfacesDisp;
 import objectref.ObjectRefUtil;
 import threadpool.IOThreadPool;
 import util.StringUtils;
 
-import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -38,8 +38,8 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     }
 
     private void startPushMessageServer(String serverName){
-        if (StringUtils.isEmpty(IceProperties.INSTANCE.pmStoreImp)) return;
-        if (!IceProperties.INSTANCE.pmStoreImp.contains(serverName)) return;
+        if (StringUtils.isEmpty(IceProperties.INSTANCE.allowPushMessageServer)) return;
+        if (!IceProperties.INSTANCE.allowPushMessageServer.contains(serverName)) return;
         pool = new IOThreadPool();
         _clientsMaps = new ConcurrentHashMap<>();
         //注入消息存储实现
@@ -168,8 +168,10 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     @Override
     public void run() {
         //循环检测
-        while (true){
+
+        while (!communicator.isShutdown()){
             try {
+                communicator.getLogger().print("消息推送服务检测中");
                 Thread.sleep( 5 * 1000);
 
                 if (_clientsMaps.size() == 0) continue;

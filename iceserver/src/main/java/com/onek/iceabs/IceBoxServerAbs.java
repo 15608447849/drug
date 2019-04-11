@@ -6,9 +6,9 @@ import IceBox.Service;
 import com.onek.server.infimp.IIceIceInitialize;
 import com.onek.server.infimp.IceProperties;
 import objectref.ObjectRefUtil;
+import threadpool.IOThreadPool;
 
 import java.lang.Exception;
-import java.util.List;
 
 import static Ice.Application.communicator;
 
@@ -22,31 +22,40 @@ public abstract class IceBoxServerAbs implements Service {
 
     @Override
     public void start(String name, Communicator communicator, String[] args) {
-        initApplication(name);
         initIceLogger(name,(CommunicatorI) communicator);
+
         this.communicator = communicator;
         _serverName = name;
         logger = communicator.getLogger();
+        initApplication(name);
         _adapter = communicator.createObjectAdapter(_serverName);
         //创建servant并激活
         Ice.Object object = specificServices();
         relationID(object,communicator);
+
         _adapter.activate();
         logger.print("\n成功启动服务:" + _serverName+"\n" );
     }
 
     //初始化 系统应用
     private void initApplication(String serverName) {
-        List<String> list = IceProperties.INSTANCE.getAppInitializationList();
-        for (String clazz : list){
-            try {
-                java.lang.Object object = ObjectRefUtil.createObject(clazz,null,null);
-                if (object instanceof IIceIceInitialize){
-                    IIceIceInitialize i = (IIceIceInitialize) object;
-                    i.startUp(serverName);
-                }
-            } catch (Exception ignored) { }
-        }
+        //scan all class
+        logger.print(serverName + " 开始初始化系统");
+        long time = System.currentTimeMillis();
+        IOThreadPool p = new IOThreadPool();
+        ObjectRefUtil.scanJarAllClass(classPath -> {
+            if (classPath.endsWith("Initialize") && !classPath.equals(IIceIceInitialize.class.getName())){
+               p.post(()->{
+                   try {
+                       java.lang.Object object = ObjectRefUtil.createObject(classPath,null,null);
+                       if (object instanceof IIceIceInitialize){
+                           ((IIceIceInitialize) object).startUp(serverName);
+                       }
+                   } catch (Exception ignored) {
+                   }
+               });
+            }
+        });
     }
 
     private void initIceLogger(String name,CommunicatorI ic) {
