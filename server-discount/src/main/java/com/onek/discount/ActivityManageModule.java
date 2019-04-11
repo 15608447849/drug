@@ -149,9 +149,9 @@ public class ActivityManageModule {
         }
 
         if (jsonObject.get("brulecode") != null && !jsonObject.get("brulecode").getAsString().isEmpty()) {
-            int ruleCode = jsonObject.get("brulecode").getAsInt();
+            int ruleCode = jsonObject.get("a.brulecode").getAsInt();
             if (ruleCode > 0) {
-                sqlBuilder.append(" and brulecode=").append(ruleCode);
+                sqlBuilder.append(" and a.brulecode=").append(ruleCode);
             }
         }
         return sqlBuilder;
