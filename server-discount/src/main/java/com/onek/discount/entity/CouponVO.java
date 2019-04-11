@@ -97,6 +97,16 @@ public class CouponVO {
     //优惠商品赠换
     private List<AssGiftVO> assGiftVOS;
 
+    //规则
+    private List<RulesVO> activeRule;
+
+    public List<RulesVO> getActiveRule() {
+        return activeRule;
+    }
+
+    public void setActiveRule(List<RulesVO> activeRule) {
+        this.activeRule = activeRule;
+    }
 
     public List<AssGiftVO> getAssGiftVOS() {
         return assGiftVOS;
