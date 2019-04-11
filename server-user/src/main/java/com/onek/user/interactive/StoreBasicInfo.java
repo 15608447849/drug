@@ -16,7 +16,7 @@ public class StoreBasicInfo {
     public int authenticationStatus;// 状态 64:未认证; 128:审核中; 256:已认证; 512:认证失败; 1024:停用
     public String authenticationMessage = "未关联";//认证消息
     public String address;//营业执照地址
-    public Integer addressCode;//地区码
+    public Long addressCode;//地区码
     public BigDecimal longitude;//营业执照地址纬度
     public BigDecimal latitude;//营业执照地址经度
 

@@ -1,5 +1,6 @@
 package com.onek.init;
 
+import com.onek.server.infimp.IIceIceInitialize;
 import org.hyrdpf.ds.AppConfig;
 import static Ice.Application.communicator;
 
@@ -7,7 +8,8 @@ import static Ice.Application.communicator;
  * @Author: leeping
  * @Date: 2019/3/18 15:37
  */
-public class SystemInitialize {
+public class SystemInitialize implements IIceIceInitialize {
+    @Override
     public void startUp(String serverName){
         try {
             AppConfig.initLogger();

@@ -2,14 +2,13 @@ package com.onek.iceabs;
 
 import Ice.Object;
 import Ice.*;
-import IceBox.Server;
 import IceBox.Service;
+import com.onek.server.infimp.IIceIceInitialize;
 import com.onek.server.infimp.IceProperties;
 import objectref.ObjectRefUtil;
-import util.StringUtils;
 
 import java.lang.Exception;
-import java.util.Arrays;
+import java.util.List;
 
 import static Ice.Application.communicator;
 
@@ -38,12 +37,15 @@ public abstract class IceBoxServerAbs implements Service {
 
     //初始化 系统应用
     private void initApplication(String serverName) {
-        if (StringUtils.isEmpty(IceProperties.INSTANCE.appInitializationImp)) return;
-        try {
-            java.lang.Object initObj = ObjectRefUtil.createObject(IceProperties.INSTANCE.appInitializationImp,null,null);
-            if (initObj!=null) ObjectRefUtil.callMethod(initObj,"startUp",new Class[]{String.class},serverName);
-        } catch (Exception ignored) {
-
+        List<String> list = IceProperties.INSTANCE.getAppInitializationList();
+        for (String clazz : list){
+            try {
+                java.lang.Object object = ObjectRefUtil.createObject(clazz,null,null);
+                if (object instanceof IIceIceInitialize){
+                    IIceIceInitialize i = (IIceIceInitialize) object;
+                    i.startUp(serverName);
+                }
+            } catch (Exception ignored) { }
         }
     }
 

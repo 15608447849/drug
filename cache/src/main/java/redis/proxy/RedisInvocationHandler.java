@@ -37,7 +37,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
-		System.out.println("############ redis inocation invoke ###############");
+		//System.out.println("############ redis inocation invoke ###############");
         CacheInvoke cacheInvoke =method.getAnnotation(CacheInvoke.class);
         if(cacheInvoke == null) {
             return method.invoke(target, args);
@@ -86,7 +86,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 			}
 			return result;
 		}else {
-			System.out.println("#### loadCacheObject cahce hit!!!");
+			//System.out.println("#### loadCacheObject cahce hit!!!");
 			return cacheObj;
 
 		}
@@ -143,7 +143,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
             }
             return result;
         }else {
-            System.out.println("#### loadAllCache cahce hit!!!");
+            //System.out.println("#### loadAllCache cahce hit!!!");
             return cacheObj;
 
         }
@@ -164,7 +164,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 
         String key = String.join(",", strings);
         String hash = md5(key);
-        System.out.println("##### hash: "+hash + "#######");
+       // System.out.println("##### hash: "+hash + "#######");
 
         if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
 
@@ -205,7 +205,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
             }
             return result;
         }else {
-            System.out.println("#### loadCacheList cahce hit!!!");
+           // System.out.println("#### loadCacheList cahce hit!!!");
             return cacheObj;
 
         }
@@ -232,6 +232,37 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 		}
 		return null;
 	}
+
+    private Object flushPartCache(Method method, Object target,Object[] args) throws IllegalAccessException, InvocationTargetException {
+
+        String keycolum = "";
+        IRedisCache t = (IRedisCache)(target);
+        keycolum = t.getKey();
+        String prefix = "";
+        prefix = t.getPrefix();
+
+        Object cacheObj = null;
+        String keyval = "";
+        if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
+
+            Object arg = args[0];
+            keyval = arg.toString();
+
+        }
+        Object result = method.invoke(target, args);
+        if (result != null) {
+            Integer num = (Integer)result;
+            if(num > 0) {
+
+                if(!StringUtils.isEmpty(keyval)) {
+                    stringProvide.delete(prefix + keyval);
+
+                }
+            }
+            return result;
+        }
+        return null;
+    }
 
     /**
      * 使用md5的算法进行加密(具体根据需求)

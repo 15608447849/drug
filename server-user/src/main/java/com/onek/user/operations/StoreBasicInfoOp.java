@@ -53,7 +53,7 @@ public class StoreBasicInfoOp implements IOperation<AppContext> {
             info.authenticationStatus = status;
             info.storeName = checkObjectNull(rows[2],"");
             info.address = checkObjectNull(rows[3],"未设置");
-            info.addressCode = checkObjectNull(rows[4],0);
+            info.addressCode = checkObjectNull(rows[4],0L);
             info.latitude = checkObjectNull(rows[5],new BigDecimal(0)); //纬度
             info.longitude = checkObjectNull(rows[6],new BigDecimal(0)); //精度
         }
