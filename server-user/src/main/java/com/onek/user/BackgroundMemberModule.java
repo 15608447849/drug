@@ -23,8 +23,6 @@ import util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.onek.util.RedisGlobalKeys.getUserCode;
-
 /**
  * @author jiangwg
  *  * @version 1.1.1

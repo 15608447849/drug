@@ -3,7 +3,6 @@ package com.onek.client;
 import com.onek.server.inf.IRequest;
 import com.onek.server.inf.InterfacesPrx;
 import com.onek.server.inf.InterfacesPrxHelper;
-import threadpool.IOThreadPool;
 import threadpool.MThreadPool;
 
 import java.io.IOException;

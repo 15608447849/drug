@@ -2,7 +2,6 @@ package com.onek.goods;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
@@ -16,12 +15,9 @@ import com.onek.goods.entities.ProdVO;
 import com.onek.goods.service.MallFloorImpl;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
-import com.onek.util.dict.DictUtil;
 import com.onek.util.fs.FileServerUtils;
-import com.onek.util.prod.ProdEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
-import objectref.ObjectRefUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -34,7 +30,6 @@ import util.TimeUtils;
 
 import java.util.*;
 
-import static com.onek.goods.util.ProdESUtil.searchProd;
 
 @SuppressWarnings("unchecked")
 public class ProdModule {

@@ -1,15 +1,12 @@
 package com.onek.util.dict;
 
-import constant.DSMConst;
-import dao.BaseDAO;
+import global.IceRemoteUtil;
 import redis.IRedisCache;
 
 import java.util.Arrays;
 import java.util.List;
 
 public class DictUtil implements IRedisCache {
-
-    private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
     @Override
     public String getPrefix() {
