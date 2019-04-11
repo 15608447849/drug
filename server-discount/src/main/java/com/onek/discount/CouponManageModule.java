@@ -215,7 +215,7 @@ public class CouponManageModule {
         couponVOS[0].setRuletype(Integer.parseInt(rType.substring(1,2)));
         couponVOS[0].setPreWay(Integer.parseInt(rType.substring(2,3)));
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
-        couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0].getRuleno()));
+        couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0],couponVOS[0].getRuleno()));
         couponVOS[0].setActiveRule(getRules(rRuleCode));
 
         return  result.success(couponVOS[0]);
@@ -266,10 +266,10 @@ public class CouponManageModule {
      * @param rulecode
      * @return
      */
-    private List<LadderVO> getCoupLadder(int rulecode){
+    private List<LadderVO> getCoupLadder(CouponVO couponVO,int rulecode){
         StringBuilder sb = new StringBuilder(QUERY_PROM_LAD_SQL);
-        sb.append(" and offercode like '").append(rulecode).append("%");
-        List<Object[]> result = baseDao.queryNative(QUERY_PROM_LAD_SQL);
+        sb.append(" and offercode like '").append(rulecode).append("%'");
+        List<Object[]> result = baseDao.queryNative(sb.toString());
 
         if(result == null || result.isEmpty()){
             return null;
@@ -278,8 +278,13 @@ public class CouponManageModule {
         LadderVO[] ladderVOS = new LadderVO[result.size()];
         baseDao.convToEntity(result, ladderVOS, LadderVO.class,
                 new String[]{"unqid","ladamt","ladnum","offer","offercode"});
+
+        String offerCode = ladderVOS[0].getOffercode() + "";
+        couponVO.setRulecomp(Integer.parseInt(offerCode.substring(4,5)));
         return Arrays.asList(ladderVOS);
     }
+
+
 
 
     /**
@@ -419,7 +424,7 @@ public class CouponManageModule {
         couponVO.getGlbno(),couponVO.getQlfno(),couponVO.getQlfval(),
         couponVO.getDesc(),couponVO.getPeriodtype(),couponVO.getPeriodday(),
         couponVO.getStartdate(),couponVO.getEnddate(),couponVO.getRuleno(),couponVO.getValidday(),
-                couponVO.getValidflag(),actCode,couponVO.getActstock(),couponVO.getLimitnum()});
+                couponVO.getValidflag(),couponVO.getActstock(),couponVO.getLimitnum(),actCode});
 
         if (ret > 0) {
             //新增活动场次
@@ -431,8 +436,8 @@ public class CouponManageModule {
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
                 StringBuilder sb = new StringBuilder(DEL_LAD_OFF_SQL);
-                sb.append(" and offercode like '").append(couponVO.getRuleno()).append("%");
-                if (baseDao.updateNative(sb.toString(), actCode) > 0) {
+                sb.append(" and offercode like '").append(couponVO.getRuleno()).append("%'");
+                if (baseDao.updateNative(sb.toString()) > 0) {
                     insertLadOff(couponVO.getLadderVOS(),
                             couponVO.getRuleno()+""+couponVO.getRulecomp());
                 }
@@ -445,7 +450,7 @@ public class CouponManageModule {
 //                }
 //            }
         } else {
-            result.fail("修改失败");
+            return result.fail("修改失败");
         }
         return result.success("修改成功");
     }
