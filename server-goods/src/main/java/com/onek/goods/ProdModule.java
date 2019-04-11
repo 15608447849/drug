@@ -81,9 +81,9 @@ public class ProdModule {
 
     @UserPermission(ignore = true)
     public Result getNewMallFloor(AppContext appContext) {
-        List<Integer> bb = new ArrayList<>();
-        bb.add(128);
-        bb.add(512);
+        List<Integer> bb = new ArrayList(){{
+            add(128); add(512);
+        }};
         Set<Integer> result = new HashSet<>();
         NumUtil.arrangeAdd(256, bb, result);
 
@@ -96,9 +96,9 @@ public class ProdModule {
 
     @UserPermission(ignore = true)
     public Result getChooseForYouMallFloor(AppContext appContext) {
-        List<Integer> bb1 = new ArrayList<>();
-        bb1.add(218);
-        bb1.add(256);
+        List<Integer> bb1 = new ArrayList(){{
+            add(218); add(256);
+        }};
         Set<Integer> result1 = new HashSet<>();
         NumUtil.arrangeAdd(512, bb1, result1);
 
@@ -110,9 +110,9 @@ public class ProdModule {
 
     @UserPermission(ignore = true)
     public Result getHotMallFloor(AppContext appContext) {
-        List<Integer> bb1 = new ArrayList<>();
-        bb1.add(256);
-        bb1.add(512);
+        List<Integer> bb1 = new ArrayList(){{
+            add(256); add(512);
+        }};
         Set<Integer> result1 = new HashSet<>();
         NumUtil.arrangeAdd(128, bb1, result1);
 
@@ -372,9 +372,9 @@ public class ProdModule {
     public Result getProdDetailHotArea(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         int spu = json.get("spu").getAsInt();
-        List<Integer> bb1 = new ArrayList<>();
-        bb1.add(256);
-        bb1.add(512);
+        List<Integer> bb1 = new ArrayList(){{
+            add(256); add(512);
+        }};
         Set<Integer> result1 = new HashSet<>();
         NumUtil.arrangeAdd(128, bb1, result1);
 

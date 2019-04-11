@@ -1,6 +1,7 @@
 package com.onek.goods.timer;
 
 import com.alibaba.fastjson.JSONObject;
+import com.onek.consts.ESConstant;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdDiscountObserver;
 import constant.DSMConst;
@@ -71,7 +72,7 @@ public class RemoveNewFlagTask extends TimerTask {
                     long sku = Long.parseLong(sourceMap.get("sku").toString());
                     int skucstatus = Integer.parseInt(sourceMap.get("skucstatus").toString());
                     sourceMap.put("skucstatus", skucstatus&~  256);
-                    bulkRequest.add(client.prepareUpdate("prod", "prod_type", sku+"").setDoc(sourceMap));
+                    bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
                 }
                 BulkResponse bulkResponse = bulkRequest.get();

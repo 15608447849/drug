@@ -1,8 +1,7 @@
 package com.onek.goods.util;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonObject;
+import com.onek.consts.ESConstant;
 import com.onek.goods.entities.BgProdVO;
 import elasticsearch.ElasticSearchClientFactory;
 import elasticsearch.ElasticSearchProvider;
@@ -18,7 +17,6 @@ import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
@@ -73,7 +71,7 @@ public class ProdESUtil {
             data.put("storestatus", 0);
             data.put("time", TimeUtils.date_yMd_Hms_2String(new Date()));
             data.put("detail", JSONObject.toJSON(prodVO));
-            IndexResponse response = ElasticSearchProvider.addDocument(data, "prod", "prod_type", sku+"");
+            IndexResponse response = ElasticSearchProvider.addDocument(data, ESConstant.PROD_INDEX, "prod_type", sku+"");
             if(response == null || RestStatus.CREATED != response.status()) {
                 return -1;
             }
@@ -124,9 +122,9 @@ public class ProdESUtil {
             data.put("rulestatus", 0);
             data.put("storestatus", 0);
             data.put("detail", JSONObject.toJSON(prodVO));
-            GetResponse getResponse = ElasticSearchProvider.getDocumentById("prod", "prod_type", sku+"");
+            GetResponse getResponse = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, "prod_type", sku+"");
             data.put("time", getResponse.getSourceAsMap().get("time").toString());
-            UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, "prod", "prod_type", sku+"");
+            UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, ESConstant.PROD_INDEX, "prod_type", sku+"");
             if(response == null || RestStatus.OK != response.status()) {
                 return -1;
             }
@@ -145,9 +143,9 @@ public class ProdESUtil {
      * @return
      */
     public static void deleteProdDocument(long sku){
-        GetResponse response = ElasticSearchProvider.getDocumentById("prod", "prod_type", sku+"");
+        GetResponse response = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, "prod_type", sku+"");
         if (response != null && response.isExists()) {
-            ElasticSearchProvider.deleteDocumentById("prod", "prod_type", sku+"");
+            ElasticSearchProvider.deleteDocumentById(ESConstant.PROD_INDEX, "prod_type", sku+"");
         }
     }
 
@@ -171,7 +169,7 @@ public class ProdESUtil {
 
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
 
-            SearchRequestBuilder requestBuilder = client.prepareSearch("prod")
+            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery);
 
 
@@ -184,7 +182,7 @@ public class ProdESUtil {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                     long sku = Long.parseLong(sourceMap.get("sku").toString());
                     sourceMap.put("prodstatus", prodstatus);
-                    bulkRequest.add(client.prepareUpdate("prod", "prod_type", sku+"").setDoc(sourceMap));
+                    bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, "prod_type", sku+"").setDoc(sourceMap));
 
                 }
                 BulkResponse bulkResponse = bulkRequest.get();
@@ -237,7 +235,7 @@ public class ProdESUtil {
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
-            response = client.prepareSearch("prod")
+            response = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
@@ -318,7 +316,7 @@ public class ProdESUtil {
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
-            SearchRequestBuilder requestBuilder = client.prepareSearch("prod")
+            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize);
@@ -355,7 +353,7 @@ public class ProdESUtil {
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
-            response = client.prepareSearch("prod")
+            response = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
@@ -385,7 +383,7 @@ public class ProdESUtil {
             boolQuery.must(rangeQuery);
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
-            response = client.prepareSearch("prod")
+            response = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
@@ -436,7 +434,7 @@ public class ProdESUtil {
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
-            response = client.prepareSearch("prod")
+            response = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
@@ -478,7 +476,7 @@ public class ProdESUtil {
         }
 
         TransportClient client = ElasticSearchClientFactory.getClientInstance();
-        SearchRequestBuilder requestBuilder = client.prepareSearch("prod").setQuery(boolQuery);
+        SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX).setQuery(boolQuery);
         AggregationBuilder aggregationBuilder = AggregationBuilders.terms("agg").field(column);
         SearchResponse response = requestBuilder
                 .addAggregation(aggregationBuilder)
@@ -513,7 +511,7 @@ public class ProdESUtil {
 
             int from = pagenum * pagesize - pagesize;
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
-            response = client.prepareSearch("prod")
+            response = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
