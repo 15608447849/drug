@@ -1,6 +1,7 @@
 package com.onek.propagation.prod;
 
 import com.alibaba.fastjson.JSONObject;
+import com.onek.consts.ESConstant;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchClientFactory;
@@ -92,13 +93,13 @@ public class ProdDiscountObserver implements ProdObserver {
             if(delList != null && delList.size() > 0){
                 Object [] skuArray = new Long[delList.size()];
                 skuArray = delList.toArray(skuArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuArray);
                 boolQuery.must(builder);
             }
 
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
 
-            SearchRequestBuilder requestBuilder = client.prepareSearch("prod")
+            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery);
 
 
@@ -109,10 +110,10 @@ public class ProdDiscountObserver implements ProdObserver {
             if(response != null && response.getHits().totalHits > 0){
                 for (SearchHit searchHit : response.getHits()) {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-                    long sku = Long.parseLong(sourceMap.get("sku").toString());
-                    int rulestatus = Integer.parseInt(sourceMap.get("rulestatus").toString());
-                    sourceMap.put("rulestatus", rulestatus&~  rulecode);
-                    bulkRequest.add(client.prepareUpdate("prod", "prod_type", sku+"").setDoc(sourceMap));
+                    long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
+                    int rulestatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_RULESTATUS).toString());
+                    sourceMap.put(ESConstant.PROD_COLUMN_RULESTATUS, rulestatus&~  rulecode);
+                    bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
                 }
             }
@@ -140,13 +141,13 @@ public class ProdDiscountObserver implements ProdObserver {
             if(delList != null && delList.size() > 0){
                 Object [] skuArray = new Long[delList.size()];
                 skuArray = delList.toArray(skuArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuArray);
                 boolQuery.must(builder);
             }
 
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
 
-            SearchRequestBuilder requestBuilder = client.prepareSearch("prod")
+            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery);
 
 
@@ -157,10 +158,10 @@ public class ProdDiscountObserver implements ProdObserver {
             if(response != null && response.getHits().totalHits > 0){
                 for (SearchHit searchHit : response.getHits()) {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-                    long sku = Long.parseLong(sourceMap.get("sku").toString());
-                    int rulestatus = Integer.parseInt(sourceMap.get("rulestatus").toString());
-                    sourceMap.put("rulestatus", rulestatus|rulecode);
-                    bulkRequest.add(client.prepareUpdate("prod", "prod_type", sku+"").setDoc(sourceMap));
+                    long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
+                    int rulestatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_RULESTATUS).toString());
+                    sourceMap.put(ESConstant.PROD_COLUMN_RULESTATUS, rulestatus|rulecode);
+                    bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
                 }
             }

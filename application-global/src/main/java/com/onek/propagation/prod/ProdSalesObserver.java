@@ -1,6 +1,7 @@
 package com.onek.propagation.prod;
 
 import com.alibaba.fastjson.JSONObject;
+import com.onek.consts.ESConstant;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchClientFactory;
@@ -73,13 +74,13 @@ public class ProdSalesObserver implements ProdObserver {
             if (skuList != null && skuList.size() > 0) {
                 Object[] skuArray = new Long[skuList.size()];
                 skuArray = skuList.toArray(skuArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuArray);
                 boolQuery.must(builder);
             }
 
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
 
-            SearchRequestBuilder requestBuilder = client.prepareSearch("prod")
+            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery);
 
 
@@ -90,10 +91,10 @@ public class ProdSalesObserver implements ProdObserver {
             if (response != null && response.getHits().totalHits > 0) {
                 for (SearchHit searchHit : response.getHits()) {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-                    long sku = Long.parseLong(sourceMap.get("sku").toString());
-                    int sales = Integer.parseInt(sourceMap.get("sales").toString());
-                    sourceMap.put("sales", salesMap.get(sku));
-                    bulkRequest.add(client.prepareUpdate("prod", "prod_type", sku + "").setDoc(sourceMap));
+                    long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
+                    int sales = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SALES).toString());
+                    sourceMap.put(ESConstant.PROD_COLUMN_SALES, salesMap.get(sku) + sales);
+                    bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku + "").setDoc(sourceMap));
 
                 }
             }

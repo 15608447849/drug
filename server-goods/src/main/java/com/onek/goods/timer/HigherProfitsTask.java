@@ -83,7 +83,7 @@ public class HigherProfitsTask extends TimerTask {
             if(skuList != null && skuList.size() > 0){
                 Object [] skuArray = new Long[skuList.size()];
                 skuArray = skuList.toArray(skuArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuArray);
                 boolQuery.must(builder);
             }
 
@@ -100,9 +100,9 @@ public class HigherProfitsTask extends TimerTask {
             if(response != null && response.getHits().totalHits > 0){
                 for (SearchHit searchHit : response.getHits()) {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-                    long sku = Long.parseLong(sourceMap.get("sku").toString());
-                    int skucstatus = Integer.parseInt(sourceMap.get("skucstatus").toString());
-                    sourceMap.put("skucstatus", skucstatus&~512);
+                    long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
+                    int skucstatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS).toString());
+                    sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, skucstatus&~512);
                     bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
                 }
@@ -131,7 +131,7 @@ public class HigherProfitsTask extends TimerTask {
             if(skuList != null && skuList.size() > 0){
                 Object [] skuArray = new Long[skuList.size()];
                 skuArray = skuList.toArray(skuArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuArray);
                 boolQuery.must(builder);
             }
 
@@ -148,9 +148,9 @@ public class HigherProfitsTask extends TimerTask {
             if(response != null && response.getHits().totalHits > 0){
                 for (SearchHit searchHit : response.getHits()) {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-                    long sku = Long.parseLong(sourceMap.get("sku").toString());
-                    int skucstatus = Integer.parseInt(sourceMap.get("skucstatus").toString());
-                    sourceMap.put("skucstatus", skucstatus|512);
+                    long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
+                    int skucstatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS).toString());
+                    sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, skucstatus|512);
                     bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
                 }

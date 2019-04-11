@@ -28,7 +28,6 @@ public class DiscountRuleTask extends TimerTask {
             server.registerObserver(new ProdDiscountObserver());
 
             Map<Integer,List<String>> map = new HashMap<>();
-            List<String> proList = new ArrayList<>();
             for(Object[] result : results){
                 Long gcode = (Long) result[0];
 //                String actcode = (String) result[1];
