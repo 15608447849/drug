@@ -36,20 +36,20 @@ public class ActivityManageModule {
 
     private static final String SELECT_ACT_SQL = "select unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,rulecode,cstatus from {{?" + DSMConst.TD_PROM_ACT + "}} "
+                "actcycle,sdate,edate,brulecode,cstatus from {{?" + DSMConst.TD_PROM_ACT + "}} "
                  + " where cstatus&1=0 ";
 
     //新增活动
     private static final String INSERT_ACT_SQL = "insert into {{?" + DSMConst.TD_PROM_ACT + "}} "
             + "(unqid,actname,incpriority,cpriority,qualcode,qualvalue,actdesc,"
-            + "excdiscount,acttype,actcycle,sdate,edate,rulecode) "
+            + "excdiscount,acttype,actcycle,sdate,edate,brulecode) "
             + "values(?,?,?,?,?,"
             + "?,?,?,?,?,?,?,?)";
 
     //修改活动
     private static final String UPD_ACT_SQL = "update {{?" + DSMConst.TD_PROM_ACT + "}} set actname=?,"
             + "incpriority=?,cpriority=?,qualcode=?,qualvalue=?,actdesc=?,"
-            + "excdiscount=?,acttype=?,actcycle=?,sdate=?,edate=?,rulecode=? where cstatus&1=0 "
+            + "excdiscount=?,acttype=?,actcycle=?,sdate=?,edate=?,brulecode=? where cstatus&1=0 "
             + " and unqid=?";
 
     //新增场次
@@ -70,16 +70,16 @@ public class ActivityManageModule {
 
     //优惠阶梯
     private static final String INSERT_LAD_OFF_SQL = "insert into {{?" + DSMConst.TD_PROM_LADOFF + "}} "
-            + "(unqid,actcode,ruleno,ladamt,ladnum,offercode,offer) "
-            + " values(?,?,?,?,?,?,?)";
+            + "(unqid,ladamt,ladnum,offercode,offer) "
+            + " values(?,?,?,?,?)";
 
     private static final String DEL_LAD_OFF_SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 and actcode=?";
 
     //优惠赠换商品
     private static final String INSERT_ASS_GIFT_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSGIFT + "}} "
-            + "(unqid,actcode,assgiftno,offercode)"
-            + " values(?,?,?,?)";
+            + "(unqid,assgiftno,offercode)"
+            + " values(?,?,?)";
 
     private static final String DEL_ASS_GIFT_SQL = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 and actcode=?";
@@ -190,7 +190,7 @@ public class ActivityManageModule {
      **/
     private Result insertActivity(ActivityVO activityVO, int cpt) {
         boolean b;
-        int ruleCode = activityVO.getRulecode();//规则码
+        int ruleCode = activityVO.getBrulecode();//规则码
         Result result = new Result();
         long actCode = GenIdUtil.getUnqId();//唯一码(活动码)
         //新增活动
@@ -198,7 +198,7 @@ public class ActivityManageModule {
            int re = baseDao.updateNative(INSERT_ACT_SQL,actCode, activityVO.getActname(),
                    activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                    activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                   activityVO.getEdate(), activityVO.getRulecode());
+                   activityVO.getEdate(), ruleCode);
            b = re > 0;
         } else {
             List<Object[]> params = new ArrayList<>();
@@ -206,7 +206,7 @@ public class ActivityManageModule {
             params.add(new Object[]{actCode, activityVO.getActname(),
                     activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                    activityVO.getEdate(), activityVO.getRulecode()});
+                    activityVO.getEdate(), ruleCode});
             int[] actResult = baseDao.updateTransNative(new String[]{UPDATE_ACT_CP, INSERT_ACT_SQL}, params);
             b = !ModelUtil.updateTransEmpty(actResult);
         }
@@ -217,7 +217,7 @@ public class ActivityManageModule {
             }
             //新增阶梯
             if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty()) {
-                insertLadOff(activityVO.getLadderVOS(), actCode, activityVO.getRulecode());
+                insertLadOff(activityVO.getLadderVOS(),ruleCode);
             }
             //新增活动商品
 //            if (activityVO.getAssDrugVOS() != null && !activityVO.getAssDrugVOS().isEmpty()) {
@@ -249,7 +249,7 @@ public class ActivityManageModule {
             int re = baseDao.updateNative(UPD_ACT_SQL, activityVO.getActname(),
                     activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                    activityVO.getEdate(), activityVO.getRulecode(),actCode);
+                    activityVO.getEdate(), activityVO.getBrulecode(),actCode);
             b = re > 0;
         } else {
             List<Object[]> params = new ArrayList<>();
@@ -257,7 +257,7 @@ public class ActivityManageModule {
             params.add(new Object[]{activityVO.getActname(),
                     activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                    activityVO.getEdate(), activityVO.getRulecode(),actCode});
+                    activityVO.getEdate(), activityVO.getBrulecode(),actCode});
             int[] actResult = baseDao.updateTransNative(new String[]{UPDATE_ACT_CP,UPD_ACT_SQL}, params);
             b = !ModelUtil.updateTransEmpty(actResult);
         }
@@ -272,7 +272,7 @@ public class ActivityManageModule {
             if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty()) {
                 if (baseDao.updateNative(DEL_LAD_OFF_SQL, actCode) > 0) {
                     baseDao.updateNative(DEL_ASS_GIFT_SQL, actCode);
-                    insertLadOff(activityVO.getLadderVOS(), actCode, activityVO.getRulecode());
+                    insertLadOff(activityVO.getLadderVOS(), activityVO.getBrulecode());
                 }
             }
 
@@ -311,16 +311,16 @@ public class ActivityManageModule {
      * @time  2019/4/2 16:09
      * @version 1.1.1
      **/
-    private void insertLadOff(List<LadderVO> ladderVOS, long actCode, int ruleCode) {
+    private void insertLadOff(List<LadderVO> ladderVOS, int ruleCode) {
         List<Object[]> ladOffParams = new ArrayList<>();
         List<Object[]> assGiftParams = new ArrayList<>();
         for (LadderVO ladderVO : ladderVOS) {
             int offerCode = getOfferCode();
-            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, ruleCode,
+            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(),
                     ladderVO.getLadamt(),ladderVO.getLadnum(),offerCode,ladderVO.getOffer()});
                 //新增优惠赠换商品
             if (ruleCode == 2) {
-                assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, ladderVO.getAssgiftno(),offerCode});
+                assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), ladderVO.getAssgiftno(),offerCode});
             }
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
@@ -471,8 +471,8 @@ public class ActivityManageModule {
         long actCode = jsonObject.get("unqid").getAsLong();
         String selectSQL = "select a.unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,a.rulecode,a.cstatus,rulename from {{?" + DSMConst.TD_PROM_ACT + "}} a "
-                + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.rulecode=b.rulecode"
+                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.brulecode=b.brulecode"
                 + " where a.cstatus&1=0 and a.unqid=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         ActivityVO[] activityVOS = new ActivityVO[queryResult.size()];
@@ -483,7 +483,7 @@ public class ActivityManageModule {
                 "cstatus","ruleName"
         });
         activityVOS[0].setTimeVOS(getTimes(actCode));
-        activityVOS[0].setLadderVOS(getLadder(actCode));
+        activityVOS[0].setLadderVOS(getLadder(activityVOS[0].getBrulecode()));
 //        activityVOS[0].setAssGiftVOS(getAssGift(actCode));
 //        activityVOS[0].setAssDrugVOS(new CouponManageModule().getCoupGoods(actCode));
         return result.success(activityVOS[0]);
@@ -508,9 +508,9 @@ public class ActivityManageModule {
     }
 
 
-    private List<LadderVO> getLadder(long actCode) {
-        String sql = "select unqid,actcode,ruleno,ladamt,ladnum,offercode,offer,cstatus from {{?"
-                + DSMConst.TD_PROM_LADOFF + "}} where cstatus&1=0 and actcode=" + actCode;
+    private List<LadderVO> getLadder(int bRuleCode) {
+        String sql = "select unqid,ladamt,ladnum,offercode,offer,cstatus from {{?"
+                + DSMConst.TD_PROM_LADOFF + "}} where cstatus&1=0 and offercode like '" + bRuleCode + "%'";
         List<Object[]> queryResult = baseDao.queryNative(sql);
         LadderVO[] ladderVOS = new LadderVO[queryResult.size()];
         baseDao.convToEntity(queryResult, ladderVOS, LadderVO.class);
@@ -585,8 +585,7 @@ public class ActivityManageModule {
                 ret = baseDao.updateNative(CLOSE_ACT,actcode);
                 break;
         }
-
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
-
     }
+
 }
