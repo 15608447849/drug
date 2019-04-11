@@ -322,8 +322,8 @@ public class CouponManageModule {
 
         List<Object[]> ladOffParams = new ArrayList<>();
         for (LadderVO ladderVO : ladderVOS) {
-            ladOffParams.add(new Object[]{CommonModule.getLaderNo(laddrno), actCode,ruleno,
-                    ladderVO.getLadamt(),ladderVO.getLadnum(),ladderVO.getOffer()});
+            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ruleno,
+                    ladderVO.getLadamt(),ladderVO.getLadnum(),CommonModule.getLaderNo(laddrno)});
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
         boolean b = !ModelUtil.updateTransEmpty(result);
