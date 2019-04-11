@@ -268,7 +268,7 @@ public class CouponManageModule {
      */
     private List<LadderVO> getCoupLadder(CouponVO couponVO,int rulecode){
         StringBuilder sb = new StringBuilder(QUERY_PROM_LAD_SQL);
-        sb.append(" and offercode like '").append(rulecode).append("%");
+        sb.append(" and offercode like '").append(rulecode).append("%'");
         List<Object[]> result = baseDao.queryNative(sb.toString());
 
         if(result == null || result.isEmpty()){
