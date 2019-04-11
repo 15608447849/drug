@@ -27,7 +27,17 @@ import java.util.Map;
 public class CommonModule {
 
 
+    static{
+        AppConfig.initLogger();
+        AppConfig.initialize();
+
+    }
+
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
+
+    private static final String SELECT_LADDER_NO = "select IFNULL(max(right(offercode,2)),0) from {{?" + DSMConst.TD_PROM_LADOFF + "}} ";
+
+
     /**
      * @description 查询赠品信息
      * @params [appContext]
@@ -94,15 +104,34 @@ public class CommonModule {
         return result.success(map);
     }
 
+
+    public static int getLaderNo(String preLader){
+        StringBuilder sb = new StringBuilder(SELECT_LADDER_NO);
+        sb.append(" where offercode like '");
+        sb.append(preLader);
+        sb.append("%' and cstatus & 1 = 0 ");
+        List<Object[]> queryResult = baseDao.queryNative(sb.toString());
+        int ladernum = Integer.parseInt(queryResult.get(0)[0].toString());
+        ladernum = ladernum +1;
+        sb.setLength(0);
+        sb.append(preLader);
+        if(ladernum < 10){
+            sb.append("0");
+        }
+        sb.append(ladernum);
+        return Integer.parseInt(sb.toString());
+    }
+
     public static void main(String[] args) {
         CommonModule commonModule = new CommonModule();
-        IRequest request = new IRequest();
-        Current current = new Current();
-        request.param.json = "";
-        AppContext appContext = new AppContext(current,request);
-
-        Result result = commonModule.queryPromGift(appContext);
-        System.out.println(result.toString());
+        System.out.println(CommonModule.getLaderNo("11202"));
+//        IRequest request = new IRequest();
+//        Current current = new Current();
+//        request.param.json = "";
+//        AppContext appContext = new AppContext(current,request);
+//
+//        Result result = commonModule.queryPromGift(appContext);
+//        System.out.println(result.toString());
     }
 
 
