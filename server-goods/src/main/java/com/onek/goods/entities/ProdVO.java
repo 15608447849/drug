@@ -38,6 +38,13 @@ public class ProdVO {
     private String unitName;
     private String imageUrl;
 
+    // 活动消息
+    private String sdate;
+    private String edate;
+    private int startnum;
+    private int buynum;
+    private int actlimit;
+
     public long getSpu() {
         return spu;
     }
@@ -252,5 +259,45 @@ public class ProdVO {
 
     public void setImageUrl(String imageUrl) {
         this.imageUrl = imageUrl;
+    }
+
+    public String getSdate() {
+        return sdate;
+    }
+
+    public void setSdate(String sdate) {
+        this.sdate = sdate;
+    }
+
+    public String getEdate() {
+        return edate;
+    }
+
+    public void setEdate(String edate) {
+        this.edate = edate;
+    }
+
+    public int getStartnum() {
+        return startnum;
+    }
+
+    public void setStartnum(int startnum) {
+        this.startnum = startnum;
+    }
+
+    public int getBuynum() {
+        return buynum;
+    }
+
+    public void setBuynum(int buynum) {
+        this.buynum = buynum;
+    }
+
+    public int getActlimit() {
+        return actlimit;
+    }
+
+    public void setActlimit(int actlimit) {
+        this.actlimit = actlimit;
     }
 }

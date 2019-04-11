@@ -81,10 +81,36 @@ public class TimeUtils {
     }
 
     /**
+     * 例: 2017-11-11 9:50:00
+     */
+    public static String date_yMd_Hms_2String(Date date){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        try {
+            return simpleDateFormat.format(date);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
      * 例: 2017-11-11
      */
     public static String date_yMd_2String(Date date){
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            return simpleDateFormat.format(date);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 例: 1111 标识xx月xx日
+     */
+    public static String date_Md_2String(Date date){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMdd");
         try {
             return simpleDateFormat.format(date);
         } catch (Exception e) {

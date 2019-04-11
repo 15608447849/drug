@@ -19,6 +19,8 @@ import com.onek.util.dict.DictStore;
 import com.onek.util.dict.DictUtil;
 import com.onek.util.fs.FileServerUtils;
 import com.onek.util.prod.ProdEntity;
+import constant.DSMConst;
+import dao.BaseDAO;
 import objectref.ObjectRefUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
@@ -28,6 +30,7 @@ import redis.proxy.CacheProxyInstance;
 import util.BeanMapUtils;
 import util.NumUtil;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.util.*;
 
@@ -38,43 +41,336 @@ public class ProdModule {
 
     private static IRedisCache mallFloorProxy = (IRedisCache) CacheProxyInstance.createInstance(new MallFloorImpl());
 
-    public static final Long NEW = 1L;
-    public static final Long HOT = 2L;
-    public static final Long SECKILL = 3L;
+    private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
+
+    private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
+            "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
+            "where a.unqid = d.actcode " +
+            "and a.brulecode = ? " +
+            "and a.sdate <= CURDATE() and CURDATE()<= a.edate and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1)";
+
+
+    private static String NEWMEMBER_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
+            "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
+            " where a.unqid = d.actcode  " +
+            "and a.sdate <= CURDATE() and CURDATE()<= a.edate and a.cstatus&1 = 0 " +
+            "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1)";
+
+    private static String EXEMPOST_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
+            "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
+            " where a.unqid = d.actcode  " +
+            "and a.sdate <= CURDATE() and CURDATE()<= a.edate and a.cstatus&1 = 0 " +
+            "and brulecode like '112%' " +
+            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) ";
+
+    private static String PROM_TIME_SQL = "select sdate,edate from {{?"+ DSMConst.TD_PROM_TIME +"}} where cstatus&1=0 and actcode = ?";
+
+//
+//    public static final Long NEW = 1L; // 新品专区
+//    public static final Long HOT = 2L; // 热销专区
+//    public static final Long SECKILL = 4L; // 秒杀专区
+//    public static final Long TEAMBUY = 8L; // 一块购专区
+//    public static final Long EXEMPOST = 16L; // 包邮专区
+//    public static final Long NEWMEMBER = 32L; // 新人专享
+//    public static final Long CHINAFAMPRE = 64L; // 中华名方
+//    public static final Long CHOOSEFORYOU = 128L; // 为你精选
+//    public static final Long BRAND = 256L; // 品牌
+//    public static final Long DISCOUNT = 512L; // 限时折扣
 
     @UserPermission(ignore = true)
     public Result getMallFloorProd(AppContext appContext) {
 //    public Result getMallFloorProd() {
         List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
-        JSONObject jsonObject = new JSONObject();
-        if (mallFloorVOList != null && mallFloorVOList.size() > 0) {
-            List<Integer> bb = new ArrayList<>();
-            bb.add(128);
-            bb.add(512);
-            Set<Integer> result = new HashSet<>();
-            NumUtil.arrangeAdd(256, bb, result);
+        return new Result().success(mallFloorVOList);
+    }
 
-            List<ProdVO> newprodList = getFilterProds(result);
+    @UserPermission(ignore = true)
+    public Result getNewMallFloor(AppContext appContext) {
+        List<Integer> bb = new ArrayList<>();
+        bb.add(128);
+        bb.add(512);
+        Set<Integer> result = new HashSet<>();
+        NumUtil.arrangeAdd(256, bb, result);
 
-            List<Integer> bb1 = new ArrayList<>();
-            bb1.add(256);
-            bb1.add(512);
-            Set<Integer> result1 = new HashSet<>();
-            NumUtil.arrangeAdd(128, bb1, result1);
+        List<ProdVO> newprodList = getFilterProds(result);
 
-            List<ProdVO> hotprodList = getFilterProds(result1);
+        List<ProdVO> filterProdList = loadProd(newprodList, 256);
 
-            for (MallFloorVO floorVO : mallFloorVOList) {
-                if (floorVO.getUnqid() == NEW) {
-                    List<ProdVO> filterProdList = loadProd(newprodList, 256);
-                    jsonObject.put("new", filterProdList);
-                } else if (floorVO.getUnqid() == HOT) {
-                    List<ProdVO> filterProdList = loadProd(hotprodList, 128);
-                    jsonObject.put("hot", filterProdList);
+        return new Result().success(filterProdList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getChooseForYouMallFloor(AppContext appContext) {
+        List<Integer> bb1 = new ArrayList<>();
+        bb1.add(218);
+        bb1.add(256);
+        Set<Integer> result1 = new HashSet<>();
+        NumUtil.arrangeAdd(512, bb1, result1);
+
+        List<ProdVO> hotprodList = getFilterProds(result1);
+        List<ProdVO> filterProdList = loadProd(hotprodList, 128);
+
+        return new Result().success(filterProdList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getHotMallFloor(AppContext appContext) {
+        List<Integer> bb1 = new ArrayList<>();
+        bb1.add(256);
+        bb1.add(512);
+        Set<Integer> result1 = new HashSet<>();
+        NumUtil.arrangeAdd(128, bb1, result1);
+
+        List<ProdVO> hotprodList = getFilterProds(result1);
+        List<ProdVO> filterProdList = loadProd(hotprodList, 128);
+
+        return new Result().success(filterProdList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getBrandMallFloor(AppContext appContext) {
+
+        SearchResponse response = ProdESUtil.searchProdHasBrand(1, 100);
+        List<ProdVO> prodList = new ArrayList<>();
+        assembleData(response, prodList);
+
+        return new Result().success(prodList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getNewMemberMallFloor(AppContext appContext) {
+
+        String mmdd = TimeUtils.date_Md_2String(new Date());
+        List<Object[]> list = BASE_DAO.queryNative(NEWMEMBER_ACT_PROD_SQL, new Object[]{mmdd});
+        List<ProdVO> prodVOList = new ArrayList<>();
+        if(list != null && list.size() > 0){
+            List<Long> actCodeList = new ArrayList<>();
+            List<Long> skuList = new ArrayList<>();
+            Map<Long,Integer> dataMap = new HashMap<>();
+            for(Object[] objects : list){
+                Long actcode = Long.parseLong(objects[0].toString());
+                Long gcode = Long.parseLong(objects[1].toString());
+                int limitnum = Integer.parseInt(objects[3].toString());
+
+                skuList.add(gcode);
+                dataMap.put(gcode, limitnum);
+
+            }
+
+            SearchResponse response =  ProdESUtil.searchProdBySpuList(skuList, 1, 100);
+
+            if(response != null && response.getHits().totalHits > 0){
+                assembleData(response, prodVOList);
+            }
+            if(prodVOList != null && prodVOList.size() > 0){
+                for(ProdVO prodVO : prodVOList){
+                    prodVO.setBuynum(0);
+                    prodVO.setStartnum(0);
+                    prodVO.setActlimit(dataMap.get(prodVO.getSku()));
                 }
             }
         }
-        return new Result().success(jsonObject);
+        return new Result().success(prodVOList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getExemPostMallFloor(AppContext appContext) {
+
+        String mmdd = TimeUtils.date_Md_2String(new Date());
+        List<Object[]> list = BASE_DAO.queryNative(EXEMPOST_ACT_PROD_SQL, new Object[]{mmdd});
+        List<ProdVO> prodVOList = new ArrayList<>();
+        if(list != null && list.size() > 0){
+            List<Long> actCodeList = new ArrayList<>();
+            List<Long> skuList = new ArrayList<>();
+            Map<Long,Integer> dataMap = new HashMap<>();
+            for(Object[] objects : list){
+                Long actcode = Long.parseLong(objects[0].toString());
+                Long gcode = Long.parseLong(objects[1].toString());
+                int limitnum = Integer.parseInt(objects[3].toString());
+
+                skuList.add(gcode);
+                dataMap.put(gcode, limitnum);
+
+            }
+
+            SearchResponse response =  ProdESUtil.searchProdBySpuList(skuList, 1, 100);
+
+            if(response != null && response.getHits().totalHits > 0){
+                assembleData(response, prodVOList);
+            }
+            if(prodVOList != null && prodVOList.size() > 0){
+                for(ProdVO prodVO : prodVOList){
+                    prodVO.setBuynum(0);
+                    prodVO.setStartnum(0);
+                    prodVO.setActlimit(dataMap.get(prodVO.getSku()));
+                }
+            }
+        }
+        return new Result().success(prodVOList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getTeamBuyMallFloor(AppContext appContext) {
+
+        String mmdd = TimeUtils.date_Md_2String(new Date());
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{8, mmdd});
+        List<ProdVO> prodVOList = new ArrayList<>();
+        if(list != null && list.size() > 0){
+            List<Long> actCodeList = new ArrayList<>();
+            List<Long> skuList = new ArrayList<>();
+            Map<Long,String[]> timeMap = new HashMap<>();
+            Map<Long,Integer> dataMap = new HashMap<>();
+            for(Object[] objects : list){
+                Long actcode = Long.parseLong(objects[0].toString());
+                Long gcode = Long.parseLong(objects[1].toString());
+                int limitnum = Integer.parseInt(objects[3].toString());
+
+                skuList.add(gcode);
+                if(!actCodeList.contains(actcode)){
+                    List<Object[]> list2= BASE_DAO.queryNative(PROM_TIME_SQL, new Object[]{ actcode });
+                    for(Object[] objects1 : list2){
+                        String sdate =  objects1[0].toString();
+                        String edate =  objects1[1].toString();
+                        timeMap.put(actcode, new String[]{sdate, edate});
+                    }
+                    actCodeList.add(actcode);
+                }
+                dataMap.put(gcode, limitnum);
+
+            }
+
+            SearchResponse response =  ProdESUtil.searchProdBySpuList(skuList, 1, 100);
+
+            if(response != null && response.getHits().totalHits > 0){
+                assembleData(response, prodVOList);
+            }
+            if(prodVOList != null && prodVOList.size() > 0){
+                for(ProdVO prodVO : prodVOList){
+                    prodVO.setBuynum(0);
+                    prodVO.setStartnum(0);
+                    prodVO.setActlimit(dataMap.get(prodVO.getSku()));
+                    if(timeMap.get(prodVO.getSku())==null || timeMap.get(prodVO.getSku()).length<=0){
+                        prodVO.setSdate("00:00:00");
+                        prodVO.setEdate("23:59:59");
+                    }else{
+                        prodVO.setSdate(timeMap.get(prodVO.getSku())[0]);
+                        prodVO.setEdate(timeMap.get(prodVO.getSku())[1]);
+                    }
+
+                }
+            }
+        }
+        return new Result().success(prodVOList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getSeckillMallFloor(AppContext appContext) {
+
+        String mmdd = TimeUtils.date_Md_2String(new Date());
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{8, mmdd});
+        JSONObject result = new JSONObject();
+        List<ProdVO> prodVOList = new ArrayList<>();
+        if(list != null && list.size() > 0){
+            List<Long> actCodeList = new ArrayList<>();
+            List<Long> skuList = new ArrayList<>();
+            Map<Long,String[]> timeMap = new HashMap<>();
+            Map<Long,Integer> dataMap = new HashMap<>();
+
+            for(Object[] objects : list){
+                Long actcode = Long.parseLong(objects[0].toString());
+                Long gcode = Long.parseLong(objects[1].toString());
+                int limitnum = Integer.parseInt(objects[3].toString());
+
+                if(!actCodeList.contains(actcode)){
+                    actCodeList.add(actcode);
+                    List<Object[]> list2 = BASE_DAO.queryNative(PROM_TIME_SQL, new Object[]{actcode});
+                    for (Object[] objects1 : list2) {
+                        String sdate = objects1[0].toString();
+                        String edate = objects1[1].toString();
+                        timeMap.put(actcode, new String[]{sdate, edate});
+                    }
+                }
+                if(actCodeList.size() >1){
+                    break;
+                }
+
+                skuList.add(gcode);
+                dataMap.put(gcode, limitnum);
+
+            }
+
+            SearchResponse response =  ProdESUtil.searchProdBySpuList(skuList, 1, 100);
+
+            if(response != null && response.getHits().totalHits > 0){
+                assembleData(response, prodVOList);
+            }
+            if(prodVOList != null && prodVOList.size() > 0){
+                for(ProdVO prodVO : prodVOList){
+                    prodVO.setBuynum(0);
+                    prodVO.setStartnum(0);
+                    prodVO.setActlimit(dataMap.get(prodVO.getSku()));
+                }
+            }
+            result.put("sdate", timeMap.get(actCodeList.get(0))[0]);
+            result.put("edate", timeMap.get(actCodeList.get(0))[1]);
+            result.put("list", prodVOList);
+        }
+        return new Result().success(result);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getDiscountMallFloor(AppContext appContext) {
+
+        String mmdd = TimeUtils.date_Md_2String(new Date());
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{8, mmdd});
+        JSONObject result = new JSONObject();
+        List<ProdVO> prodVOList = new ArrayList<>();
+        if(list != null && list.size() > 0){
+            List<Long> actCodeList = new ArrayList<>();
+            List<Long> skuList = new ArrayList<>();
+            Map<Long,String[]> timeMap = new HashMap<>();
+            Map<Long,Integer> dataMap = new HashMap<>();
+
+            for(Object[] objects : list){
+                Long actcode = Long.parseLong(objects[0].toString());
+                Long gcode = Long.parseLong(objects[1].toString());
+                int limitnum = Integer.parseInt(objects[3].toString());
+
+                if(!actCodeList.contains(actcode)){
+                    actCodeList.add(actcode);
+                    List<Object[]> list2 = BASE_DAO.queryNative(PROM_TIME_SQL, new Object[]{actcode});
+                    for (Object[] objects1 : list2) {
+                        String sdate = objects1[0].toString();
+                        String edate = objects1[1].toString();
+                        timeMap.put(actcode, new String[]{sdate, edate});
+                    }
+                }
+                if(actCodeList.size() >1){
+                    break;
+                }
+
+                skuList.add(gcode);
+                dataMap.put(gcode, limitnum);
+
+            }
+
+            SearchResponse response =  ProdESUtil.searchProdBySpuList(skuList, 1, 100);
+
+            if(response != null && response.getHits().totalHits > 0){
+                assembleData(response, prodVOList);
+            }
+            if(prodVOList != null && prodVOList.size() > 0){
+                for(ProdVO prodVO : prodVOList){
+                    prodVO.setBuynum(0);
+                    prodVO.setStartnum(0);
+                    prodVO.setActlimit(dataMap.get(prodVO.getSku()));
+                }
+            }
+            result.put("sdate", timeMap.get(actCodeList.get(0))[0]);
+            result.put("edate", timeMap.get(actCodeList.get(0))[1]);
+            result.put("list", prodVOList);
+        }
+        return new Result().success(result);
     }
 
     @UserPermission(ignore = true)
@@ -242,7 +538,7 @@ public class ProdModule {
     private List<ProdVO> loadProd(List<ProdVO> prodList, int type) {
         List<ProdVO> newProdList = new ArrayList<>();
         for (ProdVO prodVO : prodList) {
-            if ((prodVO.getCstatus() & 256) > 0) {
+            if ((prodVO.getCstatus() & type) > 0) {
                 newProdList.add(prodVO);
             }
         }
