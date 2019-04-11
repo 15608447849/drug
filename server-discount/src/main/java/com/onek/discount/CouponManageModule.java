@@ -67,12 +67,12 @@ public class CouponManageModule {
 
     //优惠阶梯
     private final String INSERT_LAD_OFF_SQL = "insert into {{?" + DSMConst.TD_PROM_LADOFF + "}} "
-            + "(unqid,actcode,ladamt,ladnum,offer) "
+            + "(unqid,ladamt,ladnum,offer,offercode) "
             + " values(?,?,?,?,?)";
 
     //删除阶梯
-    private static final String DEL_LAD_OFF__SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and actcode=?";
+    private static final String DEL_LAD_OFF_SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
+            + " where cstatus&1=0 ";
 
     //优惠赠换商品
     private final String INSERT_ASS_GIFT_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSGIFT + "}} "
@@ -93,7 +93,7 @@ public class CouponManageModule {
      */
     private final String QUERY_COUPON_LIST_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
-            "brulecode,rulename,cop.cstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
+            "cop.brulecode,rulename,cop.cstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
             " {{?"+ DSMConst.TD_PROM_RULE +"}}  ru on cop.brulecode = ru.brulecode  where cop.cstatus&1=0 ";
 
 
@@ -102,7 +102,7 @@ public class CouponManageModule {
 
     private final String QUERY_PROM_RULE_SQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE+"}} where cstatus&1=0 ";
 
-    private final String QUERY_PROM_LAD_SQL = "select unqid,ladamt,ladnum,offer from {{?" + DSMConst.TD_PROM_LADOFF+"}} where actcode = ? and cstatus&1=0 ";
+    private final String QUERY_PROM_LAD_SQL = "select unqid,ladamt,ladnum,offer,offercode from {{?" + DSMConst.TD_PROM_LADOFF+"}} where cstatus&1=0 ";
 
     private final String QUERY_PROM_GOODS_SQL = "select pdrug.unqid,pdrug.actcode,`spec`,gcode,limitnum,manuname,standarno,prodname,classname,convert(vatp/100,decimal(10,2)) price,actstock " +
             " from {{?" + DSMConst.TD_PROM_ASSDRUG+"}} pdrug" +
@@ -131,7 +131,7 @@ public class CouponManageModule {
                     + " WHERE unqid = ? ";
 
     private static final String DEL_ASS_GIFT_SQL = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and actcode=?";
+            + " where cstatus&1=0 and offercode=?";
 
 
     /**
@@ -163,13 +163,13 @@ public class CouponManageModule {
             }
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
-                insertLadOff(couponVO.getLadderVOS(), unqid,couponVO.getRuleno(),couponVO.getRuleno()+""+couponVO.getAlgorithm());
+                insertLadOff(couponVO.getLadderVOS(),couponVO.getRuleno()+""+couponVO.getPreWay());
             }
 
-            //新增优惠赠换商品
-            if (couponVO.getAssGiftVOS() != null && !couponVO.getAssGiftVOS().isEmpty()) {
-                insertAssGift(couponVO.getAssGiftVOS(), unqid);
-            }
+//            //新增优惠赠换商品
+//            if (couponVO.getAssGiftVOS() != null && !couponVO.getAssGiftVOS().isEmpty()) {
+//                insertAssGift(couponVO.getAssGiftVOS(), unqid);
+//            }
         } else {
             return result.fail("新增失败");
         }
@@ -209,7 +209,7 @@ public class CouponManageModule {
                             "startdate", "enddate", "ruleno","validday","validflag","rulename"});
 
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
-        couponVOS[0].setLadderVOS(getCoupLadder(actcode));
+        couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0].getRuleno()));
 
         return  result.success(couponVOS[0]);
     }
@@ -256,12 +256,13 @@ public class CouponManageModule {
 
     /**
      * 查询阶梯
-     * @param actcode
+     * @param rulecode
      * @return
      */
-    private List<LadderVO> getCoupLadder(long actcode){
-        List<Object[]> result = baseDao.queryNative(QUERY_PROM_LAD_SQL,
-                new Object[]{actcode});
+    private List<LadderVO> getCoupLadder(int rulecode){
+        StringBuilder sb = new StringBuilder(QUERY_PROM_LAD_SQL);
+        sb.append(" and offercode like '").append(rulecode).append("%");
+        List<Object[]> result = baseDao.queryNative(QUERY_PROM_LAD_SQL);
 
         if(result == null || result.isEmpty()){
             return null;
@@ -269,7 +270,7 @@ public class CouponManageModule {
 
         LadderVO[] ladderVOS = new LadderVO[result.size()];
         baseDao.convToEntity(result, ladderVOS, LadderVO.class,
-                new String[]{"unqid","ladamt","ladnum","offer"});
+                new String[]{"unqid","ladamt","ladnum","offer","offercode"});
         return Arrays.asList(ladderVOS);
     }
 
@@ -316,16 +317,16 @@ public class CouponManageModule {
     /**
      * 新增阶梯
      * @param ladderVOS
-     * @param actCode
+     * @param laddrno
      */
-    private void insertLadOff(List<LadderVO> ladderVOS, long actCode,int ruleno,String laddrno) {
+    private void insertLadOff(List<LadderVO> ladderVOS,String laddrno) {
 
         List<Object[]> ladOffParams = new ArrayList<>();
         int [] ladernos = CommonModule.getLaderNo(laddrno, ladderVOS.size());
 
         for (int i = 0; i < ladderVOS.size(); i++) {
             ladOffParams.add(new Object[]{GenIdUtil.getUnqId(),
-                    ladderVOS.get(i).getLadamt(),ladderVOS.get(i).getLadnum(),ladernos[i]});
+                    ladderVOS.get(i).getLadamt(),ladderVOS.get(i).getLadnum(),ladderVOS.get(i).getOffer(),ladernos[i]});
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
         boolean b = !ModelUtil.updateTransEmpty(result);
@@ -422,18 +423,20 @@ public class CouponManageModule {
             }
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
-                if (baseDao.updateNative(DEL_LAD_OFF__SQL, actCode) > 0) {
-                    insertLadOff(couponVO.getLadderVOS(), actCode,couponVO.getRuleno(),
-                            couponVO.getRuleno()+""+couponVO.getAlgorithm());
+                StringBuilder sb = new StringBuilder(DEL_LAD_OFF_SQL);
+                sb.append(" and offercode like '").append(couponVO.getRuleno()).append("%");
+                if (baseDao.updateNative(sb.toString(), actCode) > 0) {
+                    insertLadOff(couponVO.getLadderVOS(),
+                            couponVO.getRuleno()+""+couponVO.getRulecomp());
                 }
             }
 
             //新增优惠赠换商品
-            if (couponVO.getAssGiftVOS() != null && !couponVO.getAssGiftVOS().isEmpty()) {
-                if (baseDao.updateNative(DEL_ASS_GIFT_SQL,actCode) > 0) {
-                    insertAssGift(couponVO.getAssGiftVOS(), actCode);
-                }
-            }
+//            if (couponVO.getAssGiftVOS() != null && !couponVO.getAssGiftVOS().isEmpty()) {
+//                if (baseDao.updateNative(DEL_ASS_GIFT_SQL,actCode) > 0) {
+//                    insertAssGift(couponVO.getAssGiftVOS(), actCode);
+//                }
+//            }
         } else {
             result.fail("修改失败");
         }
@@ -540,13 +543,23 @@ public class CouponManageModule {
     }
 
 
-    private void insertAssGift(List<AssGiftVO> assGiftVOS, long actCode) {
-        List<Object[]> assGiftParams = new ArrayList<>();
-        for (AssGiftVO assGiftVO : assGiftVOS) {
-            assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, assGiftVO.getAssgiftno()});
-        }
-        int[] result = baseDao.updateBatchNative(INSERT_ASS_GIFT_SQL, assGiftParams, assGiftVOS.size());
-        boolean b = !ModelUtil.updateTransEmpty(result);
-    }
+//    private void insertAssGift(List<AssGiftVO> assGiftVOS, long actCode) {
+//        List<Object[]> assGiftParams = new ArrayList<>();
+//        for (AssGiftVO assGiftVO : assGiftVOS) {
+//            assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, assGiftVO.getAssgiftno()});
+//        }
+//        int[] result = baseDao.updateBatchNative(INSERT_ASS_GIFT_SQL, assGiftParams, assGiftVOS.size());
+//        boolean b = !ModelUtil.updateTransEmpty(result);
+//    }
+
+//    private List<AssGiftVO> getAssGift(long actCode) {
+//        String sql = "select unqid,offerno,assgiftno,cstatus,giftname from {{?" + DSMConst.TD_PROM_ASSGIFT
+//                + "}} a left join {{?" + DSMConst.TD_PROM_GIFT + "}} g on a.assgiftno=g.unqid "
+//                + " where cstatus&1=0 and actcode=" + actCode;
+//        List<Object[]> queryResult = baseDao.queryNative(sql);
+//        AssGiftVO[] assGiftVOS = new AssGiftVO[queryResult.size()];
+//        baseDao.convToEntity(queryResult, assGiftVOS, AssGiftVO.class);
+//        return Arrays.asList(assGiftVOS);
+//    }
 
 }

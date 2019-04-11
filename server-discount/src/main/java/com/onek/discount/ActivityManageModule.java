@@ -2,7 +2,6 @@ package com.onek.discount;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.alibaba.fastjson.JSONArray;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -22,7 +21,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.onek.util.RedisGlobalKeys.getOfferCode;
+import static com.onek.discount.CommonModule.getLaderNo;
 
 /**
  * @author 11842
@@ -33,11 +32,6 @@ import static com.onek.util.RedisGlobalKeys.getOfferCode;
 public class ActivityManageModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
-
-    private static final String SELECT_ACT_SQL = "select unqid,actname,incpriority,cpriority," +
-                "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,brulecode,cstatus from {{?" + DSMConst.TD_PROM_ACT + "}} "
-                 + " where cstatus&1=0 ";
 
     //新增活动
     private static final String INSERT_ACT_SQL = "insert into {{?" + DSMConst.TD_PROM_ACT + "}} "
@@ -74,7 +68,7 @@ public class ActivityManageModule {
             + " values(?,?,?,?,?)";
 
     private static final String DEL_LAD_OFF_SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and actcode=?";
+            + " where cstatus&1=0 and offercode like '?%'";
 
     //优惠赠换商品
     private static final String INSERT_ASS_GIFT_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSGIFT + "}} "
@@ -82,7 +76,7 @@ public class ActivityManageModule {
             + " values(?,?,?)";
 
     private static final String DEL_ASS_GIFT_SQL = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and actcode=?";
+            + " where cstatus&1=0 and offercode like '?%'";
 
     private static final String UPDATE_ACT_CP = "update {{?" + DSMConst.TD_PROM_ACT + "}} set cpriority=? "
             + " where cstatus&1=0 and incpriority=? and cpriority=?";
@@ -130,11 +124,20 @@ public class ActivityManageModule {
         page.pageIndex = pageIndex;
         PageHolder pageHolder = new PageHolder(page);
         StringBuilder sqlBuilder = new StringBuilder();
-        sqlBuilder.append(SELECT_ACT_SQL);
+        String selectSQL = "select a.unqid,actname,incpriority,cpriority," +
+                "qualcode,qualvalue,actdesc,excdiscount,acttype," +
+                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.brulecode=b.brulecode"
+                + " where a.cstatus&1=0 ";
+        sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject).append(" group by unqid desc");
         List<Object[]> queryList = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
         ActivityVO[] activityVOS = new ActivityVO[queryList.size()];
-        baseDao.convToEntity(queryList, activityVOS, ActivityVO.class);
+        baseDao.convToEntity(queryList, activityVOS, ActivityVO.class,new String[]{
+                "unqid","actname","incpriority","cpriority",
+                "qualcode","qualvalue","actdesc","excdiscount",
+                "acttype","actcycle","sdate","edate","brulecode",
+                "cstatus","ruleName"});
         return result.setQuery(activityVOS, pageHolder);
     }
 
@@ -145,10 +148,10 @@ public class ActivityManageModule {
             sqlBuilder.append(" and actname like '%").append(actName).append("%'");
         }
 
-        if (jsonObject.get("rulecode") != null && !jsonObject.get("rulecode").getAsString().isEmpty()) {
-            int ruleCode = jsonObject.get("rulecode").getAsInt();
+        if (jsonObject.get("brulecode") != null && !jsonObject.get("brulecode").getAsString().isEmpty()) {
+            int ruleCode = jsonObject.get("brulecode").getAsInt();
             if (ruleCode > 0) {
-                sqlBuilder.append(" and rulecode=").append(ruleCode);
+                sqlBuilder.append(" and brulecode=").append(ruleCode);
             }
         }
         return sqlBuilder;
@@ -218,7 +221,7 @@ public class ActivityManageModule {
             }
             //新增阶梯
             if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty()) {
-                insertLadOff(activityVO.getLadderVOS(),bruleCode);
+                insertLadOff(activityVO.getLadderVOS(),bruleCode, rCode);
             }
             //新增活动商品
 //            if (activityVO.getAssDrugVOS() != null && !activityVO.getAssDrugVOS().isEmpty()) {
@@ -245,12 +248,15 @@ public class ActivityManageModule {
         boolean b;
         Result result = new Result();
         long actCode = activityVO.getUnqid();
+        int oldRuleCode = selectBRuleCode(actCode);
+        int bRuleCode = activityVO.getBrulecode();//前四位 规则业务码
+        int rCode = Integer.parseInt(bRuleCode + "" + activityVO.getRulecomp());//前五位码
         //新增活动
         if (cpt == activityVO.getCpriority()) {
             int re = baseDao.updateNative(UPD_ACT_SQL, activityVO.getActname(),
                     activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                    activityVO.getEdate(), activityVO.getBrulecode(),actCode);
+                    activityVO.getEdate(), bRuleCode, actCode);
             b = re > 0;
         } else {
             List<Object[]> params = new ArrayList<>();
@@ -271,9 +277,9 @@ public class ActivityManageModule {
             }
             //新增阶梯
             if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty()) {
-                if (baseDao.updateNative(DEL_LAD_OFF_SQL, actCode) > 0) {
-                    baseDao.updateNative(DEL_ASS_GIFT_SQL, actCode);
-                    insertLadOff(activityVO.getLadderVOS(), activityVO.getBrulecode());
+                if (baseDao.updateNative(DEL_LAD_OFF_SQL, oldRuleCode) > 0) {
+                    baseDao.updateNative(DEL_ASS_GIFT_SQL, oldRuleCode);
+                    insertLadOff(activityVO.getLadderVOS(), bRuleCode, rCode);
                 }
             }
 
@@ -282,6 +288,13 @@ public class ActivityManageModule {
         }
 
         return result.success("修改成功");
+    }
+
+    private int selectBRuleCode(long actCode) {
+        String sql = "select brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} where cstatus&1=0 "
+                + " and unqid=" + actCode;
+        List<Object[]> queryResult = baseDao.queryNative(sql);
+        return Integer.parseInt(String.valueOf(queryResult.get(0)[0]));
     }
 
     /* *
@@ -312,20 +325,23 @@ public class ActivityManageModule {
      * @time  2019/4/2 16:09
      * @version 1.1.1
      **/
-    private void insertLadOff(List<LadderVO> ladderVOS, int ruleCode) {
+    private void insertLadOff(List<LadderVO> ladderVOS, int bRuleCode, int rCode) {
         List<Object[]> ladOffParams = new ArrayList<>();
         List<Object[]> assGiftParams = new ArrayList<>();
-        for (LadderVO ladderVO : ladderVOS) {
-            int offerCode = getOfferCode();
-            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(),
-                    ladderVO.getLadamt(),ladderVO.getLadnum(),offerCode,ladderVO.getOffer()});
+        String stype = bRuleCode+"";
+        int offerCode[] = getLaderNo(rCode + "", ladderVOS.size());
+        for (int i = 0; i < ladderVOS.size(); i++) {
+            if (offerCode != null) {
+                ladOffParams.add(new Object[]{GenIdUtil.getUnqId(),
+                        ladderVOS.get(i).getLadamt(),ladderVOS.get(i).getLadnum(),offerCode[i],ladderVOS.get(i).getOffer()});
                 //新增优惠赠换商品
-            if (ruleCode == 2) {
-                assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), ladderVO.getAssgiftno(),offerCode});
+                if (stype.startsWith("124")) {
+                    assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), ladderVOS.get(i).getAssgiftno(),offerCode[i]});
+                }
             }
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
-        if (ruleCode == 2) {
+        if (stype.startsWith("124")) {
             baseDao.updateBatchNative(INSERT_ASS_GIFT_SQL, assGiftParams, ladderVOS.size());
         }
         boolean b = !ModelUtil.updateTransEmpty(result);
@@ -480,13 +496,16 @@ public class ActivityManageModule {
         baseDao.convToEntity(queryResult, activityVOS, ActivityVO.class, new String[]{
                 "unqid","actname","incpriority","cpriority",
                 "qualcode","qualvalue","actdesc","excdiscount",
-                "acttype","actcycle","sdate","edate","rulecode",
+                "acttype","actcycle","sdate","edate","brulecode",
                 "cstatus","ruleName"
         });
+        int rRuleCode = activityVOS[0].getBrulecode();
+        String rType = rRuleCode + "";
+        activityVOS[0].setRuletype(Integer.parseInt(rType.substring(1,2)));
+        activityVOS[0].setPreWay(Integer.parseInt(rType.substring(2,3)));
         activityVOS[0].setTimeVOS(getTimes(actCode));
-        activityVOS[0].setLadderVOS(getLadder(activityVOS[0].getBrulecode()));
-//        activityVOS[0].setAssGiftVOS(getAssGift(actCode));
-//        activityVOS[0].setAssDrugVOS(new CouponManageModule().getCoupGoods(actCode));
+        activityVOS[0].setLadderVOS(getLadder(activityVOS[0],rRuleCode));
+        activityVOS[0].setActiveRule(getRules(rRuleCode));
         return result.success(activityVOS[0]);
     }
 
@@ -509,13 +528,27 @@ public class ActivityManageModule {
     }
 
 
-    private List<LadderVO> getLadder(int bRuleCode) {
+    private List<LadderVO> getLadder(ActivityVO activityVO, int bRuleCode) {
         String sql = "select unqid,ladamt,ladnum,offercode,offer,cstatus from {{?"
                 + DSMConst.TD_PROM_LADOFF + "}} where cstatus&1=0 and offercode like '" + bRuleCode + "%'";
         List<Object[]> queryResult = baseDao.queryNative(sql);
         LadderVO[] ladderVOS = new LadderVO[queryResult.size()];
         baseDao.convToEntity(queryResult, ladderVOS, LadderVO.class);
+        String offerCode = ladderVOS[0].getOffercode() + "";
+        activityVO.setRulecomp(Integer.parseInt(offerCode.substring(4,5)));
         return Arrays.asList(ladderVOS);
+    }
+
+    private List<RulesVO> getRules(int bRuleCode) {
+        int code = Integer.parseInt((bRuleCode + "").substring(0,3));
+        String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
+                + " and brulecode like '" + code + "%' and  NOT EXISTS(select brulecode from {{?"
+                + DSMConst.TD_PROM_ACT +"}} b where cstatus&1=0 and a.brulecode = b.brulecode and brulecode like '"
+                + code +"%' and edate>CURRENT_DATE and a.brulecode<>"+bRuleCode+")";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
+        return Arrays.asList(rulesVOS);
     }
 
     private List<AssGiftVO> getAssGift(long actCode) {
