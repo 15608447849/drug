@@ -36,14 +36,14 @@ public class CouponManageModule {
     //新增优惠券
     private final String INSERT_COUPON_SQL = "insert into {{?" + DSMConst.TD_PROM_COUPON + "}} "
             + "(unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype,"
-            + "periodday,startdate,enddate,brulecode,validday,validflag,cstatus) "
+            + "periodday,startdate,enddate,brulecode,validday,validflag,cstatus,actstock,limitnum) "
             + "values(?,?,?,?,?,"
-            + "?,?,?,?,?,?,?,?,?)";
+            + "?,?,?,?,?,?,?,?,?,?,?)";
 
     //修改优惠券
     private static final String UPDATE_COUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set coupname=?,"
             + "glbno=?,qlfno=?,qlfval=?,coupdesc=?,periodtype=?,"
-            + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=? where cstatus&1=0 "
+            + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=?,actstock=?,limitnum=? where cstatus&1=0 "
             + " and unqid=? ";
 
 
@@ -84,7 +84,7 @@ public class CouponManageModule {
      */
     private final String QUERY_COUPON_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
-            "brulecode,validday,validflag,rulename from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
+            "brulecode,validday,validflag,rulename,actstock,limitnum from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
             "  {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.brulecode = ru.brulecode  where cop.cstatus&1=0 and unqid = ? ";
 
 
@@ -154,7 +154,8 @@ public class CouponManageModule {
                 unqid,couponVO.getCoupname(),couponVO.getGlbno(),couponVO.getQlfno(),
                 couponVO.getQlfval(),couponVO.getDesc(),couponVO.getPeriodtype(),
                 couponVO.getPeriodday(),couponVO.getStartdate(),couponVO.getEnddate(),
-                couponVO.getRuleno(),couponVO.getValidday(),couponVO.getValidflag(),couponVO.getCstatus()
+                couponVO.getRuleno(),couponVO.getValidday(),couponVO.getValidflag(),
+                couponVO.getCstatus(),couponVO.getActstock(),couponVO.getLimitnum()
         });
         if (ret > 0) {
             //新增活动场次
@@ -206,7 +207,8 @@ public class CouponManageModule {
         baseDao.convToEntity(coupResult, couponVOS, CouponVO.class,
                     new String[]{"coupno", "coupname", "glbno",
                             "qlfno", "qlfval", "desc", "periodtype", "periodday",
-                            "startdate", "enddate", "ruleno","validday","validflag","rulename"});
+                            "startdate", "enddate", "ruleno","validday","validflag",
+                            "rulename","actstock","limitnum"});
 
         int rRuleCode = couponVOS[0].getRuleno();
         String rType = rRuleCode + "";
@@ -417,7 +419,7 @@ public class CouponManageModule {
         couponVO.getGlbno(),couponVO.getQlfno(),couponVO.getQlfval(),
         couponVO.getDesc(),couponVO.getPeriodtype(),couponVO.getPeriodday(),
         couponVO.getStartdate(),couponVO.getEnddate(),couponVO.getRuleno(),couponVO.getValidday(),
-                couponVO.getValidflag(),actCode});
+                couponVO.getValidflag(),actCode,couponVO.getActstock(),couponVO.getLimitnum()});
 
         if (ret > 0) {
             //新增活动场次

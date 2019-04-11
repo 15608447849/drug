@@ -57,6 +57,10 @@ public class CouponVO {
     //规则名称
     private String rulename;
 
+    private int actstock;
+
+    private int limitnum;
+
     public int getRuletype() {
         return ruletype;
     }
@@ -114,6 +118,22 @@ public class CouponVO {
 
     public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
         this.assGiftVOS = assGiftVOS;
+    }
+
+    public int getActstock() {
+        return actstock;
+    }
+
+    public void setActstock(int actstock) {
+        this.actstock = actstock;
+    }
+
+    public int getLimitnum() {
+        return limitnum;
+    }
+
+    public void setLimitnum(int limitnum) {
+        this.limitnum = limitnum;
     }
 
 
