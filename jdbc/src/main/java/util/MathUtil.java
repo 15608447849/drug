@@ -156,7 +156,7 @@ public class MathUtil {
         BigDecimal a1 = BigDecimal.valueOf(a);
         BigDecimal b1 = BigDecimal.valueOf(b);
 
-        return a1.divide(b1);
+        return a1.divide(b1, 2, BigDecimal.ROUND_HALF_UP);
     }
 
     /**
@@ -167,6 +167,6 @@ public class MathUtil {
         BigDecimal a1 = BigDecimal.valueOf(a);
         BigDecimal b1 = BigDecimal.valueOf(b);
 
-        return a1.divide(b1);
+        return a1.divide(b1, 2, BigDecimal.ROUND_HALF_UP);
     }
 }

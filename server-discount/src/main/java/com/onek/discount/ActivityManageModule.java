@@ -2,8 +2,12 @@ package com.onek.discount;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSONArray;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.onek.annotation.UserPermission;
+import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
@@ -18,6 +22,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static com.onek.util.RedisGlobalKeys.getOfferCode;
+
 /**
  * @author 11842
  * @version 1.1.1
@@ -30,20 +36,20 @@ public class ActivityManageModule {
 
     private static final String SELECT_ACT_SQL = "select unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,rulecode,cstatus from {{?" + DSMConst.TD_PROM_ACT + "}} "
+                "actcycle,sdate,edate,brulecode,cstatus from {{?" + DSMConst.TD_PROM_ACT + "}} "
                  + " where cstatus&1=0 ";
 
     //新增活动
     private static final String INSERT_ACT_SQL = "insert into {{?" + DSMConst.TD_PROM_ACT + "}} "
             + "(unqid,actname,incpriority,cpriority,qualcode,qualvalue,actdesc,"
-            + "excdiscount,acttype,actcycle,sdate,edate,rulecode) "
+            + "excdiscount,acttype,actcycle,sdate,edate,brulecode) "
             + "values(?,?,?,?,?,"
             + "?,?,?,?,?,?,?,?)";
 
     //修改活动
     private static final String UPD_ACT_SQL = "update {{?" + DSMConst.TD_PROM_ACT + "}} set actname=?,"
             + "incpriority=?,cpriority=?,qualcode=?,qualvalue=?,actdesc=?,"
-            + "excdiscount=?,acttype=?,actcycle=?,sdate=?,edate=?,rulecode=? where cstatus&1=0 "
+            + "excdiscount=?,acttype=?,actcycle=?,sdate=?,edate=?,brulecode=? where cstatus&1=0 "
             + " and unqid=?";
 
     //新增场次
@@ -64,15 +70,15 @@ public class ActivityManageModule {
 
     //优惠阶梯
     private static final String INSERT_LAD_OFF_SQL = "insert into {{?" + DSMConst.TD_PROM_LADOFF + "}} "
-            + "(unqid,actcode,ruleno,ladamt,ladnum,offercode,offer) "
-            + " values(?,?,?,?,?,?)";
+            + "(unqid,ladamt,ladnum,offercode,offer) "
+            + " values(?,?,?,?,?)";
 
-    private static final String DEL_LAD_OFF__SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
+    private static final String DEL_LAD_OFF_SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 and actcode=?";
 
     //优惠赠换商品
     private static final String INSERT_ASS_GIFT_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSGIFT + "}} "
-            + "(unqid,actcode,assgiftno)"
+            + "(unqid,assgiftno,offercode)"
             + " values(?,?,?)";
 
     private static final String DEL_ASS_GIFT_SQL = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 "
@@ -81,6 +87,24 @@ public class ActivityManageModule {
     private static final String UPDATE_ACT_CP = "update {{?" + DSMConst.TD_PROM_ACT + "}} set cpriority=? "
             + " where cstatus&1=0 and incpriority=? and cpriority=?";
 
+
+    //启用
+    private static final String OPEN_ACT =
+            " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}"
+                    + " SET cstatus = cstatus & " + ~CSTATUS.CLOSE
+                    + " WHERE unqid = ? ";
+
+    //停用
+    private static final String CLOSE_ACT =
+            " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}"
+                    + " SET cstatus = cstatus | " + CSTATUS.CLOSE
+                    + " WHERE unqid = ? ";
+
+    //删除
+    private static final String DELETE_ACT =
+            " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}"
+                    + " SET cstatus = cstatus | " + CSTATUS.DELETE
+                    + " WHERE unqid = ? ";
 
 
     /* *
@@ -92,6 +116,7 @@ public class ActivityManageModule {
      * @time  2019/4/3 10:03
      * @version 1.1.1
      **/
+    @UserPermission(ignore = true)
     public Result queryActivities(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
@@ -139,6 +164,7 @@ public class ActivityManageModule {
      * @time  2019/4/2 14:34
      * @version 1.1.1
      **/
+    @UserPermission(ignore = true)
     public Result insertActivity(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
@@ -147,9 +173,9 @@ public class ActivityManageModule {
         int cpt = getCPCount(activityVO.getIncpriority(), activityVO.getCpriority());
         if (cpt == -1) return result.fail("优先级已超过");
         if (activityVO.getUnqid() > 0) {//修改
-            return insertActivity(activityVO, cpt);
-        } else {//新增
             return updateActivity(activityVO, cpt);
+        } else {//新增
+            return insertActivity(activityVO, cpt);
         }
     }
 
@@ -164,7 +190,8 @@ public class ActivityManageModule {
      **/
     private Result insertActivity(ActivityVO activityVO, int cpt) {
         boolean b;
-        int ruleCode = activityVO.getRulecode();//规则码
+        int bruleCode = activityVO.getBrulecode();//规则码(前四位)
+        int rCode = Integer.parseInt(bruleCode + "" + activityVO.getRulecomp());//前五位码
         Result result = new Result();
         long actCode = GenIdUtil.getUnqId();//唯一码(活动码)
         //新增活动
@@ -172,7 +199,7 @@ public class ActivityManageModule {
            int re = baseDao.updateNative(INSERT_ACT_SQL,actCode, activityVO.getActname(),
                    activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                    activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                   activityVO.getEdate(), activityVO.getRulecode());
+                   activityVO.getEdate(), bruleCode);
            b = re > 0;
         } else {
             List<Object[]> params = new ArrayList<>();
@@ -180,7 +207,7 @@ public class ActivityManageModule {
             params.add(new Object[]{actCode, activityVO.getActname(),
                     activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                    activityVO.getEdate(), activityVO.getRulecode()});
+                    activityVO.getEdate(), bruleCode});
             int[] actResult = baseDao.updateTransNative(new String[]{UPDATE_ACT_CP, INSERT_ACT_SQL}, params);
             b = !ModelUtil.updateTransEmpty(actResult);
         }
@@ -191,16 +218,12 @@ public class ActivityManageModule {
             }
             //新增阶梯
             if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty()) {
-                insertLadOff(activityVO.getLadderVOS(), actCode);
-            }
-            //新增优惠赠换商品
-            if (activityVO.getAssGiftVOS() != null && !activityVO.getAssGiftVOS().isEmpty() && ruleCode == 105) {
-                insertAssGift(activityVO.getAssGiftVOS(), actCode);
+                insertLadOff(activityVO.getLadderVOS(),bruleCode);
             }
             //新增活动商品
-            if (activityVO.getAssDrugVOS() != null && !activityVO.getAssDrugVOS().isEmpty()) {
-                insertAssDrug(activityVO.getAssDrugVOS());
-            }
+//            if (activityVO.getAssDrugVOS() != null && !activityVO.getAssDrugVOS().isEmpty()) {
+//                insertAssDrug(activityVO.getAssDrugVOS());
+//            }
         } else {
             return result.fail("新增失败");
         }
@@ -227,7 +250,7 @@ public class ActivityManageModule {
             int re = baseDao.updateNative(UPD_ACT_SQL, activityVO.getActname(),
                     activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                    activityVO.getEdate(), activityVO.getRulecode(),actCode);
+                    activityVO.getEdate(), activityVO.getBrulecode(),actCode);
             b = re > 0;
         } else {
             List<Object[]> params = new ArrayList<>();
@@ -235,8 +258,8 @@ public class ActivityManageModule {
             params.add(new Object[]{activityVO.getActname(),
                     activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
-                    activityVO.getEdate(), activityVO.getRulecode(),actCode});
-            int[] actResult = baseDao.updateTransNative(new String[]{UPD_ACT_SQL, INSERT_ACT_SQL}, params);
+                    activityVO.getEdate(), activityVO.getBrulecode(),actCode});
+            int[] actResult = baseDao.updateTransNative(new String[]{UPDATE_ACT_CP,UPD_ACT_SQL}, params);
             b = !ModelUtil.updateTransEmpty(actResult);
         }
         if (b) {
@@ -248,22 +271,12 @@ public class ActivityManageModule {
             }
             //新增阶梯
             if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty()) {
-                if (baseDao.updateNative(DEL_LAD_OFF__SQL, actCode) > 0) {
-                    insertLadOff(activityVO.getLadderVOS(), actCode);
+                if (baseDao.updateNative(DEL_LAD_OFF_SQL, actCode) > 0) {
+                    baseDao.updateNative(DEL_ASS_GIFT_SQL, actCode);
+                    insertLadOff(activityVO.getLadderVOS(), activityVO.getBrulecode());
                 }
             }
-            //新增优惠赠换商品
-            if (activityVO.getAssGiftVOS() != null && !activityVO.getAssGiftVOS().isEmpty()) {
-                if (baseDao.updateNative(DEL_ASS_GIFT_SQL,actCode) > 0) {
-                    insertAssGift(activityVO.getAssGiftVOS(), actCode);
-                }
-            }
-            //新增活动商品
-            if (activityVO.getAssDrugVOS() != null && !activityVO.getAssDrugVOS().isEmpty()) {
-                if (baseDao.updateNative(DEL_ASS_DRUG_SQL,actCode) > 0) {
-                    insertAssDrug(activityVO.getAssDrugVOS());
-                }
-            }
+
         } else {
             result.fail("修改失败");
         }
@@ -299,13 +312,22 @@ public class ActivityManageModule {
      * @time  2019/4/2 16:09
      * @version 1.1.1
      **/
-    private void insertLadOff(List<LadderVO> ladderVOS, long actCode) {
+    private void insertLadOff(List<LadderVO> ladderVOS, int ruleCode) {
         List<Object[]> ladOffParams = new ArrayList<>();
+        List<Object[]> assGiftParams = new ArrayList<>();
         for (LadderVO ladderVO : ladderVOS) {
-            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(), actCode,ladderVO.getRuleno(),
-                    ladderVO.getLadamt(),ladderVO.getLadnum(),ladderVO.getOffercode(),ladderVO.getOffer()});
+            int offerCode = getOfferCode();
+            ladOffParams.add(new Object[]{GenIdUtil.getUnqId(),
+                    ladderVO.getLadamt(),ladderVO.getLadnum(),offerCode,ladderVO.getOffer()});
+                //新增优惠赠换商品
+            if (ruleCode == 2) {
+                assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), ladderVO.getAssgiftno(),offerCode});
+            }
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
+        if (ruleCode == 2) {
+            baseDao.updateBatchNative(INSERT_ASS_GIFT_SQL, assGiftParams, ladderVOS.size());
+        }
         boolean b = !ModelUtil.updateTransEmpty(result);
 //        return b ? 1 : 0;
     }
@@ -331,7 +353,7 @@ public class ActivityManageModule {
     
     
     /* *
-     * @description 新增活动商品
+     * @description 关联活动商品
      * @params [goodsVOS]
      * @return void
      * @exception
@@ -339,14 +361,26 @@ public class ActivityManageModule {
      * @time  2019/4/2 16:23
      * @version 1.1.1
      **/
-    private void insertAssDrug(List<GoodsVO> assDrugVOS) {
+    private boolean relationAssDrug(List<GoodsVO> assDrugVOS, long actCode) {
+        boolean b = false;
         List<Object[]> assDrugParams = new ArrayList<>();
         for (GoodsVO assDrugVO : assDrugVOS) {
             assDrugParams.add(new Object[]{GenIdUtil.getUnqId(), assDrugVO.getActcode(),assDrugVO.getGcode(),
                     assDrugVO.getMenucode(),assDrugVO.getActstock()});
         }
-        int[] result = baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, assDrugParams, assDrugVOS.size());
-        boolean b = !ModelUtil.updateTransEmpty(result);
+        String delSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
+                + " where cstatus&1=0 and actcode=" + actCode;
+        int state = baseDao.updateNative(delSql);
+        if (state >= 0) {
+            int[] result = baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, assDrugParams, assDrugVOS.size());
+            b = !ModelUtil.updateTransEmpty(result);
+        }
+        if (state < 0 || !b) {
+            String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus&~1 "
+                    + " where cstatus&1>0 and actcode=" + actCode;
+            baseDao.updateNative(updateSql);
+        }
+        return b;
     }
 
 
@@ -359,6 +393,7 @@ public class ActivityManageModule {
      * @time  2019/4/1 17:44
      * @version 1.1.1
      **/
+    @UserPermission(ignore = true)
     public Result getCPriority(AppContext appContext) {
         Result result = new Result();
         List<Integer> cps = new ArrayList<>();
@@ -428,17 +463,18 @@ public class ActivityManageModule {
      * @time  2019/4/2 19:24
      * @version 1.1.1
      **/
+    @UserPermission(ignore = true)
     public Result getActDetail(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int actCode = jsonObject.get("unqid").getAsInt();
-        String selectSQL = "select unqid,actname,incpriority,cpriority," +
+        long actCode = jsonObject.get("unqid").getAsLong();
+        String selectSQL = "select a.unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,rulecode,cstatus,rulename from {{?" + DSMConst.TD_PROM_ACT + "}} a "
-                + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.rulecode=b.rulecode"
-                + " where cstatus&1=0 and unqid=" + actCode;
+                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.brulecode=b.brulecode"
+                + " where a.cstatus&1=0 and a.unqid=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         ActivityVO[] activityVOS = new ActivityVO[queryResult.size()];
         baseDao.convToEntity(queryResult, activityVOS, ActivityVO.class, new String[]{
@@ -448,10 +484,10 @@ public class ActivityManageModule {
                 "cstatus","ruleName"
         });
         activityVOS[0].setTimeVOS(getTimes(actCode));
-        activityVOS[0].setLadderVOS(getLadder(actCode));
-        activityVOS[0].setAssGiftVOS(getAssGift(actCode));
-        activityVOS[0].setAssDrugVOS(new CouponManageModule().getCoupGoods(actCode));
-        return result;
+        activityVOS[0].setLadderVOS(getLadder(activityVOS[0].getBrulecode()));
+//        activityVOS[0].setAssGiftVOS(getAssGift(actCode));
+//        activityVOS[0].setAssDrugVOS(new CouponManageModule().getCoupGoods(actCode));
+        return result.success(activityVOS[0]);
     }
 
     /* *
@@ -463,7 +499,7 @@ public class ActivityManageModule {
      * @time  2019/4/2 22:33
      * @version 1.1.1
      **/
-    private List<TimeVO> getTimes(int actCode) {
+    private List<TimeVO> getTimes(long actCode) {
         String sql = "select unqid,actcode,sdate,edate,cstatus from {{?" + DSMConst.TD_PROM_TIME
                 + "}} where cstatus&1=0 and actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(sql);
@@ -473,16 +509,16 @@ public class ActivityManageModule {
     }
 
 
-    private List<LadderVO> getLadder(int actCode) {
-        String sql = "select unqid,ladno,ruleno,ladamt,ladnum,offercode,offer,cstatus from {{?"
-                + DSMConst.TD_PROM_LADOFF + "}} where cstatus&1=0 and actcode=" + actCode;
+    private List<LadderVO> getLadder(int bRuleCode) {
+        String sql = "select unqid,ladamt,ladnum,offercode,offer,cstatus from {{?"
+                + DSMConst.TD_PROM_LADOFF + "}} where cstatus&1=0 and offercode like '" + bRuleCode + "%'";
         List<Object[]> queryResult = baseDao.queryNative(sql);
         LadderVO[] ladderVOS = new LadderVO[queryResult.size()];
         baseDao.convToEntity(queryResult, ladderVOS, LadderVO.class);
         return Arrays.asList(ladderVOS);
     }
 
-    private List<AssGiftVO> getAssGift(int actCode) {
+    private List<AssGiftVO> getAssGift(long actCode) {
         String sql = "select unqid,offerno,assgiftno,cstatus,giftname from {{?" + DSMConst.TD_PROM_ASSGIFT
                 + "}} a left join {{?" + DSMConst.TD_PROM_GIFT + "}} g on a.assgiftno=g.unqid "
                 + " where cstatus&1=0 and actcode=" + actCode;
@@ -490,6 +526,67 @@ public class ActivityManageModule {
         AssGiftVO[] assGiftVOS = new AssGiftVO[queryResult.size()];
         baseDao.convToEntity(queryResult, assGiftVOS, AssGiftVO.class);
         return Arrays.asList(assGiftVOS);
+    }
+
+
+    /**
+     * @description 关联商品
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/4/6 10:09
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result relationGoods(AppContext appContext) {
+        boolean re = false;
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long actCode = jsonObject.get("actCode").getAsLong();
+        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        //关联活动商品
+        List<GoodsVO> goodsVOS = new ArrayList<>();
+        if (goodsArr != null && !goodsArr.getAsString().isEmpty()) {
+            for (int i = 0; i < goodsArr.size(); i++) {
+                GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).getAsString(), GoodsVO.class);
+                goodsVOS.add(goodsVO);
+            }
+            re = relationAssDrug(goodsVOS, actCode);
+        }
+        return re ? result.success("关联商品成功") : result.fail("操作失败");
+    }
+
+
+    /**
+     * 更新活动状态
+     * @param appContext 0 启用  32 停用  1 删除
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result updateActStatus(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+
+        long actcode = jsonObject.get("actcode").getAsLong();
+        int cstatus = jsonObject.get("cstatus").getAsInt();
+        int ret = 0;
+        switch (cstatus){
+            case 0:
+                ret = baseDao.updateNative(OPEN_ACT,actcode);
+                break;
+            case 1:
+                ret = baseDao.updateNative(DELETE_ACT,actcode);
+                break;
+            case 32:
+                ret = baseDao.updateNative(CLOSE_ACT,actcode);
+                break;
+        }
+        return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
     }
 
 }

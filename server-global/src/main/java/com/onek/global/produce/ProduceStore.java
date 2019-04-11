@@ -1,16 +1,18 @@
-package com.onek.util.prod;
+package com.onek.global.produce;
 
 import com.google.gson.*;
 import com.onek.entitys.Result;
+import com.onek.util.prod.ProdEntity;
+import com.onek.util.prod.ProduceClassEntity;
+import com.onek.util.prod.ProduceClassUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchProvider;
+import org.elasticsearch.action.get.GetResponse;
+import util.BeanMapUtils;
 import util.TreeUtil;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 @SuppressWarnings("unchecked")
 public class ProduceStore {
@@ -96,7 +98,6 @@ public class ProduceStore {
         ProdEntity[] returnResults = new ProdEntity[queryResult.size()];
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, returnResults, ProdEntity.class);
-
         return returnResults[0];
     }
 

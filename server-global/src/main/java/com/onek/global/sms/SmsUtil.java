@@ -1,4 +1,4 @@
-package sms;
+package com.onek.global.sms;
 
 import org.apache.http.client.fluent.Request;
 

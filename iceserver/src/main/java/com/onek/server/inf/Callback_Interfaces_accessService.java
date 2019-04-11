@@ -20,6 +20,10 @@
 
 package com.onek.server.inf;
 
+/**
+ * 前后台交互
+ **/
+
 public abstract class Callback_Interfaces_accessService
     extends IceInternal.TwowayCallback implements Ice.TwowayCallbackArg1<String>
 {

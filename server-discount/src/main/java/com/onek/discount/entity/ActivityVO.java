@@ -21,9 +21,12 @@ public class ActivityVO {
     private long actcycle;//活动周期
     private String sdate;//活动开始日期
     private String edate;//活动结束日期
-    private int rulecode;//活动规则码
+    private int brulecode;//活动规则码
     private int cstatus;//综合状态码
     private String ruleName;//规则名称
+    private int ruletype; // 活动类型
+    private int preWay; // 活动优惠方式
+    private int rulecomp;//优惠算法
 
 //    private List<AssDrugVO> assDrugVOS;//活动关联商品集合
 
@@ -31,10 +34,10 @@ public class ActivityVO {
 
     private List<LadderVO> ladderVOS;//阶梯优惠
 
-    private List<AssGiftVO> assGiftVOS;//优惠商品赠换
+//    private List<AssGiftVO> assGiftVOS;//优惠商品赠换
 
     //活动关联商品集合
-    private List<GoodsVO> assDrugVOS;
+//    private List<GoodsVO> assDrugVOS;
 
     public long getUnqid() {
         return unqid;
@@ -132,12 +135,12 @@ public class ActivityVO {
         this.edate = edate;
     }
 
-    public int getRulecode() {
-        return rulecode;
+    public int getBrulecode() {
+        return brulecode;
     }
 
-    public void setRulecode(int rulecode) {
-        this.rulecode = rulecode;
+    public void setBrulecode(int brulecode) {
+        this.brulecode = brulecode;
     }
 
     public int getCstatus() {
@@ -148,13 +151,13 @@ public class ActivityVO {
         this.cstatus = cstatus;
     }
 
-    public List<GoodsVO> getAssDrugVOS() {
-        return assDrugVOS;
-    }
-
-    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
-        this.assDrugVOS = assDrugVOS;
-    }
+//    public List<GoodsVO> getAssDrugVOS() {
+//        return assDrugVOS;
+//    }
+//
+//    public void setAssDrugVOS(List<GoodsVO> assDrugVOS) {
+//        this.assDrugVOS = assDrugVOS;
+//    }
 
     public List<TimeVO> getTimeVOS() {
         return timeVOS;
@@ -164,13 +167,13 @@ public class ActivityVO {
         this.timeVOS = timeVOS;
     }
 
-    public List<AssGiftVO> getAssGiftVOS() {
-        return assGiftVOS;
-    }
-
-    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
-        this.assGiftVOS = assGiftVOS;
-    }
+//    public List<AssGiftVO> getAssGiftVOS() {
+//        return assGiftVOS;
+//    }
+//
+//    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
+//        this.assGiftVOS = assGiftVOS;
+//    }
 
     public List<LadderVO> getLadderVOS() {
         return ladderVOS;
@@ -186,5 +189,29 @@ public class ActivityVO {
 
     public void setRuleName(String ruleName) {
         this.ruleName = ruleName;
+    }
+
+    public int getRuletype() {
+        return ruletype;
+    }
+
+    public void setRuletype(int ruletype) {
+        this.ruletype = ruletype;
+    }
+
+    public int getPreWay() {
+        return preWay;
+    }
+
+    public void setPreWay(int preWay) {
+        this.preWay = preWay;
+    }
+
+    public int getRulecomp() {
+        return rulecomp;
+    }
+
+    public void setRulecomp(int rulecomp) {
+        this.rulecomp = rulecomp;
     }
 }

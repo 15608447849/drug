@@ -16,7 +16,6 @@ public class UserSession implements Serializable{
     public String password;//用户密码
     public String lastIp;//最后登录IP
     public String userName;//用户姓名
-    public int orderServerIndex = -1; //用户服务调用下标 规则: 企业码/8%65535
     private UserSession(){}
 
 
@@ -33,12 +32,7 @@ public class UserSession implements Serializable{
     public static UserSession createStoreUser(int userId,long roleCode,String phone,String lastId,String password,int compId){
         UserSession userSession = createUser(userId,roleCode,phone,lastId,password);
         userSession.compId = compId;
-        userSession.orderServerIndex = genOrderServerIndex(userSession.compId);
         return userSession;
-    }
-    //获取订单服务的下标规则
-    private static int genOrderServerIndex(int compId){
-        return compId/8%65535;
     }
 
     public static UserSession createBackManagerUser(int userId,long roleCode,String phone,String lastId,String password,String account,String userName){
@@ -59,4 +53,17 @@ public class UserSession implements Serializable{
         return userSession;
     }
 
+    @Override
+    public String toString() {
+        return "UserSession{" +
+                "userId=" + userId +
+                ", compId=" + compId +
+                ", roleCode=" + roleCode +
+                ", account='" + account + '\'' +
+                ", phone='" + phone + '\'' +
+                ", password='" + password + '\'' +
+                ", lastIp='" + lastIp + '\'' +
+                ", userName='" + userName + '\'' +
+                '}';
+    }
 }

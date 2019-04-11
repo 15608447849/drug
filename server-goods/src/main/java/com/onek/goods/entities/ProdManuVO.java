@@ -4,7 +4,7 @@ public class ProdManuVO {
     private int oid;
     private long manuno;
     private String manuname;
-    private int areac;
+    private long areac;
     private String address;
     private String createdate;
     private String createtime;
@@ -34,11 +34,11 @@ public class ProdManuVO {
         this.manuname = manuname;
     }
 
-    public int getAreac() {
+    public long getAreac() {
         return areac;
     }
 
-    public void setAreac(int areac) {
+    public void setAreac(long areac) {
         this.areac = areac;
     }
 

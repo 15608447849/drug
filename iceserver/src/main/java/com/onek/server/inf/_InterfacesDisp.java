@@ -73,9 +73,36 @@ public abstract class _InterfacesDisp extends Ice.ObjectImpl implements Interfac
         return __ids[1];
     }
 
+    /**
+     * 前后台交互
+     **/
     public final String accessService(IRequest request)
     {
         return accessService(request, null);
+    }
+
+    /**
+     * 消息推送-服务端 / 客户端下线
+     **/
+    public final void offline(String identityName)
+    {
+        offline(identityName, null);
+    }
+
+    /**
+     * 消息推送-服务端 / 客户端上线
+     **/
+    public final void online(Ice.Identity identity)
+    {
+        online(identity, null);
+    }
+
+    /**
+     * 消息推送-服务端 / 后端服务调用 - 向指定客户端发送消息
+     **/
+    public final void sendMessageToClient(String identityName, String message)
+    {
+        sendMessageToClient(identityName, message, null);
     }
 
     public static Ice.DispatchStatus ___accessService(Interfaces __obj, IceInternal.Incoming __inS, Ice.Current __current)
@@ -92,13 +119,54 @@ public abstract class _InterfacesDisp extends Ice.ObjectImpl implements Interfac
         return Ice.DispatchStatus.DispatchOK;
     }
 
+    public static Ice.DispatchStatus ___online(Interfaces __obj, IceInternal.Incoming __inS, Ice.Current __current)
+    {
+        __checkMode(Ice.OperationMode.Normal, __current.mode);
+        IceInternal.BasicStream __is = __inS.startReadParams();
+        Ice.Identity identity = null;
+        identity = Ice.Identity.__read(__is, identity);
+        __inS.endReadParams();
+        __obj.online(identity, __current);
+        __inS.__writeEmptyParams();
+        return Ice.DispatchStatus.DispatchOK;
+    }
+
+    public static Ice.DispatchStatus ___offline(Interfaces __obj, IceInternal.Incoming __inS, Ice.Current __current)
+    {
+        __checkMode(Ice.OperationMode.Normal, __current.mode);
+        IceInternal.BasicStream __is = __inS.startReadParams();
+        String identityName;
+        identityName = __is.readString();
+        __inS.endReadParams();
+        __obj.offline(identityName, __current);
+        __inS.__writeEmptyParams();
+        return Ice.DispatchStatus.DispatchOK;
+    }
+
+    public static Ice.DispatchStatus ___sendMessageToClient(Interfaces __obj, IceInternal.Incoming __inS, Ice.Current __current)
+    {
+        __checkMode(Ice.OperationMode.Normal, __current.mode);
+        IceInternal.BasicStream __is = __inS.startReadParams();
+        String identityName;
+        String message;
+        identityName = __is.readString();
+        message = __is.readString();
+        __inS.endReadParams();
+        __obj.sendMessageToClient(identityName, message, __current);
+        __inS.__writeEmptyParams();
+        return Ice.DispatchStatus.DispatchOK;
+    }
+
     private final static String[] __all =
     {
         "accessService",
         "ice_id",
         "ice_ids",
         "ice_isA",
-        "ice_ping"
+        "ice_ping",
+        "offline",
+        "online",
+        "sendMessageToClient"
     };
 
     public Ice.DispatchStatus __dispatch(IceInternal.Incoming in, Ice.Current __current)
@@ -130,6 +198,18 @@ public abstract class _InterfacesDisp extends Ice.ObjectImpl implements Interfac
             case 4:
             {
                 return ___ice_ping(this, in, __current);
+            }
+            case 5:
+            {
+                return ___offline(this, in, __current);
+            }
+            case 6:
+            {
+                return ___online(this, in, __current);
+            }
+            case 7:
+            {
+                return ___sendMessageToClient(this, in, __current);
             }
         }
 

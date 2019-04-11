@@ -25,6 +25,8 @@ public class IceProperties extends ApplicationPropertiesBase {
   public String contextImp;
   @PropertiesName("ice.system.initialization")
   public String appInitializationImp;
+  @PropertiesName("ice.push.message.store.imp")
+  public String pmStoreImp;
 
   //rep 列表 k = 服务名 v = 组名
   public HashMap<String,String> repSrvMap;

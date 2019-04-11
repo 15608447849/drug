@@ -1,4 +1,4 @@
-package sms;
+package com.onek.global.sms;
 
 import properties.abs.ApplicationPropertiesBase;
 import properties.annotations.PropertiesFilePath;

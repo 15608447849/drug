@@ -6,6 +6,9 @@ import com.google.gson.JsonObject;
 import com.onek.goods.entities.BgProdVO;
 import elasticsearch.ElasticSearchClientFactory;
 import elasticsearch.ElasticSearchProvider;
+import org.elasticsearch.action.bulk.BulkItemResponse;
+import org.elasticsearch.action.bulk.BulkRequestBuilder;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
@@ -14,6 +17,7 @@ import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
+import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
@@ -23,10 +27,9 @@ import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+
+import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
 public class ProdESUtil {
 
@@ -143,6 +146,60 @@ public class ProdESUtil {
     }
 
     /**
+     * 批量修改商品状态
+     *
+     * @param skuList sku列表
+     * @param prodstatus 1:代表上架 0:代表下架
+     * @return
+     */
+    public static int updateProdStatusDocList(List<Long> skuList,int prodstatus){
+        SearchResponse response = null;
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            if(skuList != null && skuList.size() > 0){
+                Object [] skuArray = new Long[skuList.size()];
+                skuArray = skuList.toArray(skuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
+                boolQuery.must(builder);
+            }
+
+            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+
+            SearchRequestBuilder requestBuilder = client.prepareSearch("prod")
+                    .setQuery(boolQuery);
+
+
+            response = requestBuilder
+                    .execute().actionGet();
+
+            BulkRequestBuilder bulkRequest = client.prepareBulk();
+            if(response != null && response.getHits().totalHits > 0){
+                for (SearchHit searchHit : response.getHits()) {
+                    Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+                    long sku = Long.parseLong(sourceMap.get("sku").toString());
+                    sourceMap.put("prodstatus", prodstatus);
+                    bulkRequest.add(client.prepareUpdate("prod", "prod_type", sku+"").setDoc(sourceMap));
+
+                }
+                BulkResponse bulkResponse = bulkRequest.get();
+                if (bulkResponse.hasFailures()) {
+                    for(BulkItemResponse item : bulkResponse.getItems()){
+                        System.out.println(item.getFailureMessage());
+                    }
+                    return -1;
+                }
+
+            }
+
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+        return 1;
+
+    }
+
+    /**
      * 根据条件全文检索商品
      *
      * @param keyword
@@ -169,7 +226,7 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(!StringUtils.isEmpty(keyword)){
-                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery("content", keyword).analyzer("ik_max_word");
+                MatchQueryBuilder matchQuery = matchQuery("content", keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
@@ -222,7 +279,7 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(!StringUtils.isEmpty(keyword)){
-                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery("content", keyword).analyzer("ik_max_word");
+                MatchQueryBuilder matchQuery = matchQuery("content", keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
             if(spu > 0){
@@ -275,19 +332,20 @@ public class ProdESUtil {
     /**
      * 根据条件全文检索商品
      *
-     * @param status
+     * @param statusSet
      * @param pagenum
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdWithMallFloor(String status,int pagenum,int pagesize){
+    public static SearchResponse searchProdWithMallFloor(Set<Integer> statusSet, int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-            if(!StringUtils.isEmpty(status)){
-                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("cstatus");
-                rangeQuery.gt(status);
-                boolQuery.must(rangeQuery);
+            if(statusSet!=null && statusSet.size() >0){
+                Object [] resultArray = new Integer[statusSet.size()];
+                resultArray = statusSet.toArray(resultArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery("cstatus", resultArray);
+                boolQuery.must(builder);
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
@@ -295,6 +353,58 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
+                    .addSort("sku", SortOrder.DESC)
+                    .execute().actionGet();
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        return response;
+    }
+
+    /**
+     * 根据状态码列表和sku全文筛选商品
+     *
+     * @param statusSet
+     * @param pagenum
+     * @param pagesize
+     * @return
+     */
+    public static SearchResponse searchProdWithHotAndSpu(Set<Integer> statusSet, int spu,int pagenum, int pagesize){
+        SearchResponse response = null;
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            if(statusSet!=null && statusSet.size() >0){
+                Object[] resultArray = new Integer[statusSet.size()];
+                resultArray = statusSet.toArray(resultArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery("cstatus", resultArray);
+                boolQuery.must(builder);
+            }
+            if(spu > 0){
+                String start = "1"+addZeroForNum(spu+"", 6) +"00000";
+                String end = "1"+addZeroForNum(spu+"", 6) +"99999";
+                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("spu");
+                rangeQuery.gt(start);
+                rangeQuery.lt(end);
+
+                String start1 = "2"+addZeroForNum(spu+"", 6) +"00000";
+                String end1 = "2"+addZeroForNum(spu+"", 6) +"99999";
+                RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery("spu");
+                rangeQuery1.gt(start1);
+                rangeQuery1.lt(end1);
+                org.elasticsearch.index.query.QueryBuilder postFilterBool =QueryBuilders.boolQuery()
+                        .should(rangeQuery)
+                        .should(rangeQuery1);
+                boolQuery.must(postFilterBool);
+            }
+            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+            int from = pagenum * pagesize - pagesize;
+            response = client.prepareSearch("prod")
+                    .setQuery(boolQuery)
+                    .setFrom(from)
+                    .setSize(pagesize)
+                    .addSort("sku", SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -308,7 +418,7 @@ public class ProdESUtil {
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
-            MatchQueryBuilder matchQuery = QueryBuilders.matchQuery("content", keyword).analyzer("ik_max_word");
+            MatchQueryBuilder matchQuery = matchQuery("content", keyword).analyzer("ik_max_word");
             boolQuery.must(matchQuery);
         }
 
@@ -361,7 +471,12 @@ public class ProdESUtil {
     }
 
     public static void main(String[] args) {
-        getConditions("", 10, "manuname");
+//        getConditions("", 10, "manuname");
+        Set<Integer> statusList = new HashSet<>();
+        statusList.add(0);
+//        statusList.add(256);
+        SearchResponse response = searchProdWithMallFloor(statusList,1,100);
+        System.out.println(response.getHits().totalHits);
     }
 
 }

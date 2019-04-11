@@ -17,13 +17,16 @@ import com.onek.goods.service.MallFloorImpl;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.dict.DictUtil;
+import com.onek.util.fs.FileServerUtils;
 import com.onek.util.prod.ProdEntity;
 import objectref.ObjectRefUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
 import util.BeanMapUtils;
+import util.NumUtil;
 import util.StringUtils;
 
 import java.util.*;
@@ -45,39 +48,63 @@ public class ProdModule {
         List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
         JSONObject jsonObject = new JSONObject();
         if (mallFloorVOList != null && mallFloorVOList.size() > 0) {
-            List<ProdVO> prodVOList = new ArrayList<>();
-            SearchResponse response = ProdESUtil.searchProdWithMallFloor("128", 1, 100);
-            if (response == null || response.getHits().totalHits <= 10) {
-                response = ProdESUtil.searchProdWithMallFloor("", 1, 100);
-            }
-            List<ProdVO> prodList = new ArrayList<>();
-            for (SearchHit searchHit : response.getHits()) {
-                ProdVO prodVO = new ProdVO();
-                Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+            List<Integer> bb = new ArrayList<>();
+            bb.add(128);
+            bb.add(512);
+            Set<Integer> result = new HashSet<>();
+            NumUtil.arrangeAdd(256, bb, result);
 
-                HashMap detail = (HashMap) sourceMap.get("detail");
-                BeanMapUtils.mapToBean(detail, prodVO);
+            List<ProdVO> newprodList = getFilterProds(result);
 
-                prodList.add(prodVO);
-                try{
-                    DictStore.translate(prodVO);
-                }catch(Exception e){
-                    e.printStackTrace();
-                }
-            }
+            List<Integer> bb1 = new ArrayList<>();
+            bb1.add(256);
+            bb1.add(512);
+            Set<Integer> result1 = new HashSet<>();
+            NumUtil.arrangeAdd(128, bb1, result1);
 
+            List<ProdVO> hotprodList = getFilterProds(result1);
 
             for (MallFloorVO floorVO : mallFloorVOList) {
                 if (floorVO.getUnqid() == NEW) {
-                    List<ProdVO> filterProdList = loadProd(prodList, 256);
+                    List<ProdVO> filterProdList = loadProd(newprodList, 256);
                     jsonObject.put("new", filterProdList);
                 } else if (floorVO.getUnqid() == HOT) {
-                    List<ProdVO> filterProdList = loadProd(prodList, 128);
+                    List<ProdVO> filterProdList = loadProd(hotprodList, 128);
                     jsonObject.put("hot", filterProdList);
                 }
             }
         }
         return new Result().success(jsonObject);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getProdDetailHotArea(AppContext appContext) {
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        int spu = json.get("spu").getAsInt();
+        List<Integer> bb1 = new ArrayList<>();
+        bb1.add(256);
+        bb1.add(512);
+        Set<Integer> result1 = new HashSet<>();
+        NumUtil.arrangeAdd(128, bb1, result1);
+
+        SearchResponse searchResponse = ProdESUtil.searchProdWithHotAndSpu(result1, spu,1, 10);
+        List<ProdVO> prodVOList = new ArrayList<>();
+        if(searchResponse == null || searchResponse.getHits().totalHits <5){
+            if(searchResponse != null && searchResponse.getHits().totalHits > 0){
+                assembleData(searchResponse, prodVOList);
+            }
+            searchResponse = ProdESUtil.searchProdWithHotAndSpu(result1, spu,1, 10);
+            if(searchResponse != null && searchResponse.getHits().totalHits > 0){
+                assembleData(searchResponse, prodVOList);
+            }
+            if(prodVOList.size() < 5){
+                searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, spu, 1, 10);
+                assembleData(searchResponse, prodVOList);
+            }
+        }else{
+            assembleData(searchResponse, prodVOList);
+        }
+        return new Result().success(prodVOList);
     }
 
     @UserPermission(ignore = true)
@@ -227,8 +254,43 @@ public class ProdModule {
                 }
             }
         }
-        System.out.println("230 line:"+newProdList.size());
         return newProdList;
+    }
+
+    private List<ProdVO> getFilterProds(Set<Integer> result) {
+        SearchResponse response = ProdESUtil.searchProdWithMallFloor(result, 1, 100);
+        List<ProdVO> prodList = new ArrayList<>();
+        if (response == null || response.getHits().totalHits <= 10) {
+            SearchHits hits = response.getHits();
+            if(hits.totalHits > 0){
+                assembleData(response, prodList);
+            }
+            response = ProdESUtil.searchProdWithMallFloor(null, 1, 100);
+        }
+
+        assembleData(response, prodList);
+        return prodList;
+    }
+
+    private void assembleData(SearchResponse response, List<ProdVO> prodList) {
+        if(response == null || response.getHits().totalHits<=0){
+            return;
+        }
+        for (SearchHit searchHit : response.getHits()) {
+            ProdVO prodVO = new ProdVO();
+            Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+
+            HashMap detail = (HashMap) sourceMap.get("detail");
+            BeanMapUtils.mapToBean(detail, prodVO);
+
+            prodList.add(prodVO);
+            prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
+            try{
+                DictStore.translate(prodVO);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
+        }
     }
 
 }

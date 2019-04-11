@@ -58,7 +58,7 @@ public class CommonModule {
     }
 
     /**
-     * @description 查询所有活动优惠券规则
+     * @description 查询活动规则
      * @params [appContext]
      * @return com.onek.entitys.Result
      * @exception
@@ -72,18 +72,52 @@ public class CommonModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int type = jsonObject.get("type").getAsInt();
-        int cstatus = 64;
-        if(type == 2){
-            cstatus = 128;
-        }
-
-        String selectSQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus & ? > 0 ";
-        List<Object[]> queryResult = baseDao.queryNative(selectSQL,cstatus);
+        int brulecode = jsonObject.get("type").getAsInt();
+//        String selectActSQL = " SELECT brulecode FROM {{?" + DSMConst.TD_PROM_ACT +"}} where cstatus&1=0 and "
+//                + " brulecode like '" + brulecode + "%' and edate>CURRENT_DATE" ;
+//        List<Object[]> queryActResult = baseDao.queryNative(selectActSQL);
+        String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
+                + " and brulecode like '" + brulecode + "%' and  NOT EXISTS(select brulecode from {{?"
+                + DSMConst.TD_PROM_ACT +"}} b where cstatus&1=0 and a.brulecode = b.brulecode and brulecode like '"
+                + brulecode +"%' and edate>CURRENT_DATE)";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
-        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"rulecode", "rulename"});
+        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
         return result.success(rulesVOS);
     }
+
+    /**
+     * @description 查询优惠券规则
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/4/1 11:55
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result queryCoupRules(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int brulecode = jsonObject.get("type").getAsInt();
+//        String selectActSQL = " SELECT brulecode FROM {{?" + DSMConst.TD_PROM_ACT +"}} where cstatus&1=0 and "
+//                + " brulecode like '" + brulecode + "%' and edate>CURRENT_DATE" ;
+//        List<Object[]> queryActResult = baseDao.queryNative(selectActSQL);
+        String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
+                + " and brulecode like '" + brulecode + "%' and  NOT EXISTS(select brulecode from {{?"
+                + DSMConst.TD_PROM_COUPON +"}} b where cstatus&1=0 and a.brulecode = b.brulecode and brulecode like '"
+                + brulecode +"%' and enddate>CURRENT_DATE)";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
+        return result.success(rulesVOS);
+    }
+
+
+
+
 
     /**
      * @description 参加资格

@@ -9,9 +9,9 @@ import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
-import com.onek.util.prod.ProduceStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import global.IceRemoteUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
 import util.StringUtils;
@@ -23,7 +23,7 @@ import java.util.regex.Pattern;
 public class BackgroundProdModule {
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
     private static final String PZWH = "^国药准字[H|B|S|T|F|J|Z]\\d{8}$";
-    private static final String ZCZBH = "^[\\u4e00-\\u9fa5]食药监械\\([准|进|许]\\)字\\d{4}第\\d{7}号$";
+//    private static final String ZCZBH = "^[\\u4e00-\\u9fa5]食药监械\\([准|进|许]\\)字\\d{4}第\\d{7}号$";
 
     private static final String GET_MAX_SPU =
             " SELECT SUBSTR(MAX(spu), 8, 3), COUNT(0)"
@@ -36,7 +36,7 @@ public class BackgroundProdModule {
             + " WHERE popnameh = CRC32(?) AND popname = ? "
             + " AND prodnameh = CRC32(?) AND prodname = ? "
             + " AND standarnoh = CRC32(?) AND standarno = ? "
-            + " AND manuno = ? ";
+            + " AND manuno = ? AND spu REGEXP ? ";
 
     private static final String INSERT_PROD_SPU =
             " INSERT INTO {{?" + DSMConst.TD_PROD_SPU + "}} "
@@ -58,12 +58,12 @@ public class BackgroundProdModule {
             + " vaildsdate, vaildedate, "
             + " prodsdate, prodedate, store, "
             + " activitystore, limits, wholenum, medpacknum, unit,"
-            + " ondate, ontime, spec) "
+            + " ondate, ontime, spec, cstatus) "
             + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, ?, "
-                    + " CURRENT_DATE, CURRENT_TIME, ?) ";
+                    + " CURRENT_DATE, CURRENT_TIME, ?, 256) ";
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -96,6 +96,66 @@ public class BackgroundProdModule {
             + " prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
             + " store = ?, activitystore = ?, limits = ?, wholenum = ?, medpacknum = ? "
             + " WHERE sku = ? ";
+
+    public Result onProd(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (params == null || params.length == 0) {
+            return new Result().fail("参数为空");
+        }
+        String sql = "UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} " +
+                " SET prodstatus = 1, ondate = CURRENT_DATE, ontime = CURRENT_TIME " +
+                "  WHERE sku = ? AND prodstatus = 0 ";
+
+        List<Object[]> p = new ArrayList<>();
+        List<Long> skuList = new ArrayList<>();
+
+        try {
+            for (String ps : params) {
+                p.add(new Object[] { Long.parseLong(ps) });
+                skuList.add(Long.parseLong(ps));
+            }
+        } catch (Exception e) {
+            return new Result().fail("参数存在非法值");
+        }
+
+        int status = ProdESUtil.updateProdStatusDocList(skuList, 0);
+        if(status > 0){
+            BASE_DAO.updateBatchNative(sql, p, params.length);
+        }
+
+        return new Result().success(null);
+    }
+
+    public Result offProd(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (params == null || params.length == 0) {
+            return new Result().fail("参数为空");
+        }
+        String sql = "UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} " +
+                " SET prodstatus = 0, offdate = CURRENT_DATE, offtime = CURRENT_TIME " +
+                "  WHERE sku = ? AND prodstatus = 1 ";
+
+        List<Object[]> p = new ArrayList<>();
+        List<Long> skuList = new ArrayList<>();
+
+        try {
+            for (String ps : params) {
+                p.add(new Object[] { Long.parseLong(ps) });
+                skuList.add(Long.parseLong(ps));
+            }
+        } catch (Exception e) {
+            return new Result().fail("参数存在非法值");
+        }
+
+        int status = ProdESUtil.updateProdStatusDocList(skuList, 0);
+        if(status > 0){
+            BASE_DAO.updateBatchNative(sql, p, params.length);
+        }
+        return new Result().success(null);
+    }
+
 
     public Result updateProd(AppContext appContext) {
         BgProdVO bgProdVO;
@@ -239,6 +299,9 @@ public class BackgroundProdModule {
                     case 4:
                         sql.append(" AND sku.vaildsdate < STR_TO_DATE(?, '%Y-%m-%d') ");
                         break;
+                    case 5:
+                        sql.append(" AND sku.prodstatus = ? ");
+                        break;
                 }
             } catch (Exception e) {
                 continue;
@@ -376,7 +439,7 @@ public class BackgroundProdModule {
             if (spuParser != null) {
                 bgProdVO.setClassNo(Long.parseLong(spuParser[0]));
                 bgProdVO.setForm(Integer.parseInt(spuParser[1]));
-                bgProdVO.setClassName(ProduceStore.getProduceName(spuParser[0]));
+                bgProdVO.setClassName(IceRemoteUtil.getProduceName(spuParser[0]));
             }
 
             try {
@@ -417,7 +480,8 @@ public class BackgroundProdModule {
             throw new IllegalArgumentException("产品名为空");
         }
 
-        if (StringUtils.isEmpty(prodVO.getStandarNo())) {
+        if (!String.valueOf(prodVO.getClassNo()).startsWith("21")
+                && StringUtils.isEmpty(prodVO.getStandarNo())) {
             throw new IllegalArgumentException("批准文号/注册证编号为空");
         }
 
@@ -445,11 +509,20 @@ public class BackgroundProdModule {
     }
 
     private String containsSPU(BgProdVO prodVO) {
+
+        StringBuilder regexp =
+                new StringBuilder("^")
+                    .append("[0-9]{1}")
+                    .append(prodVO.getClassNo())
+                    .append("[0-9]{3}")
+                    .append(String.format("%02d", prodVO.getForm()))
+                    .append("$");
+
         List<Object[]> queryResult = BASE_DAO.queryNative(CHECK_SAME_SPU,
                 prodVO.getPopname(), prodVO.getPopname(),
                 prodVO.getProdname(), prodVO.getProdname(),
                 prodVO.getStandarNo(), prodVO.getStandarNo(),
-                prodVO.getManuNo());
+                prodVO.getManuNo(), regexp.toString());
 
         if (queryResult.isEmpty()) {
             return null;
@@ -518,9 +591,9 @@ public class BackgroundProdModule {
             return 1;
         }
 
-        if (Pattern.matches(ZCZBH, standarNo)) {
-            return 2;
-        }
+//        if (Pattern.matches(ZCZBH, standarNo)) {
+//            return 2;
+//        }
 
         return 0;
     }
@@ -539,10 +612,8 @@ public class BackgroundProdModule {
         switch (type) {
             case 1  :
                 return standarNo.contains("J")  ? 2 : 1;
-            case 2  :
-                return standarNo.contains("准") ? 1 : 2;
             default :
-                return 0;
+                return standarNo.contains("准") ? 1 : 2;
         }
     }
 

@@ -19,11 +19,13 @@ public abstract class IceBoxServerAbs implements Service {
     protected String _serverName;
     private ObjectAdapter _adapter;
     protected Logger logger;
+    protected Communicator communicator;
 
     @Override
     public void start(String name, Communicator communicator, String[] args) {
         initApplication(name);
         initIceLogger(name,(CommunicatorI) communicator);
+        this.communicator = communicator;
         _serverName = name;
         logger = communicator.getLogger();
         _adapter = communicator.createObjectAdapter(_serverName);
