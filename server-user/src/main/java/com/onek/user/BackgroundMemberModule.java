@@ -1,24 +1,13 @@
 package com.onek.user;
 
-import cn.hy.otms.rpcproxy.comm.cstruct.Page;
-import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.entity.MemberLevelVO;
-import com.onek.user.entity.UserInfoVo;
 import com.onek.user.service.MemberLevelImpl;
-import com.onek.util.dict.DictUtil;
-import constant.DSMConst;
-import dao.BaseDAO;
 import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
-import util.EncryptUtils;
-import util.GsonUtils;
-import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;

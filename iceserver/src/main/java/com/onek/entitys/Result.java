@@ -8,8 +8,6 @@ import java.util.HashMap;
 
 public class Result {
 
-
-
    interface CODE{
       int FAIL = -1;
       int INTERCEPT = -2;

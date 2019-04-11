@@ -25,10 +25,19 @@ public class DictUtil implements IRedisCache {
 
     @Override
     public DictEntity getId(Object id) {
-        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0 and dictc = ?", new Object[] {id});
-        DictEntity[] dicts = new DictEntity[result.size()];
-        baseDao.convToEntity(result, dicts, DictEntity.class);
-        return dicts[0];
+        return IceRemoteUtil.getId(id);
+    }
+
+    @Override
+    public List<?> queryAll() {
+        DictEntity[] dicts = IceRemoteUtil.queryAll();
+        return Arrays.asList(dicts	);
+    }
+
+    @Override
+    public List<?> queryByParams(String [] params) {
+        DictEntity[] dicts = IceRemoteUtil.queryByParams(params);
+        return Arrays.asList(dicts	);
     }
 
     @Override
@@ -46,23 +55,5 @@ public class DictUtil implements IRedisCache {
         return 0;
     }
 
-    @Override
-    public List<?> queryAll() {
-
-        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0", new Object[] {});
-        DictEntity[] dicts = new DictEntity[result.size()];
-        baseDao.convToEntity(result, dicts, DictEntity.class);
-        return Arrays.asList(dicts	);
-
-    }
-
-    @Override
-    public List<?> queryByParams(String [] params) {
-
-        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0 and customc = ? and type = ?", new Object[]{params[0], params[1]});
-        DictEntity[] dicts = new DictEntity[result.size()];
-        baseDao.convToEntity(result, dicts, DictEntity.class);
-        return Arrays.asList(dicts	);
-    }
 
 }
