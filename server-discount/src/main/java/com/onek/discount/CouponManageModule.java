@@ -215,7 +215,7 @@ public class CouponManageModule {
         couponVOS[0].setRuletype(Integer.parseInt(rType.substring(1,2)));
         couponVOS[0].setPreWay(Integer.parseInt(rType.substring(2,3)));
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
-        couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0].getRuleno()));
+        couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0],couponVOS[0].getRuleno()));
         couponVOS[0].setActiveRule(getRules(rRuleCode));
 
         return  result.success(couponVOS[0]);
@@ -266,10 +266,10 @@ public class CouponManageModule {
      * @param rulecode
      * @return
      */
-    private List<LadderVO> getCoupLadder(int rulecode){
+    private List<LadderVO> getCoupLadder(CouponVO couponVO,int rulecode){
         StringBuilder sb = new StringBuilder(QUERY_PROM_LAD_SQL);
         sb.append(" and offercode like '").append(rulecode).append("%");
-        List<Object[]> result = baseDao.queryNative(QUERY_PROM_LAD_SQL);
+        List<Object[]> result = baseDao.queryNative(sb.toString());
 
         if(result == null || result.isEmpty()){
             return null;
@@ -278,8 +278,13 @@ public class CouponManageModule {
         LadderVO[] ladderVOS = new LadderVO[result.size()];
         baseDao.convToEntity(result, ladderVOS, LadderVO.class,
                 new String[]{"unqid","ladamt","ladnum","offer","offercode"});
+
+        String offerCode = ladderVOS[0].getOffercode() + "";
+        couponVO.setRulecomp(Integer.parseInt(offerCode.substring(4,5)));
         return Arrays.asList(ladderVOS);
     }
+
+
 
 
     /**
