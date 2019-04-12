@@ -156,6 +156,59 @@ public class TimeUtils {
         return 1900;
     }
 
+    /**
+     * 格式为"HH:mm:ss"
+     * 判断当前时间是否在[startDate, endDate]区间，注意时间格式要一致
+     *
+     * @param startTime
+     * @param endTime
+     * @return
+     */
+    public static boolean isEffectiveTime(String startTime, String endTime){
+        try{
+            String format = "HH:mm:ss";
+            SimpleDateFormat sdf = new SimpleDateFormat(format);
+            String nowTime = sdf.format(new Date());
+            Date nowDate = sdf.parse(nowTime);
+            Date startDate = sdf.parse(startTime);
+            Date endDate = sdf.parse(endTime);
+            return isEffectiveDate(nowDate, startDate, endDate);
+
+        }catch(Exception e){
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    /**
+     * 判断当前时间是否在[startDate, endDate]区间，注意时间格式要一致
+     *
+     * @param nowDate 当前时间
+     * @param startDate 开始时间
+     * @param endDate 结束时间
+     * @return
+     */
+    public static boolean isEffectiveDate(Date nowDate, Date startDate, Date endDate) {
+        if (nowDate.getTime() == startDate.getTime()
+                || nowDate.getTime() == endDate.getTime()) {
+            return true;
+        }
+
+        Calendar date = Calendar.getInstance();
+        date.setTime(nowDate);
+
+        Calendar begin = Calendar.getInstance();
+        begin.setTime(startDate);
+
+        Calendar end = Calendar.getInstance();
+        end.setTime(endDate);
+
+        if (date.after(begin) && date.before(end)) {
+            return true;
+        } else {
+            return false;
+        }
+    }
 
 
 }
