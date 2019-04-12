@@ -139,9 +139,9 @@ public class UpdateStoreOp implements IOperation<AppContext> {
             String areaPrev = IceRemoteUtil.getCompleteName(addressCode);
             if (!StringUtils.isEmpty(areaPrev)){
                 String addStr = areaPrev + address;
-                String pointStr = GaoDeMapUtil.addressConvertLatLon(address);
-                Application.communicator().getLogger().print(addStr +" 经纬度:" + pointStr);
+                String pointStr = GaoDeMapUtil.addressConvertLatLon(addStr);
                 if (!StringUtils.isEmpty(pointStr)){
+                    Application.communicator().getLogger().print(addStr +" 经纬度:" + pointStr);
                     longitude = Double.parseDouble(pointStr.split(",")[0]) ;
                     latitude = Double.parseDouble(pointStr.split(",")[1]) ;
                 }

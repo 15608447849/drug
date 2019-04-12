@@ -4,6 +4,7 @@ import util.GsonUtils;
 import util.StringUtils;
 import util.http.HttpRequest;
 
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
 
@@ -29,20 +30,31 @@ public class GaoDeMapUtil {
      * 经度(longitude)在前，纬度(latitude)在后
      */
     public static String addressConvertLatLon(String address){
-        StringBuffer sb = new StringBuffer( "https://restapi.amap.com/v3/geocode/geo?");
-        HashMap<String,String> map = new HashMap<>();
-        map.put("key",apiKey);
-        map.put("address",address);
-        map.put("city","");
-        map.put("batch","false");
-        map.put("sig","");
-        map.put("output","JSON");
-        map.put("callback","");
-        String result = new HttpRequest().bindParam(sb,map).getRespondContent();
-        if(StringUtils.isEmpty(result)) return null;
-        JsonBean jsonBean = GsonUtils.jsonToJavaBean(result,JsonBean.class);
-        if (jsonBean == null || jsonBean.status != 1) return null;
-        return jsonBean.geocodes.get(0).location;
+        return addressConvertLatLon(address.trim(),0);
+    }
+
+    private static String addressConvertLatLon(String address,int index){
+        try {
+            StringBuffer sb = new StringBuffer( "https://restapi.amap.com/v3/geocode/geo?");
+            HashMap<String,String> map = new HashMap<>();
+            map.put("key",apiKey);
+            map.put("address", URLEncoder.encode(address,"UTF-8"));
+            map.put("city","");
+            map.put("batch","false");
+            map.put("sig","");
+            map.put("output","JSON");
+            map.put("callback","");
+            String result = new HttpRequest().bindParam(sb,map).getRespondContent();
+            //System.out.println(sb.toString()+"\naddress "+address+","+result);
+            if(StringUtils.isEmpty(result)) throw  new NullPointerException();
+            JsonBean jsonBean = GsonUtils.jsonToJavaBean(result,JsonBean.class);
+            if (jsonBean == null || jsonBean.status != 1 || jsonBean.geocodes.size() == 0) throw  new NullPointerException();
+            return jsonBean.geocodes.get(0).location;
+        } catch (Exception e) {
+            index++;
+            if (index<3) return addressConvertLatLon(address,index);
+        }
+        return null;
     }
 
 }

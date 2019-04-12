@@ -107,7 +107,7 @@ public class CommonModule {
     }
     @UserPermission(ignore = true)
     public Result getCompleteName(AppContext appContext){
-        long areaCode = Integer.parseInt(appContext.param.arrays[0]);
+        long areaCode = Long.parseLong(appContext.param.arrays[0]);
         String[] areas = AreaStore.getCompleteName(areaCode);
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i<areas.length ;i++){
