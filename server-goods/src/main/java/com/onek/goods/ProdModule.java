@@ -87,9 +87,9 @@ public class ProdModule {
         Set<Integer> result = new HashSet<>();
         NumUtil.arrangeAdd(256, bb, result);
 
-        List<ProdVO> newprodList = getFilterProds(result, 1);
+        List<ProdVO> newProdList = getFilterProds(result, 1);
 
-        List<ProdVO> filterProdList = loadProd(newprodList, 256);
+        List<ProdVO> filterProdList = loadProd(newProdList, 256);
 
         return new Result().success(filterProdList);
     }
@@ -102,8 +102,8 @@ public class ProdModule {
         Set<Integer> result1 = new HashSet<>();
         NumUtil.arrangeAdd(512, bb1, result1);
 
-        List<ProdVO> hotprodList = getFilterProds(result1, 1);
-        List<ProdVO> filterProdList = loadProd(hotprodList, 128);
+        List<ProdVO> prodList = getFilterProds(result1, 1);
+        List<ProdVO> filterProdList = loadProd(prodList, 128);
 
         return new Result().success(filterProdList);
     }
@@ -113,11 +113,11 @@ public class ProdModule {
         List<Integer> bb1 = new ArrayList(){{
             add(256); add(512);
         }};
-        Set<Integer> result1 = new HashSet<>();
-        NumUtil.arrangeAdd(128, bb1, result1);
+        Set<Integer> result = new HashSet<>();
+        NumUtil.arrangeAdd(128, bb1, result);
 
-        List<ProdVO> hotprodList = getFilterProds(result1, 2);
-        List<ProdVO> filterProdList = loadProd(hotprodList, 128);
+        List<ProdVO> hotProdList = getFilterProds(result, 2);
+        List<ProdVO> filterProdList = loadProd(hotProdList, 128);
 
         return new Result().success(filterProdList);
     }
@@ -230,6 +230,9 @@ public class ProdModule {
                     }
                     actCodeList.add(actcode);
                 }
+                if(actCodeList.size() >1){
+                    break;
+                }
                 dataMap.put(gcode, limitnum);
 
             }
@@ -244,7 +247,7 @@ public class ProdModule {
                     prodVO.setBuynum(0);
                     prodVO.setStartnum(0);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku()));
-                    if(timeMap.get(prodVO.getSku())==null || timeMap.get(prodVO.getSku()).length<=0){
+                    if(timeMap.get(prodVO.getSku()) == null || timeMap.get(prodVO.getSku()).length <= 0){
                         prodVO.setSdate("00:00:00");
                         prodVO.setEdate("23:59:59");
                     }else{
@@ -472,7 +475,7 @@ public class ProdModule {
             }
 
         }
-        // r.success(resultList);
+
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
@@ -496,10 +499,6 @@ public class ProdModule {
                 specList.add(elem.getAsJsonObject().get("val").getAsString());
             }
         }
-
-//       for(String spec : specList){
-//           System.out.println("spec:"+spec);
-//       }
 
         List<Long> manunoList = new ArrayList<>();
         if (manuArray != null && manuArray.size() > 0) {
@@ -548,7 +547,7 @@ public class ProdModule {
         return newProdList;
     }
 
-    private List<ProdVO> getFilterProds(Set<Integer> result,int sort) {
+    private List<ProdVO> getFilterProds(Set<Integer> result, int sort) {
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, sort,1, 100);
         List<ProdVO> prodList = new ArrayList<>();
         if (response == null || response.getHits().totalHits <= 10) {
@@ -564,7 +563,7 @@ public class ProdModule {
     }
 
     private void assembleData(SearchResponse response, List<ProdVO> prodList) {
-        if(response == null || response.getHits().totalHits<=0){
+        if(response == null || response.getHits().totalHits <= 0){
             return;
         }
         for (SearchHit searchHit : response.getHits()) {
