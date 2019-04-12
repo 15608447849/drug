@@ -75,19 +75,18 @@ public class AreaStore {
 
 
     public static String[] getCompleteName(long areac) {
-//        String[] result = new String[AreaUtil.getLayer(areac) + 1];
-//
-//        AreaEntity area;
-//        for (int i = 0; i < result.length; i++) {
-//            area = getAreaByAreac(AreaUtil.getCodeByLayer(areac, i));
-//
-//            if (area != null) {
-//                result[i] = area.getArean();
-//            }
-//        }
-//
-//        return result;
-        return null;
+        String[] result = new String[AreaUtil.getLayer(areac) + 1];
+
+        AreaEntity area;
+        for (int i = 0; i < result.length; i++) {
+            area = getAreaByAreac(AreaUtil.getCodeByLayer(areac, i));
+
+            if (area != null) {
+                result[i] = area.getArean();
+            }
+        }
+
+        return result;
     }
 
     public static AreaEntity[] getChildren(long areac) {

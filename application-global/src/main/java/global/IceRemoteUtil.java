@@ -32,7 +32,24 @@ public class IceRemoteUtil {
                     .settingReq("","CommonModule","getProduceName")
                     .settingParam(new String[]{pclass})
                     .executeSync();
-            System.out.println(result);
+            HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+            Object data = hashMap.get("data");
+            if (data!=null) {
+                return data.toString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getCompleteName(String areaCode) {
+        try {
+
+            String result = ic.settingProxy("globalServer")
+                    .settingReq("","CommonModule","getCompleteName")
+                    .settingParam(new String[]{areaCode})
+                    .executeSync();
             HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
             Object data = hashMap.get("data");
             if (data!=null) {
@@ -51,7 +68,9 @@ public class IceRemoteUtil {
                     .settingParam(new String[]{sku+""})
                     .executeSync();
             HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-            String json = hashMap.get("data").toString();
+            Object data = hashMap.get("data");
+            if (data==null) return null;
+            String json = data.toString();
             ProdEntity prodEntity = GsonUtils.jsonToJavaBean(json,ProdEntity.class);
             return prodEntity;
         } catch (Exception e) {
@@ -71,7 +90,9 @@ public class IceRemoteUtil {
                     .settingParam(args)
                     .executeSync();
             HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-            String message = hashMap.get("data").toString();
+            Object data = hashMap.get("data");
+            if (data==null) return null;
+            String message = data.toString();
            if (!StringUtils.isEmpty(message)) return message;
         } catch (Exception e) {
             e.printStackTrace();
@@ -85,7 +106,9 @@ public class IceRemoteUtil {
                 .settingParam(new String[]{id+""})
                 .executeSync();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        String json = hashMap.get("data").toString();
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,DictEntity.class);
     }
 
@@ -94,7 +117,9 @@ public class IceRemoteUtil {
                 .settingReq("","DictUtilRemoteModule","queryAll")
                 .executeSync();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        String json = hashMap.get("data").toString();
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,DictEntity[].class);
     }
 
@@ -104,7 +129,9 @@ public class IceRemoteUtil {
                 .settingParam(params)
                 .executeSync();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        String json = hashMap.get("data").toString();
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,DictEntity[].class);
     }
 

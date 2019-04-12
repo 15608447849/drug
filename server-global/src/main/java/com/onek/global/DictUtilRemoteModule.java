@@ -36,7 +36,7 @@ public class DictUtilRemoteModule {
     @UserPermission(ignore = true)
     public Result queryByParams(AppContext appContext) {
         String [] params = appContext.param.arrays;
-        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0", params[0], params[1]);
+        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0 and customc = ? and type =?", params[0], params[1]);
         DictEntity[] dicts = new DictEntity[result.size()];
         baseDao.convToEntity(result, dicts, DictEntity.class);
         return new Result().success(GsonUtils.javaBeanToJson(dicts));

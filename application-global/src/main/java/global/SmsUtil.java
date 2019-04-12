@@ -67,10 +67,10 @@ public class SmsUtil  extends ApplicationPropertiesBase {
             sb.append("&rf=2");//json返回
             sb.append("&ts=").append(timestamp);//加密时间戳
             String request = sb.toString();
-            System.out.println("request:" + request);
+//            System.out.println("request:" + request);
             // 以GET方式发起请求
             String result = Request.Get(request).execute().returnContent().asString();
-            System.out.println("result" + result);
+//            System.out.println("result" + result);
             return result;
         } catch (Exception e) {
             e.printStackTrace();

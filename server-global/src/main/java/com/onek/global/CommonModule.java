@@ -105,5 +105,15 @@ public class CommonModule {
         ProdEntity entity = ProduceStore.getProdBySku(Long.parseLong(appContext.param.arrays[0]));
         return new Result().success(GsonUtils.javaBeanToJson(entity));
     }
+    @UserPermission(ignore = true)
+    public Result getCompleteName(AppContext appContext){
+        long areaCode = Integer.parseInt(appContext.param.arrays[0]);
+        String[] areas = AreaStore.getCompleteName(areaCode);
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i<areas.length ;i++){
+            sb.append(areas[i]);
+        }
+        return new Result().success(sb.toString());
+    }
 
 }
