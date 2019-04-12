@@ -43,35 +43,35 @@ public class ProdESUtil {
             BgProdVO prodVO = (BgProdVO) paramVo.clone();
             prodVO.setDetail("");
             long sku = prodVO.getSku();
-            String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "")
-                    + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "")
-                    + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "")
-                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "");
+            String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
+                    + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
+                    + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()
+                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim();
             String spec = prodVO.getSpec();
             long spu = prodVO.getSpu();
             long manuno = prodVO.getManuNo();
-            String manuname = StringUtils.checkObjectNull(prodVO.getManuName(),"");
+            String manuname = StringUtils.checkObjectNull(prodVO.getManuName(),"").trim();
             long brandno = prodVO.getBrandNo();
-            String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"");
+            String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"").trim();
 
             Map<String, Object> data = new HashMap<>();
-            data.put("sku", sku);
-            data.put("content", keyword);
-            data.put("spec", spec);
-            data.put("spu", spu);
-            data.put("manuno", manuno);
-            data.put("manuname", manuname);
-            data.put("brandno", brandno);
-            data.put("brandname", brandname);
-            data.put("prodstatus", prodVO.getProdstatus());
-            data.put("skucstatus", prodVO.getSkuCstatus());
-            data.put("vatp", prodVO.getVatp());
-            data.put("sales", prodVO.getSales());
-            data.put("rulestatus", 0);
-            data.put("storestatus", 0);
-            data.put("time", TimeUtils.date_yMd_Hms_2String(new Date()));
-            data.put("detail", JSONObject.toJSON(prodVO));
-            IndexResponse response = ElasticSearchProvider.addDocument(data, ESConstant.PROD_INDEX, "prod_type", sku+"");
+            data.put(ESConstant.PROD_COLUMN_SKU, sku);
+            data.put(ESConstant.PROD_COLUMN_CONTENT, keyword);
+            data.put(ESConstant.PROD_COLUMN_SPEC, spec);
+            data.put(ESConstant.PROD_COLUMN_SPU, spu);
+            data.put(ESConstant.PROD_COLUMN_MANUNO, manuno);
+            data.put(ESConstant.PROD_COLUMN_MANUNAME, manuname);
+            data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
+            data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
+            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus());
+            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus());
+            data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
+            data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
+            data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
+            data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
+            data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
+            data.put(ESConstant.PROD_COLUMN_TIME, TimeUtils.date_yMd_Hms_2String(new Date()));
+            IndexResponse response = ElasticSearchProvider.addDocument(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             if(response == null || RestStatus.CREATED != response.status()) {
                 return -1;
             }
@@ -94,37 +94,37 @@ public class ProdESUtil {
             BgProdVO prodVO = (BgProdVO)paramVo.clone();
             prodVO.setDetail("");
             long sku = prodVO.getSku();
-            String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "")
-                    + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "")
-                    + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "")
-                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "");
+            String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
+                    + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
+                    + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()
+                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim();
             String spec = prodVO.getSpec();
             long spu = prodVO.getSpu();
             long manuno = prodVO.getManuNo();
-            String manuname = StringUtils.checkObjectNull(prodVO.getManuName(),"");
+            String manuname = StringUtils.checkObjectNull(prodVO.getManuName(),"").trim();
             long brandno = prodVO.getBrandNo();
-            String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"");
+            String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"").trim();
 
             prodVO.clone();
             Map<String, Object> data = new HashMap<>();
-            data.put("sku", sku);
-            data.put("content", keyword);
-            data.put("spec", spec);
-            data.put("spu", spu);
-            data.put("manuno", manuno);
-            data.put("manuname", manuname);
-            data.put("brandno", brandno);
-            data.put("brandname", brandname);
-            data.put("prodstatus", prodVO.getProdstatus());
-            data.put("skucstatus", prodVO.getSkuCstatus());
-            data.put("vatp", prodVO.getVatp());
-            data.put("sales", prodVO.getSales());
-            data.put("rulestatus", 0);
-            data.put("storestatus", 0);
-            data.put("detail", JSONObject.toJSON(prodVO));
-            GetResponse getResponse = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, "prod_type", sku+"");
-            data.put("time", getResponse.getSourceAsMap().get("time").toString());
-            UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, ESConstant.PROD_INDEX, "prod_type", sku+"");
+            data.put(ESConstant.PROD_COLUMN_SKU, sku);
+            data.put(ESConstant.PROD_COLUMN_CONTENT, keyword);
+            data.put(ESConstant.PROD_COLUMN_SPEC, spec);
+            data.put(ESConstant.PROD_COLUMN_SPU, spu);
+            data.put(ESConstant.PROD_COLUMN_MANUNO, manuno);
+            data.put(ESConstant.PROD_COLUMN_MANUNAME, manuname);
+            data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
+            data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
+            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus());
+            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus());
+            data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
+            data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
+            data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
+            data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
+            data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
+            GetResponse getResponse = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
+            data.put(ESConstant.PROD_COLUMN_TIME, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_TIME).toString());
+            UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             if(response == null || RestStatus.OK != response.status()) {
                 return -1;
             }
@@ -143,9 +143,9 @@ public class ProdESUtil {
      * @return
      */
     public static void deleteProdDocument(long sku){
-        GetResponse response = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, "prod_type", sku+"");
+        GetResponse response = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
         if (response != null && response.isExists()) {
-            ElasticSearchProvider.deleteDocumentById(ESConstant.PROD_INDEX, "prod_type", sku+"");
+            ElasticSearchProvider.deleteDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
         }
     }
 
@@ -163,7 +163,7 @@ public class ProdESUtil {
             if(skuList != null && skuList.size() > 0){
                 Object [] skuArray = new Long[skuList.size()];
                 skuArray = skuList.toArray(skuArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", skuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuArray);
                 boolQuery.must(builder);
             }
 
@@ -180,9 +180,9 @@ public class ProdESUtil {
             if(response != null && response.getHits().totalHits > 0){
                 for (SearchHit searchHit : response.getHits()) {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-                    long sku = Long.parseLong(sourceMap.get("sku").toString());
-                    sourceMap.put("prodstatus", prodstatus);
-                    bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, "prod_type", sku+"").setDoc(sourceMap));
+                    long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
+                    sourceMap.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodstatus);
+                    bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
                 }
                 BulkResponse bulkResponse = bulkRequest.get();
@@ -220,17 +220,17 @@ public class ProdESUtil {
             if(specList != null && specList.size() > 0){
                 Object [] specArray = new String[specList.size()];
                 specArray = specList.toArray(specArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("spec", specArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SPEC, specArray);
 			    boolQuery.must(builder);
             }
             if(manuNoList != null && manuNoList.size() > 0){
                 Object [] manuNoArray = new String[manuNoList.size()];
                 manuNoArray = manuNoList.toArray(manuNoArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("manuno", manuNoArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNO, manuNoArray);
                 boolQuery.must(builder);
             }
             if(!StringUtils.isEmpty(keyword)){
-                MatchQueryBuilder matchQuery = matchQuery("content", keyword).analyzer("ik_max_word");
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
@@ -267,23 +267,23 @@ public class ProdESUtil {
             if(specList != null && specList.size() > 0){
                 Object [] specArray = new String[specList.size()];
                 specArray = specList.toArray(specArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("spec", specArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SPEC, specArray);
                 boolQuery.must(builder);
             }
             if(manunameList != null && manunameList.size() > 0){
                 Object [] manuNoArray = new String[manunameList.size()];
                 manuNoArray = manunameList.toArray(manuNoArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("manuname", manuNoArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNAME, manuNoArray);
                 boolQuery.must(builder);
             }
             if(brandnameList != null && brandnameList.size() > 0){
                 Object [] brandNameArray = new String[brandnameList.size()];
                 brandNameArray = brandnameList.toArray(brandNameArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("brandname", brandNameArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_BRANDNAME, brandNameArray);
                 boolQuery.must(builder);
             }
             if(!StringUtils.isEmpty(keyword)){
-                MatchQueryBuilder matchQuery = matchQuery("content", keyword).analyzer("ik_max_word");
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
             if(spu > 0){
@@ -306,11 +306,11 @@ public class ProdESUtil {
             FieldSortBuilder sortBuilder = null;
             if(sort > 0){
                 if(sort == 1){ // 销量
-                    sortBuilder = SortBuilders.fieldSort("sales").order(SortOrder.DESC);
+                    sortBuilder = SortBuilders.fieldSort(ESConstant.PROD_COLUMN_SALES).order(SortOrder.DESC);
                 }else if(sort == 2){ // 价格从搞到低
-                    sortBuilder = SortBuilders.fieldSort("vatp").order(SortOrder.DESC);
+                    sortBuilder = SortBuilders.fieldSort(ESConstant.PROD_COLUMN_VATP).order(SortOrder.DESC);
                 }else if(sort ==3){ // 价格从低到高
-                    sortBuilder = SortBuilders.fieldSort("vatp").order(SortOrder.ASC);
+                    sortBuilder = SortBuilders.fieldSort(ESConstant.PROD_COLUMN_VATP).order(SortOrder.ASC);
                 }
 
             }
@@ -337,27 +337,40 @@ public class ProdESUtil {
      * 根据条件全文检索商品
      *
      * @param statusSet
+     * @param  sort
      * @param pagenum
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdWithMallFloor(Set<Integer> statusSet, int pagenum, int pagesize){
+    public static SearchResponse searchProdWithStatusList(Set<Integer> statusSet, int sort,int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             if(statusSet!=null && statusSet.size() >0){
                 Object [] resultArray = new Integer[statusSet.size()];
                 resultArray = statusSet.toArray(resultArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("cstatus", resultArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKUCSTATUS, resultArray);
                 boolQuery.must(builder);
             }
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
-            response = client.prepareSearch(ESConstant.PROD_INDEX)
+            FieldSortBuilder sortBuilder = null;
+            if(sort > 0){
+                if(sort == 1){ // 销量
+                    sortBuilder = SortBuilders.fieldSort(ESConstant.PROD_COLUMN_SALES).order(SortOrder.DESC);
+                }else if(sort == 2){ // 时间
+                    sortBuilder = SortBuilders.fieldSort(ESConstant.PROD_COLUMN_TIME).order(SortOrder.DESC);
+                }
+
+            }
+            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
-                    .setSize(pagesize)
-                    .addSort("time", SortOrder.DESC)
+                    .setSize(pagesize);
+            if(sortBuilder != null){
+                requestBuilder.addSort(sortBuilder);
+            }
+            response = requestBuilder
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -366,6 +379,7 @@ public class ProdESUtil {
 
         return response;
     }
+
 
     /**
      * 根据条件全文检索商品
@@ -378,7 +392,7 @@ public class ProdESUtil {
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-            RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("brandno");
+            RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_BRANDNO);
             rangeQuery.gt(0);
             boolQuery.must(rangeQuery);
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
@@ -387,7 +401,7 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort("time", SortOrder.DESC)
+                    .addSort(ESConstant.PROD_COLUMN_TIME ,SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -412,7 +426,7 @@ public class ProdESUtil {
             if(statusSet!=null && statusSet.size() >0){
                 Object[] resultArray = new Integer[statusSet.size()];
                 resultArray = statusSet.toArray(resultArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("cstatus", resultArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKUCSTATUS, resultArray);
                 boolQuery.must(builder);
             }
             if(spu > 0){
@@ -424,7 +438,7 @@ public class ProdESUtil {
 
                 String start1 = "2"+addZeroForNum(spu+"", 6) +"00000";
                 String end1 = "2"+addZeroForNum(spu+"", 6) +"99999";
-                RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery("spu");
+                RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SPU);
                 rangeQuery1.gt(start1);
                 rangeQuery1.lt(end1);
                 org.elasticsearch.index.query.QueryBuilder postFilterBool =QueryBuilders.boolQuery()
@@ -438,7 +452,7 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort("time", SortOrder.DESC)
+                    .addSort(ESConstant.PROD_COLUMN_TIME, SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -452,7 +466,7 @@ public class ProdESUtil {
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
-            MatchQueryBuilder matchQuery = matchQuery("content", keyword).analyzer("ik_max_word");
+            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
             boolQuery.must(matchQuery);
         }
 
@@ -466,7 +480,7 @@ public class ProdESUtil {
 
             String start1 = "2"+addZeroForNum(spu+"", 6) +"00000";
             String end1 = "2"+addZeroForNum(spu+"", 6) +"99999";
-            RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery("spu");
+            RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SPU);
             rangeQuery1.gt(start1);
             rangeQuery1.lt(end1);
             org.elasticsearch.index.query.QueryBuilder postFilterBool =QueryBuilders.boolQuery()
@@ -505,7 +519,7 @@ public class ProdESUtil {
             if(skuList != null && skuList.size() > 0){
                 Object [] spuArray = new Long[skuList.size()];
                 spuArray = skuList.toArray(spuArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery("sku", spuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, spuArray);
                 boolQuery.must(builder);
             }
 
@@ -541,7 +555,7 @@ public class ProdESUtil {
         Set<Integer> statusList = new HashSet<>();
         statusList.add(0);
 //        statusList.add(256);
-        SearchResponse response = searchProdWithMallFloor(statusList,1,100);
+        SearchResponse response = searchProdWithStatusList(statusList,1, 1,100);
         System.out.println(response.getHits().totalHits);
     }
 

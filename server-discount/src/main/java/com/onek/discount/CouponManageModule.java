@@ -424,7 +424,7 @@ public class CouponManageModule {
         couponVO.getGlbno(),couponVO.getQlfno(),couponVO.getQlfval(),
         couponVO.getDesc(),couponVO.getPeriodtype(),couponVO.getPeriodday(),
         couponVO.getStartdate(),couponVO.getEnddate(),couponVO.getRuleno(),couponVO.getValidday(),
-                couponVO.getValidflag(),actCode,couponVO.getActstock(),couponVO.getLimitnum()});
+                couponVO.getValidflag(),couponVO.getActstock(),couponVO.getLimitnum(),actCode});
 
         if (ret > 0) {
             //新增活动场次
@@ -436,8 +436,8 @@ public class CouponManageModule {
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
                 StringBuilder sb = new StringBuilder(DEL_LAD_OFF_SQL);
-                sb.append(" and offercode like '").append(couponVO.getRuleno()).append("%");
-                if (baseDao.updateNative(sb.toString(), actCode) > 0) {
+                sb.append(" and offercode like '").append(couponVO.getRuleno()).append("%'");
+                if (baseDao.updateNative(sb.toString()) > 0) {
                     insertLadOff(couponVO.getLadderVOS(),
                             couponVO.getRuleno()+""+couponVO.getRulecomp());
                 }
@@ -450,7 +450,7 @@ public class CouponManageModule {
 //                }
 //            }
         } else {
-            result.fail("修改失败");
+            return result.fail("修改失败");
         }
         return result.success("修改成功");
     }

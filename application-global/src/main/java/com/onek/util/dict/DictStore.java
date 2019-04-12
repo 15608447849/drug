@@ -96,7 +96,7 @@ public class DictStore{
                         dictVo = (DictEntity)dictProxy.getId(val);
                     }else if(dictWay == GetDictWay.CUSTOMC_AND_TYPE){
                         String type = cacheField.type();
-                        if(!StringUtils.isEmpty(type)){
+                        if(!StringUtils.isEmpty(type) && Integer.parseInt(val.toString())>0){
                             List<DictEntity> dicts = (List<DictEntity>)dictProxy.queryByParams(new String[]{val.toString(), type});
                             dictVo = dicts != null && dicts.size() > 0 ? dicts.get(0) : null;
                         }
@@ -148,7 +148,7 @@ public class DictStore{
                             dictVo = (DictEntity)dictProxy.getId(val);
                         }else if(dictWay == GetDictWay.CUSTOMC_AND_TYPE){
                             String type = cacheField.type();
-                            if(!StringUtils.isEmpty(type)){
+                            if(!StringUtils.isEmpty(type) && Integer.parseInt(val.toString())>0){
                                 List<DictEntity> dicts = (List<DictEntity>)dictProxy.queryByParams(new String[]{val.toString(), type});
                                 dictVo = dicts != null && dicts.size() > 0 ? dicts.get(0) : null;
                             }
