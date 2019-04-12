@@ -1,5 +1,6 @@
 package dao;
 
+import IceInternal.Ex;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import constant.BUSConst;
@@ -17,6 +18,7 @@ import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.KV;
 import org.hyrdpf.util.LogUtil;
 
+import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
@@ -1188,8 +1190,8 @@ public class BaseDAO {
             int arraryIndex = 0;
             //循环取数据集合
             for (Object[] srcArr : srcLst) {  
-                //反射动态创建实例。  
-                obj = clszz.newInstance();   
+                //反射动态创建实例。
+                obj = newInstance(clszz);
                 //循环给实体的属性赋值
                 for (int i = 0; i < srcArr.length; i++) {
                 	fedAtt[i].setAccessible(true); 
@@ -1202,7 +1204,21 @@ public class BaseDAO {
         } catch (Exception e) {
 			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
         } 
-    }  
+    }
+
+    private Object newInstance(Class clszz) throws Exception {
+		Object result;
+		try {
+			result = clszz.newInstance();
+		} catch (Exception e) {
+			Constructor constructor = clszz.getDeclaredConstructor();
+			constructor.setAccessible(true);
+			result = constructor.newInstance();
+		}
+
+		return result;
+	}
+
 	/**
 	 * @Title: getFieldTypeValue shanben-CN
 	 * @Description: TODO 根据反射出的字段的数据类型，再其需要赋值的变量改变成对应的数据类型的值。
