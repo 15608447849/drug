@@ -13,7 +13,7 @@ public class LadderVO {
     private long unqid;
 
     //金额阶梯值
-    private int ladamt;
+    private double ladamt;
 
     //数量阶梯值
     private int ladnum;
@@ -21,7 +21,7 @@ public class LadderVO {
     private int offercode;//优惠码
 
     //优惠值
-    private int offer;
+    private double offer;
 
     //综合状态
     private int cstatus;
@@ -30,11 +30,11 @@ public class LadderVO {
 
     private String giftname;//商品名称
 
-    public int getLadamt() {
+    public double getLadamt() {
         return ladamt;
     }
 
-    public void setLadamt(int ladamt) {
+    public void setLadamt(double ladamt) {
         this.ladamt = ladamt;
     }
 
@@ -46,11 +46,11 @@ public class LadderVO {
         this.ladnum = ladnum;
     }
 
-    public int getOffer() {
+    public double getOffer() {
         return offer;
     }
 
-    public void setOffer(int offer) {
+    public void setOffer(double offer) {
         this.offer = offer;
     }
 

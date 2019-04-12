@@ -3,10 +3,8 @@ package com.onek.server.infimp;
 import Ice.Communicator;
 import Ice.Current;
 import Ice.Logger;
-import Ice.Request;
-import com.onek.server.inf.IRequest;
-import com.onek.server.inf._InterfacesDisp;
 import com.onek.entitys.Result;
+import com.onek.server.inf.IRequest;
 import objectref.ObjectPoolManager;
 import objectref.ObjectRefUtil;
 import util.GsonUtils;
@@ -14,7 +12,6 @@ import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Iterator;
 
 /**
  * ice bind type = ::inf::Interfaces
@@ -86,18 +83,19 @@ public class ServerImp extends IcePushMessageServerImps {
     private void printParam(IRequest request, Current __current) {
         try {
             StringBuilder sb = new StringBuilder();
-            sb.append("call:\t" +serverName+ " ->" + request.pkg +" -> " + request.cls +" -> "+request.method+"\n");
+            sb.append(__current.con.toString().split("\n")[1]);
+            sb.append("\ncall:\t" +serverName+ " >>> " + request.pkg +" >>> " + request.cls +" >>> "+request.method);
             if(!StringUtils.isEmpty(request.param.token)){
-                sb.append( "token:\t"+ request.param.token+"\n");
+                sb.append( "\ntoken:\t"+ request.param.token);
             }
             if(!StringUtils.isEmpty(request.param.json)){
-                sb.append("json:\t" + request.param.json +"\n");
+                sb.append("\njson:\t" + request.param.json );
             }
             if(request.param.arrays!=null &&request.param.arrays.length>0){
-                sb.append("array:\t" + Arrays.toString(request.param.arrays)+"\n");
+                sb.append("\narray:\t" + Arrays.toString(request.param.arrays));
             }
             if(request.param.pageIndex > 0 && request.param.pageNumber > 0){
-                sb.append("Paging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
+                sb.append("\npaging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
             }
             logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString());
 
@@ -155,9 +153,7 @@ public class ServerImp extends IcePushMessageServerImps {
 
     private String printResult(Object result) {
         String resultString = GsonUtils.javaBeanToJson(result);
-        if (resultString.length() < 1000){
-            logger.print("-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-\n\t" + resultString +"\n");
-        }
+        logger.print(resultString +"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-");
         return resultString;
     }
 

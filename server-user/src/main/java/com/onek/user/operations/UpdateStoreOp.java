@@ -1,11 +1,15 @@
 package com.onek.user.operations;
 
+import Ice.Application;
 import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
+import global.GaoDeMapUtil;
+import global.IceRemoteUtil;
+import util.StringUtils;
 
 import java.util.List;
 
@@ -58,6 +62,8 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 }
             }
         }
+
+        convertLatLon();
 
         if (session.compId > 0 ){
 
@@ -126,5 +132,21 @@ public class UpdateStoreOp implements IOperation<AppContext> {
             }
         }
         return new Result().fail("关联异常");
+    }
+
+    private void convertLatLon() {
+        try {
+            String areaPrev = IceRemoteUtil.getCompleteName(addressCode);
+            if (!StringUtils.isEmpty(areaPrev)){
+                String addStr = areaPrev + address;
+                String pointStr = GaoDeMapUtil.addressConvertLatLon(addStr);
+                if (!StringUtils.isEmpty(pointStr)){
+                    Application.communicator().getLogger().print(addStr +" 经纬度:" + pointStr);
+                    longitude = Double.parseDouble(pointStr.split(",")[0]) ;
+                    latitude = Double.parseDouble(pointStr.split(",")[1]) ;
+                }
+            }
+        } catch (NumberFormatException ignored) {
+        }
     }
 }

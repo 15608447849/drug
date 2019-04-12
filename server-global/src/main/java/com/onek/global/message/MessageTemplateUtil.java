@@ -2,7 +2,6 @@ package com.onek.global.message;
 
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 
 import java.util.List;
 import java.util.Locale;
@@ -30,7 +29,4 @@ public class MessageTemplateUtil {
         }
         return null;
     }
-
-
-
 }

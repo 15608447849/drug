@@ -1,9 +1,10 @@
-package com.onek;
+package com.onek.push;
 
 import com.onek.server.infimp.IPushMessageStore;
 import dao.BaseDAO;
+import global.IceRemoteUtil;
+import util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,6 +88,23 @@ public class PushMessageMySqlImps implements IPushMessageStore {
 
     @Override
     public String convertMessage(String identityName, String message) {
+        //规则格式:  push:模板序列#参数内容
+        try {
+            if (message.startsWith("push")) {
+                String arrayStr = message.split(":")[1];
+                String[] array ;
+                if (arrayStr.contains("#")){
+                    array = arrayStr.split("#");
+                }else{
+                    array = new String[]{arrayStr};
+                }
+                String msg = IceRemoteUtil.getMessageByNo(array);
+                if (!StringUtils.isEmpty(msg)) return msg;
+            }
+        } catch (Exception ignored) {
+
+        }
+
         return message;
     }
 

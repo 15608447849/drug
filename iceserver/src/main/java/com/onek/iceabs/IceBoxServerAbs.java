@@ -3,10 +3,9 @@ package com.onek.iceabs;
 import Ice.Object;
 import Ice.*;
 import IceBox.Service;
-import com.onek.server.infimp.IIceIceInitialize;
+import com.onek.server.infimp.IIceInitialize;
 import com.onek.server.infimp.IceProperties;
 import objectref.ObjectRefUtil;
-import threadpool.IOThreadPool;
 
 import java.lang.Exception;
 
@@ -17,45 +16,45 @@ public abstract class IceBoxServerAbs implements Service {
     //服务名
     protected String _serverName;
     private ObjectAdapter _adapter;
-    protected Logger logger;
-    protected Communicator communicator;
+
+    protected Communicator _communicator;
 
     @Override
     public void start(String name, Communicator communicator, String[] args) {
         initIceLogger(name,(CommunicatorI) communicator);
-
-        this.communicator = communicator;
+        _communicator = communicator;
         _serverName = name;
-        logger = communicator.getLogger();
-        initApplication(name);
-        _adapter = communicator.createObjectAdapter(_serverName);
-        //创建servant并激活
+        _adapter = _communicator.createObjectAdapter(_serverName);
+        //创建servant
         Ice.Object object = specificServices();
+        //关联servant
         relationID(object,communicator);
-
+        //激活适配器
         _adapter.activate();
-        logger.print("\n成功启动服务:" + _serverName+"\n" );
+        _communicator.getLogger().print("启动服务:" + _serverName );
+        initApplication(name);
     }
 
     //初始化 系统应用
     private void initApplication(String serverName) {
         //scan all class
-        logger.print(serverName + " 开始初始化系统");
+        _communicator.getLogger().print(serverName + " 开始初始化系统");
         long time = System.currentTimeMillis();
-        IOThreadPool p = new IOThreadPool();
+//        IOThreadPool p = new IOThreadPool();
         ObjectRefUtil.scanJarAllClass(classPath -> {
-            if (classPath.endsWith("Initialize") && !classPath.equals(IIceIceInitialize.class.getName())){
-               p.post(()->{
+            if (classPath.endsWith("Initialize") && !classPath.equals(IIceInitialize.class.getName())){
+//               p.post(()->{
                    try {
                        java.lang.Object object = ObjectRefUtil.createObject(classPath,null,null);
-                       if (object instanceof IIceIceInitialize){
-                           ((IIceIceInitialize) object).startUp(serverName);
+                       if (object instanceof IIceInitialize){
+                           ((IIceInitialize) object).startUp(serverName);
                        }
                    } catch (Exception ignored) {
                    }
-               });
+//               });
             }
         });
+        _communicator.getLogger().print("初始化完成,耗时:"+ (System.currentTimeMillis() - time)+"ms");
     }
 
     private void initIceLogger(String name,CommunicatorI ic) {
@@ -75,7 +74,7 @@ public abstract class IceBoxServerAbs implements Service {
         if (name == null) return;
         identity = communicator.stringToIdentity(name);
         _adapter.add(IceServiceDispatchInterceptor.getInstance().addIceObject(identity,object),identity);
-        logger.print("服务: "+_serverName +" ,加入负载均衡组 " + name);
+        _communicator.getLogger().print("服务: "+_serverName +" ,加入负载均衡组 " + name);
     }
 
     protected abstract Object specificServices();
@@ -83,7 +82,7 @@ public abstract class IceBoxServerAbs implements Service {
     @Override
     public void stop() {
         _adapter.destroy();
-        logger.print("销毁服务:" + _serverName);
+        _communicator.getLogger().print("销毁服务:" + _serverName);
     }
 
 }
