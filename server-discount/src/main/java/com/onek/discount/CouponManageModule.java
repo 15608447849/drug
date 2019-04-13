@@ -693,7 +693,8 @@ public class CouponManageModule {
                 new Object[]{rcdid,couponVO.getCoupno(),
                 couponVO.getCompid(),0});
         if(ret > 0){
-            int oret = IceRemoteUtil.collectCoupons(couponVO.getCompid(),json);
+            int oret = 0;
+        //    int oret = IceRemoteUtil.collectCoupons(couponVO.getCompid(),json);
             if(oret > 0){
                 baseDao.updateNative(UPDATE_COUPON_STOCK,
                         new Object[]{couponVO.getCoupno()});
