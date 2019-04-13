@@ -83,6 +83,10 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     public void addDiscounted(double discount) {
+        if (discount <= 0) {
+            return;
+        }
+
         this.discount = add(this.discount, discount);
 
         double[] shared = DiscountUtil.shareDiscount(getEachCurrent(), discount);
@@ -92,6 +96,11 @@ public class Activity extends AccurateMath implements IDiscount {
         for (int i = 0; i < shared.length; i++) {
             prodList.get(i).addSharePrice(shared[i]);
         }
+    }
+
+    @Override
+    public void setDiscounted(double discount) {
+        this.discount = discount;
     }
 
     @Override

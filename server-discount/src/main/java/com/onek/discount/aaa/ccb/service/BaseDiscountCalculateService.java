@@ -3,8 +3,10 @@ package com.onek.discount.aaa.ccb.service;
 import com.onek.discount.aaa.ccb.entity.IDiscount;
 import com.onek.discount.aaa.ccb.entity.IProduct;
 import com.onek.discount.aaa.ccb.entity.Ladoff;
+import com.onek.discount.util.DiscountUtil;
 import util.MathUtil;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public abstract class BaseDiscountCalculateService implements ICalculateService {
@@ -28,10 +30,11 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
 
     protected boolean doSP(IDiscount discount, Ladoff ladoff) {
         List<IProduct> prods = discount.getProductList();
-
         if (KILL == discount.getBRule()) {
             for (IProduct product : prods) {
-                product.addSharePrice(ladoff.getOfferValue());
+                double dd = product.getCurrentPrice() - (ladoff.getOfferValue() * product.getNums());
+                product.addSharePrice(dd);
+                discount.setDiscounted(discount.getDiscounted() + dd);
             }
 
             return true;
