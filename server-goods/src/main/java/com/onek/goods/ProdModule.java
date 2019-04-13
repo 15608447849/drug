@@ -173,7 +173,7 @@ public class ProdModule {
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(0);
-                    prodVO.setStartnum(0);
+                    prodVO.setStartnum(1);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku()));
                 }
             }
@@ -207,7 +207,7 @@ public class ProdModule {
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(0);
-                    prodVO.setStartnum(0);
+                    prodVO.setStartnum(1);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku()));
                 }
             }
@@ -401,12 +401,11 @@ public class ProdModule {
         }
         JSONObject result = new JSONObject();
         List<ProdVO> prodVOList = new ArrayList<>();
-        String mmdd = TimeUtils.date_Md_2String(new Date());
         List<Long> skuList = new ArrayList<>();
 
         Map<Long,Integer[]> dataMap = new HashMap<>();
 
-        List<Object[]> list = BASE_DAO.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{actcode, mmdd});
+        List<Object[]> list = BASE_DAO.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{actcode});
 
         if(list != null && list.size() > 0){
             for(Object[] objects : list) {
@@ -479,6 +478,7 @@ public class ProdModule {
         result.put("sdate", sdate);
         result.put("edate", edate);
         result.put("list", prodVOList);
+        result.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
 
         return new Result().success(result);
     }
@@ -493,12 +493,11 @@ public class ProdModule {
         }
         JSONObject result = new JSONObject();
         List<ProdVO> prodVOList = new ArrayList<>();
-        String mmdd = TimeUtils.date_Md_2String(new Date());
         List<Long> skuList = new ArrayList<>();
 
         Map<Long,Integer[]> dataMap = new HashMap<>();
 
-        List<Object[]> list = BASE_DAO.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{actcode, mmdd});
+        List<Object[]> list = BASE_DAO.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{actcode});
 
         if(list != null && list.size() > 0){
             for(Object[] objects : list) {
@@ -578,6 +577,7 @@ public class ProdModule {
         result.put("sdate", sdate);
         result.put("edate", edate);
         result.put("list", prodVOList);
+        result.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
 
 //        result.put("")
         return new Result().success(result);
@@ -687,10 +687,11 @@ public class ProdModule {
                     if(bits.size() > 1){
                         prodVO.setMutiact(true);
                     }
-                    Double[] dd = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
-                    if(dd != null){
-                        prodVO.setMinprize(dd[0]);
-                        prodVO.setMaxprize(dd[1]);
+                    ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
+                    if(prizeEntity != null){
+                        prodVO.setMinprize(prizeEntity.getMinactprize());
+                        prodVO.setMaxprize(prizeEntity.getMaxactprize());
+                        prodVO.setActcode(prizeEntity.getActcode());
                     }
                 }
                 try{

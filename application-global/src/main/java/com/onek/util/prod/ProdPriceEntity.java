@@ -6,6 +6,7 @@ public class ProdPriceEntity {
     private double actprice;
     private double minactprize;
     private double maxactprize;
+    private long actcode;
 
     public long getSku() {
         return sku;
@@ -45,5 +46,13 @@ public class ProdPriceEntity {
 
     public void setMaxactprize(double maxactprize) {
         this.maxactprize = maxactprize;
+    }
+
+    public long getActcode() {
+        return actcode;
+    }
+
+    public void setActcode(long actcode) {
+        this.actcode = actcode;
     }
 }
