@@ -294,8 +294,10 @@ public class CouponManageModule {
         if(cstatus == 0){
             cstatus = 128;
         }else{
-            cstatus = 128 & 32;
+            cstatus = 128 | 32;
         }
+
+
         int ret = baseDao.updateNative(INSERT_ASSCOUPON_SQL,
                  new Object[]{unqid,couponAssVO.getGlbno(),couponAssVO.getCoupdesc(),
                         couponAssVO.getRuleno(),couponAssVO.getValidday(),couponAssVO.getValidflag(),

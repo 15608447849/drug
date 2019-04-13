@@ -108,7 +108,7 @@ public class CommonModule {
 
 
     /**
-     * @description 查询互动优惠券规则
+     * @description 查询活动优惠券规则
      * @params [appContext]
      * @return com.onek.entitys.Result
      * @exception
@@ -199,21 +199,6 @@ public class CommonModule {
             laddnumArray[i] = Integer.parseInt(sb.toString());
         }
         return laddnumArray;
-    }
-
-    public static void main(String[] args) {
-        CommonModule commonModule = new CommonModule();
-        int lads[] = CommonModule.getLaderNo("11202",5);
-        for (int i = 0; i <lads.length; i++ ){
-            System.out.println(lads[i]);
-        }
-//        IRequest request = new IRequest();
-//        Current current = new Current();
-//        request.param.json = "";
-//        AppContext appContext = new AppContext(current,request);
-//
-//        Result result = commonModule.queryPromGift(appContext);
-//        System.out.println(result.toString());
     }
 
 
