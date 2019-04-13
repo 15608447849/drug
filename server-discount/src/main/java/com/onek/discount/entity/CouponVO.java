@@ -14,7 +14,6 @@ public class CouponVO {
     //优惠券码
     private long coupno;
 
-
     //优惠券名称
     private String coupname;
 
@@ -59,23 +58,8 @@ public class CouponVO {
 
     private int actstock;
 
-    private int limitnum;
 
-    public int getRuletype() {
-        return ruletype;
-    }
 
-    public void setRuletype(int ruletype) {
-        this.ruletype = ruletype;
-    }
-
-    public int getPreWay() {
-        return preWay;
-    }
-
-    public void setPreWay(int preWay) {
-        this.preWay = preWay;
-    }
 
     public int getRulecomp() {
         return rulecomp;
@@ -85,8 +69,7 @@ public class CouponVO {
         this.rulecomp = rulecomp;
     }
 
-    private int ruletype; // 活动类型
-    private int preWay; // 活动优惠方式
+
     private int rulecomp;//优惠算法
 
 
@@ -98,8 +81,6 @@ public class CouponVO {
     //阶梯
     private List<LadderVO> ladderVOS;
 
-    //优惠商品赠换
-    private List<AssGiftVO> assGiftVOS;
 
     //规则
     private List<RulesVO> activeRule;
@@ -112,14 +93,6 @@ public class CouponVO {
         this.activeRule = activeRule;
     }
 
-    public List<AssGiftVO> getAssGiftVOS() {
-        return assGiftVOS;
-    }
-
-    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
-        this.assGiftVOS = assGiftVOS;
-    }
-
     public int getActstock() {
         return actstock;
     }
@@ -128,13 +101,7 @@ public class CouponVO {
         this.actstock = actstock;
     }
 
-    public int getLimitnum() {
-        return limitnum;
-    }
 
-    public void setLimitnum(int limitnum) {
-        this.limitnum = limitnum;
-    }
 
 
 

@@ -45,7 +45,18 @@ public class CouponListVO {
     //规则名称
     private String rulename;
 
+    private int actstock;
+
     //综合状态
+
+    public int getActstock() {
+        return actstock;
+    }
+
+    public void setActstock(int actstock) {
+        this.actstock = actstock;
+    }
+
     private int cstatus;
 
     public long getCoupno() {
