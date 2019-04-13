@@ -44,23 +44,32 @@ public class ProdActPriceUtil {
 
         List<ProdPriceEntity> resultList = new ArrayList<>();
         if(skuPriceList != null){
-            for(ProdPriceEntity prodPriceEntity : skuPriceList){
-                long sku = prodPriceEntity.getSku();
-                Long subVersion = versionMap.containsKey(sku) ? versionMap.get(sku) : 0L;
+            boolean needLoad = false;
+            for(ProdPriceEntity skuPrice : skuPriceList){
+                Long subVersion = versionMap.containsKey(skuPrice.getSku()) ? versionMap.get(skuPrice.getSku()) : 0L;
                 if(v > subVersion || subVersion == 0){
-                    ProdPriceEntity [] array = IceRemoteUtil.calcMultiProdActPrize(actcode, skuPriceList);
-                    for(ProdPriceEntity calcEntity : array){
-                        if(calcEntity != null){
-                            prizeMap.put(sku,calcEntity.getActprice());
-                        }else{
-                            prizeMap.put(sku, prodPriceEntity.getVatp());
-                        }
+                    needLoad = true;
+                    break;
+                }
+            }
 
-                        versionMap.put(sku, v);
-                        resultList.add(calcEntity);
+            if(needLoad){
+                ProdPriceEntity [] array = IceRemoteUtil.calcMultiProdActPrize(actcode, skuPriceList);
+                for(ProdPriceEntity calcEntity : array){
+                    if(calcEntity != null){
+                        prizeMap.put(calcEntity.getSku(),calcEntity.getActprice());
                     }
 
+                    versionMap.put(calcEntity.getSku(), v);
+                    resultList.add(calcEntity);
                 }
+                return resultList;
+            }
+            for(ProdPriceEntity prodPriceEntity : skuPriceList){
+                ProdPriceEntity priceEntity = new ProdPriceEntity();
+                priceEntity.setSku(prodPriceEntity.getSku());
+                priceEntity.setActprice(prizeMap.get(prodPriceEntity.getSku()));
+                resultList.add(priceEntity);
 
             }
         }

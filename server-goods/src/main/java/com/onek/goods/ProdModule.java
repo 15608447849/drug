@@ -681,6 +681,8 @@ public class ProdModule {
                 prodVO.setActprod(false);
                 prodList.add(prodVO);
                 int rulestatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_RULESTATUS).toString());
+                prodVO.setRulestatus(rulestatus);
+//                System.out.println("685 line:"+prodVO.getRulestatus());
                 if(rulestatus > 0){
                     prodVO.setActprod(true);
                     List<Integer> bits = NumUtil.getNonZeroBits(rulestatus);
