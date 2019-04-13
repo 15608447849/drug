@@ -1,7 +1,4 @@
-package com.onek.discount.aaa.ccb.service;
-
-import com.onek.discount.aaa.ccb.entity.IDiscount;
-import com.onek.discount.aaa.ccb.entity.Ladoff;
+package com.onek.discount.calculate.service;
 
 public abstract class BaseDiscountContent implements IDiscountContent {
     protected int getStragy(long bRule) {

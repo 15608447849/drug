@@ -1,4 +1,4 @@
-package com.onek.discount.aaa.ccb.entity;
+package com.onek.discount.calculate.entity;
 
 public class Gift {
     private static interface TYPE {

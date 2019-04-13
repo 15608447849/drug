@@ -1,6 +1,6 @@
-package com.onek.discount.aaa.ccb.entity;
+package com.onek.discount.calculate.entity;
 
-import com.onek.discount.aaa.ccb.service.AccurateMath;
+import com.onek.discount.calculate.service.AccurateMath;
 import com.onek.discount.util.DiscountUtil;
 
 import java.util.ArrayList;

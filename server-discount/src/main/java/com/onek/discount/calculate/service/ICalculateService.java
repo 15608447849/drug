@@ -1,6 +1,6 @@
-package com.onek.discount.aaa.ccb.service;
+package com.onek.discount.calculate.service;
 
-import com.onek.discount.aaa.ccb.entity.IDiscount;
+import com.onek.discount.calculate.entity.IDiscount;
 
 import java.util.List;
 

@@ -535,6 +535,7 @@ public class CouponManageModule {
             case 1:
                 List<Object[]> params = new ArrayList<>();
                 params.add(new Object[]{actcode});
+                params.add(new Object[]{});
                 StringBuilder sb = new StringBuilder(DEL_LAD_OFF_SQL);
                 sb.append(" and offercode like '").append(brulecode).append("%'");
                 int [] rets = baseDao.updateTransNative(new String[]{DELETE_COUPON,sb.toString()},params);

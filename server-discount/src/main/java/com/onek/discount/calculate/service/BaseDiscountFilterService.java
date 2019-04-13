@@ -1,8 +1,8 @@
-package com.onek.discount.aaa.ccb.service;
+package com.onek.discount.calculate.service;
 
-import com.onek.discount.aaa.ccb.entity.IDiscount;
-import com.onek.discount.aaa.ccb.entity.IProduct;
-import com.onek.discount.aaa.ccb.filter.ActivitiesFilter;
+import com.onek.discount.calculate.entity.IDiscount;
+import com.onek.discount.calculate.entity.IProduct;
+import com.onek.discount.calculate.filter.ActivitiesFilter;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -69,5 +69,5 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         return String.valueOf(sku).substring(1, 7);
     }
 
-    protected abstract List<IDiscount> getCurrentDiscounts(long sku);
+    public abstract List<IDiscount> getCurrentDiscounts(long sku);
 }

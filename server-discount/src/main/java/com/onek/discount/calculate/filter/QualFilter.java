@@ -1,7 +1,7 @@
-package com.onek.discount.aaa.ccb.filter;
+package com.onek.discount.calculate.filter;
 
 
-import com.onek.discount.aaa.ccb.entity.IDiscount;
+import com.onek.discount.calculate.entity.IDiscount;
 
 import java.util.Iterator;
 import java.util.List;

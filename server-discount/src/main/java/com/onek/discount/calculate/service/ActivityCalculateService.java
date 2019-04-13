@@ -1,7 +1,7 @@
-package com.onek.discount.aaa.ccb.service;
+package com.onek.discount.calculate.service;
 
-import com.onek.discount.aaa.ccb.entity.Gift;
-import com.onek.discount.aaa.ccb.entity.Ladoff;
+import com.onek.discount.calculate.entity.Gift;
+import com.onek.discount.calculate.entity.Ladoff;
 import constant.DSMConst;
 import dao.BaseDAO;
 
