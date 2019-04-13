@@ -47,6 +47,28 @@ public class CouponListVO {
 
     private int actstock;
 
+    //有效天数
+    private int validday;
+
+    public int getValidday() {
+        return validday;
+    }
+
+    public void setValidday(int validday) {
+        this.validday = validday;
+    }
+
+    public int getValidflag() {
+        return validflag;
+    }
+
+    public void setValidflag(int validflag) {
+        this.validflag = validflag;
+    }
+
+    //生效标记 0 即日生效 、1 次日生效
+    private int validflag;
+
     //综合状态
 
     public int getActstock() {

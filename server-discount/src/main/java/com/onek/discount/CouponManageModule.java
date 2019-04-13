@@ -55,7 +55,7 @@ public class CouponManageModule {
 
     //修改活动优惠券
     private static final String UPDATE_ASSCOUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set "
-            + "glbno=?,coupdesc=?,brulecode=?,validday=?,validflag=?,actstock=?,reqflag=? where cstatus&1=0 "
+            + "glbno=?,coupdesc=?,brulecode=?,validday=?,validflag=?,actstock=?,reqflag=?,cstatus=? where cstatus&1=0 "
             + " and unqid=? ";
 
 
@@ -102,10 +102,10 @@ public class CouponManageModule {
 
 
     /**
-     * 查询优惠券详情
+     * 查询活动优惠券详情
      */
     private final String QUERY_ASSCOUPON_SQL = "select unqid,glbno,coupdesc," +
-            "cop.brulecode,validday,validflag,rulename,actstock,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
+            "cop.brulecode,validday,validflag,rulename,actstock,reqflag,cop.cstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
             "  {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.brulecode = ru.brulecode  where cop.cstatus&1=0 and unqid = ? ";
 
 
@@ -114,7 +114,7 @@ public class CouponManageModule {
      */
     private final String QUERY_COUPON_LIST_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
-            "cop.brulecode,rulename,cop.cstatus,actstock from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
+            "cop.brulecode,rulename,cop.cstatus,actstock,validday,validflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
             " {{?"+ DSMConst.TD_PROM_RULE +"}}  ru on cop.brulecode = ru.brulecode " +
             " where cop.cstatus & ? > 0 and cop.cstatus&1=0 ";
 
@@ -123,7 +123,7 @@ public class CouponManageModule {
      * 查询活动优惠券列表
      */
     private final String QUERY_ASSCOUPON_LIST_SQL = "select unqid,glbno,coupdesc," +
-            "cop.brulecode,rulename,cop.cstatus,actstock,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
+            "cop.brulecode,rulename,validday,validflag,cop.cstatus,actstock,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
             " {{?"+ DSMConst.TD_PROM_RULE +"}}  ru on cop.brulecode = ru.brulecode " +
             " where cop.cstatus & 128 > 0 and cop.cstatus&1=0 ";
 
@@ -290,20 +290,22 @@ public class CouponManageModule {
         String json = appContext.param.json;
         CouponAssVO couponAssVO = GsonUtils.jsonToJavaBean(json, CouponAssVO.class);
         long unqid = GenIdUtil.getUnqId();
-        List<Object[]> parmList = new ArrayList<>();
-
-        parmList.add(new Object[]{
-                unqid,couponAssVO.getGlbno(),couponAssVO.getCoupdesc(),
-                couponAssVO.getRuleno(),couponAssVO.getValidday(),couponAssVO.getValidflag(),
-                128,couponAssVO.getActstock(),couponAssVO.getReqflag()});
-        parmList.add(new Object[]{GenIdUtil.getUnqId(),unqid,0,0});
-
-        int[] coupRet = baseDao.updateTransNative(new String[]{INSERT_ASSCOUPON_SQL, INSERT_ASS_DRUG_SQL},
-                parmList);
-        if (ModelUtil.updateTransEmpty(coupRet)) {
-            return result.fail("新增失败");
+        int cstatus = couponAssVO.getCstatus();
+        if(cstatus == 0){
+            cstatus = 128;
+        }else{
+            cstatus = 128 | 32;
         }
-        return result.success("新增成功");
+
+
+        int ret = baseDao.updateNative(INSERT_ASSCOUPON_SQL,
+                 new Object[]{unqid,couponAssVO.getGlbno(),couponAssVO.getCoupdesc(),
+                        couponAssVO.getRuleno(),couponAssVO.getValidday(),couponAssVO.getValidflag(),
+                         cstatus,couponAssVO.getActstock(),couponAssVO.getReqflag()});
+        if (ret > 0) {
+            return result.success("新增成功");
+        }
+        return result.fail("新增失败");
     }
 
 
@@ -334,8 +336,8 @@ public class CouponManageModule {
 
         baseDao.convToEntity(coupResult, couponAssVOS, CouponAssVO.class,
                 new String[]{"coupno", "glbno", "coupdesc",
-                        "brulecode", "validday", "validflag", "rulename", "actstock",
-                        "reqflag"});
+                        "ruleno", "validday", "validflag", "rulename", "actstock",
+                        "reqflag","cstatus"});
 
 
         return  result.success(couponAssVOS[0]);
@@ -563,7 +565,50 @@ public class CouponManageModule {
         baseDao.convToEntity(queryResult, couponListVOS, CouponListVO.class,
                 new String[]{"coupno","coupname","glbno","qlfno","qlfval","desc",
                         "periodtype","periodday",
-                        "startdate","enddate","ruleno","rulename","cstatus","actstock"});
+                        "startdate","enddate","ruleno","rulename","cstatus","actstock","validday","validflag"});
+
+        return result.setQuery(couponListVOS, pageHolder);
+    }
+
+
+    /**
+     * 查询活动优惠券列表
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result queryAssCouponList(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int pageSize = jsonObject.get("pageSize").getAsInt();
+        int pageIndex = jsonObject.get("pageNo").getAsInt();
+        Page page = new Page();
+        page.pageSize = pageSize;
+        page.pageIndex = pageIndex;
+        PageHolder pageHolder = new PageHolder(page);
+        Result result = new Result();
+
+        int rulecode = jsonObject.get("rulecode").getAsInt();
+
+
+
+        StringBuilder sqlBuilder = new StringBuilder(QUERY_ASSCOUPON_LIST_SQL);
+
+        if(rulecode != 0){
+            sqlBuilder.append(" and rulecode = ");
+            sqlBuilder.append(rulecode);
+        }
+
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
+        CouponAssVO[] couponListVOS = new CouponAssVO[queryResult.size()];
+        if (queryResult == null || queryResult.isEmpty()) {
+            return result.setQuery(couponListVOS, pageHolder);
+        }
+
+        baseDao.convToEntity(queryResult, couponListVOS, CouponAssVO.class,
+                new String[]{"coupno","glbno","coupdesc",
+                        "ruleno","rulename","validday","validflag","cstatus","actstock","reqflag"});
 
         return result.setQuery(couponListVOS, pageHolder);
     }
@@ -626,7 +671,7 @@ public class CouponManageModule {
         //新增活动
         int ret = baseDao.updateNative(UPDATE_ASSCOUPON_SQL,new Object[]{
                 couponVO.getGlbno(),couponVO.getCoupdesc(),couponVO.getRuleno(),couponVO.getValidday(),
-                couponVO.getValidflag(),couponVO.getActstock(),couponVO.getReqflag(),actCode});
+                couponVO.getValidflag(),couponVO.getActstock(),couponVO.getReqflag(),couponVO.getCstatus(),actCode});
 
         if (ret > 0) {
             return result.success("修改成功");
@@ -671,6 +716,36 @@ public class CouponManageModule {
                 ret = baseDao.updateNative(CLOSE_COUPON,actcode);
         }
 
+        return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
+
+    }
+
+
+
+    /**
+     * 更新活动优惠券状态
+     * @param appContext 0 启用  32 停用  1 删除
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result updateAssCouponStatus(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+        long actcode = jsonObject.get("actcode").getAsLong();
+        int cstatus = jsonObject.get("cstatus").getAsInt();
+        int ret = 0;
+        switch (cstatus){
+            case 0:
+                ret = baseDao.updateNative(OPEN_COUPON,actcode);
+                break;
+            case 1:
+                ret = baseDao.updateNative(DELETE_COUPON,actcode);
+                break;
+            case 32:
+                ret = baseDao.updateNative(CLOSE_COUPON,actcode);
+        }
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
 
     }

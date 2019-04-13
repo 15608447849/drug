@@ -5,7 +5,7 @@ import redis.util.RedisUtil;
 
 import java.util.List;
 
-public class ProdCurrentObserver implements ProdObserver {
+public class ProdCurrentActPriceObserver implements ProdObserver {
 
     @Override
     public void update(List<String> list) {
