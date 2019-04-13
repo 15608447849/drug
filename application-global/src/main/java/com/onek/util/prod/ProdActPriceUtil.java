@@ -18,7 +18,7 @@ public class ProdActPriceUtil {
     private static HashMap<Long, Double> prizeMap = new HashMap<>();
 
     private static transient HashMap<Long, Long> versionIntervalMap = new HashMap<>();
-    private static HashMap<Long, Double[]> prizeIntervalMap = new HashMap<>();
+    private static HashMap<Long,  ProdPriceEntity> prizeIntervalMap = new HashMap<>();
 
     public static double getActPrizeBySku(long actcode,long sku,double vatp){
         RedisStringProvide rs = RedisUtil.getStringProvide();
@@ -70,7 +70,7 @@ public class ProdActPriceUtil {
     }
 
 
-    public static Double [] getActIntervalPrizeBySku(long sku,double vatp){
+    public static ProdPriceEntity getActIntervalPrizeBySku(long sku,double vatp){
         RedisStringProvide rs = RedisUtil.getStringProvide();
         long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
 
@@ -78,9 +78,11 @@ public class ProdActPriceUtil {
         if(v > subVersion || subVersion == 0){
             ProdPriceEntity entity = IceRemoteUtil.calcSingleProdActIntervalPrize(sku, vatp);
             if(entity != null){
-                prizeIntervalMap.put(sku, new Double[]{entity.getMinactprize(), entity.getMaxactprize()});
+                prizeIntervalMap.put(sku, entity);
             }else{
-                prizeIntervalMap.put(sku, new Double[]{vatp, vatp});
+                entity.setMinactprize(vatp);
+                entity.setMaxactprize(vatp);
+                prizeIntervalMap.put(sku, entity);
             }
             versionIntervalMap.put(sku, v);
         }

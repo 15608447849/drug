@@ -3,7 +3,7 @@ package com.onek.discount.calculate.entity;
 import java.math.BigDecimal;
 import java.util.List;
 
-public interface IDiscount {
+public interface  IDiscount {
     long getActNo();
     int getActtype();
     long getActcycle();
@@ -23,6 +23,9 @@ public interface IDiscount {
     boolean getFreeShipping();
     void setExCoupon(boolean exCoupon);
     boolean setExCoupon();
+
+    String getStartTime();
+    String getEndTime();
 
     default void updateAllPrices() {
         for (IProduct product: getProductList()) {

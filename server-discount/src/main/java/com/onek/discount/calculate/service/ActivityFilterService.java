@@ -13,7 +13,7 @@ import java.util.List;
 
 public class ActivityFilterService extends BaseDiscountFilterService {
     private static final String GET_ACTIVITIES_BY_SKU =
-            " SELECT act.*, ass.limitnum "
+            " SELECT act.*, ass.limitnum, time.sdate, time.edate "
                     + " FROM ({{?" + DSMConst.TD_PROM_ASSDRUG + "}} ass "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_ACT + "}} act"
                     + " ON ass.cstatus&1 = 0 "
@@ -48,7 +48,12 @@ public class ActivityFilterService extends BaseDiscountFilterService {
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, activities, Activity.class);
 
-        return new ArrayList<>(Arrays.asList(activities));
+        List<IDiscount> returnResult =  new ArrayList<>(Arrays.asList(activities));
+
+        // 不参与活动的商品不加入。
+        doFilter(returnResult);
+
+        return returnResult;
     }
 
 }

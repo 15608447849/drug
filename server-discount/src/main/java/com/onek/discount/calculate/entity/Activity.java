@@ -23,8 +23,10 @@ public class Activity extends AccurateMath implements IDiscount {
     private long brulecode;//活动规则码
     private int cstatus;//综合状态码
     private int limitnum; // 限购量
+    private String sTime; // 起始时间
+    private String eTime; // 结束时间
 
-    private double discount;
+    private double discounted;
     private List<IProduct> productList;
     private boolean freeShipping;
 
@@ -87,7 +89,7 @@ public class Activity extends AccurateMath implements IDiscount {
             return;
         }
 
-        this.discount = add(this.discount, discount);
+        this.discounted = add(this.discounted, discount);
 
         double[] shared = DiscountUtil.shareDiscount(getEachCurrent(), discount);
 
@@ -100,12 +102,12 @@ public class Activity extends AccurateMath implements IDiscount {
 
     @Override
     public void setDiscounted(double discount) {
-        this.discount = discount;
+        this.discounted = discount;
     }
 
     @Override
     public double getDiscounted() {
-        return this.discount;
+        return this.discounted;
     }
 
     public void addProduct(IProduct product) {
@@ -142,6 +144,31 @@ public class Activity extends AccurateMath implements IDiscount {
         return this.excdiscount == 1;
     }
 
+    @Override
+    public String getStartTime() {
+        return this.sTime;
+    }
+
+    @Override
+    public String getEndTime() {
+        return this.eTime;
+    }
+
+    public String getsTime() {
+        return sTime;
+    }
+
+    public void setsTime(String sTime) {
+        this.sTime = sTime;
+    }
+
+    public String geteTime() {
+        return eTime;
+    }
+
+    public void seteTime(String eTime) {
+        this.eTime = eTime;
+    }
 
     @Override
     public boolean equals(Object o) {
