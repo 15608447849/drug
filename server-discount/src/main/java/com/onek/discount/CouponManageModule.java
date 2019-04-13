@@ -622,9 +622,9 @@ public class CouponManageModule {
     private List<RulesVO> getRules(int bRuleCode) {
         int code = Integer.parseInt((bRuleCode + "").substring(0,3));
         String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
-                + " and brulecode like '" + code + "%' and  NOT EXISTS(select brulecode from {{?"
-                + DSMConst.TD_PROM_COUPON +"}} b where cstatus&1=0 and a.brulecode = b.brulecode and brulecode like '"
-                + code +"%' and enddate>CURRENT_DATE and a.brulecode<>"+bRuleCode+")";
+                + " and brulecode REGEXP '^2' and  NOT EXISTS(select brulecode from {{?"
+                + DSMConst.TD_PROM_COUPON +"}} b where cstatus&1=0 and cstatus&64>0 and a.brulecode = b.brulecode and brulecode "
+                + " REGEXP '^2' and enddate>CURRENT_DATE and a.brulecode<>"+bRuleCode+")";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
         baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
