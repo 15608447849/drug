@@ -4,7 +4,9 @@ import com.onek.discount.calculate.service.AccurateMath;
 import com.onek.discount.util.DiscountUtil;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Activity extends AccurateMath implements IDiscount {
     private int oid;
@@ -29,9 +31,14 @@ public class Activity extends AccurateMath implements IDiscount {
     private double discounted;
     private List<IProduct> productList;
     private boolean freeShipping;
+    private Map<Long, Integer> SKU_LIMITS = new HashMap<>();
 
     public Activity() {
         this.productList = new ArrayList<>();
+    }
+
+    public int getLimitnum() {
+        return this.limitnum;
     }
 
     @Override
@@ -120,11 +127,6 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     @Override
-    public int getLimits() {
-        return this.limitnum;
-    }
-
-    @Override
     public void setFreeShipping(boolean free) {
         this.freeShipping = free;
     }
@@ -142,6 +144,18 @@ public class Activity extends AccurateMath implements IDiscount {
     @Override
     public boolean setExCoupon() {
         return this.excdiscount == 1;
+    }
+
+    @Override
+    public void setLimits(long sku, int limits) {
+        SKU_LIMITS.put(sku, limits);
+    }
+
+    @Override
+    public int getLimits(long sku) {
+        Integer result = SKU_LIMITS.get(sku);
+
+        return result == null ? 0 : result;
     }
 
     @Override

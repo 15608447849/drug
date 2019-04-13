@@ -60,6 +60,7 @@ public class DiscountModule {
                 new Date(), "yyyy-dd-MM HH:mm:ss"));
         jsonObject.put("startTime", currDiscount.getStartTime());
         jsonObject.put("endTime", currDiscount.getEndTime());
+        jsonObject.put("limits", currDiscount.getLimits(sku));
         if (currDiscount.getBRule() == 1113) {
             // 秒杀
             jsonObject.put("killPrice", ladoffs[0].getOfferValue());

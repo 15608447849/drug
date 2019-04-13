@@ -18,11 +18,13 @@ public interface IDiscount {
     double getDiscounted();
     void addProduct(IProduct product);
     List<IProduct> getProductList();
-    int getLimits();
     void setFreeShipping(boolean free);
     boolean getFreeShipping();
     void setExCoupon(boolean exCoupon);
     boolean setExCoupon();
+
+    void setLimits(long sku, int limits);
+    int getLimits(long sku);
 
     String getStartTime();
     String getEndTime();
