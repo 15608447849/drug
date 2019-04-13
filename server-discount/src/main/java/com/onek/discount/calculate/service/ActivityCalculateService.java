@@ -42,7 +42,7 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
 
 
     @Override
-    protected Ladoff[] getLadoffs(long brule) {
+    public Ladoff[] getLadoffs(long brule) {
         List<Object[]> ladResult =
                 BaseDAO.getBaseDAO().queryNative(GET_LADOFF, "^" + brule + "[0-9]{3}$");
 
