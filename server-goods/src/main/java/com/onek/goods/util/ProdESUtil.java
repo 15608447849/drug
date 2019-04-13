@@ -419,7 +419,7 @@ public class ProdESUtil {
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdWithHotAndSpu(Set<Integer> statusSet, int spu,int pagenum, int pagesize){
+    public static SearchResponse searchProdWithHotAndSpu(Set<Integer> statusSet, long spu,int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -529,6 +529,41 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
+                    .execute().actionGet();
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        return response;
+    }
+
+    /**
+     * 根据sku列表检索商品
+     *
+     * @param skuList
+     * @param  keyword
+     * @return
+     */
+    public static SearchResponse searchProdBySpuListAndKeyword(List<Long> skuList,String keyword){
+        SearchResponse response = null;
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            if(skuList != null && skuList.size() > 0){
+                Object [] spuArray = new Long[skuList.size()];
+                spuArray = skuList.toArray(spuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, spuArray);
+                boolQuery.must(builder);
+            }
+
+            if(!StringUtils.isEmpty(keyword)){
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+                boolQuery.must(matchQuery);
+            }
+
+            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+            response = client.prepareSearch(ESConstant.PROD_INDEX)
+                    .setQuery(boolQuery)
                     .execute().actionGet();
 
         }catch(Exception e) {
