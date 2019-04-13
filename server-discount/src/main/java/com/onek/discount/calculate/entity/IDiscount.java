@@ -24,6 +24,9 @@ public interface IDiscount {
     void setExCoupon(boolean exCoupon);
     boolean setExCoupon();
 
+    String getStartTime();
+    String getEndTime();
+
     default void updateAllPrices() {
         for (IProduct product: getProductList()) {
             product.updateCurrentPrice();

@@ -31,9 +31,6 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         for (IProduct product : products) {
             temp = getCurrentDiscounts(product.getSKU());
 
-            // 不参与活动的商品不加入。
-            doFilter(temp);
-
             for (IDiscount activity : temp) {
                 index = result.indexOf(activity);
 
