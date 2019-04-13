@@ -16,6 +16,7 @@ public interface IDiscount {
 
     int getPriority();
     void addDiscounted(double discount);
+    void setDiscounted(double discount);
     double getDiscounted();
     void addProduct(IProduct product);
     List<IProduct> getProductList();
