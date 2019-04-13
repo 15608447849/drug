@@ -15,9 +15,7 @@ import com.onek.entitys.Result;
 import com.onek.util.prod.ProdPriceEntity;
 import util.GsonUtils;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 public class DiscountCalcModule {
 
@@ -121,7 +119,11 @@ public class DiscountCalcModule {
         double maxprize = 0D;
         List<IDiscount> discounts = new ActivityFilterService(null).getCurrentActivities(products);
         new ActivityCalculateService().calculate(discounts);
+        List<Long> actList = new ArrayList<>();
         for(IDiscount discount : discounts){
+            if(discount.getPriority() !=0){
+                actList.add(discount.getActNo());
+            }
             List<IProduct> discountProduct = discount.getProductList();
             for(IProduct product : discountProduct){
                 if(sku == product.getSKU()){
@@ -136,12 +138,17 @@ public class DiscountCalcModule {
             }
 
         }
+
         ProdPriceEntity entity = new ProdPriceEntity();
         entity.setSku(sku);
         entity.setVatp(vatp);
         entity.setActprice(actprize);
         entity.setMinactprize(minprize);
         entity.setMaxactprize(maxprize);
+        if(actList.size() == 1){
+            entity.setActcode(actList.get(0));
+        }
+
         return new Result().success(GsonUtils.javaBeanToJson(entity));
     }
 }
