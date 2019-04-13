@@ -1,6 +1,4 @@
-package com.onek.discount.aaa.ccb.entity;
-
-import util.MathUtil;
+package com.onek.discount.calculate.entity;
 
 import java.math.BigDecimal;
 import java.util.List;

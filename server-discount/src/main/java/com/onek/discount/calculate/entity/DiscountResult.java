@@ -1,4 +1,4 @@
-package com.onek.discount.aaa.ccb.entity;
+package com.onek.discount.calculate.entity;
 
 import java.util.List;
 
