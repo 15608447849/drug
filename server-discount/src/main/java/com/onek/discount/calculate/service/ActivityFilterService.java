@@ -50,6 +50,12 @@ public class ActivityFilterService extends BaseDiscountFilterService {
 
         List<IDiscount> returnResult =  new ArrayList<>(Arrays.asList(activities));
 
+        Activity a;
+        for (IDiscount discount : returnResult) {
+            a = (Activity) discount;
+            discount.setLimits(sku, a.getLimitnum());
+        }
+
         // 不参与活动的商品不加入。
         doFilter(returnResult);
 

@@ -41,10 +41,21 @@ public class CouponManageModule {
             + "values(?,?,?,?,?,"
             + "?,?,?,?,?,?,?,?,?,?)";
 
+    //新增活动优惠券
+    private final String INSERT_ASSCOUPON_SQL = "insert into {{?" + DSMConst.TD_PROM_COUPON + "}} "
+            + "(unqid,glbno,coupdesc,brulecode,validday,validflag,cstatus,actstock,reqflag) "
+            + " values(?,?,?,?,?,?,?,?,?)";
+
     //修改优惠券
     private static final String UPDATE_COUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set coupname=?,"
             + "glbno=?,qlfno=?,qlfval=?,coupdesc=?,periodtype=?,"
             + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=?,actstock=? where cstatus&1=0 "
+            + " and unqid=? ";
+
+
+    //修改活动优惠券
+    private static final String UPDATE_ASSCOUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set "
+            + "glbno=?,coupdesc=?,brulecode=?,validday=?,validflag=?,actstock=?,reqflag=? where cstatus&1=0 "
             + " and unqid=? ";
 
 
@@ -57,10 +68,11 @@ public class CouponManageModule {
     private static final String DEL_TIME_SQL = "update {{?" + DSMConst.TD_PROM_TIME + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 and actcode=?";
 
+
     //新增活动商品
     private final String INSERT_ASS_DRUG_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
-            + "(unqid,actcode,gcode,menucode) "
-            + " values(?,?,?,?)";
+            + "(unqid,actcode,gcode,menucode,actstock,limitnum) "
+            + " values(?,?,?,?,?,?)";
 
     //删除商品
     private static final String DEL_ASS_DRUG_SQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
@@ -90,6 +102,14 @@ public class CouponManageModule {
 
 
     /**
+     * 查询优惠券详情
+     */
+    private final String QUERY_ASSCOUPON_SQL = "select unqid,glbno,coupdesc," +
+            "cop.brulecode,validday,validflag,rulename,actstock,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
+            "  {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.brulecode = ru.brulecode  where cop.cstatus&1=0 and unqid = ? ";
+
+
+    /**
      * 查询优惠券列表
      */
     private final String QUERY_COUPON_LIST_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
@@ -97,6 +117,15 @@ public class CouponManageModule {
             "cop.brulecode,rulename,cop.cstatus,actstock from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
             " {{?"+ DSMConst.TD_PROM_RULE +"}}  ru on cop.brulecode = ru.brulecode " +
             " where cop.cstatus & ? > 0 and cop.cstatus&1=0 ";
+
+
+    /**
+     * 查询活动优惠券列表
+     */
+    private final String QUERY_ASSCOUPON_LIST_SQL = "select unqid,glbno,coupdesc," +
+            "cop.brulecode,rulename,cop.cstatus,actstock,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join" +
+            " {{?"+ DSMConst.TD_PROM_RULE +"}}  ru on cop.brulecode = ru.brulecode " +
+            " where cop.cstatus & 128 > 0 and cop.cstatus&1=0 ";
 
 
 
@@ -243,6 +272,77 @@ public class CouponManageModule {
         }
         return result.success("新增成功");
     }
+
+
+
+
+    /**
+     * @description 活动优惠券新增
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @time  2019/4/2 14:34
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result insertAssCoupon(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        CouponAssVO couponAssVO = GsonUtils.jsonToJavaBean(json, CouponAssVO.class);
+        long unqid = GenIdUtil.getUnqId();
+        List<Object[]> parmList = new ArrayList<>();
+
+        parmList.add(new Object[]{
+                unqid,couponAssVO.getGlbno(),couponAssVO.getCoupdesc(),
+                couponAssVO.getRuleno(),couponAssVO.getValidday(),couponAssVO.getValidflag(),
+                128,couponAssVO.getActstock(),couponAssVO.getReqflag()});
+        parmList.add(new Object[]{GenIdUtil.getUnqId(),unqid,0,0});
+
+        int[] coupRet = baseDao.updateTransNative(new String[]{INSERT_ASSCOUPON_SQL, INSERT_ASS_DRUG_SQL},
+                parmList);
+        if (ModelUtil.updateTransEmpty(coupRet)) {
+            return result.fail("新增失败");
+        }
+        return result.success("新增成功");
+    }
+
+
+    /**
+     * @description 查询活动优惠券详情
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @time  2019/4/2 14:34
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result queryAssCoupon(AppContext appContext) {
+
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long actcode = jsonObject.get("actcode").getAsLong();
+
+        List<Object[]> coupResult = baseDao.queryNative(QUERY_ASSCOUPON_SQL,
+                new Object[]{actcode});
+
+        CouponAssVO[] couponAssVOS = new CouponAssVO[coupResult.size()];
+        if(coupResult == null || coupResult.isEmpty()){
+            return  result.success(couponAssVOS);
+        }
+
+        baseDao.convToEntity(coupResult, couponAssVOS, CouponAssVO.class,
+                new String[]{"coupno", "glbno", "coupdesc",
+                        "brulecode", "validday", "validflag", "rulename", "actstock",
+                        "reqflag"});
+
+
+        return  result.success(couponAssVOS[0]);
+    }
+
+
+
 
 
     /**
@@ -506,9 +606,33 @@ public class CouponManageModule {
             }
 
         } else {
-            result.fail("修改失败");
+            return result.fail("修改失败");
         }
         return result.success("修改成功");
+    }
+
+
+    /**
+     * 活动优惠券修改
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result updateAssCoupon(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        CouponAssVO couponVO = GsonUtils.jsonToJavaBean(json, CouponAssVO.class);
+        long actCode = couponVO.getCoupno();
+        //新增活动
+        int ret = baseDao.updateNative(UPDATE_ASSCOUPON_SQL,new Object[]{
+                couponVO.getGlbno(),couponVO.getCoupdesc(),couponVO.getRuleno(),couponVO.getValidday(),
+                couponVO.getValidflag(),couponVO.getActstock(),couponVO.getReqflag(),actCode});
+
+        if (ret > 0) {
+            return result.success("修改成功");
+        }
+        return result.fail("修改失败");
+
     }
 
 
