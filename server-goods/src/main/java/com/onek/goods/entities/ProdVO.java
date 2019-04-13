@@ -39,6 +39,9 @@ public class ProdVO {
     private String imageUrl;
 
     // 活动消息
+    private boolean actprod;
+    private boolean mutiact;
+    private int rulestatus;
     private String sdate;
     private String edate;
     private int startnum;
@@ -46,6 +49,8 @@ public class ProdVO {
     private int actlimit;
     private double actprize;
     private double surplusstock;
+    private double minprize;
+    private double maxprize;
 
     public long getSpu() {
         return spu;
@@ -317,5 +322,45 @@ public class ProdVO {
 
     public void setSurplusstock(double surplusstock) {
         this.surplusstock = surplusstock;
+    }
+
+    public int getRulestatus() {
+        return rulestatus;
+    }
+
+    public void setRulestatus(int rulestatus) {
+        this.rulestatus = rulestatus;
+    }
+
+    public boolean isActprod() {
+        return actprod;
+    }
+
+    public void setActprod(boolean actprod) {
+        this.actprod = actprod;
+    }
+
+    public boolean isMutiact() {
+        return mutiact;
+    }
+
+    public void setMutiact(boolean mutiact) {
+        this.mutiact = mutiact;
+    }
+
+    public double getMinprize() {
+        return minprize;
+    }
+
+    public void setMinprize(double minprize) {
+        this.minprize = minprize;
+    }
+
+    public double getMaxprize() {
+        return maxprize;
+    }
+
+    public void setMaxprize(double maxprize) {
+        this.maxprize = maxprize;
     }
 }

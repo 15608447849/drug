@@ -9,6 +9,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
+import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.MallFloorVO;
@@ -17,8 +18,11 @@ import com.onek.goods.service.MallFloorImpl;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.fs.FileServerUtils;
+import com.onek.util.prod.ProdActPriceUtil;
+import com.onek.util.prod.ProdPriceEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
+import global.IceRemoteUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -30,6 +34,8 @@ import util.StringUtils;
 import util.TimeUtils;
 
 import java.util.*;
+
+import static global.IceRemoteUtil.calcMultiProdActPrize;
 
 
 @SuppressWarnings("unchecked")
@@ -247,17 +253,23 @@ public class ProdModule {
             }
 
             List<Object[]> ladoffList =BASE_DAO.queryNative(TEAM_BUY_LADOFF_SQL, new Object[]{});
+            int minoff = 100;
             JSONArray ladoffArray = new JSONArray();
             if(ladoffList != null && ladoffList.size() > 0){
+                int i = 0;
                 for(Object[] objects : ladoffList){
                     int ladamt = Integer.parseInt(objects[0].toString());
                     int ladnum = Integer.parseInt(objects[1].toString());
                     int offer = Integer.parseInt(objects[2].toString()) / 100;
+                    if(i == 0){
+                        minoff = offer;
+                    }
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("ladamt", ladamt);
                     jsonObject.put("ladnum", ladnum);
                     jsonObject.put("offer", offer);
                     ladoffArray.add(jsonObject);
+                    i++;
                 }
             }
 
@@ -272,7 +284,7 @@ public class ProdModule {
                     prodVO.setStartnum(0);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
-
+                    prodVO.setActprize(prodVO.getVatp() * minoff / 100);
                 }
             }
             GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(actCodeList, timeMap).invoke();
@@ -340,12 +352,28 @@ public class ProdModule {
             if(response != null && response.getHits().totalHits > 0){
                 assembleData(response, prodVOList);
             }
+            List<ProdPriceEntity> priceEntities = new ArrayList<>();
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(0);
                     prodVO.setStartnum(0);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
+                    ProdPriceEntity priceEntity = new ProdPriceEntity();
+                    priceEntity.setSku(prodVO.getSku());
+                    priceEntity.setVatp(prodVO.getVatp());
+                    priceEntities.add(priceEntity);
+                }
+            }
+
+            if(priceEntities != null && priceEntities.size() > 0){
+                ProdPriceEntity[] entities = IceRemoteUtil.calcMultiProdActPrize(actCodeList.get(0), priceEntities);
+                for(ProdVO prodVO : prodVOList){
+                    for(ProdPriceEntity calcEntity: entities){
+                        if(prodVO.getSku() == calcEntity.getSku()){
+                            prodVO.setActprize(calcEntity.getActprice());
+                        }
+                    }
                 }
             }
 
@@ -421,12 +449,28 @@ public class ProdModule {
             if(response != null && response.getHits().totalHits > 0){
                 assembleData(response, prodVOList);
             }
+            List<ProdPriceEntity> priceEntities = new ArrayList<>();
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(0);
                     prodVO.setStartnum(0);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
+                    ProdPriceEntity priceEntity = new ProdPriceEntity();
+                    priceEntity.setSku(prodVO.getSku());
+                    priceEntity.setVatp(prodVO.getVatp());
+                    priceEntities.add(priceEntity);
+                }
+            }
+
+            if(priceEntities != null && priceEntities.size() > 0){
+                ProdPriceEntity[] entities = IceRemoteUtil.calcMultiProdActPrize(actCodeList.get(0), priceEntities);
+                for(ProdVO prodVO : prodVOList){
+                    for(ProdPriceEntity calcEntity: entities){
+                        if(prodVO.getSku() == calcEntity.getSku()){
+                            prodVO.setActprize(calcEntity.getActprice());
+                        }
+                    }
                 }
             }
         }
@@ -485,6 +529,28 @@ public class ProdModule {
             array.add(time);
         }
         timeMap.put(actcode, times);
+
+        List<Object[]> ladoffList =BASE_DAO.queryNative(TEAM_BUY_LADOFF_SQL, new Object[]{});
+        int minoff = 100;
+        JSONArray ladoffArray = new JSONArray();
+        if(ladoffList != null && ladoffList.size() > 0){
+            int i = 0;
+            for(Object[] objects : ladoffList){
+                int ladamt = Integer.parseInt(objects[0].toString());
+                int ladnum = Integer.parseInt(objects[1].toString());
+                int offer = Integer.parseInt(objects[2].toString()) / 100;
+                if(i == 0){
+                    minoff = offer;
+                }
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("ladamt", ladamt);
+                jsonObject.put("ladnum", ladnum);
+                jsonObject.put("offer", offer);
+                ladoffArray.add(jsonObject);
+                i++;
+            }
+        }
+
         List<Long> actCodeList = new ArrayList<>();
         actCodeList.add(actcode);
         GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(actCodeList, timeMap).invoke();
@@ -500,9 +566,10 @@ public class ProdModule {
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(0);
-                    prodVO.setStartnum(0);
+                    prodVO.setStartnum(1);
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
+                    prodVO.setActprize(prodVO.getVatp() * minoff / 100);
                 }
             }
         }
@@ -610,8 +677,22 @@ public class ProdModule {
                 ProdVO prodVO = new ProdVO();
                 HashMap detail = (HashMap) sourceMap.get("detail");
                 BeanMapUtils.mapToBean(detail, prodVO);
-
+                prodVO.setMutiact(false);
+                prodVO.setActprod(false);
                 prodList.add(prodVO);
+                int rulestatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_RULESTATUS).toString());
+                if(rulestatus > 0){
+                    prodVO.setActprod(true);
+                    List<Integer> bits = NumUtil.getNonZeroBits(rulestatus);
+                    if(bits.size() > 1){
+                        prodVO.setMutiact(true);
+                    }
+                    Double[] dd = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
+                    if(dd != null){
+                        prodVO.setMinprize(dd[0]);
+                        prodVO.setMaxprize(dd[1]);
+                    }
+                }
                 try{
                     DictStore.translate(prodVO);
                 }catch(Exception e){
