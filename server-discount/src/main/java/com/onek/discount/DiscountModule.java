@@ -11,6 +11,7 @@ import com.onek.discount.calculate.service.ActivityFilterService;
 import com.onek.entitys.Result;
 import org.apache.http.client.utils.DateUtils;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.util.Date;
 import java.util.List;
@@ -56,8 +57,7 @@ public class DiscountModule {
 
         JSONObject jsonObject = new JSONObject();
 
-        jsonObject.put("currentDate", DateUtils.formatDate(
-                new Date(), "yyyy-dd-MM HH:mm:ss"));
+        jsonObject.put("currentDate", TimeUtils.date_yMd_Hms_2String(new Date()));
         jsonObject.put("startTime", currDiscount.getStartTime());
         jsonObject.put("endTime", currDiscount.getEndTime());
         jsonObject.put("limits", currDiscount.getLimits(sku));
