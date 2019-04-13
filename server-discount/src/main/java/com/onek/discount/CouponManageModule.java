@@ -55,8 +55,7 @@ public class CouponManageModule {
 
     //修改活动优惠券
     private static final String UPDATE_ASSCOUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set "
-            + "glbno=?,coupdesc=?,brulecode=?,validday=?,validflag=?,actstock=?,reqflag=?,cstatus=? where cstatus&1=0 "
-            + " and unqid=? ";
+            + "glbno=?,coupdesc=?,brulecode=?,validday=?,validflag=?,actstock=?,reqflag=? ";
 
 
     //新增场次
@@ -668,10 +667,22 @@ public class CouponManageModule {
         String json = appContext.param.json;
         CouponAssVO couponVO = GsonUtils.jsonToJavaBean(json, CouponAssVO.class);
         long actCode = couponVO.getCoupno();
+
+        StringBuilder sb = new StringBuilder(UPDATE_ASSCOUPON_SQL);
+        int cstatus = couponVO.getCstatus();
+
+        if(cstatus == 0){
+            sb.append(",cstatus = cstatus & ").append(~CSTATUS.CLOSE);
+        }else{
+            sb.append(",cstatus = cstatus | ").append(CSTATUS.CLOSE);
+        }
+        sb.append(" where cstatus&1=0 and unqid=? ");
+
+
         //新增活动
-        int ret = baseDao.updateNative(UPDATE_ASSCOUPON_SQL,new Object[]{
+        int ret = baseDao.updateNative(sb.toString(),new Object[]{
                 couponVO.getGlbno(),couponVO.getCoupdesc(),couponVO.getRuleno(),couponVO.getValidday(),
-                couponVO.getValidflag(),couponVO.getActstock(),couponVO.getReqflag(),couponVO.getCstatus(),actCode});
+                couponVO.getValidflag(),couponVO.getActstock(),couponVO.getReqflag(),actCode});
 
         if (ret > 0) {
             return result.success("修改成功");
@@ -894,7 +905,7 @@ public class CouponManageModule {
                 couponVO.getCompid(),0});
         if(ret > 0){
             int oret = 0;
-        //    int oret = IceRemoteUtil.collectCoupons(couponVO.getCompid(),json);
+            //int oret = IceRemoteUtil.collectCoupons(couponVO.getCompid(),json);
             if(oret > 0){
                 baseDao.updateNative(UPDATE_COUPON_STOCK,
                         new Object[]{couponVO.getCoupno()});
