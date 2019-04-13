@@ -34,7 +34,7 @@ public class ActivityFilterService extends BaseDiscountFilterService {
         super(discountFilters);
     }
 
-    protected List<IDiscount> getCurrentDiscounts(long sku) {
+    public List<IDiscount> getCurrentDiscounts(long sku) {
         String pclass = getProductCode(sku);
 
         if (StringUtils.isEmpty(pclass)) {
