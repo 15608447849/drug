@@ -1,14 +1,18 @@
 package global;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
 import com.onek.prop.IceMasterInfoProperties;
 import com.onek.util.dict.DictEntity;
 import com.onek.util.prod.ProdEntity;
+import com.onek.util.prod.ProdPriceEntity;
 import util.GsonUtils;
 import util.StringUtils;
 
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @Author: leeping
@@ -32,7 +36,24 @@ public class IceRemoteUtil {
                     .settingReq("","CommonModule","getProduceName")
                     .settingParam(new String[]{pclass})
                     .executeSync();
-            System.out.println(result);
+            HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+            Object data = hashMap.get("data");
+            if (data!=null) {
+                return data.toString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getCompleteName(String areaCode) {
+        try {
+
+            String result = ic.settingProxy("globalServer")
+                    .settingReq("","CommonModule","getCompleteName")
+                    .settingParam(new String[]{areaCode})
+                    .executeSync();
             HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
             Object data = hashMap.get("data");
             if (data!=null) {
@@ -51,7 +72,9 @@ public class IceRemoteUtil {
                     .settingParam(new String[]{sku+""})
                     .executeSync();
             HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-            String json = hashMap.get("data").toString();
+            Object data = hashMap.get("data");
+            if (data==null) return null;
+            String json = data.toString();
             ProdEntity prodEntity = GsonUtils.jsonToJavaBean(json,ProdEntity.class);
             return prodEntity;
         } catch (Exception e) {
@@ -71,7 +94,9 @@ public class IceRemoteUtil {
                     .settingParam(args)
                     .executeSync();
             HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-            String message = hashMap.get("data").toString();
+            Object data = hashMap.get("data");
+            if (data==null) return null;
+            String message = data.toString();
            if (!StringUtils.isEmpty(message)) return message;
         } catch (Exception e) {
             e.printStackTrace();
@@ -85,7 +110,9 @@ public class IceRemoteUtil {
                 .settingParam(new String[]{id+""})
                 .executeSync();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        String json = hashMap.get("data").toString();
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,DictEntity.class);
     }
 
@@ -94,7 +121,9 @@ public class IceRemoteUtil {
                 .settingReq("","DictUtilRemoteModule","queryAll")
                 .executeSync();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        String json = hashMap.get("data").toString();
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,DictEntity[].class);
     }
 
@@ -104,8 +133,65 @@ public class IceRemoteUtil {
                 .settingParam(params)
                 .executeSync();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        String json = hashMap.get("data").toString();
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,DictEntity[].class);
+    }
+
+    public static ProdPriceEntity calcSingleProdActPrize(long actcode,long sku,double vatp) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("actcode", actcode);
+        jsonObject.put("sku", sku);
+        jsonObject.put("vatp", vatp);
+        String result = ic.settingProxy("discountServer")
+                .settingReq("","DiscountCalcModule","calcSingleProdActPrize")
+                .settingParam(jsonObject.toJSONString())
+                .executeSync();
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.jsonToJavaBean(json,ProdPriceEntity.class);
+    }
+
+    public static ProdPriceEntity[] calcMultiProdActPrize(long actcode, List<ProdPriceEntity> list) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("actcode", actcode);
+        JSONArray jsonArray = new JSONArray();
+        if(list != null && list.size() > 0){
+            for(ProdPriceEntity entity : list){
+                JSONObject jsObj = new JSONObject();
+                jsObj.put("sku", entity.getSku());
+                jsObj.put("vatp", entity.getVatp());
+                jsonArray.add(jsObj);
+            }
+        }
+        jsonObject.put("skulist", jsonArray);
+        String result = ic.settingProxy("discountServer")
+                .settingReq("","DiscountCalcModule","calcMultiProdActPrize")
+                .settingParam(jsonObject.toJSONString())
+                .executeSync();
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.jsonToJavaBean(json,ProdPriceEntity[].class);
+    }
+
+    public static ProdPriceEntity calcSingleProdActIntervalPrize(long sku,double vatp) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("sku", sku);
+        jsonObject.put("vatp", vatp);
+        String result = ic.settingProxy("discountServer")
+                .settingReq("","DiscountCalcModule","calcSingleProdActIntervalPrize")
+                .settingParam(jsonObject.toJSONString())
+                .executeSync();
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.jsonToJavaBean(json,ProdPriceEntity.class);
     }
 
 }

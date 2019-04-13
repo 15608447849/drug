@@ -49,7 +49,7 @@ public class MallFloorImpl implements IRedisCache {
 
     @Override
     public List<?> queryAll() {
-        String selectSQL = "select oid,unqid,fname,cstatus from {{?" + DSMConst.TB_MALL_FLOOR + "}} where cstatus&1=0";
+        String selectSQL = "select oid,unqid,fname,cstatus from {{?" + DSMConst.TB_MALL_FLOOR + "}} where cstatus&1=0 order by sortno desc";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         MallFloorVO[] levels = new MallFloorVO[queryResult.size()];
         baseDao.convToEntity(queryResult, levels, MallFloorVO.class);

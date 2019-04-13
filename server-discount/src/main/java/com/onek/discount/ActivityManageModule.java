@@ -149,7 +149,7 @@ public class ActivityManageModule {
         }
 
         if (jsonObject.get("brulecode") != null && !jsonObject.get("brulecode").getAsString().isEmpty()) {
-            int ruleCode = jsonObject.get("a.brulecode").getAsInt();
+            int ruleCode = jsonObject.get("brulecode").getAsInt();
             if (ruleCode > 0) {
                 sqlBuilder.append(" and a.brulecode=").append(ruleCode);
             }
@@ -333,7 +333,7 @@ public class ActivityManageModule {
         for (int i = 0; i < ladderVOS.size(); i++) {
             if (offerCode != null) {
                 ladOffParams.add(new Object[]{GenIdUtil.getUnqId(),
-                        ladderVOS.get(i).getLadamt(),ladderVOS.get(i).getLadnum(),offerCode[i],ladderVOS.get(i).getOffer()});
+                        ladderVOS.get(i).getLadamt()*100,ladderVOS.get(i).getLadnum(),offerCode[i],ladderVOS.get(i).getOffer()*100});
                 //新增优惠赠换商品
                 if (stype.startsWith("124")) {
                     assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), ladderVOS.get(i).getAssgiftno(),offerCode[i]});
@@ -534,6 +534,10 @@ public class ActivityManageModule {
         List<Object[]> queryResult = baseDao.queryNative(sql);
         LadderVO[] ladderVOS = new LadderVO[queryResult.size()];
         baseDao.convToEntity(queryResult, ladderVOS, LadderVO.class);
+        for (LadderVO ladderVO:ladderVOS) {
+            ladderVO.setLadamt(ladderVO.getLadamt()/100);
+            ladderVO.setOffer(ladderVO.getOffer()/100);
+        }
         String offerCode = ladderVOS[0].getOffercode() + "";
         activityVO.setRulecomp(Integer.parseInt(offerCode.substring(4,5)));
         return Arrays.asList(ladderVOS);
@@ -613,7 +617,14 @@ public class ActivityManageModule {
                 ret = baseDao.updateNative(OPEN_ACT,actcode);
                 break;
             case 1:
-                ret = baseDao.updateNative(DELETE_ACT,actcode);
+                int rCode = selectBRuleCode(actcode);
+                List<Object[]> params = new ArrayList<>();
+                String delLadderSQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
+                        + " where cstatus&1=0 and offercode like '" + rCode + "%'";
+                params.add(new Object[]{});
+                params.add(new Object[]{actcode});
+                boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{delLadderSQL,DELETE_ACT},params));
+                ret = b ? 1 : 0;
                 break;
             case 32:
                 ret = baseDao.updateNative(CLOSE_ACT,actcode);

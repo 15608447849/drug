@@ -1,6 +1,7 @@
 package util;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -31,5 +32,25 @@ public class NumUtil {
             arrangeAdd(aa+i,cc, result);
         }
         return result;
+    }
+
+    /**
+     * 获取这个数字所有二进制唯一的位数
+     *
+     * @param val
+     * @return
+     */
+    public static List<Integer> getNonZeroBits(int val){
+        List<Integer>  list = new ArrayList<>();
+        int index = 0;
+        while(val > 0){
+            if((val & 1) > 0){
+                list.add(1 << index);
+            }
+
+            index++;
+            val >>=  1;
+        }
+        return list;
     }
 }

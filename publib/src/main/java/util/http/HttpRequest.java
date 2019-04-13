@@ -12,7 +12,7 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
 
     private String text;
 
-    void bindParam(StringBuffer sb,Map<String,String > map){
+    public HttpRequest bindParam(StringBuffer sb,Map<String,String > map){
         Iterator<Map.Entry<String,String>> it = map.entrySet().iterator();
         Map.Entry<String,String> entry ;
 
@@ -21,6 +21,7 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
             sb.append(entry.getKey()).append("=").append(entry.getValue()).append("&");
         }
         sb.deleteCharAt(sb.length()-1);
+        return accessUrl(sb.toString());
     }
 
     public HttpRequest accessUrl(String url){
