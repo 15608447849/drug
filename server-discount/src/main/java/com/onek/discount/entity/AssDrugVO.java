@@ -20,6 +20,15 @@ public class AssDrugVO {
     private String standarno;//批准文号
     private long manuno;//生产厂家码
     private String manuname;//生产厂家
+    private double price;//活动价格
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
+    }
 
     public int getLimitnum() {
         return limitnum;

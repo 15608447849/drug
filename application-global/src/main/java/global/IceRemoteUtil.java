@@ -194,4 +194,17 @@ public class IceRemoteUtil {
         return GsonUtils.jsonToJavaBean(json,ProdPriceEntity.class);
     }
 
+    public static int collectCoupons(int compid,String content){
+        String result = ic.settingProxy("orderServer"+getOrderServerNo(compid))
+                .settingReq("","CouponRevModule","insertRevCoupon")
+                .settingParam(content)
+                .executeSync();
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        return Integer.parseInt(hashMap.get("code").toString());
+    }
+
+    public static int getOrderServerNo(int compid){
+        return compid /  GLOBALConst._DMNUM % GLOBALConst._SMALLINTMAX;
+    }
+
 }

@@ -10,16 +10,16 @@ package com.onek.discount.entity;
 public class CouponPubLadderVO {
 
     //金额阶梯值
-    private int ladamt;
+    private double ladamt;
 
     //数量阶梯值
     private int ladnum;
 
-    ;//优惠码
+    //优惠码
     private int offercode;
 
     //优惠值
-    private int offer;
+    private double offer;
 
     //阶梯码
     private long unqid;
@@ -32,11 +32,11 @@ public class CouponPubLadderVO {
         this.unqid = unqid;
     }
 
-    public int getLadamt() {
+    public double getLadamt() {
         return ladamt;
     }
 
-    public void setLadamt(int ladamt) {
+    public void setLadamt(double ladamt) {
         this.ladamt = ladamt;
     }
 
@@ -48,6 +48,14 @@ public class CouponPubLadderVO {
         this.ladnum = ladnum;
     }
 
+    public double getOffer() {
+        return offer;
+    }
+
+    public void setOffer(double offer) {
+        this.offer = offer;
+    }
+
     public int getOffercode() {
         return offercode;
     }
@@ -56,11 +64,5 @@ public class CouponPubLadderVO {
         this.offercode = offercode;
     }
 
-    public int getOffer() {
-        return offer;
-    }
 
-    public void setOffer(int offer) {
-        this.offer = offer;
-    }
 }

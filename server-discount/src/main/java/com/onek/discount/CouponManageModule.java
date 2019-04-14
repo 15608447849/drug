@@ -70,12 +70,12 @@ public class CouponManageModule {
 
     //新增活动商品
     private final String INSERT_ASS_DRUG_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
-            + "(unqid,actcode,gcode,menucode,actstock,limitnum) "
-            + " values(?,?,?,?,?,?)";
+            + "(unqid,actcode,gcode,menucode,actstock,limitnum,price) "
+            + " values(?,?,?,?,?,?,?)";
 
     //删除商品
     private static final String DEL_ASS_DRUG_SQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and actcode=?";
+            + " where cstatus&1=0 or  and actcode=?";
 
     //优惠阶梯
     private final String INSERT_LAD_OFF_SQL = "insert into {{?" + DSMConst.TD_PROM_LADOFF + "}} "
@@ -132,9 +132,9 @@ public class CouponManageModule {
 
     private final String QUERY_PROM_RULE_SQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE+"}} where cstatus&1=0 ";
 
-    private final String QUERY_PROM_LAD_SQL = "select unqid,ladamt,ladnum,offer,offercode from {{?" + DSMConst.TD_PROM_LADOFF+"}} where cstatus&1=0 ";
+    private final String QUERY_PROM_LAD_SQL = "select unqid,convert(ladamt/100,decimal(10,2)) ladamt,ladnum,convert(offer/100,decimal(10,2)),offercode from {{?" + DSMConst.TD_PROM_LADOFF+"}} where cstatus&1=0 ";
 
-    private final String QUERY_PROM_GOODS_SQL = "select pdrug.unqid,pdrug.actcode,`spec`,gcode,limitnum,manuname,standarno,prodname,classname,convert(vatp/100,decimal(10,2)) price,actstock " +
+    private final String QUERY_PROM_GOODS_SQL = "select pdrug.unqid,pdrug.actcode,`spec`,gcode,limitnum,manuname,standarno,prodname,classname,convert(pdrug.price/100,decimal(10,2)) price,actstock " +
             " from {{?" + DSMConst.TD_PROM_ASSDRUG+"}} pdrug" +
             " left join {{?" + DSMConst.TD_PROD_SKU+"}} psku on pdrug.gcode = psku.sku " +
             " left join {{?" + DSMConst.TD_PROD_SPU+"}} pspu on psku.spu = pspu.spu "+
@@ -186,31 +186,39 @@ public class CouponManageModule {
 //            " and not exists (select 1 from {{?" + DSMConst.TB_PROM_COURCD + "}} "+
 //            " where coupno = tpcp.unqid and offercode = prf.offercode  and compid = ? and cstatus & 1 = 0)";
 
-    private static final String QUERY_COUP_PUB = "select  coupno,brulecode,rulename,validday,validflag,glbno,goods from ("+
+    private static final String QUERY_COUP_PUB = "select coupno,brulecode,rulename,validday,validflag,glbno,goods from ("+
             "select coupno,brulecode,rulename,validday,validflag,periodtype,periodday,actstock,glbno,goods from ("+
             "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,0 goods "+
-            "from {{?" + DSMConst.TD_PROM_COUPON + "}} tpcp inner join {?" + DSMConst.TD_PROM_RULE + "}}" +
+            "from {{?" + DSMConst.TD_PROM_COUPON + "}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}}" +
             " tpcr on tpcp.brulecode = tpcr.brulecode  "+
             " inner join {{?" + DSMConst.TD_PROM_ASSDRUG + "}} assd on assd.actcode = tpcp.unqid "+
-            " where assd.gcode = 0  and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0  "+
+            " where assd.gcode = 0  and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 "+
             " union "+
             "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods  from {{?"+
-            DSMConst.TD_PROM_COUPON +"}} tpcp inner join {?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode " +
-            " inner join {{?" +DSMConst.TD_PROM_ASSDRUG+"}} assd on assd.actcode = tpcp.unqid ";
-//    select coupno,brulecode,rulename,validday,validflag from (
-//            select coupno,brulecode,rulename,validday,validflag,periodtype,periodday from (
-//            select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,
-//            periodday
-//                    from td_prom_coupon tpcp inner join td_prom_rule tpcr on tpcp.brulecode = tpcr.brulecode
-//                    inner join td_prom_assdrug assd on assd.actcode = tpcp.unqid
-//                    where assd.gcode = 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0
-//                    union
-//                    select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,
-//            periodday
-//                    from td_prom_coupon tpcp inner join td_prom_rule tpcr on tpcp.brulecode = tpcr.brulecode
-//                    inner join td_prom_assdrug assd on assd.actcode = tpcp.unqid
-//                    where (assd.gcode like '11000000020201%' ) and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 ) a where 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0)
-//    and not exists (select 1 from td_prom_courcd where coupno = a.coupno and compid = 1 and cstatus & 1 = 0)) a
+            DSMConst.TD_PROM_COUPON +"}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode " +
+            " inner join {{?" +DSMConst.TD_PROM_ASSDRUG+"}} assd on assd.actcode = tpcp.unqid "+
+            " where assd.gcode = ? "+
+            " and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 ) a "+
+            " where a.actstock > 0 and 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) "+
+            " and not exists (select 1 from td_prom_courcd where coupno = a.coupno and compid = ? and cstatus & 1 = 0)) a ";
+
+
+    private static final String QUERY_COUP_CNT_PUB = "select count(1) from ("+
+            "select coupno,brulecode,rulename,validday,validflag,periodtype,periodday,actstock,glbno,goods from ("+
+            "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,0 goods "+
+            "from {{?" + DSMConst.TD_PROM_COUPON + "}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}}" +
+            " tpcr on tpcp.brulecode = tpcr.brulecode  "+
+            " inner join {{?" + DSMConst.TD_PROM_ASSDRUG + "}} assd on assd.actcode = tpcp.unqid "+
+            " where assd.gcode = 0  and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 "+
+            " union "+
+            "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods  from {{?"+
+            DSMConst.TD_PROM_COUPON +"}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode " +
+            " inner join {{?" +DSMConst.TD_PROM_ASSDRUG+"}} assd on assd.actcode = tpcp.unqid "+
+            " where assd.gcode = ? "+
+            " and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 ) a "+
+            " where a.actstock > 0 and 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) "+
+            " and not exists (select 1 from td_prom_courcd where coupno = a.coupno and compid = ? and cstatus & 1 = 0)) a ";
+
 
 
 
@@ -252,7 +260,7 @@ public class CouponManageModule {
                 couponVO.getPeriodday(),couponVO.getStartdate(),couponVO.getEnddate(),
                 couponVO.getRuleno(),couponVO.getValidday(),couponVO.getValidflag(),
                 couponVO.getCstatus(),couponVO.getActstock()});
-        parmList.add(new Object[]{GenIdUtil.getUnqId(),unqid,0,0});
+        parmList.add(new Object[]{GenIdUtil.getUnqId(),unqid,0,0,0,0,0});
 
         int[] coupRet = baseDao.updateTransNative(new String[]{INSERT_COUPON_SQL, INSERT_ASS_DRUG_SQL},
                 parmList);
@@ -481,7 +489,7 @@ public class CouponManageModule {
         List<Object[]> assDrugParams = new ArrayList<>();
         for (GoodsVO assDrugVO : assDrugVOS) {
             assDrugParams.add(new Object[]{GenIdUtil.getUnqId(), assDrugVO.getActcode(),assDrugVO.getGcode(),
-                    assDrugVO.getMenucode(),assDrugVO.getActstock(),assDrugVO.getLimitnum()});
+                    assDrugVO.getMenucode(),assDrugVO.getActstock(),assDrugVO.getLimitnum(),assDrugVO.getPrice()*100});
         }
         int[] result = baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, assDrugParams, assDrugVOS.size());
         return !ModelUtil.updateTransEmpty(result);
@@ -500,7 +508,7 @@ public class CouponManageModule {
 
         for (int i = 0; i < ladderVOS.size(); i++) {
             ladOffParams.add(new Object[]{GenIdUtil.getUnqId(),
-                    ladderVOS.get(i).getLadamt(),ladderVOS.get(i).getLadnum(),ladderVOS.get(i).getOffer(),ladernos[i]});
+                    ladderVOS.get(i).getLadamt()*100,ladderVOS.get(i).getLadnum(),ladderVOS.get(i).getOffer()*100,ladernos[i]});
         }
         int[] result = baseDao.updateBatchNative(INSERT_LAD_OFF_SQL, ladOffParams, ladderVOS.size());
         boolean b = !ModelUtil.updateTransEmpty(result);
@@ -858,20 +866,26 @@ public class CouponManageModule {
         Page page = new Page();
         page.pageSize = pageSize;
         page.pageIndex = pageIndex;
-        PageHolder pageHolder = new PageHolder(page);
         Result result = new Result();
-
-        StringBuilder stringBuilder = new StringBuilder(QUERY_COUP_PUB);
-
 
         int compid = jsonObject.get("compid").getAsInt();
         long gcode = jsonObject.get("gcode").getAsLong();
-        stringBuilder.append(" where assd.gcode like '").append(gcode).append("%");
-        stringBuilder.append(" and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 ) a ");
-        stringBuilder.append(" where a.actstock > 0 and 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) ");
-        stringBuilder.append(" and not exists (select 1 from td_prom_courcd where coupno = a.coupno and compid = ? and cstatus & 1 = 0)) a ");
-        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, stringBuilder.toString(),compid);
+
+        int curpageCount = 0;
+        StringBuilder sbSql = new StringBuilder(QUERY_COUP_PUB);
+        if(page.pageIndex > 0){
+            curpageCount = (page.pageIndex - 1) * page.pageSize;
+        }
+        sbSql.append("LIMIT ").append(curpageCount).append(",").append(page.pageSize);
+        int count = 0;
+        List<Object[]> listCount = baseDao.queryNative(QUERY_COUP_CNT_PUB,new Object[]{gcode,compid});
+        if(!listCount.isEmpty()){
+            count = Integer.parseInt(listCount.get(0)[0].toString());
+        }
+        page.totalItems = count;
+        List<Object[]> queryResult = baseDao.queryNative(sbSql.toString(),gcode,compid);
         CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
+        PageHolder pageHolder = new PageHolder(page);
         if(queryResult == null || queryResult.isEmpty()){
             return result.setQuery(couponPubVOS, pageHolder);
         }
@@ -891,6 +905,7 @@ public class CouponManageModule {
 
             couponPubVO.setLadderVOS(Arrays.asList(ladderVOS));
         }
+
         return result.setQuery(couponPubVOS, pageHolder);
     }
 
@@ -904,8 +919,8 @@ public class CouponManageModule {
                 new Object[]{rcdid,couponVO.getCoupno(),
                 couponVO.getCompid(),0});
         if(ret > 0){
-            int oret = 0;
-            //int oret = IceRemoteUtil.collectCoupons(couponVO.getCompid(),json);
+          //  int oret = 0;
+            int oret = IceRemoteUtil.collectCoupons(couponVO.getCompid(),json);
             if(oret > 0){
                 baseDao.updateNative(UPDATE_COUPON_STOCK,
                         new Object[]{couponVO.getCoupno()});
