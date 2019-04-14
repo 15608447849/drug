@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
+import com.onek.entitys.Result;
 import com.onek.prop.IceMasterInfoProperties;
 import com.onek.util.dict.DictEntity;
 import com.onek.util.prod.ProdEntity;
@@ -199,8 +200,8 @@ public class IceRemoteUtil {
                 .settingReq("","CouponRevModule","insertRevCoupon")
                 .settingParam(content)
                 .executeSync();
-        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        return Integer.parseInt(hashMap.get("code").toString());
+        Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
+        return ret.code;
     }
 
     public static int getOrderServerNo(int compid){
