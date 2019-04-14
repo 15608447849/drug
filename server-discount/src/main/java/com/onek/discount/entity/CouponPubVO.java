@@ -12,7 +12,10 @@ import java.util.List;
  */
 public class CouponPubVO {
 
+    private long unqid;
+
     /**
+
      * 优惠券码
      */
     private long coupno;
@@ -124,6 +127,13 @@ public class CouponPubVO {
         this.validflag = validflag;
     }
 
+    public long getUnqid() {
+        return unqid;
+    }
+
+    public void setUnqid(long unqid) {
+        this.unqid = unqid;
+    }
     public static void main(String[] args) {
 
         int a = 536862733 / 8192 % 65535;
