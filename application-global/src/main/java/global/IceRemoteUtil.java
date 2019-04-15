@@ -2,6 +2,7 @@ package global;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
 import com.onek.entitys.Result;
@@ -12,6 +13,7 @@ import com.onek.util.prod.ProdPriceEntity;
 import util.GsonUtils;
 import util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -207,5 +209,29 @@ public class IceRemoteUtil {
     public static int getOrderServerNo(int compid){
         return compid /  GLOBALConst._DMNUM % GLOBALConst._SMALLINTMAX;
     }
+
+    /**
+     * 发送消息到指定客户端
+     * 消息规则 :  push:消息模板ID#消息模板参数1#消息模板参数2#...
+     */
+    public static void sendMessageToClient(int compid,String message){
+        int index = getOrderServerNo(compid);
+        ic.settingProxy("orderServer"+index).sendMessageToClient(compid+"",message);
+    }
+
+    //查询所有足迹
+    public static ArrayList<LinkedTreeMap> queryFootprint(int compid){
+        int index = getOrderServerNo(compid);
+        HashMap<String,Object> hashMap = new HashMap<>();
+        hashMap.put("compid",compid);
+        String result = ic.settingProxy("orderServer"+index).settingReq("","MyFootprintModule","query")
+                .settingParam(GsonUtils.javaBeanToJson(hashMap)).executeSync();
+        hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        return (ArrayList<LinkedTreeMap>)data;
+    }
+
+
 
 }

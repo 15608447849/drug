@@ -1,5 +1,6 @@
 package com.onek.order;
 
+import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.IOThreadUtils;
@@ -11,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static constant.DSMConst.TD_FOOTPRINT;
-import static constant.DSMConst.TD_TRAN_COLLE;
 import static global.GenIdUtil.getUnqId;
 import static util.TimeUtils.getCurrentYear;
 
@@ -23,8 +23,9 @@ public class MyFootprintModule {
 
 
     private static class Param {
-        long unqid; //
-        long sku;
+        int compid;
+        String unqid; //
+        String sku;
         String data;//
         String time;//
     }
@@ -37,13 +38,12 @@ public class MyFootprintModule {
 
         int compId = appContext.getUserSession().compId;
 
+        String json = appContext.param.json;
+        Param p = GsonUtils.jsonToJavaBean(json, Param.class);
+
         IOThreadUtils.runTask(() -> {
             deleteExpireData(compId);
         });
-
-        String json = appContext.param.json;
-        Param p = GsonUtils.jsonToJavaBean(json, Param.class);
-        assert p != null;
         long unqid = getUnqId();
         String insertSql = "INSERT INTO {{?"+TD_FOOTPRINT+"}} ( unqid, sku, compid, browsedate, browsetime ) " +
                 "VALUES " +
@@ -68,9 +68,6 @@ public class MyFootprintModule {
      * 参数 unqid
      */
     public Result del(AppContext appContext){
-        String json = appContext.param.json;
-        Param p = GsonUtils.jsonToJavaBean(json, Param.class);
-        assert p != null;
         int compId = appContext.getUserSession().compId;
         String delSql = "DELETE FROM {{?"+TD_FOOTPRINT+"}} WHERE unqid = ? ";
         int i =  BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(), delSql,compId);
@@ -83,8 +80,13 @@ public class MyFootprintModule {
     /**
      * 查询
      */
+    @UserPermission(ignore = true)
     public Result query(AppContext appContext){
-        int compId = appContext.getUserSession().compId;
+        int compId = 0;
+        try { compId = appContext.getUserSession().compId; } catch (Exception ignored) { }
+        String json = appContext.param.json;
+        Param p = GsonUtils.jsonToJavaBean(json, Param.class);
+        if (p!=null && p.compid > 0) compId = p.compid;
         String selectSql = "SELECT unqid,sku,browsedate,browsetime " +
                 "FROM {{?"+TD_FOOTPRINT+"}} " +
                 "WHERE compid = ?";
@@ -95,8 +97,8 @@ public class MyFootprintModule {
         Param data;
         for (Object[] arr: lines){
             data = new Param();
-            data.unqid = StringUtils.checkObjectNull(arr[0],0L);
-            data.sku = StringUtils.checkObjectNull(arr[1],0L);
+            data.unqid = StringUtils.checkObjectNull(arr[0],"");
+            data.sku = StringUtils.checkObjectNull(arr[1],"");
             data.data = StringUtils.checkObjectNull(arr[2],"");
             data.time = StringUtils.checkObjectNull(arr[3],"");
             list.add(data);

@@ -503,7 +503,7 @@ public class CouponManageModule {
             case 2://类别关联
             default://商品关联
                 relationGoods(jsonObject, actCode);
-                break;
+                return result.success("关联商品成功");
         }
         return re ? result.success("关联商品成功") : result.fail("操作失败");
     }
