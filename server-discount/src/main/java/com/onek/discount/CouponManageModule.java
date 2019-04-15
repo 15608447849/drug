@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Administrator
@@ -75,7 +76,7 @@ public class CouponManageModule {
 
     //删除商品
     private static final String DEL_ASS_DRUG_SQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 or  and actcode=?";
+            + " where cstatus&1=0 and actcode=?";
 
     //优惠阶梯
     private final String INSERT_LAD_OFF_SQL = "insert into {{?" + DSMConst.TD_PROM_LADOFF + "}} "
@@ -260,7 +261,7 @@ public class CouponManageModule {
                 couponVO.getPeriodday(),couponVO.getStartdate(),couponVO.getEnddate(),
                 couponVO.getRuleno(),couponVO.getValidday(),couponVO.getValidflag(),
                 couponVO.getCstatus(),couponVO.getActstock()});
-        parmList.add(new Object[]{GenIdUtil.getUnqId(),unqid,0,0,0,0,0});
+        parmList.add(new Object[]{GenIdUtil.getUnqId(),unqid,0,0,couponVO.getActstock(),0,0});
 
         int[] coupRet = baseDao.updateTransNative(new String[]{INSERT_COUPON_SQL, INSERT_ASS_DRUG_SQL},
                 parmList);
@@ -477,6 +478,88 @@ public class CouponManageModule {
                 new String[]{"spec","gcode","limitnum",
                         "manuname","standarno","prodname","classname","price"});
         return Arrays.asList(goodsVOS);
+    }
+
+
+    /**
+     * @description 关联商品
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/4/6 10:09
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result relationGoods(AppContext appContext) {
+        boolean re = false;
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int type = jsonObject.get("type").getAsInt();//1:全部商品  3部分商品  2 部分类别
+        long actCode = jsonObject.get("actCode").getAsLong();
+        switch (type) {
+            case 1://全部商品
+                re = relationAllGoods(jsonObject, actCode);
+                break;
+            case 2://类别关联
+            default://商品关联
+                relationGoods(jsonObject, actCode);
+                break;
+        }
+        return re ? result.success("关联商品成功") : result.fail("操作失败");
+    }
+
+    private void relationGoods(JsonObject jsonObject, long actCode) {
+        //关联活动商品
+        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        List<GoodsVO> insertGoodsVOS = new ArrayList<>();
+        List<GoodsVO> updateGoodsVOS = new ArrayList<>();
+        if (goodsArr != null && !goodsArr.toString().isEmpty()) {
+            relationAssDrug(insertGoodsVOS, updateGoodsVOS,actCode);
+        }
+    }
+
+    private boolean relationAllGoods(JsonObject jsonObject,long actCode) {
+        int limitnum = jsonObject.get("limitnum").getAsInt();
+        int actstock = jsonObject.get("actstock").getAsInt();
+        double price = jsonObject.get("price").getAsDouble() * 100;
+        String delSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
+                + " where cstatus&1=0 and actcode=?";
+        baseDao.updateNative(delSql,actCode);
+        int result = baseDao.updateNative(INSERT_ASS_DRUG_SQL,GenIdUtil.getUnqId(),actCode, 0, 0,
+                actstock,limitnum,price);
+        return result > 0;
+
+    }
+
+    /* *
+     * @description 关联活动商品
+     * @params [goodsVOS]
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/4/2 16:23
+     * @version 1.1.1
+     **/
+    private void relationAssDrug(List<GoodsVO> insertDrugVOS, List<GoodsVO> updDrugVOS, long actCode) {
+        List<Object[]> insertDrugParams = new ArrayList<>();
+        List<Object[]> updateDrugParams = new ArrayList<>();
+        String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, vcode=?, price=? "
+                + " where cstatus&1=0 and gcode=? and vcode=? and actcode=?";
+        for (GoodsVO insGoodsVO : insertDrugVOS) {
+            insertDrugParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, insGoodsVO.getGcode(),
+                    insGoodsVO.getMenucode(),insGoodsVO.getActstock(),insGoodsVO.getLimitnum(),
+                    insGoodsVO.getPrice()*100});
+        }
+        for (GoodsVO updateGoodsVO : updDrugVOS) {
+            updateDrugParams.add(new Object[]{updateGoodsVO.getActstock(),updateGoodsVO.getLimitnum(),
+                    updateGoodsVO.getVcode()+1, updateGoodsVO.getPrice()*100,updateGoodsVO.getGcode(),
+                    updateGoodsVO.getVcode(),actCode});
+        }
+        baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, insertDrugParams, insertDrugVOS.size());
+        baseDao.updateBatchNative(updateSql, updateDrugParams, updDrugVOS.size());
     }
 
 
