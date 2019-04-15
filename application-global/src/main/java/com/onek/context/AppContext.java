@@ -1,12 +1,16 @@
 package com.onek.context;
 
 import Ice.Current;
+import com.onek.entitys.Result;
 import com.onek.server.inf.IRequest;
+import com.onek.server.inf.PushMessageClientPrx;
 import com.onek.server.infimp.IceContext;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
+
+import java.util.Map;
 
 /**
  * 平台上下文对象
@@ -73,6 +77,19 @@ public class AppContext extends IceContext {
         return false;
     }
 
-
-
+    @Override
+    protected void longConnectionSetting(Map<String, PushMessageClientPrx> map, Result result) {
+        if (userSession==null || userSession.compId == 0) return;
+        String key = userSession.compId+"";
+        PushMessageClientPrx clientPrx = map.get(key);
+        if (clientPrx == null) {
+            result.setRequestOnline();
+        } else {
+            try {
+                clientPrx.ice_ping();
+            } catch (Exception e) {
+                result.setRequestOnline();
+            }
+        }
+    }
 }

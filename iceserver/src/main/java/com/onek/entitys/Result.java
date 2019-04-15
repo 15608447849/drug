@@ -23,6 +23,9 @@ public class Result {
    public int code = CODE.FAIL;
    public String message = MESSAGE.FAIL;
 
+   //请求上线
+   public boolean requestOnline = false;
+
    public Object data ;
 
    public HashMap<String,Object> map;
@@ -50,7 +53,6 @@ public class Result {
       this.data = data;
       return this;
    }
-
 
 
    public Result setHashMap(String key,Object value){
@@ -96,4 +98,8 @@ public class Result {
       return this;
    }
 
+   public Result setRequestOnline(){
+      requestOnline = true;
+      return this;
+   }
 }
