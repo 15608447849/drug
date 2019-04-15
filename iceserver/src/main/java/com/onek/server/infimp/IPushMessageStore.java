@@ -1,7 +1,6 @@
 package com.onek.server.infimp;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * @Author: leeping
@@ -9,8 +8,26 @@ import java.util.Map;
  */
 public interface IPushMessageStore {
 
-    long storeMessageToDb(String identityName, String message) ;
-    void changeMessageStateToDb(String identityName,long id) ;
-    Map<Long,String> checkOfflineMessageFromDbByIdentityName(String identityName);
-    String convertMessage(String identityName,String message);
+   class IPMessage{
+        public String identityName;
+        public String content;
+        public long id;
+
+       public IPMessage(String identityName,  String message) {
+           this.identityName = identityName;
+           this.content = message;
+       }
+       public IPMessage(String identityName, long id, String message) {
+           this.identityName = identityName;
+           this.id = id;
+           this.content = message;
+       }
+   }
+
+    boolean storeMessageToQueue(IPMessage message);
+    IPMessage pullMessageFromQueue();
+    long storeMessageToDb(IPMessage message) ;
+    void changeMessageStateToDb(IPMessage message) ;
+    List<IPMessage> checkOfflineMessageFromDbByIdentityName(String identityName);
+    String convertMessage(IPMessage message);
 }

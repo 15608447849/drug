@@ -5,9 +5,9 @@ import dao.BaseDAO;
 import global.IceRemoteUtil;
 import util.StringUtils;
 
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.LinkedBlockingQueue;
 
 import static Ice.Application.communicator;
 import static constant.DSMConst.TD_PUSH_MSG;
@@ -20,10 +20,33 @@ import static util.TimeUtils.getCurrentYear;
  * 推送服务 数据存储
  */
 public class PushMessageMySqlImps implements IPushMessageStore {
+
+    private final LinkedBlockingQueue<IPMessage> messageQueue = new LinkedBlockingQueue<>();
+
     @Override
-    public long storeMessageToDb(String identityName, String message) {
+    public boolean storeMessageToQueue(IPMessage message) {
         try {
-            int compid = Integer.parseInt(identityName);
+            messageQueue.put(message);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return false;
+    }
+
+    @Override
+    public IPMessage pullMessageFromQueue() {
+        try {
+            return messageQueue.take();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    @Override
+    public long storeMessageToDb(IPMessage message) {
+        try {
+            int compid = Integer.parseInt(message.identityName);
             long unqid = getUnqId();
 
             String insertSql = "INSERT INTO {{?"+TD_PUSH_MSG+"}} ( unqid, identity, message, date, time ) " +
@@ -31,41 +54,36 @@ public class PushMessageMySqlImps implements IPushMessageStore {
                     "( ?, ?, ? , CURRENT_DATE,CURRENT_TIME )";
             int i = BaseDAO.getBaseDAO().updateNativeSharding(compid,getCurrentYear(),
                     insertSql,
-                    unqid, compid, message);
+                    unqid, compid, message.content);
             if (i > 0){
-                communicator().getLogger().print("推送-存储消息\t"+identityName+" , "+ message);
+                communicator().getLogger().print("推送-存储消息\t"+message.identityName+" , "+ message.content);
                 return unqid;
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            communicator().getLogger().error("推送-存储消息失败\t"+message.identityName+" , "+ message.content +", 原因:"+ e);
         }
         return 0;
     }
 
     @Override
-    public void changeMessageStateToDb(String identityName,long id) {
+    public void changeMessageStateToDb(IPMessage message) {
 
         try {
-            int compid = Integer.parseInt(identityName);
+            if (message.id == 0) return;
+            int compid = Integer.parseInt(message.identityName);
+            String updateSql = "UPDATE {{?"+TD_PUSH_MSG+"}} SET cstatus=1 WHERE unqid = ? AND cstatus=0";
+            BaseDAO.getBaseDAO().updateNativeSharding(compid,getCurrentYear(),
+                    updateSql, message.id);
 
-            String updateSql = "UPDATE {{?"+TD_PUSH_MSG+"}} SET cstatus=1 WHERE unqid = ? AND identity = ?";
-
-            int i = BaseDAO.getBaseDAO().updateNativeSharding(compid,getCurrentYear(),
-                    updateSql,
-                    id,compid );
-
-            if (i > 0){
-                communicator().getLogger().print("推送成功-改变数据\t"+id);
-            }
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    public Map<Long,String> checkOfflineMessageFromDbByIdentityName(String identityName) {
+    public List<IPMessage> checkOfflineMessageFromDbByIdentityName(String identityName) {
 
-        Map<Long,String> map = new HashMap<>();
+        List<IPMessage> list = new ArrayList<>();
         try {
             int compid = Integer.parseInt(identityName);
 
@@ -76,22 +94,29 @@ public class PushMessageMySqlImps implements IPushMessageStore {
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compid,getCurrentYear(),
                     selectSql,compid);
             for (Object[] arr: lines){
-                map.put((long)arr[0],arr[1].toString());
+                list.add(new IPMessage(
+                        identityName,
+                        (long)arr[0],
+                        arr[1].toString()
+                ));
             }
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-        communicator().getLogger().print("查询-离线数据\t"+identityName+" - 条数:"+ map.size());
-        return map;
+        if (list.size() > 0){
+            communicator().getLogger().print("推送-离线数据\t"+identityName+" - 条数:"+ list.size());
+        }
+        return list;
     }
 
     @Override
-    public String convertMessage(String identityName, String message) {
+    public String convertMessage(IPMessage message) {
         //规则格式:  push:模板序列#参数内容
         try {
-            if (message.startsWith("push")) {
-                String arrayStr = message.split(":")[1];
+
+            if (message.content.startsWith("push")) {
+                String arrayStr = message.content.split(":")[1];
                 String[] array ;
                 if (arrayStr.contains("#")){
                     array = arrayStr.split("#");
@@ -105,7 +130,7 @@ public class PushMessageMySqlImps implements IPushMessageStore {
 
         }
 
-        return message;
+        return message.content;
     }
 
 
