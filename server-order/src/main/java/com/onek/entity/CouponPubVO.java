@@ -1,4 +1,4 @@
-package com.onek.discount.entity;
+package com.onek.entity;
 
 
 import java.util.List;
@@ -13,9 +13,7 @@ import java.util.List;
 public class CouponPubVO {
 
     private long unqid;
-
     /**
-
      * 优惠券码
      */
     private long coupno;
@@ -49,6 +47,65 @@ public class CouponPubVO {
     private int glbno;
 
     private int goods;
+
+    private int ctype;
+
+    private int reqflag;
+
+    private String ladder;
+
+    private String startdate;
+
+    public String getStartdate() {
+        return startdate;
+    }
+
+    public void setStartdate(String startdate) {
+        this.startdate = startdate;
+    }
+
+    public String getEnddate() {
+        return enddate;
+    }
+
+    public void setEnddate(String enddate) {
+        this.enddate = enddate;
+    }
+
+    private String enddate;
+
+    public String getLadder() {
+        return ladder;
+    }
+
+    public void setLadder(String ladder) {
+        this.ladder = ladder;
+    }
+
+    public int getCtype() {
+        return ctype;
+    }
+
+    public void setCtype(int ctype) {
+        this.ctype = ctype;
+    }
+
+    public int getReqflag() {
+        return reqflag;
+    }
+
+    public void setReqflag(int reqflag) {
+        this.reqflag = reqflag;
+    }
+
+    public long getUnqid() {
+        return unqid;
+    }
+
+    public void setUnqid(long unqid) {
+        this.unqid = unqid;
+    }
+
 
     public int getGlbno() {
         return glbno;
@@ -127,13 +184,6 @@ public class CouponPubVO {
         this.validflag = validflag;
     }
 
-    public long getUnqid() {
-        return unqid;
-    }
-
-    public void setUnqid(long unqid) {
-        this.unqid = unqid;
-    }
     public static void main(String[] args) {
 
         int a = 536862733 / 8192 % 65535;

@@ -231,8 +231,8 @@ public class CouponManageModule {
 
     //扣减优惠券库存
     private static final String UPDATE_COUPON_STOCK = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
-                    + "set actstock = actstock - 1 " +
-            "where unqid = ? and actstock > 0 and cstatus & 33 = 0";
+                    + " set actstock = actstock - 1 " +
+            "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
 
     //查询库存版本号
 //    private static final String SELECT_COUPON_VER_ = " select ver from {{?" + DSMConst.TD_PROM_COUPON + "}}"
@@ -904,13 +904,14 @@ public class CouponManageModule {
                     new String[]{"unqid","ladamt","ladnum","offer","offercode"});
 
             couponPubVO.setLadderVOS(Arrays.asList(ladderVOS));
+            couponPubVO.setCompid(compid);
         }
 
         return result.setQuery(couponPubVOS, pageHolder);
     }
 
 
-    public Result RevCoupon(AppContext appContext){
+    public Result revCoupon(AppContext appContext){
         Result result = new Result();
         String json = appContext.param.json;
         CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
