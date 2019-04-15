@@ -2,9 +2,12 @@ package com.onek.server.infimp;
 
 import Ice.Current;
 import Ice.Logger;
-import Ice.Request;
+import com.onek.entitys.Result;
 import com.onek.server.inf.IParam;
 import com.onek.server.inf.IRequest;
+import com.onek.server.inf.PushMessageClientPrx;
+
+import java.util.Map;
 
 
 /**
@@ -41,7 +44,9 @@ public class IceContext {
     protected void initialization()  {
 
     }
+    protected void longConnectionSetting(Map<String, PushMessageClientPrx> map, Result result){
 
+    }
     /**
      * 返回this
      */

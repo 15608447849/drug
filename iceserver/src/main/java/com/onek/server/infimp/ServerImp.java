@@ -168,6 +168,9 @@ public class ServerImp extends IcePushMessageServerImps {
             IceContext context = generateContext(__current,request);
             result = interceptor(context);
             if (result == null) result = callObjectMethod(context.refPkg,context.refCls,context.refMed,context);
+            if (isLongConnection) {
+
+            }
         } catch (Exception e) {
             e.printStackTrace();
             logger.print(__current.con._toString().split("\\n")[1]+"\t"+e);

@@ -32,6 +32,8 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
 
     private IPushMessageStore iPushMessageStore;
 
+    protected boolean isLongConnection = false;
+
     public IcePushMessageServerImps(Communicator communicator,String serverName) {
         this.communicator = communicator;
         startPushMessageServer(serverName);
@@ -45,6 +47,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         //注入消息存储实现
         createMessageStoreImps();
         new Thread(this).start();
+        isLongConnection = true;
     }
 
     private void createMessageStoreImps() {
