@@ -44,7 +44,7 @@ public class CouponRevModule {
      * 查询领取的优惠券列表
      */
     private final String QUERY_COUPONREV_SQL = "select unqid,coupno,compid,DATE_FORMAT(startdate,'%Y-%m-%d') startdate," +
-            "DATE_FORMAT(startdate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
+            "DATE_FORMAT(enddate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where cstatus&1=0 ";
 
