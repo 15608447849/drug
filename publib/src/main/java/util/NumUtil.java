@@ -1,5 +1,6 @@
 package util;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -52,5 +53,25 @@ public class NumUtil {
             val >>=  1;
         }
         return list;
+    }
+
+    /**
+     * 除
+     * @param numerator 分子
+     * @param denominator 分母
+     * @return
+     */
+    public static double div(int numerator, int denominator){
+        return BigDecimal.valueOf(numerator *100 / denominator).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue()/100;
+    }
+
+    /**
+     * 除
+     * @param numerator 分子
+     * @param denominator 分母
+     * @return
+     */
+    public static double div(double numerator, int denominator){
+        return BigDecimal.valueOf(numerator *100 / denominator).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue()/100;
     }
 }
