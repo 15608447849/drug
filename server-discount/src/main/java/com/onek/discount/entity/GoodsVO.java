@@ -43,6 +43,9 @@ public class GoodsVO {
     //综合状态码
     private int cstatus;
 
+    //乐观锁
+    private int vcode;
+
     //商品单价
     private double price;
 
@@ -149,5 +152,13 @@ public class GoodsVO {
 
     public void setSpec(String spec) {
         this.spec = spec;
+    }
+
+    public int getVcode() {
+        return vcode;
+    }
+
+    public void setVcode(int vcode) {
+        this.vcode = vcode;
     }
 }

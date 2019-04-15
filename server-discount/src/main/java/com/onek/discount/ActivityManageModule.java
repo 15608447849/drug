@@ -17,9 +17,7 @@ import util.BUSUtil;
 import util.GsonUtils;
 import util.ModelUtil;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 import static com.onek.discount.CommonModule.getLaderNo;
 
@@ -56,8 +54,8 @@ public class ActivityManageModule {
 
     //新增活动商品
     private static final String INSERT_ASS_DRUG_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
-            + "(unqid,actcode,gcode,menucode,actstock) "
-            + " values(?,?,?,?,?)";
+            + "(unqid,actcode,gcode,menucode,actstock,limitnum,price) "
+            + " values(?,?,?,?,?,?,?)";
 
     private static final String DEL_ASS_DRUG_SQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 and actcode=?";
@@ -377,26 +375,23 @@ public class ActivityManageModule {
      * @time  2019/4/2 16:23
      * @version 1.1.1
      **/
-    private boolean relationAssDrug(List<GoodsVO> assDrugVOS, long actCode) {
-        boolean b = false;
-        List<Object[]> assDrugParams = new ArrayList<>();
-        for (GoodsVO assDrugVO : assDrugVOS) {
-            assDrugParams.add(new Object[]{GenIdUtil.getUnqId(), assDrugVO.getActcode(),assDrugVO.getGcode(),
-                    assDrugVO.getMenucode(),assDrugVO.getActstock()});
+    private void relationAssDrug(List<GoodsVO> insertDrugVOS, List<GoodsVO> updDrugVOS, long actCode) {
+        List<Object[]> insertDrugParams = new ArrayList<>();
+        List<Object[]> updateDrugParams = new ArrayList<>();
+        String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, vcode=?, price=? "
+                + " where cstatus&1=0 and gcode=? and vcode=? and actcode=?";
+        for (GoodsVO insGoodsVO : insertDrugVOS) {
+            insertDrugParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, insGoodsVO.getGcode(),
+                    insGoodsVO.getMenucode(),insGoodsVO.getActstock(),insGoodsVO.getLimitnum(),
+                    insGoodsVO.getPrice()*100});
         }
-        String delSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
-                + " where cstatus&1=0 and actcode=" + actCode;
-        int state = baseDao.updateNative(delSql);
-        if (state >= 0) {
-            int[] result = baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, assDrugParams, assDrugVOS.size());
-            b = !ModelUtil.updateTransEmpty(result);
+        for (GoodsVO updateGoodsVO : updDrugVOS) {
+            updateDrugParams.add(new Object[]{updateGoodsVO.getActstock(),updateGoodsVO.getLimitnum(),
+                    updateGoodsVO.getVcode()+1, updateGoodsVO.getPrice()*100,updateGoodsVO.getGcode(),
+                    updateGoodsVO.getVcode(),actCode});
         }
-        if (state < 0 || !b) {
-            String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus&~1 "
-                    + " where cstatus&1>0 and actcode=" + actCode;
-            baseDao.updateNative(updateSql);
-        }
-        return b;
+        baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, insertDrugParams, insertDrugVOS.size());
+        baseDao.updateBatchNative(updateSql, updateDrugParams, updDrugVOS.size());
     }
 
 
@@ -582,20 +577,84 @@ public class ActivityManageModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int type = jsonObject.get("type").getAsInt();//1:全部商品  3部分商品  2 部分类别
         long actCode = jsonObject.get("actCode").getAsLong();
-        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
-        //关联活动商品
-        List<GoodsVO> goodsVOS = new ArrayList<>();
-        if (goodsArr != null && !goodsArr.getAsString().isEmpty()) {
-            for (int i = 0; i < goodsArr.size(); i++) {
-                GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).getAsString(), GoodsVO.class);
-                goodsVOS.add(goodsVO);
-            }
-            re = relationAssDrug(goodsVOS, actCode);
+        switch (type) {
+            case 1://全部商品
+                re = relationAllGoods(jsonObject, actCode);
+                break;
+            case 2://类别关联
+            default://商品关联
+                relationGoods(jsonObject, actCode);
+                break;
         }
         return re ? result.success("关联商品成功") : result.fail("操作失败");
     }
 
+
+    private boolean relationAllGoods(JsonObject jsonObject,long actCode) {
+        int limitnum = jsonObject.get("limitnum").getAsInt();
+        int actstock = jsonObject.get("actstock").getAsInt();
+        double price = jsonObject.get("price").getAsDouble() * 100;
+        int result = baseDao.updateNative(INSERT_ASS_DRUG_SQL,GenIdUtil.getUnqId(),actCode, 0, 0,
+                actstock,limitnum,price);
+        return result > 0;
+
+    }
+
+    private void relationGoods(JsonObject jsonObject, long actCode) {
+        //关联活动商品
+        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+//        JsonArray classArr = jsonObject.get("goodsArr").getAsJsonArray();
+        List<GoodsVO> goodsVOS = new ArrayList<>();
+        List<GoodsVO> insertGoodsVOS = new ArrayList<>();
+        List<GoodsVO> updateGoodsVOS = new ArrayList<>();
+        StringBuilder skuBuilder = new StringBuilder();
+        if (goodsArr != null && !goodsArr.toString().isEmpty()) {
+            for (int i = 0; i < goodsArr.size(); i++) {
+                GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
+                if (goodsVO != null) {
+                    skuBuilder.append(goodsVO.getGcode()).append(",");
+                }
+                goodsVOS.add(goodsVO);
+            }
+            String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
+            Map<Long,ActStock> goodsMap = getAllGoods(skuStr, actCode);
+            for (int i = 0; i < goodsVOS.size(); i++) {
+                if (goodsMap != null) {
+                    if (goodsMap.containsKey(goodsVOS.get(i).getGcode())) {//数据库不存在该商品 新增 否则修改
+                        int newActStock = goodsVOS.get(i).getActstock();//新库存
+                        int oldActStock = goodsMap.get(goodsVOS.get(i).getGcode()).getActstock();//旧库存
+                        if (newActStock >= oldActStock) {
+//                            goodsVOS.get(i).setActstock(newActStock);
+                        } else {
+//                            goodsVOS.get(i).setActstock();
+                        }
+                        goodsVOS.get(i).setVcode(goodsMap.get(goodsVOS.get(i).getGcode()).getVocode());
+                        updateGoodsVOS.add(goodsVOS.get(i));
+                    } else {
+                        insertGoodsVOS.add(goodsVOS.get(i));
+                    }
+                }
+            }
+            relationAssDrug(insertGoodsVOS, updateGoodsVOS,actCode);
+        }
+    }
+
+    private Map<Long,ActStock> getAllGoods(String skuStr,long actcode) {
+        Map<Long,ActStock> vcodeMap = new HashMap<>();
+        String selectSQL = "select gcode,vcode,actstock from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
+                + " and gcode in(" + skuStr + ") and actcode=?";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, actcode);
+        if (queryResult == null || queryResult.isEmpty()) return null;
+        queryResult.forEach(obj -> {
+            ActStock actStock = new ActStock();
+            actStock.setVocode((int)obj[1]);
+            actStock.setActstock((int)obj[2]);
+            vcodeMap.put((long)obj[0], actStock);
+        });
+        return vcodeMap;
+    }
 
     /**
      * 更新活动状态
@@ -631,6 +690,27 @@ public class ActivityManageModule {
                 break;
         }
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
+    }
+
+    class ActStock {
+        private int vocode;
+        private int actstock;
+
+        public int getVocode() {
+            return vocode;
+        }
+
+        public void setVocode(int vocode) {
+            this.vocode = vocode;
+        }
+
+        public int getActstock() {
+            return actstock;
+        }
+
+        public void setActstock(int actstock) {
+            this.actstock = actstock;
+        }
     }
 
 }
