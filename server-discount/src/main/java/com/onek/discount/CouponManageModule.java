@@ -509,12 +509,11 @@ public class CouponManageModule {
     }
 
     private List<Long> getAllGoods(String skuStr, long actcode) {
-        Map<Long,ActivityManageModule.ActStock> vcodeMap = new HashMap<>();
+        List<Long> gcList = new ArrayList<>();
         String selectSQL = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
                 + " and gcode in(" + skuStr + ") and actcode=?";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL, actcode);
-        if (queryResult == null || queryResult.isEmpty()) return null;
-        List<Long> gcList = new ArrayList<>();
+        if (queryResult == null || queryResult.isEmpty()) return gcList;
         queryResult.forEach(obj -> {
             gcList.add((long)obj[0]);
         });

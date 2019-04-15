@@ -591,6 +591,16 @@ public class ActivityManageModule {
                 break;
             case 2://类别关联
             default://商品关联
+                int code;
+                Map<Integer, Long> map = selectGoodsByAct(actCode);
+                if (map.size() == 1 && map.containsKey(0)) {
+                    String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1,"
+                            + "vcode=? where cstatus&1=0 and actcode=? and vcode=?";
+                    code = baseDao.updateNative(updateSQL, map.get(0)+1, actCode, map.get(0));
+                    if (code <= 0) {
+                        return result.fail("操作失败");
+                    }
+                }
                 relationGoods(jsonObject, actCode);
                 return result.success("关联商品成功");
         }
@@ -640,17 +650,27 @@ public class ActivityManageModule {
                 + " actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(sql);
         if (queryResult==null || queryResult.isEmpty()) return map;
-        long gcode = (long)queryResult.get(0)[1];
-        map.put((int)queryResult.get(0)[0], gcode);
+        for (Object[] aQueryResult : queryResult) {
+            long gcode = (long) aQueryResult[1];
+            map.put((int) aQueryResult[0], gcode);
+        }
         return map;
     }
 
     private boolean relationAllGoods(JsonObject jsonObject,long actCode) {
+        int result;
         int limitnum = jsonObject.get("limitnum").getAsInt();
         int actstock = jsonObject.get("actstock").getAsInt();
         double price = jsonObject.get("price").getAsDouble() * 100;
-        int result = baseDao.updateNative(INSERT_ASS_DRUG_SQL,GenIdUtil.getUnqId(),actCode, 0, 0,
-                actstock,limitnum,price);
+        Map<Integer, Long> map = selectGoodsByAct(actCode);
+        if (map.size() == 0) {
+            result = baseDao.updateNative(INSERT_ASS_DRUG_SQL, GenIdUtil.getUnqId(), actCode, 0, 0,
+                    actstock, limitnum, price);
+        } else {
+            String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?, limitnum=?,"
+                    + "price=?, vcode=? where cstatus&1=0 and actcode=? and vcode=?";
+            result = baseDao.updateNative(updateSQL, actstock, limitnum, 0, map.get(0)+1,actCode, map.get(0));
+        }
 //        noticeGoodsUpd(1, null);
         return result > 0;
     }
