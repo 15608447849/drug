@@ -208,4 +208,24 @@ public class IceRemoteUtil {
         return compid /  GLOBALConst._DMNUM % GLOBALConst._SMALLINTMAX;
     }
 
+    public static String getCoup(int compid, long couponId) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("unqid", couponId);
+        jsonObject.put("compid", compid);
+
+        String result =
+                ic.settingProxy("orderServer" + getOrderServerNo(compid))
+                    .settingReq("", "CouponRevModule", "queryCouponByUid")
+                    .settingParam(jsonObject.toJSONString())
+                    .executeSync();
+
+        if (StringUtils.isEmpty(result)) {
+            return null;
+        }
+
+        JSONObject resultJson = JSONObject.parseObject(result);
+
+        return resultJson.getJSONArray("data").getString(0);
+    }
+
 }
