@@ -18,10 +18,7 @@ import util.ModelUtil;
 import util.StringUtils;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author Administrator
@@ -511,12 +508,52 @@ public class CouponManageModule {
         return re ? result.success("关联商品成功") : result.fail("操作失败");
     }
 
+    private List<Long> getAllGoods(String skuStr, long actcode) {
+        Map<Long,ActivityManageModule.ActStock> vcodeMap = new HashMap<>();
+        String selectSQL = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
+                + " and gcode in(" + skuStr + ") and actcode=?";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, actcode);
+        if (queryResult == null || queryResult.isEmpty()) return null;
+        List<Long> gcList = new ArrayList<>();
+        queryResult.forEach(obj -> {
+            gcList.add((long)obj[0]);
+        });
+        return gcList;
+    }
+
+
+
     private void relationGoods(JsonObject jsonObject, long actCode) {
         //关联活动商品
         JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        List<GoodsVO> goodsVOS = new ArrayList<>();
         List<GoodsVO> insertGoodsVOS = new ArrayList<>();
         List<GoodsVO> updateGoodsVOS = new ArrayList<>();
+        StringBuilder skuBuilder = new StringBuilder();
         if (goodsArr != null && !goodsArr.toString().isEmpty()) {
+            for (int i = 0; i < goodsArr.size(); i++) {
+                GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
+                if (goodsVO != null) {
+                    skuBuilder.append(goodsVO.getGcode()).append(",");
+                }
+                goodsVOS.add(goodsVO);
+            }
+
+            String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
+            List<Long> gcList = getAllGoods(skuStr, actCode);
+            for (int i = 0; i < goodsVOS.size(); i++) {
+                for(int j = 0; j < gcList.size(); j++){
+                    if(goodsVOS.get(i).getGcode() == gcList.get(i)){
+                        updateGoodsVOS.add(goodsVOS.get(i));
+                    }else{
+                        insertGoodsVOS.add(goodsVOS.get(i));
+                    }
+                }
+
+                if(gcList.isEmpty()){
+                    insertGoodsVOS.add(goodsVOS.get(i));
+                }
+            }
             relationAssDrug(insertGoodsVOS, updateGoodsVOS,actCode);
         }
     }
