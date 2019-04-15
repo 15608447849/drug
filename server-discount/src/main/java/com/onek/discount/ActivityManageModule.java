@@ -2,6 +2,7 @@ package com.onek.discount;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -10,6 +11,9 @@ import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
+import com.onek.propagation.prod.ActivityManageServer;
+import com.onek.propagation.prod.ProdCurrentActPriceObserver;
+import com.onek.propagation.prod.ProdDiscountObserver;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
@@ -499,7 +503,9 @@ public class ActivityManageModule {
         activityVOS[0].setRuletype(Integer.parseInt(rType.substring(1,2)));
         activityVOS[0].setPreWay(Integer.parseInt(rType.substring(2,3)));
         activityVOS[0].setTimeVOS(getTimes(actCode));
-        activityVOS[0].setLadderVOS(getLadder(activityVOS[0],rRuleCode));
+        if (activityVOS[0].getBrulecode() != 1113) {
+            activityVOS[0].setLadderVOS(getLadder(activityVOS[0], rRuleCode));
+        }
         activityVOS[0].setActiveRule(getRules(rRuleCode));
         return result.success(activityVOS[0]);
     }
@@ -586,11 +592,58 @@ public class ActivityManageModule {
             case 2://类别关联
             default://商品关联
                 relationGoods(jsonObject, actCode);
-                break;
+                return result.success("关联商品成功");
         }
         return re ? result.success("关联商品成功") : result.fail("操作失败");
     }
 
+
+    /* *
+     * @description 通知前台修改商品价格
+     * @params []
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/4/15 15:20
+     * @version 1.1.1
+     **/
+    private void noticeGoodsUpd(int type, List<GoodsVO> goodsVOS) {
+        ActivityManageServer activityManageServer = new ActivityManageServer();
+        activityManageServer.registerObserver(new ProdDiscountObserver());
+        activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
+        List<String> proList = new ArrayList<>();
+        if (type == 1) {//全部商品
+            JSONObject jsonObject = new JSONObject();
+            jsonObject.put("discount", 1);
+            jsonObject.put("gcode", 0);
+            jsonObject.put("cstatus", "0");
+            jsonObject.put("rulecode", "2048");
+            proList.add(jsonObject.toJSONString());
+        } else {
+            if (goodsVOS != null && goodsVOS.size() > 0) {
+                for (GoodsVO goodsVO : goodsVOS) {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("discount", 1);
+                    jsonObject.put("gcode", goodsVO.getGcode());
+                    jsonObject.put("cstatus", "0");
+                    jsonObject.put("rulecode", "2048");
+                    proList.add(jsonObject.toJSONString());
+                }
+            }
+        }
+        activityManageServer.setProd(proList);
+    }
+
+    private Map<Integer, Long> selectGoodsByAct(long actCode) {
+        Map<Integer, Long> map = new HashMap<>();
+        String sql = "select vcode, gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 and "
+                + " actcode=" + actCode;
+        List<Object[]> queryResult = baseDao.queryNative(sql);
+        if (queryResult==null || queryResult.isEmpty()) return map;
+        long gcode = (long)queryResult.get(0)[1];
+        map.put((int)queryResult.get(0)[0], gcode);
+        return map;
+    }
 
     private boolean relationAllGoods(JsonObject jsonObject,long actCode) {
         int limitnum = jsonObject.get("limitnum").getAsInt();
@@ -598,8 +651,8 @@ public class ActivityManageModule {
         double price = jsonObject.get("price").getAsDouble() * 100;
         int result = baseDao.updateNative(INSERT_ASS_DRUG_SQL,GenIdUtil.getUnqId(),actCode, 0, 0,
                 actstock,limitnum,price);
+//        noticeGoodsUpd(1, null);
         return result > 0;
-
     }
 
     private void relationGoods(JsonObject jsonObject, long actCode) {
@@ -638,6 +691,8 @@ public class ActivityManageModule {
                 }
             }
             relationAssDrug(insertGoodsVOS, updateGoodsVOS,actCode);
+            //通知notice
+//            noticeGoodsUpd(2, goodsVOS);
         }
     }
 
