@@ -42,17 +42,24 @@ public class ProdModule {
 
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
 
-    private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
-            "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
-            "where a.unqid = d.actcode " +
-            "and a.brulecode = ? " +
-            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0";
+    private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
+                    "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
+                    "where a.unqid = d.actcode " +
+                    "and a.brulecode = ? and d.cstatus&1 = 0 " +
+                    "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
+                    "union all " +
+                    "select a.unqid,(select sku from {{?"+ DSMConst.TD_PROD_SKU + "}} where cstatus&1 =0 and spu like CONCAT('_', d.gcode,'%')) gcode,d.actstock,d.limitnum,d.price from " +
+                   "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
+                    "where a.unqid = d.actcode " +
+                    "and a.brulecode = ? and d.cstatus&1 = 0 " +
+                    "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
+                    "and length(d.gcode) < 14 and d.gcode !=0";
 
-    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
+    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
             "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
             "where a.unqid = d.actcode " +
             "and d.actcode = ? " +
-            "and a.sdate <= CURDATE() and CURDATE()<= a.edate ";
+            "and a.sdate <= CURRENT_DATE and CURRENT_DATE<= a.edate ";
 
     private static String NEWMEMBER_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
             "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
@@ -150,7 +157,6 @@ public class ProdModule {
         List<Object[]> list = BASE_DAO.queryNative(NEWMEMBER_ACT_PROD_SQL, new Object[]{mmdd});
         List<ProdVO> prodVOList = new ArrayList<>();
         if(list != null && list.size() > 0){
-            List<Long> actCodeList = new ArrayList<>();
             List<Long> skuList = new ArrayList<>();
             Map<Long,Integer> dataMap = new HashMap<>();
             for(Object[] objects : list){
@@ -216,7 +222,7 @@ public class ProdModule {
     public Result getTeamBuyMallFloor(AppContext appContext) {
 
         String mmdd = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1133, mmdd});
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1133, mmdd, 1133, mmdd});
         List<ProdVO> prodVOList = new ArrayList<>();
         JSONObject result = new JSONObject();
         if(list != null && list.size() > 0){
@@ -229,6 +235,7 @@ public class ProdModule {
                 Long gcode = Long.parseLong(objects[1].toString());
                 int actstock = Integer.parseInt(objects[2].toString());
                 int limitnum = Integer.parseInt(objects[3].toString());
+                int prize = Integer.parseInt(objects[4].toString());
 
                 skuList.add(gcode);
                 if(!actCodeList.contains(actcode)){
@@ -245,7 +252,7 @@ public class ProdModule {
                 if(actCodeList.size() >1){
                     break;
                 }
-                dataMap.put(gcode, new Integer[]{limitnum ,actstock});
+                dataMap.put(gcode, new Integer[]{limitnum ,actstock, prize});
 
             }
 
@@ -278,7 +285,7 @@ public class ProdModule {
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(1);
-                    prodVO.setStartnum(0);
+                    prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
                     prodVO.setActprize(prodVO.getVatp() * minoff / 100);
@@ -310,7 +317,7 @@ public class ProdModule {
     public Result getDiscountMallFloor(AppContext appContext) {
 
         String mmdd = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1113, mmdd});
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1113, mmdd, 1113, mmdd});
         JSONObject result = new JSONObject();
         List<ProdVO> prodVOList = new ArrayList<>();
         if(list != null && list.size() > 0){
@@ -324,6 +331,7 @@ public class ProdModule {
                 Long gcode = Long.parseLong(objects[1].toString());
                 int actstock = Integer.parseInt(objects[2].toString());
                 int limitnum = Integer.parseInt(objects[3].toString());
+                int prize = Integer.parseInt(objects[4].toString());
 
                 if(!actCodeList.contains(actcode)){
                     actCodeList.add(actcode);
@@ -341,7 +349,7 @@ public class ProdModule {
                 }
 
                 skuList.add(gcode);
-                dataMap.put(gcode, new Integer[]{limitnum ,actstock});
+                dataMap.put(gcode, new Integer[]{limitnum ,actstock,prize});
 
             }
 
@@ -354,27 +362,28 @@ public class ProdModule {
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(0);
-                    prodVO.setStartnum(1);
+                    prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
                     ProdPriceEntity priceEntity = new ProdPriceEntity();
                     priceEntity.setSku(prodVO.getSku());
                     priceEntity.setVatp(prodVO.getVatp());
                     priceEntities.add(priceEntity);
+                    prodVO.setActprize(NumUtil.div(dataMap.get(prodVO.getSku())[2], 100));
                     if(prodVO.getRulestatus() > 0) prodVO.setActprod(true);
                 }
             }
 
-            if(priceEntities != null && priceEntities.size() > 0){
-                List<ProdPriceEntity> entities = ProdActPriceUtil.getActPrizeByMutiSku(actCodeList.get(0), priceEntities);
-                for(ProdVO prodVO : prodVOList){
-                    for(ProdPriceEntity calcEntity: entities){
-                        if(prodVO.getSku() == calcEntity.getSku()){
-                            prodVO.setActprize(calcEntity.getActprice());
-                        }
-                    }
-                }
-            }
+//            if(priceEntities != null && priceEntities.size() > 0){
+//                List<ProdPriceEntity> entities = ProdActPriceUtil.getActPrizeByMutiSku(actCodeList.get(0), priceEntities);
+//                for(ProdVO prodVO : prodVOList){
+//                    for(ProdPriceEntity calcEntity: entities){
+//                        if(prodVO.getSku() == calcEntity.getSku()){
+//                            prodVO.setActprize(calcEntity.getActprice());
+//                        }
+//                    }
+//                }
+//            }
 
             GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(actCodeList, timeMap).invoke();
             String sdate = getEffectiveTimeByActCode.getSdate();
@@ -411,7 +420,9 @@ public class ProdModule {
                 Long gcode = Long.parseLong(objects[1].toString());
                 int actstock = Integer.parseInt(objects[2].toString());
                 int limitnum = Integer.parseInt(objects[3].toString());
-                dataMap.put(gcode, new Integer[]{limitnum, actstock});
+                int prize = Integer.parseInt(objects[4].toString());
+
+                dataMap.put(gcode, new Integer[]{limitnum, actstock, prize});
                 skuList.add(gcode);
             }
         }
@@ -451,7 +462,7 @@ public class ProdModule {
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(1);
-                    prodVO.setStartnum(0);
+                    prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
                     ProdPriceEntity priceEntity = new ProdPriceEntity();
@@ -460,19 +471,20 @@ public class ProdModule {
                     priceEntities.add(priceEntity);
                     if(prodVO.getRulestatus() > 0) prodVO.setActprod(true);
                     prodVO.setActcode(actCodeList.get(0));
+                    prodVO.setActprize(NumUtil.div(dataMap.get(prodVO.getSku())[2], 100));
                 }
             }
 
-            if(priceEntities != null && priceEntities.size() > 0){
-                List<ProdPriceEntity> entities = ProdActPriceUtil.getActPrizeByMutiSku(actCodeList.get(0), priceEntities);
-                for(ProdVO prodVO : prodVOList){
-                    for(ProdPriceEntity calcEntity: entities){
-                        if(prodVO.getSku() == calcEntity.getSku()){
-                            prodVO.setActprize(calcEntity.getActprice());
-                        }
-                    }
-                }
-            }
+//            if(priceEntities != null && priceEntities.size() > 0){
+//                List<ProdPriceEntity> entities = ProdActPriceUtil.getActPrizeByMutiSku(actCodeList.get(0), priceEntities);
+//                for(ProdVO prodVO : prodVOList){
+//                    for(ProdPriceEntity calcEntity: entities){
+//                        if(prodVO.getSku() == calcEntity.getSku()){
+//                            prodVO.setActprize(calcEntity.getActprice());
+//                        }
+//                    }
+//                }
+//            }
         }
 
         result.put("timeArray", array);
@@ -567,7 +579,7 @@ public class ProdModule {
             if(prodVOList != null && prodVOList.size() > 0){
                 for(ProdVO prodVO : prodVOList){
                     prodVO.setBuynum(1);
-                    prodVO.setStartnum(1);
+                    prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
                     prodVO.setActprize(prodVO.getVatp() * minoff / 100);
@@ -687,6 +699,9 @@ public class ProdModule {
                 prodList.add(prodVO);
                 int rulestatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_RULESTATUS).toString());
                 prodVO.setRulestatus(rulestatus);
+                prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+                prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+                prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
 //                System.out.println("685 line:"+prodVO.getRulestatus());
                 if(rulestatus > 0){
                     prodVO.setActprod(true);
@@ -696,8 +711,8 @@ public class ProdModule {
                     }
                     ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
                     if(prizeEntity != null){
-                        prodVO.setMinprize(prizeEntity.getMinactprize());
-                        prodVO.setMaxprize(prizeEntity.getMaxactprize());
+                        prodVO.setMinprize(NumUtil.div(prizeEntity.getMinactprize(), 100));
+                        prodVO.setMaxprize(NumUtil.div(prizeEntity.getMaxactprize(), 100));
                         prodVO.setActcode(prizeEntity.getActcode());
                     }
                 }
@@ -811,6 +826,9 @@ public class ProdModule {
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
             int rulestatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_RULESTATUS).toString());
             prodVO.setRulestatus(rulestatus);
+            prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+            prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+            prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
             try{
                 DictStore.translate(prodVO);
             }catch(Exception e){

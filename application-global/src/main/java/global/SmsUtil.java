@@ -16,7 +16,7 @@ import java.util.Date;
  * @author: lzp
  */
 
-@PropertiesFilePath("/smsapplication.properties")
+@PropertiesFilePath("/sms.properties")
 public class SmsUtil  extends ApplicationPropertiesBase {
 
     private static SmsUtil INSTANCE = new SmsUtil();
