@@ -44,7 +44,7 @@ public class CouponRevModule {
      * 查询领取的优惠券列表
      */
     private final String QUERY_COUPONREV_SQL = "select unqid,coupno,compid,DATE_FORMAT(startdate,'%Y-%m-%d') startdate," +
-            "DATE_FORMAT(startdate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
+            "DATE_FORMAT(enddate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where cstatus&1=0 ";
 
@@ -117,13 +117,13 @@ public class CouponRevModule {
 
         switch (type){
             case 0:
-                sqlBuilder.append(" and  CURRENT_DATE >= startdate and CURRENT_DATE <= enddate ");
+                sqlBuilder.append(" and  CURRENT_DATE <= enddate ");
                 break;
             case 1:
                 sqlBuilder.append(" and  cstatus & 64 > 0 ");
                 break;
             case 2:
-                sqlBuilder.append(" and  CURRENT_DATE < startdate or CURRENT_DATE > enddate ");
+                sqlBuilder.append(" and  CURRENT_DATE > enddate ");
         }
 
 
