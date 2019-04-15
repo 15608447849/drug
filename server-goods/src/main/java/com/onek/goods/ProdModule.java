@@ -8,9 +8,11 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.internal.LinkedTreeMap;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.MallFloorVO;
 import com.onek.goods.entities.ProdVO;
@@ -22,6 +24,7 @@ import com.onek.util.prod.ProdActPriceUtil;
 import com.onek.util.prod.ProdPriceEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
+import global.IceRemoteUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -288,7 +291,7 @@ public class ProdModule {
                     prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
-                    prodVO.setActprize(prodVO.getVatp() * minoff / 100);
+                    prodVO.setActprize(NumUtil.roundup(NumUtil.div(prodVO.getVatp() * minoff, 100)));
                     if(prodVO.getRulestatus() > 0) prodVO.setActprod(true);
                 }
             }
@@ -582,7 +585,7 @@ public class ProdModule {
                     prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.get(prodVO.getSku())[0]);
                     prodVO.setSurplusstock(dataMap.get(prodVO.getSku())[1]);
-                    prodVO.setActprize(prodVO.getVatp() * minoff / 100);
+                    prodVO.setActprize(NumUtil.roundup(NumUtil.div(prodVO.getVatp() * minoff, 100)));
                     if(prodVO.getRulestatus() > 0) prodVO.setActprod(true);
                     prodVO.setActcode(actCodeList.get(0));
                 }
@@ -630,10 +633,44 @@ public class ProdModule {
         return new Result().success(prodVOList);
     }
 
+    @UserPermission(ignore = false)
+    public Result guessYouLikeArea(AppContext appContext) {
+
+        UserSession userSession = appContext.getUserSession();
+        List<ProdVO> prodList = new ArrayList<>();
+        if(userSession != null && userSession.compId > 0){
+            ArrayList<LinkedTreeMap> footPrintMap = IceRemoteUtil.queryFootprint(userSession.compId);
+            List<Long> skuList = new ArrayList<>();
+            if(footPrintMap != null && footPrintMap.size() > 0){
+                for(LinkedTreeMap map : footPrintMap){
+                    skuList.add(Long.parseLong(map.get("sku").toString()));
+                }
+            }
+            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, 0, 10);
+            if (response == null || response.getHits().totalHits <= 5) {
+                SearchHits hits = response.getHits();
+                if(hits.totalHits > 0){
+                    assembleData(response, prodList);
+                }
+                List<Integer> bb1 = new ArrayList(){{
+                    add(218); add(256);
+                }};
+                Set<Integer> result1 = new HashSet<>();
+                NumUtil.arrangeAdd(512, bb1, result1);
+
+                response = ProdESUtil.searchProdWithStatusList(result1, 1,1, 100);
+            }
+
+            assembleData(response, prodList);
+
+        }
+        return new Result().success(prodList);
+    }
+
     @UserPermission(ignore = true)
     public Result getConditionByFullTextSearch(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
-        String keyword = json.has("keyword") ? json.get("keyword").getAsString() : "";
+        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         int spu = json.has("spu") ? json.get("spu").getAsInt() : 0;
         if(StringUtils.isEmpty(keyword) && spu <=0){
             return new Result().success(null);
@@ -651,7 +688,7 @@ public class ProdModule {
     @UserPermission(ignore = true)
     public Result fullTextsearchProdMall(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
-        String keyword = json.has("keyword") ? json.get("keyword").getAsString() : "";
+        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         long spu = json.has("spu") ? json.get("spu").getAsLong() : 0;
         JsonArray specArray = json.has("specArray") ? json.get("specArray").getAsJsonArray() : null;
         JsonArray manuArray = json.has("manuArray") ? json.get("manuArray").getAsJsonArray() : null;
@@ -738,7 +775,7 @@ public class ProdModule {
     @UserPermission(ignore = true)
     public Result fullTextsearchProd(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
-        String keyword = json.has("keyword") ? json.get("keyword").getAsString() : "";
+        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         JsonArray specArray = json.get("specArray").getAsJsonArray();
         JsonArray manuArray = json.get("manuArray").getAsJsonArray();
         List<String> specList = new ArrayList<>();
