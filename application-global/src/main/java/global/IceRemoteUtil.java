@@ -232,13 +232,6 @@ public class IceRemoteUtil {
         return (ArrayList<LinkedTreeMap>)data;
     }
 
-    public static void main(String[] args) {
-        ArrayList<LinkedTreeMap> list = IceRemoteUtil.queryFootprint(536862721);
-        System.out.println(list.get(0).get("compid"));
-        System.out.println(list.get(0).get("unqid"));
-        System.out.println(list.get(0).get("sku"));
-        System.out.println(list.get(0).get("data"));
-        System.out.println(list.get(0).get("time"));
-    }
+
 
 }
