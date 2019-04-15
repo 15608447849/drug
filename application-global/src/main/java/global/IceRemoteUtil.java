@@ -232,6 +232,17 @@ public class IceRemoteUtil {
         return (ArrayList<LinkedTreeMap>)data;
     }
 
-
+    public static HashMap<Object, Object> getEffectiveRule() {
+        JSONObject jsonObject = new JSONObject();
+        String result = ic.settingProxy("discountServer")
+                .settingReq("","DiscountCalcModule","getEffectiveRule")
+                .settingParam(jsonObject.toJSONString())
+                .executeSync();
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.string2Map(json);
+    }
 
 }

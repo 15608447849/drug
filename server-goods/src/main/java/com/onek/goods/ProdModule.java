@@ -697,7 +697,8 @@ public class ProdModule {
                 prodVO.setMutiact(false);
                 prodVO.setActprod(false);
                 prodList.add(prodVO);
-                int rulestatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_RULESTATUS).toString());
+                int rulestatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
+
                 prodVO.setRulestatus(rulestatus);
                 prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
                 prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
@@ -824,7 +825,7 @@ public class ProdModule {
 
             prodList.add(prodVO);
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
-            int rulestatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_RULESTATUS).toString());
+            int rulestatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(rulestatus);
             prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
             prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
