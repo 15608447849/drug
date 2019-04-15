@@ -117,13 +117,13 @@ public class CouponRevModule {
 
         switch (type){
             case 0:
-                sqlBuilder.append(" and  CURRENT_DATE >= startdate and CURRENT_DATE <= enddate ");
+                sqlBuilder.append(" and  CURRENT_DATE <= enddate ");
                 break;
             case 1:
                 sqlBuilder.append(" and  cstatus & 64 > 0 ");
                 break;
             case 2:
-                sqlBuilder.append(" and  CURRENT_DATE < startdate or CURRENT_DATE > enddate ");
+                sqlBuilder.append(" and  CURRENT_DATE > enddate ");
         }
 
 
