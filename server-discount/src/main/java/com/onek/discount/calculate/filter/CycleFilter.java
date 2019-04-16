@@ -9,6 +9,9 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * 周期过滤器。用以过滤在周期内的活动
+ */
 public class CycleFilter implements ActivitiesFilter {
     private static final int DAY = 0;
     private static final int WEEK = 1;

@@ -9,11 +9,11 @@ import java.math.BigDecimal;
 public class SubDiscountContent extends BaseDiscountContent {
     @Override
     public void sub(IDiscount discount, Ladoff ladoff) {
-        int s = getStragy(ladoff.getOfferCode());
+        int s = getStragy(ladoff.getOffercode());
 
         if (s == 1) {
-            int ladNum = ladoff.getLadNum();
-            double ladAmt = ladoff.getLadAmt();
+            int ladNum = ladoff.getLadnum();
+            double ladAmt = ladoff.getLadamt();
             int times = 0;
 
             if (ladNum > 0 && ladAmt > 0) {
@@ -25,20 +25,20 @@ public class SubDiscountContent extends BaseDiscountContent {
             }
 
             discount.addDiscounted(MathUtil
-                    .exactMul(ladoff.getOfferValue(), times)
+                    .exactMul(ladoff.getOffer(), times)
                     .doubleValue());
         } else if (s == 2) {
-            discount.addDiscounted(ladoff.getOfferValue());
+            discount.addDiscounted(ladoff.getOffer());
         }
     }
 
     @Override
     public void percent(IDiscount discount, Ladoff ladoff) {
-        int s = getStragy(ladoff.getOfferCode());
+        int s = getStragy(ladoff.getOffercode());
 
         if (s == 2) {
             double p = BigDecimal
-                        .valueOf(1 - (ladoff.getOfferValue() / 100))
+                        .valueOf(1 - (ladoff.getOffer() / 100))
                         .setScale(2, BigDecimal.ROUND_HALF_UP)
                         .doubleValue();
 

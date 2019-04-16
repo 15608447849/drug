@@ -11,11 +11,31 @@ public class Product extends AccurateMath implements IProduct {
     private long sku;
     private int nums;
     private double originalPrice;
-    private double discount;
     private double currentPrice;
+    private double discount;
     private long packageId;
     private Set<Long> activityList = new HashSet<>();
-    private List<Gift> giftList = new ArrayList<Gift>();
+//    private List<Gift> giftList = new ArrayList<Gift>();
+
+    /**
+    //商品标题
+    private String ptitle;
+
+    //规格
+    private String spec;
+
+    //厂商
+    private String verdor;
+
+    //有效期
+    private String vperiod;
+
+    //库存量
+    private int inventory;
+     */
+
+
+
 
     public long getSku() {
         return sku;
@@ -23,6 +43,12 @@ public class Product extends AccurateMath implements IProduct {
 
     public void setNums(int nums) {
         this.nums = nums;
+    }
+
+    public void autoSetCurrentPrice(double originalPrice, int nums) {
+        this.setOriginalPrice(originalPrice);
+        this.setNums(nums);
+        this.setCurrentPrice(originalPrice * nums);
     }
 
     public void setOriginalPrice(double originalPrice) {
@@ -53,13 +79,13 @@ public class Product extends AccurateMath implements IProduct {
         this.activityList = activityList;
     }
 
-    public List<Gift> getGiftList() {
-        return giftList;
-    }
-
-    public void setGiftList(List<Gift> giftList) {
-        this.giftList = giftList;
-    }
+//    public List<Gift> getGiftList() {
+//        return giftList;
+//    }
+//
+//    public void setGiftList(List<Gift> giftList) {
+//        this.giftList = giftList;
+//    }
 
     public void setSku(long sku) { this.sku = sku; }
 
@@ -71,14 +97,14 @@ public class Product extends AccurateMath implements IProduct {
         return this.nums;
     }
 
-    public void addGift(Gift gift) {
-        this.giftList.add(gift);
-    }
-
-    @Override
-    public void addGifts(List<Gift> gifts) {
-        this.giftList.addAll(gifts);
-    }
+//    public void addGift(Gift gift) {
+//        this.giftList.add(gift);
+//    }
+//
+//    @Override
+//    public void addGifts(List<Gift> gifts) {
+//        this.giftList.addAll(gifts);
+//    }
 
     public void addActivity(long activity) {
         this.activityList.add(activity);

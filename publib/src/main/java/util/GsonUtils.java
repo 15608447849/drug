@@ -1,9 +1,11 @@
 package util;
 
 import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 /**
@@ -44,6 +46,16 @@ public class GsonUtils {
             if (json==null || json.length()==0) return null;
             return new Gson().fromJson(json, cls);//对于javabean直接给出class实例
         } catch (JsonSyntaxException e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static <T,D> HashMap<T,D> string2Map(String json){
+        try {
+            if (StringUtils.isEmpty(json)) return null;
+            return jsonToJavaBean(json, new TypeToken<HashMap<T,D>>() {}.getType());
+        } catch (Exception e) {
             e.printStackTrace();
         }
         return null;

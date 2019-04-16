@@ -7,6 +7,10 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+/**
+ * 优先级过滤器。用以过滤除全局外的低优先级。
+ */
+
 public class PriorityFilter implements ActivitiesFilter {
 
     public void doFilter(List<IDiscount> activities) {

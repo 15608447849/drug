@@ -1,14 +1,17 @@
 package com.onek.discount;
 
+import com.alibaba.fastjson.JSONArray;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
+import com.onek.discount.calculate.entity.DiscountResult;
 import com.onek.discount.calculate.entity.IDiscount;
 import com.onek.discount.calculate.entity.IProduct;
 import com.onek.discount.calculate.entity.Product;
+import com.onek.discount.calculate.filter.*;
 import com.onek.discount.calculate.service.ActivityCalculateService;
 import com.onek.discount.calculate.service.ActivityFilterService;
 import com.onek.entitys.Result;
@@ -17,6 +20,7 @@ import com.onek.util.prod.ProdPriceEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.GsonUtils;
+import util.StringUtils;
 
 import java.util.*;
 
@@ -171,9 +175,59 @@ public class DiscountCalcModule {
         return new Result().success(GsonUtils.javaBeanToJson(entity));
     }
 
+    public Result getProdsPrice(AppContext appContext) {
+        String json = appContext.param.json;
+
+        if (StringUtils.isEmpty(json)) {
+            return new Result().fail("参数为空");
+        }
+
+        List<Product> tempProds = JSONArray.parseArray(json, Product.class);
+//        ProdEntity pes;
+//        for (Product prod : tempProds) {
+//            pes = ProdInfoStore.getProdBySku(prod.getSKU());
+//            prod.autoSetCurrentPrice(pes.getVatp(), prod.getNums());
+//        }
+
+        List<IDiscount> activityList =
+                new ActivityFilterService(
+                        new ActivitiesFilter[] {
+                            new TypeFilter(),
+                            new CycleFilter(),
+                            new QualFilter(appContext.getUserSession().compId),
+                            new PriorityFilter(),
+                        }).getCurrentActivities(tempProds);
+
+        TreeMap<Integer, List<IDiscount>> pri_act =
+                new TreeMap<>((o1, o2) -> o2 - o1);
+
+        int priority;
+        List<IDiscount> tempDiscount;
+        for (IDiscount discount : activityList) {
+            priority = discount.getPriority();
+
+            tempDiscount = pri_act.get(priority);
+
+            if (tempDiscount == null) {
+                tempDiscount = new ArrayList<>();
+                pri_act.put(priority, tempDiscount);
+            }
+
+            tempDiscount.add(discount);
+        }
+
+
+        for (List<IDiscount> discounts : pri_act.values()) {
+            new ActivityCalculateService().calculate(discounts);
+        }
+
+        DiscountResult result = new DiscountResult(activityList);
+
+        return new Result().success(result);
+    }
+
     @UserPermission(ignore = true)
     public Result getEffectiveRule(AppContext appContext) {
-
         List<Object[]> allBruleList = BASE_DAO.queryNative(QUERY_ALL_PROD_BRULE, new Object[]{});
         Map<Long, Integer> prodMap = new HashMap<>();
         if(allBruleList != null && allBruleList.size() > 0){

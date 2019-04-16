@@ -11,11 +11,11 @@ public class GiftDiscountContent extends BaseDiscountContent {
 
     @Override
     public void sub(IDiscount discount, Ladoff ladoff) {
-        int s = getStragy(ladoff.getOfferCode());
+        int s = getStragy(ladoff.getOffercode());
 
         if (s == 1) {
-            int ladNum = ladoff.getLadNum();
-            double ladAmt = ladoff.getLadAmt();
+            int ladNum = ladoff.getLadnum();
+            double ladAmt = ladoff.getLadamt();
             int times = 0;
 
             if (ladNum > 0 && ladAmt > 0) {
@@ -26,27 +26,19 @@ public class GiftDiscountContent extends BaseDiscountContent {
                 times = (int) (discount.getCurrentPriceTotal() / ladAmt);
             }
 
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGift(Gift.getSubCoupon(ladoff.getOfferValue(), times));
-            }
+            discount.addGift(Gift.getSubCoupon(ladoff.getOffer(), times));
         } else if (s == 2) {
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGift(Gift.getSubCoupon(ladoff.getOfferValue(), 1));
-            }
+            discount.addGift(Gift.getSubCoupon(ladoff.getOffer(), 1));
         }
     }
 
     @Override
     public void percent(IDiscount discount, Ladoff ladoff) {
-        int s = getStragy(ladoff.getOfferCode());
+        int s = getStragy(ladoff.getOffercode());
 
         if (s == 1) {
-            int ladNum = ladoff.getLadNum();
-            double ladAmt = ladoff.getLadAmt();
+            int ladNum = ladoff.getLadnum();
+            double ladAmt = ladoff.getLadamt();
             int times = 0;
 
             if (ladNum > 0 && ladAmt > 0) {
@@ -57,36 +49,24 @@ public class GiftDiscountContent extends BaseDiscountContent {
                 times = (int) (discount.getCurrentPriceTotal() / ladAmt);
             }
 
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGift(Gift.getPercentCoupon(ladoff.getOfferValue(), times));
-            }
+            discount.addGift(Gift.getPercentCoupon(ladoff.getOffer(), times));
         } else if (s == 2) {
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGift(Gift.getPercentCoupon(ladoff.getOfferValue(), 1));
-            }
+            discount.addGift(Gift.getPercentCoupon(ladoff.getOffer(), 1));
         }
     }
 
     @Override
     public void shipping(IDiscount discount, Ladoff ladoff) {
-        List<IProduct> prods = discount.getProductList();
-
-        for (IProduct prod : prods) {
-            prod.addGift(Gift.getFreeShipping(1));
-        }
+        discount.addGift(Gift.getFreeShipping(1));
     }
 
     @Override
     public void gift(IDiscount discount, Ladoff ladoff) {
-        int s = getStragy(ladoff.getOfferCode());
+        int s = getStragy(ladoff.getOffercode());
 
         if (s == 1) {
-            int ladNum = ladoff.getLadNum();
-            double ladAmt = ladoff.getLadAmt();
+            int ladNum = ladoff.getLadnum();
+            double ladAmt = ladoff.getLadamt();
             int times = 0;
 
             if (ladNum > 0 && ladAmt > 0) {
@@ -97,21 +77,14 @@ public class GiftDiscountContent extends BaseDiscountContent {
                 times = (int) (discount.getCurrentPriceTotal() / ladAmt);
             }
 
-            List<IProduct> prods = discount.getProductList();
             List<Gift> gifts = ladoff.getGiftList();
             for (Gift gift : gifts) {
                 gift.setNums(times);
             }
 
-            for (IProduct prod : prods) {
-                prod.addGifts(gifts);
-            }
+            discount.addGifts(gifts);
         } else if (s == 2) {
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGifts(ladoff.getGiftList());
-            }
+            discount.addGifts(ladoff.getGiftList());
         }
     }
 }

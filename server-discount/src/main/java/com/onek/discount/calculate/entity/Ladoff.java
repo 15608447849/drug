@@ -6,19 +6,19 @@ public class Ladoff {
     private int oid;
 
     //阶梯码
-    private long ladId;
+    private long unqid;
 
     //金额阶梯值
-    private double ladAmt;
+    private double ladamt;
 
     //数量阶梯值
-    private int ladNum;
+    private int ladnum;
 
     //优惠码
-    private int offerCode;
+    private int offercode;
 
     //优惠值
-    private double offerValue;
+    private double offer;
 
     // 综合状态
     private int cstatus;
@@ -26,52 +26,44 @@ public class Ladoff {
     // 礼物列表
     private List<Gift> giftList;
 
-    public int getOid() {
-        return oid;
+    public long getUnqid() {
+        return unqid;
     }
 
-    public void setOid(int oid) {
-        this.oid = oid;
+    public void setUnqid(long unqid) {
+        this.unqid = unqid;
     }
 
-    public long getLadId() {
-        return ladId;
+    public double getLadamt() {
+        return ladamt;
     }
 
-    public void setLadId(long ladId) {
-        this.ladId = ladId;
+    public void setLadamt(double ladamt) {
+        this.ladamt = ladamt;
     }
 
-    public double getLadAmt() {
-        return ladAmt;
+    public int getLadnum() {
+        return ladnum;
     }
 
-    public void setLadAmt(double ladAmt) {
-        this.ladAmt = ladAmt;
+    public void setLadnum(int ladnum) {
+        this.ladnum = ladnum;
     }
 
-    public int getLadNum() {
-        return ladNum;
+    public int getOffercode() {
+        return offercode;
     }
 
-    public void setLadNum(int ladNum) {
-        this.ladNum = ladNum;
+    public void setOffercode(int offercode) {
+        this.offercode = offercode;
     }
 
-    public int getOfferCode() {
-        return offerCode;
+    public double getOffer() {
+        return offer;
     }
 
-    public void setOfferCode(int offerCode) {
-        this.offerCode = offerCode;
-    }
-
-    public double getOfferValue() {
-        return offerValue;
-    }
-
-    public void setOfferValue(double offerValue) {
-        this.offerValue = offerValue;
+    public void setOffer(double offer) {
+        this.offer = offer;
     }
 
     public int getCstatus() {

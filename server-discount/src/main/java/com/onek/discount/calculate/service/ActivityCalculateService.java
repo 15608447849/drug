@@ -11,9 +11,12 @@ import java.util.List;
 
 public class ActivityCalculateService extends BaseDiscountCalculateService {
     private static final String GET_LADOFF =
-            " SELECT * "
-                    + " FROM {{?" + DSMConst.TD_PROM_LADOFF + "}} "
-                    + " WHERE cstatus&1 = 0 AND offercode REGEXP ? ";
+            " SELECT lad.* "
+            + " FROM {{?" + DSMConst.TD_PROM_LADOFF + "}} lad"
+            + " INNER JOIN {{?" + DSMConst.TD_PROM_RELA + "}} rela "
+            + " ON lad.cstatus&1 = 0 AND rela.cstatus&1 = 0 "
+            + " AND lad.unqid = rela.ladid AND rela.actcode = ? "
+            + " WHERE 1 = 1 ";
 
     private static final String GET_GIFT =
             " SELECT * "
@@ -42,18 +45,18 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
 
 
     @Override
-    public Ladoff[] getLadoffs(long brule) {
+    public Ladoff[] getLadoffs(long actCode) {
         List<Object[]> ladResult =
-                BaseDAO.getBaseDAO().queryNative(GET_LADOFF, "^" + brule + "[0-9]{3}$");
+                BaseDAO.getBaseDAO().queryNative(GET_LADOFF, actCode);
 
         Ladoff[] lapArray = new Ladoff[ladResult.size()];
 
         BaseDAO.getBaseDAO().convToEntity(ladResult, lapArray, Ladoff.class);
 
         for (Ladoff ladoff : lapArray) {
-            ladoff.setLadAmt(ladoff.getLadAmt() / 100);
-            ladoff.setOfferValue(ladoff.getOfferValue() / 100);
-            ladoff.setGiftList(getGifts(ladoff.getOfferCode()));
+            ladoff.setLadamt(ladoff.getLadamt() / 100);
+            ladoff.setOffer(ladoff.getOffer() / 100);
+            ladoff.setGiftList(getGifts(ladoff.getOffercode()));
         }
 
         return lapArray;
