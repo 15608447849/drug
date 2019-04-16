@@ -98,7 +98,9 @@ public interface DSMConst extends UDAConst {
     public final static int TB_AREA_VILLAGES = 35;
     public final static int TB_PROM_COURCD = 36;
     public final static int TD_PROM_RELA = 37;
-
+    public final static int TD_MEMBER = 38;
+    public final static int TD_SIGNIN = 39;
+    public final static int TD_INTEGRAL_DETAIL = 40;
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
     // 索引必须同_DB_TABLES里的索引对应
@@ -110,8 +112,8 @@ public interface DSMConst extends UDAConst {
             0, 0, 0, 0, 0,//20-24
             0, 0, 1, 0, 3,//25-29
             0, 3, 3, 0, 0,//30-34
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 1,//35-39
+            1, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
