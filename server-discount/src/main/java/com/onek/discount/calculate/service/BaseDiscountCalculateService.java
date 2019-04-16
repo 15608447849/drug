@@ -42,9 +42,9 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
     }*/
 
     protected void discountHandler(IDiscount discount) {
-        long bRule = discount.getBRule();
+        long actNo = discount.getActNo();
 
-        Ladoff[] ladoff = getLadoffs(bRule);
+        Ladoff[] ladoff = getLadoffs(actNo);
 
         if (ladoff == null || ladoff.length == 0) {
             return;
@@ -71,11 +71,13 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             return;
         }
 
-        int index = Character.digit(String.valueOf(bRule).charAt(1), 10) - 1;
+        long brule = discount.getBRule();
+
+        int index = Character.digit(String.valueOf(brule).charAt(1), 10) - 1;
 
         IDiscountContent contents = I_DISCOUNT_CONTENTS[index];
 
-        int way = Character.digit(String.valueOf(bRule).charAt(2), 10);
+        int way = Character.digit(String.valueOf(brule).charAt(2), 10);
 
         switch (way) {
             case 1 :
@@ -120,6 +122,6 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
         return null;
     }
 
-    protected abstract Ladoff[] getLadoffs(long brule);
+    protected abstract Ladoff[] getLadoffs(long actCode);
 }
 

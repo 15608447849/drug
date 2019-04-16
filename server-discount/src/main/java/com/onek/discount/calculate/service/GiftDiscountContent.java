@@ -26,17 +26,9 @@ public class GiftDiscountContent extends BaseDiscountContent {
                 times = (int) (discount.getCurrentPriceTotal() / ladAmt);
             }
 
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGift(Gift.getSubCoupon(ladoff.getOffer(), times));
-            }
+            discount.addGift(Gift.getSubCoupon(ladoff.getOffer(), times));
         } else if (s == 2) {
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGift(Gift.getSubCoupon(ladoff.getOffer(), 1));
-            }
+            discount.addGift(Gift.getSubCoupon(ladoff.getOffer(), 1));
         }
     }
 
@@ -57,27 +49,15 @@ public class GiftDiscountContent extends BaseDiscountContent {
                 times = (int) (discount.getCurrentPriceTotal() / ladAmt);
             }
 
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGift(Gift.getPercentCoupon(ladoff.getOffer(), times));
-            }
+            discount.addGift(Gift.getPercentCoupon(ladoff.getOffer(), times));
         } else if (s == 2) {
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGift(Gift.getPercentCoupon(ladoff.getOffer(), 1));
-            }
+            discount.addGift(Gift.getPercentCoupon(ladoff.getOffer(), 1));
         }
     }
 
     @Override
     public void shipping(IDiscount discount, Ladoff ladoff) {
-        List<IProduct> prods = discount.getProductList();
-
-        for (IProduct prod : prods) {
-            prod.addGift(Gift.getFreeShipping(1));
-        }
+        discount.addGift(Gift.getFreeShipping(1));
     }
 
     @Override
@@ -97,21 +77,14 @@ public class GiftDiscountContent extends BaseDiscountContent {
                 times = (int) (discount.getCurrentPriceTotal() / ladAmt);
             }
 
-            List<IProduct> prods = discount.getProductList();
             List<Gift> gifts = ladoff.getGiftList();
             for (Gift gift : gifts) {
                 gift.setNums(times);
             }
 
-            for (IProduct prod : prods) {
-                prod.addGifts(gifts);
-            }
+            discount.addGifts(gifts);
         } else if (s == 2) {
-            List<IProduct> prods = discount.getProductList();
-
-            for (IProduct prod : prods) {
-                prod.addGifts(ladoff.getGiftList());
-            }
+            discount.addGifts(ladoff.getGiftList());
         }
     }
 }

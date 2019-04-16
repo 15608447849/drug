@@ -35,6 +35,8 @@ public class Activity extends AccurateMath implements IDiscount {
     private boolean freeShipping;
     private Map<Long, Integer> SKU_LIMITS = new HashMap<>();
 
+    private List<Gift> giftList = new ArrayList<Gift>();
+
     public Activity() {
         this.productList = new ArrayList<>();
     }
@@ -173,6 +175,16 @@ public class Activity extends AccurateMath implements IDiscount {
     @Override
     public String getEndTime() {
         return this.eTime;
+    }
+
+    @Override
+    public void addGift(Gift gift) {
+        giftList.add(gift);
+    }
+
+    @Override
+    public void addGifts(List<Gift> gifts) {
+        giftList.addAll(gifts);
     }
 
     public String getsTime() {

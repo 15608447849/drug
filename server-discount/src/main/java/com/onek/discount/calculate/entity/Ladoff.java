@@ -3,6 +3,8 @@ package com.onek.discount.calculate.entity;
 import java.util.List;
 
 public class Ladoff {
+    private int oid;
+
     //阶梯码
     private long unqid;
 

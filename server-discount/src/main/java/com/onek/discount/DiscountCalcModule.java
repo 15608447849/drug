@@ -228,7 +228,6 @@ public class DiscountCalcModule {
 
     @UserPermission(ignore = true)
     public Result getEffectiveRule(AppContext appContext) {
-
         List<Object[]> allBruleList = BASE_DAO.queryNative(QUERY_ALL_PROD_BRULE, new Object[]{});
         Map<Long, Integer> prodMap = new HashMap<>();
         if(allBruleList != null && allBruleList.size() > 0){

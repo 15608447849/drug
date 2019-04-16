@@ -29,6 +29,9 @@ public interface IDiscount {
     String getStartTime();
     String getEndTime();
 
+    void addGift(Gift gift);
+    void addGifts(List<Gift> gifts);
+
     default void updateAllPrices() {
         for (IProduct product: getProductList()) {
             product.updateCurrentPrice();

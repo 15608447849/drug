@@ -10,7 +10,7 @@ public class CouponCalculateService extends BaseDiscountCalculateService {
     }
 
     @Override
-    protected Ladoff[] getLadoffs(long brule) {
+    protected Ladoff[] getLadoffs(long actCode) {
         return this.ladoff;
     }
 }

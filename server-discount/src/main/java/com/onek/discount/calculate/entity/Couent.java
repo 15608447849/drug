@@ -230,6 +230,16 @@ public class Couent implements IDiscount {
     }
 
     @Override
+    public void addGift(Gift gift) {
+
+    }
+
+    @Override
+    public void addGifts(List<Gift> gifts) {
+
+    }
+
+    @Override
     public boolean equals(Object o) {
         if (this == o) return true;
         if (o == null || getClass() != o.getClass()) return false;
