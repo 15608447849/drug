@@ -194,7 +194,7 @@ public class DiscountCalcModule {
                         new ActivitiesFilter[] {
                             new TypeFilter(),
                             new CycleFilter(),
-                            new QualFilter(appContext.getUserSession()),
+                            new QualFilter(appContext.getUserSession().compId),
                             new PriorityFilter(),
                         }).getCurrentActivities(tempProds);
 

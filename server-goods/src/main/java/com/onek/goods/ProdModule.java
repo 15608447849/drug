@@ -77,7 +77,10 @@ public class ProdModule {
             "and brulecode like '112%' " +
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0";
 
-    private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from {{?" + DSMConst.TD_PROM_LADOFF + "}} where offercode like '1133%'";
+    private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
+            "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ?";
+
+            //"select ladamt,ladnum,offer from {{?" + DSMConst.TD_PROM_LADOFF + "}} where offercode like '1133%'";
 
     private static String PROM_TIME_SQL = "select sdate,edate from {{?"+ DSMConst.TD_PROM_TIME +"}} where cstatus&1=0 and actcode = ?";
 
@@ -259,7 +262,7 @@ public class ProdModule {
 
             }
 
-            List<Object[]> ladoffList =BASE_DAO.queryNative(TEAM_BUY_LADOFF_SQL, new Object[]{});
+            List<Object[]> ladoffList =BASE_DAO.queryNative(TEAM_BUY_LADOFF_SQL, new Object[]{actCodeList.get(0)});
             int minoff = 100;
             JSONArray ladoffArray = new JSONArray();
             if(ladoffList != null && ladoffList.size() > 0){
@@ -546,7 +549,7 @@ public class ProdModule {
         }
         timeMap.put(actcode, times);
 
-        List<Object[]> ladoffList =BASE_DAO.queryNative(TEAM_BUY_LADOFF_SQL, new Object[]{});
+        List<Object[]> ladoffList =BASE_DAO.queryNative(TEAM_BUY_LADOFF_SQL, new Object[]{actcode});
         int minoff = 100;
         JSONArray ladoffArray = new JSONArray();
         if(ladoffList != null && ladoffList.size() > 0){

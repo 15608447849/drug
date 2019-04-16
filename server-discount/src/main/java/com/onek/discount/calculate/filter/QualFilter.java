@@ -16,15 +16,18 @@ public class QualFilter implements ActivitiesFilter {
     private static final int ORDER_NUMS = 1;
     private static final int LV = 2;
     private static final int AREA = 3;
+    private final int compid;
 
-    private UserSession userSession;
-
-    public QualFilter(UserSession userSession) {
-        this.userSession = userSession;
+    public QualFilter(int compid) {
+        this.compid = compid;
     }
 
     @Override
     public void doFilter(List<IDiscount> activities) {
+        if (this.compid <= 0) {
+            return ;
+        }
+
         Iterator<IDiscount> it = activities.iterator();
         IDiscount activity;
         while (it.hasNext()) {
@@ -40,8 +43,7 @@ public class QualFilter implements ActivitiesFilter {
         boolean result = true;
         int qualCode = activity.getQualcode();
         int qualValue = activity.getQualvalue();
-//        int uid = userSession.userId;
-//        int cid = userSession.compId;
+
         switch (qualCode) {
             case ALL:
                 result = false;
