@@ -620,15 +620,17 @@ public class ActivityManageModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int type = jsonObject.get("type").getAsInt();//1:全部商品  3部分商品  2 部分类别
         long actCode = jsonObject.get("actCode").getAsLong();
+        int ruleCode = jsonObject.get("rulecode").getAsInt();
         switch (type) {
             case 1://全部商品
-                re = relationAllGoods(jsonObject, actCode);
+                re = relationAllGoods(jsonObject, actCode, ruleCode);
                 break;
             case 2://类别关联
             default://商品关联
                 int code;
-                Map<Integer, Long> map = selectGoodsByAct(actCode);
-                if (map.size() == 1 && map.containsKey(0)) {
+                Map<Long, Integer> map = selectGoodsByAct(actCode);
+                System.out.println("-----------map----------- " + map.size());
+                if (map.size() == 1 && map.get(0) == 0) {
                     String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1,"
                             + "vcode=? where cstatus&1=0 and actcode=? and vcode=?";
                     code = baseDao.updateNative(updateSQL, map.get(0)+1, actCode, map.get(0));
@@ -636,7 +638,7 @@ public class ActivityManageModule {
                         return result.fail("操作失败");
                     }
                 }
-                relationGoods(jsonObject, actCode);
+                relationGoods(jsonObject, actCode, ruleCode);
                 return result.success("关联商品成功");
         }
         return re ? result.success("关联商品成功") : result.fail("操作失败");
@@ -652,7 +654,7 @@ public class ActivityManageModule {
      * @time  2019/4/15 15:20
      * @version 1.1.1
      **/
-    private void noticeGoodsUpd(int type, List<GoodsVO> goodsVOS) {
+    private void noticeGoodsUpd(int type, List<GoodsVO> goodsVOS, int rulecode) {
         ActivityManageServer activityManageServer = new ActivityManageServer();
         activityManageServer.registerObserver(new ProdDiscountObserver());
         activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
@@ -662,7 +664,7 @@ public class ActivityManageModule {
             jsonObject.put("discount", 1);
             jsonObject.put("gcode", 0);
             jsonObject.put("cstatus", "0");
-            jsonObject.put("rulecode", "2048");
+            jsonObject.put("rulecode", rulecode);
             proList.add(jsonObject.toJSONString());
         } else {
             if (goodsVOS != null && goodsVOS.size() > 0) {
@@ -671,7 +673,7 @@ public class ActivityManageModule {
                     jsonObject.put("discount", 1);
                     jsonObject.put("gcode", goodsVO.getGcode());
                     jsonObject.put("cstatus", "0");
-                    jsonObject.put("rulecode", "2048");
+                    jsonObject.put("rulecode", rulecode);
                     proList.add(jsonObject.toJSONString());
                 }
             }
@@ -679,25 +681,25 @@ public class ActivityManageModule {
         activityManageServer.setProd(proList);
     }
 
-    private Map<Integer, Long> selectGoodsByAct(long actCode) {
-        Map<Integer, Long> map = new HashMap<>();
+    private Map<Long, Integer> selectGoodsByAct(long actCode) {
+        Map<Long, Integer> map = new HashMap<>();
         String sql = "select vcode, gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 and "
                 + " actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(sql);
         if (queryResult==null || queryResult.isEmpty()) return map;
         for (Object[] aQueryResult : queryResult) {
             long gcode = (long) aQueryResult[1];
-            map.put((int) aQueryResult[0], gcode);
+            map.put(gcode, (int) aQueryResult[0]);
         }
         return map;
     }
 
-    private boolean relationAllGoods(JsonObject jsonObject,long actCode) {
+    private boolean relationAllGoods(JsonObject jsonObject,long actCode, int rulecode) {
         int result;
         int limitnum = jsonObject.get("limitnum").getAsInt();
         int actstock = jsonObject.get("actstock").getAsInt();
         double price = jsonObject.get("price").getAsDouble() * 100;
-        Map<Integer, Long> map = selectGoodsByAct(actCode);
+        Map<Long, Integer> map = selectGoodsByAct(actCode);
         if (map.size() == 0) {
             result = baseDao.updateNative(INSERT_ASS_DRUG_SQL, GenIdUtil.getUnqId(), actCode, 0, 0,
                     actstock, limitnum, price);
@@ -706,11 +708,11 @@ public class ActivityManageModule {
                     + "price=?, vcode=? where cstatus&1=0 and actcode=? and vcode=?";
             result = baseDao.updateNative(updateSQL, actstock, limitnum, 0, map.get(0)+1,actCode, map.get(0));
         }
-//        noticeGoodsUpd(1, null);
+        noticeGoodsUpd(1, null, rulecode);
         return result > 0;
     }
 
-    private void relationGoods(JsonObject jsonObject, long actCode) {
+    private void relationGoods(JsonObject jsonObject, long actCode, int rulecode) {
         //关联活动商品
         JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
 //        JsonArray classArr = jsonObject.get("goodsArr").getAsJsonArray();
@@ -749,7 +751,7 @@ public class ActivityManageModule {
             }
             relationAssDrug(insertGoodsVOS, updateGoodsVOS,actCode);
             //通知notice
-//            noticeGoodsUpd(2, goodsVOS);
+            noticeGoodsUpd(2, goodsVOS, rulecode);
         }
     }
 
