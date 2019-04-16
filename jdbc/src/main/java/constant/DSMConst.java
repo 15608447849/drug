@@ -54,6 +54,9 @@ public interface DSMConst extends UDAConst {
             {"tb_area_villages"}, //35 村表
             {"td_prom_courcd"}, //36 优惠券领取记录表
             {"td_prom_rela"}, //37 优惠券领取记录表
+            {"td_tran_order"}, //38订单表
+            {"td_tran_goods"}, //39 订单商品表
+
     };
 
 
@@ -98,6 +101,8 @@ public interface DSMConst extends UDAConst {
     public final static int TB_AREA_VILLAGES = 35;
     public final static int TB_PROM_COURCD = 36;
     public final static int TD_PROM_RELA = 37;
+    public final static int TD_TRAN_ORDER = 38;
+    public final static int TD_TRAN_GOODS = 39;
 
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
@@ -110,7 +115,7 @@ public interface DSMConst extends UDAConst {
             0, 0, 0, 0, 0,//20-24
             0, 0, 1, 0, 3,//25-29
             0, 3, 3, 0, 0,//30-34
-            0, 0, 0, 0, 0,
+            0, 0, 0, 1, 1,//35-39
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
