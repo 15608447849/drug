@@ -562,8 +562,9 @@ public class ActivityManageModule {
 
 
     private List<LadderVO> getLadder(ActivityVO activityVO, long actCode) {
-        String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer,a.cstatus from {{?" + DSMConst.TD_PROM_RELA
-                + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
+        String selectSQL = "select a.unqid,ladamt,ladnum,b.offercode,offer,a.cstatus, assgiftno from {{?" + DSMConst.TD_PROM_RELA
+                + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid left join {{?"
+                + DSMConst.TD_PROM_ASSGIFT + "}} c on b.offercode=c.offercode and c.cstatus&1=0 where a.cstatus&1=0 "
                 + " and a.actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         LadderVO[] ladderVOS = new LadderVO[queryResult.size()];
