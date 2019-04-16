@@ -43,8 +43,11 @@ public class SynDbLog {
     public static boolean isBaseSqlError(Throwable e){
         if(e instanceof SQLException){
             SQLException sqlException = (SQLException) e;
+            System.out.println("SQL异常编号："+sqlException.getSQLState());
             if(sqlException.getSQLState() != null
-                    && ((sqlException.getSQLState()).startsWith("22")
+                    && ((sqlException.getSQLState()).startsWith("S0")
+                    || (sqlException.getSQLState()).startsWith("S1")
+                    ||(sqlException.getSQLState()).startsWith("22")
                     || (sqlException.getSQLState()).startsWith("23")
                     ||(sqlException.getSQLState()).startsWith("42"))){
                 LogUtil.getDefaultLogger().debug("SQL异常！");
