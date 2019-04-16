@@ -20,6 +20,9 @@ public class ProdActPriceUtil {
     private static transient HashMap<Long, Long> versionIntervalMap = new HashMap<>();
     private static HashMap<Long,  ProdPriceEntity> prizeIntervalMap = new HashMap<>();
 
+    private static transient HashMap<Long, Long> versionRuleMap = new HashMap<>();
+    private static HashMap<Long,  Integer> prodRuleMap = new HashMap<>();
+
     public static double getActPrizeBySku(long actcode,long sku,double vatp){
         RedisStringProvide rs = RedisUtil.getStringProvide();
         long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
@@ -97,6 +100,31 @@ public class ProdActPriceUtil {
         }
 
         return prizeIntervalMap.get(sku);
+    }
+
+    public static int getRuleBySku(long sku){
+        RedisStringProvide rs = RedisUtil.getStringProvide();
+        long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
+        Long subVersion = versionRuleMap.containsKey(sku) ? versionRuleMap.get(sku) : 0L;
+        if(v > subVersion || subVersion == 0){
+            HashMap<Object, Object> map = IceRemoteUtil.getEffectiveRule();
+            if(map != null && map.size() > 0){
+                for(Object key : map.keySet()){
+                    if(key != null){
+                        prodRuleMap.put(Long.parseLong(key.toString()), ((int)Double.parseDouble(map.get(key).toString())));
+                        versionRuleMap.put(Long.parseLong(key.toString()), v);
+                    }
+                }
+            }
+
+        }
+
+        if(!prodRuleMap.containsKey(sku)){
+            prodRuleMap.put(sku, 0);
+            versionRuleMap.put(sku, v);
+        }
+
+        return prodRuleMap.get(sku);
     }
 
 }

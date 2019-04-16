@@ -158,8 +158,6 @@ public class CouponManageModule {
                     + " SET cstatus = cstatus | " + CSTATUS.DELETE
                     + " WHERE unqid = ? ";
 
-    private static final String DEL_ASS_GIFT_SQL = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and offercode=?";
 
 
     /**
@@ -584,6 +582,10 @@ public class CouponManageModule {
         List<Object[]> updateDrugParams = new ArrayList<>();
         String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, vcode=?, price=? "
                 + " where cstatus&1=0 and gcode=? and vcode=? and actcode=?";
+
+        String delSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
+                + " where cstatus&1=0 and gcode= 0 and actcode=?";
+
         for (GoodsVO insGoodsVO : insertDrugVOS) {
             insertDrugParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, insGoodsVO.getGcode(),
                     insGoodsVO.getMenucode(),insGoodsVO.getActstock(),insGoodsVO.getLimitnum(),
@@ -594,6 +596,7 @@ public class CouponManageModule {
                     updateGoodsVO.getVcode()+1, updateGoodsVO.getPrice()*100,updateGoodsVO.getGcode(),
                     updateGoodsVO.getVcode(),actCode});
         }
+        baseDao.updateNative(delSql,actCode);
         baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, insertDrugParams, insertDrugVOS.size());
         baseDao.updateBatchNative(updateSql, updateDrugParams, updDrugVOS.size());
     }
@@ -1039,8 +1042,14 @@ public class CouponManageModule {
                 new Object[]{rcdid,couponVO.getCoupno(),
                 couponVO.getCompid(),0});
         if(ret > 0){
-          //  int oret = 0;
-            int oret = IceRemoteUtil.collectCoupons(couponVO.getCompid(),json);
+            int oret = 0;
+            try{
+                oret = IceRemoteUtil.collectCoupons(couponVO.getCompid(),json);
+            }catch (Exception e){
+                baseDao.updateNative(DEL_COURCD,rcdid);
+                e.printStackTrace();
+            }
+
             if(oret > 0){
                 baseDao.updateNative(UPDATE_COUPON_STOCK,
                         new Object[]{couponVO.getCoupno()});
