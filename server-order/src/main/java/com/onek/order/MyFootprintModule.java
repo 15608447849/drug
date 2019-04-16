@@ -23,7 +23,7 @@ public class MyFootprintModule {
 
 
     private static class Param {
-        int compid;
+        String compid;
         String unqid; //
         String sku;
         String data;//
@@ -86,7 +86,9 @@ public class MyFootprintModule {
         try { compId = appContext.getUserSession().compId; } catch (Exception ignored) { }
         String json = appContext.param.json;
         Param p = GsonUtils.jsonToJavaBean(json, Param.class);
-        if (p!=null && p.compid > 0) compId = p.compid;
+        if (p!=null && !StringUtils.isEmpty(p.compid )) {
+            try { compId = Integer.parseInt(p.compid); } catch (NumberFormatException ignored) { }
+        }
         String selectSql = "SELECT unqid,sku,browsedate,browsetime " +
                 "FROM {{?"+TD_FOOTPRINT+"}} " +
                 "WHERE compid = ?";
@@ -97,6 +99,7 @@ public class MyFootprintModule {
         Param data;
         for (Object[] arr: lines){
             data = new Param();
+            data.compid = compId+"";
             data.unqid = StringUtils.checkObjectNull(arr[0],"");
             data.sku = StringUtils.checkObjectNull(arr[1],"");
             data.data = StringUtils.checkObjectNull(arr[2],"");
