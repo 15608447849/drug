@@ -11,7 +11,6 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.lang.reflect.Field;
 import java.util.HashMap;
-import java.util.Map;
 import java.util.Properties;
 
 /**
@@ -38,51 +37,31 @@ public abstract class ApplicationPropertiesBase {
 
     public ApplicationPropertiesBase() {
         try {
-            String filePath = getPropertiesFilePath();
-            InputStream in = readPathProperties(filePath);
-            if (in==null) throw new Exception("配置文件获取失败: "+ filePath);
+            String filePath = getPropertiesFilePath(this.getClass());
+            InputStream in = readPathProperties(this.getClass(),filePath);
+            if (in==null) throw new RuntimeException("配置文件获取失败: "+ filePath);
             properties.clear();
             properties.load(in);
             in.close();
             autoReadPropertiesMapToField();
             initialization();
         } catch (Exception e) {
-            throw new RuntimeException(e);
+           e.printStackTrace();
         }
     }
-
-    private InputStream readPathProperties(String filePath) throws FileNotFoundException {
+    //读取配置文件
+    private static InputStream readPathProperties(Class clazz,String filePath) throws FileNotFoundException {
         //优先从外部配置文件获取
-        String dirPath = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
+        String dirPath = new File(clazz.getProtectionDomain().getCodeSource().getLocation().getPath()).getParent();
         File file = new File(dirPath+"/resources"+filePath);
         if (file.exists()){
-            //try { System.out.println("配置文件: "+ file.getCanonicalPath()); } catch (IOException ignored) {  }
             return new FileInputStream(file);
         }
-        //在获取当前jar包下是否存在
-        /*URL url = this.getClass().getResource(filePath);
-        if (url == null) {
-            return this.getClass().getResourceAsStream( filePath );
-        }
-        System.out.println("jar默认配置文件: "+ url.getFile());
-        try {
-            return url.openStream();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-//        file = new File(url.getFile());
-//        if (file.exists()){
-//            try { System.out.println("存在配置文件: "+ file.getCanonicalPath()); } catch (IOException ignored) {  }
-//        }
-
-        return this.getClass().getResourceAsStream( filePath );
+        return clazz.getResourceAsStream( filePath );
     }
 
-
-
-
-    private String getPropertiesFilePath() {
-        PropertiesFilePath annotation = this.getClass().getAnnotation(PropertiesFilePath.class);
+    private static String getPropertiesFilePath(Class clazz) {
+        PropertiesFilePath annotation = (PropertiesFilePath) clazz.getAnnotation(PropertiesFilePath.class);
         return annotation.value();
     }
 
@@ -100,7 +79,6 @@ public abstract class ApplicationPropertiesBase {
                 String key = name.value();
                 String value = properties.getProperty(key);
                 if (value==null || value.length()==0) {
-//                    System.err.println("找不到属性名:"+key);
                     continue;
                 }
                 //获取属性类型
@@ -117,9 +95,38 @@ public abstract class ApplicationPropertiesBase {
         }
     }
 
+    public static void initStaticFields(Class clazz) {
+        try {
+            String filePath = getPropertiesFilePath(clazz);
+            InputStream in = readPathProperties(clazz,filePath);
+            if (in==null) throw new RuntimeException("配置文件获取失败: "+ filePath);
+            properties.clear();
+            properties.load(in);
+            Field[] fields = clazz.getDeclaredFields();
+            for (Field field : fields) {
+                PropertiesName name = field.getAnnotation(PropertiesName.class);
+                if (name==null) continue;
+                field.setAccessible(true);
+                String key = name.value();
+                String value = properties.getProperty(key);
+                if (value==null || value.length()==0) continue;
+                //获取属性类型
+                String type = field.getGenericType().toString();
+                if(baseType.containsKey(type)){
+                    try {
+                        baseType.get(type).setValue(clazz,field,value);
+                    } catch (IllegalAccessException e) {
+                        e.printStackTrace();
+                    }
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     protected void initialization(){
         Field[] fields = getClass().getDeclaredFields();
-//        System.out.println("读取配置文件:");
         for(Field field:fields){
             field.setAccessible(true); // 设置些属性是可以访问的
             PropertiesName name = field.getAnnotation(PropertiesName.class);
@@ -127,7 +134,6 @@ public abstract class ApplicationPropertiesBase {
             try {
                 Object k = name.value();
                 Object v = field.get(this);
-                //System.out.println( "\t" + k + " = "  + v);
             } catch (IllegalAccessException ignored) {
             }
         }
