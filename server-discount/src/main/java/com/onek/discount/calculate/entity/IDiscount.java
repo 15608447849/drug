@@ -4,12 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface IDiscount {
-    long getActNo();
-    int getActtype();
-    long getActcycle();
-    int getIncpriority();
-    int getQualcode();
-    int getQualvalue();
+    long getDiscountNo();
     long getBRule();
 
     int getPriority();
@@ -28,6 +23,9 @@ public interface IDiscount {
 
     String getStartTime();
     String getEndTime();
+
+    void addGift(Gift gift);
+    void addGifts(List<Gift> gifts);
 
     default void updateAllPrices() {
         for (IProduct product: getProductList()) {

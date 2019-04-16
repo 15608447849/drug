@@ -12,8 +12,8 @@ import com.onek.discount.calculate.entity.IDiscount;
 import com.onek.discount.calculate.entity.IProduct;
 import com.onek.discount.calculate.entity.Product;
 import com.onek.discount.calculate.filter.*;
-import com.onek.discount.calculate.service.ActivityCalculateService;
-import com.onek.discount.calculate.service.ActivityFilterService;
+import com.onek.discount.calculate.service.calculate.ActivityCalculateService;
+import com.onek.discount.calculate.service.filter.ActivityFilterService;
 import com.onek.entitys.Result;
 import com.onek.util.discount.DiscountRuleStore;
 import com.onek.util.prod.ProdPriceEntity;
@@ -62,7 +62,7 @@ public class DiscountCalcModule {
         List<IDiscount> discounts = new ActivityFilterService(null).getCurrentActivities(products);
         new ActivityCalculateService().calculate(discounts);
         for(IDiscount discount : discounts){
-            if(discount.getActNo() == actcode){
+            if(discount.getDiscountNo() == actcode){
                 List<IProduct> discountProduct = discount.getProductList();
                 for(IProduct product : discountProduct){
                     if(sku == product.getSKU()){
@@ -105,7 +105,7 @@ public class DiscountCalcModule {
         List<IDiscount> discounts = new ActivityFilterService(null).getCurrentActivities(products);
         new ActivityCalculateService().calculate(discounts);
         for(IDiscount discount : discounts){
-            if(discount.getActNo() == actcode){
+            if(discount.getDiscountNo() == actcode){
                 List<IProduct> discountProduct = discount.getProductList();
                 int i = 0;
                 for(IProduct product : discountProduct){
@@ -145,7 +145,7 @@ public class DiscountCalcModule {
         List<Long> actList = new ArrayList<>();
         for(IDiscount discount : discounts){
             if(discount.getPriority() !=0){
-                actList.add(discount.getActNo());
+                actList.add(discount.getDiscountNo());
             }
             List<IProduct> discountProduct = discount.getProductList();
             for(IProduct product : discountProduct){
@@ -194,7 +194,7 @@ public class DiscountCalcModule {
                         new ActivitiesFilter[] {
                             new TypeFilter(),
                             new CycleFilter(),
-                            new QualFilter(appContext.getUserSession()),
+                            new QualFilter(appContext.getUserSession().compId),
                             new PriorityFilter(),
                         }).getCurrentActivities(tempProds);
 
@@ -228,7 +228,6 @@ public class DiscountCalcModule {
 
     @UserPermission(ignore = true)
     public Result getEffectiveRule(AppContext appContext) {
-
         List<Object[]> allBruleList = BASE_DAO.queryNative(QUERY_ALL_PROD_BRULE, new Object[]{});
         Map<Long, Integer> prodMap = new HashMap<>();
         if(allBruleList != null && allBruleList.size() > 0){

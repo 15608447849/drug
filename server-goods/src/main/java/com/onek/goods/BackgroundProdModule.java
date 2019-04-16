@@ -17,6 +17,7 @@ import util.MathUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -194,6 +195,57 @@ public class BackgroundProdModule {
                 bgProdVO.getSku());
 
         return new Result().success(null);
+    }
+
+    public Result getProds(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (params == null || params.length == 0) {
+            return new Result().fail("参数为空");
+        }
+
+        StringBuilder sql = new StringBuilder(QUERY_PROD_BASE);
+        sql.append(" AND sku.sku IN (");
+
+        String param;
+        for (int i = 0; i < params.length; i++) {
+            param = params[i];
+
+            if (!StringUtils.isBiggerZero(param)) {
+                return new Result().fail("参数异常");
+            }
+
+            sql.append(param);
+
+            if (i < params.length - 1) {
+                sql.append(", ");
+            }
+        }
+
+        sql.append(") ");
+
+
+        List<Object[]> queryResult = BASE_DAO.queryNative(sql.toString());
+
+        if (queryResult.isEmpty()) {
+            return new Result().success(null);
+        }
+
+        BgProdVO[] returnResults = new BgProdVO[queryResult.size()];
+
+        BASE_DAO.convToEntity(queryResult, returnResults, BgProdVO.class);
+
+        convProds(returnResults);
+
+        if (appContext.getUserSession() == null) {
+            for (BgProdVO returnResult : returnResults) {
+                returnResult.setRrp(0);
+                returnResult.setMp(0);
+                returnResult.setVatp(0);
+            }
+        }
+
+        return new Result().success(returnResults);
     }
 
     @UserPermission(ignore = true)

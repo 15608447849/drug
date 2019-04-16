@@ -7,8 +7,8 @@ import com.onek.discount.calculate.entity.Ladoff;
 import com.onek.discount.calculate.entity.Product;
 import com.onek.discount.calculate.filter.ActivitiesFilter;
 import com.onek.discount.calculate.filter.CycleFilter;
-import com.onek.discount.calculate.service.ActivityCalculateService;
-import com.onek.discount.calculate.service.ActivityFilterService;
+import com.onek.discount.calculate.service.calculate.ActivityCalculateService;
+import com.onek.discount.calculate.service.filter.ActivityFilterService;
 import com.onek.entitys.Result;
 import util.StringUtils;
 import util.TimeUtils;
@@ -47,7 +47,7 @@ public class DiscountModule {
         JSONObject jsonObject = new JSONObject();
 
         for (IDiscount discount : discounts) {
-            if (discount.getActNo() == actcode) {
+            if (discount.getDiscountNo() == actcode) {
                 currDiscount = discount;
                 break;
             }
@@ -89,7 +89,6 @@ public class DiscountModule {
         }
 
         long sku = Long.parseLong(arrays[0]);
-
 
         List<Product> products = new ArrayList<>();
         Product p = new Product();

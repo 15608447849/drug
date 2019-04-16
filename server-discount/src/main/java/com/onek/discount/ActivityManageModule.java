@@ -299,7 +299,7 @@ public class ActivityManageModule {
         StringBuilder stringBuilder = new StringBuilder();
         StringBuilder offerBuilder = new StringBuilder();
         String selectSQL = "select ladid,offercode from {{?" + DSMConst.TD_PROM_RELA + "}} a left join {{?"
-                + DSMConst.TD_PROM_LADOFF +"}} b on a.ladid=b.unqid  where cstatus&1=0" +
+                + DSMConst.TD_PROM_LADOFF +"}} b on a.ladid=b.unqid  where a.cstatus&1=0" +
                 " and actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         if (queryResult == null || queryResult.isEmpty()) return false;

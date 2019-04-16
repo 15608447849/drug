@@ -35,6 +35,8 @@ public class Activity extends AccurateMath implements IDiscount {
     private boolean freeShipping;
     private Map<Long, Integer> SKU_LIMITS = new HashMap<>();
 
+    private List<Gift> giftList = new ArrayList<Gift>();
+
     public Activity() {
         this.productList = new ArrayList<>();
     }
@@ -45,34 +47,8 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     @Override
-    public long getActNo() {
+    public long getDiscountNo() {
         return this.unqid;
-    }
-
-    @Override
-    public int getActtype() {
-        return this.acttype;
-    }
-
-    @Override
-    public long getActcycle() {
-        return this.actcycle;
-    }
-
-    @JSONField(serialize = false)
-    @Override
-    public int getIncpriority() {
-        return this.incpriority;
-    }
-
-    @Override
-    public int getQualcode() {
-        return this.qualcode;
-    }
-
-    @Override
-    public int getQualvalue() {
-        return this.qualvalue;
     }
 
     @Override
@@ -173,6 +149,16 @@ public class Activity extends AccurateMath implements IDiscount {
     @Override
     public String getEndTime() {
         return this.eTime;
+    }
+
+    @Override
+    public void addGift(Gift gift) {
+        giftList.add(gift);
+    }
+
+    @Override
+    public void addGifts(List<Gift> gifts) {
+        giftList.addAll(gifts);
     }
 
     public String getsTime() {
@@ -312,6 +298,42 @@ public class Activity extends AccurateMath implements IDiscount {
 
     public void setActPrice(double actPrice) {
         this.actPrice = actPrice;
+    }
+
+    public int getIncpriority() {
+        return incpriority;
+    }
+
+    public int getQualcode() {
+        return qualcode;
+    }
+
+    public int getQualvalue() {
+        return qualvalue;
+    }
+
+    public int getActtype() {
+        return acttype;
+    }
+
+    public long getActcycle() {
+        return actcycle;
+    }
+
+    public Map<Long, Integer> getSKU_LIMITS() {
+        return SKU_LIMITS;
+    }
+
+    public void setSKU_LIMITS(Map<Long, Integer> SKU_LIMITS) {
+        this.SKU_LIMITS = SKU_LIMITS;
+    }
+
+    public List<Gift> getGiftList() {
+        return giftList;
+    }
+
+    public void setGiftList(List<Gift> giftList) {
+        this.giftList = giftList;
     }
 
     @Override

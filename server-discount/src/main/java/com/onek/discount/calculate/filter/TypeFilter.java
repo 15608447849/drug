@@ -9,21 +9,8 @@ import java.util.List;
  * 类型过滤器。用以过滤团购类型。
  */
 
-public class TypeFilter implements ActivitiesFilter {
-    @Override
-    public void doFilter(List<IDiscount> activities) {
-        Iterator<IDiscount> it = activities.iterator();
-        IDiscount activity;
-        while (it.hasNext()) {
-            activity = it.next();
-
-            if (isFilter(activity)) {
-                it.remove();
-            }
-        }
-    }
-
-    private boolean isFilter(IDiscount activity) {
+public class TypeFilter extends BaseFilter {
+    protected boolean isFilter(IDiscount activity) {
         long bRule = activity.getBRule();
 
         return bRule == 1133;

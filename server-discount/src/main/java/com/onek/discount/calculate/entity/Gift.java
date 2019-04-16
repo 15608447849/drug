@@ -18,6 +18,7 @@ public class Gift {
         Gift gift = new Gift();
         gift.giftValue = giftValue;
         gift.nums = nums;
+        gift.giftName = "满减券";
         gift.type = TYPE.SUB;
 
         return gift;
@@ -25,6 +26,7 @@ public class Gift {
 
     public static Gift getFreeShipping(int nums) {
         Gift gift = new Gift();
+        gift.giftName = "免邮券";
         gift.nums = nums;
         gift.type = TYPE.FREESHIPPING;
 
@@ -33,6 +35,7 @@ public class Gift {
 
     public static Gift getPercentCoupon(double giftValue, int nums) {
         Gift gift = new Gift();
+        gift.giftName = "折扣券";
         gift.giftValue = giftValue;
         gift.nums = nums;
         gift.type = TYPE.PERCENT;

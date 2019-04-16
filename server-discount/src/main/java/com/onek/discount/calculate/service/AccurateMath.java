@@ -22,7 +22,6 @@ public abstract class AccurateMath {
     }
 
     protected double div(double a, double b) {
-
         return BigDecimal.valueOf(a / b).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 

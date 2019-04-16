@@ -127,33 +127,8 @@ public class Couent implements IDiscount {
     }
 
     @Override
-    public long getActNo() {
+    public long getDiscountNo() {
         return this.unqid;
-    }
-
-    @Override
-    public int getActtype() {
-        return 0;
-    }
-
-    @Override
-    public long getActcycle() {
-        return 0;
-    }
-
-    @Override
-    public int getIncpriority() {
-        return -1;
-    }
-
-    @Override
-    public int getQualcode() {
-        return 0;
-    }
-
-    @Override
-    public int getQualvalue() {
-        return 0;
     }
 
     @Override
@@ -227,6 +202,16 @@ public class Couent implements IDiscount {
     @Override
     public String getEndTime() {
         return "23:59:59";
+    }
+
+    @Override
+    public void addGift(Gift gift) {
+
+    }
+
+    @Override
+    public void addGifts(List<Gift> gifts) {
+
     }
 
     @Override
