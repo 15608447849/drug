@@ -1,10 +1,10 @@
 package util;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonSyntaxException;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -43,7 +43,6 @@ public class GsonUtils {
      */
     public static <T> T jsonToJavaBean(String json,Class<T> cls) {
         try {
-
             if (json==null || json.length()==0) return null;
             return new Gson().fromJson(json, cls);//对于javabean直接给出class实例
         } catch (JsonSyntaxException e) {
@@ -62,24 +61,18 @@ public class GsonUtils {
         return null;
     }
 
-    public static <T> T[] string2Array(String json){
+    public static <T> List<T> json2List(String json, Class<T> clazz){
+        List<T> list = new ArrayList<>();
         try {
-            if (StringUtils.isEmpty(json)) return null;
-            return jsonToJavaBean(json, new TypeToken<T[]>() {}.getType());
+            Gson gson = new Gson();
+            JsonArray array = new JsonParser().parse(json).getAsJsonArray();
+            for (JsonElement element : array) {
+                list.add(gson.fromJson(element, clazz));
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return null;
-    }
-
-    public static <T> List<T> string2List(String json) {
-        try {
-            if (StringUtils.isEmpty(json)) return null;
-            return jsonToJavaBean(json, new TypeToken<T>() {}.getType());
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
+        return list;
     }
 
 

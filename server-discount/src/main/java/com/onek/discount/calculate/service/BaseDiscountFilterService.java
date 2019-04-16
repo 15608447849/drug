@@ -24,12 +24,15 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         }
     }
 
-    public List<IDiscount> getCurrentActivities(List<IProduct> products) {
+    public List<IDiscount> getCurrentActivities(List<? extends IProduct> products) {
         List<IDiscount> result = new ArrayList<>();
         List<IDiscount> temp;
         int index;
         for (IProduct product : products) {
             temp = getCurrentDiscounts(product.getSKU());
+
+            // 不参与活动的商品不加入。
+            doFilter(temp);
 
             for (IDiscount activity : temp) {
                 index = result.indexOf(activity);
@@ -38,6 +41,8 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
                     activity.addProduct(product);
                     result.add(activity);
                 } else {
+                    result.get(index).setLimits(
+                            product.getSKU(), activity.getLimits(product.getSKU()));
                     result.get(index).addProduct(product);
                 }
 
@@ -47,7 +52,7 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         return result;
     }
 
-    protected final int checkSKU(long sku) {
+    private final int checkSKU(long sku) {
         int length = String.valueOf(sku).length();
 
         switch (length) {
@@ -60,11 +65,11 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
 
     protected final String getProductCode(long sku) {
         if (checkSKU(sku) < 0) {
-            return null;
+            throw new IllegalArgumentException("SKU is illegal, " + sku);
         }
 
         return String.valueOf(sku).substring(1, 7);
     }
 
-    public abstract List<IDiscount> getCurrentDiscounts(long sku);
+    protected abstract List<IDiscount> getCurrentDiscounts(long sku);
 }

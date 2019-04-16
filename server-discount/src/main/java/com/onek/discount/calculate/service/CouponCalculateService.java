@@ -1,0 +1,16 @@
+package com.onek.discount.calculate.service;
+
+import com.onek.discount.calculate.entity.Ladoff;
+
+public class CouponCalculateService extends BaseDiscountCalculateService {
+    private Ladoff[] ladoff;
+
+    public CouponCalculateService(Ladoff[] ladoff) {
+        this.ladoff = ladoff;
+    }
+
+    @Override
+    protected Ladoff[] getLadoffs(long brule) {
+        return this.ladoff;
+    }
+}

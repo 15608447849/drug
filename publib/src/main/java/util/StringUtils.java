@@ -1,11 +1,7 @@
 package util;
 
 import com.google.gson.JsonParser;
-
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.logging.SimpleFormatter;
 import java.util.regex.Pattern;
 
 public class StringUtils {
@@ -79,7 +75,6 @@ public class StringUtils {
         } catch (Exception e) {
             return false;
         }
-
         return true;
     }
 

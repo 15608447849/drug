@@ -11,8 +11,8 @@ public class Product extends AccurateMath implements IProduct {
     private long sku;
     private int nums;
     private double originalPrice;
-    private double discount;
     private double currentPrice;
+    private double discount;
     private long packageId;
     private Set<Long> activityList = new HashSet<>();
     private List<Gift> giftList = new ArrayList<Gift>();
@@ -23,6 +23,12 @@ public class Product extends AccurateMath implements IProduct {
 
     public void setNums(int nums) {
         this.nums = nums;
+    }
+
+    public void autoSetCurrentPrice(double originalPrice, int nums) {
+        this.setOriginalPrice(originalPrice);
+        this.setNums(nums);
+        this.setCurrentPrice(originalPrice * nums);
     }
 
     public void setOriginalPrice(double originalPrice) {
