@@ -51,9 +51,9 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
         BaseDAO.getBaseDAO().convToEntity(ladResult, lapArray, Ladoff.class);
 
         for (Ladoff ladoff : lapArray) {
-            ladoff.setLadAmt(ladoff.getLadAmt() / 100);
-            ladoff.setOfferValue(ladoff.getOfferValue() / 100);
-            ladoff.setGiftList(getGifts(ladoff.getOfferCode()));
+            ladoff.setLadamt(ladoff.getLadamt() / 100);
+            ladoff.setOffer(ladoff.getOffer() / 100);
+            ladoff.setGiftList(getGifts(ladoff.getOffercode()));
         }
 
         return lapArray;

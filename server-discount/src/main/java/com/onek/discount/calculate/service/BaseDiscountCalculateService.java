@@ -16,7 +16,7 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
     };
 
     @Override
-    public void calculate(List<IDiscount> discountList) {
+    public void calculate(List<? extends IDiscount> discountList) {
         for (IDiscount iDiscount : discountList) {
             discountHandler(iDiscount);
         }
@@ -26,7 +26,7 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
         }
     }
 
-    protected boolean doSP(IDiscount discount, Ladoff ladoff) {
+   /* protected boolean doSP(IDiscount discount, Ladoff ladoff) {
         List<IProduct> prods = discount.getProductList();
         if (KILL == discount.getBRule()) {
             for (IProduct product : prods) {
@@ -39,7 +39,7 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
         }
 
         return false;
-    }
+    }*/
 
     protected void discountHandler(IDiscount discount) {
         long bRule = discount.getBRule();
@@ -50,9 +50,9 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             return;
         }
 
-        if (doSP(discount, ladoff[0])) {
+        /*if (doSP(discount, ladoff[0])) {
             return ;
-        }
+        }*/
 
         List<IProduct> prods = discount.getProductList();
         double priceTotal = 0.0;
@@ -99,8 +99,8 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
         boolean able;
 
         for (Ladoff ladoff : ladoffs) {
-            ladAmt = ladoff.getLadAmt();
-            ladNum = ladoff.getLadNum();
+            ladAmt = ladoff.getLadamt();
+            ladNum = ladoff.getLadnum();
             able = true;
             // 全为0则直接拿value
             if (ladAmt > 0 && ladNum > 0) {
@@ -121,7 +121,5 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
     }
 
     protected abstract Ladoff[] getLadoffs(long brule);
-
-
 }
 

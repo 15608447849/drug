@@ -1,31 +1,27 @@
 package com.onek.discount.util;
 
+import com.onek.discount.calculate.entity.IDiscount;
+import com.onek.discount.calculate.entity.IProduct;
 import util.MathUtil;
 
 import java.math.BigDecimal;
-import java.util.Arrays;
-import java.util.Random;
+import java.util.*;
 
 public class DiscountUtil {
-
     public static double[] shareDiscount(double[] prices, double discount) {
         if (discount <= 0) {
-            return prices;
+            throw new IllegalArgumentException("折扣价小于0");
         }
 
         double[] result = new double[prices.length];
-        double total = 0.0;
+        double total = Arrays.stream(prices).sum();
         double realDiscountTotal = 0.0;
         double turlyDiscountTotal;
         double proportion;
         double deviation;
 
-        for (double price : prices) {
-            total = MathUtil.exactAdd(total, price).doubleValue();
-        }
-
         if (total <= discount) {
-            Arrays.fill(result, 0.0);
+            Arrays.fill(result, 0);
             return result;
         }
 
@@ -56,4 +52,21 @@ public class DiscountUtil {
 
         return result;
     }
+
+    public static double getTotalCurrentPrice(List<? extends IDiscount> discounts) {
+        BigDecimal bd = BigDecimal.ZERO;
+        Set<IProduct> productSet = new HashSet<>();
+
+        for (IDiscount discount : discounts) {
+            productSet.addAll(discount.getProductList());
+        }
+
+        for (IProduct iProduct : productSet) {
+            bd = bd.add(BigDecimal.valueOf(iProduct.getCurrentPrice()));
+        }
+
+        return bd.setScale(2).doubleValue();
+    }
+
+
 }

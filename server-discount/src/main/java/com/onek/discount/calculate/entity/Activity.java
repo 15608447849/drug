@@ -1,5 +1,6 @@
 package com.onek.discount.calculate.entity;
 
+import com.alibaba.fastjson.annotation.JSONField;
 import com.onek.discount.calculate.service.AccurateMath;
 import com.onek.discount.util.DiscountUtil;
 
@@ -27,6 +28,7 @@ public class Activity extends AccurateMath implements IDiscount {
     private int limitnum; // 限购量
     private String sTime; // 起始时间
     private String eTime; // 结束时间
+    private double actPrice;
 
     private double discounted;
     private List<IProduct> productList;
@@ -37,6 +39,7 @@ public class Activity extends AccurateMath implements IDiscount {
         this.productList = new ArrayList<>();
     }
 
+    @JSONField(serialize = false)
     public int getLimitnum() {
         return this.limitnum;
     }
@@ -56,6 +59,7 @@ public class Activity extends AccurateMath implements IDiscount {
         return this.actcycle;
     }
 
+    @JSONField(serialize = false)
     @Override
     public int getIncpriority() {
         return this.incpriority;
@@ -80,6 +84,7 @@ public class Activity extends AccurateMath implements IDiscount {
         return this.incpriority * 10 + this.cpriority;
     }
 
+    @JSONField(serialize = false)
     private double[] getEachCurrent() {
         List<IProduct> prodList = getProductList();
         double[] results = new double[prodList.size()];
@@ -91,6 +96,7 @@ public class Activity extends AccurateMath implements IDiscount {
         return results;
     }
 
+    @JSONField(serialize = false)
     public void addDiscounted(double discount) {
         if (discount <= 0) {
             return;
@@ -142,7 +148,7 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     @Override
-    public boolean setExCoupon() {
+    public boolean getExCoupon() {
         return this.excdiscount == 1;
     }
 
@@ -151,6 +157,7 @@ public class Activity extends AccurateMath implements IDiscount {
         SKU_LIMITS.put(sku, limits);
     }
 
+    @JSONField(serialize = false)
     @Override
     public int getLimits(long sku) {
         Integer result = SKU_LIMITS.get(sku);
@@ -182,6 +189,129 @@ public class Activity extends AccurateMath implements IDiscount {
 
     public void seteTime(String eTime) {
         this.eTime = eTime;
+    }
+
+    @JSONField(serialize = false)
+    public int getOid() {
+        return oid;
+    }
+
+    public void setOid(int oid) {
+        this.oid = oid;
+    }
+
+    @JSONField(serialize = false)
+    public long getUnqid() {
+        return unqid;
+    }
+
+    public void setUnqid(long unqid) {
+        this.unqid = unqid;
+    }
+
+    public String getActname() {
+        return actname;
+    }
+
+    public void setActname(String actname) {
+        this.actname = actname;
+    }
+
+    public void setIncpriority(int incpriority) {
+        this.incpriority = incpriority;
+    }
+
+    @JSONField(serialize = false)
+    public int getCpriority() {
+        return cpriority;
+    }
+
+    public void setCpriority(int cpriority) {
+        this.cpriority = cpriority;
+    }
+
+    public void setQualcode(int qualcode) {
+        this.qualcode = qualcode;
+    }
+
+    public void setQualvalue(int qualvalue) {
+        this.qualvalue = qualvalue;
+    }
+
+    public String getActdesc() {
+        return actdesc;
+    }
+
+    public void setActdesc(String actdesc) {
+        this.actdesc = actdesc;
+    }
+
+    public int getExcdiscount() {
+        return excdiscount;
+    }
+
+    public void setExcdiscount(int excdiscount) {
+        this.excdiscount = excdiscount;
+    }
+
+    public void setActtype(int acttype) {
+        this.acttype = acttype;
+    }
+
+    public void setActcycle(long actcycle) {
+        this.actcycle = actcycle;
+    }
+
+    public String getSdate() {
+        return sdate;
+    }
+
+    public void setSdate(String sdate) {
+        this.sdate = sdate;
+    }
+
+    public String getEdate() {
+        return edate;
+    }
+
+    public void setEdate(String edate) {
+        this.edate = edate;
+    }
+
+    public long getBrulecode() {
+        return brulecode;
+    }
+
+    public void setBrulecode(long brulecode) {
+        this.brulecode = brulecode;
+    }
+
+    public int getCstatus() {
+        return cstatus;
+    }
+
+    public void setCstatus(int cstatus) {
+        this.cstatus = cstatus;
+    }
+
+    public void setLimitnum(int limitnum) {
+        this.limitnum = limitnum;
+    }
+
+    public void setProductList(List<IProduct> productList) {
+        this.productList = productList;
+    }
+
+    public boolean isFreeShipping() {
+        return freeShipping;
+    }
+
+    public double getActPrice() {
+        return actPrice;
+    }
+
+    public void setActPrice(double actPrice) {
+        this.actPrice = actPrice;
     }
 
     @Override

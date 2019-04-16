@@ -1,10 +1,15 @@
 package com.onek.discount.calculate.filter;
 
 
+import com.onek.context.UserSession;
 import com.onek.discount.calculate.entity.IDiscount;
 
 import java.util.Iterator;
 import java.util.List;
+
+/**
+ * 质资过滤器。用以过滤用户资质。
+ */
 
 public class QualFilter implements ActivitiesFilter {
     private static final int ALL = 0;
@@ -12,11 +17,11 @@ public class QualFilter implements ActivitiesFilter {
     private static final int LV = 2;
     private static final int AREA = 3;
 
-//    private final UserSession userSession;
+    private UserSession userSession;
 
-//    public QualFilter(UserSession userSession) {
-//        this.userSession = userSession;
-//    }
+    public QualFilter(UserSession userSession) {
+        this.userSession = userSession;
+    }
 
     @Override
     public void doFilter(List<IDiscount> activities) {
@@ -25,7 +30,7 @@ public class QualFilter implements ActivitiesFilter {
         while (it.hasNext()) {
             activity = it.next();
 
-            if (isFilter(activity)) {
+            if (false && isFilter(activity)) {
                 it.remove();
             }
         }
