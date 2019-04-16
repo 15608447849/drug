@@ -210,6 +210,26 @@ public class IceRemoteUtil {
         return compid /  GLOBALConst._DMNUM % GLOBALConst._SMALLINTMAX;
     }
 
+    public static String getCoup(int compid, long couponId) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("unqid", couponId);
+        jsonObject.put("compid", compid);
+
+        String result =
+                ic.settingProxy("orderServer" + getOrderServerNo(compid))
+                    .settingReq("", "CouponRevModule", "queryCouponByUid")
+                    .settingParam(jsonObject.toJSONString())
+                    .executeSync();
+
+        if (StringUtils.isEmpty(result)) {
+            return null;
+        }
+
+        JSONObject resultJson = JSONObject.parseObject(result);
+
+        return resultJson.getJSONArray("data").getString(0);
+    }
+
     /**
      * 发送消息到指定客户端
      * 消息规则 :  push:消息模板ID#消息模板参数1#消息模板参数2#...
@@ -232,6 +252,17 @@ public class IceRemoteUtil {
         return (ArrayList<LinkedTreeMap>)data;
     }
 
-
+    public static HashMap<Object, Object> getEffectiveRule() {
+        JSONObject jsonObject = new JSONObject();
+        String result = ic.settingProxy("discountServer")
+                .settingReq("","DiscountCalcModule","getEffectiveRule")
+                .settingParam(jsonObject.toJSONString())
+                .executeSync();
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.string2Map(json);
+    }
 
 }
