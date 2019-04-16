@@ -1,6 +1,7 @@
 package com.onek.discount.calculate.filter;
 
 
+import com.onek.discount.calculate.entity.Activity;
 import com.onek.discount.calculate.entity.IDiscount;
 
 import java.util.Arrays;
@@ -11,9 +12,9 @@ import java.util.List;
  * 优先级过滤器。用以过滤除全局外的低优先级。
  */
 
-public class PriorityFilter implements ActivitiesFilter {
+public class PriorityFilter extends BaseFilter {
 
-    public void doFilter(List<IDiscount> activities) {
+    public void doFilter(List<? extends IDiscount> activities) {
         int len = activities.size();
 
         if (len == 0) {
@@ -23,15 +24,15 @@ public class PriorityFilter implements ActivitiesFilter {
         final int[] priorityArr = new int[len];
 
         for (int i = 0; i < len; i++) {
-            priorityArr[i] = activities.get(i).getIncpriority();
+            priorityArr[i] = ((Activity) activities.get(i)).getIncpriority();
         }
 
         int max = Arrays.stream(priorityArr).max().getAsInt();
 
-        Iterator<IDiscount> it = activities.iterator();
-        IDiscount activity;
+        Iterator<? extends IDiscount> it = activities.iterator();
+        Activity activity;
         while (it.hasNext()) {
-            activity = it.next();
+            activity = (Activity) it.next();
 
             if (activity.getIncpriority() != 0
                     && activity.getIncpriority() != max) {
@@ -39,5 +40,10 @@ public class PriorityFilter implements ActivitiesFilter {
             }
         }
 
+    }
+
+    @Override
+    protected boolean isFilter(IDiscount iDiscount) {
+        return false;
     }
 }

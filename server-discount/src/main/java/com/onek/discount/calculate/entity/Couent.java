@@ -127,33 +127,8 @@ public class Couent implements IDiscount {
     }
 
     @Override
-    public long getActNo() {
+    public long getDiscountNo() {
         return this.unqid;
-    }
-
-    @Override
-    public int getActtype() {
-        return 0;
-    }
-
-    @Override
-    public long getActcycle() {
-        return 0;
-    }
-
-    @Override
-    public int getIncpriority() {
-        return -1;
-    }
-
-    @Override
-    public int getQualcode() {
-        return 0;
-    }
-
-    @Override
-    public int getQualvalue() {
-        return 0;
     }
 
     @Override

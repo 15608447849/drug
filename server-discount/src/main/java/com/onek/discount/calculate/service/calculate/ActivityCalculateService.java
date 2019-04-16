@@ -1,4 +1,4 @@
-package com.onek.discount.calculate.service;
+package com.onek.discount.calculate.service.calculate;
 
 import com.onek.discount.calculate.entity.Gift;
 import com.onek.discount.calculate.entity.Ladoff;

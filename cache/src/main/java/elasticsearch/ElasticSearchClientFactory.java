@@ -38,7 +38,22 @@ public class ElasticSearchClientFactory  {
 	}
 	
 	public static TransportClient getClientInstance() {
+		if(client == null){
+			synchronized (ElasticSearchClientFactory.class){
+				if(client == null){
+					settings = Settings.builder().put("cluster.name", clusterName).build();
+					try{
 
+						preBuiltTransportClient = new PreBuiltTransportClient(settings);
+						client = preBuiltTransportClient
+								.addTransportAddress(new TransportAddress(InetAddress.getByName(host), port));
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+
+				}
+			}
+		}
 		return client;
 	}
 	

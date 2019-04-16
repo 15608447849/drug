@@ -157,6 +157,19 @@ public class TimeUtils {
     }
 
     /**
+     * 获取当前日期
+     */
+    public static String getCurrentDate(){
+        try {
+            return new SimpleDateFormat("yyyy-MM-dd").format(new Date());
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }
+        return "1900-01-01";
+    }
+
+
+    /**
      * 格式为"HH:mm:ss"
      * 判断当前时间是否在[startDate, endDate]区间，注意时间格式要一致
      *
@@ -208,6 +221,22 @@ public class TimeUtils {
         } else {
             return false;
         }
+    }
+
+
+    /**
+     * 判断时间1是否在时间2之后
+     *
+     * @param date1 时间1
+     * @param date2 时间2
+     * @return
+     */
+    public static boolean after(String date1, String date2) {
+
+        Date d1 = str_yMd_Hms_2Date(date1);
+        Date d2 = str_yMd_Hms_2Date(date2);
+
+        return d1.after(d2);
     }
 
 

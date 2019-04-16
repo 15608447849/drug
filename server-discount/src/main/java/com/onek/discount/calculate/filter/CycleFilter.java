@@ -1,6 +1,7 @@
 package com.onek.discount.calculate.filter;
 
 
+import com.onek.discount.calculate.entity.Activity;
 import com.onek.discount.calculate.entity.IDiscount;
 
 import java.text.ParseException;
@@ -12,7 +13,7 @@ import java.util.List;
 /**
  * 周期过滤器。用以过滤在周期内的活动
  */
-public class CycleFilter implements ActivitiesFilter {
+public class CycleFilter extends BaseFilter {
     private static final int DAY = 0;
     private static final int WEEK = 1;
     private static final int MONTH = 2;
@@ -23,22 +24,12 @@ public class CycleFilter implements ActivitiesFilter {
 
     private static final SimpleDateFormat YYMMDD = new SimpleDateFormat("yyMMdd");
 
-    public void doFilter(List<IDiscount> activities) {
-        Iterator<IDiscount> it = activities.iterator();
-        IDiscount activity;
-        while (it.hasNext()) {
-            activity = it.next();
+    protected boolean isFilter(IDiscount activity) {
+        Activity act = (Activity) activity;
 
-            if (isFilter(activity)) {
-                it.remove();
-            }
-        }
-    }
-
-    private boolean isFilter(IDiscount activity) {
         boolean result = true;
-        int actType = activity.getActtype();
-        long actcycle = activity.getActcycle();
+        int actType = act.getActtype();
+        long actcycle = act.getActcycle();
         Calendar now = Calendar.getInstance();
 
         switch (actType) {

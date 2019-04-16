@@ -4,12 +4,7 @@ import java.math.BigDecimal;
 import java.util.List;
 
 public interface IDiscount {
-    long getActNo();
-    int getActtype();
-    long getActcycle();
-    int getIncpriority();
-    int getQualcode();
-    int getQualvalue();
+    long getDiscountNo();
     long getBRule();
 
     int getPriority();

@@ -733,7 +733,12 @@ public class ProdModule {
                 Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                 ProdVO prodVO = new ProdVO();
                 HashMap detail = (HashMap) sourceMap.get("detail");
-                BeanMapUtils.mapToBean(detail, prodVO);
+                try{
+                    if(detail != null)
+                        BeanMapUtils.mapToBean(detail, prodVO);
+                }catch (Exception e){
+                    // e.printStackTrace();
+                }
                 prodVO.setMutiact(false);
                 prodVO.setActprod(false);
                 prodList.add(prodVO);
@@ -819,7 +824,7 @@ public class ProdModule {
         return r.setQuery(resultList, pageHolder);
     }
 
-    private List<ProdVO> loadProd(List<ProdVO> prodList, int type) {
+    private static List<ProdVO> loadProd(List<ProdVO> prodList, int type) {
         List<ProdVO> newProdList = new ArrayList<>();
         for (ProdVO prodVO : prodList) {
             if ((prodVO.getCstatus() & type) > 0) {
@@ -837,7 +842,7 @@ public class ProdModule {
         return newProdList;
     }
 
-    private List<ProdVO> getFilterProds(Set<Integer> result, int sort) {
+    private static List<ProdVO>  getFilterProds(Set<Integer> result, int sort) {
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, sort,1, 100);
         List<ProdVO> prodList = new ArrayList<>();
         if (response == null || response.getHits().totalHits <= 10) {
@@ -852,7 +857,7 @@ public class ProdModule {
         return prodList;
     }
 
-    private void assembleData(SearchResponse response, List<ProdVO> prodList) {
+    private static void  assembleData(SearchResponse response, List<ProdVO> prodList) {
         if(response == null || response.getHits().totalHits <= 0){
             return;
         }
@@ -861,8 +866,12 @@ public class ProdModule {
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
 
             HashMap detail = (HashMap) sourceMap.get("detail");
-            BeanMapUtils.mapToBean(detail, prodVO);
-
+            try{
+                if(detail != null)
+                    BeanMapUtils.mapToBean(detail, prodVO);
+            }catch (Exception e){
+               // e.printStackTrace();
+            }
             prodList.add(prodVO);
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
             int rulestatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
@@ -912,4 +921,15 @@ public class ProdModule {
             return this;
         }
     }
+
+//    public static void main(String[] args) {
+//        List<Integer> bb1 = new ArrayList(){{
+//            add(256); add(512);
+//        }};
+//        Set<Integer> result = new HashSet<>();
+//        NumUtil.arrangeAdd(128, bb1, result);
+//
+//        List<ProdVO> hotProdList = getFilterProds(result, 2);
+//        List<ProdVO> filterProdList = loadProd(hotProdList, 128);
+//    }
 }

@@ -1,4 +1,4 @@
-package com.onek.discount.calculate.service;
+package com.onek.discount.calculate.service.filter;
 
 import com.onek.discount.calculate.entity.IDiscount;
 import com.onek.discount.calculate.entity.IProduct;
