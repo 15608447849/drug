@@ -1,20 +1,15 @@
-package com.onek.discount.calculate.service;
+package com.onek.discount.calculate.service.calculate;
 
 import com.onek.discount.calculate.entity.IDiscount;
 import com.onek.discount.calculate.entity.IProduct;
 import com.onek.discount.calculate.entity.Ladoff;
+import com.onek.discount.calculate.rule.RuleParser;
+import com.onek.discount.calculate.service.calculate.ICalculateService;
 import util.MathUtil;
 
 import java.util.List;
 
 public abstract class BaseDiscountCalculateService implements ICalculateService {
-    private static final long KILL = 1113;
-
-    private static final IDiscountContent[] I_DISCOUNT_CONTENTS = {
-        new SubDiscountContent(),
-        new GiftDiscountContent(),
-    };
-
     @Override
     public void calculate(List<? extends IDiscount> discountList) {
         for (IDiscount iDiscount : discountList) {
@@ -42,7 +37,7 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
     }*/
 
     protected void discountHandler(IDiscount discount) {
-        long actNo = discount.getActNo();
+        long actNo = discount.getDiscountNo();
 
         Ladoff[] ladoff = getLadoffs(actNo);
 
@@ -71,28 +66,7 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             return;
         }
 
-        long brule = discount.getBRule();
-
-        int index = Character.digit(String.valueOf(brule).charAt(1), 10) - 1;
-
-        IDiscountContent contents = I_DISCOUNT_CONTENTS[index];
-
-        int way = Character.digit(String.valueOf(brule).charAt(2), 10);
-
-        switch (way) {
-            case 1 :
-                contents.sub(discount, currentLadoff);
-                break;
-            case 2:
-                contents.shipping(discount, currentLadoff);
-                break;
-            case 3:
-                contents.percent(discount, currentLadoff);
-                break;
-            case 4:
-                contents.gift(discount, currentLadoff);
-                break;
-        }
+        new RuleParser(discount.getBRule()).parser(discount, currentLadoff);
     }
 
     protected final Ladoff getLadoffable(Ladoff[] ladoffs, double price, int nums) {
