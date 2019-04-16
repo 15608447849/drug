@@ -55,6 +55,17 @@ public class NumUtil {
         return list;
     }
 
+
+    /**
+     * 四舍五入
+     *
+     * @param val 值
+     * @return
+     */
+    public static double roundup(double val){
+        return BigDecimal.valueOf(val).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+    }
+
     /**
      * 除
      * @param numerator 分子

@@ -67,9 +67,11 @@ public class CommonModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int brulecode = jsonObject.get("type").getAsInt();
         String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
-                + " and brulecode like '" + brulecode + "%' and  NOT EXISTS(select brulecode from {{?"
-                + DSMConst.TD_PROM_ACT +"}} b where cstatus&1=0 and a.brulecode = b.brulecode and brulecode like '"
-                + brulecode +"%' and edate>CURRENT_DATE)";
+                + " and brulecode like '" + brulecode + "%'";
+//        String selectSQLEx = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
+//                + " and brulecode like '" + brulecode + "%' and  NOT EXISTS(select brulecode from {{?"
+//                + DSMConst.TD_PROM_ACT +"}} b where cstatus&1=0 and a.brulecode = b.brulecode and brulecode like '"
+//                + brulecode +"%' and edate>CURRENT_DATE)";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
         baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
