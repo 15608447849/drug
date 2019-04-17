@@ -49,16 +49,17 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             return ;
         }*/
 
-        List<IProduct> prods = discount.getProductList();
-        double priceTotal = 0.0;
-        int numsTotal = 0;
+//        List<IProduct> prods = discount.getProductList();
 
-        for (IProduct prod : prods) {
+        double priceTotal = discount.getCurrentPriceTotal();
+        int numsTotal = discount.getNumTotal();
+
+        /*for (IProduct prod : prods) {
             priceTotal = MathUtil.exactAdd(
                     prod.getCurrentPrice(), priceTotal).doubleValue();
             numsTotal = MathUtil.exactAdd(
                     prod.getNums(), numsTotal).intValue();
-        }
+        }*/
 
         Ladoff currentLadoff = getLadoffable(ladoff, priceTotal, numsTotal);
 
@@ -66,7 +67,7 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             return;
         }
 
-        new RuleParser(discount.getBRule()).parser(discount, currentLadoff);
+        new RuleParser(currentLadoff.getOffercode()).parser(discount, currentLadoff);
     }
 
     protected final Ladoff getLadoffable(Ladoff[] ladoffs, double price, int nums) {
