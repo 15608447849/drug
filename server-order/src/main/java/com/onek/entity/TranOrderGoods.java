@@ -1,0 +1,145 @@
+package com.onek.entity;
+
+/**
+ * @author 11842
+ * @version 1.1.1
+ * @description 订单关联商品信息
+ * @time 2019/4/16 15:15
+ **/
+public class TranOrderGoods {
+    private long unqid;//全局唯一
+    private long orderno;//订单号
+    private int compid;//企业码
+    private long pdno;//商品码（SKU）
+    private int pdprice;//商品单价
+    private int distprice;//商品优惠价
+    private int payamt;//支付金额
+    private int coupamt;//优惠券金额
+    private int promtype;//促销类型
+    private int pkgno;//套餐码
+    private int asstatus;//售后状态
+    private String createdate;//创建日期
+    private String createtime;//创建时间
+    private int cstatus;
+    private int pnum;//商品数量
+
+    public long getUnqid() {
+        return unqid;
+    }
+
+    public void setUnqid(long unqid) {
+        this.unqid = unqid;
+    }
+
+    public long getOrderno() {
+        return orderno;
+    }
+
+    public void setOrderno(long orderno) {
+        this.orderno = orderno;
+    }
+
+    public int getCompid() {
+        return compid;
+    }
+
+    public void setCompid(int compid) {
+        this.compid = compid;
+    }
+
+    public long getPdno() {
+        return pdno;
+    }
+
+    public void setPdno(long pdno) {
+        this.pdno = pdno;
+    }
+
+    public int getPdprice() {
+        return pdprice;
+    }
+
+    public void setPdprice(int pdprice) {
+        this.pdprice = pdprice;
+    }
+
+    public int getDistprice() {
+        return distprice;
+    }
+
+    public void setDistprice(int distprice) {
+        this.distprice = distprice;
+    }
+
+    public int getPayamt() {
+        return payamt;
+    }
+
+    public void setPayamt(int payamt) {
+        this.payamt = payamt;
+    }
+
+    public int getCoupamt() {
+        return coupamt;
+    }
+
+    public void setCoupamt(int coupamt) {
+        this.coupamt = coupamt;
+    }
+
+    public int getPromtype() {
+        return promtype;
+    }
+
+    public void setPromtype(int promtype) {
+        this.promtype = promtype;
+    }
+
+    public int getPkgno() {
+        return pkgno;
+    }
+
+    public void setPkgno(int pkgno) {
+        this.pkgno = pkgno;
+    }
+
+    public int getAsstatus() {
+        return asstatus;
+    }
+
+    public void setAsstatus(int asstatus) {
+        this.asstatus = asstatus;
+    }
+
+    public String getCreatedate() {
+        return createdate;
+    }
+
+    public void setCreatedate(String createdate) {
+        this.createdate = createdate;
+    }
+
+    public String getCreatetime() {
+        return createtime;
+    }
+
+    public void setCreatetime(String createtime) {
+        this.createtime = createtime;
+    }
+
+    public int getCstatus() {
+        return cstatus;
+    }
+
+    public void setCstatus(int cstatus) {
+        this.cstatus = cstatus;
+    }
+
+    public int getPnum() {
+        return pnum;
+    }
+
+    public void setPnum(int pnum) {
+        this.pnum = pnum;
+    }
+}
