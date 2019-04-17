@@ -1,28 +1,15 @@
 package com.onek.discount;
 
-import com.alibaba.fastjson.JSONArray;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
-import com.onek.discount.calculate.entity.DiscountResult;
-import com.onek.discount.calculate.entity.IDiscount;
-import com.onek.discount.calculate.entity.IProduct;
-import com.onek.discount.calculate.entity.Product;
-import com.onek.discount.calculate.filter.*;
-import com.onek.discount.calculate.service.calculate.ActivityCalculateService;
-import com.onek.discount.calculate.service.filter.ActivityFilterService;
 import com.onek.entitys.Result;
 import com.onek.util.discount.DiscountRuleStore;
-import com.onek.util.prod.ProdPriceEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
-import util.GsonUtils;
-import util.StringUtils;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DiscountCalcModule {
 
@@ -42,8 +29,8 @@ public class DiscountCalcModule {
             "and d.cstatus &1 =0  and length(d.gcode) >= 14 and a.sdate <= CURRENT_DATE and CURRENT_DATE<= a.edate " +
             ") tab where tab.gcode is not null group by gcode,brulecode";
 
-    @UserPermission(ignore = true)
-    public Result calcSingleProdActPrize(AppContext appContext) {
+//    @UserPermission(ignore = true)
+    /*public Result calcSingleProdActPrize(AppContext appContext) {
 
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         long actcode = json.get("actcode").getAsLong();
@@ -78,9 +65,9 @@ public class DiscountCalcModule {
         entity.setVatp(vatp);
         entity.setActprice(actprize);
         return new Result().success(GsonUtils.javaBeanToJson(entity));
-    }
+    }*/
 
-    @UserPermission(ignore = true)
+    /*@UserPermission(ignore = true)
     public Result calcMultiProdActPrize(AppContext appContext) {
 
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
@@ -120,9 +107,9 @@ public class DiscountCalcModule {
 
         }
         return new Result().success(GsonUtils.javaBeanToJson(array));
-    }
+    }*/
 
-    @UserPermission(ignore = true)
+    /*@UserPermission(ignore = true)
     public Result calcSingleProdActIntervalPrize(AppContext appContext) {
 
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
@@ -173,9 +160,9 @@ public class DiscountCalcModule {
         }
 
         return new Result().success(GsonUtils.javaBeanToJson(entity));
-    }
+    }*/
 
-    public Result getProdsPrice(AppContext appContext) {
+    /*public Result getProdsPrice(AppContext appContext) {
         String json = appContext.param.json;
 
         if (StringUtils.isEmpty(json)) {
@@ -224,7 +211,7 @@ public class DiscountCalcModule {
         DiscountResult result = new DiscountResult(activityList);
 
         return new Result().success(result);
-    }
+    }*/
 
     @UserPermission(ignore = true)
     public Result getEffectiveRule(AppContext appContext) {
