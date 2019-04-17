@@ -4,6 +4,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
+import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entity.CouponPubLadderVO;
 import com.onek.entity.CouponPubVO;
@@ -11,6 +12,7 @@ import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
+import global.IceRemoteUtil;
 import util.GsonUtils;
 import util.StringUtils;
 import util.TimeUtils;
@@ -47,6 +49,28 @@ public class CouponRevModule {
             "DATE_FORMAT(enddate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where cstatus&1=0 ";
+
+    /**
+     * 查询领取的优惠券列表
+     */
+    private final String QUERY_COUPONREV_ONE_SQL = "select unqid,coupno,compid,DATE_FORMAT(startdate,'%Y-%m-%d') startdate," +
+            "DATE_FORMAT(enddate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
+            "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
+            " where cstatus&1=0 and unqid = ?";
+
+
+    private static final String INSERT_COURCD =  "insert into {{?" + DSMConst.TB_PROM_COURCD + "}}" +
+            " (unqid,coupno,compid,offercode,gettime) values (?,?,?,?,now())";
+
+    private static final String DEL_COURCD =  "update {{?" + DSMConst.TB_PROM_COURCD + "}}" +
+            " SET cstatus = cstatus | " + CSTATUS.DELETE +" WHERE unqid = ? ";
+
+
+    //扣减优惠券库存
+    private static final String UPDATE_COUPON_STOCK = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
+            + " set actstock = actstock - 1 " +
+            "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
+
 
 
 
@@ -151,6 +175,88 @@ public class CouponRevModule {
             }
         }
         return result.setQuery(couponListVOS, pageHolder);
+    }
+
+
+    /**
+     * 领取优惠券
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result revCoupon(AppContext appContext){
+        Result result = new Result();
+        String json = appContext.param.json;
+        CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
+        long rcdid = GenIdUtil.getUnqId();
+        int ret = baseDao.updateNative(INSERT_COURCD,
+                new Object[]{rcdid,couponVO.getCoupno(),
+                        couponVO.getCompid(),0});
+        if(ret > 0){
+            try{
+                if(insertCoupon(couponVO) > 0){
+                    baseDao.updateNative(UPDATE_COUPON_STOCK,
+                            new Object[]{couponVO.getCoupno()});
+                    return result.success("领取成功");
+                }else{
+                    //删除优惠记录
+                    baseDao.updateNative(DEL_COURCD,rcdid);
+                }
+            }catch (Exception e){
+                baseDao.updateNative(DEL_COURCD,rcdid);
+                e.printStackTrace();
+            }
+        }
+        return result.success("领取失败");
+    }
+
+
+
+    @UserPermission(ignore = true)
+    public Result queryCouponByUid(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long unqid = jsonObject.get("unqid").getAsLong();
+        int compid = jsonObject.get("compid").getAsInt();
+
+        Result result = new Result();
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compid,TimeUtils.getCurrentYear(),QUERY_COUPONREV_ONE_SQL,unqid);
+        CouponPubVO[] couponListVOS = new CouponPubVO[queryResult.size()];
+        if (queryResult == null || queryResult.isEmpty()) {
+            return result.success(couponListVOS);
+        }
+
+        baseDao.convToEntity(queryResult, couponListVOS, CouponPubVO.class,
+                new String[]{"unqid","coupno","compid","startdate","enddate","brulecode",
+                        "rulename","goods","ladder","glbno","ctype","reqflag"});
+
+        return  result.success(couponListVOS);
+    }
+
+    public int insertCoupon(CouponPubVO couponVO){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date curDate = new Date();
+        String startDate = dateFormat.format(curDate);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(curDate);
+        calendar.add(Calendar.DATE, couponVO.getValidday());
+        String endDate = dateFormat.format(calendar.getTime());
+        if(couponVO.getValidflag() == 1){
+            calendar.setTime(curDate);
+            calendar.add(Calendar.DATE, 1);
+            startDate = dateFormat.format(calendar.getTime());
+            calendar.add(Calendar.DATE, couponVO.getValidday());
+            endDate = dateFormat.format(calendar.getTime());
+        }
+        String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
+        return  baseDao.updateNativeSharding(couponVO.getCompid(),
+                TimeUtils.getCurrentYear(),INSERT_COUPONREV_SQL,
+                new Object[]{GenIdUtil.getUnqId(),couponVO.getCoupno(),
+                couponVO.getCompid(),startDate,"00:00:00",
+                        endDate,"00:00:00",couponVO.getBrulecode(),
+                couponVO.getRulename(),couponVO.getGoods(),
+                        ladderJson,couponVO.getGlbno(),0});
     }
 
 
