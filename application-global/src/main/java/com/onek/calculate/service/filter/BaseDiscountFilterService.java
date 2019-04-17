@@ -14,6 +14,8 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         this.discountFilters = discountFilters;
     }
 
+    public BaseDiscountFilterService() {}
+
     protected void doFilter(List<IDiscount> activityList) {
         if (discountFilters == null) {
             return;

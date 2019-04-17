@@ -1,14 +1,19 @@
 package com.onek.calculate.entity;
 
+import constant.DSMConst;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class Couent implements IDiscount {
+    private int oid;
     private long unqid;
     private long coupno;
     private int compid;
     private String startdate;
+    private String starttime;
     private String enddate;
+    private String endtime;
     private int brulecode;
     private String rulename;
     private int goods;

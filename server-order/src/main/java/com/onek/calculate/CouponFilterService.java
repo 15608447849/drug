@@ -9,6 +9,7 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import global.IceRemoteUtil;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -24,7 +25,7 @@ public class CouponFilterService extends BaseDiscountFilterService {
     private static final String GET_COUPON =
             " SELECT * "
             + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
-            + " WHERE cstatus=0 "
+            + " WHERE cstatus = 0 "
             + " AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
             + " AND unqid = ? ";
 
@@ -34,13 +35,11 @@ public class CouponFilterService extends BaseDiscountFilterService {
             + " WHERE cstatus&1 = 0 "
             + " AND actcode = ? AND gcode IN (?, ? , 0) ";
 
-
-
     public CouponFilterService(
             long couponNo,
             boolean excoupon,
             UserSession userSession) {
-        super(null);
+        super();
 
         this.couponNo = couponNo;
         this.userSession = userSession;
@@ -79,22 +78,23 @@ public class CouponFilterService extends BaseDiscountFilterService {
             return this.couent;
         }
 
-        String coupStr = IceRemoteUtil.getCoup(this.userSession.compId, this.couponNo);
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
+                        this.userSession.compId, TimeUtils.getCurrentYear(),
+                        GET_COUPON, this.couponNo);
 
-        if (StringUtils.isEmpty(coupStr)) {
+        if (queryResult.isEmpty()) {
             this.noway = true;
             return null;
         }
 
-        Couent couent;
+        Couent[] cArray = new Couent[queryResult.size()];
 
-        try {
-           couent = JSONObject.parseObject(coupStr, Couent.class);
-        } catch (Exception e) {
-            this.noway = true;
-            return null;
-        }
+        BaseDAO.getBaseDAO().convToEntity(queryResult, cArray, Couent.class);
 
+        Couent couent = cArray[0];
+
+        //glbno为0 -> 不全局兼容
+        //excoupon -> 是否排斥优惠券
         if (couent.getGlbno() == 0 && this.excoupon) {
             this.noway = true;
             return null;
