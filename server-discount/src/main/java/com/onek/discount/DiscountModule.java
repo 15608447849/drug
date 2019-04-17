@@ -1,24 +1,7 @@
 package com.onek.discount;
 
-import com.alibaba.fastjson.JSONObject;
-import com.onek.context.AppContext;
-import com.onek.discount.calculate.entity.IDiscount;
-import com.onek.discount.calculate.entity.Ladoff;
-import com.onek.discount.calculate.entity.Product;
-import com.onek.discount.calculate.filter.ActivitiesFilter;
-import com.onek.discount.calculate.filter.CycleFilter;
-import com.onek.discount.calculate.service.calculate.ActivityCalculateService;
-import com.onek.discount.calculate.service.filter.ActivityFilterService;
-import com.onek.entitys.Result;
-import util.StringUtils;
-import util.TimeUtils;
-
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-
 public class DiscountModule {
-    public Result getGoodsActInfo(AppContext appContext) {
+    /*public Result getGoodsActInfo(AppContext appContext) {
         String[] arrays = appContext.param.arrays;
 
         if (arrays == null || arrays.length == 0) {
@@ -75,9 +58,9 @@ public class DiscountModule {
         }
 
         return new Result().success(jsonObject);
-    }
+    }*/
 
-    public Result getActivitiesBySKU(AppContext appContext) {
+    /*public Result getActivitiesBySKU(AppContext appContext) {
         String[] arrays = appContext.param.arrays;
 
         if (arrays == null || arrays.length == 0) {
@@ -100,6 +83,6 @@ public class DiscountModule {
                  .getCurrentActivities(products);
 
         return new Result().success(discounts);
-    }
+    }*/
 
 }
