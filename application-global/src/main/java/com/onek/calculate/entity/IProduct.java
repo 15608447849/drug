@@ -8,7 +8,7 @@ public interface IProduct {
 //    void addGift(Gift gift);
 //    void addGifts(List<Gift> gifts);
 //    void addActivity(long activity);
-//    double getOriginalPrice();
+    double getOriginalPrice();
     double getCurrentPrice();
     void setCurrentPrice(double currentPrice);
     void addSharePrice(double sharePrice);
