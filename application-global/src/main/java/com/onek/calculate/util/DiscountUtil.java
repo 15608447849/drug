@@ -53,6 +53,16 @@ public class DiscountUtil {
         return result;
     }
 
+    public static boolean isExcoupon(List<? extends IDiscount> discounts) {
+        boolean result = false;
+
+        for (IDiscount discount : discounts) {
+            result = result || discount.getExCoupon();
+        }
+
+        return result;
+    }
+
     public static double getTotalCurrentPrice(List<? extends IDiscount> discounts) {
         BigDecimal bd = BigDecimal.ZERO;
         Set<IProduct> productSet = new HashSet<>();

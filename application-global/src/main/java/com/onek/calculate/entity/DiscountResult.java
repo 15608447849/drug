@@ -67,4 +67,12 @@ public class DiscountResult {
     public void setActivityList(List<IDiscount> activityList) {
         this.activityList = activityList;
     }
+
+    public int getTotalNums() {
+        return totalNums;
+    }
+
+    public void setTotalNums(int totalNums) {
+        this.totalNums = totalNums;
+    }
 }

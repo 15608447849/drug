@@ -17,7 +17,7 @@ import java.util.List;
 
 public class CouponFilterService extends BaseDiscountFilterService {
     private long couponNo;
-    private UserSession userSession;
+    private int compid;
     private boolean excoupon;
     private Boolean noway = null;
     private Couent couent;
@@ -38,11 +38,11 @@ public class CouponFilterService extends BaseDiscountFilterService {
     public CouponFilterService(
             long couponNo,
             boolean excoupon,
-            UserSession userSession) {
+            int compid) {
         super();
 
         this.couponNo = couponNo;
-        this.userSession = userSession;
+        this.compid = compid;
         this.excoupon = excoupon;
     }
 
@@ -78,8 +78,13 @@ public class CouponFilterService extends BaseDiscountFilterService {
             return this.couent;
         }
 
+        if (this.compid <= 0) {
+            this.noway = true;
+            return null;
+        }
+
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                        this.userSession.compId, TimeUtils.getCurrentYear(),
+                        this.compid, TimeUtils.getCurrentYear(),
                         GET_COUPON, this.couponNo);
 
         if (queryResult.isEmpty()) {
