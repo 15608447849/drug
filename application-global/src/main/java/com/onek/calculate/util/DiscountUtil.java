@@ -15,7 +15,7 @@ public class DiscountUtil {
 
         double[] result = new double[prices.length];
         double total = Arrays.stream(prices).sum();
-        double realDiscountTotal = 0.0;
+        double realDiscountTotal = .0;
         double turlyDiscountTotal;
         double proportion;
         double deviation;
