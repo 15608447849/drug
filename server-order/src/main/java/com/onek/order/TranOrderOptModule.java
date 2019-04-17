@@ -1,35 +1,30 @@
 package com.onek.order;
 
-import com.alibaba.fastjson.JSONArray;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
-import com.onek.calculate.ActivityCalculateService;
-import com.onek.calculate.ActivityFilterService;
 import com.onek.calculate.entity.DiscountResult;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
-import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
+import com.onek.util.CalculateUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
-import util.GsonUtils;
 import util.ModelUtil;
-import util.StringUtils;
 
 import java.util.*;
 
 /**
  * @author 11842
  * @version 1.1.1
- * @description 订单基本操作（下单等等）
+ * @description 订单下单
  * @time 2019/4/16 16:01
  **/
 public class TranOrderOptModule {
@@ -51,7 +46,7 @@ public class TranOrderOptModule {
             + "coupamt,promtype,pkgno,asstatus,createdate,createtime,cstatus) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "?,CURRENT_DATE,CURRENT_TIME,0)";
+            + "0,CURRENT_DATE,CURRENT_TIME,0)";
 
     private static final String UPD_TRAN_GOODS = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set "
             + "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
@@ -84,23 +79,32 @@ public class TranOrderOptModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int placeType = jsonObject.get("placeType").getAsInt();//1、直接下单 2、购物车下单
+        long coupon = 0;//优惠券码
+        if (!jsonObject.get("coupon").isJsonNull()) {
+            coupon = jsonObject.get("coupon").getAsLong();
+        }
         JsonObject orderObj = jsonObject.get("orderObj").getAsJsonObject();
         JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
         TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
+        int pdnum = 0;
         for (int i = 0; i < goodsArr.size(); i++) {
             TranOrderGoods goodsVO = gson.fromJson(goodsArr.get(i).toString(), TranOrderGoods.class);
+            pdnum += goodsVO.getPnum();
             tranOrderGoods.add(goodsVO);
         }
+        tranOrder.setPdnum(pdnum);
         //库存判断
-        if (stockIsEnough(tranOrderGoods).size() != tranOrderGoods.size()) {
+        List<TranOrderGoods> goodsList = stockIsEnough(tranOrderGoods);
+        if (goodsList.size() != tranOrderGoods.size()) {
             //库存不足处理
-
+            stockRecovery(goodsList);
             return result.fail("商品库存发生改变！");
         }
         //订单费用计算（费用分摊以及总费用计算）
-        calculatePrice(tranOrderGoods, tranOrder.getCusno());
+        List<TranOrderGoods> finalGoodsPrice = calculatePrice(tranOrderGoods, tranOrder, coupon);
+        if (finalGoodsPrice == null) return result.fail("下单失败");
         //优惠券
 
         //数据库相关操作
@@ -109,9 +113,9 @@ public class TranOrderOptModule {
                 tranOrder.getPdamt(),tranOrder.getFreight(),tranOrder.getPayamt(),tranOrder.getCoupamt(),
                 tranOrder.getRvaddno(),0,0});
         if (placeType == 1) {
-            getInsertSqlList(sqlList, params, tranOrderGoods, orderNo);
+            getInsertSqlList(sqlList, params, finalGoodsPrice, orderNo);
         } else {
-            getUpdSqlList(sqlList, params, tranOrderGoods, orderNo);
+            getUpdSqlList(sqlList, params, finalGoodsPrice, orderNo);
         }
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
@@ -121,13 +125,24 @@ public class TranOrderOptModule {
             return result.success("下单成功");
         } else {//下单失败
             //库存处理
-
+            stockRecovery(tranOrderGoods);
             return result.fail("下单失败");
         }
     }
 
 
-    private void calculatePrice(List<TranOrderGoods> tranOrderGoodsList, int compId) {
+    /* *
+     * @description 价格计算
+     * @params [tranOrderGoodsList, tranOrder]
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/4/17 15:50
+     * @version 1.1.1
+     **/
+    private List<TranOrderGoods> calculatePrice(List<TranOrderGoods> tranOrderGoodsList, TranOrder tranOrder,
+                                                long coupon) {
+        List<TranOrderGoods> finalTranOrderGoods = new ArrayList<>();//最终的商品详情
         List<Product> tempProds = new ArrayList<>();
         tranOrderGoodsList.forEach(tranOrderGoods -> {
             Product product = new Product();
@@ -135,53 +150,32 @@ public class TranOrderOptModule {
             product.autoSetCurrentPrice(tranOrderGoods.getPdprice(), tranOrderGoods.getPnum());
             tempProds.add(product);
         });
-        DiscountResult discountResult = getProdsPrice(tempProds, compId);
-    }
+        DiscountResult discountResult = CalculateUtil.calculate(tranOrder.getCusno(), tempProds, coupon);
+        if (discountResult == null) return null;
+        tranOrder.setPdamt((int)(discountResult.getTotalCurrentPrice() + discountResult.getTotalDiscount()) * 100);
+        tranOrder.setCoupamt((int)(discountResult.getCouponValue()*100));//订单使用优惠券(李康亮记得填)
+        if (discountResult.isFreeShipping()) {//免邮
+            tranOrder.setFreight(0);
+        } else {
+            tranOrder.setFreight(0);//运费(暂无)
+        }
+        tranOrder.setPayamt((int)(discountResult.getTotalCurrentPrice()*100));
+        tranOrder.setDistamt((int)(discountResult.getTotalDiscount()*100));
 
-    /**
-     * @description
-     * @params [tempProds, compId]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/17 13:50
-     * @version 1.1.1
-     **/
-    public DiscountResult getProdsPrice( List<Product> tempProds, int compId) {
-
-        List<IDiscount> activityList;
-        activityList = new ActivityFilterService(
-                new ActivitiesFilter[] {
-                    new TypeFilter(),
-                    new CycleFilter(),
-                    new QualFilter(compId),
-                    new PriorityFilter(),
-                }).getCurrentActivities(tempProds);
-
-        TreeMap<Integer, List<IDiscount>> pri_act =
-                new TreeMap<>((o1, o2) -> o2 - o1);
-
-        int priority;
-        List<IDiscount> tempDiscount;
-        for (IDiscount discount : activityList) {
-            priority = discount.getPriority();
-
-            tempDiscount = pri_act.get(priority);
-
-            if (tempDiscount == null) {
-                tempDiscount = new ArrayList<>();
-                pri_act.put(priority, tempDiscount);
+        List<IDiscount> iDiscountList = discountResult.getActivityList();
+        for (IDiscount iDiscount : iDiscountList) {
+            for (int i = 0; i < iDiscount.getProductList().size(); i++) {
+                TranOrderGoods tranOrderGoods = new TranOrderGoods();
+                tranOrderGoods.setCompid(tranOrder.getCusno());
+                tranOrderGoods.setPdno(iDiscount.getProductList().get(i).getSKU());
+                tranOrderGoods.setPdprice((int)(iDiscount.getProductList().get(i).getOriginalPrice() * 100));
+//                tranOrderGoods.setDistprice(iDiscount.getProductList().get(i));
+                tranOrderGoods.setPayamt((int)(iDiscount.getProductList().get(i).getCurrentPrice()*100));
+                tranOrderGoods.setPromtype((int)iDiscount.getBRule());
+                finalTranOrderGoods.add(tranOrderGoods);
             }
-
-            tempDiscount.add(discount);
         }
-
-
-        for (List<IDiscount> discounts : pri_act.values()) {
-            new ActivityCalculateService().calculate(discounts);
-        }
-
-        return new DiscountResult(activityList);
+        return finalTranOrderGoods;
     }
 
     /**
@@ -193,15 +187,15 @@ public class TranOrderOptModule {
      * @time  2019/4/17 11:49
      * @version 1.1.1
      **/
-    private Map<Long, Integer> stockIsEnough(List<TranOrderGoods> tranOrderGoodsList) {
-        Map<Long, Integer> skuMap = new HashMap<>();
+    private List<TranOrderGoods> stockIsEnough(List<TranOrderGoods> tranOrderGoodsList) {
+        List<TranOrderGoods> goodsList = new ArrayList<>();
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             if (!RedisStockUtil.deductionStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum())) {
-                return skuMap;
+                return goodsList;
             }
-            skuMap.put(tranOrderGoods.getPdno(), tranOrderGoods.getPnum());
+            goodsList.add(tranOrderGoods);
         }
-        return skuMap;
+        return goodsList;
     }
 
     /**
@@ -213,10 +207,9 @@ public class TranOrderOptModule {
      * @time  2019/4/17 14:38
      * @version 1.1.1
      **/
-    private void stockRecovery(Map<Long, Integer> skuMap) {
-        Set<Map.Entry<Long, Integer>> set = skuMap.entrySet();
-        for (int i = 0; i < set.size(); i++) {
-            
+    private void stockRecovery(List<TranOrderGoods> goodsList) {
+        for (TranOrderGoods aGoodsList : goodsList) {
+            RedisStockUtil.addStock(aGoodsList.getPdno(), aGoodsList.getPnum());
         }
     }
 
@@ -238,7 +231,7 @@ public class TranOrderOptModule {
 //                    coupamt,promtype,pkgno,asstatus,createdate,createtime,cstatus
             params.add(new Object[]{GenIdUtil.getUnqId(), orderNo, tranOrderGoods.getCompid(),tranOrderGoods.getPdno(),
                     tranOrderGoods.getPdprice(),tranOrderGoods.getDistprice(), tranOrderGoods.getPayamt(),tranOrderGoods.getCoupamt(),
-                    tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno(),tranOrderGoods.getAsstatus()});
+                    tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno()});
             sqlList.add(UPD_GOODS);
             params.add(new Object[]{tranOrderGoods.getPnum(),tranOrderGoods.getPdno()});
         });
