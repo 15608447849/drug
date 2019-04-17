@@ -11,9 +11,10 @@ public class DiscountResult {
     private double totalDiscount; // 总优惠
     private boolean exCoupon; //是否排斥优惠券
     private int totalNums;
+    private double couponValue;
     private List<IDiscount> activityList; // 活动列表
 
-    public DiscountResult(List<IDiscount> activityList) {
+    public DiscountResult(List<IDiscount> activityList, double couponValue) {
         this.activityList = activityList;
 
         for (IDiscount discount : activityList) {
@@ -24,6 +25,7 @@ public class DiscountResult {
                             .doubleValue();
         }
 
+        this.couponValue = couponValue;
         this.totalNums = DiscountUtil.getTotalNums(activityList);
         this.totalCurrentPrice = DiscountUtil.getTotalCurrentPrice(activityList);
     }
@@ -74,5 +76,13 @@ public class DiscountResult {
 
     public void setTotalNums(int totalNums) {
         this.totalNums = totalNums;
+    }
+
+    public double getCouponValue() {
+        return couponValue;
+    }
+
+    public void setCouponValue(double couponValue) {
+        this.couponValue = couponValue;
     }
 }

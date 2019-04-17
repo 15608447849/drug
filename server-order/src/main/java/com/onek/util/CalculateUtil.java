@@ -15,7 +15,7 @@ import java.util.List;
 import java.util.TreeMap;
 
 public class CalculateUtil {
-    private Comparator<Integer> DESC_COMPARATOR = new Comparator<Integer>() {
+    private static Comparator<Integer> DESC_COMPARATOR = new Comparator<Integer>() {
         @Override
         public int compare(Integer o1, Integer o2) {
             return o2 - o1;
@@ -60,6 +60,8 @@ public class CalculateUtil {
             new ActivityCalculateService().calculate(discounts);
         }
 
+        double couponValue = 0.0;
+
         if (couponNo > 0) {
             List<IDiscount> couponFilter =
                     new CouponFilterService(
@@ -76,10 +78,12 @@ public class CalculateUtil {
                                 .toArray(new Ladoff[0]))
                         .calculate(couponFilter);
 
+                couponValue = couent.getDiscounted();
+
                 activityList.add(couent);
             }
         }
 
-        return new DiscountResult(activityList);
+        return new DiscountResult(activityList, couponValue);
     }
 }
