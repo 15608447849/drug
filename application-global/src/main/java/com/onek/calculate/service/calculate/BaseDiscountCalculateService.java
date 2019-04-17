@@ -1,8 +1,8 @@
 package com.onek.calculate.service.calculate;
 
+import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.rule.RuleParser;
-import com.onek.calculate.entity.IDiscount;
 
 import java.util.List;
 
@@ -18,21 +18,6 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
         }
     }
 
-   /* protected boolean doSP(IDiscount discount, Ladoff ladoff) {
-        List<IProduct> prods = discount.getProductList();
-        if (KILL == discount.getBRule()) {
-            for (IProduct product : prods) {
-                double dd = product.getCurrentPrice() - (ladoff.getOfferValue() * product.getNums());
-                product.addSharePrice(dd);
-                discount.setDiscounted(discount.getDiscounted() + dd);
-            }
-
-            return true;
-        }
-
-        return false;
-    }*/
-
     protected void discountHandler(IDiscount discount) {
         long actNo = discount.getDiscountNo();
 
@@ -41,10 +26,6 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
         if (ladoff == null || ladoff.length == 0) {
             return;
         }
-
-        /*if (doSP(discount, ladoff[0])) {
-            return ;
-        }*/
 
 //        List<IProduct> prods = discount.getProductList();
 

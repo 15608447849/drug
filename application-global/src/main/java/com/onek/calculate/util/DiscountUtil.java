@@ -68,5 +68,20 @@ public class DiscountUtil {
         return bd.setScale(2).doubleValue();
     }
 
+    public static int getTotalNums(List<? extends IDiscount> discounts) {
+        int nums = 0;
+        Set<IProduct> productSet = new HashSet<>();
+
+        for (IDiscount discount : discounts) {
+            productSet.addAll(discount.getProductList());
+        }
+
+        for (IProduct iProduct : productSet) {
+            nums += iProduct.getNums();
+        }
+
+        return nums;
+    }
+
 
 }

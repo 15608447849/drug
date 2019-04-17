@@ -1,6 +1,7 @@
 package com.onek.calculate.entity;
 
 import com.onek.calculate.util.DiscountUtil;
+import util.MathUtil;
 
 import java.util.List;
 
@@ -9,6 +10,7 @@ public class DiscountResult {
     private double totalCurrentPrice; // 总活动价格
     private double totalDiscount; // 总优惠
     private boolean exCoupon; //是否排斥优惠券
+    private int totalNums;
     private List<IDiscount> activityList; // 活动列表
 
     public DiscountResult(List<IDiscount> activityList) {
@@ -17,10 +19,13 @@ public class DiscountResult {
         for (IDiscount discount : activityList) {
             this.freeShipping = this.freeShipping || discount.getFreeShipping() ;
             this.exCoupon = this.exCoupon || discount.getExCoupon();
-            this.totalDiscount += discount.getDiscounted();
+            this.totalDiscount =
+                    MathUtil.exactAdd(discount.getDiscounted(), this.totalDiscount)
+                            .doubleValue();
         }
 
-        this.totalCurrentPrice = DiscountUtil.getTotalCurrentPrice(this.activityList);
+        this.totalNums = DiscountUtil.getTotalNums(activityList);
+        this.totalCurrentPrice = DiscountUtil.getTotalCurrentPrice(activityList);
     }
 
     public boolean isFreeShipping() {
