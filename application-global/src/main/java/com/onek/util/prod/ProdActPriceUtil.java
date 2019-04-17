@@ -92,6 +92,11 @@ public class ProdActPriceUtil {
             if(entity != null){
                 prizeIntervalMap.put(sku, entity);
             }else{
+                if(entity == null){
+                    entity = new ProdPriceEntity();
+                    entity.setSku(sku);
+                    entity.setVatp(vatp);
+                }
                 entity.setMinactprize(vatp);
                 entity.setMaxactprize(vatp);
                 prizeIntervalMap.put(sku, entity);
