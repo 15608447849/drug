@@ -12,25 +12,29 @@ public class RuleParser {
         new GiftRuleHandler(),
     };
 
-    private long brule;
+    private long offerCode;
 
-    public RuleParser(long brule) {
-        this.brule = brule;
+    public RuleParser(long offerCode) {
+        this.offerCode = offerCode;
     }
 
     protected int getCalStrategy() {
-        return Character.digit(String.valueOf(this.brule).charAt(4), 10);
+        return Character.digit(String.valueOf(this.offerCode).charAt(4), 10);
     }
 
     protected int getRuleHandler() {
-        return Character.digit(String.valueOf(this.brule).charAt(1), 10);
+        return Character.digit(String.valueOf(this.offerCode).charAt(1), 10);
     }
 
     protected int getHandler() {
-        return Character.digit(String.valueOf(this.brule).charAt(2), 10);
+        return Character.digit(String.valueOf(this.offerCode).charAt(2), 10);
     }
 
     public void parser(IDiscount discount, Ladoff ladoff) {
+        if (ladoff == null) {
+            return ;
+        }
+
         IRuleHandler handler = RULE_HANDLER[getRuleHandler() - 1];
 
         ValueAndTimes vt = getValueAndTimes(discount, ladoff);

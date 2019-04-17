@@ -45,9 +45,9 @@ public class BaseDAO {
 	private static final ExecutorService ASYN_THREAD = Executors.newCachedThreadPool();
 
 
-	public static volatile AtomicInteger master = new AtomicInteger(LoadDbConfig.getDbMasterNum());
+	public static volatile AtomicInteger master = new AtomicInteger(LoadDbConfig.getDbConfigValue("master"));
 
-
+	private static final int SHARDING_FLAG = LoadDbConfig.getDbConfigValue("sharding");
 
 	private static final BaseDAO BASEDAO = new BaseDAO();
 	/**私有化其构造函数，防止随便乱创建此对象。*/
@@ -62,6 +62,11 @@ public class BaseDAO {
 		/**公共库只有一个连接,是不需要切分服务器与库及表的。公共库服务器索引是所有数据源的最后一个，库的索引值固定为0*/
 		int dbs = master.get();
 		int db = 0;
+
+		if(SHARDING_FLAG == 1){
+			db = BUSConst._MODNUM_EIGHT;
+		}
+
 		LogUtil.getDefaultLogger().debug("dbs="+dbs);
 		/**返回对应的数据库连接池供用户使用*/
 		return AppConfig.getSessionManager(dbs,db);
@@ -83,6 +88,12 @@ public class BaseDAO {
 			/** 取得数据库服务器上数据库的编号 */
 			db = sharding % BUSConst._DMNUM  % BUSConst._MODNUM_EIGHT;
 		}
+
+		if(DSMConst.SEG_TABLE_RULE[table] == 0 && SHARDING_FLAG == 1){
+			db = BUSConst._MODNUM_EIGHT;
+		}
+
+
 		/**返回对应的数据库连接池供用户使用*/
 		LogUtil.getDefaultLogger().debug("分片字段："+sharding);
 		LogUtil.getDefaultLogger().debug("服务器编号："+dbs);
@@ -106,6 +117,11 @@ public class BaseDAO {
 				db = BUSConst._MODNUM_EIGHT -1;
 			}
 		}
+
+		if(SHARDING_FLAG == 1 && sharding == 0){
+			db = BUSConst._MODNUM_EIGHT;
+		}
+
 		/**返回对应的数据库连接池供用户使用*/
 		LogUtil.getDefaultLogger().debug("分片字段："+sharding);
 		LogUtil.getDefaultLogger().debug("服务器编号："+dbs);
