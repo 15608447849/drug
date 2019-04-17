@@ -133,4 +133,9 @@ public class RedisProvide{
 //		}
 //		jedisCluster.del(keys.toArray(new String[keys.size()]));
 	}
+
+//	public JedisCluster getJedisCluster(){
+//		jedisCluster.
+//		return jedisCluster;
+//	}
 }
