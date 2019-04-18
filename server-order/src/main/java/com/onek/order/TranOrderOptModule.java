@@ -56,7 +56,7 @@ public class TranOrderOptModule {
 
     //是否要减商品总库存
     private static final String UPD_GOODS = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
-            + "freezestore=? where cstatus&1=0 and sku=? ";
+            + "freezestore=freezestore+? where cstatus&1=0 and sku=? ";
 
     //更新订单状态
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
@@ -199,19 +199,17 @@ public class TranOrderOptModule {
                 finalTranOrderGoods.add(tranOrderGoods);
             }
         }
-        if (finalTranOrderGoods.size() != tranOrderGoodsList.size()) {
-            for (TranOrderGoods goodsPrice :tranOrderGoodsList) {//传进来的
-                for (TranOrderGoods finalGoods : finalTranOrderGoods) {
-                    if (goodsPrice.getPdno() == finalGoods.getPdno()){
-                        goodsPrice.setCompid(tranOrder.getCusno());
-                        goodsPrice.setPdprice(finalGoods.getPdprice());
-                        goodsPrice.setPayamt(finalGoods.getPayamt());
-                        goodsPrice.setPromtype(finalGoods.getPromtype());
-                    }
+        for (TranOrderGoods goodsPrice :tranOrderGoodsList) {//传进来的
+            for (TranOrderGoods finalGoods : finalTranOrderGoods) {
+                if (goodsPrice.getPdno() == finalGoods.getPdno()){
+                    goodsPrice.setCompid(tranOrder.getCusno());
+                    goodsPrice.setPdprice(finalGoods.getPdprice());
+                    goodsPrice.setPayamt(finalGoods.getPayamt());
+                    goodsPrice.setPromtype(finalGoods.getPromtype());
                 }
-                goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
-                goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
             }
+            goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
+            goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
         }
         return tranOrderGoodsList;
     }
