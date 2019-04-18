@@ -37,6 +37,7 @@ public class CalculateModule {
         List<Product> products = new ArrayList<>();
         Product p = new Product();
         p.setSku(sku);
+        products.add(p);
 
         List<IDiscount> discounts
                 = new ActivityFilterService(
@@ -61,19 +62,19 @@ public class CalculateModule {
             return new Result().success(jsonObject);
         }
 
-        Ladoff[] ladoffs =
-                new ActivityCalculateService().getLadoffs(currDiscount.getBRule());
-
-        if (ladoffs.length == 0) {
-            return new Result().success(jsonObject);
-        }
-
         jsonObject.put("currentDate", TimeUtils.date_yMd_Hms_2String(new Date()));
         jsonObject.put("startTime", currDiscount.getStartTime());
         jsonObject.put("endTime", currDiscount.getEndTime());
         jsonObject.put("limits", currDiscount.getLimits(sku));
 
         if (currDiscount.getBRule() == 1133) {
+            Ladoff[] ladoffs =
+                new ActivityCalculateService().getLadoffs(currDiscount.getBRule());
+
+            if (ladoffs.length == 0) {
+                return new Result().success(jsonObject);
+            }
+
             // 团购
             jsonObject.put("ladoffs", ladoffs);
         }
