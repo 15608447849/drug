@@ -3,6 +3,7 @@ package com.onek.calculate.entity;
 import com.onek.calculate.util.DiscountUtil;
 import util.MathUtil;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public class DiscountResult {
@@ -14,8 +15,14 @@ public class DiscountResult {
     private double couponValue;
     private List<IDiscount> activityList; // 活动列表
 
-    public DiscountResult(List<IDiscount> activityList, double couponValue) {
+    public DiscountResult(List<IDiscount> activityList,
+                          double couponValue,
+                          List<? extends IProduct> products) {
         this.activityList = activityList;
+        this.couponValue = couponValue;
+
+        this.totalNums = prodsNum(products);
+        this.totalCurrentPrice = prodsCurrentTotal(products);
 
         for (IDiscount discount : activityList) {
             this.freeShipping = this.freeShipping || discount.getFreeShipping() ;
@@ -24,11 +31,29 @@ public class DiscountResult {
                     MathUtil.exactAdd(discount.getDiscounted(), this.totalDiscount)
                             .doubleValue();
         }
-
-        this.couponValue = couponValue;
-        this.totalNums = DiscountUtil.getTotalNums(activityList);
-        this.totalCurrentPrice = DiscountUtil.getTotalCurrentPrice(activityList);
     }
+
+    private int prodsNum(List<? extends IProduct> products) {
+        int result = 0;
+
+        for (IProduct product : products) {
+            result += product.getNums();
+        }
+
+        return result;
+    }
+
+    private double prodsCurrentTotal(List<? extends IProduct> products) {
+        BigDecimal result = BigDecimal.ZERO;
+
+        for (IProduct product : products) {
+            result = result.add(BigDecimal.valueOf(product.getCurrentPrice()));
+        }
+
+        return result.setScale(2).doubleValue();
+    }
+
+
 
     public boolean isFreeShipping() {
         return freeShipping;

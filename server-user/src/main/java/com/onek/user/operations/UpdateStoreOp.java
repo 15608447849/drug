@@ -126,6 +126,8 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 if (i <= 0){
                     return new Result().fail("无法关联门店信息");
                 }
+                //企业关联会员
+                compLinkMember(session.compId);
                 session.compId = (int)compid;
                 context.relationTokenUserSession();//重新保存用户信息
                 return new Result().success("新增门店信息,关联成功");
@@ -133,6 +135,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
         }
         return new Result().fail("关联异常");
     }
+
 
     private void convertLatLon() {
         try {
@@ -149,4 +152,9 @@ public class UpdateStoreOp implements IOperation<AppContext> {
         } catch (NumberFormatException ignored) {
         }
     }
+
+    //企业关联会员
+    private void compLinkMember(int compId) {
+    }
+
 }

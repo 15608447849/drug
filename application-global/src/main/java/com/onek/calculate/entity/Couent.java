@@ -1,11 +1,13 @@
 package com.onek.calculate.entity;
 
+import com.onek.calculate.service.AccurateMath;
+import com.onek.calculate.util.DiscountUtil;
 import constant.DSMConst;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Couent implements IDiscount {
+public class Couent extends AccurateMath implements IDiscount {
     private int oid;
     private long unqid;
     private long coupno;
@@ -147,13 +149,26 @@ public class Couent implements IDiscount {
     }
 
     @Override
-    public void addDiscounted(double discount) {
-        this.discounted += discount;
-    }
-
-    @Override
     public void setDiscounted(double discount) {
-        this.discounted = discounted;
+        if (discount <= 0) {
+            return;
+        }
+
+        double[] shared = DiscountUtil.shareDiscount(getEachCurrent(), discount);
+
+        List<IProduct> prodList = getProductList();
+        IProduct product;
+        double befDiscounted;
+        double totalDiscounted = .0;
+        for (int i = 0; i < shared.length; i++) {
+            product = prodList.get(i);
+            befDiscounted = product.getDiscounted();
+            product.addDiscounted(sub(product.getCurrentPrice(), shared[i]));
+            totalDiscounted = add(totalDiscounted,
+                    sub(product.getDiscounted(), befDiscounted));
+        }
+
+        this.discounted = totalDiscounted;
     }
 
     @Override
