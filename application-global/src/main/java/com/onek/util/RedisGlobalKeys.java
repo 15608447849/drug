@@ -23,6 +23,9 @@ public class RedisGlobalKeys {
     //优惠码
     public static final String OFFER_CODE = "OFFER_CODE";
 
+    // 秒杀
+    public static final String SECKILL_TOKEN_PREFIX = "SECKILL_TOKEN";
+
     /**
      * 获取用户ID
      */

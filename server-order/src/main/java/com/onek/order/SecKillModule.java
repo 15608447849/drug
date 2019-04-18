@@ -78,8 +78,9 @@ public class SecKillModule {
         }
         boolean isEnough = RedisStockUtil.deductionSecKillStock(sku, compid, stock);
         if(!isEnough){
-            return new Result().fail("库存不够参加!", null);
+            return new Result().fail("库存不够!", null);
         }
+        RedisUtil.getStringProvide().decrease(RedisGlobalKeys.SECKILL_TOKEN_PREFIX + compid);
         return new Result().success(1);
     }
 }
