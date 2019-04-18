@@ -10,7 +10,7 @@ public class Product extends AccurateMath implements IProduct {
     private int nums;
     private double originalPrice;
     private double currentPrice;
-    private double discount;
+    private double discounted;
     private long packageId;
     private Set<Long> activityList = new HashSet<>();
 //    private List<Gift> giftList = new ArrayList<Gift>();
@@ -53,12 +53,12 @@ public class Product extends AccurateMath implements IProduct {
         this.originalPrice = originalPrice;
     }
 
-    public double getDiscount() {
-        return discount;
+    public double getDiscounted() {
+        return discounted;
     }
 
-    public void setDiscount(double discount) {
-        this.discount = discount;
+    public void setDiscounted(double discounted) {
+        this.discounted = discounted;
     }
 
     public long getPackageId() {
@@ -121,12 +121,12 @@ public class Product extends AccurateMath implements IProduct {
         this.currentPrice = currentPrice;
     }
 
-    public void addSharePrice(double sharePrice) {
-        this.discount = add(this.discount, sub(this.currentPrice, sharePrice));
+    public void addDiscounted(double discounted) {
+        this.discounted = Math.min(add(this.discounted, discounted), getCurrentPrice());
     }
 
     public void updateCurrentPrice() {
-        this.currentPrice = sub(mul(this.originalPrice, this.nums), this.discount);
+        this.currentPrice = sub(mul(this.originalPrice, this.nums), this.discounted);
     }
 
     @Override
