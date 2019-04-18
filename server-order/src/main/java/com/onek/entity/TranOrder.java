@@ -1,5 +1,7 @@
 package com.onek.entity;
 
+import java.util.List;
+
 /**
  * @author 11842
  * @version 1.1.1
@@ -29,6 +31,9 @@ public class TranOrder {
     private String odate;//订单日期
     private String otime;//订单时间
     private int cstatus;//
+
+    private List<TranOrderGoods> goods;
+
 
     public String getOrderno() {
         return orderno;
@@ -204,5 +209,13 @@ public class TranOrder {
 
     public void setCstatus(int cstatus) {
         this.cstatus = cstatus;
+    }
+
+    public List<TranOrderGoods> getGoods() {
+        return goods;
+    }
+
+    public void setGoods(List<TranOrderGoods> goods) {
+        this.goods = goods;
     }
 }

@@ -3,6 +3,8 @@ package util.http;
 import java.io.*;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -599,6 +601,63 @@ public class HttpUtil {
             } catch (IOException ignored) {
             }
         }
+    }
+
+    public static String formText(String url, String type, Map<String,String> params){
+
+
+
+        String text = null;
+        HttpURLConnection con = null;
+
+        try{
+
+            StringBuilder sb = new StringBuilder();
+            for (Map.Entry<String, String> e : params.entrySet()) {
+                sb.append(e.getKey());
+                sb.append("=");
+                sb.append(URLEncoder.encode(e.getValue(),"UTF-8"));
+                sb.append("&");
+            }
+            sb.substring(0, sb.length() - 1);
+
+            String content = sb.toString();
+            if (type .equals("GET") && params.size()>0){
+                url += "?" +content ;
+            }
+
+            con = (HttpURLConnection) new URL(url).openConnection();
+            con.setRequestMethod(type);
+            con.setDoOutput(true);
+            con.setDoInput(true);
+            con.setUseCaches(false);
+            con.setRequestProperty("Charset", "UTF-8");
+            con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
+            if (type.equals("POST")){
+                OutputStreamWriter osw = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
+                osw.write(content);
+                osw.flush();
+                osw.close();
+//                con.getOutputStream().write(content.getBytes("ISO-8859-1"));
+//                con.getOutputStream().flush();
+            }
+            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
+            sb.delete(0,sb.length());
+            String line;
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+            br.close();
+            text = sb.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            if (con!=null) {
+                con.disconnect();
+                con = null;
+            }
+        }
+        return text;
     }
 
 }
