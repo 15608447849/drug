@@ -24,10 +24,14 @@ public class CancelService {
     private static DelayQueue<CancelDelayed> getDelayQueue() {
         DelayQueue<CancelDelayed> delayQueue = new DelayQueue<>();
 
-        List<CancelDelayed> cancelDelayeds = getCancelDelayedList();
+        try {
+            List<CancelDelayed> cancelDelayeds = getCancelDelayedList();
 
-        if (!cancelDelayeds.isEmpty()) {
-            delayQueue.addAll(cancelDelayeds);
+            if (!cancelDelayeds.isEmpty()) {
+                delayQueue.addAll(cancelDelayeds);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return delayQueue;
