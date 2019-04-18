@@ -54,6 +54,56 @@ public class ShoppingCartVO {
 
     private double acamt;
 
+    private long spu;
+
+    private double counpon;
+
+    private long conpno;
+
+    private double freight;
+
+    private boolean freepost;
+
+    public boolean isFreepost() {
+        return freepost;
+    }
+
+    public void setFreepost(boolean freepost) {
+        this.freepost = freepost;
+    }
+
+    public double getFreight() {
+        return freight;
+    }
+
+    public void setFreight(double freight) {
+        this.freight = freight;
+    }
+
+    public long getConpno() {
+        return conpno;
+    }
+
+    public void setConpno(long conpno) {
+        this.conpno = conpno;
+    }
+
+    public double getCounpon() {
+        return counpon;
+    }
+
+    public void setCounpon(double counpon) {
+        this.counpon = counpon;
+    }
+
+    public long getSpu() {
+        return spu;
+    }
+
+    public void setSpu(long spu) {
+        this.spu = spu;
+    }
+
     public double getAcamt() {
         return acamt;
     }
