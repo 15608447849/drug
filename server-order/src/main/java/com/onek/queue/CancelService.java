@@ -9,10 +9,10 @@ import java.util.List;
 import java.util.concurrent.DelayQueue;
 
 public class CancelService {
+    private static final String REDIS_HEAD = "_CANCEL_ORDERS";
     private final static CancelService CANCEL_SERVICE;
     private volatile DelayQueue<CancelDelayed> delayQueue;
     private static volatile CancelHandler cancelHandler;
-    private static final String REDIS_HEAD = "";
 
     static {
         CANCEL_SERVICE = new CancelService(getDelayQueue());

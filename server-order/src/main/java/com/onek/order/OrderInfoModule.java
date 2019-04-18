@@ -82,7 +82,8 @@ public class OrderInfoModule {
             return new Result().fail("非法参数");
         }
 
-        int compid = appContext.getUserSession().compId;
+        int compid = 536862720;
+//        int compid = appContext.getUserSession().compId;
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
                 compid, TimeUtils.getCurrentYear(), QUERY_ORDER_DETAIL, params[0]);
