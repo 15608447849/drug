@@ -9,6 +9,7 @@ import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
+import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.IceRemoteUtil;
@@ -183,6 +184,7 @@ public class BackgroundProdModule {
             return new Result().fail("操作失败");
         }
 
+        RedisStockUtil.setActStock(bgProdVO.getSku(), bgProdVO.getStore());
         BASE_DAO.updateNative(UPDATE_PROD_BASE,
                 MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue(),
                 MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue(),
@@ -237,13 +239,13 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-        if (appContext.getUserSession() == null) {
-            for (BgProdVO returnResult : returnResults) {
-                returnResult.setRrp(0);
-                returnResult.setMp(0);
-                returnResult.setVatp(0);
-            }
-        }
+//        if (appContext.getUserSession() == null) {
+//            for (BgProdVO returnResult : returnResults) {
+//                returnResult.setRrp(0);
+//                returnResult.setMp(0);
+//                returnResult.setVatp(0);
+//            }
+//        }
 
         return new Result().success(returnResults);
     }
@@ -274,13 +276,13 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-        if (appContext.getUserSession() == null) {
-            for (BgProdVO returnResult : returnResults) {
-                returnResult.setRrp(0);
-                returnResult.setMp(0);
-                returnResult.setVatp(0);
-            }
-        }
+//        if (appContext.getUserSession() == null) {
+//            for (BgProdVO returnResult : returnResults) {
+//                returnResult.setRrp(0);
+//                returnResult.setMp(0);
+//                returnResult.setVatp(0);
+//            }
+//        }
 
         return new Result().success(returnResults[0]);
     }
@@ -456,7 +458,7 @@ public class BackgroundProdModule {
                     bgProdVO.getSpec()
             });
 
-
+            RedisStockUtil.setActStock(bgProdVO.getSku(), bgProdVO.getStore());
             int esResult = ProdESUtil.addProdDocument(bgProdVO);
 
             if (esResult != 0) {

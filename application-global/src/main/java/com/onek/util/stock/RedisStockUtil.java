@@ -1,6 +1,7 @@
 package com.onek.util.stock;
 
 import redis.util.RedisUtil;
+import util.StringUtils;
 
 import java.util.Random;
 import java.util.concurrent.ExecutorService;
@@ -21,7 +22,7 @@ public class RedisStockUtil {
     }
 
     public static boolean deductionSecKillStock(long sku, int compid, int stock){
-        String currentStock = RedisUtil.getStringProvide().get(ACT_PREFIX+sku);
+        String currentStock = RedisUtil.getStringProvide().get(ACT_PREFIX + sku);
         if(Integer.parseInt(currentStock) <= 0){
             return false;
         }
@@ -40,6 +41,9 @@ public class RedisStockUtil {
 
     public static boolean deductionStock(long sku, int stock){
         String currentStock = RedisUtil.getStringProvide().get(PREFIX+sku);
+        if(StringUtils.isEmpty(currentStock)){
+            return false;
+        }
         if(Integer.parseInt(currentStock) <= 0){
             return false;
         }

@@ -1,5 +1,8 @@
 package com.onek.calculate.entity;
 
+import com.onek.calculate.util.DiscountUtil;
+import util.MathUtil;
+
 import java.math.BigDecimal;
 import java.util.List;
 
@@ -8,9 +11,22 @@ public interface IDiscount {
     long getBRule();
 
     int getPriority();
-    void addDiscounted(double discount);
     void setDiscounted(double discount);
     double getDiscounted();
+
+    default double[] getEachCurrent() {
+        List<IProduct> prodList = getProductList();
+        double[] results = new double[prodList.size()];
+        IProduct product;
+        for (int i = 0; i < results.length; i++) {
+            product = prodList.get(i);
+
+            results[i] = product.getCurrentPrice();
+        }
+
+        return results;
+    }
+
     void addProduct(IProduct product);
     List<IProduct> getProductList();
     void setFreeShipping(boolean free);

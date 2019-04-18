@@ -60,39 +60,29 @@ public class Activity extends AccurateMath implements IDiscount {
         return this.incpriority * 10 + this.cpriority;
     }
 
-    @JSONField(serialize = false)
-    private double[] getEachCurrent() {
-        List<IProduct> prodList = getProductList();
-        double[] results = new double[prodList.size()];
-
-        for (int i = 0; i < results.length; i++) {
-            results[i] = prodList.get(i).getCurrentPrice();
-        }
-
-        return results;
-    }
-
-    @JSONField(serialize = false)
-    public void addDiscounted(double discount) {
+    @Override
+    public void setDiscounted(double discount) {
         if (discount <= 0) {
             return;
         }
 
-        this.discounted = add(this.discounted, discount);
-
         double[] shared = DiscountUtil.shareDiscount(getEachCurrent(), discount);
 
         List<IProduct> prodList = getProductList();
-
+        IProduct product;
+        double befDiscounted;
+        double totalDiscounted = .0;
         for (int i = 0; i < shared.length; i++) {
-            prodList.get(i).addSharePrice(shared[i]);
+            product = prodList.get(i);
+            befDiscounted = product.getDiscounted();
+            product.addDiscounted(sub(product.getCurrentPrice(), shared[i]));
+            totalDiscounted = add(totalDiscounted,
+                    sub(product.getDiscounted(), befDiscounted));
         }
+
+        this.discounted = totalDiscounted;
     }
 
-    @Override
-    public void setDiscounted(double discount) {
-        this.discounted = discount;
-    }
 
     @Override
     public double getDiscounted() {

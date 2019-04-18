@@ -23,6 +23,9 @@ public class TranOrderGoods {
     private int cstatus;
     private int pnum;//商品数量
 
+    private String pname;  // 商品名
+    private String pspec; // 商品规格
+
     public long getUnqid() {
         return unqid;
     }
@@ -141,5 +144,21 @@ public class TranOrderGoods {
 
     public void setPnum(int pnum) {
         this.pnum = pnum;
+    }
+
+    public String getPname() {
+        return pname;
+    }
+
+    public void setPname(String pname) {
+        this.pname = pname;
+    }
+
+    public String getPspec() {
+        return pspec;
+    }
+
+    public void setPspec(String pspec) {
+        this.pspec = pspec;
     }
 }
