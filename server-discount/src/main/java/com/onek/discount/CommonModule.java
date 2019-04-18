@@ -98,11 +98,11 @@ public class CommonModule {
 //        String selectActSQL = " SELECT brulecode FROM {{?" + DSMConst.TD_PROM_ACT +"}} where cstatus&1=0 and "
 //                + " brulecode like '" + brulecode + "%' and edate>CURRENT_DATE" ;
 //        List<Object[]> queryActResult = baseDao.queryNative(selectActSQL);
+
         String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
-                + " and brulecode REGEXP '^2' and  NOT EXISTS(select brulecode from {{?"
-                + DSMConst.TD_PROM_COUPON +"}} b where cstatus & ? >0 and cstatus&1=0 and a.brulecode = b.brulecode and "
-                 + " brulecode REGEXP '^2' and enddate>CURRENT_DATE)";
-        List<Object[]> queryResult = baseDao.queryNative(selectSQL,coupType);
+                + " and brulecode REGEXP '^2' ";
+
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         RulesVO[] rulesVOS = new RulesVO[queryResult.size()];
         baseDao.convToEntity(queryResult, rulesVOS, RulesVO.class, new String[]{"brulecode", "rulename"});
         return result.success(rulesVOS);
