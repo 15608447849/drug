@@ -18,9 +18,44 @@ public class ProdInfoStore {
             Map<String, Object> sourceMap = response.getSourceAsMap();
             HashMap detail = (HashMap) sourceMap.get("detail");
             entity = new ProdEntity();
-            BeanMapUtils.mapToBean(detail, entity);
+            assembleObjectFromEs(entity, sourceMap, detail);
         }
         return entity;
     }
 
+    public static void assembleObjectFromEs(ProdEntity prodVO, Map<String, Object> sourceMap, HashMap detail) {
+        try{
+            if(detail != null){
+                prodVO.setSpu(detail.get("spu") != null ? Long.parseLong(detail.get("spu").toString()) : 0);
+                prodVO.setPopname(detail.get("popname") != null ? detail.get("popname").toString() : "");
+                prodVO.setPopname(detail.get("prodname") != null ? detail.get("prodname").toString() : "");
+                prodVO.setStandarNo(detail.get("standarNo") != null ? detail.get("standarNo").toString() : "");
+                prodVO.setBrandNo(detail.get("brandNo") != null ? Long.parseLong(detail.get("brandNo").toString()) : 0);
+                prodVO.setBrandName(detail.get("brandName") != null ? detail.get("brandName").toString() : "");
+                prodVO.setManuNo(detail.get("manuNo") != null ? Long.parseLong(detail.get("manuNo").toString()) : 0);
+                prodVO.setManuName(detail.get("manuName") != null ? detail.get("manuName").toString() : "");
+
+                prodVO.setSku(detail.get("sku") != null ? Long.parseLong(detail.get("sku").toString()) : 0);
+                prodVO.setVatp(detail.get("vatp") != null ? Double.parseDouble(detail.get("vatp").toString()) : 0);
+                prodVO.setMp(detail.get("mp") != null ? Double.parseDouble(detail.get("mp").toString()) : 0);
+                prodVO.setRrp(detail.get("rrp") != null ? Double.parseDouble(detail.get("rrp").toString()) : 0);
+
+                prodVO.setVaildsdate(detail.get("vaildsdate") != null ? detail.get("vaildsdate").toString() : "");
+                prodVO.setVaildedate(detail.get("vaildedate") != null ? detail.get("vaildedate").toString() : "");
+                prodVO.setProdsdate(detail.get("prodsdate") != null ? detail.get("prodsdate").toString() : "");
+                prodVO.setProdedate(detail.get("prodedate") != null ? detail.get("prodedate").toString() : "");
+                prodVO.setSales(sourceMap.get("sales") != null ? Integer.parseInt(sourceMap.get("sales").toString()) : 0);
+                prodVO.setWholenum(detail.get("wholenum") != null ? Integer.parseInt(detail.get("wholenum").toString()) : 0);
+                prodVO.setMedpacknum(detail.get("medpacknum") != null ? Integer.parseInt(detail.get("medpacknum").toString()) : 0);
+                prodVO.setUnit(detail.get("unit") != null ? Integer.parseInt(detail.get("unit").toString()) : 0);
+
+                prodVO.setLimits(detail.get("limits") != null ? Integer.parseInt(detail.get("limits").toString()) : 0);
+                prodVO.setStore(detail.get("store") != null ? Integer.parseInt(detail.get("store").toString()) : 0);
+                prodVO.setActivitystore(detail.get("activitystore") != null ? Integer.parseInt(detail.get("activitystore").toString()) : 0);
+
+            }
+        }catch (Exception e){
+            // e.printStackTrace();
+        }
+    }
 }
