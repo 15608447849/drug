@@ -11,6 +11,8 @@ import com.onek.calculate.filter.QualFilter;
 import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
+import com.onek.service.AccessLimitService;
+import com.onek.service.impl.AccessLimitServiceImpl;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.stock.RedisStockUtil;
 import global.GenIdUtil;
@@ -26,6 +28,8 @@ import java.util.List;
  * @time 2019/4/16 11:14
  **/
 public class SecKillModule {
+
+    private AccessLimitService accessLimitService = new AccessLimitServiceImpl();
 
     @UserPermission(ignore = true)
     public Result beforeSecKill(AppContext appContext) {
@@ -73,14 +77,23 @@ public class SecKillModule {
         int stock = jsonObject.get("stock").getAsInt();
 
         String key = RedisUtil.getStringProvide().get(RedisGlobalKeys.SECKILL_TOKEN_PREFIX + compid);
+        if (!accessLimitService.tryAcquireSeckill()) {
+            return new Result().fail("当前秒杀人数过多!", null);
+        }
         if(unqid != Long.parseLong(key)){
             return new Result().fail("请勿重复提交!", null);
+        }
+        List<String> list = RedisUtil.getListProvide().getAllElements(RedisStockUtil.SECKILLPREFIX+sku);
+        for(String val : list){
+            if(val.contains(compid+"")){
+                return new Result().fail("不要重复秒杀!");
+            }
         }
         boolean isEnough = RedisStockUtil.deductionSecKillStock(sku, compid, stock);
         if(!isEnough){
             return new Result().fail("库存不够!", null);
         }
-        RedisUtil.getStringProvide().decrease(RedisGlobalKeys.SECKILL_TOKEN_PREFIX + compid);
+        RedisUtil.getStringProvide().delete(RedisGlobalKeys.SECKILL_TOKEN_PREFIX + compid);
         return new Result().success(1);
     }
 }

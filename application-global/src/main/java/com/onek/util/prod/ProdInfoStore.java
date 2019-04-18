@@ -28,7 +28,7 @@ public class ProdInfoStore {
             if(detail != null){
                 prodVO.setSpu(detail.get("spu") != null ? Long.parseLong(detail.get("spu").toString()) : 0);
                 prodVO.setPopname(detail.get("popname") != null ? detail.get("popname").toString() : "");
-                prodVO.setPopname(detail.get("prodname") != null ? detail.get("prodname").toString() : "");
+                prodVO.setProdname(detail.get("prodname") != null ? detail.get("prodname").toString() : "");
                 prodVO.setStandarNo(detail.get("standarNo") != null ? detail.get("standarNo").toString() : "");
                 prodVO.setBrandNo(detail.get("brandNo") != null ? Long.parseLong(detail.get("brandNo").toString()) : 0);
                 prodVO.setBrandName(detail.get("brandName") != null ? detail.get("brandName").toString() : "");
