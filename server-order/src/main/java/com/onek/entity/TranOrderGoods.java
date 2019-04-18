@@ -11,10 +11,10 @@ public class TranOrderGoods {
     private long orderno;//订单号
     private int compid;//企业码
     private long pdno;//商品码（SKU）
-    private int pdprice;//商品单价
-    private int distprice;//商品优惠价
-    private int payamt;//支付金额
-    private int coupamt;//优惠券金额
+    private double pdprice;//商品单价
+    private double distprice;//商品优惠价
+    private double payamt;//支付金额
+    private double coupamt;//优惠券金额
     private int promtype;//促销类型
     private int pkgno;//套餐码
     private int asstatus;//售后状态
@@ -55,35 +55,35 @@ public class TranOrderGoods {
         this.pdno = pdno;
     }
 
-    public int getPdprice() {
+    public double getPdprice() {
         return pdprice;
     }
 
-    public void setPdprice(int pdprice) {
+    public void setPdprice(double pdprice) {
         this.pdprice = pdprice;
     }
 
-    public int getDistprice() {
+    public double getDistprice() {
         return distprice;
     }
 
-    public void setDistprice(int distprice) {
+    public void setDistprice(double distprice) {
         this.distprice = distprice;
     }
 
-    public int getPayamt() {
+    public double getPayamt() {
         return payamt;
     }
 
-    public void setPayamt(int payamt) {
+    public void setPayamt(double payamt) {
         this.payamt = payamt;
     }
 
-    public int getCoupamt() {
+    public double getCoupamt() {
         return coupamt;
     }
 
-    public void setCoupamt(int coupamt) {
+    public void setCoupamt(double coupamt) {
         this.coupamt = coupamt;
     }
 

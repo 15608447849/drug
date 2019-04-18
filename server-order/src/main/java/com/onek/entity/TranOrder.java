@@ -14,11 +14,11 @@ public class TranOrder {
     private int ostatus;//订单状态
     private int asstatus;//售后状态
     private int pdnum;//商品数量
-    private int pdamt;//商品总价
-    private int freight;//运费金额
-    private int payamt;//支付金额
-    private int coupamt;//使用券额
-    private int distamt;//优惠金额
+    private double pdamt;//商品总价
+    private double freight;//运费金额
+    private double payamt;//支付金额
+    private double coupamt;//使用券额
+    private double distamt;//优惠金额
     private int rvaddno;//收货地址码
     private String shipdate;//发货日期
     private String shiptime;//发货时间
@@ -86,43 +86,43 @@ public class TranOrder {
         this.pdnum = pdnum;
     }
 
-    public int getPdamt() {
+    public double getPdamt() {
         return pdamt;
     }
 
-    public void setPdamt(int pdamt) {
+    public void setPdamt(double pdamt) {
         this.pdamt = pdamt;
     }
 
-    public int getFreight() {
+    public double getFreight() {
         return freight;
     }
 
-    public void setFreight(int freight) {
+    public void setFreight(double freight) {
         this.freight = freight;
     }
 
-    public int getPayamt() {
+    public double getPayamt() {
         return payamt;
     }
 
-    public void setPayamt(int payamt) {
+    public void setPayamt(double payamt) {
         this.payamt = payamt;
     }
 
-    public int getCoupamt() {
+    public double getCoupamt() {
         return coupamt;
     }
 
-    public void setCoupamt(int coupamt) {
+    public void setCoupamt(double coupamt) {
         this.coupamt = coupamt;
     }
 
-    public int getDistamt() {
+    public double getDistamt() {
         return distamt;
     }
 
-    public void setDistamt(int distamt) {
+    public void setDistamt(double distamt) {
         this.distamt = distamt;
     }
 
