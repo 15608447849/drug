@@ -17,7 +17,7 @@ public class PayModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         String orderno = jsonObject.get("orderno").getAsString();
-        int compid = jsonObject.get("orderno").getAsInt();
+        int compid = jsonObject.get("compid").getAsInt();
         String result = FileServerUtils.getPayQrImageLink("alipay","空间折叠",25.02,orderno,
                 "orderServer"+getOrderServerNo(compid),"PayModule","payCallBack");
         return new Result().success(result);
@@ -26,6 +26,13 @@ public class PayModule {
 
     public Result payCallBack(AppContext appContext){
 
+        String [] arrays = appContext.param.arrays;
+        String orderno = arrays[0];
+        String paytype = arrays[1];
+        String thirdPayNo = arrays[2];
+        String tradeStatus = arrays[3];
+        String tradeDate = arrays[4];
+        String tradeTime = arrays[5];
         return new Result().success(null);
     }
 
