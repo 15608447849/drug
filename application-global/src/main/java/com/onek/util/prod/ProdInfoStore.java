@@ -54,6 +54,7 @@ public class ProdInfoStore {
                 prodVO.setActivitystore(detail.get("activitystore") != null ? Integer.parseInt(detail.get("activitystore").toString()) : 0);
                 prodVO.setSpec(detail.get("spec") != null ? detail.get("spec").toString() : "");
 
+                prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
             }
         }catch (Exception e){
             // e.printStackTrace();
