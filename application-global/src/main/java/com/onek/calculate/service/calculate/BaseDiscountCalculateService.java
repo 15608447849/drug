@@ -3,6 +3,7 @@ package com.onek.calculate.service.calculate;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.rule.RuleParser;
+import com.onek.calculate.util.DiscountUtil;
 
 import java.util.List;
 
@@ -13,9 +14,7 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             discountHandler(iDiscount);
         }
 
-        for (IDiscount iDiscount : discountList) {
-            iDiscount.updateAllPrices();
-        }
+        DiscountUtil.updateAllPrices(DiscountUtil.getProds(discountList));
     }
 
     protected void discountHandler(IDiscount discount) {
@@ -29,8 +28,8 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
 
 //        List<IProduct> prods = discount.getProductList();
 
-        double priceTotal = discount.getCurrentPriceTotal();
-        int numsTotal = discount.getNumTotal();
+        double priceTotal = DiscountUtil.getCurrentPriceTotal(discount.getProductList());
+        int numsTotal = DiscountUtil.getNumTotal(discount.getProductList());
 
         /*for (IProduct prod : prods) {
             priceTotal = MathUtil.exactAdd(

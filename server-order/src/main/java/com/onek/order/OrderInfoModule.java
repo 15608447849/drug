@@ -69,7 +69,7 @@ public class OrderInfoModule {
                     + " LEFT JOIN " + FROM_APPRAISE
                     + " ON app.cstatus&1 = 0 "
                     + " AND app.orderno = ord.orderno "
-            + " WHERE ord.cstatus&1 = 0 AND orderno = ? ";
+            + " WHERE ord.cstatus&1 = 0 AND ord.orderno = ? ";
 
     public Result getOrderDetail(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -107,7 +107,8 @@ public class OrderInfoModule {
             return new Result().fail("参数为空");
         }
 
-        int compid = appContext.getUserSession().compId;
+        int compid = 536862720;
+//        int compid = appContext.getUserSession().compId;
 
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
@@ -174,10 +175,15 @@ public class OrderInfoModule {
         ProdEntity prod;
         for (TranOrderGoods tranOrderGoods : result) {
             prod = ProdInfoStore.getProdBySku(tranOrderGoods.getPdno());
+            tranOrderGoods.setPayamt(MathUtil.exactDiv(tranOrderGoods.getPayamt(), 100).doubleValue());
+            tranOrderGoods.setPdprice(MathUtil.exactDiv(tranOrderGoods.getPdprice(), 100).doubleValue());
+            tranOrderGoods.setDistprice(MathUtil.exactDiv(tranOrderGoods.getDistprice(), 100).doubleValue());
+            tranOrderGoods.setCoupamt(MathUtil.exactDiv(tranOrderGoods.getCoupamt(), 100).doubleValue());
 
             if (prod != null) {
-                tranOrderGoods.setPname(prod.getBrandName());
+                tranOrderGoods.setPname(prod.getProdname());
                 tranOrderGoods.setPspec(prod.getSpec());
+                tranOrderGoods.setManun(prod.getManuName());
             }
         }
 
