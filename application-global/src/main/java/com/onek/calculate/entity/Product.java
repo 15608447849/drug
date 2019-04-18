@@ -126,7 +126,8 @@ public class Product extends AccurateMath implements IProduct {
     }
 
     public void updateCurrentPrice() {
-        this.currentPrice = sub(mul(this.originalPrice, this.nums), this.discounted);
+        this.currentPrice = sub(
+                mul(this.originalPrice, this.nums), this.discounted);
     }
 
     @Override
