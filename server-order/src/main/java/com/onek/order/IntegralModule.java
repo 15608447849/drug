@@ -13,6 +13,7 @@ import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
+import global.IceRemoteUtil;
 import util.GsonUtils;
 import util.StringUtils;
 import util.TimeUtils;
@@ -73,7 +74,8 @@ public class IntegralModule {
             integral = base[times];
         }
         long unqid = GenIdUtil.getUnqId();
-        baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_SIGNIN, integral, 0,0 });
+        int code = IceRemoteUtil.addPoint(compid, integral);
+        if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_SIGNIN, integral, 0,0 });
 
         return new Result().success(null);
     }

@@ -1,5 +1,7 @@
 package com.onek.user;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
@@ -9,8 +11,6 @@ import dao.BaseDAO;
 import util.GsonUtils;
 
 import java.util.List;
-
-import static dao.SynDbLog.queryNative;
 
 public class MemberModule {
 
@@ -22,12 +22,15 @@ public class MemberModule {
     @UserPermission(ignore = true)
     public Result addPoint(AppContext appContext) {
         String json = appContext.param.json;
-        MemberVO memberVO = GsonUtils.jsonToJavaBean(json, MemberVO.class);
-        List<Object[]> list = baseDao.queryNative(GET_SQL, new Object[]{ memberVO.getCompid()});
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int compid = jsonObject.get("compid").getAsInt();
+        int point = jsonObject.get("point").getAsInt();
+        List<Object[]> list = baseDao.queryNative(GET_SQL, new Object[]{ compid});
         if(list != null && list.size() > 0){
             int accupoints = Integer.parseInt(list.get(0)[0].toString());
             int balpoints = Integer.parseInt(list.get(0)[1].toString());
-            baseDao.updateNative(UPDATE_SQL, new Object[]{ accupoints+ memberVO.getAccupoints(), balpoints + memberVO.getBalpoints(), memberVO.getCompid()});
+            baseDao.updateNative(UPDATE_SQL, new Object[]{ accupoints+ point, balpoints + point, compid});
         }
 
         return new Result().success(null);
@@ -36,12 +39,15 @@ public class MemberModule {
     @UserPermission(ignore = true)
     public Result reducePoint(AppContext appContext) {
         String json = appContext.param.json;
-        MemberVO memberVO = GsonUtils.jsonToJavaBean(json, MemberVO.class);
-        List<Object[]> list = baseDao.queryNative(GET_SQL, new Object[]{ memberVO.getCompid()});
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int compid = jsonObject.get("compid").getAsInt();
+        int point = jsonObject.get("point").getAsInt();
+        List<Object[]> list = baseDao.queryNative(GET_SQL, new Object[]{ compid});
         if(list != null && list.size() > 0){
             int accupoints = Integer.parseInt(list.get(0)[0].toString());
             int balpoints = Integer.parseInt(list.get(0)[1].toString());
-            baseDao.updateNative(UPDATE_SQL, new Object[]{ accupoints+ memberVO.getAccupoints(), balpoints - memberVO.getBalpoints(), memberVO.getCompid()});
+            baseDao.updateNative(UPDATE_SQL, new Object[]{ accupoints, balpoints - point, compid});
         }
 
         return new Result().success(null);

@@ -245,4 +245,28 @@ public class IceRemoteUtil {
         return GsonUtils.string2Map(json);
     }
 
+    public static int addPoint(int compid, int point){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("compid", compid);
+        jsonObject.put("point", point);
+        String result = ic.settingProxy("userServer")
+                .settingReq("","MemberModule","addPoint")
+                .settingParam(jsonObject.toJSONString())
+                .executeSync();
+        Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
+        return ret.code;
+    }
+
+    public static int reducePoint(int compid, int point){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("compid", compid);
+        jsonObject.put("point", point);
+        String result = ic.settingProxy("userServer")
+                .settingReq("","MemberModule","reducePoint")
+                .settingParam(jsonObject.toJSONString())
+                .executeSync();
+        Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
+        return ret.code;
+    }
+
 }
