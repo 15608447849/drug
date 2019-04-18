@@ -6,8 +6,7 @@ import com.onek.calculate.ActivityFilterService;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.entity.Product;
-import com.onek.calculate.filter.ActivitiesFilter;
-import com.onek.calculate.filter.CycleFilter;
+import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import util.StringUtils;
@@ -33,6 +32,7 @@ public class CalculateModule {
 
         long sku = Long.parseLong(arrays[0]);
         long actcode = Long.parseLong(arrays[1]);
+        int compid = appContext.getUserSession().compId;
 
         List<Product> products = new ArrayList<>();
         Product p = new Product();
@@ -40,7 +40,10 @@ public class CalculateModule {
 
         List<IDiscount> discounts
                 = new ActivityFilterService(
-                        new ActivitiesFilter[] { new CycleFilter() })
+                        new ActivitiesFilter[] {
+                                new TypeFilter(),
+                                new CycleFilter(),
+                                new QualFilter(compid) })
                 .getCurrentActivities(products);
 
         IDiscount currDiscount = null;
