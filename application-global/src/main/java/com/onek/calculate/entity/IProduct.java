@@ -11,6 +11,7 @@ public interface IProduct {
     double getOriginalPrice();
     double getCurrentPrice();
     void setCurrentPrice(double currentPrice);
-    void addSharePrice(double sharePrice);
+    void addDiscounted(double discounted);
+    double getDiscounted();
     void updateCurrentPrice();
 }

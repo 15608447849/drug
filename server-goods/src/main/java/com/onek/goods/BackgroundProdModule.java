@@ -239,13 +239,13 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-        if (appContext.getUserSession() == null) {
-            for (BgProdVO returnResult : returnResults) {
-                returnResult.setRrp(0);
-                returnResult.setMp(0);
-                returnResult.setVatp(0);
-            }
-        }
+//        if (appContext.getUserSession() == null) {
+//            for (BgProdVO returnResult : returnResults) {
+//                returnResult.setRrp(0);
+//                returnResult.setMp(0);
+//                returnResult.setVatp(0);
+//            }
+//        }
 
         return new Result().success(returnResults);
     }
@@ -276,13 +276,13 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-        if (appContext.getUserSession() == null) {
-            for (BgProdVO returnResult : returnResults) {
-                returnResult.setRrp(0);
-                returnResult.setMp(0);
-                returnResult.setVatp(0);
-            }
-        }
+//        if (appContext.getUserSession() == null) {
+//            for (BgProdVO returnResult : returnResults) {
+//                returnResult.setRrp(0);
+//                returnResult.setMp(0);
+//                returnResult.setVatp(0);
+//            }
+//        }
 
         return new Result().success(returnResults[0]);
     }

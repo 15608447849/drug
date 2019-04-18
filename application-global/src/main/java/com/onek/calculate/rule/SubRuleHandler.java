@@ -10,7 +10,7 @@ import java.util.List;
 public class SubRuleHandler implements IRuleHandler {
     @Override
     public void subHandler(IDiscount discount, double value, int times) {
-        discount.addDiscounted(MathUtil
+        discount.setDiscounted(MathUtil
                 .exactMul(value, times)
                 .doubleValue());
     }
@@ -22,7 +22,7 @@ public class SubRuleHandler implements IRuleHandler {
                 .setScale(2, BigDecimal.ROUND_HALF_UP)
                 .doubleValue();
 
-        discount.addDiscounted(
+        discount.setDiscounted(
                 MathUtil.exactMul(p, discount.getCurrentPriceTotal())
                         .doubleValue());
     }
