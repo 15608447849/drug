@@ -16,6 +16,7 @@ import com.onek.entitys.Result;
 import com.onek.goods.entities.MallFloorVO;
 import com.onek.goods.entities.ProdVO;
 import com.onek.goods.service.MallFloorImpl;
+import com.onek.goods.service.PromTimeService;
 import com.onek.goods.util.ProdActPriceUtil;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
@@ -43,6 +44,8 @@ public class ProdModule {
     private static IRedisCache mallFloorProxy = (IRedisCache) CacheProxyInstance.createInstance(new MallFloorImpl());
 
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
+
+    private static PromTimeService timeService = new PromTimeService();
 
     private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
                     "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
@@ -244,14 +247,6 @@ public class ProdModule {
 
                 skuList.add(gcode);
                 if(!actCodeList.contains(actcode)){
-                    List<Object[]> list2= BASE_DAO.queryNative(PROM_TIME_SQL, new Object[]{ actcode });
-                    List<String[]> times = new ArrayList<>();
-                    for(Object[] objects1 : list2){
-                        String sdate =  objects1[0].toString();
-                        String edate =  objects1[1].toString();
-                        times.add(new String[]{ sdate, edate});
-                    }
-                    timeMap.put(actcode, times);
                     actCodeList.add(actcode);
                 }
                 if(actCodeList.size() >1){
@@ -297,7 +292,10 @@ public class ProdModule {
                     if(prodVO.getRulestatus() > 0) prodVO.setActprod(true);
                 }
             }
-            GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(actCodeList, timeMap).invoke();
+
+            List<String[]> times = timeService.getTimesByActcode(actCodeList.get(0));
+
+            GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
             String sdate = getEffectiveTimeByActCode.getSdate();
             String edate = getEffectiveTimeByActCode.getEdate();
 
@@ -328,7 +326,6 @@ public class ProdModule {
         if(list != null && list.size() > 0){
             List<Long> actCodeList = new ArrayList<>();
             List<Long> skuList = new ArrayList<>();
-            Map<Long,List<String[]>> timeMap = new HashMap<>();
             Map<Long,Integer[]> dataMap = new HashMap<>();
 
             for(Object[] objects : list){
@@ -340,14 +337,6 @@ public class ProdModule {
 
                 if(!actCodeList.contains(actcode)){
                     actCodeList.add(actcode);
-                    List<Object[]> list2 = BASE_DAO.queryNative(PROM_TIME_SQL, new Object[]{actcode});
-                    List<String[]> times = new ArrayList<>();
-                    for(Object[] objects1 : list2){
-                        String sdate =  objects1[0].toString();
-                        String edate =  objects1[1].toString();
-                        times.add(new String[]{ sdate, edate});
-                    }
-                    timeMap.put(actcode, times);
                 }
                 if(actCodeList.size() >1){
                     break;
@@ -390,7 +379,9 @@ public class ProdModule {
 //                }
 //            }
 
-            GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(actCodeList, timeMap).invoke();
+            List<String[]> times = timeService.getTimesByActcode(actCodeList.get(0));
+
+            GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
             String sdate = getEffectiveTimeByActCode.getSdate();
             String edate = getEffectiveTimeByActCode.getEdate();
 
@@ -431,31 +422,24 @@ public class ProdModule {
                 skuList.add(gcode);
             }
         }
-        List<Object[]> list2 = BASE_DAO.queryNative(PROM_TIME_SQL, new Object[]{actcode});
-        Map<Long,List<String[]>> timeMap = new HashMap<>();
-        List<String[]> times = new ArrayList<>();
-        JSONArray array = new JSONArray();
-        for(Object[] objects1 : list2){
-            String sdate =  objects1[0].toString();
-            String edate =  objects1[1].toString();
-            times.add(new String[]{ sdate, edate});
-            JSONObject time = new JSONObject();
-            time.put("sdate", sdate);
-            time.put("edate", edate);
-            array.add(time);
-        }
-        if(times.size() <= 0){
-            JSONObject time = new JSONObject();
-            time.put("sdate", "00:00:00");
-            time.put("edate", "23:59:59");
-            array.add(time);
-        }
-        timeMap.put(actcode, times);
+
         List<Long> actCodeList = new ArrayList<>();
         actCodeList.add(actcode);
-        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(actCodeList, timeMap).invoke();
+        List<String[]> times = timeService.getTimesByActcode(actCodeList.get(0));
+
+        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
         String sdate = getEffectiveTimeByActCode.getSdate();
         String edate = getEffectiveTimeByActCode.getEdate();
+        JSONArray array = new JSONArray();
+        for(String[]  objects1: times){
+            String s =  objects1[0].toString();
+            String d =  objects1[1].toString();
+            times.add(new String[]{ s, d});
+            JSONObject time = new JSONObject();
+            time.put("sdate", s);
+            time.put("edate", d);
+            array.add(time);
+        }
 
         if(skuList.size() > 0){
             SearchResponse response =  ProdESUtil.searchProdBySpuListAndKeyword(skuList, keyword);
@@ -527,26 +511,26 @@ public class ProdModule {
                 skuList.add(gcode);
             }
         }
-        List<Object[]> list2 = BASE_DAO.queryNative(PROM_TIME_SQL, new Object[]{actcode});
-        Map<Long,List<String[]>> timeMap = new HashMap<>();
-        List<String[]> times = new ArrayList<>();
+
+
+        List<Long> actCodeList = new ArrayList<>();
+        actCodeList.add(actcode);
+
+        List<String[]> times = timeService.getTimesByActcode(actCodeList.get(0));
+
+        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
+        String sdate = getEffectiveTimeByActCode.getSdate();
+        String edate = getEffectiveTimeByActCode.getEdate();
         JSONArray array = new JSONArray();
-        for(Object[] objects1 : list2){
-            String sdate =  objects1[0].toString();
-            String edate =  objects1[1].toString();
-            times.add(new String[]{ sdate, edate});
+        for(String[]  objects1: times){
+            String s =  objects1[0].toString();
+            String d =  objects1[1].toString();
+            times.add(new String[]{ s, d});
             JSONObject time = new JSONObject();
-            time.put("sdate", sdate);
-            time.put("edate", edate);
+            time.put("sdate", s);
+            time.put("edate", d);
             array.add(time);
         }
-        if(times.size() <= 0){
-            JSONObject time = new JSONObject();
-            time.put("sdate", "00:00:00");
-            time.put("edate", "23:59:59");
-            array.add(time);
-        }
-        timeMap.put(actcode, times);
 
         List<Object[]> ladoffList =BASE_DAO.queryNative(TEAM_BUY_LADOFF_SQL, new Object[]{actcode});
         int minoff = 100;
@@ -569,11 +553,6 @@ public class ProdModule {
             }
         }
 
-        List<Long> actCodeList = new ArrayList<>();
-        actCodeList.add(actcode);
-        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(actCodeList, timeMap).invoke();
-        String sdate = getEffectiveTimeByActCode.getSdate();
-        String edate = getEffectiveTimeByActCode.getEdate();
 
         if(skuList.size() > 0){
             SearchResponse response =  ProdESUtil.searchProdBySpuListAndKeyword(skuList, keyword);
@@ -749,11 +728,29 @@ public class ProdModule {
                     if(bits.size() > 1){
                         prodVO.setMutiact(true);
                     }
+
                     ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
                     if(prizeEntity != null){
                         prodVO.setMinprize(NumUtil.div(prizeEntity.getMinactprize(), 100));
                         prodVO.setMaxprize(NumUtil.div(prizeEntity.getMaxactprize(), 100));
                         prodVO.setActcode(prizeEntity.getActcode());
+                        if(prizeEntity.getActcode() > 0 && bits.size() == 1 && ((rulestatus & 2048) > 0 || (rulestatus & 4096) > 0)){
+                            List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
+                            GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
+                            String sdate = getEffectiveTimeByActCode.getSdate();
+                            String edate = getEffectiveTimeByActCode.getEdate();
+                            if(StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate)){
+                                prodVO.setRulestatus(0);
+                                prodVO.setActprod(false);
+                                prodVO.setMutiact(false);
+                                prodVO.setMinprize(prodVO.getVatp());
+                                prodVO.setMaxprize(prodVO.getVatp());
+                                prodVO.setActcode(prizeEntity.getActcode());
+                            }else{
+                                prodVO.setSdate(sdate);
+                                prodVO.setEdate(edate);
+                            }
+                        }
                     }
                 }
                 try{
@@ -913,14 +910,12 @@ public class ProdModule {
     }
 
     private class GetEffectiveTimeByActCode {
-        private List<Long> actCodeList;
-        private Map<Long, List<String[]>> timeMap;
+        private List<String[]> times;
         private String sdate;
         private String edate;
 
-        public GetEffectiveTimeByActCode(List<Long> actCodeList, Map<Long, List<String[]>> timeMap) {
-            this.actCodeList = actCodeList;
-            this.timeMap = timeMap;
+        public GetEffectiveTimeByActCode(List<String[]> times) {
+            this.times = times;
         }
 
         public String getSdate() {
@@ -932,9 +927,10 @@ public class ProdModule {
         }
 
         public GetEffectiveTimeByActCode invoke() {
-            List<String[]> times = timeMap.get(actCodeList.get(0));
-            sdate = "00:00:00";
-            edate = "23:59:59";
+            if(times == null || times.size()<=0){
+                sdate = "00:00:00";
+                edate = "23:59:59";
+            }
             if(times != null && times.size() > 0){
                for(String[] time: times){
                    if(TimeUtils.isEffectiveTime(time[0], time[1])){
