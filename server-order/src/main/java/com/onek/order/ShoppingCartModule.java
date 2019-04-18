@@ -339,7 +339,7 @@ public class ShoppingCartModule {
             for(Product product: ckProduct){
                 if(shoppingCartVO.getPdno() == product.getSKU()
                         && shoppingCartVO.getChecked() == 1){
-                    shoppingCartVO.setDiscount(product.getDiscount());
+                    shoppingCartVO.setDiscount(product.getDiscounted());
                     shoppingCartVO.setAmt(discountResult.getTotalDiscount());
                     shoppingCartVO.setAcamt(discountResult.getTotalCurrentPrice());
                 }
