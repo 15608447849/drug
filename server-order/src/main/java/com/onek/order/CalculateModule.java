@@ -76,6 +76,8 @@ public class CalculateModule {
         if (currDiscount.getBRule() == 1133) {
             // 团购
             jsonObject.put("ladoffs", ladoffs);
+        } else if (currDiscount.getBRule() == 1113) {
+            jsonObject.put("killPrice", currDiscount.getPrice(sku));
         }
 
         return new Result().success(jsonObject);
