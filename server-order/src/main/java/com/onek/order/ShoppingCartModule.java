@@ -65,7 +65,7 @@ public class ShoppingCartModule {
 
     //查询购物车列表
     private final String QUERY_SHOPCART_SQL = "select unqid,pdno,compid,cstatus,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "+
-            " where cstatus&1=0 and compid = ? order by createdate,createtime desc";
+            " where cstatus&1=0 and  orderno = 0 and compid = ? order by createdate,createtime desc";
 
 
     private static final String QUERY_PROD_BASE =
