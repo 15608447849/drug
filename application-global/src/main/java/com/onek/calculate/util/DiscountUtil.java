@@ -63,35 +63,52 @@ public class DiscountUtil {
         return result;
     }
 
-    public static double getTotalCurrentPrice(List<? extends IDiscount> discounts) {
-        BigDecimal bd = BigDecimal.ZERO;
-        Set<IProduct> productSet = new HashSet<>();
+    public static double[] getEachCurrent(List<? extends IProduct> prodList) {
+        double[] results = new double[prodList.size()];
+        IProduct product;
+        for (int i = 0; i < results.length; i++) {
+            product = prodList.get(i);
 
-        for (IDiscount discount : discounts) {
-            productSet.addAll(discount.getProductList());
+            results[i] = product.getCurrentPrice();
         }
 
-        for (IProduct iProduct : productSet) {
-            bd = bd.add(BigDecimal.valueOf(iProduct.getCurrentPrice()));
-        }
-
-        return bd.setScale(2).doubleValue();
+        return results;
     }
 
-    public static int getTotalNums(List<? extends IDiscount> discounts) {
-        int nums = 0;
-        Set<IProduct> productSet = new HashSet<>();
+    public static List<IProduct> getProds(List<? extends IDiscount> discounts) {
+        Set<IProduct> resultSet = new HashSet<>();
 
         for (IDiscount discount : discounts) {
-            productSet.addAll(discount.getProductList());
+            resultSet.addAll(discount.getProductList());
         }
 
-        for (IProduct iProduct : productSet) {
-            nums += iProduct.getNums();
-        }
-
-        return nums;
+        return new ArrayList<>(resultSet);
     }
 
+    public static void updateAllPrices(List<? extends IProduct> prodList) {
+        for (IProduct product: prodList) {
+            product.updateCurrentPrice();
+        }
+    }
+
+    public static double getCurrentPriceTotal(List<? extends IProduct> prodList) {
+        BigDecimal result = BigDecimal.ZERO;
+
+        for (IProduct product: prodList) {
+            result = result.add(BigDecimal.valueOf(product.getCurrentPrice()));
+        }
+
+        return result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+    }
+
+    public static int getNumTotal(List<? extends IProduct> prodList) {
+        int result = 0;
+
+        for (IProduct product: prodList) {
+            result += product.getNums();
+        }
+
+        return result;
+    }
 
 }
