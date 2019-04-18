@@ -17,6 +17,7 @@ import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
+import org.hyrdpf.util.LogUtil;
 import util.ModelUtil;
 
 import java.util.*;
@@ -43,10 +44,10 @@ public class TranOrderOptModule {
     //订单商品表新增
     private static final String INSERT_TRAN_GOODS = "insert into {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + "(unqid,orderno,compid,pdno,pdprice,distprice,payamt,"
-            + "coupamt,promtype,pkgno,asstatus,createdate,createtime,cstatus) "
+            + "coupamt,promtype,pkgno,pnum,asstatus,createdate,createtime,cstatus) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "0,CURRENT_DATE,CURRENT_TIME,0)";
+            + "?,0,CURRENT_DATE,CURRENT_TIME,0)";
 
     private static final String UPD_TRAN_GOODS = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set "
             + "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
@@ -56,6 +57,15 @@ public class TranOrderOptModule {
     //是否要减商品总库存
     private static final String UPD_GOODS = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "freezestore=? where cstatus&1=0 and sku=? ";
+
+    //更新订单状态
+    private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
+            + " where cstatus&1=0 and orderno=?";
+
+    //释放商品冻结库存
+    private static final String UPD_GOODS_FSTORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
+            + "freezestore=freezestore-? where cstatus&1=0 and sku=? ";
+
 
 
 
@@ -92,6 +102,7 @@ public class TranOrderOptModule {
         for (int i = 0; i < goodsArr.size(); i++) {
             TranOrderGoods goodsVO = gson.fromJson(goodsArr.get(i).toString(), TranOrderGoods.class);
             pdnum += goodsVO.getPnum();
+            goodsVO.setCompid(tranOrder.getCusno());
             tranOrderGoods.add(goodsVO);
         }
         tranOrder.setPdnum(pdnum);
@@ -103,20 +114,26 @@ public class TranOrderOptModule {
             return result.fail("商品库存发生改变！");
         }
         //订单费用计算（费用分摊以及总费用计算）
-        List<TranOrderGoods> finalGoodsPrice = calculatePrice(tranOrderGoods, tranOrder, coupon);
-        if (finalGoodsPrice == null) return result.fail("下单失败");
-        //优惠券
-
+        List<TranOrderGoods> finalGoodsPrice = null;
+        try {
+            finalGoodsPrice = calculatePrice(tranOrderGoods, tranOrder, coupon);
+        } catch (Exception e) {
+            stockRecovery(goodsList);
+            LogUtil.getDefaultLogger().info("计算活动价格异常！");
+            return result.fail("下单失败");
+        }
         //数据库相关操作
         sqlList.add(INSERT_TRAN_ORDER);
         params.add(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0,tranOrder.getPdnum(),
-                tranOrder.getPdamt(),tranOrder.getFreight(),tranOrder.getPayamt(),tranOrder.getCoupamt(),
+                tranOrder.getPdamt(),tranOrder.getFreight(),tranOrder.getPayamt(),tranOrder.getCoupamt(),tranOrder.getDistamt(),
                 tranOrder.getRvaddno(),0,0});
+
         if (placeType == 1) {
             getInsertSqlList(sqlList, params, finalGoodsPrice, orderNo);
         } else {
             getUpdSqlList(sqlList, params, finalGoodsPrice, orderNo);
         }
+
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
         int year = Integer.parseInt("20" + orderNo.substring(0,2));
@@ -151,16 +168,16 @@ public class TranOrderOptModule {
             tempProds.add(product);
         });
         DiscountResult discountResult = CalculateUtil.calculate(tranOrder.getCusno(), tempProds, coupon);
-        if (discountResult == null) return null;
-        tranOrder.setPdamt((int)(discountResult.getTotalCurrentPrice() + discountResult.getTotalDiscount()) * 100);
-        tranOrder.setCoupamt((int)(discountResult.getCouponValue()*100));//订单使用优惠券(李康亮记得填)
+//        if (discountResult == null) return finalTranOrderGoods;
+        tranOrder.setPdamt((discountResult.getTotalCurrentPrice() + discountResult.getTotalDiscount()) * 100);
+        tranOrder.setCoupamt((discountResult.getCouponValue()*100));//订单使用优惠券(李康亮记得填)
         if (discountResult.isFreeShipping()) {//免邮
             tranOrder.setFreight(0);
         } else {
             tranOrder.setFreight(0);//运费(暂无)
         }
-        tranOrder.setPayamt((int)(discountResult.getTotalCurrentPrice()*100));
-        tranOrder.setDistamt((int)(discountResult.getTotalDiscount()*100));
+        tranOrder.setPayamt((discountResult.getTotalCurrentPrice()*100));
+        tranOrder.setDistamt((discountResult.getTotalDiscount()*100));
 
         List<IDiscount> iDiscountList = discountResult.getActivityList();
         for (IDiscount iDiscount : iDiscountList) {
@@ -168,12 +185,19 @@ public class TranOrderOptModule {
                 TranOrderGoods tranOrderGoods = new TranOrderGoods();
                 tranOrderGoods.setCompid(tranOrder.getCusno());
                 tranOrderGoods.setPdno(iDiscount.getProductList().get(i).getSKU());
-                tranOrderGoods.setPdprice((int)(iDiscount.getProductList().get(i).getOriginalPrice() * 100));
+                tranOrderGoods.setPdprice((iDiscount.getProductList().get(i).getOriginalPrice() * 100));
 //                tranOrderGoods.setDistprice(iDiscount.getProductList().get(i));
-                tranOrderGoods.setPayamt((int)(iDiscount.getProductList().get(i).getCurrentPrice()*100));
+                tranOrderGoods.setPayamt((iDiscount.getProductList().get(i).getCurrentPrice()*100));
                 tranOrderGoods.setPromtype((int)iDiscount.getBRule());
                 finalTranOrderGoods.add(tranOrderGoods);
             }
+        }
+        if (finalTranOrderGoods.size() == 0) {
+            for (TranOrderGoods goodsPrice :tranOrderGoodsList) {
+                goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
+                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
+            }
+            return tranOrderGoodsList;
         }
         return finalTranOrderGoods;
     }
@@ -225,16 +249,17 @@ public class TranOrderOptModule {
      **/
     private void getInsertSqlList(List<String> sqlList, List<Object[]> params, List<TranOrderGoods> tranOrderGoodsList,
             String orderNo){
-        tranOrderGoodsList.forEach(tranOrderGoods -> {
+        for (TranOrderGoods tranOrderGoods : tranOrderGoodsList){
             sqlList.add(INSERT_TRAN_GOODS);
 //            unqid,orderno,compid,pdno,pdprice,distprice,payamt,
 //                    coupamt,promtype,pkgno,asstatus,createdate,createtime,cstatus
             params.add(new Object[]{GenIdUtil.getUnqId(), orderNo, tranOrderGoods.getCompid(),tranOrderGoods.getPdno(),
                     tranOrderGoods.getPdprice(),tranOrderGoods.getDistprice(), tranOrderGoods.getPayamt(),tranOrderGoods.getCoupamt(),
-                    tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno()});
+                    tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno(), tranOrderGoods.getPnum()});
             sqlList.add(UPD_GOODS);
             params.add(new Object[]{tranOrderGoods.getPnum(),tranOrderGoods.getPdno()});
-        });
+        }
+
     }
 
     /* *
@@ -248,7 +273,7 @@ public class TranOrderOptModule {
      **/
     private void getUpdSqlList(List<String> sqlList, List<Object[]> params, List<TranOrderGoods> tranOrderGoodsList,
                                   String orderNo){
-        tranOrderGoodsList.forEach(tranOrderGoods -> {
+        for (TranOrderGoods tranOrderGoods : tranOrderGoodsList){
             sqlList.add(UPD_TRAN_GOODS);
 //            "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
 //                    + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME where cstatus&1=0 and "
@@ -257,6 +282,62 @@ public class TranOrderOptModule {
                     tranOrderGoods.getCoupamt(),tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno(),tranOrderGoods.getPdno()});
             sqlList.add(UPD_GOODS);
             params.add(new Object[]{tranOrderGoods.getPnum(),tranOrderGoods.getPdno()});
-        });
+        }
     }
+
+
+    /**
+     * @description 取消订单
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/4/17 17:00
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result cancelOrder(AppContext appContext) {
+        Result result = new Result();
+        Gson gson = new Gson();
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> params = new ArrayList<>();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.get("orderno").getAsString();//订单号
+        int cusno = jsonObject.get("cusno").getAsInt(); //企业码
+        sqlList.add(UPD_ORDER_STATUS);
+        params.add(new Object[]{-4, orderNo});
+        TranOrderGoods[] tranOrderGoods = getGoodsArr(orderNo, cusno);
+
+        for (int i = 0; i < tranOrderGoods.length; i++) {
+            RedisStockUtil.addStock(tranOrderGoods[i].getPdno(),tranOrderGoods[i].getPnum());//恢复redis库存
+            sqlList.add(UPD_GOODS_FSTORE);
+            params.add(new Object[]{tranOrderGoods[i].getPnum(), tranOrderGoods[i].getPdno()});
+        }
+        String[] sqlNative = new String[sqlList.size()];
+        sqlNative = sqlList.toArray(sqlNative);
+        int year = Integer.parseInt("20" + orderNo.substring(0,2));
+        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(cusno,year, sqlNative, params));
+
+        return b ? result.success("取消成功") : result.fail("取消失败");
+    }
+
+    private TranOrderGoods[] getGoodsArr(String orderNo, int cusno){
+        String selectGoodsSql = "select pdno, pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
+                + " and orderno=" + orderNo;
+        int year = Integer.parseInt("20" + orderNo.substring(0,2));
+        List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, selectGoodsSql);
+        TranOrderGoods[] tranOrderGoods = new TranOrderGoods[queryResult.size()];
+        baseDao.convToEntity(queryResult, tranOrderGoods, TranOrderGoods.class, new String[]{
+                "pdno", "pnum"
+        });
+        return tranOrderGoods;
+    }
+
+//    public static void main(String[] args) {
+//        Gson gson = new Gson();
+//        TranOrderGoods goodsVO = gson.fromJson("{\"pdno\":\"11000000140102\",\"pnum\":\"1\"}", TranOrderGoods.class);
+//        System.out.println("------------" + goodsVO.getPdno());
+//    }
 }

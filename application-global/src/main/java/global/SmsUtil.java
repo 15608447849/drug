@@ -33,7 +33,6 @@ public class SmsUtil  extends ApplicationPropertiesBase {
     @PropertiesName("sms.password")
     public String password;
 
-
     public static String sendMsg(String phone, String context) {
         try {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");

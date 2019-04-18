@@ -8,7 +8,9 @@ import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GaoDeMapUtil;
+import global.GenIdUtil;
 import global.IceRemoteUtil;
+import org.hyrdpf.ds.AppConfig;
 import util.StringUtils;
 
 import java.util.List;
@@ -154,7 +156,13 @@ public class UpdateStoreOp implements IOperation<AppContext> {
     }
 
     //企业关联会员
-    private void compLinkMember(int compId) {
+    public static void compLinkMember(int compId) {
+        String insertSql = "INSERT INTO {{?"+ DSMConst.TD_MEMBER +"}} " +
+                "(unqid,compid,accupoints,balpoints,createdate,createtime,cstatus) " +
+                "VALUES(?,?,0,0,CURRENT_DATE,CURRENT_TIME,0)";
+        int i = BaseDAO.getBaseDAO().updateNative(insertSql,
+                GenIdUtil.getUnqId(),
+                compId);
     }
 
 }

@@ -1,6 +1,7 @@
 
 dependencies {
     implementation project(':application-global')
+    compile 'com.google.guava:guava:27.0.1-jre'
 }
 shadowJar {
     baseName = 'order'

@@ -1,10 +1,14 @@
 package com.onek.util.fs;
 
 import com.onek.prop.FileServerProperties;
+import com.onek.prop.IceMasterInfoProperties;
 import util.EncryptUtils;
+import util.GsonUtils;
+import util.http.HttpUtil;
 
-import javax.swing.text.html.parser.Entity;
-import java.math.BigInteger;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
 
 /**
  * @Author: leeping
@@ -67,11 +71,36 @@ public class FileServerUtils {
         return path;
     }
 
-   /* public static void main(String[] args) {
-        System.out.println("可配置的默认目录: "+ defaultHome());
-        System.out.println("企业相关文件目录: "+ companyFilePath(536862726));
-        System.out.println("具体商品相关目录: "+ goodsFilePath(110101099910L,11010109991001L));
-        System.out.println("订单售后相关目录: "+ orderFilePath(536862726,190325000000010011L));
-    }*/
 
+
+
+    public static String getPayQrImageLink(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method){
+
+        List<String> list = new ArrayList<>();
+            list.add(IceMasterInfoProperties.INSTANCE.name);
+            list.add(IceMasterInfoProperties.INSTANCE.host);
+            list.add(IceMasterInfoProperties.INSTANCE.port+"");
+            list.add(serverName);
+            list.add(callback_clazz);
+            list.add(callback_method);
+        String body = String.join("@",list);
+        HashMap<String,String> map = new HashMap<>();
+        map.put("type",type);
+        map.put("subject",subject);
+        map.put("price",String.valueOf(price));
+        map.put("orderNo",orderNo);
+        map.put("body",body);
+
+        String json = HttpUtil.formText(FileServerProperties.INSTANCE.payUrl,"POST",map);
+        HashMap<String,Object> rmap = GsonUtils.string2Map(json);
+        assert rmap != null;
+
+        return rmap.get("data")==null ? null : rmap.get("data").toString();
+    }
+
+    public static void main(String[] args) {
+        String res = getPayQrImageLink("alipay","控件",25.02,"15608447849010222",
+                "orderserver","aplipayModule","callback");
+        System.out.println(res);
+    }
 }

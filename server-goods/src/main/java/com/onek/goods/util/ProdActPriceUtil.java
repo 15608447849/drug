@@ -5,6 +5,7 @@ import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.entity.Product;
 import com.onek.goods.calculate.ActivityCalculateService;
 import com.onek.goods.calculate.ActivityFilterService;
+import com.onek.goods.service.PromTimeService;
 import com.onek.util.prod.ProdPriceEntity;
 import global.IceRemoteUtil;
 import redis.provide.RedisStringProvide;
@@ -26,6 +27,11 @@ public class ProdActPriceUtil {
 
     private static transient HashMap<Long, Long> versionRuleMap = new HashMap<>();
     private static HashMap<Long,  Integer> prodRuleMap = new HashMap<>();
+
+    private static transient HashMap<Long, Long> versionTimeMap = new HashMap<>();
+    private static HashMap<Long,  List<String[]>> promTimeMap = new HashMap<>();
+
+    private static PromTimeService timeService = new PromTimeService();
 
     public static double getActPrizeBySku(long actcode,long sku,double vatp){
         RedisStringProvide rs = RedisUtil.getStringProvide();
@@ -134,6 +140,18 @@ public class ProdActPriceUtil {
         }
 
         return prodRuleMap.get(sku);
+    }
+
+    public static List<String[]> getTimesByActcode(long actcode){
+        RedisStringProvide rs = RedisUtil.getStringProvide();
+        long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
+        Long subVersion = versionTimeMap.containsKey(actcode) ? versionTimeMap.get(actcode) : 0L;
+        if(v > subVersion || subVersion == 0){
+            List<String[]> times = timeService.getTimesByActcode(actcode);
+            promTimeMap.put(actcode, times);
+        }
+
+        return promTimeMap.get(actcode);
     }
 
 
