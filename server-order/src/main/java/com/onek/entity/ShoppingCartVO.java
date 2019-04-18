@@ -64,6 +64,8 @@ public class ShoppingCartVO {
 
     private boolean freepost;
 
+    private boolean seckill = false;
+
     public boolean isFreepost() {
         return freepost;
     }
@@ -230,5 +232,13 @@ public class ShoppingCartVO {
 
     public List<DiscountRule> getRule() {
         return rule;
+    }
+
+    public boolean isSeckill() {
+        return seckill;
+    }
+
+    public void setSeckill(boolean seckill) {
+        this.seckill = seckill;
     }
 }
