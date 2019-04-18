@@ -80,6 +80,8 @@ public class TranOrderOptModule {
      **/
     @UserPermission(ignore = true)
     public Result placeOrder(AppContext appContext) {
+//        List<TranOrderGoods> finalGoodsPrice = null;
+        long coupon = 0;//优惠券码
         Result result = new Result();
         Gson gson = new Gson();
         List<String> sqlList = new ArrayList<>();
@@ -88,16 +90,19 @@ public class TranOrderOptModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int placeType = jsonObject.get("placeType").getAsInt();//1、直接下单 2、购物车下单
-        long coupon = 0;//优惠券码
-        if (!jsonObject.get("coupon").isJsonNull()) {
-            coupon = jsonObject.get("coupon").getAsLong();
+        int orderType = 0;//下单类型 0普通
+        if (jsonObject.has("orderType") && !jsonObject.get("orderType").isJsonNull()) {
+            orderType = jsonObject.get("orderType").getAsInt();
         }
+        int placeType = jsonObject.get("placeType").getAsInt();//1、直接下单 2、购物车下单
         JsonObject orderObj = jsonObject.get("orderObj").getAsJsonObject();
         JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
         TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
+        if (!jsonObject.get("coupon").isJsonNull()) {
+            coupon = jsonObject.get("coupon").getAsLong();
+        }
         int pdnum = 0;
         for (int i = 0; i < goodsArr.size(); i++) {
             TranOrderGoods goodsVO = gson.fromJson(goodsArr.get(i).toString(), TranOrderGoods.class);
@@ -106,21 +111,22 @@ public class TranOrderOptModule {
             tranOrderGoods.add(goodsVO);
         }
         tranOrder.setPdnum(pdnum);
-        //库存判断
-        List<TranOrderGoods> goodsList = stockIsEnough(tranOrderGoods);
-        if (goodsList.size() != tranOrderGoods.size()) {
-            //库存不足处理
-            stockRecovery(goodsList);
-            return result.fail("商品库存发生改变！");
-        }
-        //订单费用计算（费用分摊以及总费用计算）
-        List<TranOrderGoods> finalGoodsPrice = null;
-        try {
-            finalGoodsPrice = calculatePrice(tranOrderGoods, tranOrder, coupon);
-        } catch (Exception e) {
-            stockRecovery(goodsList);
-            LogUtil.getDefaultLogger().info("计算活动价格异常！");
-            return result.fail("下单失败");
+        if (orderType == 0) {
+            //库存判断
+            List<TranOrderGoods> goodsList = stockIsEnough(tranOrderGoods);
+            if (goodsList.size() != tranOrderGoods.size()) {
+                //库存不足处理
+                stockRecovery(goodsList);
+                return result.fail("商品库存发生改变！");
+            }
+            //订单费用计算（费用分摊以及总费用计算）
+            try {
+                calculatePrice(tranOrderGoods, tranOrder, coupon);
+            } catch (Exception e) {
+                stockRecovery(goodsList);
+                LogUtil.getDefaultLogger().info("计算活动价格异常！");
+                return result.fail("下单失败");
+            }
         }
         //数据库相关操作
         sqlList.add(INSERT_TRAN_ORDER);
@@ -129,9 +135,9 @@ public class TranOrderOptModule {
                 tranOrder.getRvaddno(),0,0});
 
         if (placeType == 1) {
-            getInsertSqlList(sqlList, params, finalGoodsPrice, orderNo);
+            getInsertSqlList(sqlList, params, tranOrderGoods, orderNo);
         } else {
-            getUpdSqlList(sqlList, params, finalGoodsPrice, orderNo);
+            getUpdSqlList(sqlList, params, tranOrderGoods, orderNo);
         }
 
         String[] sqlNative = new String[sqlList.size()];
@@ -139,7 +145,7 @@ public class TranOrderOptModule {
         int year = Integer.parseInt("20" + orderNo.substring(0,2));
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(tranOrder.getCusno(),year, sqlNative, params));
         if (b){
-            updateSku(finalGoodsPrice);//若失败则需要处理（保证一致性）
+            updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
             return result.success("下单成功");
         } else {//下单失败
             //库存处理
