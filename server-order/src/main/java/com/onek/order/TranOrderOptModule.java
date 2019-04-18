@@ -313,7 +313,6 @@ public class TranOrderOptModule {
     public Result cancelOrder(AppContext appContext) {
         Result result = new Result();
 //        List<String> sqlList = new ArrayList<>();
-        List<Object[]> params = new ArrayList<>();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
@@ -324,21 +323,26 @@ public class TranOrderOptModule {
 
 //        String[] sqlNative = new String[sqlList.size()];
 //        sqlNative = sqlList.toArray(sqlNative);
+        boolean b = cancelOrder(orderNo, cusno);
+        return b ? result.success("取消成功") : result.fail("取消失败");
+    }
+
+    public boolean cancelOrder(String orderNo, int cusno) {
+        List<Object[]> params = new ArrayList<>();
         int year = Integer.parseInt("20" + orderNo.substring(0,2));
         int res = baseDao.updateNativeSharding(cusno,year, UPD_ORDER_STATUS, -4, orderNo);
         if (res > 0) {
             TranOrderGoods[] tranOrderGoods = getGoodsArr(orderNo, cusno);
-            for (int i = 0; i < tranOrderGoods.length; i++) {
-                RedisStockUtil.addStock(tranOrderGoods[i].getPdno(),tranOrderGoods[i].getPnum());//恢复redis库存
-                params.add(new Object[]{tranOrderGoods[i].getPnum(), tranOrderGoods[i].getPdno()});
+            for (TranOrderGoods tranOrderGood : tranOrderGoods) {
+                RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
+                params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
             }
             baseDao.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length );
         }
-
-        return res > 0 ? result.success("取消成功") : result.fail("取消失败");
+        return res > 0;
     }
 
-    public static TranOrderGoods[] getGoodsArr(String orderNo, int cusno){
+    static TranOrderGoods[] getGoodsArr(String orderNo, int cusno){
         String selectGoodsSql = "select pdno, pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
                 + " and orderno=" + orderNo;
         int year = Integer.parseInt("20" + orderNo.substring(0,2));
