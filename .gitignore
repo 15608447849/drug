@@ -33,3 +33,5 @@ server-discount/src/test/
 server-discount/src/main/resources/
 server-order/src/main/resources/
 server-order/src/test/
+server-global/src/main/resources/
+server-order/build/

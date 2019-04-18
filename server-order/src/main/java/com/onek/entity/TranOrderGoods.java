@@ -25,6 +25,7 @@ public class TranOrderGoods {
 
     private String pname;  // 商品名
     private String pspec; // 商品规格
+    private String manun; // 厂商名
 
     public long getUnqid() {
         return unqid;
@@ -160,5 +161,13 @@ public class TranOrderGoods {
 
     public void setPspec(String pspec) {
         this.pspec = pspec;
+    }
+
+    public String getManun() {
+        return manun;
+    }
+
+    public void setManun(String manun) {
+        this.manun = manun;
     }
 }

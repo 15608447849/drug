@@ -2,6 +2,7 @@ package com.onek.calculate.rule;
 
 import com.onek.calculate.entity.Gift;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.util.DiscountUtil;
 import util.MathUtil;
 
 import java.math.BigDecimal;
@@ -23,7 +24,7 @@ public class SubRuleHandler implements IRuleHandler {
                 .doubleValue();
 
         discount.setDiscounted(
-                MathUtil.exactMul(p, discount.getCurrentPriceTotal())
+                MathUtil.exactMul(p, DiscountUtil.getCurrentPriceTotal(discount.getProductList()))
                         .doubleValue());
     }
 

@@ -153,10 +153,11 @@ public class Couent extends AccurateMath implements IDiscount {
         if (discount <= 0) {
             return;
         }
-
-        double[] shared = DiscountUtil.shareDiscount(getEachCurrent(), discount);
-
         List<IProduct> prodList = getProductList();
+
+        double[] shared = DiscountUtil.shareDiscount(
+                DiscountUtil.getEachCurrent(prodList), discount);
+
         IProduct product;
         double befDiscounted;
         double totalDiscounted = .0;

@@ -52,7 +52,7 @@ public class TranOrderOptModule {
     private static final String UPD_TRAN_GOODS = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set "
             + "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
             + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME where cstatus&1=0 and "
-            + " pdno=?";
+            + " pdno=? and orderno=0";
 
     //是否要减商品总库存
     private static final String UPD_GOODS = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
@@ -139,6 +139,7 @@ public class TranOrderOptModule {
         int year = Integer.parseInt("20" + orderNo.substring(0,2));
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(tranOrder.getCusno(),year, sqlNative, params));
         if (b){
+            updateSku(finalGoodsPrice);//若失败则需要处理（保证一致性）
             return result.success("下单成功");
         } else {//下单失败
             //库存处理
@@ -147,6 +148,13 @@ public class TranOrderOptModule {
         }
     }
 
+    private boolean updateSku(List<TranOrderGoods> tranOrderGoodsList) {
+        List<Object[]> paramOne = new ArrayList<>();
+        for (TranOrderGoods tranOrderGoods : tranOrderGoodsList){
+            paramOne.add(new Object[]{tranOrderGoods.getPnum(),tranOrderGoods.getPdno()});
+        }
+        return !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(UPD_GOODS,paramOne, tranOrderGoodsList.size()));
+    }
 
     /* *
      * @description 价格计算
@@ -185,21 +193,27 @@ public class TranOrderOptModule {
                 TranOrderGoods tranOrderGoods = new TranOrderGoods();
                 tranOrderGoods.setCompid(tranOrder.getCusno());
                 tranOrderGoods.setPdno(iDiscount.getProductList().get(i).getSKU());
-                tranOrderGoods.setPdprice((iDiscount.getProductList().get(i).getOriginalPrice() * 100));
-//                tranOrderGoods.setDistprice(iDiscount.getProductList().get(i));
-                tranOrderGoods.setPayamt((iDiscount.getProductList().get(i).getCurrentPrice()*100));
+                tranOrderGoods.setPdprice(iDiscount.getProductList().get(i).getOriginalPrice());
+                tranOrderGoods.setPayamt(iDiscount.getProductList().get(i).getCurrentPrice());
                 tranOrderGoods.setPromtype((int)iDiscount.getBRule());
                 finalTranOrderGoods.add(tranOrderGoods);
             }
         }
-        if (finalTranOrderGoods.size() == 0) {
-            for (TranOrderGoods goodsPrice :tranOrderGoodsList) {
+        if (finalTranOrderGoods.size() != tranOrderGoodsList.size()) {
+            for (TranOrderGoods goodsPrice :tranOrderGoodsList) {//传进来的
+                for (TranOrderGoods finalGoods : finalTranOrderGoods) {
+                    if (goodsPrice.getPdno() == finalGoods.getPdno()){
+                        goodsPrice.setCompid(tranOrder.getCusno());
+                        goodsPrice.setPdprice(finalGoods.getPdprice());
+                        goodsPrice.setPayamt(finalGoods.getPayamt());
+                        goodsPrice.setPromtype(finalGoods.getPromtype());
+                    }
+                }
                 goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
-                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
+                goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
             }
-            return tranOrderGoodsList;
         }
-        return finalTranOrderGoods;
+        return tranOrderGoodsList;
     }
 
     /**
@@ -256,8 +270,6 @@ public class TranOrderOptModule {
             params.add(new Object[]{GenIdUtil.getUnqId(), orderNo, tranOrderGoods.getCompid(),tranOrderGoods.getPdno(),
                     tranOrderGoods.getPdprice(),tranOrderGoods.getDistprice(), tranOrderGoods.getPayamt(),tranOrderGoods.getCoupamt(),
                     tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno(), tranOrderGoods.getPnum()});
-            sqlList.add(UPD_GOODS);
-            params.add(new Object[]{tranOrderGoods.getPnum(),tranOrderGoods.getPdno()});
         }
 
     }
@@ -275,13 +287,11 @@ public class TranOrderOptModule {
                                   String orderNo){
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList){
             sqlList.add(UPD_TRAN_GOODS);
-//            "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
+//            + "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
 //                    + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME where cstatus&1=0 and "
-//                    + " pdno=?";
+//                    + " pdno=? and orderno=0";
             params.add(new Object[]{orderNo, tranOrderGoods.getPdprice(),tranOrderGoods.getDistprice(),tranOrderGoods.getPayamt(),
                     tranOrderGoods.getCoupamt(),tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno(),tranOrderGoods.getPdno()});
-            sqlList.add(UPD_GOODS);
-            params.add(new Object[]{tranOrderGoods.getPnum(),tranOrderGoods.getPdno()});
         }
     }
 
@@ -323,7 +333,7 @@ public class TranOrderOptModule {
         return b ? result.success("取消成功") : result.fail("取消失败");
     }
 
-    private TranOrderGoods[] getGoodsArr(String orderNo, int cusno){
+    public static TranOrderGoods[] getGoodsArr(String orderNo, int cusno){
         String selectGoodsSql = "select pdno, pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
                 + " and orderno=" + orderNo;
         int year = Integer.parseInt("20" + orderNo.substring(0,2));
