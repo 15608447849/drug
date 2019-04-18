@@ -56,7 +56,7 @@ public class TranOrderOptModule {
 
     //是否要减商品总库存
     private static final String UPD_GOODS = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
-            + "freezestore=? where cstatus&1=0 and sku=? ";
+            + "freezestore=freezestore+? where cstatus&1=0 and sku=? ";
 
     //更新订单状态
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
@@ -199,19 +199,17 @@ public class TranOrderOptModule {
                 finalTranOrderGoods.add(tranOrderGoods);
             }
         }
-        if (finalTranOrderGoods.size() != tranOrderGoodsList.size()) {
-            for (TranOrderGoods goodsPrice :tranOrderGoodsList) {//传进来的
-                for (TranOrderGoods finalGoods : finalTranOrderGoods) {
-                    if (goodsPrice.getPdno() == finalGoods.getPdno()){
-                        goodsPrice.setCompid(tranOrder.getCusno());
-                        goodsPrice.setPdprice(finalGoods.getPdprice());
-                        goodsPrice.setPayamt(finalGoods.getPayamt());
-                        goodsPrice.setPromtype(finalGoods.getPromtype());
-                    }
+        for (TranOrderGoods goodsPrice :tranOrderGoodsList) {//传进来的
+            for (TranOrderGoods finalGoods : finalTranOrderGoods) {
+                if (goodsPrice.getPdno() == finalGoods.getPdno()){
+                    goodsPrice.setCompid(tranOrder.getCusno());
+                    goodsPrice.setPdprice(finalGoods.getPdprice());
+                    goodsPrice.setPayamt(finalGoods.getPayamt());
+                    goodsPrice.setPromtype(finalGoods.getPromtype());
                 }
-                goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
-                goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
             }
+            goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
+            goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
         }
         return tranOrderGoodsList;
     }
@@ -308,29 +306,30 @@ public class TranOrderOptModule {
     @UserPermission(ignore = true)
     public Result cancelOrder(AppContext appContext) {
         Result result = new Result();
-        Gson gson = new Gson();
-        List<String> sqlList = new ArrayList<>();
+//        List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         String orderNo = jsonObject.get("orderno").getAsString();//订单号
         int cusno = jsonObject.get("cusno").getAsInt(); //企业码
-        sqlList.add(UPD_ORDER_STATUS);
-        params.add(new Object[]{-4, orderNo});
-        TranOrderGoods[] tranOrderGoods = getGoodsArr(orderNo, cusno);
+//        sqlList.add(UPD_ORDER_STATUS);
+//        params.add(new Object[]{-4, orderNo});
 
-        for (int i = 0; i < tranOrderGoods.length; i++) {
-            RedisStockUtil.addStock(tranOrderGoods[i].getPdno(),tranOrderGoods[i].getPnum());//恢复redis库存
-            sqlList.add(UPD_GOODS_FSTORE);
-            params.add(new Object[]{tranOrderGoods[i].getPnum(), tranOrderGoods[i].getPdno()});
-        }
-        String[] sqlNative = new String[sqlList.size()];
-        sqlNative = sqlList.toArray(sqlNative);
+//        String[] sqlNative = new String[sqlList.size()];
+//        sqlNative = sqlList.toArray(sqlNative);
         int year = Integer.parseInt("20" + orderNo.substring(0,2));
-        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(cusno,year, sqlNative, params));
+        int res = baseDao.updateNativeSharding(cusno,year, UPD_ORDER_STATUS, -4, orderNo);
+        if (res > 0) {
+            TranOrderGoods[] tranOrderGoods = getGoodsArr(orderNo, cusno);
+            for (int i = 0; i < tranOrderGoods.length; i++) {
+                RedisStockUtil.addStock(tranOrderGoods[i].getPdno(),tranOrderGoods[i].getPnum());//恢复redis库存
+                params.add(new Object[]{tranOrderGoods[i].getPnum(), tranOrderGoods[i].getPdno()});
+            }
+            baseDao.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length );
+        }
 
-        return b ? result.success("取消成功") : result.fail("取消失败");
+        return res > 0 ? result.success("取消成功") : result.fail("取消失败");
     }
 
     public static TranOrderGoods[] getGoodsArr(String orderNo, int cusno){

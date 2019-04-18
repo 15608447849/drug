@@ -272,7 +272,7 @@ public class CouponManageModule {
             }
             //新增阶梯
             if (couponVO.getLadderVOS() != null && !couponVO.getLadderVOS().isEmpty()) {
-                insertLadOff(couponVO.getLadderVOS(),couponVO.getRuleno()+""+couponVO.getRulecomp(),couponVO.getCoupno());
+                insertLadOff(couponVO.getLadderVOS(),couponVO.getRuleno()+""+couponVO.getRulecomp(),unqid);
             }
 
         } else {
@@ -386,7 +386,7 @@ public class CouponManageModule {
                             "rulename","actstock"});
 
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
-        couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0],couponVOS[0].getRuleno()));
+        couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0],couponVOS[0].getCoupno()));
         couponVOS[0].setActiveRule(getRules());
 
         return  result.success(couponVOS[0]);
@@ -650,11 +650,15 @@ public class CouponManageModule {
         List<Object[]> ladOffParams = new ArrayList<>();
         List<Object[]> relaParams = new ArrayList<>();
         int offerCode[] = getLaderNo(laddrno, ladderVOS.size());
+        System.out.println("===============00活动码"+actCode);
+
         for (int i = 0; i < ladderVOS.size(); i++) {
             if (offerCode != null) {
                 long ladderId = GenIdUtil.getUnqId();
                 ladOffParams.add(new Object[]{ladderId, ladderVOS.get(i).getLadamt()*100,
-                        ladderVOS.get(i).getLadnum(),offerCode[i],ladderVOS.get(i).getOffer()*100});
+                        ladderVOS.get(i).getLadnum(),ladderVOS.get(i).getOffer()*100,offerCode[i]});
+
+                System.out.println("===============11活动码"+actCode);
                 relaParams.add(new Object[]{GenIdUtil.getUnqId(),actCode,ladderId});
             }
         }
