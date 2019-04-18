@@ -20,7 +20,7 @@ public class CalculateUtil {
     };
 
 
-    private static DiscountResult calculate(int compid,
+    public static DiscountResult calculate(int compid,
                                      List<? extends IProduct> products,
                                      long couponNo) {
         if (compid <= 0) {
