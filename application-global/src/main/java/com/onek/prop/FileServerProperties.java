@@ -17,6 +17,9 @@ public class FileServerProperties extends ApplicationPropertiesBase {
     @PropertiesName("file.default.directory")
     public String fileDefaultDir;
 
+    @PropertiesName("pay.server.url")
+    public String payUrl;
+
 
 
 
