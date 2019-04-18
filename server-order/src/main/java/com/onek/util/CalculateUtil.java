@@ -9,10 +9,7 @@ import com.onek.calculate.filter.*;
 import com.onek.calculate.service.calculate.CouponCalculateService;
 import com.onek.calculate.util.DiscountUtil;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.TreeMap;
+import java.util.*;
 
 public class CalculateUtil {
     private static Comparator<Integer> DESC_COMPARATOR = new Comparator<Integer>() {
@@ -22,11 +19,12 @@ public class CalculateUtil {
         }
     };
 
-    public static DiscountResult calculate(int compid,
+
+    private static DiscountResult calculate(int compid,
                                      List<? extends IProduct> products,
                                      long couponNo) {
         if (compid <= 0) {
-            return null;
+            return new DiscountResult(Collections.EMPTY_LIST, 0.0, products);
         }
 
         List<IDiscount> activityList =
@@ -38,26 +36,28 @@ public class CalculateUtil {
                                 new PriorityFilter(),
                         }).getCurrentActivities(products);
 
-        TreeMap<Integer, List<IDiscount>> pri_act = new TreeMap<>(DESC_COMPARATOR);
+        if (!activityList.isEmpty()) {
+            TreeMap<Integer, List<IDiscount>> pri_act = new TreeMap<>(DESC_COMPARATOR);
 
-        int priority;
-        List<IDiscount> temp;
-        for (IDiscount discount : activityList) {
-            priority = discount.getPriority();
+            int priority;
+            List<IDiscount> temp;
+            for (IDiscount discount : activityList) {
+                priority = discount.getPriority();
 
-            temp = pri_act.get(priority);
+                temp = pri_act.get(priority);
 
-            if (temp == null) {
-                temp = new ArrayList<>();
-                pri_act.put(priority, temp);
+                if (temp == null) {
+                    temp = new ArrayList<>();
+                    pri_act.put(priority, temp);
+                }
+
+                temp.add(discount);
             }
 
-            temp.add(discount);
-        }
 
-
-        for (List<IDiscount> discounts : pri_act.values()) {
-            new ActivityCalculateService().calculate(discounts);
+            for (List<IDiscount> discounts : pri_act.values()) {
+                new ActivityCalculateService().calculate(discounts);
+            }
         }
 
         double couponValue = 0.0;
@@ -84,6 +84,6 @@ public class CalculateUtil {
             }
         }
 
-        return new DiscountResult(activityList, couponValue);
+        return new DiscountResult(activityList, couponValue, products);
     }
 }
