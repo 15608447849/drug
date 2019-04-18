@@ -7,12 +7,15 @@ import redis.util.RedisUtil;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.DelayQueue;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 public class CancelService {
     private static final String REDIS_HEAD = "_CANCEL_ORDERS";
     private final static CancelService CANCEL_SERVICE;
     private volatile DelayQueue<CancelDelayed> delayQueue;
     private static volatile CancelHandler cancelHandler;
+    private static final Executor EXECUTOR = Executors.newFixedThreadPool(10);
 
     static {
         CANCEL_SERVICE = new CancelService(getDelayQueue());
@@ -24,7 +27,7 @@ public class CancelService {
         List<CancelDelayed> cancelDelayeds = getCancelDelayedList();
 
         if (!cancelDelayeds.isEmpty()) {
-            delayQueue.addAll(getCancelDelayedList());
+            delayQueue.addAll(cancelDelayeds);
         }
 
         return delayQueue;
@@ -57,21 +60,31 @@ public class CancelService {
     }
 
     public void add(CancelDelayed cancelDelayed) {
-        boolean addResult = delayQueue.add(cancelDelayed);
+        EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                boolean addResult = delayQueue.add(cancelDelayed);
 
-        if (addResult) {
-            RedisUtil.getHashProvide().putElement(
-                REDIS_HEAD, cancelDelayed.getOrderNo(),
-                JSONObject.toJSONString(cancelDelayed));
-        }
+                if (addResult) {
+                    RedisUtil.getHashProvide().putElement(
+                            REDIS_HEAD, cancelDelayed.getOrderNo(),
+                            JSONObject.toJSONString(cancelDelayed));
+                }
+            }
+        });
     }
 
     public void remove(CancelDelayed cancelDelayed) {
-        boolean removeResult = delayQueue.remove(cancelDelayed);
+        EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                boolean removeResult = delayQueue.remove(cancelDelayed);
 
-        if (removeResult) {
-            RedisUtil.getHashProvide().delByKey(REDIS_HEAD, cancelDelayed.getOrderNo());
-        }
+                if (removeResult) {
+                    RedisUtil.getHashProvide().delByKey(REDIS_HEAD, cancelDelayed.getOrderNo());
+                }
+            }
+        });
     }
 
     static class CancelHandler extends Thread {
@@ -80,17 +93,17 @@ public class CancelService {
         public void run() {
             while (true) {
                 try {
-                    CancelDelayed c = CancelService.getInstance().delayQueue.take();
+                    CancelDelayed cancelDelayed = CancelService.getInstance().delayQueue.take();
 
-                    if (c != null) {
-//                        tranOrderOptModule.cancelOrder();
+                    if (cancelDelayed != null) {
                         // TODO 取消订单接口
-                        boolean cancelResult = true;
+                        boolean cancelResult =
+                                new TranOrderOptModule()
+                                    .cancelOrder(cancelDelayed.getOrderNo(), cancelDelayed.getCompid());
 
                         if (cancelResult) {
-                            RedisUtil.getHashProvide().delByKey(REDIS_HEAD, c.getOrderNo());
+                            RedisUtil.getHashProvide().delByKey(REDIS_HEAD, cancelDelayed.getOrderNo());
                         }
-//                        System.out.println("Remove --- " + c.getOrderNo());
                     }
 
                     Thread.sleep(1000);
