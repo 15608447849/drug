@@ -14,6 +14,7 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import global.GLOBALConst;
 import global.GenIdUtil;
+import global.IceRemoteUtil;
 import util.MathUtil;
 import util.ModelUtil;
 import util.StringUtils;
@@ -32,7 +33,11 @@ public class PayModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
-    private static final String GET_TO_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ? and ostatus=0";
+    private static final String GET_TO_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ? and ostatus=?";
+
+    private static final String GET_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ?";
+
+    private static final String GET_TRAN_TRANS_SQL = "select payprice,payway,payno,orderno,paysource,paystatus,paydate,paytime,completedate,completetime from {{?" + DSMConst.TD_TRAN_TRANS + "}} where orderno=? and compid = ? order by completedate desc,completetime desc limit 1";
 
     //支付回调更新订单状态
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,settstatus=?,"
@@ -65,7 +70,7 @@ public class PayModule {
         String orderno = jsonObject.get("orderno").getAsString();
         int compid = jsonObject.get("compid").getAsInt();
 
-        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid});
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid, 0});
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime"});
@@ -161,11 +166,18 @@ public class PayModule {
         int compid = jsonObject.get("compid").getAsInt();
 
 
-        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid});
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight", "coupamt","distamt","rvaddno"});
+            baseDao.convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight", "coupamt","distamt","rvaddno"});
 
+            List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, new Object[]{ orderno, compid});
+            if(trans != null && trans.size() > 0){
+                baseDao.
+            }
+            if(result[0].getRvaddno() > 0){
+                 IceRemoteUtil.getArean(result[0].getRvaddno());
+            }
         }
 
         return new Result().success(null);

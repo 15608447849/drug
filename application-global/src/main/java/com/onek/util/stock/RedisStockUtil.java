@@ -39,6 +39,10 @@ public class RedisStockUtil {
         return true;
     }
 
+    public static int getActStockBySkuAndActno(long sku, int actno){
+        return 0;
+    }
+
     public static boolean deductionStock(long sku, int stock){
         String currentStock = RedisUtil.getStringProvide().get(PREFIX+sku);
         if(StringUtils.isEmpty(currentStock)){

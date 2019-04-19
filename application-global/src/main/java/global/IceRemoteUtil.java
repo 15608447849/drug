@@ -120,6 +120,19 @@ public class IceRemoteUtil {
         return GsonUtils.jsonToJavaBean(json,DictEntity.class);
     }
 
+    public static String getArean(long areac) {
+        String result = ic.settingProxy("globalServer")
+                .settingReq("","CommonModule","getAreaName")
+                .settingParam(new String[]{String.valueOf(areac)})
+                .executeSync();
+
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+
+        Object data = hashMap.get("data");
+
+        return data == null ? "" : data.toString();
+    }
+
     public static DictEntity[] queryAll() {
         String result = ic.settingProxy("globalServer")
                 .settingReq("","DictUtilRemoteModule","queryAll")
@@ -283,5 +296,6 @@ public class IceRemoteUtil {
         String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,MemberEntity.class);
     }
+
 
 }
