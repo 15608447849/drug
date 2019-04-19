@@ -144,7 +144,12 @@ public class PayModule {
             String time = TimeUtils.date_Hms_2String(date);
             result = failOpt(orderno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
-        return new Result().success(result);
+        if(result){
+            return new Result().success(null);
+        }else{
+            return new Result().fail(null);
+        }
+
     }
 
     /* *
