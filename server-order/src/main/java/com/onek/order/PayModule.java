@@ -1,9 +1,12 @@
 package com.onek.order;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
+import com.onek.entity.TranOrder;
+import com.onek.entity.TranOrderDetail;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
 import com.onek.util.fs.FileServerUtils;
@@ -11,7 +14,9 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import global.GLOBALConst;
 import global.GenIdUtil;
+import util.MathUtil;
 import util.ModelUtil;
+import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +26,8 @@ import static com.onek.order.TranOrderOptModule.getGoodsArr;
 public class PayModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
+
+    private static final String GET_TO_PAY_SQL = "select payamt,odate,otime from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ? and ostatus=0";
 
     //支付回调更新订单状态
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,settstatus=?,"
@@ -55,22 +62,41 @@ public class PayModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         String orderno = jsonObject.get("orderno").getAsString();
         int compid = jsonObject.get("compid").getAsInt();
-        String result = FileServerUtils.getPayQrImageLink("alipay","空间折叠",25.02,orderno,
-                "orderServer"+getOrderServerNo(compid),"PayModule","payCallBack");
-        return new Result().success(result);
+        String paytype = jsonObject.get("paytype").getAsString();
+        if(StringUtils.isEmpty(orderno) || compid <=0){
+            return new Result().fail("获取订单号或企业码失败!");
+        }
+        List<Object[]> list = baseDao.queryNative(GET_TO_PAY_SQL, new Object[]{ orderno, compid});
+        if(list != null && list.size() > 0){
+            TranOrder[] result = new TranOrder[list.size()];
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{ "payamt","odate","otime"});
+
+            JSONObject js = new JSONObject();
+            double payamt = result[0].getPayamt();
+             MathUtil.exactDiv(payamt, 100).doubleValue();
+
+            String r = FileServerUtils.getPayQrImageLink("alipay","空间折叠",25.02,orderno,
+                    "orderServer"+getOrderServerNo(compid),"PayModule","payCallBack");
+
+        }else{
+            return new Result().fail("未查到【"+orderno+"】支付的订单!");
+        }
+
+        return new Result().success(null);
 
     }
 
     public Result payCallBack(AppContext appContext){
 
         String[] arrays = appContext.param.arrays;
-        String orderno = arrays[0];
-        String paytype = arrays[1];
-        String thirdPayNo = arrays[2];
-        String tradeStatus = arrays[3];
-        String tradeDate = arrays[4];
-        String tradeTime = arrays[5];
-        int compid = Integer.parseInt(arrays[6]);
+        System.out.println(arrays[0]+";"+arrays[1]+";"+arrays[2]+";"+arrays[3]+";"+arrays[4]+";"+arrays[5]+";"+arrays[7]);
+//        String orderno = arrays[0];
+//        String paytype = arrays[1];
+//        String thirdPayNo = arrays[2];
+//        String tradeStatus = arrays[3];
+//        String tradeDate = arrays[4];
+//        String tradeTime = arrays[5];
+//        int compid = Integer.parseInt(arrays[6]);
         return new Result().success(null);
     }
 
