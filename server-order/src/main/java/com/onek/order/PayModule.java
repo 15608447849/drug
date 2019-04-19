@@ -72,17 +72,16 @@ public class PayModule {
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{ "payamt","odate","otime"});
 
             JSONObject js = new JSONObject();
-            double payamt = result[0].getPayamt();
-             MathUtil.exactDiv(payamt, 100).doubleValue();
+            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
 
-            String r = FileServerUtils.getPayQrImageLink("alipay","空间折叠",25.02,orderno,
-                    "orderServer"+getOrderServerNo(compid),"PayModule","payCallBack");
+            String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
+                    "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+
+            return new Result().success(r);
 
         }else{
             return new Result().fail("未查到【"+orderno+"】支付的订单!");
         }
-
-        return new Result().success(null);
 
     }
 
