@@ -108,7 +108,7 @@ public class BaseDAO {
 		int db = 0;
 
 		// 按公司模型切分表
-		if ((DSMConst.SEG_TABLE_RULE[table] & 1) > 0 && sharding != 0) {
+		if ((DSMConst.SEG_TABLE_RULE[table] & 1) > 0) {
 			/** 取得数据库服务器的编号 */
 			//dbs = sharding / BUSConst._DMNUM  % BUSConst._SMALLINTMAX;
 			/** 取得数据库服务器上数据库的编号 */
@@ -118,7 +118,7 @@ public class BaseDAO {
 			}
 		}
 
-		if(SHARDING_FLAG == 1 && sharding == 0){
+		if(SHARDING_FLAG == 1 && (DSMConst.SEG_TABLE_RULE[table] & 1) == 0){
 			db = BUSConst._MODNUM_EIGHT;
 		}
 
