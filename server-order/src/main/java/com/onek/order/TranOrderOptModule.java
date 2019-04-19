@@ -150,7 +150,10 @@ public class TranOrderOptModule {
         if (b){
             updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
             CancelService.getInstance().add(new CancelDelayed(orderNo, tranOrder.getCusno()));
-            return result.success("下单成功");
+            JsonObject object = new JsonObject();
+            object.addProperty("orderno", orderNo);
+            object.addProperty("message", "下单成功");
+            return result.success(object);
         } else {//下单失败
             //库存处理
             stockRecovery(tranOrderGoods);
