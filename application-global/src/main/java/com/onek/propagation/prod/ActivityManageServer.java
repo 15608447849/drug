@@ -1,5 +1,7 @@
 package com.onek.propagation.prod;
 
+import com.alibaba.fastjson.JSONObject;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -30,7 +32,22 @@ public class ActivityManageServer implements ProdObserverable {
         }
     }
 
+    /*
+   * 设置产品列表
+    **/
     public void setProd(List<String> list){
+        datas = list;
+        notifyObserver();
+    }
+
+    /*
+     * 活动修改
+     **/
+    public void actUpdate(long actcode){
+        List<String> list = new ArrayList<>();
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("actcode" ,actcode);
+        list.add(jsonObject.toJSONString());
         datas = list;
         notifyObserver();
     }
