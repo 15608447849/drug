@@ -58,7 +58,7 @@ public class ActivityFilterService extends BaseDiscountFilterService {
             a = (Activity) discount;
             discount.setLimits(sku, a.getLimitnum());
             a.setActPrice(MathUtil.exactDiv(a.getActPrice(), 100).doubleValue());
-            discount.setPrice(sku, a.getActPrice());
+            discount.setActionPrice(sku, a.getActPrice());
         }
 
         return returnResult;

@@ -56,9 +56,10 @@ public class StoreBasicInfoOp implements IOperation<AppContext> {
             info.addressCode = checkObjectNull(rows[4],0L);
             info.latitude = checkObjectNull(rows[5],new BigDecimal(0)); //纬度
             info.longitude = checkObjectNull(rows[6],new BigDecimal(0)); //精度
+            return new Result().success(info);//返回用户信息
         }
+        return new Result().fail("没有企业信息,请关联企业");//返回用户信息
 
-        return new Result().success(info);//返回用户信息
     }
 
 }

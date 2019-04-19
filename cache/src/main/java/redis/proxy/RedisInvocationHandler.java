@@ -1,6 +1,7 @@
 package redis.proxy;
 
 import redis.IRedisCache;
+import redis.IRedisPartCache;
 import redis.annation.CacheInvoke;
 import redis.provide.RedisListProvide;
 import redis.provide.RedisStringProvide;
@@ -37,7 +38,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
-		//System.out.println("############ redis inocation invoke ###############");
+		System.out.println("############ redis inocation invoke ###############");
         CacheInvoke cacheInvoke =method.getAnnotation(CacheInvoke.class);
         if(cacheInvoke == null) {
             return method.invoke(target, args);
@@ -50,18 +51,31 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 	}
 
 	private Object loadCacheObject(Method method, Object target,Object[] args) throws IllegalAccessException, InvocationTargetException {
+
+        System.out.println("############ redis loadCacheObject invoke ###############");
 		Class<?> clazz = null;
 		String type = null;
 
         String keycolum = "";
-        IRedisCache t = (IRedisCache)(target);
-        keycolum = t.getKey();
         String prefix = "";
-        prefix = t.getPrefix();
-        clazz = t.getReturnType();
+        if(target instanceof IRedisCache){
+            IRedisCache t = (IRedisCache)(target);
+            keycolum = t.getKey();
+
+            prefix = t.getPrefix();
+            clazz = t.getReturnType();
+
+        }else if(target instanceof IRedisPartCache){
+            IRedisPartCache t = (IRedisPartCache)(target);
+            keycolum = t.getKey();
+
+            prefix = t.getPrefix();
+            clazz = t.getReturnType();
+        }
 
 		Object cacheObj = null;
 		String keyval = "";
+        System.out.println("#### loadCacheObject "+prefix+";"+keycolum);
 		if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
 
             Object arg = args[0];
@@ -86,7 +100,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 			}
 			return result;
 		}else {
-			//System.out.println("#### loadCacheObject cahce hit!!!");
+			System.out.println("#### loadCacheObject cahce hit!!!");
 			return cacheObj;
 
 		}
@@ -236,7 +250,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
     private Object flushPartCache(Method method, Object target,Object[] args) throws IllegalAccessException, InvocationTargetException {
 
         String keycolum = "";
-        IRedisCache t = (IRedisCache)(target);
+        IRedisPartCache t = (IRedisPartCache)(target);
         keycolum = t.getKey();
         String prefix = "";
         prefix = t.getPrefix();

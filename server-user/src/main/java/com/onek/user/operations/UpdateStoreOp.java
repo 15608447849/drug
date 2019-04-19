@@ -10,7 +10,6 @@ import dao.BaseDAO;
 import global.GaoDeMapUtil;
 import global.GenIdUtil;
 import global.IceRemoteUtil;
-import org.hyrdpf.ds.AppConfig;
 import util.StringUtils;
 
 import java.util.List;
@@ -33,30 +32,38 @@ public class UpdateStoreOp implements IOperation<AppContext> {
     @Override
     public Result execute(AppContext context) {
 
+        //转换经纬度
+        convertLatLon();
+
         UserSession session = context.getUserSession();
-        boolean isRelated = false; //是否关联
+        boolean isRelated = false; //是否关联-假设未关联企业
         if (session.compId == 0){ //当前用户没有关联任何企业
-            //根据传递的企业名称查询是否存在采集企业
-            String selectSql = "SELECT cid FROM {{?" + DSMConst.D_COMP +"}} WHERE cstatus&1 = 0 AND ctype=0 AND cname = ?";
+            //根据传递的企业名称查询是否存在采集企业(相同名字企业)
+            String selectSql = "SELECT cid FROM {{?" + DSMConst.D_COMP +"}} WHERE cstatus&1 = 0 AND ctype=0 AND cname=?";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,storeName);
-            if (lines.size()>0){
-                if (session.compId > 0) return new Result().fail("修改失败,存在相同门店名");
+            if (lines.size()==1){
+                //存在一个采集企业
                 int compid = (int) lines.get(0)[0];
                 //用户关联企业码
-                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} SET cid = ? WHERE cstatus&1 AND uid = ?";
+                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} SET cid = ? WHERE cstatus&1 AND uid=?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql,compid,session.userId);
                 if (i <= 0){
                     return new Result().fail("无法关联门店信息");
                 }
                 session.compId = compid;
-                context.relationTokenUserSession();//重新保存用户信息
+                //重新保存用户信息
+                if (!context.relationTokenUserSession()){
+                    return new Result().fail("无法保存用户信息");
+                }
+                //企业关联会员
+                compLinkMember(session.compId);
                 isRelated = true;
             }
         }
-
+        //如果没有关联企业
         if (!isRelated){
             //判断是否存在相同企业名
-            String selectSql = "SELECT cid FROM {{?" +DSMConst.D_COMP+"}} WHERE cstatus&1 = 0 AND ctype=0 AND cid=? AND cname=? ";
+            String selectSql = "SELECT cid FROM {{?" +DSMConst.D_COMP+"}} WHERE cstatus&1 = 0 AND ctype=0 AND cname=?";
             List<Object[]>lines = BaseDAO.getBaseDAO().queryNative(selectSql,session.compId,storeName);
             if (lines.size() > 0) {
                 if((int)lines.get(0)[0] != session.compId){
@@ -65,7 +72,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
             }
         }
 
-        convertLatLon();
+
 
         if (session.compId > 0 ){
 
@@ -128,10 +135,16 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 if (i <= 0){
                     return new Result().fail("无法关联门店信息");
                 }
+
+                session.compId = (int)compid;
+
+                if (!context.relationTokenUserSession()){
+                    //重新保存用户信息
+                    return new Result().fail("保存用户信息失败");
+                }
                 //企业关联会员
                 compLinkMember(session.compId);
-                session.compId = (int)compid;
-                context.relationTokenUserSession();//重新保存用户信息
+
                 return new Result().success("新增门店信息,关联成功");
             }
         }

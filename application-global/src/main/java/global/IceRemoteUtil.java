@@ -8,6 +8,7 @@ import com.onek.client.IceClient;
 import com.onek.entitys.Result;
 import com.onek.prop.IceMasterInfoProperties;
 import com.onek.util.dict.DictEntity;
+import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdPriceEntity;
 import util.GsonUtils;
@@ -267,6 +268,20 @@ public class IceRemoteUtil {
                 .executeSync();
         Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
         return ret.code;
+    }
+
+    public static MemberEntity getMemberByCompid(int compid) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("compid", compid);
+        String result = ic.settingProxy("userServer")
+                .settingReq("","MemberModule","getMember")
+                .settingParam(jsonObject.toJSONString())
+                .executeSync();
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.jsonToJavaBean(json,MemberEntity.class);
     }
 
 }

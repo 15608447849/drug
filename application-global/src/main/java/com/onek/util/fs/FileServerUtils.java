@@ -74,7 +74,7 @@ public class FileServerUtils {
 
 
 
-    public static String getPayQrImageLink(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method){
+    public static String getPayQrImageLink(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr){
 
         List<String> list = new ArrayList<>();
             list.add(IceMasterInfoProperties.INSTANCE.name);
@@ -83,6 +83,8 @@ public class FileServerUtils {
             list.add(serverName);
             list.add(callback_clazz);
             list.add(callback_method);
+            if (attr!=null && attr.length()>0)  list.add(attr);
+
         String body = String.join("@",list);
         HashMap<String,String> map = new HashMap<>();
         map.put("type",type);
@@ -100,7 +102,7 @@ public class FileServerUtils {
 
     public static void main(String[] args) {
         String res = getPayQrImageLink("alipay","控件",25.02,"15608447849010222",
-                "orderserver","aplipayModule","callback");
+                "orderserver","aplipayModule","callback",null);
         System.out.println(res);
     }
 }

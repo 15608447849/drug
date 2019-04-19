@@ -287,6 +287,9 @@ public class ActivityManageModule {
                 }
             }
 
+            // 通知活动有修改
+            noticeActUpdate(actCode);
+
         } else {
             result.fail("修改失败");
         }
@@ -680,6 +683,21 @@ public class ActivityManageModule {
             }
         }
         activityManageServer.setProd(proList);
+    }
+
+    /* *
+     * @description 通知活动修改
+     * @params []
+     * @return void
+     * @exception
+     * @author jiangwenguang
+     * @time  2019/4/19 1:50
+     * @version 1.1.1
+     **/
+    private void noticeActUpdate(long actcode) {
+        ActivityManageServer activityManageServer = new ActivityManageServer();
+        activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
+        activityManageServer.actUpdate(actcode);
     }
 
     private Map<Long, Integer> selectGoodsByAct(long actCode) {

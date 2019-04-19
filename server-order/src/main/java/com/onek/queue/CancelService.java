@@ -64,30 +64,24 @@ public class CancelService {
     }
 
     public void add(CancelDelayed cancelDelayed) {
-        EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                boolean addResult = delayQueue.add(cancelDelayed);
+        EXECUTOR.execute(() -> {
+            boolean addResult = delayQueue.add(cancelDelayed);
 
-                if (addResult) {
-                    RedisUtil.getHashProvide().putElement(
-                            REDIS_HEAD, cancelDelayed.getOrderNo(),
-                            JSONObject.toJSONString(cancelDelayed));
-                }
+            if (addResult) {
+                RedisUtil.getHashProvide().putElement(
+                        REDIS_HEAD, cancelDelayed.getOrderNo(),
+                        JSONObject.toJSONString(cancelDelayed));
             }
         });
     }
 
-    public void remove(CancelDelayed cancelDelayed) {
-        EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                boolean removeResult = delayQueue.remove(cancelDelayed);
+    public void remove(String orderno) {
+        EXECUTOR.execute(() -> {
+                boolean removeResult = delayQueue.remove(orderno);
 
                 if (removeResult) {
-                    RedisUtil.getHashProvide().delByKey(REDIS_HEAD, cancelDelayed.getOrderNo());
+                    RedisUtil.getHashProvide().delByKey(REDIS_HEAD, orderno);
                 }
-            }
         });
     }
 
@@ -110,7 +104,6 @@ public class CancelService {
                         }
                     }
 
-                    Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
