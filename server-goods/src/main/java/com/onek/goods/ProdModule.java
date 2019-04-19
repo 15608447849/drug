@@ -901,7 +901,6 @@ public class ProdModule {
 
                 prodVO.setLimits(detail.get("limits") != null ? Integer.parseInt(detail.get("limits").toString()) : 0);
                 prodVO.setStore(detail.get("store") != null ? Integer.parseInt(detail.get("store").toString()) : 0);
-                prodVO.setActivitystore(detail.get("activitystore") != null ? Integer.parseInt(detail.get("activitystore").toString()) : 0);
 
             }
         }catch (Exception e){

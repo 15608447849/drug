@@ -39,7 +39,6 @@ public class ProdEntity {
     private String prodedate;
 
     private int store;
-    private int activitystore;
     private int limits;
     private int sales;
     private int wholenum;
@@ -250,14 +249,6 @@ public class ProdEntity {
 
     public void setStore(int store) {
         this.store = store;
-    }
-
-    public int getActivitystore() {
-        return activitystore;
-    }
-
-    public void setActivitystore(int activitystore) {
-        this.activitystore = activitystore;
     }
 
     public int getLimits() {

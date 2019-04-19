@@ -47,7 +47,7 @@ public class RedisStockUtil {
         return Integer.parseInt(currentStock);
     }
 
-    public static int getActStockBySkuAndActno(long sku, int actno){
+    public static int getActStockBySkuAndActno(long sku, long actno){
         return 0;
     }
 

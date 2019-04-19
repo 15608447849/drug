@@ -28,7 +28,7 @@ public class ProduceStore {
                     + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
                     + " spu.insurance, spu.gspGMS, spu.gspSC, spu.detail, spu.cstatus,"
                     + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.vaildsdate, sku.vaildedate,"
-                    + " sku.prodsdate, sku.prodedate, sku.store, sku.activitystore, "
+                    + " sku.prodsdate, sku.prodedate, sku.store, "
                     + " sku.limits, sku.sales, sku.wholenum, sku.medpacknum, sku.unit, "
                     + " sku.ondate, sku.ontime, sku.offdate, sku.offtime, sku.spec, sku.prodstatus, "
                     + " sku.imagestatus, sku.cstatus "
@@ -163,11 +163,4 @@ public class ProduceStore {
 
     }
     
-    
-
-    public static int addProduce(){
-//        ElasticSearchProvider.addDocument();
-        return 0;
-    }
-
 }
