@@ -56,11 +56,19 @@ public class CancelDelayed implements Delayed {
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
+
+        if (o == null) return false;
+
+        if (getClass() != o.getClass()) {
+            if (o.getClass() == String.class) {
+                return o.equals(this.orderNo);
+            }
+        }
 
         CancelDelayed that = (CancelDelayed) o;
 
         if (compid != that.compid) return false;
+
         return orderNo != null ? orderNo.equals(that.orderNo) : that.orderNo == null;
     }
 
@@ -70,4 +78,5 @@ public class CancelDelayed implements Delayed {
         result = 31 * result + compid;
         return result;
     }
+
 }

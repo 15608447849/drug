@@ -216,6 +216,16 @@ public class Couent extends AccurateMath implements IDiscount {
     }
 
     @Override
+    public void setActionPrice(long sku, double price) {
+
+    }
+
+    @Override
+    public double getActionPrice(long sku) {
+        return 0;
+    }
+
+    @Override
     public String getStartTime() {
         return "00:00:00";
     }

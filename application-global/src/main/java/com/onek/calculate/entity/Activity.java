@@ -134,12 +134,12 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     @Override
-    public void setPrice(long sku, double price) {
+    public void setActionPrice(long sku, double price) {
         SKU_PRICE.put(sku, price);
     }
 
     @Override
-    public double getPrice(long sku) {
+    public double getActionPrice(long sku) {
         Double result = SKU_PRICE.get(sku);
 
         return result == null ? .0 : result;
