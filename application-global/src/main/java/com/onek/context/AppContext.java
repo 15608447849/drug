@@ -42,7 +42,7 @@ public class AppContext extends IceContext {
             if(StringUtils.isEmpty(json)) return;
 
             this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
-//            logger.print(key+" - Redis存在用户信息:\n" + userSession);
+            logger.print(key+" - Redis - 用户信息:\n" + userSession);
 
         } catch (Exception ignored) { }
     }

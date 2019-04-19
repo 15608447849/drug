@@ -20,11 +20,15 @@ import util.StringUtils;
 import util.TimeUtils;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 import static com.onek.order.TranOrderOptModule.getGoodsArr;
 
 public class PayModule {
+
+    public static final String PAY_TYPE_ALI = "alipay";
+    public static final String PAY_TYPE_WX = "wxpay";
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
@@ -53,7 +57,33 @@ public class PayModule {
             + " values(?,?,?,?,?,"
             + "?,?,?)";
 
+    @UserPermission(ignore = true)
+    public Result showPayInfo(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderno = jsonObject.get("orderno").getAsString();
+        int compid = jsonObject.get("compid").getAsInt();
 
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid});
+        if(list != null && list.size() > 0) {
+            TranOrder[] result = new TranOrder[list.size()];
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime"});
+
+            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
+
+            JSONObject r = new JSONObject();
+            r.put("payamt", payamt);
+            r.put("odate", result[0].getOdate());
+            r.put("otime", result[0].getOtime());
+            r.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+
+            return  new Result().success(r);
+        }else{
+            return new Result().fail("未查到【"+orderno+"】支付的订单!");
+        }
+
+    }
 
     @UserPermission(ignore = true)
     public Result prePay(AppContext appContext){
@@ -85,18 +115,41 @@ public class PayModule {
 
     }
 
+    @UserPermission(ignore = true)
     public Result payCallBack(AppContext appContext){
 
         String[] arrays = appContext.param.arrays;
-        System.out.println(arrays[0]+";"+arrays[1]+";"+arrays[2]+";"+arrays[3]+";"+arrays[4]+";"+arrays[5]+";"+arrays[7]);
-//        String orderno = arrays[0];
-//        String paytype = arrays[1];
-//        String thirdPayNo = arrays[2];
-//        String tradeStatus = arrays[3];
-//        String tradeDate = arrays[4];
-//        String tradeTime = arrays[5];
-//        int compid = Integer.parseInt(arrays[6]);
-        return new Result().success(null);
+        String orderno = arrays[0];
+        String paytype = arrays[1];
+        String thirdPayNo = arrays[2];
+        String tradeStatus = arrays[3];
+        String tradeDate = arrays[4];
+        double money = Double.parseDouble(arrays[5]);
+        int compid = Integer.parseInt(arrays[6]);
+
+        int paychannel = -1;
+        if(PAY_TYPE_ALI.equals(paytype)){
+            paychannel = 2;
+        }else if(PAY_TYPE_WX.equals(paytype)){
+            paychannel = 1;
+        }
+        Date date = TimeUtils.str_yMd_Hms_2Date(tradeDate);
+        boolean result = false;
+        if("1".equals(tradeStatus)){
+            String tdate = TimeUtils.date_yMd_2String(date);
+            String time = TimeUtils.date_Hms_2String(date);
+            result = successOpt(orderno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+        }else if("2".equals(tradeStatus)){
+            String tdate = TimeUtils.date_yMd_2String(date);
+            String time = TimeUtils.date_Hms_2String(date);
+            result = failOpt(orderno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+        }
+        if(result){
+            return new Result().success(null);
+        }else{
+            return new Result().fail(null);
+        }
+
     }
 
     /* *
@@ -108,15 +161,7 @@ public class PayModule {
      * @time  2019/4/18 20:56
      * @version 1.1.1
      **/
-    private boolean successOpt(String[] arrays) {
-        String orderno = arrays[0];
-        String paytype = arrays[1];
-        String thirdPayNo = arrays[2];
-        String tradeStatus = arrays[3];
-        String tradeDate = arrays[4];
-        String tradeTime = arrays[5];
-        int compid = Integer.parseInt(arrays[6]);
-        double price = Double.parseDouble(arrays[7]) * 100;
+    private boolean successOpt(String orderno, int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
         int paysource = 0;
 
         List<String> sqlList = new ArrayList<>();
@@ -131,7 +176,7 @@ public class PayModule {
         }
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
-        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, price, paytype, paysource, -2, GenIdUtil.getUnqId(),
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
                 thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
 //        + "(unqid,compid,payno,eventdesc,resultdesc,"
 //                + "completedate,completetime,cstatus)"
@@ -152,15 +197,8 @@ public class PayModule {
      * @time  2019/4/18 20:37
      * @version 1.1.1
      **/
-    private boolean failOpt(String[] arrays) {
-        String orderno = arrays[0];
-        String paytype = arrays[1];
-        String thirdPayNo = arrays[2];
-        String tradeStatus = arrays[3];
-        String tradeDate = arrays[4];
-        String tradeTime = arrays[5];
-        int compid = Integer.parseInt(arrays[6]);
-        double price = Double.parseDouble(arrays[7]) * 100;
+    private boolean failOpt(String orderno, int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
+
         int paysource = 0;
 
         List<String> sqlList = new ArrayList<>();
@@ -168,7 +206,7 @@ public class PayModule {
 //        + "(unqid,compid,orderno,payno,payprice,payway,paysource,paystatus,"
 //                + "payorderno,tppno,paydate,paytime,completedate,completetime,cstatus)"
         sqlList.add(INSERT_TRAN_TRANS);
-        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, price, paytype, paysource, -2, GenIdUtil.getUnqId(),
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
                 thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
 //        + "(unqid,compid,payno,eventdesc,resultdesc,"
 //                + "completedate,completetime,cstatus)"
