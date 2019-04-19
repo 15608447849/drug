@@ -32,6 +32,9 @@ public class RedisGlobalKeys {
     // 库存活动前缀
     public static final String ACTSTOCK_PREFIX = "ACTSTOCK";
 
+    // 库存活动前缀
+    public static final String ACTSTOCK_INIT_PREFIX = "ACTINITSTOCK";
+
     // 秒杀前缀
     public static final String SECKILLPREFIX = "SECKILL";
 

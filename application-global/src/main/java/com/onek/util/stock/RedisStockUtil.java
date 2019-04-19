@@ -12,6 +12,11 @@ public class RedisStockUtil {
 
     public static void setActStock(long sku, long actcode,int initStock){
         RedisUtil.getStringProvide().set(RedisGlobalKeys.ACTSTOCK_PREFIX  + sku + "|" +actcode, String.valueOf(initStock));
+        RedisUtil.getStringProvide().set(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX  + sku + "|" +actcode, String.valueOf(initStock));
+    }
+
+    public static void clearActStock(long sku, long actcode){
+        RedisUtil.getStringProvide().delete(RedisGlobalKeys.ACTSTOCK_PREFIX  + sku + "|" +actcode);
     }
 
     public static boolean deductionSecKillStock(long sku, int compid, int stock, long actcode){
