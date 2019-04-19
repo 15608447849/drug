@@ -17,6 +17,7 @@ import global.GenIdUtil;
 import util.MathUtil;
 import util.ModelUtil;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -66,12 +67,11 @@ public class PayModule {
         if(StringUtils.isEmpty(orderno) || compid <=0){
             return new Result().fail("获取订单号或企业码失败!");
         }
-        List<Object[]> list = baseDao.queryNative(GET_TO_PAY_SQL, new Object[]{ orderno, compid});
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid});
         if(list != null && list.size() > 0){
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{ "payamt","odate","otime"});
 
-            JSONObject js = new JSONObject();
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
 
             String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
