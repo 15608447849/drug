@@ -12,6 +12,8 @@ import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
+import com.onek.queue.CancelDelayed;
+import com.onek.queue.CancelService;
 import com.onek.util.CalculateUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
@@ -20,7 +22,8 @@ import global.GenIdUtil;
 import org.hyrdpf.util.LogUtil;
 import util.ModelUtil;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author 11842
@@ -146,6 +149,7 @@ public class TranOrderOptModule {
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(tranOrder.getCusno(),year, sqlNative, params));
         if (b){
             updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
+            CancelService.getInstance().add(new CancelDelayed(orderNo, tranOrder.getCusno()));
             JsonObject object = new JsonObject();
             object.addProperty("orderno", orderNo);
             object.addProperty("message", "下单成功");
@@ -327,6 +331,11 @@ public class TranOrderOptModule {
 //        String[] sqlNative = new String[sqlList.size()];
 //        sqlNative = sqlList.toArray(sqlNative);
         boolean b = cancelOrder(orderNo, cusno);
+
+        if (b) {
+            CancelService.getInstance().remove(orderNo);
+        }
+
         return b ? result.success("取消成功") : result.fail("取消失败");
     }
 
