@@ -1,5 +1,6 @@
 package com.onek.util.stock;
 
+import com.onek.util.RedisGlobalKeys;
 import redis.util.RedisUtil;
 import util.StringUtils;
 
@@ -7,52 +8,53 @@ import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+
 public class RedisStockUtil {
 
-    public static final String PREFIX = "stock_";
-    public static final String ACT_PREFIX = "actstock_";
-    public static final String SECKILLPREFIX = "seckill_";
-
     public static void setStock(long sku, int initStock){
-        RedisUtil.getStringProvide().set(PREFIX+sku, String.valueOf(initStock));
+        RedisUtil.getStringProvide().set(RedisGlobalKeys.STOCK_PREFIX + sku, String.valueOf(initStock));
     }
 
     public static void setActStock(long sku, int initStock){
-        RedisUtil.getStringProvide().set(ACT_PREFIX + sku, String.valueOf(initStock));
+        RedisUtil.getStringProvide().set(RedisGlobalKeys.ACTSTOCK_PREFIX + sku, String.valueOf(initStock));
     }
 
-    public static boolean deductionSecKillStock(long sku, int compid, int stock){
-        String currentStock = RedisUtil.getStringProvide().get(ACT_PREFIX + sku);
+    public static boolean deductionSecKillStock(long sku, int compid, int stock, int actcode){
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX  + sku);
         if(Integer.parseInt(currentStock) <= 0){
             return false;
         }
         if((Integer.parseInt(currentStock) - stock) <= 0){
             return false;
         }
-        Long num = RedisUtil.getStringProvide().decrease(ACT_PREFIX + sku, stock);
+        Long num = RedisUtil.getStringProvide().decrease(RedisGlobalKeys.ACTSTOCK_PREFIX  + sku + "|" +actcode, stock);
         if(num < 0){
-            RedisUtil.getStringProvide().increase(ACT_PREFIX + sku, stock);
+            RedisUtil.getStringProvide().increase(RedisGlobalKeys.ACTSTOCK_PREFIX  + + sku + "|" +actcode, stock);
             return false;
         }
-        RedisUtil.getStringProvide().decrease(PREFIX + sku, stock);
-        RedisUtil.getListProvide().addEndElement(SECKILLPREFIX + sku, compid + "|" + stock);
+        RedisUtil.getStringProvide().decrease(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
+        RedisUtil.getListProvide().addEndElement(RedisGlobalKeys.SECKILLPREFIX + sku, compid + "|" + stock);
         return true;
     }
 
     public static int getStock(long sku){
-        String currentStock = RedisUtil.getStringProvide().get(PREFIX+sku);
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.STOCK_PREFIX+sku);
         if(StringUtils.isEmpty(currentStock)){
             return 0;
         }
         return Integer.parseInt(currentStock);
     }
 
-    public static int getActStockBySkuAndActno(long sku, int actno){
-        return 0;
+    public static int getActStockBySkuAndActno(long sku, long actno){
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX  + sku + "|" +actno);
+        if(StringUtils.isEmpty(currentStock)){
+            return 0;
+        }
+        return Integer.parseInt(currentStock);
     }
 
     public static boolean deductionStock(long sku, int stock){
-        String currentStock = RedisUtil.getStringProvide().get(PREFIX+sku);
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.STOCK_PREFIX+sku);
         if(StringUtils.isEmpty(currentStock)){
             return false;
         }
@@ -62,16 +64,16 @@ public class RedisStockUtil {
         if((Integer.parseInt(currentStock) - stock) <= 0){
             return false;
         }
-        Long num = RedisUtil.getStringProvide().decrease(PREFIX+sku, stock);
+        Long num = RedisUtil.getStringProvide().decrease(RedisGlobalKeys.STOCK_PREFIX+sku, stock);
         if(num < 0){
-            RedisUtil.getStringProvide().increase(PREFIX+sku, stock);
+            RedisUtil.getStringProvide().increase(RedisGlobalKeys.STOCK_PREFIX+sku, stock);
             return false;
         }
         return true;
     }
 
     public static long addStock(long sku, int stock){
-        Long num = RedisUtil.getStringProvide().increase(PREFIX+sku, stock);
+        Long num = RedisUtil.getStringProvide().increase(RedisGlobalKeys.STOCK_PREFIX+sku, stock);
         return num;
     }
 

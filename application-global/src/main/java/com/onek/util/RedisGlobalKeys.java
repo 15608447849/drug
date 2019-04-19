@@ -26,6 +26,16 @@ public class RedisGlobalKeys {
     // 秒杀
     public static final String SECKILL_TOKEN_PREFIX = "SECKILL_TOKEN";
 
+    // 库存前缀
+    public static final String STOCK_PREFIX = "STOCK";
+
+    // 库存活动前缀
+    public static final String ACTSTOCK_PREFIX = "ACTSTOCK";
+
+    // 秒杀前缀
+    public static final String SECKILLPREFIX = "SECKILL";
+
+
     /**
      * 获取用户ID
      */
