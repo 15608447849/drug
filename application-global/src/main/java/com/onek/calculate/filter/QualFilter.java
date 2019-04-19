@@ -35,7 +35,7 @@ public class QualFilter extends BaseFilter {
         boolean result = true;
         int qualCode = act.getQualcode();
         int qualValue = act.getQualvalue();
-        long value;
+
         switch (qualCode) {
             case ALL:
                 result = false;
@@ -45,7 +45,6 @@ public class QualFilter extends BaseFilter {
                 result = getCurrentOrdNum() < qualValue;
                 break;
             case LV:
-                // TODO 根据用户获取等级
                 result = getCurrentLV() < qualValue;
                 break;
             case AREA:
@@ -59,7 +58,7 @@ public class QualFilter extends BaseFilter {
         return result;
     }
 
-    public Integer getCurrentLV() {
+    private Integer getCurrentLV() {
         if (this.currentLV == null) {
             this.currentLV = MemberStore.getLevelByCompid(this.compid);
         }
@@ -67,21 +66,19 @@ public class QualFilter extends BaseFilter {
         return this.currentLV;
     }
 
-    public Integer getCurrentOrdNum() {
-//        if (this.currentOrdNum == null) {
-//            this.currentOrdNum = MemberStore.getLevelByCompid(this.compid);
-//        }
+    private Integer getCurrentOrdNum() {
+        if (this.currentOrdNum == null) {
+            this.currentOrdNum = 0;
+        }
 
-//        return this.currentOrdNum;
-        return 0;
+        return this.currentOrdNum;
     }
 
-    public Integer getCurrentArea() {
-//        if (this.currentArea == null) {
-//            this.currentArea = MemberStore.getLevelByCompid(this.compid);
-//        }
+    private Integer getCurrentArea() {
+        if (this.currentArea == null) {
+            this.currentArea = 0;
+        }
 
-//        return this.currentArea;
-        return 0;
+        return this.currentArea;
     }
 }

@@ -36,7 +36,6 @@ public class BgProdVO implements Cloneable{
     private String prodedate;
 
     private Integer store;
-    private Integer activitystore;
     private Integer limits;
     private Integer sales;
     private Integer wholenum;
@@ -263,14 +262,6 @@ public class BgProdVO implements Cloneable{
 
     public void setStore(Integer store) {
         this.store = store;
-    }
-
-    public Integer getActivitystore() {
-        return activitystore;
-    }
-
-    public void setActivitystore(Integer activitystore) {
-        this.activitystore = activitystore;
     }
 
     public Integer getLimits() {

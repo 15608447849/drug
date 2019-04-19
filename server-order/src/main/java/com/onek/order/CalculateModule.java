@@ -9,6 +9,7 @@ import com.onek.calculate.entity.Product;
 import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.util.stock.RedisStockUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
@@ -79,6 +80,7 @@ public class CalculateModule {
             jsonObject.put("ladoffs", ladoffs);
         } else if (currDiscount.getBRule() == 1113) {
             jsonObject.put("killPrice", currDiscount.getActionPrice(sku));
+            jsonObject.put("actRealStore", RedisStockUtil.getActStockBySkuAndActno(sku, actcode));
         }
 
         return new Result().success(jsonObject);

@@ -60,7 +60,7 @@ public class BackgroundProdModule {
             + " (spu, sku, vatp, mp, rrp, "
             + " vaildsdate, vaildedate, "
             + " prodsdate, prodedate, store, "
-            + " activitystore, limits, wholenum, medpacknum, unit,"
+            + " limits, wholenum, medpacknum, unit,"
             + " ondate, ontime, spec, cstatus) "
             + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
@@ -82,7 +82,7 @@ public class BackgroundProdModule {
             + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
             + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus,"
             + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.vaildsdate, sku.vaildedate,"
-            + " sku.prodsdate, sku.prodedate, sku.store, sku.activitystore, "
+            + " sku.prodsdate, sku.prodedate, sku.store, "
             + " sku.limits, sku.sales, sku.wholenum, sku.medpacknum, sku.unit, "
             + " sku.ondate, sku.ontime, sku.offdate, sku.offtime, sku.spec, sku.prodstatus, "
             + " sku.imagestatus, sku.cstatus "
@@ -97,7 +97,7 @@ public class BackgroundProdModule {
             + " SET vatp = ?, mp = ?, rrp = ?, unit = ?, spec = ?, "
             + " vaildsdate = STR_TO_DATE(?, '%Y-%m-%d'), vaildedate = STR_TO_DATE(?, '%Y-%m-%d'), "
             + " prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
-            + " store = ?, activitystore = ?, limits = ?, wholenum = ?, medpacknum = ? "
+            + " store = ?, limits = ?, wholenum = ?, medpacknum = ? "
             + " WHERE sku = ? ";
 
     public Result onProd(AppContext appContext) {
@@ -193,7 +193,7 @@ public class BackgroundProdModule {
                 bgProdVO.getUnit(), bgProdVO.getSpec(),
                 bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
                 bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
-                bgProdVO.getStore(), bgProdVO.getActivitystore(), bgProdVO.getLimits(),
+                bgProdVO.getStore(), bgProdVO.getLimits(),
                 bgProdVO.getWholenum(), bgProdVO.getMedpacknum(),
                 bgProdVO.getSku());
 
@@ -444,7 +444,7 @@ public class BackgroundProdModule {
             // rrp, "
             // vaildsdate, vaildedate,
             // prodsdate, prodedate,
-            // store, activitystore, limits,
+            // store, limits,
             // wholenum, medpacknum, unit,
             // spec, "
             params.add(new Object[] {
@@ -454,7 +454,7 @@ public class BackgroundProdModule {
                     MathUtil.exactMul(bgProdVO.getRrp (), 100).intValue(),
                     bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
                     bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
-                    bgProdVO.getStore(), bgProdVO.getActivitystore(), bgProdVO.getLimits(),
+                    bgProdVO.getStore(), bgProdVO.getLimits(),
                     bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getUnit(),
                     bgProdVO.getSpec()
             });
