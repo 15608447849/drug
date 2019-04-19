@@ -32,7 +32,7 @@ public class PayModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
-    private static final String GET_TO_PAY_SQL = "select payamt,odate,otime from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ? and ostatus=0";
+    private static final String GET_TO_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ? and ostatus=0";
 
     //支付回调更新订单状态
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,settstatus=?,"
@@ -55,7 +55,7 @@ public class PayModule {
             + "(unqid,compid,payno,eventdesc,resultdesc,"
             + "completedate,completetime,cstatus)"
             + " values(?,?,?,?,?,"
-            + "?,?,?)";
+            + "?,?,0)";
 
     @UserPermission(ignore = true)
     public Result showPayInfo(AppContext appContext){
@@ -152,6 +152,25 @@ public class PayModule {
 
     }
 
+    @UserPermission(ignore = true)
+    public Result getPayResult(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderno = jsonObject.get("orderno").getAsString();
+        int compid = jsonObject.get("compid").getAsInt();
+
+
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid});
+        if(list != null && list.size() > 0) {
+            TranOrder[] result = new TranOrder[list.size()];
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight", "coupamt","distamt","rvaddno"});
+
+        }
+
+        return new Result().success(null);
+    }
+
     /* *
      * @description 支付成功操作
      * @params [arrays]
@@ -166,14 +185,9 @@ public class PayModule {
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
+        List<Object[]> paramsOne = new ArrayList<>();
         sqlList.add(UPD_ORDER_STATUS);//更新订单状态
         params.add(new Object[]{1,1,tradeDate,tradeTime,orderno,0});
-
-        TranOrderGoods[] tranOrderGoods = getGoodsArr(orderno, compid);
-        for (TranOrderGoods tranOrderGood : tranOrderGoods) {
-            sqlList.add(UPD_GOODS_STORE);//更新商品库存
-            params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPnum(), tranOrderGood.getPdno()});
-        }
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
         params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
@@ -185,7 +199,15 @@ public class PayModule {
         int year = Integer.parseInt("20" + orderno.substring(0,2));
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
-        return !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
+        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
+        if (b) {
+            TranOrderGoods[] tranOrderGoods = getGoodsArr(orderno, compid);
+            for (TranOrderGoods tranOrderGood : tranOrderGoods) {
+                paramsOne.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPnum(), tranOrderGood.getPdno()});
+            }
+            baseDao.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+        }
+        return b;
     }
 
     /* *
