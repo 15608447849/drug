@@ -11,9 +11,15 @@ public class MemberStore {
 
     public static int getLevelByCompid(int compid){
 
-        MemberEntity memberEntity = (MemberEntity) memProxy.getId(compid);
-        int point = memberEntity.getAccupoints();
+        int point = 0;
+        if(compid > 0){
 
+            MemberEntity memberEntity = (MemberEntity) memProxy.getId(compid);
+            if(memberEntity != null){
+                point = memberEntity.getAccupoints();
+            }
+
+        }
         double val = Math.abs(Math.sqrt((point + 250) / 1000)) - 0.5;
 
         int level = BigDecimal.valueOf(val).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
