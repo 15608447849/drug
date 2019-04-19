@@ -8,6 +8,7 @@ import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderDetail;
 import com.onek.entity.TranOrderGoods;
+import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
 import com.onek.util.fs.FileServerUtils;
 import constant.DSMConst;
@@ -165,22 +166,45 @@ public class PayModule {
         String orderno = jsonObject.get("orderno").getAsString();
         int compid = jsonObject.get("compid").getAsInt();
 
-
+        JSONObject jsonResult = new JSONObject();
         List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
             baseDao.convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight", "coupamt","distamt","rvaddno"});
 
+            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
+            double pdamt = MathUtil.exactDiv(result[0].getPdamt(), 100).doubleValue();
+            double freight = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
+            double coupamt = MathUtil.exactDiv(result[0].getCoupamt(), 100).doubleValue();
+            double distamt = MathUtil.exactDiv(result[0].getDistamt(), 100).doubleValue();
+
+            jsonResult.put("payamt", payamt);
+            jsonResult.put("odate", result[0].getOdate());
+            jsonResult.put("otime", result[0].getOtime());
+            jsonResult.put("pdamt", pdamt);
+            jsonResult.put("freight", freight);
+            jsonResult.put("coupamt", coupamt);
+            jsonResult.put("distamt", distamt);
+
             List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, new Object[]{ orderno, compid});
             if(trans != null && trans.size() > 0){
-                baseDao.
+                TranTransVO[] tranTransVOS = new TranTransVO[trans.size()];
+                baseDao.convToEntity(trans, tranTransVOS, TranTransVO.class,
+                        new String[]{"payprice", "payway", "payno", "orderno", "paysource", "paystatus", "paydate", "paytime", "completedate", "completetime"});
+                jsonResult.put("paystatus", tranTransVOS[0].getPaystatus());
+            }else{
+                jsonResult.put("paystatus", 0);
             }
             if(result[0].getRvaddno() > 0){
-                 IceRemoteUtil.getArean(result[0].getRvaddno());
+                try{
+                    jsonResult.put("address",IceRemoteUtil.getArean(result[0].getRvaddno()));
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
             }
         }
 
-        return new Result().success(null);
+        return new Result().success(jsonResult);
     }
 
     /* *

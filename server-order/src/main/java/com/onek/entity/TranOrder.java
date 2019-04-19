@@ -21,7 +21,7 @@ public class TranOrder {
     private double payamt;//支付金额
     private double coupamt;//使用券额
     private double distamt;//优惠金额
-    private int rvaddno;//收货地址码
+    private long rvaddno;//收货地址码
     private String shipdate;//发货日期
     private String shiptime;//发货时间
     private int settstatus;//结算状态
@@ -131,11 +131,11 @@ public class TranOrder {
         this.distamt = distamt;
     }
 
-    public int getRvaddno() {
+    public long getRvaddno() {
         return rvaddno;
     }
 
-    public void setRvaddno(int rvaddno) {
+    public void setRvaddno(long rvaddno) {
         this.rvaddno = rvaddno;
     }
 
