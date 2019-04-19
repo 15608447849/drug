@@ -120,6 +120,19 @@ public class TimeUtils {
     }
 
     /**
+     * 例: 2017-11-11 9:50:00
+     */
+    public static String date_Hms_2String(Date date){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("HH:mm:ss");
+        try {
+            return simpleDateFormat.format(date);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
      * 毫秒数-> x天x小时x分x秒
      * @author lzp
      */
