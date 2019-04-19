@@ -65,13 +65,13 @@ public class ShoppingCartModule {
 
     //查询购物车列表
     private final String QUERY_SHOPCART_SQL = "select unqid,pdno,compid,cstatus,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "+
-            " where cstatus&1=0 and compid = ? order by createdate,createtime desc";
+            " where cstatus&1=0 and  orderno = 0 and compid = ? order by createdate,createtime desc";
 
 
     private static final String QUERY_PROD_BASE =
             " SELECT  spu.prodname ptitle,m.manuname verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
-                    "sku.store inventory, sku.spec, sku.prodstatus "
+                    "sku.store inventory, sku.spec, sku.prodstatus,spu.spu "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
@@ -262,7 +262,7 @@ public class ShoppingCartModule {
         }
         ShoppingCartVO[] returnResults = new ShoppingCartVO[queryResult.size()];
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
-                new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory","spec","status"});
+                new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory","spec","status","spu"});
 
 
         return Arrays.asList(returnResults);
@@ -284,6 +284,7 @@ public class ShoppingCartModule {
                     shoppingCartVO.setNum(shoppingCartDTOS.get(i).getPnum());
                     shoppingCartVO.setChecked(shoppingCartDTOS.get(i).getChecked());
                     shoppingCartVO.setUnqid(shoppingCartDTOS.get(i).getUnqid());
+                    shoppingCartVO.setCounpon(shoppingCartDTOS.get(i).getConpno());
                     break;
                 }
             }
@@ -322,7 +323,6 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
-
                         if(brule == 1113 ||  brule == 1133){
                             shoppingCartVO.setStatus(1);
                         }
@@ -330,11 +330,12 @@ public class ShoppingCartModule {
                     }
                 }
             }
+            shoppingCartVO.setRule(ruleList);
         }
 
 
         DiscountResult discountResult
-                = CalculateUtil.calculate(compid,ckProduct,0);
+                = CalculateUtil.calculate(compid,ckProduct,shoppingCartList.get(0).getConpno());
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
             for(Product product: ckProduct){
                 if(shoppingCartVO.getPdno() == product.getSKU()
@@ -342,6 +343,9 @@ public class ShoppingCartModule {
                     shoppingCartVO.setDiscount(product.getDiscounted());
                     shoppingCartVO.setAmt(discountResult.getTotalDiscount());
                     shoppingCartVO.setAcamt(discountResult.getTotalCurrentPrice());
+                    shoppingCartVO.setCounpon(discountResult.getCouponValue());
+                    shoppingCartVO.setFreepost(discountResult.isFreeShipping());
+                    shoppingCartVO.setFreight(20);
                 }
             }
         }
@@ -381,5 +385,29 @@ public class ShoppingCartModule {
     }
 
 
+    /**
+     * 查询结算购物车列表
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result querySettShopCartList(AppContext appContext){
+        String json = appContext.param.json;
+        Result result = new Result();
+        JsonParser jsonParser = new JsonParser();
+        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+        List<ShoppingCartDTO> shoppingCartDTOS = new ArrayList<>();
+        Gson gson = new Gson();
+        for (JsonElement shopVO : jsonArray){
+            ShoppingCartDTO shoppingCartDTO = gson.fromJson(shopVO, ShoppingCartDTO.class);
+            shoppingCartDTOS.add(shoppingCartDTO);
+        }
+        //更新购物车数量
+       // baseDao.updateBatchNativeSharding(shoppingCartDTOS.get(0).getCompid(),TimeUtils.getCurrentYear(),UPDATE_SHOPCART_SQL_NUM, updateParm, updateParm.size());
+        List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
+        //TODO 获取活动匹配
+        convResult(shopCart,shoppingCartDTOS.get(0).getCompid());
+        return result.success(shopCart);
+    }
 
 }

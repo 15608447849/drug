@@ -34,6 +34,7 @@ public class Activity extends AccurateMath implements IDiscount {
     private List<IProduct> productList;
     private boolean freeShipping;
     private Map<Long, Integer> SKU_LIMITS = new HashMap<>();
+    private Map<Long, Double> SKU_PRICE = new HashMap<>();
 
     private List<Gift> giftList = new ArrayList<Gift>();
 
@@ -65,10 +66,11 @@ public class Activity extends AccurateMath implements IDiscount {
         if (discount <= 0) {
             return;
         }
-
-        double[] shared = DiscountUtil.shareDiscount(getEachCurrent(), discount);
-
         List<IProduct> prodList = getProductList();
+
+        double[] shared = DiscountUtil.shareDiscount(
+                DiscountUtil.getEachCurrent(prodList), discount);
+
         IProduct product;
         double befDiscounted;
         double totalDiscounted = .0;
@@ -129,6 +131,18 @@ public class Activity extends AccurateMath implements IDiscount {
         Integer result = SKU_LIMITS.get(sku);
 
         return result == null ? 0 : result;
+    }
+
+    @Override
+    public void setPrice(long sku, double price) {
+        SKU_PRICE.put(sku, price);
+    }
+
+    @Override
+    public double getPrice(long sku) {
+        Double result = SKU_PRICE.get(sku);
+
+        return result == null ? .0 : result;
     }
 
     @Override

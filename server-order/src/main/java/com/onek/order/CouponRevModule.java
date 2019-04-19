@@ -4,6 +4,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
+import com.onek.calculate.entity.Ladoff;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entity.CouponPubLadderVO;
@@ -257,6 +258,36 @@ public class CouponRevModule {
                         endDate,"00:00:00",couponVO.getBrulecode(),
                 couponVO.getRulename(),couponVO.getGoods(),
                         ladderJson,couponVO.getGlbno(),0});
+    }
+
+
+
+
+    protected final Ladoff getLadoffable(Ladoff[] ladoffs, double price, int nums) {
+        double ladAmt;
+        int ladNum;
+        boolean able;
+
+        for (Ladoff ladoff : ladoffs) {
+            ladAmt = ladoff.getLadamt();
+            ladNum = ladoff.getLadnum();
+            able = true;
+            // 全为0则直接拿value
+            if (ladAmt > 0 && ladNum > 0) {
+                able = price >= ladAmt && nums >= ladNum;
+            } else if (ladAmt > 0) {
+                able = price >= ladAmt;
+            } else if (ladNum > 0) {
+                able = price >= ladNum;
+            }
+
+            if (able) {
+                return ladoff;
+            }
+
+        }
+
+        return null;
     }
 
 

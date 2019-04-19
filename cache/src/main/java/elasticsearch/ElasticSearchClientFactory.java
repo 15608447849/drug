@@ -17,6 +17,10 @@ public class ElasticSearchClientFactory  {
 	static String clusterName = null;
 	static Settings settings;
 
+	public static void init(){
+
+	}
+
 	static{
 		host = ElasticSearchConfig.ES_CONFIG.pro_host;
 		port = Integer.parseInt(ElasticSearchConfig.ES_CONFIG.pro_port);

@@ -17,6 +17,7 @@ public class QualFilter extends BaseFilter {
 
     public QualFilter(int compid) {
         this.compid = compid;
+        System.out.println("compid " + compid);
     }
 
     protected boolean isFilter(IDiscount activity) {

@@ -9,6 +9,7 @@ import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
+import com.onek.util.prod.ProduceClassUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -492,8 +493,8 @@ public class BackgroundProdModule {
 
             if (spuParser != null) {
                 bgProdVO.setClassNo(Long.parseLong(spuParser[0]));
+                bgProdVO.setClassName(ProduceClassUtil.getProdClassName(spuParser[0]));
                 bgProdVO.setForm(Integer.parseInt(spuParser[1]));
-                bgProdVO.setClassName(IceRemoteUtil.getProduceName(spuParser[0]));
             }
 
             try {

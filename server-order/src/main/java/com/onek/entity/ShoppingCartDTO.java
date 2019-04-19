@@ -12,6 +12,8 @@ public class ShoppingCartDTO {
     //商品SKU
     private long pdno;
 
+    private long conpno;
+
     private int pnum;
 
     private int compid;
@@ -40,6 +42,14 @@ public class ShoppingCartDTO {
 
     public long getPdno() {
         return pdno;
+    }
+
+    public long getConpno() {
+        return conpno;
+    }
+
+    public void setConpno(long conpno) {
+        this.conpno = conpno;
     }
 
     public void setPdno(long pdno) {

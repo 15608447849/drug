@@ -3,6 +3,7 @@ package com.onek.calculate.rule;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.entity.Gift;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.util.DiscountUtil;
 
 import java.util.List;
 
@@ -62,12 +63,12 @@ public final class RuleParser {
         switch (getCalStrategy()) {
             case 1:
                 times = meiMan(
-                        ladoff.getLadnum(), discount.getNumTotal(),
-                        ladoff.getLadamt(), discount.getCurrentPriceTotal());
+                        ladoff.getLadnum(), DiscountUtil.getNumTotal(discount.getProductList()),
+                        ladoff.getLadamt(), DiscountUtil.getCurrentPriceTotal(discount.getProductList()));
                 break;
             case 2:
-                times = jianMian(ladoff.getLadnum(), discount.getNumTotal(),
-                        ladoff.getLadamt(), discount.getCurrentPriceTotal());
+                times = jianMian(ladoff.getLadnum(), DiscountUtil.getNumTotal(discount.getProductList()),
+                        ladoff.getLadamt(), DiscountUtil.getCurrentPriceTotal(discount.getProductList()));
                 break;
             default:
                 break;

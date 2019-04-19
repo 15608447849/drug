@@ -1,11 +1,30 @@
 package com.onek.util.prod;
 
+import global.IceRemoteUtil;
 import util.StringUtils;
 
+import java.util.HashMap;
+import java.util.Map;
+
 public class ProduceClassUtil {
+    private static final Map<String, String> PROD_NAME_MAP = new HashMap<>();
+
     private static final String ZERO_STR = "0";
     private static final int MAX_LAYER = 3;
     private static final int LAYER_NUM = 2;
+
+    public static String getProdClassName(final String pclass) {
+        String result = PROD_NAME_MAP.get(pclass);
+
+        if (StringUtils.isEmpty(result)) {
+            result = IceRemoteUtil.getProduceName(pclass);
+
+            PROD_NAME_MAP.put(pclass, result);
+        }
+
+        return result;
+    }
+
     /**
      * 获取对应层级的码
      * @param pclass
