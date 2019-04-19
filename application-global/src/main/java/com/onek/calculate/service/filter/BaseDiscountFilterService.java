@@ -45,6 +45,8 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
                 } else {
                     result.get(index).setLimits(
                             product.getSKU(), activity.getLimits(product.getSKU()));
+                    result.get(index).setPrice(
+                            product.getSKU(), activity.getPrice(product.getSKU()));
                     result.get(index).addProduct(product);
                 }
 

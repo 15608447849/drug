@@ -24,6 +24,9 @@ public interface IDiscount {
     void setLimits(long sku, int limits);
     int getLimits(long sku);
 
+    void setPrice(long sku, double price);
+    double getPrice(long sku);
+
     String getStartTime();
     String getEndTime();
 
