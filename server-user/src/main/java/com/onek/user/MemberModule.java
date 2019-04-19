@@ -6,18 +6,16 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.entity.MemberVO;
-import constant.DSMConst;
-import dao.BaseDAO;
-import util.GsonUtils;
+import com.onek.user.service.MemberImpl;
+import redis.IRedisPartCache;
+import redis.proxy.CacheProxyInstance;
 
 import java.util.List;
 
 public class MemberModule {
 
-    private static final BaseDAO baseDao = BaseDAO.getBaseDAO();
+     private static IRedisPartCache memProxy =(IRedisPartCache) CacheProxyInstance.createPartInstance(new MemberImpl());
 
-    private static final String GET_SQL = "select accupoints,balpoints from {{?" + DSMConst.TD_MEMBER + "}} where compid = ?";
-    private static final String UPDATE_SQL = "update {{?" + DSMConst.TD_MEMBER + "}} set accupoints = ?, balpoints = ? where compid = ?";
 
     @UserPermission(ignore = true)
     public Result addPoint(AppContext appContext) {
@@ -26,11 +24,16 @@ public class MemberModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int compid = jsonObject.get("compid").getAsInt();
         int point = jsonObject.get("point").getAsInt();
-        List<Object[]> list = baseDao.queryNative(GET_SQL, new Object[]{ compid});
-        if(list != null && list.size() > 0){
-            int accupoints = Integer.parseInt(list.get(0)[0].toString());
-            int balpoints = Integer.parseInt(list.get(0)[1].toString());
-            baseDao.updateNative(UPDATE_SQL, new Object[]{ accupoints+ point, balpoints + point, compid});
+        MemberVO memberVO = (MemberVO) memProxy.getId(compid);
+        if(memberVO != null){
+            int accupoints = memberVO.getAccupoints();
+            int balpoints = memberVO.getBalpoints();
+
+            MemberVO updateMemberVO = new MemberVO();
+            updateMemberVO.setCompid(compid);
+            updateMemberVO.setAccupoints(accupoints+ point);
+            updateMemberVO.setBalpoints(balpoints + point);
+            memProxy.update(compid, updateMemberVO);
         }
 
         return new Result().success(null);
@@ -43,11 +46,16 @@ public class MemberModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int compid = jsonObject.get("compid").getAsInt();
         int point = jsonObject.get("point").getAsInt();
-        List<Object[]> list = baseDao.queryNative(GET_SQL, new Object[]{ compid});
-        if(list != null && list.size() > 0){
-            int accupoints = Integer.parseInt(list.get(0)[0].toString());
-            int balpoints = Integer.parseInt(list.get(0)[1].toString());
-            baseDao.updateNative(UPDATE_SQL, new Object[]{ accupoints, balpoints - point, compid});
+        MemberVO memberVO = (MemberVO) memProxy.getId(compid);
+        if(memberVO != null){
+            int accupoints = memberVO.getAccupoints();
+            int balpoints = memberVO.getBalpoints();
+
+            MemberVO updateMemberVO = new MemberVO();
+            updateMemberVO.setCompid(compid);
+            updateMemberVO.setAccupoints(accupoints);
+            updateMemberVO.setBalpoints(balpoints - point);
+            memProxy.update(compid, updateMemberVO);
         }
 
         return new Result().success(null);
