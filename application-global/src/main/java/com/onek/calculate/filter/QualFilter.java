@@ -3,6 +3,7 @@ package com.onek.calculate.filter;
 
 import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.util.member.MemberStore;
 
 /**
  * 质资过滤器。用以过滤用户资质。
@@ -17,7 +18,6 @@ public class QualFilter extends BaseFilter {
 
     public QualFilter(int compid) {
         this.compid = compid;
-        System.out.println("compid " + compid);
     }
 
     protected boolean isFilter(IDiscount activity) {
@@ -30,7 +30,7 @@ public class QualFilter extends BaseFilter {
         boolean result = true;
         int qualCode = act.getQualcode();
         int qualValue = act.getQualvalue();
-
+        long value;
         switch (qualCode) {
             case ALL:
                 result = false;
@@ -40,6 +40,8 @@ public class QualFilter extends BaseFilter {
                 break;
             case LV:
                 // TODO 根据用户获取等级
+                int lv = MemberStore.getLevelByCompid(this.compid);
+                result = lv < qualValue;
                 break;
             case AREA:
                 // TODO 根据用户获取区域

@@ -1,6 +1,5 @@
 package com.onek.calculate;
 
-import com.alibaba.fastjson.JSONObject;
 import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
@@ -44,8 +43,6 @@ public class ActivityFilterService extends BaseDiscountFilterService {
             return new ArrayList<>();
         }
 
-        System.out.println("=================================== " + sku);
-
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(GET_ACTIVITIES_BY_SKU,
                 sku, pclass);
 
@@ -61,10 +58,9 @@ public class ActivityFilterService extends BaseDiscountFilterService {
             a = (Activity) discount;
             discount.setLimits(sku, a.getLimitnum());
             a.setActPrice(MathUtil.exactDiv(a.getActPrice(), 100).doubleValue());
-            discount.setPrice(sku, a.getActPrice());
+            discount.setActionPrice(sku, a.getActPrice());
         }
 
-        System.out.println("=================================== " + JSONObject.toJSONString(returnResult));
         return returnResult;
     }
 
