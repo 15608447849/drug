@@ -152,16 +152,7 @@ public class PayModule {
             result = failOpt(orderno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
 
-        JSONObject jsonObject = new JSONObject();
-        JSONObject body = new JSONObject();
-        body.put("orderNo", orderno);
-        body.put("tradeStatus", tradeStatus);
-        body.put("money", money);
-        body.put("compid", compid);
-        body.put("tradeDate", tradeDate);
-        jsonObject.put("event", MessageEvent.PAY_CALLBACK.getState());
-        jsonObject.put("body", body);
-        IceRemoteUtil.sendMessageToClient(compid, jsonObject.toJSONString());
+        new SendMsgThread(orderno, tradeStatus ,money, compid, tradeDate).start();
 
         if(result){
             return new Result().success(null);
@@ -289,6 +280,36 @@ public class PayModule {
         return !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
     }
 
+    class SendMsgThread extends Thread{
+        private String orderno;
+        private String tradeStatus;
+        private double money;
+        private int compid;
+        private String tradeDate;
+
+        public SendMsgThread(String orderno, String tradeStatus, double money, int compid, String tradeDate){
+            this.orderno = orderno;
+            this.tradeStatus = tradeStatus;
+            this.money = money;
+            this.compid = compid;
+            this.tradeDate = tradeDate;
+        }
+
+        @Override
+        public void run() {
+            JSONObject jsonObject = new JSONObject();
+            JSONObject body = new JSONObject();
+            body.put("orderNo", orderno);
+            body.put("tradeStatus", tradeStatus);
+            body.put("money", money);
+            body.put("compid", compid);
+            body.put("tradeDate", tradeDate);
+            jsonObject.put("event", MessageEvent.PAY_CALLBACK.getState());
+            jsonObject.put("body", body);
+            IceRemoteUtil.sendMessageToClient(compid, jsonObject.toJSONString());
+
+        }
+    }
 
     public static int getOrderServerNo(int compid){
         return compid /  GLOBALConst._DMNUM % GLOBALConst._SMALLINTMAX;

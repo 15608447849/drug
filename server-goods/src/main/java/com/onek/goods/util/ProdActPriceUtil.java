@@ -167,7 +167,7 @@ public class ProdActPriceUtil {
         product1.setSku(sku);
         products.add(product1);
 
-        double actprize = 0D;
+        double actPrize = 0D;
         List<IDiscount> discounts = new ActivityFilterService(null).getCurrentActivities(products);
         new ActivityCalculateService().calculate(discounts);
         for(IDiscount discount : discounts){
@@ -175,7 +175,7 @@ public class ProdActPriceUtil {
                 List<IProduct> discountProduct = discount.getProductList();
                 for(IProduct product : discountProduct){
                     if(sku == product.getSKU()){
-                        actprize = product.getCurrentPrice();
+                        actPrize = product.getCurrentPrice();
                     }
                 }
 
@@ -185,7 +185,7 @@ public class ProdActPriceUtil {
         ProdPriceEntity entity = new ProdPriceEntity();
         entity.setSku(sku);
         entity.setVatp(vatp);
-        entity.setActprice(actprize);
+        entity.setActprice(actPrize);
         return entity;
     }
 
@@ -236,9 +236,9 @@ public class ProdActPriceUtil {
         product1.setSku(sku);
         products.add(product1);
 
-        double actprize = 0D;
-        double minprize = 0D;
-        double maxprize = 0D;
+        double actPrize = 0D;
+        double minPrize = 0D;
+        double maxPrize = 0D;
         List<IDiscount> discounts = new ActivityFilterService(null).getCurrentActivities(products);
         new ActivityCalculateService().calculate(discounts);
         List<Long> actList = new ArrayList<>();
@@ -249,12 +249,12 @@ public class ProdActPriceUtil {
             List<IProduct> discountProduct = discount.getProductList();
             for(IProduct product : discountProduct){
                 if(sku == product.getSKU()){
-                    actprize = product.getCurrentPrice();
-                    if(minprize <= actprize || minprize == 0){
-                        minprize = actprize;
+                    actPrize = product.getCurrentPrice();
+                    if(minPrize <= actPrize || minPrize == 0){
+                        minPrize = actPrize;
                     }
-                    if(maxprize >= actprize || maxprize == 0){
-                        maxprize = actprize;
+                    if(maxPrize >= actPrize || maxPrize == 0){
+                        maxPrize = actPrize;
                     }
                 }
             }
@@ -264,9 +264,9 @@ public class ProdActPriceUtil {
         ProdPriceEntity entity = new ProdPriceEntity();
         entity.setSku(sku);
         entity.setVatp(vatp);
-        entity.setActprice(actprize);
-        entity.setMinactprize(minprize);
-        entity.setMaxactprize(maxprize);
+        entity.setActprice(actPrize);
+        entity.setMinactprize(minPrize);
+        entity.setMaxactprize(maxPrize);
         if(actList.size() == 1){
             entity.setActcode(actList.get(0));
         }
