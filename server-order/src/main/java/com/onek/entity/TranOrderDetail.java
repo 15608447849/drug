@@ -17,7 +17,7 @@ public class TranOrderDetail {
 
     private int coupamt;//使用券额
     private int distamt;//优惠金额
-    private int rvaddno;//收货地址码
+    private long rvaddno;//收货地址码
     private String shipdate;//发货日期
     private String shiptime;//发货时间
 
@@ -158,11 +158,11 @@ public class TranOrderDetail {
         this.distamt = distamt;
     }
 
-    public int getRvaddno() {
+    public long getRvaddno() {
         return rvaddno;
     }
 
-    public void setRvaddno(int rvaddno) {
+    public void setRvaddno(long rvaddno) {
         this.rvaddno = rvaddno;
     }
 
