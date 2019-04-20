@@ -77,7 +77,7 @@ public class BaseDAO {
 	}
 
 	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
-	private AbstractJdbcSessionMgr getSessionMgr(int sharding, final int table){
+	protected AbstractJdbcSessionMgr getSessionMgr(int sharding, final int table){
 		/**公共库只有一个连接,是不需要切分服务器与库及表的。公共库服务器索引是所有数据源的最后一个，库的索引值固定为0*/
 		int dbs = master.get();
 		int db = 0;
