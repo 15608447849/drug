@@ -13,21 +13,18 @@ public class CancelService {
     private final static CancelService CANCEL_SERVICE = new CancelService();
     private volatile DelayQueue<CancelDelayed> delayQueue;
     private static volatile CancelHandler cancelHandler;
-    private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+    private static final Executor EXECUTOR = Executors.newFixedThreadPool(10);
 
     private void addRedisDataInQueue() {
-        EXECUTOR.execute(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    List<CancelDelayed> cancelDelayeds = getCancelDelayedList();
+        EXECUTOR.execute(() -> {
+            try {
+                List<CancelDelayed> cancelDelayeds = getCancelDelayedList();
 
-                    if (!cancelDelayeds.isEmpty()) {
-                        CancelService.this.delayQueue.addAll(cancelDelayeds);
-                    }
-                } catch (Exception e) {
-                    e.printStackTrace();
+                if (!cancelDelayeds.isEmpty()) {
+                    CancelService.this.delayQueue.addAll(cancelDelayeds);
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
