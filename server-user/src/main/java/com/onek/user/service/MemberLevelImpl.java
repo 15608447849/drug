@@ -2,6 +2,7 @@ package com.onek.user.service;
 
 import com.onek.user.entity.ConsigneeVO;
 import com.onek.user.entity.MemberLevelVO;
+import com.onek.util.RedisGlobalKeys;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.IRedisCache;
@@ -15,7 +16,7 @@ public class MemberLevelImpl implements IRedisCache {
 
     @Override
     public String getPrefix() {
-        return "memberlevel";
+        return RedisGlobalKeys.MEMBER_LEVEL_PREFIX;
     }
 
     @Override

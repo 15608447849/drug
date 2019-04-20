@@ -1,6 +1,7 @@
 package com.onek.user.service;
 
 import com.onek.user.entity.ConsigneeVO;
+import com.onek.util.RedisGlobalKeys;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.IRedisCache;
@@ -20,7 +21,7 @@ public class MyConsigneeImpl implements IRedisCache {
 
     @Override
     public String getPrefix() {
-        return "consignee";
+        return RedisGlobalKeys.CONSIGNEE_PREFIX;
     }
 
     @Override

@@ -20,6 +20,7 @@ import com.onek.goods.service.PromTimeService;
 import com.onek.goods.util.ProdActPriceUtil;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.dict.DictStore;
+import com.onek.util.fs.FileServerUtils;
 import com.onek.util.prod.ProdPriceEntity;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
@@ -30,6 +31,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
+import util.BeanMapUtils;
 import util.NumUtil;
 import util.StringUtils;
 import util.TimeUtils;
@@ -43,7 +45,7 @@ import java.util.*;
  * @version 1.0
  * @since
  */
-@SuppressWarnings("unchecked")
+@SuppressWarnings({"unchecked"})
 public class ProdModule {
 
     private static IRedisCache mallFloorProxy = (IRedisCache) CacheProxyInstance.createInstance(new MallFloorImpl());
@@ -103,7 +105,7 @@ public class ProdModule {
         Set<Integer> result = new HashSet<>();
         NumUtil.perComAdd(256, bb, result);
 
-        List<ProdVO> newProdList = getFilterProds(result, 1);
+        List<ProdVO> newProdList = getFilterProds(result, 2);
 
         List<ProdVO> filterProdList = loadProd(newProdList, 256);
 
@@ -134,7 +136,7 @@ public class ProdModule {
         Set<Integer> result = new HashSet<>();
         NumUtil.perComAdd(128, bb1, result);
 
-        List<ProdVO> hotProdList = getFilterProds(result, 2);
+        List<ProdVO> hotProdList = getFilterProds(result, 1);
         List<ProdVO> filterProdList = loadProd(hotProdList, 128);
 
         return new Result().success(filterProdList);
@@ -339,13 +341,14 @@ public class ProdModule {
         String startDate = getEffectiveTimeByActCode.getSdate(), endDate = getEffectiveTimeByActCode.getEdate();
 
         JSONArray array = new JSONArray();
-        for (String[] objects1 : times) {
-            String s = objects1[0], d = objects1[1];
-            times.add(new String[]{s, d});
-            JSONObject time = new JSONObject();
-            time.put("sdate", s);
-            time.put("edate", d);
-            array.add(time);
+        if(times != null && times.size() > 0){
+            for (String[] objects1 : times) {
+                String s = objects1[0], d = objects1[1];
+                JSONObject time = new JSONObject();
+                time.put("sdate", s);
+                time.put("edate", d);
+                array.add(time);
+            }
         }
 
         if (skuList.size() > 0) {
@@ -394,19 +397,22 @@ public class ProdModule {
 
         JSONArray ladoffArray = new JSONArray();
         int minOff = getMinOff(actCode, ladoffArray);
-        List<String[]> times = timeService.getTimesByActcode(actCodeList.get(0));
+        List<String[]> times = timeService.getTimesByActcode(actCode);
 
         GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
         String startDate = getEffectiveTimeByActCode.getSdate();
         String endDate = getEffectiveTimeByActCode.getEdate();
+
         JSONArray array = new JSONArray();
-        for (String[] objects1 : times) {
-            String s = objects1[0], d = objects1[1];
-            times.add(new String[]{s, d});
-            JSONObject time = new JSONObject();
-            time.put("sdate", s);
-            time.put("edate", d);
-            array.add(time);
+
+        if(times != null && times.size() > 0){
+            for (String[] objects1 : times) {
+                String s = objects1[0], d = objects1[1];
+                JSONObject time = new JSONObject();
+                time.put("sdate", s);
+                time.put("edate", d);
+                array.add(time);
+            }
         }
 
         if (skuList.size() > 0) {
@@ -654,7 +660,25 @@ public class ProdModule {
             return;
         }
         for (SearchHit searchHit : response.getHits()) {
-            convertSearchData(prodList, searchHit);
+            ProdVO prodVO = new ProdVO();
+            Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+
+            HashMap detail = (HashMap) sourceMap.get("detail");
+            assembleObjectFromEs(prodVO, sourceMap, detail);
+
+            prodList.add(prodVO);
+            prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
+            int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
+            prodVO.setRulestatus(ruleStatus);
+            prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+            prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+            prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+            prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
+            try{
+                DictStore.translate(prodVO);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
         }
     }
 

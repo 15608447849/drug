@@ -1,5 +1,6 @@
 package com.onek.util.dict;
 
+import com.onek.util.RedisGlobalKeys;
 import global.IceRemoteUtil;
 import redis.IRedisCache;
 
@@ -10,7 +11,7 @@ public class DictUtil implements IRedisCache {
 
     @Override
     public String getPrefix() {
-        return "dict_";
+        return RedisGlobalKeys.DICT_PREFIX;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package com.onek.user.service;
 
+import com.onek.util.RedisGlobalKeys;
 import com.onek.util.member.MemberEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -16,7 +17,7 @@ public class MemberImpl implements IRedisPartCache {
 
     @Override
     public String getPrefix() {
-        return "member";
+        return RedisGlobalKeys.MEMBER_PREFIX;
     }
 
     @Override

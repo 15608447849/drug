@@ -6,6 +6,7 @@ import com.onek.calculate.entity.Product;
 import com.onek.goods.calculate.ActivityCalculateService;
 import com.onek.goods.calculate.ActivityFilterService;
 import com.onek.goods.service.PromTimeService;
+import com.onek.util.RedisGlobalKeys;
 import com.onek.util.prod.ProdPriceEntity;
 import global.IceRemoteUtil;
 import redis.provide.RedisStringProvide;
@@ -17,7 +18,7 @@ import java.util.List;
 
 public class ProdActPriceUtil {
 
-    private static final String key = "_currprize_version";
+    public static String key = RedisGlobalKeys.ACTVERSION;
 
     private static transient HashMap<Long, Long> versionMap = new HashMap<>();
     private static HashMap<Long, Double> prizeMap = new HashMap<>();
@@ -149,6 +150,7 @@ public class ProdActPriceUtil {
         if(v > subVersion || subVersion == 0){
             List<String[]> times = timeService.getTimesByActcode(actcode);
             promTimeMap.put(actcode, times);
+            versionTimeMap.put(actcode, v);
         }
 
         return promTimeMap.get(actcode);
