@@ -86,6 +86,21 @@ public class RedisStockUtil {
     }
 
     /**
+     * 获取活动初始化库存
+     *
+     * @param sku
+     * @param actCode
+     * @return
+     */
+    public static int getActInitStock(long sku, long actCode) {
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode);
+        if (StringUtils.isEmpty(currentStock)) {
+            return 0;
+        }
+        return Integer.parseInt(currentStock);
+    }
+
+    /**
      * 扣减库存 0:当前库存不足没有扣减 1:扣减失败; 2:扣减成功
      *
      * @param sku
