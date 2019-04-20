@@ -93,6 +93,11 @@ public class BaseDAO {
 			db = BUSConst._MODNUM_EIGHT;
 		}
 
+        if((DSMConst.SEG_TABLE_RULE[table] & 4) > 0){
+            dbs = AppConfig.getDBSNum() - BUSConst._ONE;
+            db = 0;
+        }
+
 
 		/**返回对应的数据库连接池供用户使用*/
 		LogUtil.getDefaultLogger().debug("分片字段："+sharding);
@@ -105,7 +110,7 @@ public class BaseDAO {
 	protected AbstractJdbcSessionMgr getBackupSessionMgr(int sharding, final int table,boolean isLog){
 		/**公共库只有一个连接,是不需要切分服务器与库及表的。公共库服务器索引是所有数据源的最后一个，库的索引值固定为0*/
 		int dbs = master.get() == 0 ? 1 : 0;
-		int db = 0;
+        int db = 0;
 
 		// 按公司模型切分表
 		if ((DSMConst.SEG_TABLE_RULE[table] & 1) > 0) {
@@ -121,6 +126,15 @@ public class BaseDAO {
 		if(SHARDING_FLAG == 1 && (DSMConst.SEG_TABLE_RULE[table] & 1) == 0){
 			db = BUSConst._MODNUM_EIGHT;
 		}
+
+        if((DSMConst.SEG_TABLE_RULE[table] & 4) > 0){
+            dbs = AppConfig.getDBSNum() - BUSConst._ONE;
+            db = 0;
+            if(isLog){
+                dbs = master.get();
+                db = BUSConst._MODNUM_EIGHT -1;
+            }
+        }
 
 		/**返回对应的数据库连接池供用户使用*/
 		LogUtil.getDefaultLogger().debug("分片字段："+sharding);
@@ -165,11 +179,38 @@ public class BaseDAO {
 			}else{
 				strSql.append(tbSharding);
 			}
-
 		}
 		LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
 		return strSql.toString();
 	}
+
+
+    /**切分表实现,table：是要操作那个基本表，基本表就是没有切分前的表*/
+    private String getReplaceTableName(int table,int tbSharding)
+    {
+        //替换表
+        if(table == DSMConst.TD_TRAN_ORDER){
+            table = DSMConst.TD_BK_TRAN_ORDER;
+        }
+
+        if(table == DSMConst.TD_TRAN_GOODS){
+            table = DSMConst.TD_BK_TRAN_GOODS;
+        }
+
+        StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
+        //按公司模型切分表
+        if(tbSharding != 0){
+            strSql.append(DSMConst._UNDERLINE);
+            if(tbSharding == 0){
+                Calendar date = Calendar.getInstance();
+                strSql.append(date.get(Calendar.YEAR));
+            }else{
+                strSql.append(tbSharding);
+            }
+        }
+        LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
+        return strSql.toString();
+    }
 
 	/**
 	* @version 版本：1.0
@@ -234,6 +275,37 @@ public class BaseDAO {
 		return result;
 	}
 
+
+    /**
+     * @version 版本：1.0
+     * @parameter  输入参数：带固定格式"{{?d}}"的原生态查询SQL语句。
+     * @return  返回值：索引为0的返回值代表要使用的数据源id，索引为1的返回值代表是原生态查询SQL语句字符串，
+     */
+    protected String[] getNativeReplaceSQL(String nativeSQL,int tbSharding){
+        String[] result = new String[2];
+        //默认从第一个字符串开始查询指定的子字符串
+        int startIndex = 0;
+        //查询指定的子字符串终止的位置值
+        int endIndex = nativeSQL.lastIndexOf(SUFFIX_REGEX);
+
+        while (startIndex < endIndex) {
+            //查找原生态查询语句中第一个表对象固定格式的前缀所在的起始位置值。
+            startIndex = nativeSQL.indexOf(PREFIX_REGEX, startIndex);
+            //查找原生态查询语句中第一个表对象固定格式的后缀所在的起始位置值。
+            endIndex = nativeSQL.indexOf(SUFFIX_REGEX, startIndex + BUSConst._FOUR);
+            //指定第二次查找子字符串时的起始查找点的位置值
+            if(startIndex == endIndex) break;
+            //取得原生态查询语句中表对象在DSMConst.DB_TABLES常量里索引值，需要在表对象固定格式的前缀所在的起始位置值加上固定格式“{{?”三位长度。
+            result[0] = nativeSQL.substring(startIndex + BUSConst._THREE,endIndex);
+            int tableIndex = Integer.parseInt(result[0]);
+            //正则表达式
+            String regex = PREFIX_REGEX_SB.toString() + tableIndex + SUFFIX_REGEX_SB;
+            //取和数据库里真正的要查询的表名
+            nativeSQL = nativeSQL.replaceAll(regex,getReplaceTableName(tableIndex,tbSharding));
+        }
+        result[1] = nativeSQL;
+        return result;
+    }
 
 	/**
 	* @version 版本：1.0
@@ -409,6 +481,11 @@ public class BaseDAO {
 			baseDao.setManager(getBackupSessionMgr(0,Integer.parseInt(resultSQL[0]),false));
 			return baseDao.update(resultSQL[1], params);
 		}
+        if(synFlag == 2){
+            LogUtil.getDefaultLogger().debug("【Debug】Native LOG SQL：" + resultSQL[1]);
+            baseDao.setManager(getBackupSessionMgr(0,Integer.parseInt(resultSQL[0]),true));
+            return baseDao.update(resultSQL[1], params);
+        }
 		return 0;
 	}
 
@@ -429,13 +506,25 @@ public class BaseDAO {
 
 		//异步同步到备份库
 		Future<Object> future = null;
+        SynDbData synDbData = null;
 		if(SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))) {
-			SynDbData synDbData = new SynDbData(resultSQL, params, master.get(), 0);
+            synDbData = new SynDbData(resultSQL, params, master.get(), 0);
 			synDbData.setSharding(sharding);
 			synDbData.setTbSharding(tbSharding);
 			synDbData.setNativeSQL(new String[]{nativeSQL});
 			future = ASYN_THREAD.submit(synDbData);
 		}
+
+        //异步同步到订单运营后台
+        if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
+                || Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS){
+            synDbData = new SynDbData(resultSQL, params, master.get(), 6);
+            synDbData.setSharding(sharding);
+            synDbData.setTbSharding(tbSharding);
+            synDbData.setNativeSQL(new String[]{nativeSQL});
+            ASYN_THREAD.submit(synDbData);
+        }
+
 		JdbcBaseDao baseDao = null;
 		try {
 			baseDao = FacadeProxy.create(JdbcBaseDao.class);
@@ -472,6 +561,7 @@ public class BaseDAO {
 	 */
 	protected int updateNativeInCallSharding(int sharding,int tbSharding,String nativeSQL,int synFlag,final Object... params){
 		String[] resultSQL = getNativeSQL(nativeSQL,tbSharding);
+
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		if(synFlag == 0){
 			LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
@@ -490,6 +580,16 @@ public class BaseDAO {
 		}
 		return 0;
 	}
+
+    protected int updateNativeInCallBKSharding(int sharding,int tbSharding,String[] resultSQL,
+                                               final Object... params){
+        JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+        LogUtil.getDefaultLogger().debug("【Debug】Native BKSYN SQL：" + resultSQL[1]);
+        baseDao.setManager(getSessionMgr(sharding,DSMConst.TD_BK_TRAN_ORDER));
+        return baseDao.update(resultSQL[1], params);
+    }
+
+
 
 	/**
 	 * @version 版本：1.0
@@ -701,13 +801,24 @@ public class BaseDAO {
 		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(sharding,Integer.parseInt(resultSQL[0]));
 
 		//异步同步到备份库
+        SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),2);
+        synDbData.setNativeSQL(nativeSQL);
+        synDbData.setParams(params);
+        synDbData.setSharding(sharding);
+        synDbData.setTbSharding(tbSharding);
+        Future<Object> future = ASYN_THREAD.submit(synDbData);
 
-		SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),2);
-		synDbData.setNativeSQL(nativeSQL);
-		synDbData.setParams(params);
-		synDbData.setSharding(sharding);
-		synDbData.setTbSharding(tbSharding);
-		Future<Object> future = ASYN_THREAD.submit(synDbData);
+        //异步同步到订单运营后台
+        if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
+                || Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS){
+
+            synDbData = new SynDbData(resultSQL,null,master.get(),5);
+            synDbData.setNativeSQL(nativeSQL);
+            synDbData.setParams(params);
+            synDbData.setSharding(sharding);
+            synDbData.setTbSharding(tbSharding);
+            ASYN_THREAD.submit(synDbData);
+        }
 
 		try {
 			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
@@ -1382,4 +1493,5 @@ public class BaseDAO {
 		}
 		return result;
 	}
+
 }

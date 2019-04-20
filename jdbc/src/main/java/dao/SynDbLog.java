@@ -128,7 +128,7 @@ public class SynDbLog {
 
 
     public static boolean isSynBackDB(int tbidx){
-        if((DSMConst.SEG_TABLE_RULE[tbidx]  & 2) > 0){
+        if((DSMConst.SEG_TABLE_RULE[tbidx]  & (2+4)) > 0){
             return false;
         }
         return true;
