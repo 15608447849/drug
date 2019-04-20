@@ -89,7 +89,7 @@ public class BaseDAO {
 			db = sharding % BUSConst._DMNUM  % BUSConst._MODNUM_EIGHT;
 		}
 
-		if(DSMConst.SEG_TABLE_RULE[table] == 0 && SHARDING_FLAG == 1){
+		if(sharding == 0 && SHARDING_FLAG == 1){
 			db = BUSConst._MODNUM_EIGHT;
 		}
 
