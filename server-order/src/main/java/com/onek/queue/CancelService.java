@@ -9,11 +9,16 @@ import java.util.List;
 import java.util.concurrent.*;
 
 public class CancelService {
+    static {
+        EXECUTOR = Executors.newFixedThreadPool(10);
+    }
+
+    private static final Executor EXECUTOR;
     private static final String REDIS_HEAD = "_CANCEL_ORDERS";
     private final static CancelService CANCEL_SERVICE = new CancelService();
     private volatile DelayQueue<CancelDelayed> delayQueue;
     private static volatile CancelHandler cancelHandler;
-    private static final Executor EXECUTOR = Executors.newFixedThreadPool(10);
+
 
     private void addRedisDataInQueue() {
         EXECUTOR.execute(() -> {
