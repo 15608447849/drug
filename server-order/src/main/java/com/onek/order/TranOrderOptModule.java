@@ -49,14 +49,14 @@ public class TranOrderOptModule {
     //订单商品表新增
     private static final String INSERT_TRAN_GOODS = "insert into {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + "(unqid,orderno,compid,pdno,pdprice,distprice,payamt,"
-            + "coupamt,promtype,pkgno,pnum,asstatus,createdate,createtime,cstatus) "
+            + "coupamt,promtype,pkgno,pnum,asstatus,createdate,createtime,cstatus,actcode) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "?,0,CURRENT_DATE,CURRENT_TIME,0)";
+            + "?,0,CURRENT_DATE,CURRENT_TIME,0,?)";
 
     private static final String UPD_TRAN_GOODS = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set "
             + "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
-            + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME where cstatus&1=0 and "
+            + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME, actcode=? where cstatus&1=0 and "
             + " pdno=? and orderno=0";
 
     //是否要减商品总库存
@@ -70,6 +70,10 @@ public class TranOrderOptModule {
     //释放商品冻结库存
     private static final String UPD_GOODS_FSTORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "freezestore=freezestore-? where cstatus&1=0 and sku=? ";
+
+    //更新优惠券领取表
+    private static final String UPD_COUENT_SQL = "update {{?" + DSMConst.TD_PROM_COUENT + "}} set "
+            + "catstus=cstatus|64 where cstatus&1=0 and coupno=? ";
 
     // 确认发货
     private static final String UPDATE_DELIVERY =
@@ -160,6 +164,12 @@ public class TranOrderOptModule {
                 tranOrder.getPdamt(),tranOrder.getFreight(),tranOrder.getPayamt(),tranOrder.getCoupamt(),tranOrder.getDistamt(),
                 tranOrder.getRvaddno(),0,0});
 
+        if (coupon > 0) {
+            //使用优惠券
+            sqlList.add(UPD_COUENT_SQL);
+            params.add(new Object[]{coupon});
+        }
+
         if (placeType == 1) {
             getInsertSqlList(sqlList, params, tranOrderGoods, orderNo);
         } else {
@@ -232,6 +242,7 @@ public class TranOrderOptModule {
                 tranOrderGoods.setPdprice(iDiscount.getProductList().get(i).getOriginalPrice());
                 tranOrderGoods.setPayamt(iDiscount.getProductList().get(i).getCurrentPrice());
                 tranOrderGoods.setPromtype((int)iDiscount.getBRule());
+                tranOrderGoods.setActCode(iDiscount.getDiscountNo());
                 finalTranOrderGoods.add(tranOrderGoods);
             }
         }
@@ -338,7 +349,7 @@ public class TranOrderOptModule {
 //                    coupamt,promtype,pkgno,asstatus,createdate,createtime,cstatus
             params.add(new Object[]{GenIdUtil.getUnqId(), orderNo, tranOrderGoods.getCompid(),tranOrderGoods.getPdno(),
                     tranOrderGoods.getPdprice(),tranOrderGoods.getDistprice(), tranOrderGoods.getPayamt(),tranOrderGoods.getCoupamt(),
-                    tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno(), tranOrderGoods.getPnum()});
+                    tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno(), tranOrderGoods.getPnum(),tranOrderGoods.getActCode()});
         }
 
     }
@@ -360,7 +371,8 @@ public class TranOrderOptModule {
 //                    + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME where cstatus&1=0 and "
 //                    + " pdno=? and orderno=0";
             params.add(new Object[]{orderNo, tranOrderGoods.getPdprice(),tranOrderGoods.getDistprice(),tranOrderGoods.getPayamt(),
-                    tranOrderGoods.getCoupamt(),tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno(),tranOrderGoods.getPdno()});
+                    tranOrderGoods.getCoupamt(),tranOrderGoods.getPromtype(),tranOrderGoods.getPkgno(),tranOrderGoods.getPdno(),
+                    tranOrderGoods.getActCode()});
         }
     }
 
