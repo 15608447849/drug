@@ -518,7 +518,7 @@ public class BaseDAO {
         //异步同步到订单运营后台
         if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
                 || Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS){
-            synDbData = new SynDbData(resultSQL, params, master.get(), 6);
+            synDbData = new SynDbData(resultSQL, params, master.get(), 5);
             synDbData.setSharding(sharding);
             synDbData.setTbSharding(tbSharding);
             synDbData.setNativeSQL(new String[]{nativeSQL});
@@ -812,7 +812,7 @@ public class BaseDAO {
         if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
                 || Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS){
 
-            synDbData = new SynDbData(resultSQL,null,master.get(),5);
+            synDbData = new SynDbData(resultSQL,null,master.get(),6);
             synDbData.setNativeSQL(nativeSQL);
             synDbData.setParams(params);
             synDbData.setSharding(sharding);
