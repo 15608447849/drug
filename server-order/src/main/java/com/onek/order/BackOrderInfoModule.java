@@ -2,6 +2,7 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
@@ -10,7 +11,6 @@ import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
-import util.ArrayUtil;
 import util.MathUtil;
 import util.StringUtils;
 import util.TimeUtils;
@@ -53,15 +53,13 @@ public class BackOrderInfoModule {
             return new Result().fail("参数为空");
         }
 
-        int compid = appContext.getUserSession().compId;
+        int compid = Integer.parseInt(params[0]);
 
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
         page.pageSize = appContext.param.pageNumber;
 
         PageHolder pageHolder = new PageHolder(page);
-
-        params = ArrayUtil.unshift(params, String.valueOf(compid));
 
         TranOrder[] result = queryOrders(params, compid, pageHolder, page);
 
