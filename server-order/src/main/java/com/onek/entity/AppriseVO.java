@@ -18,6 +18,7 @@ public class AppriseVO {
     private int cstatus;
     private int compid;//企业码
     private long sku;//sku
+    private String compName;//企业名称
 
     public long getUnqid() {
         return unqid;
@@ -105,5 +106,13 @@ public class AppriseVO {
 
     public void setSku(long sku) {
         this.sku = sku;
+    }
+
+    public String getCompName() {
+        return compName;
+    }
+
+    public void setCompName(String compName) {
+        this.compName = compName;
     }
 }
