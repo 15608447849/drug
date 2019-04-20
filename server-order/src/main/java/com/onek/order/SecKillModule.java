@@ -38,7 +38,7 @@ import java.util.List;
 public class SecKillModule {
 
     private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
-            "{{?"+ DSMConst.TD_PROM_ACT +"}} a, {{?"+DSMConst.TD_PROM_ASSDRUG+"}} d " +
+            "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
             "and d.actcode = ? and d.gcode= ?" +
             "and a.sdate <= CURRENT_DATE and CURRENT_DATE<= a.edate ";
@@ -93,23 +93,28 @@ public class SecKillModule {
         long unqid = jsonObject.get("unqid").getAsLong();
         int stock = jsonObject.get("stock").getAsInt();
 
-        String key = RedisUtil.getStringProvide().get(RedisGlobalKeys.SECKILL_TOKEN_PREFIX + compid);
-        if(StringUtils.isEmpty(key)){
-            return new Result().fail("非法进入页面!");
+        if (actno <= 0 || compid <= 0 || stock <= 0) {
+            return new Result().fail("非法参数!");
         }
-        if (!accessLimitService.tryAcquireSeckill()) {
+        if (!accessLimitService.tryAcquireSecKill()) {
             return new Result().fail("当前秒杀人数过多!", null);
         }
+
+        String key = RedisUtil.getStringProvide().get(RedisGlobalKeys.SECKILL_TOKEN_PREFIX + compid);
+
+        if (StringUtils.isEmpty(key)) {
+            return new Result().fail("非法进入页面!");
+        }
+
         if(unqid != Long.parseLong(key)){
             return new Result().fail("请勿重复提交!", null);
         }
-        List<String> list = RedisUtil.getListProvide().getAllElements(RedisStockUtil.SECKILLPREFIX+sku);
-        for(String val : list){
-            if(val.contains(compid+"")){
+        List<String> list = RedisUtil.getListProvide().getAllElements(RedisGlobalKeys.SECKILLPREFIX + sku);
+        for (String val : list) {
+            if (val.contains(compid + "")) {
                 return new Result().fail("不要重复秒杀!");
             }
         }
-
 
         ShoppingCartVO shoppingCartVO = getCartSku(actno,sku+"");
 
@@ -122,11 +127,12 @@ public class SecKillModule {
             shoppingCartVO.setAmt(shoppingCartVO.getPdprice() * stock - shoppingCartVO.getAcamt());
         }
 
-        boolean isEnough = RedisStockUtil.deductionSecKillStock(sku, compid, stock);
-        if(!isEnough){
+        int currentStock = RedisStockUtil.getActStockBySkuAndActno(sku, actno);
+        if(currentStock <= 0 || (currentStock - stock) <= 0){
             return new Result().fail("库存不够!", null);
         }
 
+        RedisUtil.getListProvide().addEndElement(RedisGlobalKeys.SECKILLPREFIX + sku, compid + "|" + stock);
         RedisUtil.getStringProvide().delete(RedisGlobalKeys.SECKILL_TOKEN_PREFIX + compid);
 
         List<ShoppingCartVO> shoppingCartVOS = new ArrayList<>();
@@ -169,7 +175,6 @@ public class SecKillModule {
 
             }
         }
-
 
         return shoppingCartVO;
     }

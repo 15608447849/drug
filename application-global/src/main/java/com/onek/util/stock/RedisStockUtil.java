@@ -17,8 +17,11 @@ public class RedisStockUtil {
      * @return
      */
     public static int setStock(long sku, int initStock) {
-        String result = RedisUtil.getStringProvide().set(RedisGlobalKeys.STOCK_PREFIX + sku, String.valueOf(initStock));
-        return SUCCESS.equals(result) ? 1 : 0;
+        if(initStock > 0){
+            String result = RedisUtil.getStringProvide().set(RedisGlobalKeys.STOCK_PREFIX + sku, String.valueOf(initStock));
+            return SUCCESS.equals(result) ? 1 : 0;
+        }
+        return 1;
     }
 
     /**
@@ -48,7 +51,7 @@ public class RedisStockUtil {
         return r.intValue();
     }
 
-    public static boolean deductionSecKillStock(long sku, int compid, int stock, long actCode) {
+    public static boolean deductionActStock(long sku, int stock, long actCode) {
         String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
         if (Integer.parseInt(currentStock) <= 0) {
             return false;
@@ -62,7 +65,6 @@ public class RedisStockUtil {
             return false;
         }
         RedisUtil.getStringProvide().decrease(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
-        RedisUtil.getListProvide().addEndElement(RedisGlobalKeys.SECKILLPREFIX + sku, compid + "|" + stock);
         return true;
     }
 
@@ -121,7 +123,8 @@ public class RedisStockUtil {
      * @param stock
      * @return
      */
-    public static long addActStock(long sku, int actCode, int stock) {
+    public static long addActStock(long sku, long actCode, int stock) {
+        RedisUtil.getStringProvide().increase(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
         Long num = RedisUtil.getStringProvide().increase(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, stock);
         return num;
     }
@@ -133,7 +136,7 @@ public class RedisStockUtil {
      * @param stock
      * @return
      */
-    public static long deductionActStock(long sku, int actCode, int stock) {
+    public static long deductionActStock(long sku, long actCode, int stock) {
         String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
         if (Integer.parseInt(currentStock) <= 0) {
             return 0;

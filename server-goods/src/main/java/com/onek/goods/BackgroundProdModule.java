@@ -185,7 +185,7 @@ public class BackgroundProdModule {
             return new Result().fail("操作失败");
         }
 
-        RedisStockUtil.setActStock(bgProdVO.getSku(), bgProdVO.getStore());
+        RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
         BASE_DAO.updateNative(UPDATE_PROD_BASE,
                 MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue(),
                 MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue(),
@@ -459,7 +459,7 @@ public class BackgroundProdModule {
                     bgProdVO.getSpec()
             });
 
-            RedisStockUtil.setActStock(bgProdVO.getSku(), bgProdVO.getStore());
+            RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
             int esResult = ProdESUtil.addProdDocument(bgProdVO);
 
             if (esResult != 0) {

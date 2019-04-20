@@ -94,8 +94,12 @@ public class TranOrderOptModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int orderType = 0;//下单类型 0普通
+        long actcode = 0;
         if (jsonObject.has("orderType") && !jsonObject.get("orderType").isJsonNull()) {
             orderType = jsonObject.get("orderType").getAsInt();
+        }
+        if (jsonObject.has("actcode") && !jsonObject.get("actcode").isJsonNull()) {
+            actcode = jsonObject.get("actcode").getAsLong();
         }
         int placeType = jsonObject.get("placeType").getAsInt();//1、直接下单 2、购物车下单
         JsonObject orderObj = jsonObject.get("orderObj").getAsJsonObject();
@@ -129,6 +133,14 @@ public class TranOrderOptModule {
                 stockRecovery(goodsList);
                 LogUtil.getDefaultLogger().info("计算活动价格异常！");
                 return result.fail("下单失败");
+            }
+        }else if(orderType == 1){ // 秒杀
+            //库存判断
+            List<TranOrderGoods>  goodsList = secKillStockIsEnough(actcode, tranOrderGoods);
+            if (goodsList.size() != tranOrderGoods.size()) {
+                //库存不足处理
+                secKillStockRecovery(actcode, goodsList);
+                return result.fail("秒杀商品库存发生改变！");
             }
         }
         //数据库相关操作
@@ -225,6 +237,41 @@ public class TranOrderOptModule {
             goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
         }
         return tranOrderGoodsList;
+    }
+
+    /**
+     * @description 判断秒杀库存是否足够
+     * @params []
+     * @return boolean
+     * @exception
+     * @author jiangwenguang
+     * @time  2019/4/20 11:49
+     * @version 1.1.1
+     **/
+    private List<TranOrderGoods> secKillStockIsEnough(long actCode,List<TranOrderGoods> tranOrderGoodsList) {
+        List<TranOrderGoods> goodsList = new ArrayList<>();
+        for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
+            if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum(),actCode)) {
+                return goodsList;
+            }
+            goodsList.add(tranOrderGoods);
+        }
+        return goodsList;
+    }
+
+    /**
+     * @description 秒杀库存恢复
+     * @params [tranOrderGoodsList]
+     * @return boolean
+     * @exception
+     * @author jiangwenguang
+     * @time  2019/4/20 11:49
+     * @version 1.1.1
+     **/
+    private void secKillStockRecovery(long actCode,List<TranOrderGoods> goodsList) {
+        for (TranOrderGoods aGoodsList : goodsList) {
+            RedisStockUtil.addActStock(aGoodsList.getPdno(), actCode, aGoodsList.getPnum());
+        }
     }
 
     /**

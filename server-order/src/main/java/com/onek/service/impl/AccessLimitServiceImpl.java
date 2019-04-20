@@ -8,10 +8,10 @@ public class AccessLimitServiceImpl implements AccessLimitService {
     /**
      * 每秒钟只发出100个令牌，拿到令牌的请求才可以进入秒杀过程
      */
-    private RateLimiter seckillRateLimiter = RateLimiter.create(100);
+    private RateLimiter secKillRateLimiter = RateLimiter.create(100);
 
     @Override
-    public boolean tryAcquireSeckill() {
-        return seckillRateLimiter.tryAcquire();
+    public boolean tryAcquireSecKill() {
+        return secKillRateLimiter.tryAcquire();
     }
 }
