@@ -44,18 +44,6 @@ public class CancelDelayed implements Delayed {
         return -1;
     }
 
-    public void setRemoveTime(long removeTime) {
-        this.removeTime = removeTime;
-    }
-
-    public void setOrderNo(String orderNo) {
-        this.orderNo = orderNo;
-    }
-
-    public void setCompid(int compid) {
-        this.compid = compid;
-    }
-
     public long getRemoveTime() {
         return removeTime;
     }
