@@ -15,9 +15,9 @@ public class CancelService {
 
     private static final Executor EXECUTOR;
     private static final String REDIS_HEAD = "_CANCEL_ORDERS";
-    private final static CancelService CANCEL_SERVICE = new CancelService();
-    private volatile DelayQueue<CancelDelayed> delayQueue;
     private static volatile CancelHandler cancelHandler;
+    private volatile DelayQueue<CancelDelayed> delayQueue;
+    private final static CancelService CANCEL_SERVICE = new CancelService();
 
 
     private void addRedisDataInQueue() {

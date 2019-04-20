@@ -86,7 +86,7 @@ public class OrderInfoModule {
         int compid = Integer.parseInt(params[0]);
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                compid, TimeUtils.getCurrentYear(), QUERY_ORDER_DETAIL, params[0]);
+                compid, TimeUtils.getCurrentYear(), QUERY_ORDER_DETAIL, params[1]);
 
         TranOrderDetail[] result = new TranOrderDetail[queryResult.size()];
 
