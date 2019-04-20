@@ -104,7 +104,7 @@ public class PayModule {
         if(StringUtils.isEmpty(orderno) || compid <=0){
             return new Result().fail("获取订单号或企业码失败!");
         }
-        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid});
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid, 0});
         if(list != null && list.size() > 0){
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{ "payamt","odate","otime"});
