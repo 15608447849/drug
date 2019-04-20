@@ -14,6 +14,7 @@ import com.onek.entitys.Result;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdCurrentActPriceObserver;
 import com.onek.propagation.prod.ProdDiscountObserver;
+import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
@@ -633,7 +634,6 @@ public class ActivityManageModule {
             default://商品关联
                 int code;
                 Map<Long, Integer> map = selectGoodsByAct(actCode);
-                System.out.println("-----------map----------- " + map.size());
                 if (map.size() == 1 && map.get(0) == 0) {
                     String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1,"
                             + "vcode=? where cstatus&1=0 and actcode=? and vcode=?";
@@ -642,7 +642,10 @@ public class ActivityManageModule {
                         return result.fail("操作失败");
                     }
                 }
-                relationGoods(jsonObject, actCode, ruleCode);
+                int a = relationGoods(jsonObject, actCode, ruleCode);
+                if (a == -1) {
+                    return result.success("活动正在进行中，无法修改！");
+                }
                 return result.success("关联商品成功");
         }
         return re ? result.success("关联商品成功") : result.fail("操作失败");
@@ -733,7 +736,7 @@ public class ActivityManageModule {
         return result > 0;
     }
 
-    private void relationGoods(JsonObject jsonObject, long actCode, int rulecode) {
+    private int relationGoods(JsonObject jsonObject, long actCode, int rulecode) {
         //关联活动商品
         JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
 //        JsonArray classArr = jsonObject.get("goodsArr").getAsJsonArray();
@@ -745,35 +748,41 @@ public class ActivityManageModule {
             for (int i = 0; i < goodsArr.size(); i++) {
                 GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
                 if (goodsVO != null) {
+                    int stock = RedisStockUtil.getActStockBySkuAndActno(goodsVO.getGcode(), actCode);
+                    int orgStock = RedisStockUtil.getActInitStock(goodsVO.getGcode(), actCode);
+                    if (stock != orgStock) {
+                        return -1;
+                    }
                     skuBuilder.append(goodsVO.getGcode()).append(",");
                 }
                 goodsVOS.add(goodsVO);
             }
             String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
             Map<Long,ActStock> goodsMap = getAllGoods(skuStr, actCode);
-            for (int i = 0; i < goodsVOS.size(); i++) {
+            for (GoodsVO goodsVO : goodsVOS) {
                 if (goodsMap != null) {
-                    if (goodsMap.containsKey(goodsVOS.get(i).getGcode())) {//数据库不存在该商品 新增 否则修改
-                        int newActStock = goodsVOS.get(i).getActstock();//新库存
-                        int oldActStock = goodsMap.get(goodsVOS.get(i).getGcode()).getActstock();//旧库存
+                    if (goodsMap.containsKey(goodsVO.getGcode())) {//数据库不存在该商品 新增 否则修改
+                        int newActStock = goodsVO.getActstock();//新库存
+                        int oldActStock = goodsMap.get(goodsVO.getGcode()).getActstock();//旧库存
                         if (newActStock >= oldActStock) {
 //                            goodsVOS.get(i).setActstock(newActStock);
                         } else {
 //                            goodsVOS.get(i).setActstock();
                         }
-                        goodsVOS.get(i).setVcode(goodsMap.get(goodsVOS.get(i).getGcode()).getVocode());
-                        updateGoodsVOS.add(goodsVOS.get(i));
+                        goodsVO.setVcode(goodsMap.get(goodsVO.getGcode()).getVocode());
+                        updateGoodsVOS.add(goodsVO);
                     } else {
-                        insertGoodsVOS.add(goodsVOS.get(i));
+                        insertGoodsVOS.add(goodsVO);
                     }
                 } else {
-                    insertGoodsVOS.add(goodsVOS.get(i));
+                    insertGoodsVOS.add(goodsVO);
                 }
             }
             relationAssDrug(insertGoodsVOS, updateGoodsVOS,actCode);
             //通知notice
             noticeGoodsUpd(2, goodsVOS, rulecode);
         }
+        return 1;
     }
 
     private Map<Long,ActStock> getAllGoods(String skuStr,long actcode) {

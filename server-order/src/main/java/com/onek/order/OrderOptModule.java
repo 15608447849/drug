@@ -1,5 +1,7 @@
 package com.onek.order;
 
+import cn.hy.otms.rpcproxy.comm.cstruct.Page;
+import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -66,10 +68,37 @@ public class OrderOptModule {
         return b ? result.success("评价成功!"): result.fail("评价失败!");
     }
 
-    
-    
-    public static void main(String[] args) {
+    /* *
+     * @description 查询商品评价
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/4/20 15:07
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result getGoodsApprise(AppContext appContext) {
+        Result result = new Result();
         LocalDateTime localDateTime = LocalDateTime.now();
-        System.out.println(localDateTime.getYear());
+        String json = appContext.param.json;
+        Page page = new Page();
+        page.pageIndex = appContext.param.pageIndex;
+        page.pageSize = appContext.param.pageNumber;
+        PageHolder pageHolder = new PageHolder(page);
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long sku = jsonObject.get("sku").getAsLong();
+        String selectSQL = "select unqid,orderno,level,descmatch,logisticssrv,"
+                + "content,createtdate,createtime,cstatus,compid from {{?"
+                + DSMConst.TD_TRAN_APPRAISE + "}} where cstatus&1=0 and sku=" + sku;
+        List<Object[]> queryResult = baseDao.queryNativeSharding(0, localDateTime.getYear(),
+                pageHolder, page, selectSQL);
+        AppriseVO[] appriseVOS = new AppriseVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, appriseVOS, AppriseVO.class);
+        for (AppriseVO appriseVO : appriseVOS) {
+            appriseVO.setCompName("李世平-A门面");//暂无接口。。。。
+        }
+        return result.setQuery(appriseVOS, pageHolder);
     }
 }
