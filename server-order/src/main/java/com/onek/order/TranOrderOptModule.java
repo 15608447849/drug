@@ -63,7 +63,7 @@ public class TranOrderOptModule {
 
     //更新订单状态
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
-            + " where cstatus&1=0 and orderno=?";
+            + " where cstatus&1=0 and orderno=? and ostatus=?";
 
     //释放商品冻结库存
     private static final String UPD_GOODS_FSTORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
@@ -190,7 +190,7 @@ public class TranOrderOptModule {
      * @time  2019/4/17 15:50
      * @version 1.1.1
      **/
-    private List<TranOrderGoods> calculatePrice(List<TranOrderGoods> tranOrderGoodsList, TranOrder tranOrder,
+    private void calculatePrice(List<TranOrderGoods> tranOrderGoodsList, TranOrder tranOrder,
                                                 long coupon) {
         List<TranOrderGoods> finalTranOrderGoods = new ArrayList<>();//最终的商品详情
         List<Product> tempProds = new ArrayList<>();
@@ -236,7 +236,7 @@ public class TranOrderOptModule {
             goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
             goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
         }
-        return tranOrderGoodsList;
+//        return tranOrderGoodsList;
     }
 
     /**
@@ -389,7 +389,7 @@ public class TranOrderOptModule {
     public boolean cancelOrder(String orderNo, int cusno) {
         List<Object[]> params = new ArrayList<>();
         int year = Integer.parseInt("20" + orderNo.substring(0,2));
-        int res = baseDao.updateNativeSharding(cusno,year, UPD_ORDER_STATUS, -4, orderNo);
+        int res = baseDao.updateNativeSharding(cusno,year, UPD_ORDER_STATUS, -4, orderNo, 0);
         if (res > 0) {
             TranOrderGoods[] tranOrderGoods = getGoodsArr(orderNo, cusno);
             for (TranOrderGoods tranOrderGood : tranOrderGoods) {
