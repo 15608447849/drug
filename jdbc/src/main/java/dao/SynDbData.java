@@ -241,8 +241,8 @@ public class SynDbData implements Callable<Object> {
 
     public int[] updateTransNativeBk(){
         int[] result = new int[nativeSQL.length];
-        AbstractJdbcSessionMgr sessionMgr = baseDao.getBackupSessionMgr(0,
-                DSMConst.TD_BK_TRAN_ORDER,false);
+        AbstractJdbcSessionMgr sessionMgr = baseDao.getSessionMgr(0,
+                DSMConst.TD_BK_TRAN_ORDER);
         List<Object[]> bkParm = new ArrayList<>();
         List<String[]> bkResultSql = new ArrayList<>();
         for (int i = 0; i < nativeSQL.length; i++){
@@ -279,7 +279,7 @@ public class SynDbData implements Callable<Object> {
         JdbcBaseDao jdbcBaseDao = null;
         try {
             jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,DSMConst.TD_BK_TRAN_ORDER,false));
+            jdbcBaseDao.setManager(baseDao.getSessionMgr(0,DSMConst.TD_BK_TRAN_ORDER));
             result = jdbcBaseDao.update(resultSQL[1], param);
         } catch (DAOException e) {
             e.printStackTrace();

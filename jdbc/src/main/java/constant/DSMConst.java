@@ -62,8 +62,8 @@ public interface DSMConst extends UDAConst {
             {"td_tran_trans"}, //43 订单交易表
             {"td_tran_appraise"}, //44 订单评价表
             {"td_tran_payrec"}, //45 支付记录表
-            {"td_bk_tran_goods"}, //46 后台订单商品表
-            {"td_bk_tran_trans"}, //47 后台支付记录表
+            {"td_bk_tran_order"}, //46 后台订单表
+            {"td_bk_tran_goods"}, //47 后台订单商品表
 
     };
 
