@@ -65,7 +65,7 @@ public class BackgroundProdModule {
             + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
-                    + " ?, ?, ?, ?, ?, "
+                    + " ?, ?, ?, ?, "
                     + " CURRENT_DATE, CURRENT_TIME, ?, 256) ";
 
     private static final String QUERY_SPU_BASE =

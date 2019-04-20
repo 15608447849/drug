@@ -9,6 +9,7 @@ import com.onek.calculate.entity.Product;
 import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.util.CalculateUtil;
 import com.onek.util.stock.RedisStockUtil;
 import util.StringUtils;
 import util.TimeUtils;
@@ -18,6 +19,29 @@ import java.util.Date;
 import java.util.List;
 
 public class CalculateModule {
+    public Result getActivitiesBySKU(AppContext appContext) {
+        String[] arrays = appContext.param.arrays;
+
+        if (arrays == null || arrays.length == 0) {
+            return new Result().fail("参数为空");
+        }
+
+        if (!StringUtils.isBiggerZero(arrays[0])) {
+            return new Result().fail("参数错误");
+        }
+
+        long sku = Long.parseLong(arrays[0]);
+
+        List<Product> products = new ArrayList<>();
+        Product p = new Product();
+        p.setSku(sku);
+        products.add(p);
+
+        List<IDiscount> discounts
+                = CalculateUtil.getDiscount(appContext.getUserSession().compId, products);
+
+        return new Result().success(discounts);
+    }
 
     public Result getGoodsActInfo(AppContext appContext) {
         String[] arrays = appContext.param.arrays;
