@@ -25,7 +25,6 @@ public class ProdVO {
     private String prodedate;
 
     private int store;
-    private int activitystore;
     private int limits;
     private int sales;
     private int wholenum;
@@ -37,6 +36,7 @@ public class ProdVO {
     private int unit;
     private String unitName;
     private String imageUrl;
+    private int skuCstatus;;
 
     // 活动消息
     private boolean actprod;
@@ -48,7 +48,8 @@ public class ProdVO {
     private int buynum;
     private int actlimit;
     private double actprize;
-    private double surplusstock;
+    private int actinitstock;
+    private int surplusstock;
     private double minprize;
     private double maxprize;
     private long actcode;
@@ -189,14 +190,6 @@ public class ProdVO {
         this.store = store;
     }
 
-    public int getActivitystore() {
-        return activitystore;
-    }
-
-    public void setActivitystore(int activitystore) {
-        this.activitystore = activitystore;
-    }
-
     public int getLimits() {
         return limits;
     }
@@ -317,14 +310,6 @@ public class ProdVO {
         this.actprize = actprize;
     }
 
-    public double getSurplusstock() {
-        return surplusstock;
-    }
-
-    public void setSurplusstock(double surplusstock) {
-        this.surplusstock = surplusstock;
-    }
-
     public int getRulestatus() {
         return rulestatus;
     }
@@ -371,5 +356,29 @@ public class ProdVO {
 
     public void setActcode(long actcode) {
         this.actcode = actcode;
+    }
+
+    public int getSkuCstatus() {
+        return skuCstatus;
+    }
+
+    public void setSkuCstatus(int skuCstatus) {
+        this.skuCstatus = skuCstatus;
+    }
+
+    public int getActinitstock() {
+        return actinitstock;
+    }
+
+    public void setActinitstock(int actinitstock) {
+        this.actinitstock = actinitstock;
+    }
+
+    public void setSurplusstock(int surplusstock) {
+        this.surplusstock = surplusstock;
+    }
+
+    public int getSurplusstock() {
+        return surplusstock;
     }
 }

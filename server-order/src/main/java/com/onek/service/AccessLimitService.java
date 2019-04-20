@@ -8,5 +8,5 @@ public interface AccessLimitService {
      * 尝试获取令牌
      * @return
      */
-    boolean tryAcquireSeckill();
+    boolean tryAcquireSecKill();
 }

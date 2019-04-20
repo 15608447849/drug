@@ -4,6 +4,7 @@ import com.onek.calculate.util.DiscountUtil;
 import util.MathUtil;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 public class DiscountResult {
@@ -50,7 +51,7 @@ public class DiscountResult {
             result = result.add(BigDecimal.valueOf(product.getCurrentPrice()));
         }
 
-        return result.setScale(2).doubleValue();
+        return result.setScale(2, RoundingMode.HALF_UP).doubleValue();
     }
 
 

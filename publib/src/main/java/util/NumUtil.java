@@ -17,7 +17,7 @@ public class NumUtil {
      * @param result 得到结果
      * @return
      */
-    public static Set<Integer> arrangeAdd(int aa, List<Integer> bb, Set<Integer> result){
+    public static Set<Integer> perComAdd(int aa, List<Integer> bb, Set<Integer> result){
 
         if(bb.size()<=0){
             return result;
@@ -30,7 +30,7 @@ public class NumUtil {
                     cc.add(j);
                 }
             }
-            arrangeAdd(aa+i,cc, result);
+            perComAdd(aa+i,cc, result);
         }
         return result;
     }

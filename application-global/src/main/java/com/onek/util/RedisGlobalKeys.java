@@ -26,6 +26,34 @@ public class RedisGlobalKeys {
     // 秒杀
     public static final String SECKILL_TOKEN_PREFIX = "SECKILL_TOKEN";
 
+    // 库存前缀
+    public static final String STOCK_PREFIX = "STOCK";
+
+    // 库存活动前缀
+    public static final String ACTSTOCK_PREFIX = "ACTSTOCK";
+
+    // 库存活动前缀
+    public static final String ACTSTOCK_INIT_PREFIX = "ACTINITSTOCK";
+
+    // 秒杀前缀
+    public static final String SECKILLPREFIX = "SECKILL";
+
+    // 活动版本
+    public static final String ACTVERSION = "ACTVERSION";
+
+    // 会员前缀
+    public static final String MEMBER_PREFIX = "MEMBER";
+
+    // 会员等级前缀
+    public static final String MEMBER_LEVEL_PREFIX = "MEMBER_LEVEL";
+
+    // 收货人前缀
+    public static final String CONSIGNEE_PREFIX = "CONSIGNEE";
+
+    // 字典前缀
+    public static final String DICT_PREFIX = "DRUG_DICT";
+
+
     /**
      * 获取用户ID
      */

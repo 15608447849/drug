@@ -5,10 +5,10 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.global.area.AreaStore;
+import com.onek.global.produce.ProduceStore;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.area.AreaUtil;
 import com.onek.util.dict.DictStore;
-import com.onek.global.produce.ProduceStore;
 import com.onek.util.prod.ProdEntity;
 import util.GsonUtils;
 import util.StringUtils;
@@ -47,7 +47,24 @@ public class CommonModule {
             return new Result().fail("参数错误");
         }
 
-        return new Result().success(Long.parseLong(array[0]));
+        return new Result().success(AreaStore.getAreaByAreac(Long.parseLong(array[0])));
+    }
+
+    @UserPermission(ignore = true)
+    public Result getAreaName(AppContext appContext) {
+        Result r = getArea(appContext);
+
+        if (r.code != 200) {
+            return r;
+        }
+
+        if (r.data == null) {
+            return new Result().success("");
+        }
+
+        AreaEntity ae = (AreaEntity) r.data;
+
+        return new Result().success(ae.getArean());
     }
 
     private AreaEntity getArea(long areac) {

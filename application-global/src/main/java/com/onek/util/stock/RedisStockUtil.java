@@ -1,101 +1,175 @@
 package com.onek.util.stock;
 
+import com.onek.util.RedisGlobalKeys;
 import redis.util.RedisUtil;
 import util.StringUtils;
 
-import java.util.Random;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-
 public class RedisStockUtil {
 
-    public static final String PREFIX = "stock_";
-    public static final String ACT_PREFIX = "actstock_";
-    public static final String SECKILLPREFIX = "seckill_";
+    private static String SUCCESS = "OK";
+    private static String SEP = "|"; // 分隔符
 
-    public static void setStock(long sku, int initStock){
-        RedisUtil.getStringProvide().set(PREFIX+sku, String.valueOf(initStock));
+    /**
+     * 设置库存 1:设置成功 0:设置失败
+     *
+     * @param sku
+     * @param initStock
+     * @return
+     */
+    public static int setStock(long sku, int initStock) {
+        if(initStock > 0){
+            String result = RedisUtil.getStringProvide().set(RedisGlobalKeys.STOCK_PREFIX + sku, String.valueOf(initStock));
+            return SUCCESS.equals(result) ? 1 : 0;
+        }
+        return 1;
     }
 
-    public static void setActStock(long sku, int initStock){
-        RedisUtil.getStringProvide().set(ACT_PREFIX + sku, String.valueOf(initStock));
+    /**
+     * 设活动置库存 1:设置成功 0:设置失败
+     *
+     * @param sku
+     * @param actCode
+     * @param initStock
+     * @return
+     */
+    public static int setActStock(long sku, long actCode, int initStock) {
+        RedisUtil.getStringProvide().set(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, String.valueOf(initStock));
+        String result = RedisUtil.getStringProvide().set(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode, String.valueOf(initStock));
+        return SUCCESS.equals(result) ? 1 : 0;
     }
 
-    public static boolean deductionSecKillStock(long sku, int compid, int stock){
-        String currentStock = RedisUtil.getStringProvide().get(ACT_PREFIX + sku);
-        if(Integer.parseInt(currentStock) <= 0){
+
+    /**
+     * 清除活动库存 大于0代表成功; 0:代表失败
+     *
+     * @param sku
+     * @param actCode
+     * @return
+     */
+    public static int clearActStock(long sku, long actCode) {
+        Long r = RedisUtil.getStringProvide().delete(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
+        return r.intValue();
+    }
+
+    public static boolean deductionActStock(long sku, int stock, long actCode) {
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
+        if (Integer.parseInt(currentStock) <= 0) {
             return false;
         }
-        if((Integer.parseInt(currentStock) - stock) <= 0){
+        if ((Integer.parseInt(currentStock) - stock) <= 0) {
             return false;
         }
-        Long num = RedisUtil.getStringProvide().decrease(ACT_PREFIX + sku, stock);
-        if(num < 0){
-            RedisUtil.getStringProvide().increase(ACT_PREFIX + sku, stock);
+        Long num = RedisUtil.getStringProvide().decrease(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, stock);
+        if (num < 0) {
+            RedisUtil.getStringProvide().increase(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, stock);
             return false;
         }
-        RedisUtil.getStringProvide().decrease(PREFIX + sku, stock);
-        RedisUtil.getListProvide().addEndElement(SECKILLPREFIX + sku, compid + "|" + stock);
+        RedisUtil.getStringProvide().decrease(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
         return true;
     }
 
-    public static boolean deductionStock(long sku, int stock){
-        String currentStock = RedisUtil.getStringProvide().get(PREFIX+sku);
-        if(StringUtils.isEmpty(currentStock)){
-            return false;
+    public static int getStock(long sku) {
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.STOCK_PREFIX + sku);
+        if (StringUtils.isEmpty(currentStock)) {
+            return 0;
         }
-        if(Integer.parseInt(currentStock) <= 0){
-            return false;
-        }
-        if((Integer.parseInt(currentStock) - stock) <= 0){
-            return false;
-        }
-        Long num = RedisUtil.getStringProvide().decrease(PREFIX+sku, stock);
-        if(num < 0){
-            RedisUtil.getStringProvide().increase(PREFIX+sku, stock);
-            return false;
-        }
-        return true;
+        return Integer.parseInt(currentStock);
     }
 
-    public static long addStock(long sku, int stock){
-        Long num = RedisUtil.getStringProvide().increase(PREFIX+sku, stock);
+    public static int getActStockBySkuAndActno(long sku, long actCode) {
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
+        if (StringUtils.isEmpty(currentStock)) {
+            return 0;
+        }
+        return Integer.parseInt(currentStock);
+
+    }
+
+    /**
+     * 获取活动初始化库存
+     *
+     * @param sku
+     * @param actCode
+     * @return
+     */
+    public static int getActInitStock(long sku, long actCode) {
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode);
+        if (StringUtils.isEmpty(currentStock)) {
+            return 0;
+        }
+        return Integer.parseInt(currentStock);
+    }
+
+    /**
+     * 扣减库存 0:当前库存不足没有扣减 1:扣减失败; 2:扣减成功
+     *
+     * @param sku
+     * @param stock
+     * @return
+     */
+    public static int deductionStock(long sku, int stock) {
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.STOCK_PREFIX + sku);
+        if (StringUtils.isEmpty(currentStock)) {
+            return 0;
+        }
+        if (Integer.parseInt(currentStock) <= 0) {
+            return 0;
+        }
+        if ((Integer.parseInt(currentStock) - stock) <= 0) {
+            return 0;
+        }
+        Long num = RedisUtil.getStringProvide().decrease(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
+        if (num < 0) {
+            RedisUtil.getStringProvide().increase(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
+            return 1;
+        }
+        return 2;
+    }
+
+    /**
+     * 添加库存
+     *
+     * @param sku
+     * @param stock
+     * @return
+     */
+    public static long addStock(long sku, int stock) {
+        Long num = RedisUtil.getStringProvide().increase(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
         return num;
     }
 
-//    public static void main(String[] args) {
-//        System.out.println(System.currentTimeMillis());
-//        RedisStockUtil.setStock(11000000070101L, 100);
-//        ExecutorService executor = Executors.newFixedThreadPool(20);
-//        for (int i = 0; i < 1000; i++) {//设置1000个人来发起抢购
-//            executor.execute(new MyRunnable("user"+getRandomString(6)));
-//        }
-//        executor.shutdown();
-//    }
-//
-//    public static String getRandomString(int length) { //length是随机字符串长度
-//        String base = "abcdefghijklmnopqrstuvwxyz0123456789";
-//        Random random = new Random();
-//        StringBuffer sb = new StringBuffer();
-//        for (int i = 0; i < length; i++) {
-//            int number = random.nextInt(base.length());
-//            sb.append(base.charAt(number));
-//        }
-//        return sb.toString();
-//    }
-//
-//    static class MyRunnable implements  Runnable{
-//        String userinfo;
-//        public MyRunnable() {
-//        }
-//        public MyRunnable(String uinfo) {
-//            this.userinfo=uinfo;
-//        }
-//        public void run() {
-//            boolean flag = RedisStockUtil.deductionStock(11000000070101L, 2);
-//            System.out.println("userinfo:"+userinfo+";"+flag);
-//        }
-//    }
+    /**
+     * 添加库存
+     *
+     * @param sku
+     * @param stock
+     * @return
+     */
+    public static long addActStock(long sku, long actCode, int stock) {
+        RedisUtil.getStringProvide().increase(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
+        Long num = RedisUtil.getStringProvide().increase(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, stock);
+        return num;
+    }
+
+    /**
+     * 减少库存
+     *
+     * @param sku
+     * @param stock
+     * @return
+     */
+    public static long deductionActStock(long sku, long actCode, int stock) {
+        String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
+        if (Integer.parseInt(currentStock) <= 0) {
+            return 0;
+        }
+        if ((Integer.parseInt(currentStock) - stock) <= 0) {
+            return 0;
+        }
+        Long num = RedisUtil.getStringProvide().increase(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, stock);
+        return num;
+    }
+
 }
 
 

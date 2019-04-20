@@ -18,6 +18,24 @@ public class AreaUtil {
     };
 
     /**
+     * 判定c2是否为c1的所有子。
+     * @param c1
+     * @param c2
+     * @return
+     */
+    public static boolean isChildren(final long c1, final long c2) {
+        if (c1 == c2) {
+            return true;
+        }
+
+        if (getCodeByLayer(c1, 0) != getCodeByLayer(c2, 0)) {
+            return false;
+        }
+
+        return getLayer(c1) < getLayer(c2);
+    }
+
+    /**
      * 获取对应层级的码
      * @param areac
      * @param layer
@@ -95,5 +113,6 @@ public class AreaUtil {
 
         return getLayer(areac) == 0;
     }
+
 
 }

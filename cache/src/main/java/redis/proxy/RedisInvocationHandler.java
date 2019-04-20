@@ -38,7 +38,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
-		System.out.println("############ redis inocation invoke ###############");
+//		System.out.println("############ redis inocation invoke ###############");
         CacheInvoke cacheInvoke =method.getAnnotation(CacheInvoke.class);
         if(cacheInvoke == null) {
             return method.invoke(target, args);
@@ -52,7 +52,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 
 	private Object loadCacheObject(Method method, Object target,Object[] args) throws IllegalAccessException, InvocationTargetException {
 
-        System.out.println("############ redis loadCacheObject invoke ###############");
+//        System.out.println("############ redis loadCacheObject invoke ###############");
 		Class<?> clazz = null;
 		String type = null;
 
@@ -75,7 +75,7 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 
 		Object cacheObj = null;
 		String keyval = "";
-        System.out.println("#### loadCacheObject "+prefix+";"+keycolum);
+//        System.out.println("#### loadCacheObject "+prefix+";"+keycolum);
 		if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
 
             Object arg = args[0];

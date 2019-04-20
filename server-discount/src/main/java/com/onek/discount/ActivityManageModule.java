@@ -678,6 +678,8 @@ public class ActivityManageModule {
                     jsonObject.put("gcode", goodsVO.getGcode());
                     jsonObject.put("cstatus", "0");
                     jsonObject.put("rulecode", rulecode);
+                    jsonObject.put("actcode", goodsVO.getActcode());
+                    jsonObject.put("stock", goodsVO.getActstock());
                     proList.add(jsonObject.toJSONString());
                 }
             }
