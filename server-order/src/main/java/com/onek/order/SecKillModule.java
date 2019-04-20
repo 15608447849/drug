@@ -26,7 +26,6 @@ import util.NumUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -109,11 +108,9 @@ public class SecKillModule {
         if(unqid != Long.parseLong(key)){
             return new Result().fail("请勿重复提交!", null);
         }
-        List<String> list = RedisUtil.getListProvide().getAllElements(RedisGlobalKeys.SECKILLPREFIX + sku);
-        for (String val : list) {
-            if (val.contains(compid + "")) {
-                return new Result().fail("不要重复秒杀!");
-            }
+        boolean exist = RedisUtil.getSetProvide().existElement(RedisGlobalKeys.SECKILLPREFIX + sku, compid);
+        if(exist){
+            return new Result().fail("不要重复秒杀!");
         }
 
         ShoppingCartVO shoppingCartVO = getCartSku(actno,sku+"");
@@ -132,7 +129,7 @@ public class SecKillModule {
             return new Result().fail("库存不够!", null);
         }
 
-        RedisUtil.getListProvide().addEndElement(RedisGlobalKeys.SECKILLPREFIX + sku, compid + "|" + stock);
+        RedisUtil.getSetProvide().addElement(RedisGlobalKeys.SECKILLPREFIX + sku, compid);
         RedisUtil.getStringProvide().delete(RedisGlobalKeys.SECKILL_TOKEN_PREFIX + compid);
 
         List<ShoppingCartVO> shoppingCartVOS = new ArrayList<>();

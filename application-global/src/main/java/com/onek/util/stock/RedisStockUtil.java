@@ -85,23 +85,30 @@ public class RedisStockUtil {
 
     }
 
-    public static boolean deductionStock(long sku, int stock) {
+    /**
+     * 扣减库存 0:当前库存不足没有扣减 1:扣减失败; 2:扣减成功
+     *
+     * @param sku
+     * @param stock
+     * @return
+     */
+    public static int deductionStock(long sku, int stock) {
         String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.STOCK_PREFIX + sku);
         if (StringUtils.isEmpty(currentStock)) {
-            return false;
+            return 0;
         }
         if (Integer.parseInt(currentStock) <= 0) {
-            return false;
+            return 0;
         }
         if ((Integer.parseInt(currentStock) - stock) <= 0) {
-            return false;
+            return 0;
         }
         Long num = RedisUtil.getStringProvide().decrease(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
         if (num < 0) {
             RedisUtil.getStringProvide().increase(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
-            return false;
+            return 1;
         }
-        return true;
+        return 2;
     }
 
     /**

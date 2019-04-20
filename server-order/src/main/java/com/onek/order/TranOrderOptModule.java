@@ -286,7 +286,7 @@ public class TranOrderOptModule {
     private List<TranOrderGoods> stockIsEnough(List<TranOrderGoods> tranOrderGoodsList) {
         List<TranOrderGoods> goodsList = new ArrayList<>();
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
-            if (!RedisStockUtil.deductionStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum())) {
+            if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum()) != 2) {
                 return goodsList;
             }
             goodsList.add(tranOrderGoods);
