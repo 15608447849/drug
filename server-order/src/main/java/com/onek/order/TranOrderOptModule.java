@@ -20,7 +20,9 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
 import org.hyrdpf.util.LogUtil;
+import util.ArrayUtil;
 import util.ModelUtil;
+import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -73,8 +75,17 @@ public class TranOrderOptModule {
     private static final String UPD_COUENT_SQL = "update {{?" + DSMConst.TD_PROM_COUENT + "}} set "
             + "catstus=cstatus|64 where cstatus&1=0 and coupno=? ";
 
+    // 确认发货
+    private static final String UPDATE_DELIVERY =
+            " UPDATE {{?" + DSMConst.TD_TRAN_ORDER + "}} "
+                    + " SET ostatus = 2, shipdate = CURRENT_DATE, shiptime = CURRENT_TIME "
+                    + " WHERE cstatus&1 = 0 AND ostatus = 1 AND orderno = ? ";
 
-
+    // 确认收货
+    private static final String UPDATE_TAKE_DELIVERY =
+            " UPDATE {{?" + DSMConst.TD_TRAN_ORDER + "}} "
+                    + " SET ostatus = 3 "
+                    + " WHERE cstatus&1 = 0 AND ostatus = 2 AND orderno = ? ";
 
     /**
      * @description 下单接口
@@ -423,6 +434,54 @@ public class TranOrderOptModule {
                 "pdno", "pnum"
         });
         return tranOrderGoods;
+    }
+
+    /**
+     * 发货
+     * @param appContext
+     * @return
+     */
+
+    public Result delivery(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (ArrayUtil.isEmpty(params)) {
+            return new Result().fail("参数为空");
+        }
+
+        String orderNo = params[0];
+
+        if (!StringUtils.isBiggerZero(orderNo)) {
+            return new Result().fail("非法参数");
+        }
+
+        BaseDAO.getBaseDAO().updateNative(UPDATE_DELIVERY, orderNo);
+
+        return new Result().success("已发货");
+    }
+
+    /**
+     * 收货
+     * @param appContext
+     * @return
+     */
+
+    public Result takeDelivery(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (ArrayUtil.isEmpty(params)) {
+            return new Result().fail("参数为空");
+        }
+
+        String orderNo = params[0];
+
+        if (!StringUtils.isBiggerZero(orderNo)) {
+            return new Result().fail("非法参数");
+        }
+
+        BaseDAO.getBaseDAO().updateNative(UPDATE_TAKE_DELIVERY, orderNo);
+
+        return new Result().success("已确认收货");
     }
 
 //    public static void main(String[] args) {

@@ -1,8 +1,5 @@
 package com.onek.queue;
 
-import util.TimeUtils;
-
-import java.util.Date;
 import java.util.concurrent.Delayed;
 import java.util.concurrent.TimeUnit;
 
@@ -14,6 +11,12 @@ public class CancelDelayed implements Delayed {
 
     public CancelDelayed(String orderNo, int compid) {
         this.removeTime = System.currentTimeMillis() + DELAY_TIME;
+        this.orderNo = orderNo;
+        this.compid = compid;
+    }
+
+    public CancelDelayed(String orderNo, int compid, long removeTime) {
+        this.removeTime = removeTime;
         this.orderNo = orderNo;
         this.compid = compid;
     }
@@ -39,6 +42,18 @@ public class CancelDelayed implements Delayed {
         }
 
         return -1;
+    }
+
+    public void setRemoveTime(long removeTime) {
+        this.removeTime = removeTime;
+    }
+
+    public void setOrderNo(String orderNo) {
+        this.orderNo = orderNo;
+    }
+
+    public void setCompid(int compid) {
+        this.compid = compid;
     }
 
     public long getRemoveTime() {
