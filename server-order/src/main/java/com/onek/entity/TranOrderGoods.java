@@ -22,6 +22,7 @@ public class TranOrderGoods {
     private String createtime;//创建时间
     private int cstatus;
     private int pnum;//商品数量
+    private long actCode;//活动码
 
     private String pname;  // 商品名
     private String pspec; // 商品规格
@@ -169,5 +170,13 @@ public class TranOrderGoods {
 
     public void setManun(String manun) {
         this.manun = manun;
+    }
+
+    public long getActCode() {
+        return actCode;
+    }
+
+    public void setActCode(long actCode) {
+        this.actCode = actCode;
     }
 }
