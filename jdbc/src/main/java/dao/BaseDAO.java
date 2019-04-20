@@ -123,7 +123,7 @@ public class BaseDAO {
 			}
 		}
 
-		if(SHARDING_FLAG == 1 && (DSMConst.SEG_TABLE_RULE[table] & 1) == 0){
+		if(SHARDING_FLAG == 1 && sharding == 0){
 			db = BUSConst._MODNUM_EIGHT;
 		}
 
