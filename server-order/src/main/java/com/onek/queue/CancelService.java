@@ -6,38 +6,33 @@ import redis.util.RedisUtil;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.DelayQueue;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 
 public class CancelService {
     private static final String REDIS_HEAD = "_CANCEL_ORDERS";
-    private final static CancelService CANCEL_SERVICE;
+    private final static CancelService CANCEL_SERVICE = new CancelService();
     private volatile DelayQueue<CancelDelayed> delayQueue;
     private static volatile CancelHandler cancelHandler;
-    private static final Executor EXECUTOR = Executors.newFixedThreadPool(10);
+    private static final ThreadPoolExecutor EXECUTOR = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 
-    static {
-        CANCEL_SERVICE = new CancelService(getDelayQueue());
-    }
+    private void addRedisDataInQueue() {
+        EXECUTOR.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    List<CancelDelayed> cancelDelayeds = getCancelDelayedList();
 
-    private static DelayQueue<CancelDelayed> getDelayQueue() {
-        DelayQueue<CancelDelayed> delayQueue = new DelayQueue<>();
-
-        try {
-            List<CancelDelayed> cancelDelayeds = getCancelDelayedList();
-
-            if (!cancelDelayeds.isEmpty()) {
-                delayQueue.addAll(cancelDelayeds);
+                    if (!cancelDelayeds.isEmpty()) {
+                        CancelService.this.delayQueue.addAll(cancelDelayeds);
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-
-        return delayQueue;
+        });
     }
 
-    private static List<CancelDelayed> getCancelDelayedList() {
+    private List<CancelDelayed> getCancelDelayedList() {
         List<CancelDelayed> result = new ArrayList<>();
 
         List<String> allVals = RedisUtil.getHashProvide().getAllVals(REDIS_HEAD);
@@ -55,8 +50,10 @@ public class CancelService {
         return CANCEL_SERVICE;
     }
 
-    private CancelService(DelayQueue<CancelDelayed> delayQueue) {
-        this.delayQueue = delayQueue;
+    private CancelService() {
+        this.delayQueue = new DelayQueue<>();
+
+        addRedisDataInQueue();
 
         this.cancelHandler = new CancelHandler();
         this.cancelHandler.setDaemon(true);
@@ -87,6 +84,7 @@ public class CancelService {
 
     static class CancelHandler extends Thread {
         private TranOrderOptModule tranOrderOptModule = new TranOrderOptModule();
+
         @Override
         public void run() {
             while (true) {
@@ -96,8 +94,7 @@ public class CancelService {
                     if (cancelDelayed != null) {
                         // TODO 取消订单接口
                         boolean cancelResult =
-                                new TranOrderOptModule()
-                                    .cancelOrder(cancelDelayed.getOrderNo(), cancelDelayed.getCompid());
+                                this.tranOrderOptModule.cancelOrder(cancelDelayed.getOrderNo(), cancelDelayed.getCompid());
 
                         if (cancelResult) {
                             RedisUtil.getHashProvide().delByKey(REDIS_HEAD, cancelDelayed.getOrderNo());
