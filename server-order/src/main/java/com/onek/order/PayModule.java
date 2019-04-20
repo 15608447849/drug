@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
+import com.onek.consts.MessageEvent;
 import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderDetail;
@@ -150,6 +151,18 @@ public class PayModule {
             String time = TimeUtils.date_Hms_2String(date);
             result = failOpt(orderno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
+
+        JSONObject jsonObject = new JSONObject();
+        JSONObject body = new JSONObject();
+        body.put("orderNo", orderno);
+        body.put("tradeStatus", tradeStatus);
+        body.put("money", money);
+        body.put("compid", compid);
+        body.put("tradeDate", tradeDate);
+        jsonObject.put("event", MessageEvent.PAY_CALLBACK.getState());
+        jsonObject.put("body", body);
+        IceRemoteUtil.sendMessageToClient(compid, jsonObject.toJSONString());
+
         if(result){
             return new Result().success(null);
         }else{
