@@ -49,6 +49,11 @@ public class PayModule {
     private static final String UPD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "store=store-?, freezestore=freezestore-? where cstatus&1=0 and sku=? ";
 
+
+    //更新活动库存
+    private static final String UPD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
+            + "actstock=actstock-? where cstatus&1=0 and gcode=? and actcode=?";
+
     //订单交易表新增
     private static final String INSERT_TRAN_TRANS = "insert into {{?" + DSMConst.TD_TRAN_TRANS + "}} "
             + "(unqid,compid,orderno,payno,payprice,payway,paysource,paystatus,"
@@ -226,6 +231,7 @@ public class PayModule {
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
         List<Object[]> paramsOne = new ArrayList<>();
+        List<Object[]> paramsTwo = new ArrayList<>();
         sqlList.add(UPD_ORDER_STATUS);//更新订单状态
         params.add(new Object[]{1,1,tradeDate,tradeTime,orderno,0});
 
@@ -244,8 +250,11 @@ public class PayModule {
             TranOrderGoods[] tranOrderGoods = getGoodsArr(orderno, compid);
             for (TranOrderGoods tranOrderGood : tranOrderGoods) {
                 paramsOne.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPnum(), tranOrderGood.getPdno()});
+                paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(),tranOrderGood.getActCode()});
             }
             baseDao.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+            //更新活动库存
+            baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, tranOrderGoods.length);
         }
         return b;
     }
