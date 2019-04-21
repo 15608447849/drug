@@ -119,12 +119,12 @@ public class TranOrderOptModule {
         }
         tranOrder.setPdnum(pdnum);
 
-        OrderEvent orderEvent = new OrderEvent();
-        orderEvent.setPlaceType(placeType);
-        orderEvent.setCoupon(coupon);
-        orderEvent.setTranOrder(tranOrder);
-        orderEvent.setAllTranOrderGoods(tranOrderGoods);
-        System.out.println("-------------- coming............");
+//        OrderEvent orderEvent = new OrderEvent();
+//        orderEvent.setPlaceType(placeType);
+//        orderEvent.setCoupon(coupon);
+//        orderEvent.setTranOrder(tranOrder);
+//        orderEvent.setAllTranOrderGoods(tranOrderGoods);
+//        System.out.println("-------------- coming............");
 
 //        ExecutorService es1 = Executors.newFixedThreadPool(1);
 //        ExecutorService es2 = Executors.newFixedThreadPool(5);
@@ -148,7 +148,7 @@ public class TranOrderOptModule {
 //        disruptor.shutdown();
 //
 //        LogUtil.getDefaultLogger().info("result = " + orderEvent.getResult());
-        return orderEvent.getResult();
+        return new Result();
     }
 
 
