@@ -66,6 +66,16 @@ public class ShoppingCartVO {
 
     private boolean seckill = false;
 
+    private boolean oflag;
+
+    public boolean isOflag() {
+        return oflag;
+    }
+
+    public void setOflag(boolean oflag) {
+        this.oflag = oflag;
+    }
+
     public boolean isFreepost() {
         return freepost;
     }

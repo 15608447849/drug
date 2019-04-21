@@ -56,6 +56,16 @@ public class CouponPubVO {
 
     private String startdate;
 
+    private double offerAmt;
+
+    public double getOfferAmt() {
+        return offerAmt;
+    }
+
+    public void setOfferAmt(double offerAmt) {
+        this.offerAmt = offerAmt;
+    }
+
     public String getStartdate() {
         return startdate;
     }
