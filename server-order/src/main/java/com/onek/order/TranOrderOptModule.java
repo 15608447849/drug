@@ -27,6 +27,7 @@ import org.hyrdpf.util.LogUtil;
 import util.ArrayUtil;
 import util.ModelUtil;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -506,7 +507,6 @@ public class TranOrderOptModule {
      * @param appContext
      * @return
      */
-
     public Result delivery(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -514,15 +514,17 @@ public class TranOrderOptModule {
             return new Result().fail("参数为空");
         }
 
-        String orderNo = params[0];
+        int compid = Integer.parseInt(params[0]);
+        String orderNo = params[1];
 
-        if (!StringUtils.isBiggerZero(orderNo)) {
+        if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
         }
 
-        BaseDAO.getBaseDAO().updateNative(UPDATE_DELIVERY, orderNo);
+        int result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
+                UPDATE_DELIVERY, orderNo);
 
-        return new Result().success("已发货");
+        return result > 0 ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 
     /**
@@ -538,15 +540,17 @@ public class TranOrderOptModule {
             return new Result().fail("参数为空");
         }
 
-        String orderNo = params[0];
+        int compid = Integer.parseInt(params[0]);
+        String orderNo = params[1];
 
-        if (!StringUtils.isBiggerZero(orderNo)) {
+        if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
         }
 
-        BaseDAO.getBaseDAO().updateNative(UPDATE_TAKE_DELIVERY, orderNo);
+        int result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
+                UPDATE_TAKE_DELIVERY, orderNo);
 
-        return new Result().success("已确认收货");
+        return result > 0 ? new Result().success("已签收") : new Result().fail("操作失败");
     }
 
 //    public static void main(String[] args) {

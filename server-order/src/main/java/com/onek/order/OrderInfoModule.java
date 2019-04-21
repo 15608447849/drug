@@ -61,8 +61,8 @@ public class OrderInfoModule {
 
     private static final String QUERY_ORDER_DETAIL =
             " SELECT " + QUERY_TRAN_ORDER_PARAMS
-                    + ", " + QUERY_TRAN_APPRAISE_PARAMS
                     + ", " + QUERY_TRAN_TRANS_PARAMS
+                    + ", " + QUERY_TRAN_APPRAISE_PARAMS
             + " FROM " + FROM_ORDER
                     + " LEFT JOIN " + FROM_TRANS
                     + " ON trans.cstatus&1 = 0 "

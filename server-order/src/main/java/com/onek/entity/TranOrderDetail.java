@@ -4,7 +4,7 @@ import java.util.List;
 
 public class TranOrderDetail {
     private String orderno;//订单号
-    private long tradeno;//交易号
+    private String tradeno;//交易号
     private int cusno;//客户企业码
     private int busno;//商家企业码
     private int ostatus;//订单状态
@@ -37,8 +37,8 @@ public class TranOrderDetail {
     private int payway;
     private int paysource;
     private int paystatus;
-    private long payorderno;
-    private long tppno;
+    private String payorderno;
+    private String tppno;
 
     private String paydate;
     private String paytime;
@@ -70,11 +70,11 @@ public class TranOrderDetail {
         this.orderno = orderno;
     }
 
-    public long getTradeno() {
+    public String getTradeno() {
         return tradeno;
     }
 
-    public void setTradeno(long tradeno) {
+    public void setTradeno(String tradeno) {
         this.tradeno = tradeno;
     }
 
@@ -278,19 +278,19 @@ public class TranOrderDetail {
         this.paystatus = paystatus;
     }
 
-    public long getPayorderno() {
+    public String getPayorderno() {
         return payorderno;
     }
 
-    public void setPayorderno(long payorderno) {
+    public void setPayorderno(String payorderno) {
         this.payorderno = payorderno;
     }
 
-    public long getTppno() {
+    public String getTppno() {
         return tppno;
     }
 
-    public void setTppno(long tppno) {
+    public void setTppno(String tppno) {
         this.tppno = tppno;
     }
 
