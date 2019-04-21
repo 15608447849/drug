@@ -69,11 +69,20 @@ public class CouponRevModule {
             " SET cstatus = cstatus | " + CSTATUS.DELETE +" WHERE unqid = ? ";
 
 
+
+
+
     //扣减优惠券库存
     private static final String UPDATE_COUPON_STOCK = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
             + " set actstock = actstock - 1 " +
             "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
 
+
+    /**
+     * 查询领取的优惠券列表
+     */
+    private final String QUERY_COUP_EXT_SQL = "select count(1) from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
+            " where compid = ? and coupno = ? and  cstatus = 0 ";
 
 
 
@@ -191,6 +200,18 @@ public class CouponRevModule {
         Result result = new Result();
         String json = appContext.param.json;
         CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
+
+
+        List<Object[]> extCoup = baseDao.queryNativeSharding(couponVO.getCompid(),
+                TimeUtils.getCurrentYear(), QUERY_COUP_EXT_SQL, new Object[]{couponVO.getCompid(),
+                        couponVO.getCoupno()});
+        if(extCoup != null && !extCoup.isEmpty()){
+            if(Integer.parseInt(extCoup.get(0)[0].toString()) > 0){
+                result.success("已领取过该优惠券！");
+            }
+        }
+
+
         long rcdid = GenIdUtil.getUnqId();
         int ret = baseDao.updateNative(INSERT_COURCD,
                 new Object[]{rcdid,couponVO.getCoupno(),

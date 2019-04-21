@@ -9,7 +9,6 @@ import com.onek.calculate.entity.DiscountResult;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
 import com.onek.context.AppContext;
-import com.onek.disruptor.*;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
@@ -75,7 +74,7 @@ public class TranOrderOptModule {
 
     //更新优惠券领取表
     private static final String UPD_COUENT_SQL = "update {{?" + DSMConst.TD_PROM_COUENT + "}} set "
-            + "catstus=cstatus|64 where cstatus&1=0 and coupno=? ";
+            + "cststus=cstatus|64 where cstatus&1=0 and coupno=? ";
 
     // 确认发货
     private static final String UPDATE_DELIVERY =
