@@ -93,6 +93,9 @@ public class TranOrderOptModule {
                     + " SET ostatus = 3 "
                     + " WHERE cstatus&1 = 0 AND ostatus = 2 AND orderno = ? ";
 
+    private static final  String UPDATE_PROM_COURCD = "update {{?" + DSMConst.TD_PROM_COURCD
+            + "}} set cstatus=cstatus|1 where cstatus&1=0 and coupno=? and compid=?";
+
 
     @UserPermission(ignore = false)
     public Result placeOrderOne(AppContext appContext) {
@@ -248,6 +251,9 @@ public class TranOrderOptModule {
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(tranOrder.getCusno(),year, sqlNative, params));
         if (b){
             updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
+            if (coupon > 0) {
+                baseDao.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
+            }
             CancelService.getInstance().add(new CancelDelayed(orderNo, tranOrder.getCusno()));
             JsonObject object = new JsonObject();
             object.addProperty("orderno", orderNo);
