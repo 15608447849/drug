@@ -4,11 +4,15 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.lmax.disruptor.*;
+import com.lmax.disruptor.dsl.Disruptor;
+import com.lmax.disruptor.dsl.ProducerType;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.entity.DiscountResult;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
 import com.onek.context.AppContext;
+import com.onek.disruptor.*;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
@@ -26,6 +30,7 @@ import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.*;
 
 /**
  * @author 11842
@@ -87,6 +92,66 @@ public class TranOrderOptModule {
                     + " SET ostatus = 3 "
                     + " WHERE cstatus&1 = 0 AND ostatus = 2 AND orderno = ? ";
 
+
+    @UserPermission(ignore = false)
+    public Result placeOrderOne(AppContext appContext) {
+        long coupon = 0;//优惠券码
+        Result result = new Result();
+        Gson gson = new Gson();
+        List<TranOrderGoods> tranOrderGoods = new ArrayList<>();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int placeType = jsonObject.get("placeType").getAsInt();//1、直接下单 2、购物车下单
+        JsonObject orderObj = jsonObject.get("orderObj").getAsJsonObject();
+        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
+        if (tranOrder == null) return result.fail("订单信息有误");
+        if (!jsonObject.get("coupon").isJsonNull()) {
+            coupon = jsonObject.get("coupon").getAsLong();
+        }
+        int pdnum = 0;
+        for (int i = 0; i < goodsArr.size(); i++) {
+            TranOrderGoods goodsVO = gson.fromJson(goodsArr.get(i).toString(), TranOrderGoods.class);
+            pdnum += goodsVO.getPnum();
+            goodsVO.setCompid(tranOrder.getCusno());
+            tranOrderGoods.add(goodsVO);
+        }
+        tranOrder.setPdnum(pdnum);
+
+        OrderEvent orderEvent = new OrderEvent();
+        orderEvent.setPlaceType(placeType);
+        orderEvent.setCoupon(coupon);
+        orderEvent.setTranOrder(tranOrder);
+        orderEvent.setAllTranOrderGoods(tranOrderGoods);
+        System.out.println("-------------- coming............");
+
+//        ExecutorService es1 = Executors.newFixedThreadPool(1);
+//        ExecutorService es2 = Executors.newFixedThreadPool(5);
+//        int bufferSize = 1024*1024;//环形队列长度，必须是2的N次方
+//        Disruptor<OrderEvent> disruptor = new Disruptor<>(new OrderEventFactory(orderEvent), bufferSize, es2,
+//                ProducerType.SINGLE, new YieldingWaitStrategy());
+//
+//        disruptor.handleEventsWith(new DeStockEventConsumer())
+//                .handleEventsWith(new DbOptConsumer());
+//
+//        disruptor.start();
+//
+//        OrderEventProducer ep = new OrderEventProducer().setDisruptor(disruptor, orderEvent);
+//        CountDownLatch countDownLatch = ep.getLatch();
+//        es1.submit(ep);
+//        try {
+//            countDownLatch.await();
+//        } catch (InterruptedException e) {
+//            e.printStackTrace();
+//        }
+//        disruptor.shutdown();
+//
+//        LogUtil.getDefaultLogger().info("result = " + orderEvent.getResult());
+        return orderEvent.getResult();
+    }
+
+
     /**
      * @description 下单接口
      * @params [appContext]
@@ -97,29 +162,29 @@ public class TranOrderOptModule {
      * @version 1.1.1
      **/
     @UserPermission(ignore = true)
-    public Result placeOrder(AppContext appContext) {
+        public Result placeOrder(AppContext appContext) {
 //        List<TranOrderGoods> finalGoodsPrice = null;
-        long coupon = 0;//优惠券码
-        Result result = new Result();
-        Gson gson = new Gson();
-        List<String> sqlList = new ArrayList<>();
-        List<Object[]> params = new ArrayList<>();
-        List<TranOrderGoods> tranOrderGoods = new ArrayList<>();
-        String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int orderType = 0;//下单类型 0普通
-        long actcode = 0;
-        if (jsonObject.has("orderType") && !jsonObject.get("orderType").isJsonNull()) {
-            orderType = jsonObject.get("orderType").getAsInt();
-        }
-        if (jsonObject.has("actcode") && !jsonObject.get("actcode").isJsonNull()) {
-            actcode = jsonObject.get("actcode").getAsLong();
-        }
-        int placeType = jsonObject.get("placeType").getAsInt();//1、直接下单 2、购物车下单
-        JsonObject orderObj = jsonObject.get("orderObj").getAsJsonObject();
-        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
-        TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
+            long coupon = 0;//优惠券码
+            Result result = new Result();
+            Gson gson = new Gson();
+            List<String> sqlList = new ArrayList<>();
+            List<Object[]> params = new ArrayList<>();
+            List<TranOrderGoods> tranOrderGoods = new ArrayList<>();
+            String json = appContext.param.json;
+            JsonParser jsonParser = new JsonParser();
+            JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+            int orderType = 0;//下单类型 0普通
+            long actcode = 0;
+            if (jsonObject.has("orderType") && !jsonObject.get("orderType").isJsonNull()) {
+                orderType = jsonObject.get("orderType").getAsInt();
+            }
+            if (jsonObject.has("actcode") && !jsonObject.get("actcode").isJsonNull()) {
+                actcode = jsonObject.get("actcode").getAsLong();
+            }
+            int placeType = jsonObject.get("placeType").getAsInt();//1、直接下单 2、购物车下单
+            JsonObject orderObj = jsonObject.get("orderObj").getAsJsonObject();
+            JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+            TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
         if (!jsonObject.get("coupon").isJsonNull()) {
