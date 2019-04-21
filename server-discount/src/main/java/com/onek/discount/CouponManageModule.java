@@ -220,10 +220,10 @@ public class CouponManageModule {
 
 
 
-    private static final String INSERT_COURCD =  "insert into {{?" + DSMConst.TB_PROM_COURCD + "}}" +
+    private static final String INSERT_COURCD =  "insert into {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " (unqid,coupno,compid,offercode,gettime) values (?,?,?,?,now())";
 
-    private static final String DEL_COURCD =  "update {{?" + DSMConst.TB_PROM_COURCD + "}}" +
+    private static final String DEL_COURCD =  "update {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " SET cstatus = cstatus | " + CSTATUS.DELETE +" WHERE unqid = ? ";
 
 

@@ -107,7 +107,7 @@ public interface DSMConst extends UDAConst {
     public final static int TB_AREA_PCA = 33;
     public final static int TB_AREA_STREET = 34;
     public final static int TB_AREA_VILLAGES = 35;
-    public final static int TB_PROM_COURCD = 36;
+    public final static int TD_PROM_COURCD = 36;
     public final static int TD_PROM_RELA = 37;
     public final static int TD_MEMBER = 38;
     public final static int TD_SIGNIN = 39;
