@@ -44,7 +44,7 @@ public class ShoppingCartModule {
 
     //新增购物车
     private final String SELECT_SHOPCART_SQL_EXT = "select unqid from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
-            + " where orderno = 0 and compid = ? and  pdno = ? ";
+            + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
 
     //新增数量
     private final String UPDATE_SHOPCART_SQL_EXT = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set pnum = pnum + ? " +
@@ -126,6 +126,77 @@ public class ShoppingCartModule {
         }
         return result.fail("新增失败");
     }
+
+
+
+    /**
+     * @description 再次购买（购物车批量保存）
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @time  2019/4/2 14:34
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result againShopCart(AppContext appContext) {
+        String json = appContext.param.json;
+        Result result = new Result();
+
+        JsonParser jsonParser = new JsonParser();
+        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+        List<ShoppingCartDTO> shoppingCartDTOS = new ArrayList<>();
+        Gson gson = new Gson();
+        List<Object[]> updateParm = new ArrayList<>();
+        List<Object[]> insertParm = new ArrayList<>();
+        StringBuilder parmSql = new StringBuilder();
+        for (JsonElement shopVO : jsonArray) {
+            ShoppingCartDTO shoppingCartDTO = gson.fromJson(shopVO, ShoppingCartDTO.class);
+            if (shoppingCartDTO != null) {
+                parmSql.append(shoppingCartDTO.getPdno()).append(",");
+            }
+            shoppingCartDTOS.add(shoppingCartDTO);
+        }
+        int compid = shoppingCartDTOS.get(0).getCompid();
+        String skuStr = parmSql.toString().substring(0, parmSql.toString().length() - 1);
+
+        String querySql = " select unqid,pdno from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+                + " where orderno = 0 and compid = " + compid;
+        querySql = querySql + " and pdno in (" + skuStr + ")";
+
+        List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                querySql, new Object[]{});
+
+        if (queryRet != null && !queryRet.isEmpty()) {
+            boolean flag = true;
+            for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
+                for (Object[] objects : queryRet) {
+                    if (shoppingCartDTO.getPdno() == Long.parseLong(objects[1].toString())) {
+                        updateParm.add(new Object[]{shoppingCartDTO.getPnum(), objects[0]});
+                        flag = false;
+                        break;
+                    }
+                }
+                if (flag) {
+                    insertParm.add(new Object[]{GenIdUtil.getUnqId(), 0,
+                            shoppingCartDTO.getPdno(), shoppingCartDTO.getPnum(), compid, 0});
+                    flag = true;
+                }
+            }
+
+            int[] uret = baseDao.updateBatchNativeSharding(compid, TimeUtils.getCurrentYear(),
+                    UPDATE_SHOPCART_SQL_EXT, updateParm, updateParm.size());
+
+            int[] iret = baseDao.updateBatchNativeSharding(compid, TimeUtils.getCurrentYear(),
+                    INSERT_SHOPCART_SQL, insertParm, insertParm.size());
+
+            if (!ModelUtil.updateTransEmpty(uret) || !ModelUtil.updateTransEmpty(iret)) {
+                return result.success("添加成功");
+            }
+        }
+        return result.fail("添加失败");
+    }
+
+
 
     /**
      * @description 清空购物车
@@ -323,7 +394,7 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
-                        if(brule == 1113 ||  brule == 1133){
+                        if(brule == 1113 ){
                             shoppingCartVO.setStatus(1);
                         }
                         ruleList.add(discountRule);
@@ -345,6 +416,7 @@ public class ShoppingCartModule {
                     shoppingCartVO.setAcamt(discountResult.getTotalCurrentPrice());
                     shoppingCartVO.setCounpon(discountResult.getCouponValue());
                     shoppingCartVO.setFreepost(discountResult.isFreeShipping());
+                    shoppingCartVO.setOflag(discountResult.isExCoupon());
                     shoppingCartVO.setFreight(20);
                 }
             }
