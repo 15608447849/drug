@@ -8,11 +8,14 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
+import com.onek.context.StoreBasicInfo;
 import com.onek.entity.AppriseVO;
 import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
+import redis.util.RedisUtil;
+import util.GsonUtils;
 import util.ModelUtil;
 
 import java.time.LocalDateTime;
@@ -97,7 +100,13 @@ public class OrderOptModule {
         AppriseVO[] appriseVOS = new AppriseVO[queryResult.size()];
         baseDao.convToEntity(queryResult, appriseVOS, AppriseVO.class);
         for (AppriseVO appriseVO : appriseVOS) {
-            appriseVO.setCompName("李世平-A门面");//暂无接口。。。。
+            String compStr = RedisUtil.getStringProvide().get(appriseVO.getCompid() + "");
+            System.out.println("compStr-->> " + compStr);
+            //storeName
+            StoreBasicInfo storeBasicInfo = GsonUtils.jsonToJavaBean(compStr, StoreBasicInfo.class);
+            if (storeBasicInfo != null) {
+                appriseVO.setCompName(storeBasicInfo.storeName);//暂无接口。。。。
+            }
         }
         return result.setQuery(appriseVOS, pageHolder);
     }
