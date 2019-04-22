@@ -81,7 +81,7 @@ public class LccOrderUtil {
         tranOrder.setFreight(20);
         tranOrder.setRvaddno(10130803);
         tranOrder.setPdnum(2);
-        tranOrder.setOrderno("1904180003102000");
+        tranOrder.setOrderno("1904180003102002");
         LccOrderUtil.addLccOrder(tranOrder, "小李", "14598763465","北京市天安门");
     }
 }
