@@ -96,6 +96,11 @@ public class OrderInfoModule {
             tranOrder.setPayprice(
                     MathUtil.exactDiv(tranOrder.getPayprice(), 100).doubleValue());
             tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
+            tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
+            tranOrder.setPayprice(MathUtil.exactDiv(tranOrder.getPayprice(), 100).doubleValue());
+            tranOrder.setDistamt(MathUtil.exactDiv(tranOrder.getDistamt(), 100).doubleValue());
+            tranOrder.setCoupamt(MathUtil.exactDiv(tranOrder.getCoupamt(), 100).doubleValue());
+            tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
         }
 
         return new Result().success(result);
@@ -166,6 +171,11 @@ public class OrderInfoModule {
 
         for (TranOrder tranOrder : result) {
             tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
+            tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
+            tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
+            tranOrder.setPdamt(MathUtil.exactDiv(tranOrder.getPdamt(), 100).doubleValue());
+            tranOrder.setDistamt(MathUtil.exactDiv(tranOrder.getDistamt(), 100).doubleValue());
+            tranOrder.setCoupamt(MathUtil.exactDiv(tranOrder.getCoupamt(), 100).doubleValue());
         }
 
         return result;

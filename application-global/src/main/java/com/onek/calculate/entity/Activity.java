@@ -111,11 +111,6 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     @Override
-    public void setExCoupon(boolean exCoupon) {
-        this.excdiscount = exCoupon ? 1 : 0;
-    }
-
-    @Override
     public boolean getExCoupon() {
         return this.excdiscount == 1;
     }

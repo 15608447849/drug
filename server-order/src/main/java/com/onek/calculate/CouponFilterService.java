@@ -1,13 +1,10 @@
 package com.onek.calculate;
 
-import com.alibaba.fastjson.JSONObject;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
-import com.onek.context.UserSession;
 import com.onek.calculate.entity.Couent;
 import com.onek.calculate.entity.IDiscount;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.IceRemoteUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
@@ -16,7 +13,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class CouponFilterService extends BaseDiscountFilterService {
-    private long couponNo;
+    private long couentUnqid;
     private int compid;
     private boolean excoupon;
     private Boolean noway = null;
@@ -41,7 +38,7 @@ public class CouponFilterService extends BaseDiscountFilterService {
             int compid) {
         super();
 
-        this.couponNo = couponNo;
+        this.couentUnqid = couponNo;
         this.compid = compid;
         this.excoupon = excoupon;
     }
@@ -60,15 +57,13 @@ public class CouponFilterService extends BaseDiscountFilterService {
             return Collections.EMPTY_LIST;
         }
 
-        List<IDiscount> returnList = new ArrayList<>();
-        returnList.add(checkCoupon);
-
-        return returnList;
+        return new ArrayList<IDiscount>() {{add(checkCoupon);}};
     }
 
     private boolean checkSKU(long sku) {
         String productCode = getProductCode(sku);
-        List<Object[]> check = BaseDAO.getBaseDAO().queryNative(CHECK_SKU, sku, productCode);
+        List<Object[]> check = BaseDAO.getBaseDAO().queryNative(CHECK_SKU,
+                this.couent.getCoupno(), sku, productCode);
 
         return StringUtils.isBiggerZero(check.get(0)[0].toString());
     }
@@ -85,7 +80,7 @@ public class CouponFilterService extends BaseDiscountFilterService {
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
                         this.compid, TimeUtils.getCurrentYear(),
-                        GET_COUPON, this.couponNo);
+                        GET_COUPON, this.couentUnqid);
 
         if (queryResult.isEmpty()) {
             this.noway = true;

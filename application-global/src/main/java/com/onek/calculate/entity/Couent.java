@@ -198,10 +198,6 @@ public class Couent extends AccurateMath implements IDiscount {
     }
 
     @Override
-    public void setExCoupon(boolean exCoupon) {
-    }
-
-    @Override
     public boolean getExCoupon() {
         return false;
     }

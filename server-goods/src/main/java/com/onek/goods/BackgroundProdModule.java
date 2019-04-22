@@ -388,6 +388,10 @@ public class BackgroundProdModule {
             }
 
             checkProd(bgProdVO);
+
+            bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
+            bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp(), 100).intValue());
+            bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp(), 100).intValue());
         } catch (Exception e) {
             e.printStackTrace();
             return new Result().fail(e.getMessage());
@@ -449,9 +453,9 @@ public class BackgroundProdModule {
             // spec, "
             params.add(new Object[] {
                     bgProdVO.getSpu(), bgProdVO.getSku(),
-                    MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue(),
-                    MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue(),
-                    MathUtil.exactMul(bgProdVO.getRrp (), 100).intValue(),
+                    bgProdVO.getVatp(),
+                    bgProdVO.getMp  (),
+                    bgProdVO.getRrp (),
                     bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
                     bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                     bgProdVO.getStore(), bgProdVO.getLimits(),

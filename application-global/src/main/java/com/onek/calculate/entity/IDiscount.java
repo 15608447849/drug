@@ -1,9 +1,5 @@
 package com.onek.calculate.entity;
 
-import com.onek.calculate.util.DiscountUtil;
-import util.MathUtil;
-
-import java.math.BigDecimal;
 import java.util.List;
 
 public interface IDiscount {
@@ -18,7 +14,7 @@ public interface IDiscount {
     List<IProduct> getProductList();
     void setFreeShipping(boolean free);
     boolean getFreeShipping();
-    void setExCoupon(boolean exCoupon);
+//    void setExCoupon(boolean exCoupon);
     boolean getExCoupon();
 
     void setLimits(long sku, int limits);
