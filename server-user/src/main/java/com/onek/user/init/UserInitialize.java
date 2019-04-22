@@ -22,6 +22,7 @@ public class UserInitialize implements IIceInitialize {
                 try {
                     updateCompInfoToCache();
                 } catch (Exception e) {
+                    e.printStackTrace();
                     try {
                         Thread.sleep(15  * 1000);
                     } catch (InterruptedException ignored) {
@@ -34,13 +35,12 @@ public class UserInitialize implements IIceInitialize {
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }
-
             }
         }).start();
     }
 
     private void updateCompInfoToCache() {
-        String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,compid FROM {{?"+ DSMConst.D_COMP+"}} WHERE ctype=0";
+        final String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,cid FROM {{?"+ DSMConst.D_COMP+"}} WHERE ctype=0";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
         if (lines == null) return;
         for (Object[] rows : lines){
@@ -74,11 +74,7 @@ public class UserInitialize implements IIceInitialize {
             String json = GsonUtils.javaBeanToJson(info);
             String res = RedisUtil.getStringProvide().set(""+info.storeId,json );
             communicator().getLogger().print("更新 - Redis - 公司信息:\n" + json+" - "+res);
-
         }
-
-
-
 
     }
 }
