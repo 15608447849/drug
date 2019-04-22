@@ -28,6 +28,7 @@ public class AppContext extends IceContext {
     @Override
     protected void initialization(){
         try {
+            if (StringUtils.isEmpty(param.token)) return;
             String key = param.token + "@" + remoteIp;
             String value = RedisUtil.getStringProvide().get(key);
             logger.print(key+" = " + value);

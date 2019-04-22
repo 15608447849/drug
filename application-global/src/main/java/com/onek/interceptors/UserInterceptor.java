@@ -24,11 +24,15 @@ public class UserInterceptor implements IServerInterceptor {
 
     @Override
     public Result interceptor( IceContext context)  {
+
+        String classpath = null;
+        String method = null;
+        String key = null;
         try {
             AppContext appContext =  context.convert();
-            String classpath = context.refPkg + "." +context.refCls;
-            String method = context.refMed;
-            String key = classpath + method;
+            classpath = context.refPkg + "." +context.refCls;
+            method = context.refMed;
+            key = classpath + method;
             UserPermission up;
             if(permissionStatusMap.containsKey(key)){
                 up = permissionStatusMap.get(key);
@@ -43,6 +47,9 @@ public class UserInterceptor implements IServerInterceptor {
                 UserSession userSession = appContext.getUserSession();
                 if(userSession == null){
                     return new Result().intercept("用户未登录");
+                }
+                if (userSession.comp == null && userSession.compId > 0){
+                    return new Result().intercept("用户信息过期,请重新登陆");
                 }
                 if(up != null && up.compAuth()){
                     StoreBasicInfo storeInfo = userSession.comp;
@@ -69,7 +76,7 @@ public class UserInterceptor implements IServerInterceptor {
             }
         }catch(Exception e){
             //e.printStackTrace();
-            context.logger.error("UserInterceptor.interceptor(),ERROR :\n"+e.toString());
+            context.logger.error("("+classpath+","+method+","+key+") 访问被拦截,错误原因\n"+e);
             return new Result().intercept(e);
         }
         return null;
