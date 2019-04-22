@@ -18,39 +18,6 @@ public class DictStore{
 
     private static IRedisCache dictProxy =(IRedisCache) CacheProxyInstance.createInstance(new DictUtil());
 
-    public  static JSONObject getAllDict(){
-        JSONObject j = new JSONObject();
-        List<DictEntity> dictList = (List<DictEntity>)dictProxy.queryAll();
-        if(dictList != null && dictList.size() > 0){
-            Map<String, List<DictEntity>> dictMap = new HashMap<>();
-            for(DictEntity dictVo : dictList){
-                List<DictEntity> subList = dictMap.get(dictVo.getType());
-                if(subList == null) subList = new ArrayList<>();
-                if((dictVo.getCstatus() & CSTATUS.DELETE) > 0){
-                    continue;
-                }
-                subList.add(dictVo);
-                dictMap.put(dictVo.getType(), subList);
-            }
-
-            for (String type : dictMap.keySet()){
-                JSONArray dictArr = new JSONArray();
-                List<DictEntity> subList = dictMap.get(type);
-                for(DictEntity dictVo : subList){
-                    JSONObject obj = new JSONObject();
-                    obj.put("value", dictVo.getDictc());
-                    obj.put("text", dictVo.getText());
-                    obj.put("label", dictVo.getText());
-                    obj.put("remark", dictVo.getText());
-                    obj.put("customc", dictVo.getCustomc());
-                    dictArr.add(obj);
-                }
-                j.put(type, dictArr);
-            }
-        }
-        return j;
-    }
-
     public static DictEntity getDictById(int dictc){
         return (DictEntity) dictProxy.getId(dictc);
     }

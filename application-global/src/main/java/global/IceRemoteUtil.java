@@ -1,22 +1,19 @@
 package global;
 
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
 import com.onek.entitys.Result;
-import com.onek.prop.IceMasterInfoProperties;
+import com.onek.prop.AppProperties;
 import com.onek.util.dict.DictEntity;
 import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
-import com.onek.util.prod.ProdPriceEntity;
 import util.GsonUtils;
 import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
 /**
  * @Author: leeping
@@ -27,9 +24,9 @@ public class IceRemoteUtil {
     public static IceClient ic ;
     static {
         ic = new IceClient(
-                IceMasterInfoProperties.INSTANCE.name,
-                IceMasterInfoProperties.INSTANCE.host,
-                IceMasterInfoProperties.INSTANCE.port);
+                AppProperties.INSTANCE.masterName,
+                AppProperties.INSTANCE.masterHost,
+                AppProperties.INSTANCE.masterPort);
       ic.startCommunication();
     }
 

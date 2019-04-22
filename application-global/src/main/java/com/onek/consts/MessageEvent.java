@@ -2,7 +2,7 @@ package com.onek.consts;
 
 public enum MessageEvent {
 
-    PAY_CALLBACK(0001, "付款回调");
+    PAY_CALLBACK(1, "付款回调");
 
     private int state;
     private String stateInfo;

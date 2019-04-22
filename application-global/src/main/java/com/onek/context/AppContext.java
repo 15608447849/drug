@@ -28,19 +28,13 @@ public class AppContext extends IceContext {
     @Override
     protected void initialization(){
         try {
-
             String key = param.token + "@" + remoteIp;
             String value = RedisUtil.getStringProvide().get(key);
-
-//            logger.print(key+" = " + value);
-
+            logger.print(key+" = " + value);
             if(StringUtils.isEmpty(value)) return;
-
             String json = RedisUtil.getStringProvide().get(value);
-//            logger.print(value+" = " + json);
-
+            logger.print(value+" = " + json);
             if(StringUtils.isEmpty(json)) return;
-
             this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
             logger.print(key+" - Redis - 用户信息:\n" + userSession);
 
@@ -90,6 +84,12 @@ public class AppContext extends IceContext {
             } catch (Exception e) {
                 result.setRequestOnline();
             }
+        }
+    }
+
+    public void setCompInfo(StoreBasicInfo info) {
+        if (userSession!=null){
+            userSession.comp = info;
         }
     }
 }
