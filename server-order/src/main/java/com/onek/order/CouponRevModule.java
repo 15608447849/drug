@@ -4,7 +4,10 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
+import com.onek.calculate.entity.DiscountResult;
+import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.entity.Ladoff;
+import com.onek.calculate.entity.Product;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entity.CouponPubLadderVO;
@@ -12,6 +15,7 @@ import com.onek.entity.CouponPubVO;
 import com.onek.entity.CouponUseDTO;
 import com.onek.entity.ShoppingCartDTO;
 import com.onek.entitys.Result;
+import com.onek.util.CalculateUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
@@ -146,6 +150,11 @@ public class CouponRevModule {
         Result result = new Result();
 
         int compid = jsonObject.get("compid").getAsInt();
+
+        if(compid == 0){
+            result.success("用户未登陆或未认证！");
+        }
+
         int type = jsonObject.get("type").getAsInt();
 
 
@@ -201,6 +210,9 @@ public class CouponRevModule {
         String json = appContext.param.json;
         CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
 
+        if(couponVO.getCompid() == 0){
+            result.success("用户未登陆或未认证！");
+        }
 
         List<Object[]> extCoup = baseDao.queryNativeSharding(couponVO.getCompid(),
                 TimeUtils.getCurrentYear(), QUERY_COUP_EXT_SQL, new Object[]{couponVO.getCompid(),
@@ -306,10 +318,15 @@ public class CouponRevModule {
         sqlBuilder.append(" and  CURRENT_DATE <= enddate ");
 
         Gson gson = new Gson();
+        List<Product> productList = new ArrayList<>();
         for (JsonElement coupn : jsonArray) {
             CouponUseDTO couponUseDTO = gson.fromJson(coupn, CouponUseDTO.class);
             if (couponUseDTO != null) {
                 couponUseDTOS.add(couponUseDTO);
+                Product product = new Product();
+                product.setSku(couponUseDTO.getPdno());
+                product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                productList.add(product);
             }
         }
         sqlBuilder.append(" and compid = ").append(couponUseDTOS.get(0).getCompid());
@@ -349,12 +366,15 @@ public class CouponRevModule {
                 if(couponPubLadderVO != null){
                     int offerCode = couponPubLadderVO.getOffercode();
                     if(offerCode != 0){
-                        int ruleno = Integer.parseInt((offerCode+"").substring(0,4));
+                       // int ruleno = Integer.parseInt((offerCode+"").substring(0,4));
+                        DiscountResult disResult = CalculateUtil.calculate(cvs.getCompid(),
+                                productList, cvs.getUnqid());
                         cvs.setOfferAmt(couponPubLadderVO.getOffer());
-                        if(ruleno == 2130){
-                           double calAmt = samt - (samt * (couponPubLadderVO.getOffer()/100));
-                           cvs.setOfferAmt(calAmt);
-                        }
+//                        if(ruleno == 2130){
+//                           double calAmt = samt - (samt * (couponPubLadderVO.getOffer()/100));
+//                           cvs.setOfferAmt(calAmt);
+//                        }
+                        cvs.setOfferAmt(disResult.getCouponValue());
                     }
                     cuseList.add(cvs);
                 }
@@ -362,6 +382,11 @@ public class CouponRevModule {
         }
         return result.success(cuseList);
     }
+
+
+
+
+
 
 
     private CouponPubLadderVO getLadoffable(List<CouponPubLadderVO> ladoffs, double price) {

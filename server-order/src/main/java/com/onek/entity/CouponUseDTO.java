@@ -21,6 +21,8 @@ public class CouponUseDTO {
 
     private double samt;
 
+    private long coupon;
+
     private int flag;
 
     public int getFlag() {
