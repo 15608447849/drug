@@ -15,12 +15,10 @@ import com.onek.util.discount.DiscountRuleStore;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
-import util.GsonUtils;
-import util.ModelUtil;
-import util.StringUtils;
-import util.TimeUtils;
+import util.*;
 
 import java.lang.ref.PhantomReference;
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -272,7 +270,6 @@ public class ShoppingCartModule {
         Result result = new Result();
         List<Object[]> queryResult = baseDao.queryNativeSharding(compid,TimeUtils.getCurrentYear(),QUERY_SHOPCART_SQL,compid);
         ShoppingCartDTO[] shoppingCartVOS = new ShoppingCartDTO[queryResult.size()];
-
         if (queryResult == null || queryResult.isEmpty()) {
             return  result.success(shoppingCartVOS);
         }
@@ -310,7 +307,8 @@ public class ShoppingCartModule {
             }
         }
         //更新购物车数量
-        baseDao.updateBatchNativeSharding(shoppingCartDTOS.get(0).getCompid(),TimeUtils.getCurrentYear(),UPDATE_SHOPCART_SQL_NUM, updateParm, updateParm.size());
+        baseDao.updateBatchNativeSharding(shoppingCartDTOS.get(0).getCompid(),TimeUtils.getCurrentYear(),
+                UPDATE_SHOPCART_SQL_NUM, updateParm, updateParm.size());
         List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
         //TODO 获取活动匹配
         convResult(shopCart,shoppingCartDTOS.get(0).getCompid());
@@ -349,6 +347,9 @@ public class ShoppingCartModule {
         }
 
         List<ShoppingCartVO> shoppingCartList = getCartSkus(ids.toString());
+        if(shoppingCartList == null){
+            return null;
+        }
         for(ShoppingCartVO shoppingCartVO : shoppingCartList){
             for(int i = 0; i < shoppingCartDTOS.size(); i++){
                 if(shoppingCartVO.getPdno() == shoppingCartDTOS.get(i).getPdno()){
@@ -360,24 +361,29 @@ public class ShoppingCartModule {
                 }
             }
         }
+
+
+
         return shoppingCartList;
     }
 
 
     public void convResult(List<ShoppingCartVO> shoppingCartList,int compid){
+
+        if(shoppingCartList == null){
+            return;
+        }
         List<Product> productList = new ArrayList<>();
-
         List<Product> ckProduct = new ArrayList<>();
-
-
+        BigDecimal result = BigDecimal.ZERO;
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
             Product product = new Product();
             product.setSku(shoppingCartVO.getPdno());
             product.autoSetCurrentPrice(shoppingCartVO.getPdprice(),shoppingCartVO.getNum());
             productList.add(product);
-
             if(shoppingCartVO.getChecked() == 1){
                 ckProduct.add(product);
+                result = result.add(BigDecimal.valueOf(product.getCurrentPrice()));
             }
         }
 
@@ -414,12 +420,16 @@ public class ShoppingCartModule {
             for(Product product: ckProduct){
                 if(shoppingCartVO.getPdno() == product.getSKU()
                         && shoppingCartVO.getChecked() == 1){
+                    shoppingCartVO.setSubtotal(product.getCurrentPrice());
                     shoppingCartVO.setDiscount(product.getDiscounted());
                     shoppingCartVO.setAmt(discountResult.getTotalDiscount());
                     shoppingCartVO.setAcamt(discountResult.getTotalCurrentPrice());
                     shoppingCartVO.setCounpon(discountResult.getCouponValue());
                     shoppingCartVO.setFreepost(discountResult.isFreeShipping());
                     shoppingCartVO.setOflag(discountResult.isExCoupon());
+                    shoppingCartVO.setTotalamt(result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                    shoppingCartVO.setSubtotal(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()).
+                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
                     shoppingCartVO.setFreight(20);
                 }
             }
@@ -481,6 +491,7 @@ public class ShoppingCartModule {
        // baseDao.updateBatchNativeSharding(shoppingCartDTOS.get(0).getCompid(),TimeUtils.getCurrentYear(),UPDATE_SHOPCART_SQL_NUM, updateParm, updateParm.size());
         List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
         //TODO 获取活动匹配
+
         convResult(shopCart,shoppingCartDTOS.get(0).getCompid());
         return result.success(shopCart);
     }

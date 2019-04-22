@@ -37,6 +37,7 @@ public class ShoppingCartVO {
     //优惠金额
     private double amt;
 
+    //规则
     private List<DiscountRule> rule;
 
     //限购量
@@ -48,10 +49,13 @@ public class ShoppingCartVO {
     //状态
     private int status;
 
+    //是否选中
     private int checked;
 
+    //折扣价
     private double discount;
 
+    //应付金额
     private double acamt;
 
     private long spu;
@@ -60,13 +64,35 @@ public class ShoppingCartVO {
 
     private long conpno;
 
+    //运费
     private double freight;
 
+    //是否免邮
     private boolean freepost;
 
     private boolean seckill = false;
 
     private boolean oflag;
+
+    private double subtotal;
+
+    private double totalamt;
+
+    public double getTotalamt() {
+        return totalamt;
+    }
+
+    public void setTotalamt(double totalamt) {
+        this.totalamt = totalamt;
+    }
+
+    public double getSubtotal() {
+        return subtotal;
+    }
+
+    public void setSubtotal(double subtotal) {
+        this.subtotal = subtotal;
+    }
 
     public boolean isOflag() {
         return oflag;
