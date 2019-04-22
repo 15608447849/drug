@@ -1,8 +1,8 @@
 package com.onek.calculate.rule;
 
-import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.entity.Gift;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.util.DiscountUtil;
 
 import java.util.List;
@@ -11,6 +11,11 @@ public final class RuleParser {
     private static final IRuleHandler[] RULE_HANDLER = {
         new SubRuleHandler(),
         new GiftRuleHandler(),
+    };
+
+    private static final ICalStrategy[] CALTIMES_STRATEGY = {
+        new Meiman(),
+        new Manjian(),
     };
 
     private long offerCode;
@@ -59,49 +64,54 @@ public final class RuleParser {
     }
 
     private ValueAndTimes getValueAndTimes(IDiscount discount, Ladoff ladoff) {
-        int times = 0;
-        switch (getCalStrategy()) {
-            case 1:
-                times = meiMan(
-                        ladoff.getLadnum(), DiscountUtil.getNumTotal(discount.getProductList()),
-                        ladoff.getLadamt(), DiscountUtil.getCurrentPriceTotal(discount.getProductList()));
-                break;
-            case 2:
-                times = jianMian(ladoff.getLadnum(), DiscountUtil.getNumTotal(discount.getProductList()),
-                        ladoff.getLadamt(), DiscountUtil.getCurrentPriceTotal(discount.getProductList()));
-                break;
-            default:
-                break;
-        }
+        int times = CALTIMES_STRATEGY[getCalStrategy() - 1]
+                .getTimes(
+                        ladoff.getLadnum(),
+                        DiscountUtil.getNumTotal(discount.getProductList()),
+                        ladoff.getLadamt(),
+                        DiscountUtil.getCurrentPriceTotal(discount.getProductList()));
 
         return new ValueAndTimes(ladoff.getOffer(), times);
     }
 
-    private int meiMan(int ladNum, int nums, double ladAmt, double total) {
-        int times = 0;
-
-        if (ladNum > 0 && ladAmt > 0) {
-            times = Math.min(nums / ladNum, (int) (total / ladAmt));
-        } else if (ladNum > 0) {
-            times = nums / ladNum;
-        } else if (ladAmt > 0) {
-            times = (int) (total / ladAmt);
-        }
-
-        return times;
-    }
-
-    private int jianMian(int ladNum, int nums, double ladAmt, double total) {
-        return 1;
-    }
-
-    private class ValueAndTimes {
+    private static class ValueAndTimes {
         private double value;
         private int times;
 
         public ValueAndTimes(double value, int times) {
             this.value = value;
             this.times = times;
+        }
+    }
+
+    private interface ICalStrategy {
+        int getTimes(int ladNum, int nums, double ladAmt, double total);
+    }
+
+
+    private static class Manjian implements ICalStrategy {
+
+        @Override
+        public int getTimes(int ladNum, int nums, double ladAmt, double total) {
+            return 1;
+        }
+    }
+
+    private static class Meiman implements ICalStrategy {
+
+        @Override
+        public int getTimes(int ladNum, int nums, double ladAmt, double total) {
+            int times = 0;
+
+            if (ladNum > 0 && ladAmt > 0) {
+                times = Math.min(nums / ladNum, (int) (total / ladAmt));
+            } else if (ladNum > 0) {
+                times = nums / ladNum;
+            } else if (ladAmt > 0) {
+                times = (int) (total / ladAmt);
+            }
+
+            return times;
         }
     }
 }
