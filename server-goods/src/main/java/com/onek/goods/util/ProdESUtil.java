@@ -5,6 +5,7 @@ import com.onek.consts.ESConstant;
 import com.onek.goods.entities.BgProdVO;
 import elasticsearch.ElasticSearchClientFactory;
 import elasticsearch.ElasticSearchProvider;
+import objectref.ObjectRefUtil;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -14,6 +15,7 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.index.mapper.RootObjectMapper;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
@@ -32,6 +34,9 @@ import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
 public class ProdESUtil {
 
+    public final static String DEFAULT_DATE = "1990-01-01";
+    public final static String DEFAULT_TIME = "00:00:00";
+
     /**
      * 添加商品数据到ES中
      * @param paramVo 商品SKU表
@@ -42,6 +47,10 @@ public class ProdESUtil {
         try {
             BgProdVO prodVO = (BgProdVO) paramVo.clone();
             prodVO.setDetail("");
+            if(StringUtils.isEmpty(prodVO.getOffdate())){
+                prodVO.setOffdate(DEFAULT_DATE);
+                prodVO.setOfftime(DEFAULT_TIME);
+            }
             long sku = prodVO.getSku();
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
@@ -93,6 +102,10 @@ public class ProdESUtil {
         try{
             BgProdVO prodVO = (BgProdVO)paramVo.clone();
             prodVO.setDetail("");
+            if(StringUtils.isEmpty(prodVO.getOffdate())){
+                prodVO.setOffdate(DEFAULT_DATE);
+                prodVO.setOfftime(DEFAULT_TIME);
+            }
             long sku = prodVO.getSku();
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
