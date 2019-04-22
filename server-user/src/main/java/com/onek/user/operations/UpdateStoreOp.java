@@ -64,7 +64,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
         if (!isRelated){
             //判断是否存在相同企业名
             String selectSql = "SELECT cid FROM {{?" +DSMConst.D_COMP+"}} WHERE cstatus&1 = 0 AND ctype=0 AND cname=?";
-            List<Object[]>lines = BaseDAO.getBaseDAO().queryNative(selectSql,session.compId,storeName);
+            List<Object[]>lines = BaseDAO.getBaseDAO().queryNative(selectSql,storeName);
             if (lines.size() > 0) {
                 if((int)lines.get(0)[0] != session.compId){
                     return new Result().fail("存在相同门店名,无法修改");
