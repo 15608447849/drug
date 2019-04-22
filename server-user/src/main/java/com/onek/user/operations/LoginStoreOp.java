@@ -56,7 +56,10 @@ public class LoginStoreOp implements IOperation<AppContext> {
             }
 
             //关联token-用户信息
-            if (relationTokenUserSession(context)) return new Result().success("登陆成功");
+            if (relationTokenUserSession(context)) {
+                new StoreBasicInfoOp().execute(context); //获取企业信息加入缓存
+                return new Result().success("登陆成功");
+            }
             else return new Result().success("无法关联用户信息");
 
         } catch (Exception e) {
@@ -97,7 +100,6 @@ public class LoginStoreOp implements IOperation<AppContext> {
                             password,
                             StringUtils.checkObjectNull(objects[3],0)
                             );
-
                     return true;
                 }
             }else{

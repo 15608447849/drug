@@ -3,7 +3,7 @@ package com.onek.user.operations;
 import com.onek.context.AppContext;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
-import com.onek.user.interactive.StoreBasicInfo;
+import com.onek.context.StoreBasicInfo;
 import constant.DSMConst;
 import dao.BaseDAO;
 
@@ -56,6 +56,10 @@ public class StoreBasicInfoOp implements IOperation<AppContext> {
             info.addressCode = checkObjectNull(rows[4],0L);
             info.latitude = checkObjectNull(rows[5],new BigDecimal(0)); //纬度
             info.longitude = checkObjectNull(rows[6],new BigDecimal(0)); //精度
+
+
+            appContext.setCompInfo(info);
+            appContext.relationTokenUserSession();
             return new Result().success(info);//返回用户信息
         }
         return new Result().fail("没有企业信息,请关联企业");//返回用户信息
