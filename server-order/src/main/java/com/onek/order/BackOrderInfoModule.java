@@ -2,7 +2,6 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
@@ -93,6 +92,12 @@ public class BackOrderInfoModule {
                         break;
                     case 3:
                         sql.append(" AND ord.orderno = ? ");
+                        break;
+                    case 4:
+                        sql.append(" AND ord.odate <= ? ");
+                        break;
+                    case 5:
+                        sql.append(" AND ord.odate >= ? ");
                         break;
                 }
             } catch (Exception e) {

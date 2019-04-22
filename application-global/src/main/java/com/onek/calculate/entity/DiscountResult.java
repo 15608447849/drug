@@ -1,6 +1,5 @@
 package com.onek.calculate.entity;
 
-import com.onek.calculate.util.DiscountUtil;
 import util.MathUtil;
 
 import java.math.BigDecimal;
@@ -32,6 +31,8 @@ public class DiscountResult {
                     MathUtil.exactAdd(discount.getDiscounted(), this.totalDiscount)
                             .doubleValue();
         }
+
+        this.totalDiscount = MathUtil.decimal(2, this.totalDiscount);
     }
 
     private int prodsNum(List<? extends IProduct> products) {

@@ -16,6 +16,8 @@ public class UserSession implements Serializable{
     public String password;//用户密码
     public String lastIp;//最后登录IP
     public String userName;//用户姓名
+    public StoreBasicInfo comp; //公司信息
+
     private UserSession(){}
 
 

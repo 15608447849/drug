@@ -12,4 +12,5 @@ import java.lang.annotation.Target;
 public @interface UserPermission {
     boolean ignore() default false; //默认不忽略
     long[] role() default {}; // 允许访问的角色码 , 默认全部
+    boolean compAuth() default false; // 默认不用认证 true:代表需要认证通过的企业
 }
