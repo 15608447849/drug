@@ -24,6 +24,7 @@ public class UserInterceptor implements IServerInterceptor {
 
     @Override
     public Result interceptor( IceContext context)  {
+
         try {
             AppContext appContext =  context.convert();
             String classpath = context.refPkg + "." +context.refCls;
@@ -44,6 +45,7 @@ public class UserInterceptor implements IServerInterceptor {
                 if(userSession == null){
                     return new Result().intercept("用户未登录");
                 }
+
                 if(up != null && up.compAuth()){
                     StoreBasicInfo storeInfo = userSession.comp;
                     if(storeInfo == null ||  (storeInfo.authenticationStatus & 256) <= 0){
@@ -69,7 +71,7 @@ public class UserInterceptor implements IServerInterceptor {
             }
         }catch(Exception e){
             //e.printStackTrace();
-            context.logger.error("UserInterceptor.interceptor(),ERROR :\n"+e.toString());
+            context.logger.error("访问被拦截,错误原因: "+e);
             return new Result().intercept(e);
         }
         return null;
