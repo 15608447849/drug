@@ -25,14 +25,11 @@ public class UserInterceptor implements IServerInterceptor {
     @Override
     public Result interceptor( IceContext context)  {
 
-        String classpath = null;
-        String method = null;
-        String key = null;
         try {
             AppContext appContext =  context.convert();
-            classpath = context.refPkg + "." +context.refCls;
-            method = context.refMed;
-            key = classpath + method;
+            String classpath = context.refPkg + "." +context.refCls;
+            String method = context.refMed;
+            String key = classpath + method;
             UserPermission up;
             if(permissionStatusMap.containsKey(key)){
                 up = permissionStatusMap.get(key);
@@ -76,7 +73,7 @@ public class UserInterceptor implements IServerInterceptor {
             }
         }catch(Exception e){
             //e.printStackTrace();
-            context.logger.error("("+classpath+","+method+","+key+") 访问被拦截,错误原因\n"+e);
+            context.logger.error("访问被拦截,错误原因: "+e);
             return new Result().intercept(e);
         }
         return null;
