@@ -482,7 +482,7 @@ public class ProdModule {
                     skuList.add(Long.parseLong(map.get("sku").toString()));
                 }
             }
-            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, 0, 10);
+            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, 1, 10);
             if (response == null || response.getHits().totalHits <= 5) {
                 long totalHits = response != null ? response.getHits().totalHits : 0;
                 if (totalHits > 0) {
