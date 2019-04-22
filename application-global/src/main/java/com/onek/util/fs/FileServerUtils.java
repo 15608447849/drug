@@ -1,7 +1,6 @@
 package com.onek.util.fs;
 
-import com.onek.prop.FileServerProperties;
-import com.onek.prop.IceMasterInfoProperties;
+import com.onek.prop.AppProperties;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.http.HttpUtil;
@@ -15,7 +14,7 @@ import java.util.List;
  * @Date: 2019/3/20 11:00
  */
 public class FileServerUtils {
-    private static FileServerProperties fsp = FileServerProperties.INSTANCE;
+    private static AppProperties fsp = AppProperties.INSTANCE;
 
     //文件上传地址
     public static String fileUploadAddress(){
@@ -77,9 +76,9 @@ public class FileServerUtils {
     public static String getPayQrImageLink(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr){
 
         List<String> list = new ArrayList<>();
-            list.add(IceMasterInfoProperties.INSTANCE.name);
-            list.add(IceMasterInfoProperties.INSTANCE.host);
-            list.add(IceMasterInfoProperties.INSTANCE.port+"");
+            list.add(AppProperties.INSTANCE.masterName);
+            list.add(AppProperties.INSTANCE.masterHost);
+            list.add(AppProperties.INSTANCE.masterPort+"");
             list.add(serverName);
             list.add(callback_clazz);
             list.add(callback_method);
@@ -93,10 +92,25 @@ public class FileServerUtils {
         map.put("orderNo",orderNo);
         map.put("body",body);
 
-        String json = HttpUtil.formText(FileServerProperties.INSTANCE.payUrl,"POST",map);
+        String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/pay","POST",map);
         HashMap<String,Object> rmap = GsonUtils.string2Map(json);
         assert rmap != null;
 
+        return rmap.get("data")==null ? null : rmap.get("data").toString();
+    }
+
+    /**
+     * 查询一个订单支付状态
+     * @param orderNo
+     * @return 0-待支付 1已支付 -2异常
+     */
+    public static String getPayCurrentState(String type,String orderNo){
+        HashMap<String,String> map = new HashMap<>();
+        map.put("type",type);
+        map.put("orderNo",orderNo);
+        String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/query","POST",map);
+        HashMap<String,Object> rmap = GsonUtils.string2Map(json);
+        assert rmap != null;
         return rmap.get("data")==null ? null : rmap.get("data").toString();
     }
 
