@@ -28,6 +28,7 @@ public class AppContext extends IceContext {
     @Override
     protected void initialization(){
         try {
+            if (StringUtils.isEmpty(param.token)) return;
             String key = param.token + "@" + remoteIp;
             String value = RedisUtil.getStringProvide().get(key);
             logger.print(key+" = " + value);
@@ -62,10 +63,12 @@ public class AppContext extends IceContext {
         //创建token标识
         String key = createKey();
         String json = GsonUtils.javaBeanToJson(userSession);
-        logger.print("缓存用户信息:\n"+ json);
-        String res = RedisUtil.getStringProvide().set(key,json );
+
+        String res = RedisUtil.getStringProvide().set(key,json);
         if (res.equals("OK")){
+            logger.print(key+ " 更新用户信息 :\n"+ json);
             res = RedisUtil.getStringProvide().set(param.token , key);
+
             return res.equals("OK");
         }
         return false;
