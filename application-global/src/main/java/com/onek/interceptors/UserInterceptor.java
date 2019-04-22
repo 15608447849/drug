@@ -44,7 +44,7 @@ public class UserInterceptor implements IServerInterceptor {
                 if(userSession == null){
                     return new Result().intercept("用户未登录");
                 }
-                if(up.compAuth()){
+                if(up != null && up.compAuth()){
                     StoreBasicInfo storeInfo = userSession.comp;
                     if(storeInfo == null ||  (storeInfo.authenticationStatus & 256) <= 0){
                          return new Result().intercept("企业没有认证");
