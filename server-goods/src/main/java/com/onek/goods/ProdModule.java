@@ -484,8 +484,8 @@ public class ProdModule {
             }
             SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, 0, 10);
             if (response == null || response.getHits().totalHits <= 5) {
-                SearchHits hits = response.getHits();
-                if (hits.totalHits > 0) {
+                long totalHits = response != null ? response.getHits().totalHits : 0;
+                if (totalHits > 0) {
                     assembleData(response, prodList);
                 }
                 List<Integer> bb1 = new ArrayList() {{
