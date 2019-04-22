@@ -206,10 +206,12 @@ public class PayModule {
             }
             if(result[0].getRvaddno() > 0){
                 try{
-                    jsonResult.put("address",IceRemoteUtil.getArean(result[0].getRvaddno()));
+                    jsonResult.put("address",IceRemoteUtil.getCompleteName(result[0].getRvaddno()+""));
                 }catch (Exception e){
                     e.printStackTrace();
                 }
+            }else{
+                jsonResult.put("address",IceRemoteUtil.getCompleteName(result[0].getRvaddno()+""));
             }
         }
 
