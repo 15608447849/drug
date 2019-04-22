@@ -45,9 +45,7 @@ public class UserInterceptor implements IServerInterceptor {
                 if(userSession == null){
                     return new Result().intercept("用户未登录");
                 }
-                if (userSession.comp == null && userSession.compId > 0){
-                    return new Result().intercept("用户信息过期,请重新登陆");
-                }
+
                 if(up != null && up.compAuth()){
                     StoreBasicInfo storeInfo = userSession.comp;
                     if(storeInfo == null ||  (storeInfo.authenticationStatus & 256) <= 0){
