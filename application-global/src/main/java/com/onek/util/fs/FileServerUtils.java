@@ -104,8 +104,9 @@ public class FileServerUtils {
      * @param orderNo
      * @return 0-待支付 1已支付 -2异常
      */
-    public static String getPayCurrentState(String orderNo){
+    public static String getPayCurrentState(String type,String orderNo){
         HashMap<String,String> map = new HashMap<>();
+        map.put("type",type);
         map.put("orderNo",orderNo);
         String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/query","POST",map);
         HashMap<String,Object> rmap = GsonUtils.string2Map(json);
