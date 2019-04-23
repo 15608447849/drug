@@ -41,11 +41,11 @@ public class TranOrderOptModule {
     private static final String INSERT_TRAN_ORDER = "insert into {{?" + DSMConst.TD_TRAN_ORDER + "}} "
             + "(orderno,tradeno,cusno,busno,ostatus,asstatus,pdnum," +
             "pdamt,freight,payamt,coupamt,distamt,rvaddno," +
-            "settstatus,otype,odate,otime,cstatus) "
+            "settstatus,otype,odate,otime,cstatus,consignee,contact,address) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "CURRENT_DATE,CURRENT_TIME,0)";
+            + "CURRENT_DATE,CURRENT_TIME,0,?,?,?)";
 
     //订单商品表新增
     private static final String INSERT_TRAN_GOODS = "insert into {{?" + DSMConst.TD_TRAN_GOODS + "}} "
@@ -226,7 +226,7 @@ public class TranOrderOptModule {
         sqlList.add(INSERT_TRAN_ORDER);
         params.add(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
                 tranOrder.getPdamt(), tranOrder.getFreight(), tranOrder.getPayamt(), tranOrder.getCoupamt(), tranOrder.getDistamt(),
-                tranOrder.getRvaddno(), 0, 0});
+                tranOrder.getRvaddno(), 0, 0, tranOrder.getConsignee(), tranOrder.getContact(), tranOrder.getAddress()});
 
         if (coupon > 0) {
             //使用优惠券

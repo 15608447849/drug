@@ -55,7 +55,7 @@ public class CouponRevModule {
     private final String QUERY_COUPONREV_SQL = "select unqid,coupno,compid,DATE_FORMAT(startdate,'%Y-%m-%d') startdate," +
             "DATE_FORMAT(enddate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
-            " where cstatus&1=0 ";
+            " where cstatus = 0 ";
 
     /**
      * 查询领取的优惠券列表
@@ -72,6 +72,13 @@ public class CouponRevModule {
     private static final String DEL_COURCD =  "update {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " SET cstatus = cstatus | " + CSTATUS.DELETE +" WHERE unqid = ? ";
 
+    private static final String QUERY_COURCD_EXT =  "select unqid from  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
+            " where compid = ? and coupno = ? ";
+
+    private static final String UPDATE_COURCD =  "update  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
+            " set cstatus = 0,gettime = now() where unqid = ? ";
+
+
 
 
 
@@ -86,7 +93,7 @@ public class CouponRevModule {
      * 查询领取的优惠券列表
      */
     private final String QUERY_COUP_EXT_SQL = "select count(1) from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
-            " where compid = ? and coupno = ? and  cstatus = 0 ";
+            " where compid = ? and coupno = ? and  cstatus = 0  and  CURRENT_DATE <= enddate ";
 
 
 
@@ -210,24 +217,32 @@ public class CouponRevModule {
         String json = appContext.param.json;
         CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
 
-        if(couponVO.getCompid() == 0){
-            result.success("用户未登陆或未认证！");
+        if(couponVO.getCompid() <= 0){
+            return result.fail("用户未登陆或未认证！");
         }
-
         List<Object[]> extCoup = baseDao.queryNativeSharding(couponVO.getCompid(),
-                TimeUtils.getCurrentYear(), QUERY_COUP_EXT_SQL, new Object[]{couponVO.getCompid(),
+                TimeUtils.getCurrentYear(), QUERY_COUP_EXT_SQL,
+                new Object[]{couponVO.getCompid(),
                         couponVO.getCoupno()});
         if(extCoup != null && !extCoup.isEmpty()){
             if(Integer.parseInt(extCoup.get(0)[0].toString()) > 0){
-                result.success("已领取过该优惠券！");
+                return result.success("已领取过该优惠券！");
             }
         }
+        List<Object[]> crdResult = baseDao.queryNative(QUERY_COURCD_EXT, new Object[]{couponVO.getCompid(), couponVO.getCoupno()});
+        int ret = 0;
+        long rcdid = 0L;
+        if(crdResult == null || crdResult.isEmpty()){
+            rcdid = GenIdUtil.getUnqId();
+            ret = baseDao.updateNative(INSERT_COURCD,
+                    new Object[]{rcdid,couponVO.getCoupno(),
+                            couponVO.getCompid(),0});
+        }else{
+            rcdid = Long.parseLong(crdResult.get(0)[0].toString());
+            ret = baseDao.updateNative(UPDATE_COURCD,
+                    new Object[]{rcdid});
+        }
 
-
-        long rcdid = GenIdUtil.getUnqId();
-        int ret = baseDao.updateNative(INSERT_COURCD,
-                new Object[]{rcdid,couponVO.getCoupno(),
-                        couponVO.getCompid(),0});
         if(ret > 0){
             try{
                 if(insertCoupon(couponVO) > 0){
@@ -243,7 +258,7 @@ public class CouponRevModule {
                 e.printStackTrace();
             }
         }
-        return result.success("领取失败");
+        return result.fail("领取失败");
     }
 
 
