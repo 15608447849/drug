@@ -294,5 +294,17 @@ public class IceRemoteUtil {
         return GsonUtils.jsonToJavaBean(json,MemberEntity.class);
     }
 
-
+    /**
+     * 获取企业信息 json
+     * @return
+     */
+    public static String getCompanyJson(int compid) {
+        try {
+            String result = ic.settingProxy("userServer").settingParam(new String[]{compid+""}).executeSync();
+            HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+            return hashMap.get("data").toString();
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
 }

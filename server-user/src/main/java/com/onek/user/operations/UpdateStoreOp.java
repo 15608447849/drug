@@ -14,6 +14,7 @@ import util.StringUtils;
 
 import java.util.List;
 
+import static com.onek.user.operations.StoreBasicInfoOp.updateCompInfoToCacheById;
 import static com.onek.util.RedisGlobalKeys.getCompanyCode;
 
 /**
@@ -53,6 +54,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 session.compId = compid;
                 //重新保存用户信息
                 if (!context.relationTokenUserSession()){
+                    updateCompInfoToCacheById(session.compId);//更新企业信息到缓存
                     return new Result().fail("无法保存用户信息");
                 }
                 //企业关联会员
@@ -60,6 +62,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 isRelated = true;
             }
         }
+
         //如果没有关联企业
         if (!isRelated){
             //判断是否存在相同企业名
@@ -71,8 +74,6 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 }
             }
         }
-
-
 
         if (session.compId > 0 ){
 
@@ -108,6 +109,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                         session.compId
                 );
                 if (i > 0){
+                    updateCompInfoToCacheById(session.compId);//更新企业信息到缓存
                     return new Result().success("门店修改信息成功");
                 }
             }
@@ -137,8 +139,8 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 }
 
                 session.compId = (int)compid;
-
                 if (!context.relationTokenUserSession()){
+                    updateCompInfoToCacheById(session.compId);//更新企业信息到缓存
                     //重新保存用户信息
                     return new Result().fail("保存用户信息失败");
                 }
@@ -170,12 +172,15 @@ public class UpdateStoreOp implements IOperation<AppContext> {
 
     //企业关联会员
     public static void compLinkMember(int compId) {
-        String insertSql = "INSERT INTO {{?"+ DSMConst.TD_MEMBER +"}} " +
-                "(unqid,compid,accupoints,balpoints,createdate,createtime,cstatus) " +
-                "VALUES(?,?,0,0,CURRENT_DATE,CURRENT_TIME,0)";
-        int i = BaseDAO.getBaseDAO().updateNative(insertSql,
-                GenIdUtil.getUnqId(),
-                compId);
+        try {
+            String insertSql = "INSERT INTO {{?"+ DSMConst.TD_MEMBER +"}} " +
+                    "(unqid,compid,accupoints,balpoints,createdate,createtime,cstatus) " +
+                    "VALUES(?,?,0,0,CURRENT_DATE,CURRENT_TIME,0)";
+            int i = BaseDAO.getBaseDAO().updateNative(insertSql,
+                    GenIdUtil.getUnqId(),
+                    compId);
+        } catch (Exception ignored) {
+        }
     }
 
 }

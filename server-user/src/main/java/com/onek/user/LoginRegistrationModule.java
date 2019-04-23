@@ -2,11 +2,14 @@ package com.onek.user;
 
 import com.onek.context.AppContext;
 import com.onek.annotation.UserPermission;
+import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.user.operations.*;
 import redis.util.RedisUtil;
 import util.GsonUtils;
+
+import static com.onek.user.operations.StoreBasicInfoOp.getStoreInfoById;
 
 /**
  * 登陆 / 注册 模块
@@ -96,15 +99,34 @@ public class LoginRegistrationModule {
     }
 
     /**
-     * 获取门店用户-门店基础信息
+     * 内部调用 获取企业信息
+     */
+    @UserPermission(ignore = true)
+    public Result getStoreInfo(AppContext appContext){
+        int compid = Integer.parseInt(appContext.param.arrays[0]);
+        StoreBasicInfo info = new StoreBasicInfo(compid);
+        if (getStoreInfoById(info)){
+            return new Result().success(info);//返回用户信息
+        };
+        return new Result().fail("暂无企业信息");//返回用户信息
+    }
+    /**
+     * 获取门店用户信息
      */
     @UserPermission(role = {2})
-    public Result basicInfo(AppContext appContext){
-        return new StoreBasicInfoOp().execute(appContext);
+    public Result getStoreSession(AppContext appContext){
+        if (appContext.getUserSession().compId > 0){
+            StoreBasicInfo info = new StoreBasicInfo(appContext.getUserSession().compId);
+            if (getStoreInfoById(info)){
+                UserSession userSession = appContext.getUserSession().cloneStoreUserInfo(info);
+                return new Result().success(userSession);//返回用户信息
+            };
+        }
+        return new Result().fail("没有企业信息,请关联企业");//返回用户信息
     }
 
     /**
-     * 获取用户信息
+     * 获取用户信息 - 后台运营使用
      */
     public Result getUserSession(AppContext appContext){
         UserSession userSession = appContext.getUserSession().cloneBackUserInfo();
