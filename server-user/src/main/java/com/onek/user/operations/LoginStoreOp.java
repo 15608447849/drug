@@ -69,8 +69,6 @@ public class LoginStoreOp implements IOperation<AppContext> {
         return new Result().fail("登陆失败");
     }
 
-
-
     private boolean relationTokenUserSession(AppContext context) {
         context.setUserSession(userSession);
         return context.relationTokenUserSession();
