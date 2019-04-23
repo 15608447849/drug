@@ -331,7 +331,9 @@ public class ShoppingCartModule {
         }
         ShoppingCartVO[] returnResults = new ShoppingCartVO[queryResult.size()];
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
-                new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory","spec","status","spu"});
+                new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory","spec","pstatus","spu"});
+
+
 
 
         return Arrays.asList(returnResults);
@@ -351,6 +353,10 @@ public class ShoppingCartModule {
             return null;
         }
         for(ShoppingCartVO shoppingCartVO : shoppingCartList){
+            if(shoppingCartVO.getPstatus() == 0){
+                shoppingCartVO.setStatus(2);
+            }
+
             for(int i = 0; i < shoppingCartDTOS.size(); i++){
                 if(shoppingCartVO.getPdno() == shoppingCartDTOS.get(i).getPdno()){
                     shoppingCartVO.setNum(shoppingCartDTOS.get(i).getPnum());
