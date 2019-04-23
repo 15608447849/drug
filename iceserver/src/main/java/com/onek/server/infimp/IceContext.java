@@ -27,17 +27,20 @@ public class IceContext {
     public IParam param;
 
     public IceContext(Current current, IRequest request)  {
-        this.serverName = current.id.name;
-        this.current = current;
-        String[] arr = current.con._toString().split("\\n")[1].split("=")[1].trim().split(":");
-        this.remoteIp = arr[0];
-        this.remotePoint = Integer.parseInt(arr[1]);
-        this.logger = current.adapter.getCommunicator().getLogger();
-        this.refPkg = request.pkg;
-        this.refCls = request.cls;
-        this.refMed = request.method;
-        this.param = request.param;
-        initialization();
+        try {
+            this.serverName = current.id.name;
+            this.current = current;
+            String[] arr = current.con._toString().split("\\n")[1].split("=")[1].trim().split(":");
+            this.remoteIp = arr[0];
+            this.remotePoint = Integer.parseInt(arr[1]);
+            this.logger = current.adapter.getCommunicator().getLogger();
+            this.refPkg = request.pkg;
+            this.refCls = request.cls;
+            this.refMed = request.method;
+            this.param = request.param;
+            initialization();
+        } catch (Exception ignored) { }
+
     }
 
     /**初始化*/

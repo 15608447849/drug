@@ -45,6 +45,16 @@ public class UserSession implements Serializable{
     }
 
 
+
+    public UserSession cloneStoreUserInfo(StoreBasicInfo info) {
+        UserSession userSession = new UserSession();
+        userSession.userId = userId;
+        userSession.roleCode = roleCode;
+        userSession.phone = phone;
+        userSession.comp = info;
+        return userSession;
+    }
+
     public UserSession cloneBackUserInfo(){
         UserSession userSession = new UserSession();
         userSession.userId = userId;
@@ -68,4 +78,5 @@ public class UserSession implements Serializable{
                 ", userName='" + userName + '\'' +
                 '}';
     }
+
 }
