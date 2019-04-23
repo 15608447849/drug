@@ -1,34 +1,22 @@
 package com.onek.user.operations
 
 import com.onek.context.AppContext
-import com.onek.util.RedisGlobalKeys
 import com.onek.entitys.IOperation
 import com.onek.entitys.Result
 import com.onek.user.interactive.AptitudeInfo
+import com.onek.user.operations.StoreBasicInfoOp.updateCompInfoToCacheById
+import com.onek.util.RedisGlobalKeys
 import constant.DSMConst
 import dao.BaseDAO
 
 /**
  * @Author: leeping
  * @Date: 2019/3/27 11:25
- * glacier2router --Glacier2.Client.Endpoints="tcp -h 38.108.85.159 -p 50000" --Glacier2.PermissionsVerifier=Glacier2/NullPermissionsVerifier
+ * 企业资质审核
  */
 class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
     var companyId:String? = null; //公司码
-
-//    var businessId:String? = null; //营业执照
-//    var businessIdStart:String? = null; //营业执照 有效开始
-//    var businessIdEnd:String? = null; //营业执照 有效结束
-//
-//    var permitId:String? = null; //经营许可证
-//    var permitIdStart:String? = null; //经营许可证
-//    var permitIdEnd:String? = null; //经营许可证
-//
-//    var gspId:String? = null; //gsp
-//    var gspIdStart:String? = null; //gsp
-//    var gspIdEnd:String? = null; //gsp
-
     var auditCause:String? = null //审核失败原因
     var auditStatus:Int = 0; //审核状态
 
@@ -67,6 +55,7 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
             val updateSql = "UPDATE {{?" + DSMConst.D_COMP + "}} SET cstatus=cstatus&~$status|$auditStatus,examine=?,auditdate=CURRENT_DATE,audittime=CURRENT_TIME WHERE cstatus&1=0 AND cid=?"
             val i = BaseDAO.getBaseDAO().updateNative(updateSql,auditCause,companyId)
             if (i > 0) {
+                updateCompInfoToCacheById(companyId!!.toInt())//更新企业信息到缓存
                return Result().success("审核保存提交成功")
             }
         }

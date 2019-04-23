@@ -1,12 +1,9 @@
 package com.onek.iceabs;
 
-import Ice.*;
 import Ice.Object;
-import com.onek.server.inf.IRequest;
+import Ice.*;
 
 import java.lang.Exception;
-import java.util.Arrays;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,8 +20,6 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
 
     /**用来存放我们需要拦截的Ice服务对象，Key为服务ID，value为对应的Servant*/
     private Map<Identity, Object> map ;
-
-
 
     private IceServiceDispatchInterceptor() {
         map = new ConcurrentHashMap<>();
@@ -47,6 +42,14 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
         map.remove(id);
     }
 
+    private boolean systemRunning = false;
+
+    public void startServer(){
+        systemRunning = true;
+    }
+
+
+
     /**
      * 移除服务
      */
@@ -54,18 +57,19 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
     @Override
     public DispatchStatus dispatch(Request request) {
         try{
+            if (!systemRunning) throw new Exception("服务未初始化完成");
             long time = System.currentTimeMillis();
             Current current = request.getCurrent();
             Identity identity = request.getCurrent().id;
-            DispatchStatus status = map.get(identity).ice_dispatch(request);
-            if ( current.operation .equals("accessService")) communicator().getLogger().print(
-                            "调用状态: "+ statusString(status) + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms");
+            Object object = map.get(identity);
+            DispatchStatus status = object.ice_dispatch(request);
+            if (current.operation .equals("accessService")) communicator().getLogger()
+                    .print("调用状态: "+ statusString(status) + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms\n\r");
             return status;
         }catch(Exception e){
-            e.printStackTrace();
             communicator().getLogger().error(e.toString());
         }
-        return null;
+        return DispatchStatus.DispatchUserException;
     }
 
     private String statusString(DispatchStatus status){

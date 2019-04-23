@@ -25,7 +25,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     /**
      * 在线客户端
      */
-    private Map<String, PushMessageClientPrx> _clientsMaps ;
+    protected Map<String, PushMessageClientPrx> _clientsMaps ;
 
     protected IOThreadPool pool ;
 

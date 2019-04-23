@@ -5,6 +5,7 @@ import com.onek.entitys.Result;
 import com.onek.server.inf.IRequest;
 import com.onek.server.inf.PushMessageClientPrx;
 import com.onek.server.infimp.IceContext;
+import global.IceRemoteUtil;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
@@ -27,19 +28,26 @@ public class AppContext extends IceContext {
     //初始化用户信息 lzp
     @Override
     protected void initialization(){
-        try {
-            if (StringUtils.isEmpty(param.token)) return;
-            String key = param.token + "@" + remoteIp;
-            String value = RedisUtil.getStringProvide().get(key);
-            logger.print(key+" = " + value);
-            if(StringUtils.isEmpty(value)) return;
-            String json = RedisUtil.getStringProvide().get(value);
-            logger.print(value+" = " + json);
-            if(StringUtils.isEmpty(json)) return;
-            this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
-            logger.print(key+" - Redis - 用户信息:\n" + userSession);
 
-        } catch (Exception ignored) { }
+            //加载用户信息
+            if (StringUtils.isEmpty(param.token)) return;
+            String key = genUKey();
+            String json = RedisUtil.getStringProvide().get(key);
+            if(StringUtils.isEmpty(json)) return;
+            logger.print( key + " #------- 当 前 用 户 信 息 ----->> " +json );
+            this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
+
+            //查询企业信息
+        if (userSession.compId > 0) {
+            json = RedisUtil.getStringProvide().get(userSession.compId+"");
+            if(StringUtils.isEmpty(json)) {
+                //远程调用查询
+                json = IceRemoteUtil.getCompanyJson(userSession.compId);
+                if(StringUtils.isEmpty(json))  return;
+            };
+            logger.print( key + " #------- 当 前 用 户 企 业 信 息 ----->> " +json );
+            userSession.comp = GsonUtils.jsonToJavaBean(json, StoreBasicInfo.class);
+        }
     }
 
     public UserSession getUserSession() {
@@ -52,26 +60,20 @@ public class AppContext extends IceContext {
 
 
     //创建用户会话KRY lzp
-    private String createKey() {
-        param.token = param.token + "@" + remoteIp;
-        return EncryptUtils.encryption(param.token);
+    private String genUKey() {
+        return EncryptUtils.encryption(param.token + "@" + remoteIp);
     }
 
     //创建用户会话到缓存 lzp
     public boolean relationTokenUserSession() {
         if (userSession == null) return false;
-        //创建token标识
-        String key = createKey();
+        //创建token 标识
+        String key = genUKey();
         String json = GsonUtils.javaBeanToJson(userSession);
 
         String res = RedisUtil.getStringProvide().set(key,json);
-        if (res.equals("OK")){
-            logger.print(key+ " 更新用户信息 :\n"+ json);
-            res = RedisUtil.getStringProvide().set(param.token , key);
-
-            return res.equals("OK");
-        }
-        return false;
+        logger.print( key + " ||===写入用户信息到缓存======== "+ res +" =======>> "+ json);
+        return  res.equals("OK");
     }
 
     @Override
@@ -90,9 +92,4 @@ public class AppContext extends IceContext {
         }
     }
 
-    public void setCompInfo(StoreBasicInfo info) {
-        if (userSession!=null){
-            userSession.comp = info;
-        }
-    }
 }
