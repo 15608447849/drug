@@ -31,9 +31,10 @@ public class TranOrder {
     private String odate;//订单日期
     private String otime;//订单时间
     private int cstatus;//
-    private String consignee;
-    private String contact;
-    private String address;
+    private String consignee;//收货人
+    private String contact;//收货人联系方式
+    private String address;//收货详细地址
+
 
     private List<TranOrderGoods> goods;
 

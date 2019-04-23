@@ -2,6 +2,7 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -9,10 +10,12 @@ import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
+import com.onek.context.UserSession;
 import com.onek.entity.AppriseVO;
 import com.onek.entity.AsAppVO;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
+import com.onek.util.LccOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
@@ -63,7 +66,13 @@ public class OrderOptModule {
     private static final String UPD_APPRAISE_SQL = "update {{?" + DSMConst.TD_TRAN_APPRAISE + "}} set ckstatus=? "
             + " where cstatus&1=0 and pdno=? ";
 
-    ;
+
+    //更新售后表售后审核状态(-1－拒绝； 0－未审核 ；1－审核通过)
+    private static final String UPD_APPRAISE_CK_SQL = "update {{?" + DSMConst.TD_TRAN_APPRAISE + "}} set ckstatus=?, "
+            + "ckdate = CURRENT_DATE,cktime = CURRENT_TIME,checker = ?,reason = ? where cstatus&1=0 and asno=? ";
+
+
+
 
 
     /* *
@@ -251,5 +260,43 @@ public class OrderOptModule {
 //        sqlNative = sqlList.toArray(sqlNative);
 //        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compId, year, sqlNative, params));
 //        return b ? result.success("取消成功") : result.fail("取消失败");
+
+    }
+
+    @UserPermission(ignore = true)
+    public Result getLogisticsInfo(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.has("orderno") ? jsonObject.get("orderno").getAsString() : "";
+//        int compid = jsonObject.has("compid") ?  jsonObject.get("compid").getAsInt() : 0;
+
+        JSONObject result = LccOrderUtil.queryTraceByOrderno(orderNo);
+        return new Result().success(result);
+    }
+
+
+    /* *
+     * @description 售后申请审核
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result afterSaleReview(AppContext appContext) {
+        String json = appContext.param.json;
+        Result result = new Result();
+        JsonParser jsonParser = new JsonParser();
+        UserSession userSession = appContext.getUserSession();
+        if(userSession == null || (userSession.roleCode & 128 )== 0){
+            return result.fail("当前用户没有该权限");
+        }
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int asno = jsonObject.get("asno").getAsInt();
+        String reason = jsonObject.get("reason").getAsString();
+        int type =  jsonObject.get("type").getAsInt();
+        int ret = baseDao.updateNative(UPD_APPRAISE_CK_SQL, type, userSession.userId, reason, asno);
+        return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
     }
 }
