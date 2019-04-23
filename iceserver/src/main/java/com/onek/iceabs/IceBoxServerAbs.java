@@ -55,6 +55,7 @@ public abstract class IceBoxServerAbs implements Service {
             }
         });
         _communicator.getLogger().print("初始化完成,耗时:"+ (System.currentTimeMillis() - time)+"ms");
+        IceServiceDispatchInterceptor.getInstance().startServer();
     }
 
     private void initIceLogger(String name,CommunicatorI ic) {

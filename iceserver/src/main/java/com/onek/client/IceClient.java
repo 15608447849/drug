@@ -3,9 +3,7 @@ package com.onek.client;
 import com.onek.server.inf.IRequest;
 import com.onek.server.inf.InterfacesPrx;
 import com.onek.server.inf.InterfacesPrxHelper;
-import threadpool.MThreadPool;
 
-import java.io.IOException;
 import java.util.HashMap;
 import java.util.Locale;
 
@@ -15,7 +13,6 @@ import java.util.Locale;
  * ice客户端远程调用
  */
 public class IceClient {
-    private MThreadPool pool;
 
     private  Ice.Communicator ic = null;
 
@@ -33,7 +30,6 @@ public class IceClient {
     public IceClient startCommunication() {
         if (ic == null) {
             ic = Ice.Util.initialize(args);
-            pool = new MThreadPool();
         }
         return this;
     }
@@ -41,13 +37,7 @@ public class IceClient {
     synchronized
     public IceClient stopCommunication() {
         if (ic != null) {
-            try {
-                pool.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }finally {
-                ic.destroy();
-            }
+            ic.destroy();
         }
         return this;
     }
@@ -100,21 +90,9 @@ public class IceClient {
         return "";
     }
 
-    interface Callback{
-        void callback(String result);
-    }
-
-    public void executeAsync(Callback callback){
-        pool.post(() -> {
-            String result =executeSync();
-            if (callback!=null) callback.callback(result);
-        });
-    }
     public void sendMessageToClient(String identity,String message){
         if (curPrx!=null){
-//            pool.post(() -> {
              curPrx.sendMessageToClient(identity,message);
-//            });
         }
     }
 }

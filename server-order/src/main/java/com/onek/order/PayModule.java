@@ -116,10 +116,16 @@ public class PayModule {
 
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
 
-            String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
-                    "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+            try{
+                String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
+                        "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
 
-            return new Result().success(r);
+                return new Result().success(r);
+            }catch (Exception e){
+                e.printStackTrace();
+                return new Result().fail("生成支付二维码图片失败!");
+            }
+
 
         }else{
             return new Result().fail("未查到【"+orderno+"】支付的订单!");

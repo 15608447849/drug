@@ -69,7 +69,7 @@ public class CouponFilterService extends BaseDiscountFilterService {
     }
 
     private Couent getCouent() {
-        if (noway != null) {
+        if (this.noway != null) {
             return this.couent;
         }
 
@@ -93,8 +93,8 @@ public class CouponFilterService extends BaseDiscountFilterService {
 
         Couent couent = cArray[0];
 
-        //glbno为0 -> 不全局兼容
-        //excoupon -> 是否排斥优惠券
+        // glbno为0 -> 不全局兼容
+        // excoupon -> 是否排斥优惠券
         if (couent.getGlbno() == 0 && this.excoupon) {
             this.noway = true;
             return null;

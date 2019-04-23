@@ -97,7 +97,7 @@ public class ServerImp extends IcePushMessageServerImps {
             if(request.param.pageIndex > 0 && request.param.pageNumber > 0){
                 sb.append("\npaging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
             }
-            logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString());
+            logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString()+"\n");
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -124,7 +124,9 @@ public class ServerImp extends IcePushMessageServerImps {
             obj = ObjectRefUtil.createObject(packagePath+"."+classPath,null,null);
             //使用完毕之后再放入池中
         }
-        return  ObjectRefUtil.callMethod(obj,method,new Class[]{contextCls},iApplicationContext);
+        Object methodResultValue =  ObjectRefUtil.callMethod(obj,method,new Class[]{contextCls},iApplicationContext);
+        ObjectPoolManager.get().putObject(classPath,obj); //缓存对象
+        return methodResultValue;
     }
 
     //产生平台上下文对象
@@ -168,13 +170,14 @@ public class ServerImp extends IcePushMessageServerImps {
             IceContext context = generateContext(__current,request);
             result = interceptor(context);
             if (result == null) result = callObjectMethod(context.refPkg,context.refCls,context.refMed,context);
-            if (isLongConnection) {
-
+            if (isLongConnection && result instanceof Result) {
+                context.longConnectionSetting(_clientsMaps,(Result)result);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.print(__current.con._toString().split("\\n")[1]+"\t"+e);
-            result = new Result().message(e.toString());
+//            e.printStackTrace();
+            logger.error(e.toString());
+//            logger.print(__current.con._toString().split("\\n")[1]+"\t"+e);
+            result = new Result();
         }
         return printResult(result);
     }
