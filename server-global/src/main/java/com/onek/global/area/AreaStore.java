@@ -8,7 +8,7 @@ import dao.BaseDAO;
 import java.util.List;
 
 public class AreaStore {
-    private static final String AREA_SELECT_BASE = " SELECT areac, arean, cstatus ";
+    private static final String AREA_SELECT_BASE = " SELECT areac, arean, cstatus, fee, lcareac ";
     private static final String AREA_WHERE_BASE = " WHERE cstatus&1 = 0 AND areac = ? ";
     private static final String AREA_WHERE_CHILDREN =
             " WHERE cstatus&1 = 0 AND areac REGEXP ? ";
