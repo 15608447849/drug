@@ -1,11 +1,17 @@
 package com.onek.util;
 
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.hsf.framework.api.cstruct.UserParam;
+import com.hsf.framework.api.myOrder.MyOrderServerPrx;
 import com.hsf.framework.order.OrderICE;
 import com.hsf.framework.order.OrderServicePrx;
 import com.onek.entity.TranOrder;
 import com.onek.property.LccProperties;
 import org.hyrdpf.ds.AppConfig;
+import util.StringUtils;
+
+import java.util.Set;
 
 public class LccOrderUtil {
 
@@ -71,17 +77,45 @@ public class LccOrderUtil {
 
     }
 
+    public static JSONObject queryTraceByOrderno(String orderno){
+        MyOrderServerPrx myOrderServerPrx = (MyOrderServerPrx)RpcClientUtil.getServicePrx(MyOrderServerPrx.class);
+        UserParam userParam = new UserParam();
+        userParam.compid = LccProperties.INSTANCE.pubercompid + "";
+        String result = myOrderServerPrx.getOrderTraByOrderid(userParam, new String[]{orderno}, 0);
+        JSONObject traceJson = new JSONObject();
+        System.out.println(result);
+        if(!StringUtils.isEmpty(result)){
+            JSONObject jsonObject = JSONObject.parseObject(result);
+            if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
+                 JSONObject data = (JSONObject) jsonObject.get("obj");
+                 Set<String> keys = data.keySet();
+                 if(keys != null && keys.size() > 0){
+                     String key = keys.iterator().next();
+                     traceJson.put("billno", key);
+                     traceJson.put("logictype", "0");
+                     JSONArray array = data.getJSONArray(key);
+                     traceJson.put("node", array);
+                 }
+            }
+        }
+
+        return traceJson;
+    }
+
     static {
         AppConfig.initLogger("log4j2.xml");
         AppConfig.initialize();
     }
 
     public static void main(String[] args) {
-        TranOrder tranOrder = new TranOrder();
-        tranOrder.setFreight(20);
-        tranOrder.setRvaddno(10130803);
-        tranOrder.setPdnum(2);
-        tranOrder.setOrderno("1904180003102002");
-        LccOrderUtil.addLccOrder(tranOrder, "小李", "14598763465","北京市天安门");
+//        TranOrder tranOrder = new TranOrder();
+//        tranOrder.setFreight(20);
+//        tranOrder.setRvaddno(10130803);
+//        tranOrder.setPdnum(2);
+//        tranOrder.setOrderno("1904180003102002");
+//        LccOrderUtil.addLccOrder(tranOrder, "小李", "14598763465","北京市天安门");
+
+        JSONObject result = LccOrderUtil.queryTraceByOrderno("1904180003102002");
+        System.out.println(result.toJSONString());
     }
 }

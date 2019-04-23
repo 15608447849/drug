@@ -2,6 +2,7 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -11,6 +12,7 @@ import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.entity.AppriseVO;
 import com.onek.entitys.Result;
+import com.onek.util.LccOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
@@ -109,5 +111,17 @@ public class OrderOptModule {
             }
         }
         return result.setQuery(appriseVOS, pageHolder);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getLogisticsInfo(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.has("orderno") ? jsonObject.get("orderno").getAsString() : "";
+//        int compid = jsonObject.has("compid") ?  jsonObject.get("compid").getAsInt() : 0;
+
+        JSONObject result = LccOrderUtil.queryTraceByOrderno(orderNo);
+        return new Result().success(result);
     }
 }
