@@ -30,6 +30,10 @@ public class TranOrderDetail {
     private String otime;//订单时间
     private int cstatus;//
 
+    private String consignee;
+    private String contact;
+    private String address;
+
     /**      trans         **/
     private int payno;
     private double payprice;
@@ -59,6 +63,7 @@ public class TranOrderDetail {
 
     /**         ex           **/
     private String pname;
+    private String cusname;
 
     private List<TranOrderGoods> goods;
 
@@ -396,5 +401,45 @@ public class TranOrderDetail {
 
     public void setGoods(List<TranOrderGoods> goods) {
         this.goods = goods;
+    }
+
+    public String getConsignee() {
+        return consignee;
+    }
+
+    public void setConsignee(String consignee) {
+        this.consignee = consignee;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getPname() {
+        return pname;
+    }
+
+    public void setPname(String pname) {
+        this.pname = pname;
+    }
+
+    public String getCusname() {
+        return cusname;
+    }
+
+    public void setCusname(String cusname) {
+        this.cusname = cusname;
     }
 }

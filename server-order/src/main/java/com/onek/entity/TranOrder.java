@@ -31,9 +31,14 @@ public class TranOrder {
     private String odate;//订单日期
     private String otime;//订单时间
     private int cstatus;//
+    private String consignee;//收货人
+    private String contact;//收货人联系方式
+    private String address;//收货详细地址
+
 
     private List<TranOrderGoods> goods;
 
+    private String cusname;
 
     public String getOrderno() {
         return orderno;
@@ -217,5 +222,37 @@ public class TranOrder {
 
     public void setGoods(List<TranOrderGoods> goods) {
         this.goods = goods;
+    }
+
+    public String getConsignee() {
+        return consignee;
+    }
+
+    public void setConsignee(String consignee) {
+        this.consignee = consignee;
+    }
+
+    public String getContact() {
+        return contact;
+    }
+
+    public void setContact(String contact) {
+        this.contact = contact;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getCusname() {
+        return cusname;
+    }
+
+    public void setCusname(String cusname) {
+        this.cusname = cusname;
     }
 }

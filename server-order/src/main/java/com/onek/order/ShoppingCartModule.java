@@ -409,8 +409,6 @@ public class ShoppingCartModule {
                         if(brule == 1113){
                             System.out.println("活动为秒杀");
                             shoppingCartVO.setStatus(1);
-                        }else{
-                            shoppingCartVO.setStatus(0);
                         }
                         ruleList.add(discountRule);
                     }

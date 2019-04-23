@@ -11,15 +11,10 @@ import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
-import util.ArrayUtil;
-import util.MathUtil;
-import util.StringUtils;
-import util.TimeUtils;
+import redis.util.RedisUtil;
+import util.*;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class OrderInfoModule {
     private static final String QUERY_TRAN_ORDER_PARAMS =
@@ -27,7 +22,7 @@ public class OrderInfoModule {
           + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
           + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
           + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
-          + " ord.otime, ord.cstatus ";
+          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address ";
 
     private static final String QUERY_TRAN_TRANS_PARAMS =
             " trans.payno, trans.payprice, "
@@ -68,7 +63,8 @@ public class OrderInfoModule {
                     + " ON trans.cstatus&1 = 0 "
                     + " AND trans.paystatus = 1 AND trans.orderno = ord.orderno "
                     + " LEFT JOIN " + FROM_APPRAISE
-                    + " ON app.cstatus&1 = 0 "
+                    + " ON  app.cstatus&1 = 0 "
+                    + " AND app.paystatus = 1 "
                     + " AND app.orderno = ord.orderno "
             + " WHERE ord.cstatus&1 = 0 AND ord.orderno = ? ";
 
@@ -92,7 +88,17 @@ public class OrderInfoModule {
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrderDetail.class);
 
+        Map<String, String> compMap;
         for (TranOrderDetail tranOrder : result) {
+
+            String compStr = RedisUtil.getStringProvide().get(String.valueOf(tranOrder.getCusno()));
+
+            compMap = GsonUtils.string2Map(compStr);
+
+            if (compMap != null) {
+                tranOrder.setCusname(compMap.get("storeName"));
+            }
+
             tranOrder.setPayprice(
                     MathUtil.exactDiv(tranOrder.getPayprice(), 100).doubleValue());
             tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
@@ -169,7 +175,17 @@ public class OrderInfoModule {
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrder.class);
 
+        Map<String, String> compMap;
+
         for (TranOrder tranOrder : result) {
+            String compStr = RedisUtil.getStringProvide().get(String.valueOf(tranOrder.getCusno()));
+
+            compMap = GsonUtils.string2Map(compStr);
+
+            if (compMap != null) {
+                tranOrder.setCusname(compMap.get("storeName"));
+            }
+
             tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
             tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
             tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());

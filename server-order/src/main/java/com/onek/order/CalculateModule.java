@@ -67,9 +67,10 @@ public class CalculateModule {
         List<IDiscount> discounts
                 = new ActivityFilterService(
                         new ActivitiesFilter[] {
-                                new TypeFilter(),
+//                                new TypeFilter(),
                                 new CycleFilter(),
-                                new QualFilter(compid) })
+                                new QualFilter(compid),
+                                new PriorityFilter(), })
                 .getCurrentActivities(products);
 
         IDiscount currDiscount = null;

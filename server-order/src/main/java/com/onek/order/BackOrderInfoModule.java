@@ -10,14 +10,13 @@ import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import redis.util.RedisUtil;
+import util.GsonUtils;
 import util.MathUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 public class BackOrderInfoModule {
     private static final String QUERY_TRAN_ORDER_PARAMS =
@@ -25,7 +24,7 @@ public class BackOrderInfoModule {
                     + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
                     + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
                     + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
-                    + " ord.otime, ord.cstatus ";
+                    + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address ";
 
     private static final String QUERY_TRAN_GOODS_PARAMS =
             " goods.unqid, goods.orderno, goods.compid, goods.pdno, goods.pdprice, "
@@ -71,7 +70,7 @@ public class BackOrderInfoModule {
 
         List<Object> paramList = new ArrayList<>();
 
-        String param = null;
+        String param;
         for (int i = 0; i < params.length; i++) {
             param = params[i];
 
@@ -94,10 +93,10 @@ public class BackOrderInfoModule {
                         sql.append(" AND ord.orderno = ? ");
                         break;
                     case 4:
-                        sql.append(" AND ord.odate <= ? ");
+                        sql.append(" AND ord.odate >= ? ");
                         break;
                     case 5:
-                        sql.append(" AND ord.odate >= ? ");
+                        sql.append(" AND ord.odate <= ? ");
                         break;
                 }
             } catch (Exception e) {
@@ -115,7 +114,16 @@ public class BackOrderInfoModule {
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrder.class);
 
+        Map<String, String> compMap;
         for (TranOrder tranOrder : result) {
+            String compStr = RedisUtil.getStringProvide().get(String.valueOf(tranOrder.getCusno()));
+
+            compMap = GsonUtils.string2Map(compStr);
+
+            if (compMap != null) {
+                tranOrder.setCusname(compMap.get("storeName"));
+            }
+
             tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
             tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
             tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
