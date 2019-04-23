@@ -13,7 +13,6 @@ import com.onek.entity.AppriseVO;
 import com.onek.entity.AsAppVO;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
-import com.sun.org.apache.regexp.internal.RE;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
