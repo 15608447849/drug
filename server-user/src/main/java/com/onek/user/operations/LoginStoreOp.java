@@ -56,7 +56,11 @@ public class LoginStoreOp implements IOperation<AppContext> {
             }
 
             //关联token-用户信息
-            if (relationTokenUserSession(context))  return new Result().success("登陆成功");
+            if (relationTokenUserSession(context)){
+                //查看是否存在多端登陆的情况
+                context.checkMorePointLogin();
+                return new Result().success("登陆成功");
+            }
             else return new Result().success("无法关联用户信息");
 
         } catch (Exception e) {
@@ -64,6 +68,8 @@ public class LoginStoreOp implements IOperation<AppContext> {
         }
         return new Result().fail("登陆失败");
     }
+
+
 
     private boolean relationTokenUserSession(AppContext context) {
         context.setUserSession(userSession);
@@ -90,8 +96,8 @@ public class LoginStoreOp implements IOperation<AppContext> {
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql, context.remoteIp,objects[0]);
                 if (i > 0){
                     userSession = UserSession.createStoreUser(
-                            (int) objects[0],
-                            (long) objects[1],
+                            StringUtils.checkObjectNull(objects[0],0),
+                            StringUtils.checkObjectNull(objects[1],0L),
                             phone,
                             context.remoteIp,
                             password,

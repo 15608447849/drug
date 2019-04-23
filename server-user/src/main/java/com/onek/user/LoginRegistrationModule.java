@@ -1,12 +1,11 @@
 package com.onek.user;
 
-import com.onek.context.AppContext;
 import com.onek.annotation.UserPermission;
+import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.user.operations.*;
-import redis.util.RedisUtil;
 import util.GsonUtils;
 
 import static com.onek.user.operations.StoreBasicInfoOp.getStoreInfoById;
@@ -91,11 +90,14 @@ public class LoginRegistrationModule {
      * 登出
      */
     public Result logout(AppContext appContext){
-        String key = appContext.param.token + "@" + appContext.remoteIp;
-        String value = RedisUtil.getStringProvide().get(key);
-        RedisUtil.getStringProvide().delete(value);
-        RedisUtil.getStringProvide().delete(key);
-        return new Result().success("登出成功");
+        try {
+//            UserSession userSession = appContext.getUserSession();
+//            appContext.logger.print("用户:"+ userSession+" 登出中...");
+            if (appContext.clearTokenByUserSession())  return new Result().success("登出成功");
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new Result().fail("登出失败");
     }
 
     /**

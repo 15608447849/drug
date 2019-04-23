@@ -25,11 +25,22 @@ public class StoreBasicInfoOp {
         for (Object[] rows : lines){
             StoreBasicInfo info = new StoreBasicInfo(checkObjectNull(rows[7],0));
             objArrToStoreInfo(rows,info);
+            infoToCache(info);
         }
     }
+
     public static void updateCompInfoToCacheById(int cid){
-        getStoreInfoById(new StoreBasicInfo(cid));
+        StoreBasicInfo info = new StoreBasicInfo(cid);
+        getStoreInfoById(info);
+       infoToCache(info);
     }
+
+    private static void infoToCache(StoreBasicInfo info) {
+        String json = GsonUtils.javaBeanToJson(info);
+        String res = RedisUtil.getStringProvide().set(""+info.storeId,json );
+        communicator().getLogger().print("更新信息 - Redis - "+ res +" :" + json);
+    }
+
     public static boolean getStoreInfoById(StoreBasicInfo info) {
         //通过企业码获取企业信息
         String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng" +
@@ -66,12 +77,9 @@ public class StoreBasicInfoOp {
         info.storeName = checkObjectNull(rows[2],"");
         info.address = checkObjectNull(rows[3],"未设置");
         info.addressCode = checkObjectNull(rows[4],0L);
-        info.latitude = checkObjectNull(rows[5],new BigDecimal(0)); //纬度
-        info.longitude = checkObjectNull(rows[6],new BigDecimal(0)); //精度
+        info.latitude = new BigDecimal(checkObjectNull(rows[5],"0.00")); //纬度
+        info.longitude = new BigDecimal(checkObjectNull(rows[6],"0.00")); //精度
 
-        String json = GsonUtils.javaBeanToJson(info);
-        String res = RedisUtil.getStringProvide().set(""+info.storeId,json );
-        communicator().getLogger().print("更新信息 - Redis - "+ res +" :" + json);
     }
 
 
