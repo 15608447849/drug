@@ -1,12 +1,11 @@
 package com.onek.interceptors;
 
-import com.onek.context.AppContext;
-import com.onek.context.StoreBasicInfo;
-import com.onek.context.UserSession;
 import com.onek.annotation.UserPermission;
+import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.entitys.Result;
-import com.onek.server.infimp.IceContext;
 import com.onek.server.infimp.IServerInterceptor;
+import com.onek.server.infimp.IceContext;
 
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -41,17 +40,19 @@ public class UserInterceptor implements IServerInterceptor {
             }
             //判断接口是否对用户权限进行拦截
             if(up == null || !up.ignore()){
+                appContext.initialization();//初始化上下文用户信息
                 UserSession userSession = appContext.getUserSession();
-                if(userSession == null){
+
+                if(userSession == null) {
                     return new Result().intercept("用户未登录");
                 }
 
                 if(up != null && up.compAuth()){
-                    StoreBasicInfo storeInfo = userSession.comp;
-                    if(storeInfo == null ||  (storeInfo.authenticationStatus & 256) <= 0){
-                         return new Result().intercept("企业没有认证");
+                    if(userSession.comp == null ||  (userSession.comp.authenticationStatus & 256) <= 0){
+                        return new Result().intercept("企业没有认证");
                     }
                 }
+
                 if (up != null){
                     long[] roleArr = up.role();
                     //角色判断
@@ -65,14 +66,16 @@ public class UserInterceptor implements IServerInterceptor {
                                 break;
                             }
                         }
-                        if (!isAccess) return new Result().intercept("用户角色拒绝");
+                        if (!isAccess){
+                            return new Result().intercept("用户角色拒绝");
+                        }
                     }
                 }
             }
         }catch(Exception e){
             //e.printStackTrace();
-            context.logger.error("访问被拦截,错误原因: "+e);
-            return new Result().intercept("异常捕获");
+            context.logger.error("访问被拦截,异常原因: "+e );
+            return new Result().intercept("异常捕获:"+e);
         }
         return null;
     }

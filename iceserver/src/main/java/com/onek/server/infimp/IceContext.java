@@ -27,7 +27,6 @@ public class IceContext {
     public IParam param;
 
     public IceContext(Current current, IRequest request)  {
-        try {
             this.serverName = current.id.name;
             this.current = current;
             String[] arr = current.con._toString().split("\\n")[1].split("=")[1].trim().split(":");
@@ -38,13 +37,10 @@ public class IceContext {
             this.refCls = request.cls;
             this.refMed = request.method;
             this.param = request.param;
-            initialization();
-        } catch (Exception ignored) { }
-
     }
 
     /**初始化*/
-    protected void initialization()  {
+    public void initialization()  {
 
     }
     protected void longConnectionSetting(Map<String, PushMessageClientPrx> map, Result result){

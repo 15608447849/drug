@@ -155,7 +155,7 @@ public class ServerImp extends IcePushMessageServerImps {
 
     private String printResult(Object result) {
         String resultString = GsonUtils.javaBeanToJson(result);
-        logger.print(resultString +"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-");
+//        logger.print(resultString +"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-");
         return resultString;
     }
 

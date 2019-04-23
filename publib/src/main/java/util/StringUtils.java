@@ -1,6 +1,8 @@
 package util;
 
 import com.google.gson.JsonParser;
+
+import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
 import java.util.regex.Pattern;
 
@@ -30,11 +32,25 @@ public class StringUtils {
     //判断对象是否为null 设置默认值
     public static <T> T checkObjectNull(Object object,T def){
         try {
+
             if (object == null) return def;
+
             if (def instanceof String){
                 return (T) object.toString();
             }
-            return (T) object;
+
+            try {
+                Class cls = def.getClass();
+                String m = "parse"+cls.getSimpleName();
+                if (m.contains("Int")) m = "parseInt";
+                Method method = cls.getMethod(m, String.class);
+                T t = (T) method.invoke(null,object.toString());
+                return t;
+            } catch (Exception e) {
+
+                return (T) object;
+            }
+
         } catch (Exception e) {
             e.printStackTrace();
         }
