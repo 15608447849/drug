@@ -78,6 +78,16 @@ public class ShoppingCartVO {
 
     private double totalamt;
 
+    private int pstatus;
+
+    public int getPstatus() {
+        return pstatus;
+    }
+
+    public void setPstatus(int pstatus) {
+        this.pstatus = pstatus;
+    }
+
     public double getTotalamt() {
         return totalamt;
     }
