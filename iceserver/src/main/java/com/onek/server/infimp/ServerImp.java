@@ -84,7 +84,7 @@ public class ServerImp extends IcePushMessageServerImps {
         try {
             StringBuilder sb = new StringBuilder();
             sb.append(__current.con.toString().split("\n")[1]);
-            sb.append("\ncall:\t" +serverName+ " >>> " + request.pkg +" >>> " + request.cls +" >>> "+request.method);
+            sb.append("\t" +serverName+ " >>> " + request.pkg +" >>> " + request.cls +" >>> "+request.method);
             if(!StringUtils.isEmpty(request.param.token)){
                 sb.append( "\ntoken:\t"+ request.param.token);
             }
@@ -97,7 +97,7 @@ public class ServerImp extends IcePushMessageServerImps {
             if(request.param.pageIndex > 0 && request.param.pageNumber > 0){
                 sb.append("\npaging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
             }
-            logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString()+"\n");
+            logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString());
 
         } catch (Exception e) {
             e.printStackTrace();

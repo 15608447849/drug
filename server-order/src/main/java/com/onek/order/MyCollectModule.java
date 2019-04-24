@@ -1,17 +1,17 @@
 package com.onek.order;
 
-import Ice.Application;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.IOThreadUtils;
 import com.onek.util.prod.ProdEntity;
-import com.onek.util.prod.ProdInfoStore;
 import dao.BaseDAO;
 import global.IceRemoteUtil;
 import util.GsonUtils;
 import util.StringUtils;
+
 import java.util.ArrayList;
 import java.util.List;
+
 import static constant.DSMConst.TD_TRAN_COLLE;
 import static global.GenIdUtil.getUnqId;
 import static util.TimeUtils.getCurrentYear;
@@ -32,17 +32,21 @@ public class MyCollectModule {
         ProdEntity info;
     }
 
+
+
     public Result check(AppContext appContext){
+        boolean exist = false;
         String json = appContext.param.json;
         Param p = GsonUtils.jsonToJavaBean(json, Param.class);
         assert p != null;
         int compId = appContext.getUserSession().compId;
-        String selectSql = "SELECT unqid FROM {{?"+TD_TRAN_COLLE+"}} WHERE sku = ? AND compid = ?";
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
-                selectSql,p.sku,compId);
-        assert lines!=null;
-        boolean exist = false;
-        if (lines.size() > 0) exist = true;
+        if (compId>0){
+            String selectSql = "SELECT unqid FROM {{?"+TD_TRAN_COLLE+"}} WHERE sku = ? AND compid = ?";
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
+                    selectSql,p.sku,compId);
+            assert lines != null;
+            if (lines.size() > 0) exist = true;
+        }
         return new Result().success(exist);
     }
 
@@ -70,7 +74,7 @@ public class MyCollectModule {
                 //如果超过指定条数 ,删除时间最小的数据 / 异步执行
                 IOThreadUtils.runTask(() -> {
                     String selectSql = "SELECT sku FROM {{?"+TD_TRAN_COLLE+"}} WHERE compid=? ORDER BY createdate,createtime";
-                    List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,compId);
+                    List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),selectSql,compId);
                     assert lines!=null;
                     delOldData(lines,compId);
                 });

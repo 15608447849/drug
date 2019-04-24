@@ -48,7 +48,7 @@ public class AppContext extends IceContext {
 //            logger.print( key + " #------- 当 前 用 户 企 业 信 息 ----->> " +json );
             userSession.comp = GsonUtils.jsonToJavaBean(json, StoreBasicInfo.class);
         }
-
+        if (userSession!=null) logger.print(" ##------- 当 前 用 户 ( "+ key +" ) ----->>  用户码:" + userSession.userId + " ,企业码:"+ userSession.compId );
     }
 
     public UserSession getUserSession() {
