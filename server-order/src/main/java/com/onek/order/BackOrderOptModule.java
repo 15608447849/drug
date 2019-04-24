@@ -37,7 +37,7 @@ public class BackOrderOptModule {
 
         List<Object> paramList = new ArrayList<>();
 
-        String param = null;
+        String param;
         for (int i = 0; i < params.length; i++) {
             param = params[i];
 

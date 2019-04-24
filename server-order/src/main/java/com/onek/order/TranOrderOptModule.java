@@ -183,7 +183,7 @@ public class TranOrderOptModule {
     @UserPermission(ignore = true)
     public Result placeOrder(AppContext appContext) {
 //        List<TranOrderGoods> finalGoodsPrice = null;
-        long coupon = 0;//优惠券码
+        long unqid = 0, coupon = 0;//优惠券码
         Result result = new Result();
         Gson gson = new Gson();
         List<String> sqlList = new ArrayList<>();
@@ -206,6 +206,9 @@ public class TranOrderOptModule {
         TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
+        if (!jsonObject.get("unqid").isJsonNull()) {
+            unqid = jsonObject.get("unqid").getAsLong();
+        }
         if (!jsonObject.get("coupon").isJsonNull()) {
             coupon = jsonObject.get("coupon").getAsLong();
         }
@@ -227,7 +230,7 @@ public class TranOrderOptModule {
             }
             //订单费用计算（费用分摊以及总费用计算）
             try {
-                calculatePrice(tranOrderGoods, tranOrder, coupon);
+                calculatePrice(tranOrderGoods, tranOrder, unqid);
             } catch (Exception e) {
                 stockRecovery(goodsList);
                 LogUtil.getDefaultLogger().info("计算活动价格异常！");
@@ -248,10 +251,10 @@ public class TranOrderOptModule {
                 tranOrder.getPdamt(), tranOrder.getFreight(), tranOrder.getPayamt(), tranOrder.getCoupamt(), tranOrder.getDistamt(),
                 tranOrder.getRvaddno(), 0, 0, tranOrder.getConsignee(), tranOrder.getContact(), tranOrder.getAddress()});
 
-        if (coupon > 0) {
+        if (unqid > 0) {
             //使用优惠券
             sqlList.add(UPD_COUENT_SQL);
-            params.add(new Object[]{coupon});
+            params.add(new Object[]{unqid});
         }
 
         if (placeType == 1) {

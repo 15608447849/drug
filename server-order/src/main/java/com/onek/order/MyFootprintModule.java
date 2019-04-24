@@ -40,22 +40,40 @@ public class MyFootprintModule {
 
         int compId = appContext.getUserSession().compId;
 
-        String json = appContext.param.json;
-        Param p = GsonUtils.jsonToJavaBean(json, Param.class);
-
         IOThreadUtils.runTask(() -> {
             deleteExpireData(compId);
         });
+
+        String json = appContext.param.json;
+        Param p = GsonUtils.jsonToJavaBean(json, Param.class);
+
         if(!StringUtils.isEmpty(p.sku)){
-            long unqid = getUnqId();
-            String insertSql = "INSERT INTO {{?"+TD_FOOTPRINT+"}} ( unqid, sku, compid, browsedate, browsetime ) " +
-                    "VALUES " +
-                    "( ?, ?, ?, CURRENT_DATE,CURRENT_TIME )";
-            int i = BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(),
-                    insertSql,
-                    unqid, p.sku,compId);
-            if (i > 0){
-                return new Result().success("足迹记录成功");
+            String selectSql = "SELECT unqid FROM {{?"+TD_FOOTPRINT+"}} " +
+                    "WHERE compid = ? AND sku = ?";
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
+                    selectSql,compId,p.sku);
+            if (lines.size() == 1){
+                //修改
+                String unqid =  lines.get(0)[0].toString();
+                String updateSql = "UPDATE {{?"+TD_FOOTPRINT+"}} SET browsedate = CURRENT_DATE ,browsetime = CURRENT_TIME WHERE unqid = ?";
+                int i = BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(),
+                        updateSql,
+                        unqid);
+                if (i > 0){
+                    return new Result().success("足迹修改成功");
+                }
+            } else{
+                //插入
+                long unqid = getUnqId();
+                String insertSql = "INSERT INTO {{?"+TD_FOOTPRINT+"}} ( unqid, sku, compid, browsedate, browsetime ) " +
+                        "VALUES " +
+                        "( ?, ?, ?, CURRENT_DATE,CURRENT_TIME )";
+                int i = BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(),
+                        insertSql,
+                        unqid, p.sku,compId);
+                if (i > 0){
+                    return new Result().success("足迹添加成功");
+                }
             }
         }
 
@@ -74,13 +92,22 @@ public class MyFootprintModule {
      */
     public Result del(AppContext appContext){
         int compId = appContext.getUserSession().compId;
-        String delSql = "DELETE FROM {{?"+TD_FOOTPRINT+"}} WHERE unqid = ? ";
-        int i =  BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(), delSql,compId);
-        if (i > 0){
+        String json = appContext.param.json;
+        List<String> list = GsonUtils.json2List(json,String.class);
+        if (list!=null && list.size() > 0){
+            String delSql = "DELETE FROM {{?"+TD_FOOTPRINT+"}} WHERE sku = ? AND compid = ?";
+           for (String sku : list){
+               int i =  BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(), delSql, sku,compId);
+               if (i <= 0){
+                   return new Result().fail("删除失败");
+               }
+           }
             return new Result().success("删除成功");
         }
+
         return new Result().fail("删除失败");
     }
+
 
 
     private class ResultItem{
@@ -100,7 +127,6 @@ public class MyFootprintModule {
             if (p!=null && !StringUtils.isEmpty(p.compid )) {
                 try { compId = Integer.parseInt(p.compid); } catch (NumberFormatException ignored) { }
             }
-            appContext.logger.print("查询足迹 : "+ compId);
             String selectSql = "SELECT unqid,sku,browsedate,browsetime " +
                     "FROM {{?"+TD_FOOTPRINT+"}} " +
                     "WHERE compid = ?";
