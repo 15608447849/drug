@@ -8,6 +8,8 @@ import com.hsf.framework.order.OrderICE;
 import com.hsf.framework.order.OrderServicePrx;
 import com.onek.entity.TranOrder;
 import com.onek.property.LccProperties;
+import com.onek.util.area.AreaEntity;
+import global.IceRemoteUtil;
 import org.hyrdpf.ds.AppConfig;
 import util.StringUtils;
 
@@ -15,7 +17,7 @@ import java.util.Set;
 
 public class LccOrderUtil {
 
-    public static String addLccOrder(TranOrder tranOrder,String consignee,String consphone,String arriaddr) {
+    public static String addLccOrder(TranOrder tranOrder,String arriarc) {
 
         OrderICE orderIce = new OrderICE();
 
@@ -28,8 +30,8 @@ public class LccOrderUtil {
 
         orderIce.startc = LccProperties.INSTANCE.startc + "";
         orderIce.startaddr = LccProperties.INSTANCE.startaddr;
-        orderIce.arriarc = tranOrder.getRvaddno() + "";
-        orderIce.arriaddr = arriaddr;
+        orderIce.arriarc = arriarc;
+        orderIce.arriaddr = tranOrder.getAddress();
 
         orderIce.wm = 0.1;
         orderIce.wmdictc = "43"; // 立方
@@ -48,8 +50,8 @@ public class LccOrderUtil {
         orderIce.pmdictc = "84";
         orderIce.insureamt = 0;
 
-        orderIce.consignee = consignee;
-        orderIce.consphone = consphone;
+        orderIce.consignee = tranOrder.getConsignee();
+        orderIce.consphone = tranOrder.getContact();
         orderIce.ptdictc = "22"; // 线下到付
         orderIce.dmdictc = "93"; // 送货不上楼
         orderIce.redictc = "101"; // 无回单
@@ -66,12 +68,12 @@ public class LccOrderUtil {
         String result = orderServicePrx.addOrder(param, orderIce);
         System.out.println(result);
 
-        UserParam robbParam = new UserParam();
-        robbParam.uid = LccProperties.INSTANCE.robbid + "";
-        robbParam.compid = LccProperties.INSTANCE.robbcompid + "";
-        result = orderServicePrx.robbingOrder(robbParam, new String[] {orderIce.orderno, orderIce.pubercompid});
-
-        System.out.println(result);
+//        UserParam robbParam = new UserParam();
+//        robbParam.uid = LccProperties.INSTANCE.robbid + "";
+//        robbParam.compid = LccProperties.INSTANCE.robbcompid + "";
+//        result = orderServicePrx.robbingOrder(robbParam, new String[] {orderIce.orderno, orderIce.pubercompid});
+//
+//        System.out.println(result);
 
         return result;
 
