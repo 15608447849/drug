@@ -27,6 +27,7 @@ public class TranOrderGoods {
     private String pname;  // 商品名
     private String pspec; // 商品规格
     private String manun; // 厂商名
+    private String spu; // spu
 
     public long getUnqid() {
         return unqid;
@@ -178,5 +179,13 @@ public class TranOrderGoods {
 
     public void setActCode(long actCode) {
         this.actCode = actCode;
+    }
+
+    public String getSpu() {
+        return spu;
+    }
+
+    public void setSpu(String spu) {
+        this.spu = spu;
     }
 }

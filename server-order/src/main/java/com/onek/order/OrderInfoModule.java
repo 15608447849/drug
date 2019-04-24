@@ -60,8 +60,7 @@ public class OrderInfoModule {
                     + ", " + QUERY_TRAN_APPRAISE_PARAMS
             + " FROM " + FROM_ORDER
                     + " LEFT JOIN " + FROM_TRANS
-                    + " ON trans.cstatus&1 = 0 "
-                    + " AND trans.paystatus = 1 AND trans.orderno = ord.orderno "
+                    + " ON trans.paystatus = 1 AND trans.orderno = ord.orderno "
                     + " LEFT JOIN " + FROM_APPRAISE
                     + " ON  app.cstatus&1 = 0 "
                     + " AND app.orderno = ord.orderno "
@@ -102,6 +101,7 @@ public class OrderInfoModule {
                     MathUtil.exactDiv(tranOrder.getPayprice(), 100).doubleValue());
             tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
             tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
+            tranOrder.setPdamt(MathUtil.exactDiv(tranOrder.getPdamt(), 100).doubleValue());
             tranOrder.setPayprice(MathUtil.exactDiv(tranOrder.getPayprice(), 100).doubleValue());
             tranOrder.setDistamt(MathUtil.exactDiv(tranOrder.getDistamt(), 100).doubleValue());
             tranOrder.setCoupamt(MathUtil.exactDiv(tranOrder.getCoupamt(), 100).doubleValue());
@@ -215,6 +215,9 @@ public class OrderInfoModule {
             tranOrderGoods.setPdprice(MathUtil.exactDiv(tranOrderGoods.getPdprice(), 100).doubleValue());
             tranOrderGoods.setDistprice(MathUtil.exactDiv(tranOrderGoods.getDistprice(), 100).doubleValue());
             tranOrderGoods.setCoupamt(MathUtil.exactDiv(tranOrderGoods.getCoupamt(), 100).doubleValue());
+            tranOrderGoods.setSpu(
+                    String.valueOf(tranOrderGoods.getPdno())
+                        .substring(0, 12));
 
             if (prod != null) {
                 tranOrderGoods.setPname(prod.getProdname());

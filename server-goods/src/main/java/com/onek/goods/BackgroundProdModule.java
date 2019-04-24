@@ -185,11 +185,12 @@ public class BackgroundProdModule {
             return new Result().fail("操作失败");
         }
 
+        bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
+        bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue());
+        bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp (), 100).intValue());
         RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
         BASE_DAO.updateNative(UPDATE_PROD_BASE,
-                MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue(),
-                MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue(),
-                MathUtil.exactMul(bgProdVO.getRrp (), 100).intValue(),
+                bgProdVO.getVatp(), bgProdVO.getMp(), bgProdVO.getRrp(),
                 bgProdVO.getUnit(), bgProdVO.getSpec(),
                 bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
                 bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
@@ -568,7 +569,6 @@ public class BackgroundProdModule {
     }
 
     private String containsSPU(BgProdVO prodVO) {
-
         StringBuilder regexp =
                 new StringBuilder("^")
                     .append("[0-9]{1}")
