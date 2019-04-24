@@ -8,9 +8,6 @@ import com.hsf.framework.order.OrderICE;
 import com.hsf.framework.order.OrderServicePrx;
 import com.onek.entity.TranOrder;
 import com.onek.property.LccProperties;
-import com.onek.util.area.AreaEntity;
-import global.IceRemoteUtil;
-import org.hyrdpf.ds.AppConfig;
 import util.StringUtils;
 
 import java.util.Set;
@@ -91,6 +88,12 @@ public class LccOrderUtil {
             JSONObject jsonObject = JSONObject.parseObject(result);
             if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
                  JSONObject data = (JSONObject) jsonObject.get("obj");
+                 if(data == null){
+                     traceJson.put("billno", "");
+                     traceJson.put("logictype", "0");
+                     traceJson.put("node", new JSONArray());
+                     return traceJson;
+                 }
                  Set<String> keys = data.keySet();
                  if(keys != null && keys.size() > 0){
                      String key = keys.iterator().next();
@@ -120,20 +123,13 @@ public class LccOrderUtil {
         return traceJson;
     }
 
-    static {
-        AppConfig.initLogger("log4j2.xml");
-        AppConfig.initialize();
-    }
-
-    public static void main(String[] args) {
-//        TranOrder tranOrder = new TranOrder();
-//        tranOrder.setFreight(20);
-//        tranOrder.setRvaddno(10130803);
-//        tranOrder.setPdnum(2);
-//        tranOrder.setOrderno("1904180003102002");
-//        LccOrderUtil.addLccOrder(tranOrder, "小李", "14598763465","北京市天安门");
-
-        JSONObject result = LccOrderUtil.queryTraceByOrderno("1904220003127703");
-        System.out.println(result.toJSONString());
-    }
+//    static {
+//        AppConfig.initLogger("log4j2.xml");
+//        AppConfig.initialize();
+//    }
+//
+//    public static void main(String[] args) {
+//        JSONObject result = LccOrderUtil.queryTraceByOrderno("1904220003127703");
+//        System.out.println(result.toJSONString());
+//    }
 }
