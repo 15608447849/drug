@@ -11,4 +11,9 @@ public class OrderInitalize implements IIceInitialize {
         communicator().getLogger().error(serverName+" ####### 开始初始化  ####### ");
         ElasticSearchClientFactory.init();
     }
+
+    @Override
+    public int priority() {
+        return 1;
+    }
 }

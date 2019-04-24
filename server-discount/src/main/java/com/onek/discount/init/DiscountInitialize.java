@@ -13,4 +13,9 @@ public class DiscountInitialize implements IIceInitialize {
         new DiscountRuleTimer();
         ElasticSearchClientFactory.init();
     }
+
+    @Override
+    public int priority() {
+        return 1;
+    }
 }

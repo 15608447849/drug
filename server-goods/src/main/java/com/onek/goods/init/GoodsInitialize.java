@@ -12,4 +12,9 @@ public class GoodsInitialize implements IIceInitialize {
         new HigherProfitsTimer();
         ElasticSearchClientFactory.init();
     }
+
+    @Override
+    public int priority() {
+        return 1;
+    }
 }
