@@ -1,5 +1,6 @@
 package com.onek.order;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -15,10 +16,13 @@ import com.onek.entitys.Result;
 import com.onek.queue.CancelDelayed;
 import com.onek.queue.CancelService;
 import com.onek.util.CalculateUtil;
+import com.onek.util.LccOrderUtil;
+import com.onek.util.area.AreaEntity;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import global.GenIdUtil;
+import global.IceRemoteUtil;
 import org.hyrdpf.util.LogUtil;
 import util.ArrayUtil;
 import util.ModelUtil;
@@ -37,6 +41,16 @@ import java.util.List;
 public class TranOrderOptModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
+
+    private static final String QUERY_TRAN_ORDER_PARAMS =
+            " ord.orderno, ord.tradeno, ord.cusno, ord.busno, ord.ostatus, "
+                    + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
+                    + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
+                    + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
+                    + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address ";
+
+    private static final String FROM_BK_ORDER = " {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} ord ";
+
     //订单表新增
     private static final String INSERT_TRAN_ORDER = "insert into {{?" + DSMConst.TD_TRAN_ORDER + "}} "
             + "(orderno,tradeno,cusno,busno,ostatus,asstatus,pdnum," +
@@ -91,6 +105,12 @@ public class TranOrderOptModule {
     private static final String UPDATE_PROM_COURCD = "update {{?" + DSMConst.TD_PROM_COURCD
             + "}} set cstatus=cstatus|1 where cstatus&1=0 and coupno=? and compid=?";
 
+
+
+    private static final String QUERY_ORDER_BASE =
+            " SELECT " + QUERY_TRAN_ORDER_PARAMS
+                    + " FROM " + FROM_BK_ORDER
+                    + " WHERE ord.cstatus&1 = 0 ";
 
     @UserPermission(ignore = false)
     public Result placeOrderOne(AppContext appContext) {
@@ -509,6 +529,7 @@ public class TranOrderOptModule {
      * @param appContext
      * @return
      */
+    @UserPermission(ignore = true)
     public Result delivery(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -523,9 +544,51 @@ public class TranOrderOptModule {
             return new Result().fail("非法参数");
         }
 
-        int result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
-                UPDATE_DELIVERY, orderNo);
+        StringBuilder sql = new StringBuilder(QUERY_ORDER_BASE);
+        sql.append(" and orderno = ? ");
+        List<Object> paramList = new ArrayList<>();
+        paramList.add(orderNo);
 
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
+                compid, TimeUtils.getCurrentYear(), sql.toString(), paramList.toArray());
+
+        TranOrder[] r = new TranOrder[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, r, TranOrder.class);
+
+        String arriarc = "";
+        AreaEntity[] areaEntities = IceRemoteUtil.getAncestors(r[0].getRvaddno());
+        if(areaEntities != null && areaEntities.length > 0){
+            for(int i = areaEntities.length - 1; i>=0; i--){
+                if(Integer.parseInt(areaEntities[i].getLcareac()) > 0){
+                    arriarc = areaEntities[i].getLcareac();
+                    break;
+                }
+            }
+        }
+
+        if(StringUtils.isEmpty(arriarc)){
+            return new Result().fail("未找到一块物流对应的地区码");
+        }
+
+        boolean lccOrderflag = false;
+        String lccResult = LccOrderUtil.addLccOrder(r[0], arriarc);
+        if(!StringUtils.isEmpty(lccResult)){
+            JSONObject jsonObject = JSONObject.parseObject(lccResult);
+            if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
+                lccOrderflag = true;
+            }else{
+                return new Result().fail(jsonObject.get("msg").toString());
+            }
+        }
+
+        int result = 0;
+        if(lccOrderflag){
+
+            result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
+                    UPDATE_DELIVERY, orderNo);
+
+        }
         return result > 0 ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 

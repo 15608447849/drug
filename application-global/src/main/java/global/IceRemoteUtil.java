@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
 import com.onek.entitys.Result;
 import com.onek.prop.AppProperties;
+import com.onek.util.area.AreaEntity;
 import com.onek.util.dict.DictEntity;
 import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
@@ -129,6 +130,35 @@ public class IceRemoteUtil {
 
         return data == null ? "" : data.toString();
     }
+
+    public static AreaEntity getAreaByAreac(long areac){
+        String result = ic.settingProxy("globalServer")
+                .settingReq("","CommonModule","getArea")
+                .settingParam(new String[]{String.valueOf(areac)})
+                .executeSync();
+
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.jsonToJavaBean(json,AreaEntity.class);
+    }
+
+    public static AreaEntity[] getAncestors(long areac){
+        String result = ic.settingProxy("globalServer")
+                .settingReq("","CommonModule","getAncestors")
+                .settingParam(new String[]{String.valueOf(areac)})
+                .executeSync();
+
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.jsonToJavaBean(json,AreaEntity[].class);
+    }
+
 
     public static DictEntity[] queryAll() {
         String result = ic.settingProxy("globalServer")
