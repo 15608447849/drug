@@ -854,8 +854,8 @@ public class ProdModule {
 
             ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
             if (prizeEntity != null) {
-                prodVO.setMinprize(NumUtil.div(prizeEntity.getMinactprize(), 100));
-                prodVO.setMaxprize(NumUtil.div(prizeEntity.getMaxactprize(), 100));
+                prodVO.setMinprize(prizeEntity.getMinactprize());
+                prodVO.setMaxprize(prizeEntity.getMaxactprize());
                 prodVO.setActcode(prizeEntity.getActcode());
                 // 代表值存在一个活动 团购或秒杀
                 if (prizeEntity.getActcode() > 0 && bits.size() == 1 && ((ruleStatus & 2048) > 0 || (ruleStatus & 4096) > 0)) {
