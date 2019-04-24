@@ -9,7 +9,6 @@ import util.GsonUtils;
 import java.math.BigDecimal;
 import java.util.List;
 
-import static Ice.Application.communicator;
 import static util.StringUtils.checkObjectNull;
 
 /**
@@ -38,7 +37,7 @@ public class StoreBasicInfoOp {
     private static void infoToCache(StoreBasicInfo info) {
         String json = GsonUtils.javaBeanToJson(info);
         String res = RedisUtil.getStringProvide().set(""+info.storeId,json );
-        communicator().getLogger().print("更新信息 - Redis - "+ res +" :" + json);
+//        communicator().getLogger().print("更新信息 - Redis - "+ res +" :" + json);
     }
 
     public static boolean getStoreInfoById(StoreBasicInfo info) {

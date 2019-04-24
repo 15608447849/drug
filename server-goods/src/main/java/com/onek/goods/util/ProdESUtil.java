@@ -31,6 +31,7 @@ import util.TimeUtils;
 import java.util.*;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
+import static org.elasticsearch.index.query.QueryBuilders.termsQuery;
 
 public class ProdESUtil {
 
@@ -72,7 +73,7 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_MANUNAME, manuname);
             data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
             data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
-            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus());
+            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus() == null ? 0 : prodVO.getProdstatus());
             data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus());
             data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
             data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
@@ -128,7 +129,7 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_MANUNAME, manuname);
             data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
             data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
-            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus());
+            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus() == null ? 0 : prodVO.getProdstatus());
             data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus());
             data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
             data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
@@ -296,9 +297,11 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(!StringUtils.isEmpty(keyword)){
-                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
+//            MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
+//            boolQuery.must(builder);
             if(spu > 0){
                 String start = "1"+addZeroForNum(spu+"", 6) +"00000";
                 String end = "1"+addZeroForNum(spu+"", 6) +"99999";
@@ -365,6 +368,8 @@ public class ProdESUtil {
                 TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKUCSTATUS, resultArray);
                 boolQuery.must(builder);
             }
+//            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+//            boolQuery.must(matchQuery);
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
             FieldSortBuilder sortBuilder = null;
@@ -397,24 +402,33 @@ public class ProdESUtil {
     /**
      * 根据条件全文检索商品
      *
+     * @param keyword
      * @param pagenum
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdHasBrand(int pagenum, int pagesize){
+    public static SearchResponse searchProdHasBrand(String keyword,int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_BRANDNO);
             rangeQuery.gt(0);
             boolQuery.must(rangeQuery);
+            if(!StringUtils.isEmpty(keyword)){
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+                boolQuery.must(matchQuery);
+            }
+//            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+//            boolQuery.must(matchQuery);
+
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
             response = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort(ESConstant.PROD_COLUMN_TIME ,SortOrder.DESC)
+                    .addSort(ESConstant.PROD_COLUMN_BRANDNO, SortOrder.DESC)
+                    .addSort(ESConstant.PROD_COLUMN_SALES, SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -459,6 +473,8 @@ public class ProdESUtil {
                         .should(rangeQuery1);
                 boolQuery.must(postFilterBool);
             }
+//            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+//            boolQuery.must(matchQuery);
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
             response = client.prepareSearch(ESConstant.PROD_INDEX)
@@ -535,6 +551,8 @@ public class ProdESUtil {
                 TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, spuArray);
                 boolQuery.must(builder);
             }
+//            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+//            boolQuery.must(matchQuery);
 
             int from = pagenum * pagesize - pagesize;
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
@@ -573,6 +591,8 @@ public class ProdESUtil {
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
+//            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+//            boolQuery.must(matchQuery);
 
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             response = client.prepareSearch(ESConstant.PROD_INDEX)
@@ -603,7 +623,9 @@ public class ProdESUtil {
         Set<Integer> statusList = new HashSet<>();
         statusList.add(0);
 //        statusList.add(256);
-        SearchResponse response = searchProdWithStatusList(statusList,1, 1,100);
+//        SearchResponse response = searchProdWithStatusList(statusList,1, 1,100);
+//        System.out.println(response.getHits().totalHits);
+        SearchResponse response = searchProdMall("木香",0,null,null,null,0,1, 20);
         System.out.println(response.getHits().totalHits);
     }
 

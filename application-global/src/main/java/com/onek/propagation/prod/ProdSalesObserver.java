@@ -5,15 +5,19 @@ import com.onek.consts.ESConstant;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchClientFactory;
+import elasticsearch.ElasticSearchProvider;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
+import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermsQueryBuilder;
+import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
 
 import java.util.ArrayList;
@@ -23,7 +27,7 @@ import java.util.Map;
 
 public class ProdSalesObserver implements ProdObserver {
 
-    private static final String UPDATE_SKU_SALES = "update {{?" + DSMConst.TD_PROD_SKU + "}} set sales = ? where sku = ?";
+    private static final String UPDATE_SKU_SALES = "update {{?" + DSMConst.TD_PROD_SKU + "}} set sales = sales + ? where sku = ?";
 
     @Override
     public void update(List<String> list) {
@@ -38,79 +42,38 @@ public class ProdSalesObserver implements ProdObserver {
             }
 
             if (filterlist != null && filterlist.size() > 0) {
-                List<Long> spuList = new ArrayList<>();
+                List<Long> skuList = new ArrayList<>();
                 Map<Long, Integer> map = new HashMap<>();
                 for (int i = 0; i < filterlist.size(); i++) {
-                    spuList.add(filterlist.get(i).getLongValue("sku"));
+                    skuList.add(filterlist.get(i).getLongValue("sku"));
                     map.put(filterlist.get(i).getLongValue("sku"), filterlist.get(i).getInteger("sales"));
                 }
 
-                int status = batchUpdateEsSales(spuList, map);
+                for(Long sku : skuList){
 
-                if (status > 0) {
-                    String[] sqls = new String[map.size()];
-                    List<Object[]> paramsList = new ArrayList<>();
-                    int i = 0;
-                    for (Long sku : map.keySet()) {
-                        map.get(sku);
-                        sqls[i] = UPDATE_SKU_SALES;
-                        paramsList.add(new Object[]{sku, map.get(sku)});
-                        i++;
+                    GetResponse response = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku +"");
+                    boolean updateSuccess = false;
+                    if(response != null){
+                        Map<String, Object> data = response.getSourceAsMap();
+                        int sales = data.get(ESConstant.PROD_COLUMN_SALES) != null ? Integer.parseInt(data.get(ESConstant.PROD_COLUMN_SALES).toString()) : 0;
+                        data.put(ESConstant.PROD_COLUMN_SALES, map.get(sku) + sales);
+                        HashMap detail = (HashMap) data.get("detail");
+                        data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(detail));
+                        data.put(ESConstant.PROD_COLUMN_TIME, data.get(ESConstant.PROD_COLUMN_TIME).toString());
+                        UpdateResponse updateResponse = ElasticSearchProvider.updateDocumentById(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
+                        if(response != null && RestStatus.OK == updateResponse.status()) {
+                            updateSuccess = true;
+                        }
                     }
-                    BaseDAO.getBaseDAO().updateTransNative(sqls, paramsList);
-
+                    if(updateSuccess){
+                        BaseDAO.getBaseDAO().updateNative(UPDATE_SKU_SALES, new Object[]{ map.get(sku), sku});
+                    }
                 }
+
             }
 
 
         }
     }
 
-    @SuppressWarnings("unchecked")
-    public int batchUpdateEsSales(List<Long> skuList, Map<Long, Integer> salesMap) {
-        SearchResponse response = null;
-        try {
-            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-            if (skuList != null && skuList.size() > 0) {
-                Object[] skuArray = new Long[skuList.size()];
-                skuArray = skuList.toArray(skuArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuArray);
-                boolQuery.must(builder);
-            }
-
-            TransportClient client = ElasticSearchClientFactory.getClientInstance();
-
-            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
-                    .setQuery(boolQuery);
-
-
-            response = requestBuilder
-                    .execute().actionGet();
-
-            BulkRequestBuilder bulkRequest = client.prepareBulk();
-            if (response != null && response.getHits().totalHits > 0) {
-                for (SearchHit searchHit : response.getHits()) {
-                    Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-                    long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
-                    int sales = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SALES).toString());
-                    sourceMap.put(ESConstant.PROD_COLUMN_SALES, salesMap.get(sku) + sales);
-                    bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku + "").setDoc(sourceMap));
-
-                }
-            }
-
-            BulkResponse bulkResponse = bulkRequest.get();
-            if (bulkResponse.hasFailures()) {
-                for (BulkItemResponse item : bulkResponse.getItems()) {
-                    System.out.println(item.getFailureMessage());
-                }
-                return -1;
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return 1;
-
-    }
 }

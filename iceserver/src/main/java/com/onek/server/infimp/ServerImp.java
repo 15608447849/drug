@@ -155,7 +155,7 @@ public class ServerImp extends IcePushMessageServerImps {
 
     private String printResult(Object result) {
         String resultString = GsonUtils.javaBeanToJson(result);
-//        logger.print(resultString +"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-");
+        logger.print(resultString +"\n\n"); //+"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-"
         return resultString;
     }
 
@@ -176,8 +176,7 @@ public class ServerImp extends IcePushMessageServerImps {
         } catch (Exception e) {
             e.printStackTrace();
             logger.error("accessService 捕获错误:"+e.toString());
-//            logger.print(__current.con._toString().split("\\n")[1]+"\t"+e);
-            result = new Result();
+            result = new Result().error("accessService()",e);
         }
         return printResult(result);
     }

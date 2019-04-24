@@ -15,6 +15,11 @@ public class TimeUtils {
      */
     public static final long PERIOD_DAY = 24 * 60 * 60 * 1000;
 
+    /**
+     * 一小时间隔时间
+     */
+    public static final long PERIOD_HOUR = 24 * 60 * 60 * 1000;
+
     /**添加x天*/
     public static Date addDay(Date date, int num) {
         Calendar startDT = Calendar.getInstance();
