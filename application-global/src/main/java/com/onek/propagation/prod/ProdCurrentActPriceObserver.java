@@ -1,5 +1,6 @@
 package com.onek.propagation.prod;
 
+import com.onek.util.RedisGlobalKeys;
 import redis.provide.RedisStringProvide;
 import redis.util.RedisUtil;
 
@@ -11,9 +12,8 @@ public class ProdCurrentActPriceObserver implements ProdObserver {
     public void update(List<String> list) {
         if (list != null && list.size() > 0) {
             RedisStringProvide rs = RedisUtil.getStringProvide();
-            String key = "_currprize_version";
-            long version = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
-            rs.set("_currprize_version", version + 1);
+            long version = rs.get(RedisGlobalKeys.ACTVERSION) != null ? Long.parseLong(rs.get(RedisGlobalKeys.ACTVERSION)) : 0;
+            rs.set(RedisGlobalKeys.ACTVERSION, version + 1);
         }
     }
 }

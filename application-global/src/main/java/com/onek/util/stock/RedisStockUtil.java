@@ -51,6 +51,18 @@ public class RedisStockUtil {
         return r.intValue();
     }
 
+    /**
+     * 清除初始活动库存 大于0代表成功; 0:代表失败
+     *
+     * @param sku
+     * @param actCode
+     * @return
+     */
+    public static int clearActInitStock(long sku, long actCode) {
+        Long r = RedisUtil.getStringProvide().delete(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode);
+        return r.intValue();
+    }
+
     public static boolean deductionActStock(long sku, int stock, long actCode) {
         String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
         if (Integer.parseInt(currentStock) <= 0) {
