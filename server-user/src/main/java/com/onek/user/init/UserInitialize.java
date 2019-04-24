@@ -32,5 +32,10 @@ public class UserInitialize implements IIceInitialize {
         }).start();
     }
 
+    @Override
+    public int priority() {
+        return 1;
+    }
+
 
 }
