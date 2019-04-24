@@ -634,7 +634,7 @@ public class ActivityManageModule {
             default://商品关联
                 int code;
                 Map<Long, Integer> map = selectGoodsByAct(actCode);
-                if (map.size() == 1 && map.get(0) == 0) {
+                if (map.size() == 1 && map.get(0) != null && map.get(0) == 0) {
                     String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1,"
                             + "vcode=? where cstatus&1=0 and actcode=? and vcode=?";
                     code = baseDao.updateNative(updateSQL, map.get(0)+1, actCode, map.get(0));

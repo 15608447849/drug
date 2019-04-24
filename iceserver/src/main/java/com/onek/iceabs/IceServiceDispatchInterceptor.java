@@ -67,7 +67,7 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
                     .print("调用状态: "+ statusString(status) + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms\n\r");
             return status;
         }catch(Exception e){
-            communicator().getLogger().error(e.toString());
+            communicator().getLogger().error("DispatchStatus 捕获错误:"+e.toString());
         }
         return DispatchStatus.DispatchUserException;
     }

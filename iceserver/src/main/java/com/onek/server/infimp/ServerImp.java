@@ -174,8 +174,8 @@ public class ServerImp extends IcePushMessageServerImps {
                 context.longConnectionSetting(_clientsMaps,(Result)result);
             }
         } catch (Exception e) {
-//            e.printStackTrace();
-            logger.error(e.toString());
+            e.printStackTrace();
+            logger.error("accessService 捕获错误:"+e.toString());
 //            logger.print(__current.con._toString().split("\\n")[1]+"\t"+e);
             result = new Result();
         }

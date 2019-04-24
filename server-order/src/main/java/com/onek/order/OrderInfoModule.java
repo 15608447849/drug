@@ -63,7 +63,8 @@ public class OrderInfoModule {
                     + " ON trans.cstatus&1 = 0 "
                     + " AND trans.paystatus = 1 AND trans.orderno = ord.orderno "
                     + " LEFT JOIN " + FROM_APPRAISE
-                    + " ON app.cstatus&1 = 0 "
+                    + " ON  app.cstatus&1 = 0 "
+                    + " AND app.paystatus = 1 "
                     + " AND app.orderno = ord.orderno "
             + " WHERE ord.cstatus&1 = 0 AND ord.orderno = ? ";
 
