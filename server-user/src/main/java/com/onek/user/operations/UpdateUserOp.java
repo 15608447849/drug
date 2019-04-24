@@ -28,26 +28,33 @@ public class UpdateUserOp implements IOperation<AppContext> {
 
         int uid = session.userId;
 
-        if ( !StringUtils.isEmpty(oldPhone,newPhone,smsCode)){
-            String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
-            if (code.equals(smsCode) && !newPhone.equals(oldPhone)){
-                return changUserByUid("uphone="+newPhone, "uid = "+ uid);
+        if ( !StringUtils.isEmpty(oldPhone,newPhone, smsCode)){
+            if (newPhone.length()==11) {
+                String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
+                if (code.equals(smsCode) && !newPhone.equals(oldPhone)){
+                    context.getUserSession().phone = newPhone;
+                    return changUserByUid(context,"uphone="+newPhone, "uid = "+ uid);
+                }
             }
-        }
+            }
+
 
         if (!StringUtils.isEmpty(oldPassword,newPassword)){
             String curPassword = session.password;
             if (EncryptUtils.encryption(oldPassword).equalsIgnoreCase(curPassword)){
-                return changUserByUid("upw='"+ EncryptUtils.encryption(newPassword)+"'","uid = "+ uid);
+                return changUserByUid(context,"upw='"+ EncryptUtils.encryption(newPassword)+"'","uid = "+ uid);
             }
         }
         return new Result().fail("修改失败");
     }
 
-    private Result changUserByUid(String param ,String ifs) {
+    private Result changUserByUid(AppContext context,String param ,String ifs) {
         String sql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER +"}} SET " + param + " WHERE "+ifs;
         int i = BaseDAO.getBaseDAO().updateNative(sql);
-        if (i>0) return new Result().success("修改成功");
+        if (i>0) {
+            context.relationTokenUserSession();;
+            return new Result().success("修改成功");
+        }
         return new Result().fail("修改失败," +sql);
     }
 }

@@ -78,8 +78,7 @@ public class AppContext extends IceContext {
         String json = GsonUtils.javaBeanToJson(userSession);
 
         String res = RedisUtil.getStringProvide().set(key,json);
-        logger.print( key + " ||===写入用户信息到缓存======== "+ res +" =======>> "+ json);
-
+//        logger.print( key + " ||===写入用户信息到缓存======== "+ res +" =======>> "+ json);
         return  res.equals("OK");
     }
 

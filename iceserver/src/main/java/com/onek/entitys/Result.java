@@ -13,7 +13,7 @@ public class Result {
     interface CODE{
       int FAIL = -1;
       int INTERCEPT = -2;
-       int ERROR = -3;
+      int ERROR = -3;
       int SUCCESS = 200;
 
    }
