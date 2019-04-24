@@ -55,7 +55,8 @@ public class LccOrderUtil {
         orderIce.ptdictc = "22"; // 线下到付
         orderIce.dmdictc = "93"; // 送货不上楼
         orderIce.redictc = "101"; // 无回单
-        orderIce.priority = 0;
+        orderIce.priority = 1; // 定向发布
+        orderIce.source = 3;
 
         OrderServicePrx orderServicePrx = (OrderServicePrx) RpcClientUtil
                 .getServicePrx(OrderServicePrx.class);
@@ -96,7 +97,22 @@ public class LccOrderUtil {
                      traceJson.put("billno", key);
                      traceJson.put("logictype", "0");
                      JSONArray array = data.getJSONArray(key);
-                     traceJson.put("node", array);
+                     JSONArray node = new JSONArray();
+                     for(Object obj : array){
+                         if(obj instanceof String){
+                             if(obj.toString().charAt(0) == '{'){
+                                 JSONObject correct = JSONObject.parseObject(obj.toString());
+                                 if(correct.containsKey("correct")){
+                                     continue;
+                                 }
+                             }else if(obj.toString().charAt(0) == '['){
+                                 node = JSONObject.parseArray(obj.toString());
+                                 break;
+                             }
+                         }
+
+                     }
+                     traceJson.put("node", node);
                  }
             }
         }
@@ -117,7 +133,7 @@ public class LccOrderUtil {
 //        tranOrder.setOrderno("1904180003102002");
 //        LccOrderUtil.addLccOrder(tranOrder, "小李", "14598763465","北京市天安门");
 
-        JSONObject result = LccOrderUtil.queryTraceByOrderno("1904180003102002");
+        JSONObject result = LccOrderUtil.queryTraceByOrderno("1904220003127703");
         System.out.println(result.toJSONString());
     }
 }
