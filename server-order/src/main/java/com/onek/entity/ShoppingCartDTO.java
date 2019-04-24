@@ -24,6 +24,16 @@ public class ShoppingCartDTO {
 
     private int cstatus;
 
+    private long areano;
+
+    public long getAreano() {
+        return areano;
+    }
+
+    public void setAreano(long areano) {
+        this.areano = areano;
+    }
+
     public int getChecked() {
         return checked;
     }

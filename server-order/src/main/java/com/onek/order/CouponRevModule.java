@@ -2,12 +2,12 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSONArray;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
-import com.onek.calculate.entity.DiscountResult;
-import com.onek.calculate.entity.IProduct;
-import com.onek.calculate.entity.Ladoff;
-import com.onek.calculate.entity.Product;
+import com.onek.calculate.CouponListFilterService;
+import com.onek.calculate.entity.*;
+import com.onek.calculate.service.calculate.CouponCalculateService;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entity.CouponPubLadderVO;
@@ -21,14 +21,13 @@ import dao.BaseDAO;
 import global.GenIdUtil;
 import global.IceRemoteUtil;
 import util.GsonUtils;
+import util.MathUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
+import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 import java.util.logging.Logger;
 
 /**
@@ -73,7 +72,7 @@ public class CouponRevModule {
             " SET cstatus = cstatus | " + CSTATUS.DELETE +" WHERE unqid = ? ";
 
     private static final String QUERY_COURCD_EXT =  "select unqid from  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
-            " where compid = ? and coupno = ? ";
+            " where compid = ? and coupno = ?  ";
 
     private static final String UPDATE_COURCD =  "update  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " set cstatus = 0,gettime = now() where unqid = ? ";
@@ -93,7 +92,7 @@ public class CouponRevModule {
      * 查询领取的优惠券列表
      */
     private final String QUERY_COUP_EXT_SQL = "select count(1) from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
-            " where compid = ? and coupno = ? and  cstatus = 0  and  CURRENT_DATE <= enddate ";
+            " where compid = ? and coupno = ? and  cstatus = 0 and ctype = 0 and  CURRENT_DATE <= enddate ";
 
 
 
@@ -316,6 +315,92 @@ public class CouponRevModule {
 
 
 
+////    /**
+////     * 查询可以使用的优惠券
+////     * @param appContext
+////     * @return
+////     */
+////    @UserPermission(ignore = true)
+////    public Result queryActCouponList(AppContext appContext){
+////        String json = appContext.param.json;
+////       JsonParser jsonParser = new JsonParser();
+////        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+////        Result result = new Result();
+////
+////        List<CouponUseDTO> couponUseDTOS = new ArrayList<>();
+//        StringBuilder sqlBuilder = new StringBuilder(QUERY_COUPONREV_SQL);
+////        sqlBuilder.append(" and  CURRENT_DATE <= enddate ");
+////
+////        Gson gson = new Gson();
+////        List<Product> productList = new ArrayList<>();
+////        for (JsonElement coupn : jsonArray) {
+////            CouponUseDTO couponUseDTO = gson.fromJson(coupn, CouponUseDTO.class);
+////            if (couponUseDTO != null) {
+////                couponUseDTOS.add(couponUseDTO);
+////                Product product = new Product();
+////                product.setSku(couponUseDTO.getPdno());
+////                product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+////                productList.add(product);
+////            }
+////        }
+////        sqlBuilder.append(" and compid = ").append(couponUseDTOS.get(0).getCompid());
+////
+////
+////        if(couponUseDTOS.get(0).getFlag() == 1){
+////            sqlBuilder.append(" and glbno = 1 ");
+////        }
+////
+////
+////
+//        List<Object[]> queryResult = baseDao.queryNativeSharding(couponUseDTOS.get(0).getCompid(),
+////                TimeUtils.getCurrentYear(),
+////                sqlBuilder.toString());
+////
+////        CouponPubVO[] couponListVOS = new CouponPubVO[queryResult.size()];
+////        if (queryResult == null || queryResult.isEmpty()) {
+////            return result.success(couponListVOS);
+////        }
+////
+////        baseDao.convToEntity(queryResult, couponListVOS, CouponPubVO.class,
+////                new String[]{"unqid","coupno","compid","startdate","enddate","brulecode",
+////                        "rulename","goods","ladder","glbno","ctype","reqflag"});
+////
+////        List<CouponPubVO> cuseList = new ArrayList<>();
+////        for(CouponPubVO cvs :couponListVOS){
+////            String ldjson = cvs.getLadder();
+////            if(!StringUtils.isEmpty(ldjson)){
+////                JsonArray jsonArrayLadder = jsonParser.parse(ldjson).getAsJsonArray();
+////                List<CouponPubLadderVO> ladderVOS = new ArrayList<>();
+////                for (JsonElement goodvo : jsonArrayLadder){
+////                    CouponPubLadderVO ldvo = gson.fromJson(goodvo, CouponPubLadderVO.class);
+////                    ladderVOS.add(ldvo);
+////
+////                }
+////                cvs.setLadderVOS(ladderVOS);
+////                double samt = couponUseDTOS.get(0).getSamt();
+////                CouponPubLadderVO couponPubLadderVO
+////                        = getLadoffable(ladderVOS,couponUseDTOS.get(0).getSamt());
+////                if(couponPubLadderVO != null){
+////                    int offerCode = couponPubLadderVO.getOffercode();
+////                    if(offerCode != 0){
+////                       // int ruleno = Integer.parseInt((offerCode+"").substring(0,4));
+////                        DiscountResult disResult = CalculateUtil.calculate(cvs.getCompid(),
+////                                productList, cvs.getUnqid());
+////                        cvs.setOfferAmt(couponPubLadderVO.getOffer());
+//////                        if(ruleno == 2130){
+//////                           double calAmt = samt - (samt * (couponPubLadderVO.getOffer()/100));
+//////                           cvs.setOfferAmt(calAmt);
+//////                        }
+////                        cvs.setOfferAmt(disResult.getCouponValue());
+////                    }
+////                    cuseList.add(cvs);
+////                }
+////            }
+////        }
+////        return result.success(cuseList);
+////    }
+
+
     /**
      * 查询可以使用的优惠券
      * @param appContext
@@ -329,9 +414,6 @@ public class CouponRevModule {
         Result result = new Result();
 
         List<CouponUseDTO> couponUseDTOS = new ArrayList<>();
-        StringBuilder sqlBuilder = new StringBuilder(QUERY_COUPONREV_SQL);
-        sqlBuilder.append(" and  CURRENT_DATE <= enddate ");
-
         Gson gson = new Gson();
         List<Product> productList = new ArrayList<>();
         for (JsonElement coupn : jsonArray) {
@@ -344,85 +426,67 @@ public class CouponRevModule {
                 productList.add(product);
             }
         }
-        sqlBuilder.append(" and compid = ").append(couponUseDTOS.get(0).getCompid());
-
+        boolean excoupon = false;
         if(couponUseDTOS.get(0).getFlag() == 1){
-            sqlBuilder.append(" and glbno = 1 ");
+            excoupon = true;
         }
+        int compid = couponUseDTOS.get(0).getCompid();
 
-        List<Object[]> queryResult = baseDao.queryNativeSharding(couponUseDTOS.get(0).getCompid(),
-                TimeUtils.getCurrentYear(),
-                sqlBuilder.toString());
+        CouponListFilterService couponListFilterService = new CouponListFilterService(excoupon,
+                compid);
+        List<CouponPubVO> couponPubVOList = couponListFilterService.getCurrentDiscounts(productList);
 
-        CouponPubVO[] couponListVOS = new CouponPubVO[queryResult.size()];
-        if (queryResult == null || queryResult.isEmpty()) {
-            return result.success(couponListVOS);
-        }
-
-        baseDao.convToEntity(queryResult, couponListVOS, CouponPubVO.class,
-                new String[]{"unqid","coupno","compid","startdate","enddate","brulecode",
-                        "rulename","goods","ladder","glbno","ctype","reqflag"});
-
-        List<CouponPubVO> cuseList = new ArrayList<>();
-        for(CouponPubVO cvs :couponListVOS){
-            String ldjson = cvs.getLadder();
-            if(!StringUtils.isEmpty(ldjson)){
-                JsonArray jsonArrayLadder = jsonParser.parse(ldjson).getAsJsonArray();
-                List<CouponPubLadderVO> ladderVOS = new ArrayList<>();
-                for (JsonElement goodvo : jsonArrayLadder){
-                    CouponPubLadderVO ldvo = gson.fromJson(goodvo, CouponPubLadderVO.class);
-                    ladderVOS.add(ldvo);
-
-                }
-                cvs.setLadderVOS(ladderVOS);
-                double samt = couponUseDTOS.get(0).getSamt();
-                CouponPubLadderVO couponPubLadderVO
-                        = getLadoffable(ladderVOS,couponUseDTOS.get(0).getSamt());
-                if(couponPubLadderVO != null){
-                    int offerCode = couponPubLadderVO.getOffercode();
-                    if(offerCode != 0){
-                       // int ruleno = Integer.parseInt((offerCode+"").substring(0,4));
-                        DiscountResult disResult = CalculateUtil.calculate(cvs.getCompid(),
-                                productList, cvs.getUnqid());
-                        cvs.setOfferAmt(couponPubLadderVO.getOffer());
-//                        if(ruleno == 2130){
-//                           double calAmt = samt - (samt * (couponPubLadderVO.getOffer()/100));
-//                           cvs.setOfferAmt(calAmt);
-//                        }
-                        cvs.setOfferAmt(disResult.getCouponValue());
-                    }
-                    cuseList.add(cvs);
-                }
-            }
-        }
-        return result.success(cuseList);
+        return result.success(couponPubVOList);
     }
 
 
+    /**
+     * 计算优惠券价格
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result CouponCalculate(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+        Result result = new Result();
 
-
-
-
-
-    private CouponPubLadderVO getLadoffable(List<CouponPubLadderVO> ladoffs, double price) {
-        double ladAmt;
-        boolean able;
-
-        for (CouponPubLadderVO ladoff : ladoffs) {
-            ladAmt = ladoff.getLadamt();
-            able = true;
-            // 全为0则直接拿value
-            if (ladAmt > 0) {
-                able = price >= ladAmt;
-            }
-            if(ladAmt == 0 && ladoff.getOffer() > 0){
-                able = true;
-            }
-            if (able) {
-                return ladoff;
+        Map resultMap = new HashMap();
+        List<CouponUseDTO> couponUseDTOS = new ArrayList<>();
+        Gson gson = new Gson();
+        List<Product> productList = new ArrayList<>();
+        for (JsonElement coupn : jsonArray) {
+            CouponUseDTO couponUseDTO = gson.fromJson(coupn, CouponUseDTO.class);
+            if (couponUseDTO != null) {
+                couponUseDTOS.add(couponUseDTO);
+                Product product = new Product();
+                product.setSku(couponUseDTO.getPdno());
+                product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                productList.add(product);
             }
         }
-        return null;
+        int compid = couponUseDTOS.get(0).getCompid();
+        DiscountResult calculate = CalculateUtil.calculate(compid, productList, couponUseDTOS.get(0).getCoupon());
+
+
+
+        resultMap.put("tprice",calculate.getTotalCurrentPrice());
+        resultMap.put("tdiscount",calculate.getTotalDiscount());
+        resultMap.put("cpvalue",calculate.getCouponValue());
+        double acvalue = MathUtil.exactSub(calculate.getTotalDiscount(), calculate.getCouponValue()).
+                setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+        resultMap.put("acvalue",acvalue);
+        resultMap.put("freeship",calculate.isFreeShipping());
+
+        double payamt = calculate.getTotalCurrentPrice();
+        double sfee = couponUseDTOS.get(0).getShipfee();
+        if(!calculate.isFreeShipping()){
+            payamt = MathUtil.exactAdd(calculate.getTotalCurrentPrice(), sfee).
+                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+        }
+        resultMap.put("payamt",payamt);
+        return result.success(resultMap);
     }
 
 

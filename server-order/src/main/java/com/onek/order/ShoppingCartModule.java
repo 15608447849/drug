@@ -3,6 +3,7 @@ package com.onek.order;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.ActivityFilterService;
+import com.onek.calculate.CouponListFilterService;
 import com.onek.calculate.entity.*;
 import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
@@ -11,6 +12,7 @@ import com.onek.entity.ShoppingCartDTO;
 import com.onek.entity.ShoppingCartVO;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
+import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.discount.DiscountRuleStore;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -363,6 +365,7 @@ public class ShoppingCartModule {
                     shoppingCartVO.setChecked(shoppingCartDTOS.get(i).getChecked());
                     shoppingCartVO.setUnqid(shoppingCartDTOS.get(i).getUnqid());
                     shoppingCartVO.setCounpon(shoppingCartDTOS.get(i).getConpno());
+                    shoppingCartVO.setAreano(shoppingCartDTOS.get(i).getAreano());
                     break;
                 }
             }
@@ -399,6 +402,7 @@ public class ShoppingCartModule {
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
            List<DiscountRule> ruleList = new ArrayList<>();
             for(IDiscount discount : discountList){
+                Activity activity = (Activity)discount;
                 int brule = (int)discount.getBRule();
                 List<IProduct> pList =  discount.getProductList();
                 for (IProduct product: pList){
@@ -406,6 +410,7 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
+                        shoppingCartVO.setActcode(activity.getUnqid());
                         if(brule == 1113){
                             System.out.println("活动为秒杀");
                             shoppingCartVO.setStatus(1);
@@ -416,8 +421,6 @@ public class ShoppingCartModule {
             }
             shoppingCartVO.setRule(ruleList);
         }
-
-
         DiscountResult discountResult
                 = CalculateUtil.calculate(compid,ckProduct,shoppingCartList.get(0).getConpno());
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
@@ -434,7 +437,10 @@ public class ShoppingCartModule {
                     shoppingCartVO.setTotalamt(result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
                     shoppingCartVO.setSubtotal(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()).
                             setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
-                    shoppingCartVO.setFreight(20);
+                    if(shoppingCartVO.getAreano() > 0){
+                        shoppingCartVO.setFreight(AreaFeeUtil.getFee(shoppingCartVO.getAreano()));
+                    }
+
                 }
             }
         }
