@@ -74,8 +74,8 @@ public class UserInterceptor implements IServerInterceptor {
             }
         }catch(Exception e){
             //e.printStackTrace();
-            context.logger.error("访问被拦截,异常原因: "+e );
-            return new Result().intercept("异常捕获:"+e);
+            context.logger.error("interceptor 捕获错误: "+e );
+            return new Result().error("interceptor()",e);
         }
         return null;
     }

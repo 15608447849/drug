@@ -8,16 +8,21 @@ import java.util.HashMap;
 
 public class Result {
 
-   interface CODE{
+
+
+    interface CODE{
       int FAIL = -1;
       int INTERCEPT = -2;
+       int ERROR = -3;
       int SUCCESS = 200;
+
    }
 
    interface MESSAGE{
       String FAIL = "调用失败";
       String SUCCESS = "调用成功";
       String INTERCEPT = "拒绝访问";
+      String ERROR = "异常捕获";
    }
 
    public int code = CODE.FAIL;
@@ -82,6 +87,12 @@ public class Result {
       return this;
    }
 
+   public Result error(String msg,Exception e) {
+      this.code = CODE.ERROR;
+      this.message = MESSAGE.ERROR;
+      this.data = msg  +" , " +e;
+      return this;
+   }
 
 
    public Result setQuery(Object data, PageHolder pageHolder) {

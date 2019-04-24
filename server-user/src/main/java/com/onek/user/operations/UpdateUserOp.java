@@ -29,7 +29,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
         int uid = session.userId;
 
         if ( !StringUtils.isEmpty(oldPhone,newPhone,smsCode)){
-            String code = RedisUtil.getStringProvide().get(oldPhone);
+            String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
             if (code.equals(smsCode) && !newPhone.equals(oldPhone)){
                 return changUserByUid("uphone="+newPhone, "uid = "+ uid);
             }

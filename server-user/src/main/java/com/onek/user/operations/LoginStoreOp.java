@@ -48,7 +48,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
                 sb.append("用户名或密码不正确");
                 if ( failIndex >= USProperties.INSTANCE.sLoginNumMin
                         && failIndex< USProperties.INSTANCE.sLoginNumMax){
-                    sb.append(",再输入错误"+ (USProperties.INSTANCE.sLoginNumMax -failIndex) +"次将锁定账户");
+                    sb.append(",再输入错误").append(USProperties.INSTANCE.sLoginNumMax - failIndex).append("次将锁定账户");
                 }else if (failIndex >= USProperties.INSTANCE.sLoginNumMax){
                     sb = new StringBuilder("账户已锁定");
                 }
