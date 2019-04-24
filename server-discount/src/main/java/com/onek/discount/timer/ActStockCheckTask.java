@@ -19,7 +19,7 @@ public class ActStockCheckTask extends TimerTask {
 
     @Override
     public void run() {
-        System.out.println("####### act stock check start #########");
+        System.out.println("####### act stock check ["+ TimeUtils.date_yMd_Hms_2String(new Date())+"] start #########");
         Date date = TimeUtils.addDay(new Date(), -1);
         String y = TimeUtils.date_yMd_2String(date);
         List<Object[]> results = BaseDAO.getBaseDAO().queryNative(SQL, y);
