@@ -18,6 +18,7 @@ import com.onek.queue.CancelService;
 import com.onek.util.CalculateUtil;
 import com.onek.util.LccOrderUtil;
 import com.onek.util.area.AreaEntity;
+import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -318,7 +319,7 @@ public class TranOrderOptModule {
         if (discountResult.isFreeShipping()) {//免邮
             tranOrder.setFreight(0);
         } else {
-            tranOrder.setFreight(0);//运费(暂无)
+            tranOrder.setFreight(AreaFeeUtil.getFee(tranOrder.getRvaddno()));//运费(暂无)
         }
         tranOrder.setPayamt((discountResult.getTotalCurrentPrice() * 100));
         tranOrder.setDistamt((discountResult.getTotalDiscount() * 100));
