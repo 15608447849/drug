@@ -5,6 +5,7 @@ import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.entity.Product;
 import com.onek.goods.calculate.ActivityCalculateService;
 import com.onek.goods.calculate.ActivityFilterService;
+import com.onek.goods.service.PromRuleService;
 import com.onek.goods.service.PromTimeService;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.prod.ProdPriceEntity;
@@ -15,6 +16,7 @@ import redis.util.RedisUtil;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class ProdActPriceUtil {
 
@@ -33,6 +35,8 @@ public class ProdActPriceUtil {
     private static HashMap<Long,  List<String[]>> promTimeMap = new HashMap<>();
 
     private static PromTimeService timeService = new PromTimeService();
+
+    private static PromRuleService ruleService = new PromRuleService();
 
     public static double getActPrizeBySku(long actcode,long sku,double vatp){
         RedisStringProvide rs = RedisUtil.getStringProvide();
@@ -123,12 +127,12 @@ public class ProdActPriceUtil {
         long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
         Long subVersion = versionRuleMap.containsKey(sku) ? versionRuleMap.get(sku) : 0L;
         if(v > subVersion || subVersion == 0){
-            HashMap<Object, Object> map = IceRemoteUtil.getEffectiveRule();
+            Map<Long, Integer> map = ruleService.getProdRule();
             if(map != null && map.size() > 0){
-                for(Object key : map.keySet()){
+                for(Long key : map.keySet()){
                     if(key != null){
-                        prodRuleMap.put(Long.parseLong(key.toString()), ((int)Double.parseDouble(map.get(key).toString())));
-                        versionRuleMap.put(Long.parseLong(key.toString()), v);
+                        prodRuleMap.put(key, map.get(key));
+                        versionRuleMap.put(key, v);
                     }
                 }
             }

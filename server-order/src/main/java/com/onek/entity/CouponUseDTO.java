@@ -23,6 +23,24 @@ public class CouponUseDTO {
 
     private long coupon;
 
+    private double shipfee;
+
+    public double getShipfee() {
+        return shipfee;
+    }
+
+    public void setShipfee(double shipfee) {
+        this.shipfee = shipfee;
+    }
+
+    public long getCoupon() {
+        return coupon;
+    }
+
+    public void setCoupon(long coupon) {
+        this.coupon = coupon;
+    }
+
     private int flag;
 
     public int getFlag() {

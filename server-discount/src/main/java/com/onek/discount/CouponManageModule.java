@@ -192,10 +192,10 @@ public class CouponManageModule {
             " inner join {{?" + DSMConst.TD_PROM_ASSDRUG + "}} assd on assd.actcode = tpcp.unqid "+
             " where assd.gcode = 0  and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 "+
             " union "+
-            "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods  from {{?"+
+            "select distinct tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods  from {{?"+
             DSMConst.TD_PROM_COUPON +"}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode " +
             " inner join {{?" +DSMConst.TD_PROM_ASSDRUG+"}} assd on assd.actcode = tpcp.unqid "+
-            " where assd.gcode = ? "+
+            " where assd.gcode in (?,?) "+
             " and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 ) a "+
             " where a.actstock > 0 and 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) "+
             " and not exists (select 1 from td_prom_courcd where coupno = a.coupno and compid = ? and cstatus & 1 = 0)) a ";
@@ -212,7 +212,7 @@ public class CouponManageModule {
             "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods  from {{?"+
             DSMConst.TD_PROM_COUPON +"}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode " +
             " inner join {{?" +DSMConst.TD_PROM_ASSDRUG+"}} assd on assd.actcode = tpcp.unqid "+
-            " where assd.gcode = ? "+
+            " where assd.gcode in (?,?) "+
             " and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 ) a "+
             " where a.actstock > 0 and 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) "+
             " and not exists (select 1 from td_prom_courcd where coupno = a.coupno and compid = ? and cstatus & 1 = 0)) a ";
@@ -1046,12 +1046,15 @@ public class CouponManageModule {
         }
         sbSql.append("LIMIT ").append(curpageCount).append(",").append(page.pageSize);
         int count = 0;
-        List<Object[]> listCount = baseDao.queryNative(QUERY_COUP_CNT_PUB,new Object[]{gcode,compid});
+
+
+        String gtype = String.valueOf(gcode).substring(1, 7);
+        List<Object[]> listCount = baseDao.queryNative(QUERY_COUP_CNT_PUB,new Object[]{gtype,gcode,compid});
         if(!listCount.isEmpty()){
             count = Integer.parseInt(listCount.get(0)[0].toString());
         }
         page.totalItems = count;
-        List<Object[]> queryResult = baseDao.queryNative(sbSql.toString(),gcode,compid);
+        List<Object[]> queryResult = baseDao.queryNative(sbSql.toString(),gtype,gcode,compid);
         CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
         PageHolder pageHolder = new PageHolder(page);
         if(queryResult == null || queryResult.isEmpty()){
@@ -1065,7 +1068,7 @@ public class CouponManageModule {
         for (CouponPubVO couponPubVO:couponPubVOS){
             String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer from {{?" + DSMConst.TD_PROM_RELA
                     + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
-                    + " and a.actcode=" + couponPubVO.getCoupno();
+                    + " and a.actcode=" + couponPubVO.getCoupno() + " order by ladamt desc ";
             List<Object[]> queryRet = baseDao.queryNative(selectSQL);
             CouponPubLadderVO[] ladderVOS = new CouponPubLadderVO[queryRet.size()];
             baseDao.convToEntity(queryRet, ladderVOS, CouponPubLadderVO.class,

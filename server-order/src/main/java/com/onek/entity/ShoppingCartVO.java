@@ -64,6 +64,10 @@ public class ShoppingCartVO {
 
     private long conpno;
 
+    private long areano;
+
+    private long actcode;
+
     //运费
     private double freight;
 
@@ -79,6 +83,22 @@ public class ShoppingCartVO {
     private double totalamt;
 
     private int pstatus;
+
+    public long getActcode() {
+        return actcode;
+    }
+
+    public void setActcode(long actcode) {
+        this.actcode = actcode;
+    }
+
+    public long getAreano() {
+        return areano;
+    }
+
+    public void setAreano(long areano) {
+        this.areano = areano;
+    }
 
     public int getPstatus() {
         return pstatus;

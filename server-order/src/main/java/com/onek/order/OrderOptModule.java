@@ -299,4 +299,39 @@ public class OrderOptModule {
         int ret = baseDao.updateNative(UPD_APPRAISE_CK_SQL, type, userSession.userId, reason, asno);
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
     }
+
+    /* *
+     * @description 删除订单
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/4/24 11:04
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result deleteOrder(AppContext appContext) {
+        Result result = new Result();
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> params = new ArrayList<>();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        UserSession userSession = appContext.getUserSession();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.get("orderno").getAsString();
+        int compId = userSession.compId;
+        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+        String updateOrderSql = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|1 where "
+                + " cstatus&1=0 and orderno=" + orderNo;
+        sqlList.add(updateOrderSql);
+        params.add(new Object[]{});
+        String updateGoodsSql = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set cstatus=cstatus|1 where "
+                + " cstatus&1=0 and orderno=" + orderNo;
+        sqlList.add(updateGoodsSql);
+        params.add(new Object[]{});
+        String[] sqlNative = new String[sqlList.size()];
+        sqlNative = sqlList.toArray(sqlNative);
+        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compId, year, sqlNative, params));
+        return b ? result.success("删除成功") : result.fail("删除失败");
+    }
 }

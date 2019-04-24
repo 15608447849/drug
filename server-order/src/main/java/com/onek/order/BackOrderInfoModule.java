@@ -37,12 +37,12 @@ public class BackOrderInfoModule {
     private static final String QUERY_ORDER_BASE =
             " SELECT " + QUERY_TRAN_ORDER_PARAMS
                     + " FROM " + FROM_BK_ORDER
-                    + " WHERE ord.cstatus&1 = 0 ";
+                    + " WHERE 1=1 ";
 
     private static final String QUERY_ORDER_GOODS =
             " SELECT " + QUERY_TRAN_GOODS_PARAMS
                     + " FROM " + FROM_BK_GOODS
-                    + " WHERE goods.cstatus&1 = 0 AND goods.orderno = ? ";
+                    + " WHERE goods.orderno = ? ";
 
     public Result queryOrders(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -149,18 +149,21 @@ public class BackOrderInfoModule {
 
         ProdEntity prod;
         for (TranOrderGoods tranOrderGoods : result) {
+            prod = ProdInfoStore.getProdBySku(tranOrderGoods.getPdno());
             tranOrderGoods.setPayamt(MathUtil.exactDiv(tranOrderGoods.getPayamt(), 100).doubleValue());
             tranOrderGoods.setPdprice(MathUtil.exactDiv(tranOrderGoods.getPdprice(), 100).doubleValue());
             tranOrderGoods.setDistprice(MathUtil.exactDiv(tranOrderGoods.getDistprice(), 100).doubleValue());
             tranOrderGoods.setCoupamt(MathUtil.exactDiv(tranOrderGoods.getCoupamt(), 100).doubleValue());
-
-            prod = ProdInfoStore.getProdBySku(tranOrderGoods.getPdno());
+            tranOrderGoods.setSpu(
+                    String.valueOf(tranOrderGoods.getPdno())
+                            .substring(0, 12));
 
             if (prod != null) {
                 tranOrderGoods.setPname(prod.getProdname());
                 tranOrderGoods.setPspec(prod.getSpec());
                 tranOrderGoods.setManun(prod.getManuName());
             }
+
         }
 
         return new ArrayList<>(Arrays.asList(result));
