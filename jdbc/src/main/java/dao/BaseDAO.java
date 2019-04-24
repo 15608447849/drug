@@ -1,6 +1,5 @@
 package dao;
 
-import IceInternal.Ex;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import constant.BUSConst;
@@ -162,7 +161,7 @@ public class BaseDAO {
 	private String getTableName(final int table)
 	{
 		StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
-		LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
+//		LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
 		return strSql.toString();
 	}
 
@@ -177,7 +176,7 @@ public class BaseDAO {
         }else{
             strSql.append(tbSharding);
         }
-		LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
+//		LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
 		return strSql.toString();
 	}
 
@@ -205,7 +204,7 @@ public class BaseDAO {
                 strSql.append(tbSharding);
             }
         }
-        LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
+//        LogUtil.getDefaultLogger().debug("表名："+strSql.toString());
         return strSql.toString();
     }
 
@@ -354,7 +353,7 @@ public class BaseDAO {
 	public List<Object[]> queryNativeSharding(int sharding,int tbSharding,String nativeSQL,final Object... params){
 		List<Object[]> resultList = null;
 		String[] result = getNativeSQL(nativeSQL,tbSharding);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + result[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(result[0])));
 		resultList = baseDao.query(result[1], params);
@@ -479,7 +478,7 @@ public class BaseDAO {
 			return baseDao.update(resultSQL[1], params);
 		}
         if(synFlag == 2){
-            LogUtil.getDefaultLogger().debug("【Debug】Native LOG SQL：" + resultSQL[1]);
+            LogUtil.getDefaultLogger().debug("【Debug】Native LOG SQL：" + resultSQL[1] +"\n"+ Arrays.toString(params));
             baseDao.setManager(getBackupSessionMgr(0,Integer.parseInt(resultSQL[0]),true));
             return baseDao.update(resultSQL[1], params);
         }
@@ -499,7 +498,7 @@ public class BaseDAO {
 	public int updateNativeSharding(int sharding,int tbSharding,String nativeSQL,final Object... params){
 		int result = 0;
 		String[] resultSQL = getNativeSQL(nativeSQL,tbSharding);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 
 		//异步同步到备份库
 		Future<Object> future = null;
@@ -561,17 +560,17 @@ public class BaseDAO {
 
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		if(synFlag == 0){
-			LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+			LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 			return baseDao.update(resultSQL[1], params);
 		}
 		if(synFlag == 1 && SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
-			LogUtil.getDefaultLogger().debug("【Debug】Native SYN SQL：" + resultSQL[1]);
+			LogUtil.getDefaultLogger().debug("【Debug】Native SYN SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 			baseDao.setManager(getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false));
 			return baseDao.update(resultSQL[1], params);
 		}
 		if(synFlag == 2){
-			LogUtil.getDefaultLogger().debug("【Debug】Native LOG SQL：" + resultSQL[1]);
+			LogUtil.getDefaultLogger().debug("【Debug】Native LOG SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 			baseDao.setManager(getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),true));
 			return baseDao.update(resultSQL[1], params);
 		}
@@ -581,7 +580,7 @@ public class BaseDAO {
     protected int updateNativeInCallBKSharding(int sharding,int tbSharding,String[] resultSQL,
                                                final Object... params){
         JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-        LogUtil.getDefaultLogger().debug("【Debug】Native BKSYN SQL：" + resultSQL[1]);
+        LogUtil.getDefaultLogger().debug("【Debug】Native BKSYN SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
         baseDao.setManager(getSessionMgr(sharding,DSMConst.TD_BK_TRAN_ORDER));
         return baseDao.update(resultSQL[1], params);
     }
@@ -646,7 +645,7 @@ public class BaseDAO {
 	public KV<Integer, List<Object>> updateAndGPKNativeSharding(int sharding, int tbSharding, String nativeSQL, final Object... params){
 		KV<Integer,List<Object>> keys = null;
 		String[] resultSQL = getNativeSQL(nativeSQL,tbSharding);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 
 		//异步同步到备份库
 		Future<Object> future = null;
@@ -696,12 +695,12 @@ public class BaseDAO {
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		if(synFlag == 0){
-			LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+			LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
 			return baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		}
 		if(synFlag == 1 && SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
-			LogUtil.getDefaultLogger().debug("【Debug】Native SYN SQL：" + resultSQL[1]);
+			LogUtil.getDefaultLogger().debug("【Debug】Native SYN SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 			baseDao.setManager(getBackupSessionMgr(0,Integer.parseInt(resultSQL[0]),false));
 			return baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		}
@@ -720,15 +719,15 @@ public class BaseDAO {
 	protected KV<Integer, List<Object>> updateAndGPKNativeInCallSharding(int sharding,int tbSharding,String nativeSQL,int synFlag,final Object... params){
 		KV<Integer,List<Object>> keys;
 		String[] resultSQL = getNativeSQL(nativeSQL,tbSharding);
-		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 		if(synFlag == 0){
-			LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+			LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 			return baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		}
 		if(synFlag == 1 && SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
-			LogUtil.getDefaultLogger().debug("【Debug】Native SYN SQL：" + resultSQL[1]);
+			LogUtil.getDefaultLogger().debug("【Debug】Native SYN SQL：" + resultSQL[1] +"\n"+Arrays.toString(params));
 			baseDao.setManager(getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false));
 			return baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		}
@@ -1040,6 +1039,9 @@ public class BaseDAO {
 	public int[] updateBatchNative(String nativeSQL, List<Object[]> params, int batchSize){
 		String[] resultSQL = getNativeSQL(nativeSQL);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		for (Object[] objects : params){
+			LogUtil.getDefaultLogger().debug("【Debug】" + Arrays.toString(objects));
+		}
 		int[] result = null;
 		SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),4);
 		synDbData.setBatchSize(batchSize);
@@ -1080,6 +1082,9 @@ public class BaseDAO {
 	public int[] updateBatchNativeSharding(int sharding,int tbSharding,String nativeSQL, List<Object[]> params, int batchSize){
 		String[] resultSQL = getNativeSQL(nativeSQL,tbSharding);
 		LogUtil.getDefaultLogger().debug("【Debug】Native SQL：" + resultSQL[1]);
+		for (Object[] objects : params){
+			LogUtil.getDefaultLogger().debug("【Debug】" + Arrays.toString(objects));
+		}
 		int[] result = null;
 
 		SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),4);
