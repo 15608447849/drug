@@ -33,12 +33,12 @@ public class CouponFilterService extends BaseDiscountFilterService {
             + " AND actcode = ? AND gcode IN (?, ? , 0) ";
 
     public CouponFilterService(
-            long couponNo,
+            long couponUnqid,
             boolean excoupon,
             int compid) {
         super();
 
-        this.couentUnqid = couponNo;
+        this.couentUnqid = couponUnqid;
         this.compid = compid;
         this.excoupon = excoupon;
     }
