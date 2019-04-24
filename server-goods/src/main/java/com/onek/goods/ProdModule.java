@@ -145,7 +145,12 @@ public class ProdModule {
     @UserPermission(ignore = true)
     public Result getBrandMallFloor(AppContext appContext) {
 
-        SearchResponse response = ProdESUtil.searchProdHasBrand(1, 100);
+        int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
+        int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+
+        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, pageIndex, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         assembleData(response, prodList);
 
@@ -854,8 +859,8 @@ public class ProdModule {
 
             ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
             if (prizeEntity != null) {
-                prodVO.setMinprize(NumUtil.div(prizeEntity.getMinactprize(), 100));
-                prodVO.setMaxprize(NumUtil.div(prizeEntity.getMaxactprize(), 100));
+                prodVO.setMinprize(prizeEntity.getMinactprize());
+                prodVO.setMaxprize(prizeEntity.getMaxactprize());
                 prodVO.setActcode(prizeEntity.getActcode());
                 // 代表值存在一个活动 团购或秒杀
                 if (prizeEntity.getActcode() > 0 && bits.size() == 1 && ((ruleStatus & 2048) > 0 || (ruleStatus & 4096) > 0)) {

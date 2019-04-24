@@ -299,6 +299,8 @@ public class ProdESUtil {
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
+            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+            boolQuery.must(matchQuery);
             if(spu > 0){
                 String start = "1"+addZeroForNum(spu+"", 6) +"00000";
                 String end = "1"+addZeroForNum(spu+"", 6) +"99999";
@@ -365,6 +367,8 @@ public class ProdESUtil {
                 TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKUCSTATUS, resultArray);
                 boolQuery.must(builder);
             }
+            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+            boolQuery.must(matchQuery);
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
             FieldSortBuilder sortBuilder = null;
@@ -397,24 +401,33 @@ public class ProdESUtil {
     /**
      * 根据条件全文检索商品
      *
+     * @param keyword
      * @param pagenum
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdHasBrand(int pagenum, int pagesize){
+    public static SearchResponse searchProdHasBrand(String keyword,int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_BRANDNO);
             rangeQuery.gt(0);
             boolQuery.must(rangeQuery);
+            if(!StringUtils.isEmpty(keyword)){
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+                boolQuery.must(matchQuery);
+            }
+            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+            boolQuery.must(matchQuery);
+
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
             response = client.prepareSearch(ESConstant.PROD_INDEX)
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort(ESConstant.PROD_COLUMN_TIME ,SortOrder.DESC)
+                    .addSort(ESConstant.PROD_COLUMN_BRANDNO, SortOrder.DESC)
+                    .addSort(ESConstant.PROD_COLUMN_SALES, SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -459,6 +472,8 @@ public class ProdESUtil {
                         .should(rangeQuery1);
                 boolQuery.must(postFilterBool);
             }
+            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+            boolQuery.must(matchQuery);
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
             response = client.prepareSearch(ESConstant.PROD_INDEX)
@@ -535,6 +550,8 @@ public class ProdESUtil {
                 TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, spuArray);
                 boolQuery.must(builder);
             }
+            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+            boolQuery.must(matchQuery);
 
             int from = pagenum * pagesize - pagesize;
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
@@ -573,6 +590,8 @@ public class ProdESUtil {
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
+            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, 1);
+            boolQuery.must(matchQuery);
 
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             response = client.prepareSearch(ESConstant.PROD_INDEX)

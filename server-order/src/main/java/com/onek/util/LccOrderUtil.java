@@ -8,9 +8,6 @@ import com.hsf.framework.order.OrderICE;
 import com.hsf.framework.order.OrderServicePrx;
 import com.onek.entity.TranOrder;
 import com.onek.property.LccProperties;
-import com.onek.util.area.AreaEntity;
-import global.IceRemoteUtil;
-import org.hyrdpf.ds.AppConfig;
 import util.StringUtils;
 
 import java.util.Set;
@@ -55,7 +52,8 @@ public class LccOrderUtil {
         orderIce.ptdictc = "22"; // 线下到付
         orderIce.dmdictc = "93"; // 送货不上楼
         orderIce.redictc = "101"; // 无回单
-        orderIce.priority = 0;
+        orderIce.priority = 1; // 定向发布
+        orderIce.source = 3;
 
         OrderServicePrx orderServicePrx = (OrderServicePrx) RpcClientUtil
                 .getServicePrx(OrderServicePrx.class);
@@ -90,13 +88,34 @@ public class LccOrderUtil {
             JSONObject jsonObject = JSONObject.parseObject(result);
             if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
                  JSONObject data = (JSONObject) jsonObject.get("obj");
+                 if(data == null){
+                     traceJson.put("billno", "");
+                     traceJson.put("logictype", "0");
+                     traceJson.put("node", new JSONArray());
+                     return traceJson;
+                 }
                  Set<String> keys = data.keySet();
                  if(keys != null && keys.size() > 0){
                      String key = keys.iterator().next();
                      traceJson.put("billno", key);
                      traceJson.put("logictype", "0");
                      JSONArray array = data.getJSONArray(key);
-                     traceJson.put("node", array);
+                     JSONArray node = new JSONArray();
+                     for(Object obj : array){
+                         if(obj instanceof String){
+                             if(obj.toString().charAt(0) == '{'){
+                                 JSONObject correct = JSONObject.parseObject(obj.toString());
+                                 if(correct.containsKey("correct")){
+                                     continue;
+                                 }
+                             }else if(obj.toString().charAt(0) == '['){
+                                 node = JSONObject.parseArray(obj.toString());
+                                 break;
+                             }
+                         }
+
+                     }
+                     traceJson.put("node", node);
                  }
             }
         }
@@ -104,20 +123,13 @@ public class LccOrderUtil {
         return traceJson;
     }
 
-    static {
-        AppConfig.initLogger("log4j2.xml");
-        AppConfig.initialize();
-    }
-
-    public static void main(String[] args) {
-//        TranOrder tranOrder = new TranOrder();
-//        tranOrder.setFreight(20);
-//        tranOrder.setRvaddno(10130803);
-//        tranOrder.setPdnum(2);
-//        tranOrder.setOrderno("1904180003102002");
-//        LccOrderUtil.addLccOrder(tranOrder, "小李", "14598763465","北京市天安门");
-
-        JSONObject result = LccOrderUtil.queryTraceByOrderno("1904180003102002");
-        System.out.println(result.toJSONString());
-    }
+//    static {
+//        AppConfig.initLogger("log4j2.xml");
+//        AppConfig.initialize();
+//    }
+//
+//    public static void main(String[] args) {
+//        JSONObject result = LccOrderUtil.queryTraceByOrderno("1904220003127703");
+//        System.out.println(result.toJSONString());
+//    }
 }
