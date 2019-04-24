@@ -56,7 +56,7 @@ public class RedisStockUtil {
         if (Integer.parseInt(currentStock) <= 0) {
             return false;
         }
-        if ((Integer.parseInt(currentStock) - stock) <= 0) {
+        if ((Integer.parseInt(currentStock) - stock) < 0) {
             return false;
         }
         Long num = RedisUtil.getStringProvide().decrease(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, stock);
@@ -115,7 +115,7 @@ public class RedisStockUtil {
         if (Integer.parseInt(currentStock) <= 0) {
             return 0;
         }
-        if ((Integer.parseInt(currentStock) - stock) <= 0) {
+        if ((Integer.parseInt(currentStock) - stock) < 0) {
             return 0;
         }
         Long num = RedisUtil.getStringProvide().decrease(RedisGlobalKeys.STOCK_PREFIX + sku, stock);
@@ -163,7 +163,7 @@ public class RedisStockUtil {
         if (Integer.parseInt(currentStock) <= 0) {
             return 0;
         }
-        if ((Integer.parseInt(currentStock) - stock) <= 0) {
+        if ((Integer.parseInt(currentStock) - stock) < 0) {
             return 0;
         }
         Long num = RedisUtil.getStringProvide().increase(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, stock);

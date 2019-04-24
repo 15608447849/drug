@@ -20,10 +20,10 @@ public class LccProperties extends ApplicationPropertiesBase {
 
     @PropertiesName("order.startaddr")
     public String startaddr;
-
-    @PropertiesName("order.robbid")
-    public int robbid;
-
-    @PropertiesName("order.robbcompid")
-    public int robbcompid;
+//
+//    @PropertiesName("order.robbid")
+//    public int robbid;
+//
+//    @PropertiesName("order.robbcompid")
+//    public int robbcompid;
 }
