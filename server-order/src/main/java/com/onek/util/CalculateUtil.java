@@ -39,7 +39,7 @@ public class CalculateUtil {
 
     public static DiscountResult calculate(int compid,
                                      List<? extends IProduct> products,
-                                     long couponNo) {
+                                     long couponUnqid) {
         if (compid <= 0) {
             return new DiscountResult(Collections.EMPTY_LIST, 0.0, products);
         }
@@ -79,10 +79,10 @@ public class CalculateUtil {
 
         double couponValue = 0.0;
 
-        if (couponNo > 0) {
+        if (couponUnqid > 0) {
             List<IDiscount> couponFilter =
                     new CouponFilterService(
-                            couponNo,
+                            couponUnqid,
                             DiscountUtil.isExcoupon(activityList),
                             compid).getCurrentActivities(products);
 

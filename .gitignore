@@ -36,3 +36,7 @@ server-order/src/test/
 server-global/src/main/resources/
 server-order/build/
 build/
+server-order/src/main/java/com/hsf/
+server-order/src/main/java/order.js
+server-order/src/main/java/myOrder.js
+server-order/src/main/java/cstruct.js
