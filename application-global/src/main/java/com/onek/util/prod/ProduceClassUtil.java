@@ -18,7 +18,6 @@ public class ProduceClassUtil {
 
         if (StringUtils.isEmpty(result)) {
             result = IceRemoteUtil.getProduceName(pclass);
-
             PROD_NAME_MAP.put(pclass, result);
         }
 

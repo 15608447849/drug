@@ -3,6 +3,7 @@ package com.onek.client;
 import com.onek.server.inf.IRequest;
 import com.onek.server.inf.InterfacesPrx;
 import com.onek.server.inf.InterfacesPrxHelper;
+import util.GsonUtils;
 
 import java.util.HashMap;
 import java.util.Locale;
@@ -62,6 +63,23 @@ public class IceClient {
         request.param.token = token;
         return this;
     }
+
+    public IceClient setServerAndRequest(String serverName,String clazz,String method){
+        return settingProxy(serverName).settingReq("",clazz,method);
+    }
+
+    public IceClient setArrayParams(Object... objects){
+        String[] arr = new String[objects.length];
+        for (int i = 0; i< objects.length; i++) {
+            arr[i] = String.valueOf(objects[i]);
+        }
+        return settingParam(arr);
+    }
+
+    public IceClient setJsonParams(Object obj){
+        return settingParam(GsonUtils.javaBeanToJson(obj));
+    }
+
     public IceClient settingParam(String json, int index, int number){
         request.param.json = json;
         request.param.pageIndex = index;
@@ -83,11 +101,11 @@ public class IceClient {
         return this;
     }
 
-    public String executeSync(){
+    public String execute() {
         if (curPrx!=null && request!=null){
             return curPrx.accessService(request);
         }
-        return "";
+        throw new RuntimeException("ICE 未开始连接或找不到远程代理或请求参数异常");
     }
 
     public void sendMessageToClient(String identity,String message){

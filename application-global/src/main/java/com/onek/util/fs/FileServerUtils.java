@@ -14,6 +14,7 @@ import java.util.List;
  * @Date: 2019/3/20 11:00
  */
 public class FileServerUtils {
+
     private static AppProperties fsp = AppProperties.INSTANCE;
 
     //文件上传地址
@@ -28,11 +29,8 @@ public class FileServerUtils {
 
     // 文件下载地址 前缀 ,例如 下载文件 /目录/文件.png -> 下载前缀/目录/文件.png
     public static String fileDownloadPrev(){
-
         return "http://" + fsp.fileServerAddress ;
     }
-
-
 
     public static String defaultHome(){
         return "/" + EncryptUtils.encryption(fsp.fileDefaultDir);
@@ -127,12 +125,5 @@ public class FileServerUtils {
         String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/refund","POST",map);
         return GsonUtils.string2Map(json);
     }
-
-    public static void main(String[] args) {
-        HashMap<String,Object> map = refund("alipay","1000001","2019042422001434781000005726",80.00);
-
-        System.out.println(map);
-    }
-
 
 }

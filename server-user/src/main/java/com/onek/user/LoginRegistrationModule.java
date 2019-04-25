@@ -104,13 +104,11 @@ public class LoginRegistrationModule {
      * 内部调用 获取企业信息
      */
     @UserPermission(ignore = true)
-    public Result getStoreInfo(AppContext appContext){
+    public StoreBasicInfo getStoreInfo(AppContext appContext){
         int compid = Integer.parseInt(appContext.param.arrays[0]);
         StoreBasicInfo info = new StoreBasicInfo(compid);
-        if (getStoreInfoById(info)){
-            return new Result().success(info);//返回用户信息
-        };
-        return new Result().fail("暂无企业信息");//返回用户信息
+        getStoreInfoById(info);
+        return info;
     }
     /**
      * 获取门店用户信息
