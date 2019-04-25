@@ -13,7 +13,7 @@ public class DiscountInitialize implements IIceInitialize {
         communicator().getLogger().error(serverName+" ####### 开始初始化  ####### ");
         ElasticSearchClientFactory.init();
         try{
-            Thread.sleep(5000);
+            Thread.sleep(2000);
             new DiscountRuleTimer();
             new ActStockCheckTimer();
         }catch (Exception e){

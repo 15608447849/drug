@@ -560,14 +560,26 @@ public class CouponManageModule {
     }
 
     private boolean relationAllGoods(JsonObject jsonObject,long actCode) {
-        int limitnum = jsonObject.get("limitnum").getAsInt();
-        int actstock = jsonObject.get("actstock").getAsInt();
+
+
+        String limitnum = jsonObject.get("limitnum").getAsString();
+        String actstock = jsonObject.get("actstock").getAsString();
+        int limit = 0;
+        int stock = 0;
+        if(!StringUtils.isEmpty(limitnum)){
+            limit = Integer.parseInt(limitnum);
+        }
+
+        if(!StringUtils.isEmpty(actstock)){
+            stock = Integer.parseInt(actstock);
+        }
+
         double price = jsonObject.get("price").getAsDouble() * 100;
         String delSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
                 + " where cstatus&1=0 and actcode=?";
         baseDao.updateNative(delSql,actCode);
         int result = baseDao.updateNative(INSERT_ASS_DRUG_SQL,GenIdUtil.getUnqId(),actCode, 0, 0,
-                actstock,limitnum,price);
+                stock,limit,price);
         return result > 0;
 
     }
