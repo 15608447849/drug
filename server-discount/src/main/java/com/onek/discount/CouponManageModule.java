@@ -1057,8 +1057,11 @@ public class CouponManageModule {
         sbSql.append("LIMIT ").append(curpageCount).append(",").append(page.pageSize);
         int count = 0;
 
+        String gtype = "-1";
+        if(gcode > 0){
+            gtype = String.valueOf(gcode).substring(1, 7);
+        }
 
-        String gtype = String.valueOf(gcode).substring(1, 7);
         List<Object[]> listCount = baseDao.queryNative(QUERY_COUP_CNT_PUB,new Object[]{gtype,gcode,compid});
         if(!listCount.isEmpty()){
             count = Integer.parseInt(listCount.get(0)[0].toString());
