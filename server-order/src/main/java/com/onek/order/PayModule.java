@@ -13,6 +13,8 @@ import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
+import com.onek.util.LccOrderUtil;
+import com.onek.util.area.AreaEntity;
 import com.onek.util.fs.FileServerUtils;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -44,7 +46,7 @@ public class PayModule {
 
     private static final String GET_TO_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ? and ostatus=?";
 
-    private static final String GET_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ?";
+    private static final String GET_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,orderno,IFNULL(address,'') address,pdnum,IFNULL(consignee,'') consignee,IFNULL(contact,'') contact from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ?";
 
     private static final String GET_TRAN_TRANS_SQL = "select payprice,payway,payno,orderno,paysource,paystatus,paydate,paytime,completedate,completetime from {{?" + DSMConst.TD_TRAN_TRANS + "}} where orderno=? and compid = ? order by completedate desc,completetime desc limit 1";
 
@@ -234,6 +236,7 @@ public class PayModule {
         }
 
         new SendMsgThread(orderno, tradeStatus ,money, compid, tradeDate).start();
+        new GenLccOrderThread(compid, orderno).start();
 
         if(result){
             return new Result().success(null);
@@ -448,8 +451,6 @@ public class PayModule {
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
-        List<Object[]> paramsOne = new ArrayList<>();
-        List<Object[]> paramsTwo = new ArrayList<>();
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
         params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
@@ -521,6 +522,59 @@ public class PayModule {
             jsonObject.put("event", MessageEvent.PAY_CALLBACK.getState());
             jsonObject.put("body", body);
             IceRemoteUtil.sendMessageToClient(compid, jsonObject.toJSONString());
+
+        }
+    }
+
+    class GenLccOrderThread extends  Thread{
+        private int compid;
+        private String orderno;
+
+        public GenLccOrderThread(int compid, String orderno){
+            this.compid = compid;
+            this.orderno = orderno;
+        }
+
+
+        public void run(){
+
+            System.out.println("## 541 line "+compid+ ";"+orderno+" ####");
+            List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
+            if(list != null && list.size() > 0) {
+                TranOrder[] result = new TranOrder[list.size()];
+                BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime", "pdamt", "freight", "coupamt", "distamt", "rvaddno", "orderno", "address","pdnum","consignee","contact"});
+
+                TranOrder tranOrder = result[0];
+
+                String arriarc = "";
+                AreaEntity[] areaEntities = IceRemoteUtil.getAncestors(tranOrder.getRvaddno());
+                if(areaEntities != null && areaEntities.length > 0){
+                    for(int i = areaEntities.length - 1; i>=0; i--){
+                        if(areaEntities[i] != null && !StringUtils.isEmpty(areaEntities[i].getLcareac()) && Integer.parseInt(areaEntities[i].getLcareac()) > 0){
+                            arriarc = areaEntities[i].getLcareac();
+                            break;
+                        }
+                    }
+                }
+
+                if(StringUtils.isEmpty(arriarc) && tranOrder.getRvaddno() > 0){
+                    arriarc = "10" + String.valueOf(tranOrder.getRvaddno()).substring(0,7);
+                }
+
+                if(StringUtils.isEmpty(arriarc)){
+                    arriarc = "10";
+                }
+
+                String lccResult = LccOrderUtil.addLccOrder(tranOrder, arriarc);
+                if(!StringUtils.isEmpty(lccResult)){
+                    JSONObject jsonObject = JSONObject.parseObject(lccResult);
+                    if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
+                        System.out.println("## 生成一块物流订单成功 ####");
+                    }else{
+                        System.out.println("## 生成一块物流订单失败 ####");
+                    }
+                }
+            }
 
         }
     }
