@@ -20,7 +20,7 @@ public class ObjectRefUtil {
 
     private ObjectRefUtil(){ }
 
-    public static Object createObject(Class cls,Class[] parameterTypes,Object[] parameters) throws Exception{
+    public static Object createObject(Class cls,Class[] parameterTypes,Object... parameters) throws Exception{
         Constructor constructor = cls.getConstructor(parameterTypes);
         Object obj =constructor.newInstance(parameters);
         return obj;
@@ -33,7 +33,7 @@ public class ObjectRefUtil {
      * @param parameters 参数实际数据
      * @return 反射对象
      */
-    public static Object createObject(String classPath,Class[] parameterTypes,Object[] parameters) throws Exception{
+    public static Object createObject(String classPath,Class[] parameterTypes,Object... parameters) throws Exception{
             Class cls = Class.forName(classPath);
             return createObject(cls,parameterTypes,parameterTypes);
     }
@@ -47,7 +47,6 @@ public class ObjectRefUtil {
      * @return 方法调用返回值
      */
    public static Object callMethod(Object holder,String methodName,Class[] parameterTypes,Object... parameters) throws Exception{
-       Object obj = null;
            //getDeclaredMethod*()获取的是类自身声明的所有方法,包含public、protected和private方法
            // getMethod*()获取的是类的所有共有方法,这就包括自身的所有public方法,和从基类继承的、从接口实现的所有public方法
            Method method = holder.getClass().getMethod(methodName,parameterTypes);

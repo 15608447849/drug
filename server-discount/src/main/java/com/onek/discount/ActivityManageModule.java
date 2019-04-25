@@ -17,7 +17,7 @@ import com.onek.propagation.prod.ProdDiscountObserver;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.GenIdUtil;
+import com.onek.util.GenIdUtil;
 import util.BUSUtil;
 import util.GsonUtils;
 import util.ModelUtil;

@@ -10,14 +10,12 @@ import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.GenIdUtil;
-import global.IceRemoteUtil;
-import org.hyrdpf.ds.AppConfig;
+import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import util.GsonUtils;
 import util.ModelUtil;
 import util.StringUtils;
 
-import java.math.BigDecimal;
 import java.util.*;
 
 import static com.onek.discount.CommonModule.getLaderNo;
@@ -1059,8 +1057,11 @@ public class CouponManageModule {
         sbSql.append("LIMIT ").append(curpageCount).append(",").append(page.pageSize);
         int count = 0;
 
+        String gtype = "-1";
+        if(gcode > 0){
+            gtype = String.valueOf(gcode).substring(1, 7);
+        }
 
-        String gtype = String.valueOf(gcode).substring(1, 7);
         List<Object[]> listCount = baseDao.queryNative(QUERY_COUP_CNT_PUB,new Object[]{gtype,gcode,compid});
         if(!listCount.isEmpty()){
             count = Integer.parseInt(listCount.get(0)[0].toString());

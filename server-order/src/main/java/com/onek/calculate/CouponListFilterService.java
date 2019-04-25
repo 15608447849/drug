@@ -87,7 +87,7 @@ public class CouponListFilterService extends BaseDiscountFilterService {
             CouponPubVO couponPubVO = couentLadderIterator.next();
             CouponPubLadderVO couponPubLadderVO = getLadoffable(couponPubVO.getLadderVOS(),priceTotal);
             if(couponPubLadderVO == null){
-                couentIterator.remove();
+                couentLadderIterator.remove();
             }
         }
         return checkCoupon;
@@ -102,7 +102,7 @@ public class CouponListFilterService extends BaseDiscountFilterService {
 
     private String getSkusSql(List<Product> skus){
         StringBuilder sbSql = new StringBuilder(CHECK_SKU);
-        sbSql.append(" and sku in (");
+        sbSql.append(" and gcode in (");
         for(int i = 0; i < skus.size(); i++){
             if(skus.get(i).getSKU() > 0){
                 if(i == (skus.size() -1)){

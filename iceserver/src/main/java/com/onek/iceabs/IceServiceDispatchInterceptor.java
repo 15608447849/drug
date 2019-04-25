@@ -3,7 +3,6 @@ package com.onek.iceabs;
 import Ice.Object;
 import Ice.*;
 
-import java.lang.Exception;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -56,20 +55,15 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
 
     @Override
     public DispatchStatus dispatch(Request request) {
-        try{
-            if (!systemRunning) throw new Exception("服务未初始化完成");
+        if (!systemRunning)  return DispatchStatus.DispatchUserException;
             long time = System.currentTimeMillis();
             Current current = request.getCurrent();
             Identity identity = request.getCurrent().id;
             Object object = map.get(identity);
             DispatchStatus status = object.ice_dispatch(request);
             if (current.operation .equals("accessService")) communicator().getLogger()
-                    .print("调用状态: "+ statusString(status) + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms\n\r");
+                    .print("调用状态: "+ statusString(status) + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms\n");
             return status;
-        }catch(Exception ignored){
-
-        }
-        return DispatchStatus.DispatchUserException;
     }
 
     private String statusString(DispatchStatus status){

@@ -46,6 +46,6 @@ public class IceLog4jLogger implements Ice.Logger {
 
     @Override
     public void warning(String message) {
-        logger.warn(message);
+        logger.debug(message);
     }
 }

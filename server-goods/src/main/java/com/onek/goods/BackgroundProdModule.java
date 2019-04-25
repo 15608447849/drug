@@ -13,13 +13,11 @@ import com.onek.util.prod.ProduceClassUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.IceRemoteUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 
@@ -179,15 +177,16 @@ public class BackgroundProdModule {
             return new Result().fail(e.getMessage());
         }
 
+
+        bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
+        bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue());
+        bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp (), 100).intValue());
         int esResult = ProdESUtil.updateProdDocument(bgProdVO);
 
         if (esResult != 0) {
             return new Result().fail("操作失败");
         }
 
-        bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
-        bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue());
-        bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp (), 100).intValue());
         RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
         BASE_DAO.updateNative(UPDATE_PROD_BASE,
                 bgProdVO.getVatp(), bgProdVO.getMp(), bgProdVO.getRrp(),

@@ -1,6 +1,6 @@
 package com.onek.util.prod;
 
-import global.IceRemoteUtil;
+import com.onek.util.IceRemoteUtil;
 import util.StringUtils;
 
 import java.util.HashMap;
@@ -18,7 +18,6 @@ public class ProduceClassUtil {
 
         if (StringUtils.isEmpty(result)) {
             result = IceRemoteUtil.getProduceName(pclass);
-
             PROD_NAME_MAP.put(pclass, result);
         }
 

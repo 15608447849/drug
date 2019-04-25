@@ -14,6 +14,8 @@ public class SystemInitialize implements IIceInitialize {
         try {
             AppConfig.initLogger();
             AppConfig.initialize();
+            //异步日志
+            System.setProperty("Log4jContextSelector", "org.apache.logging.log4j.core.async.AsyncLoggerContextSelector");
         } catch (Exception e) {
 //            e.printStackTrace();
             communicator().getLogger().error(serverName+" , 初始化错误: "+ e);

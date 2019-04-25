@@ -23,8 +23,8 @@ import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.GenIdUtil;
-import global.IceRemoteUtil;
+import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import org.hyrdpf.util.LogUtil;
 import util.ArrayUtil;
 import util.ModelUtil;
@@ -407,8 +407,14 @@ public class TranOrderOptModule {
     private List<TranOrderGoods> stockIsEnough(List<TranOrderGoods> tranOrderGoodsList) {
         List<TranOrderGoods> goodsList = new ArrayList<>();
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
-            if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum()) != 2) {
-                return goodsList;
+            if (tranOrderGoods.getActCode() > 0) {
+                if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum(), tranOrderGoods.getActCode())) {
+                    return goodsList;
+                }
+            } else{
+                if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum()) != 2) {
+                    return goodsList;
+                }
             }
             goodsList.add(tranOrderGoods);
         }
@@ -593,7 +599,7 @@ public class TranOrderOptModule {
         AreaEntity[] areaEntities = IceRemoteUtil.getAncestors(r[0].getRvaddno());
         if(areaEntities != null && areaEntities.length > 0){
             for(int i = areaEntities.length - 1; i>=0; i--){
-                if(Integer.parseInt(areaEntities[i].getLcareac()) > 0){
+                if(areaEntities[i] != null && !StringUtils.isEmpty(areaEntities[i].getLcareac()) && Integer.parseInt(areaEntities[i].getLcareac()) > 0){
                     arriarc = areaEntities[i].getLcareac();
                     break;
                 }
