@@ -33,22 +33,19 @@ public class AppContext extends IceContext {
             if (StringUtils.isEmpty(param.token)) return;
             String key = genUKey();
             String json = RedisUtil.getStringProvide().get(key);
-            if(StringUtils.isEmpty(json)) return;
-//            logger.print( key + " #------- 当 前 用 户 信 息 ----->> " +json );
-            this.userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
+            userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
 
-            //查询企业信息
-        if (userSession.compId > 0) {
-            json = RedisUtil.getStringProvide().get(userSession.compId+"");
-            if(StringUtils.isEmpty(json)) {
-                //远程调用查询
-                json = IceRemoteUtil.getCompanyJson(userSession.compId);
-                if(StringUtils.isEmpty(json))  return;
-            };
-//            logger.print( key + " #------- 当 前 用 户 企 业 信 息 ----->> " +json );
-            userSession.comp = GsonUtils.jsonToJavaBean(json, StoreBasicInfo.class);
-        }
-        if (userSession!=null) logger.print(" ##------- 当 前 用 户 ( "+ key +" ) ----->>  用户码:" + userSession.userId + " ,企业码:"+ userSession.compId );
+            if (userSession == null) return;
+            if (userSession.compId > 0) {
+                //加载企业信息
+                json = RedisUtil.getStringProvide().get(userSession.compId+"");
+                if(StringUtils.isEmpty(json)) {
+                    //远程调用查询
+                    json = IceRemoteUtil.getCompanyJson(userSession.compId);
+                };
+                userSession.comp = GsonUtils.jsonToJavaBean(json, StoreBasicInfo.class);
+            }
+            if (userSession!=null) logger.print(" ##------- 当 前 用 户 ( "+ key +" ) ----->>  用户码:" + userSession.userId + " ,企业码:"+ userSession.compId );
     }
 
     public UserSession getUserSession() {

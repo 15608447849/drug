@@ -61,7 +61,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     private void createMessageStoreImps() {
         if (StringUtils.isEmpty(IceProperties.INSTANCE.pmStoreImp)) return;
         try {
-            java.lang.Object object = ObjectRefUtil.createObject(IceProperties.INSTANCE.pmStoreImp,null,null);
+            java.lang.Object object = ObjectRefUtil.createObject(IceProperties.INSTANCE.pmStoreImp);
             if (object instanceof IPushMessageStore) {
                 iPushMessageStore = (IPushMessageStore) object;
                 communicator.getLogger().print(Thread.currentThread()+"注入数据存储实现:"+ iPushMessageStore.getClass());
