@@ -662,6 +662,7 @@ public class TranOrderOptModule {
      * @return
      */
 
+    @UserPermission(ignore = true)
     public Result takeDelivery(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
