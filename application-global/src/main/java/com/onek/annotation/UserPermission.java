@@ -11,6 +11,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.RUNTIME)
 public @interface UserPermission {
     boolean ignore() default false; //默认不忽略
-    long[] role() default {}; // 允许访问的角色码 , 默认全部
-    boolean compAuth() default false; // 默认不用认证 true:代表需要认证通过的企业
+    long[] allowRoleList() default {}; // 允许访问的角色码 , 默认全部
+    boolean allowedUnrelated() default false;//默认false 必须关联企业 , true:允许不关联企业
+    boolean needAuthenticated() default false; //默认false 不需要认证, true:企业需要认证
 }

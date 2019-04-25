@@ -6,16 +6,20 @@ import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.MessageEvent;
 import com.onek.context.AppContext;
+import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
+import com.onek.queue.delay.DelayedHandler;
+import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.fs.FileServerUtils;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GLOBALConst;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import org.apache.http.client.utils.DateUtils;
 import util.MathUtil;
 import util.ModelUtil;
 import util.StringUtils;
@@ -28,6 +32,10 @@ import java.util.List;
 import static com.onek.order.TranOrderOptModule.getGoodsArr;
 
 public class PayModule {
+    public static final DelayedHandler<DelayedBase> DELIVERY_DELAYED =
+            new RedisDelayedHandler<>("_DELIVERY", 24,
+                    (d) -> new TranOrderOptModule().delivery(d.getOrderNo(), d.getCompid()),
+                    DelayedHandler.TIME_TYPE.HOUR);
 
     public static final String PAY_TYPE_ALI = "alipay";
     public static final String PAY_TYPE_WX = "wxpay";
@@ -97,6 +105,32 @@ public class PayModule {
     }
 
     @UserPermission(ignore = true)
+    public Result showFeePayInfo(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderno = jsonObject.get("orderno").getAsString();
+        int compid = jsonObject.get("compid").getAsInt();
+
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
+        if(list != null && list.size() > 0) {
+            TranOrder[] result = new TranOrder[list.size()];
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate", "otime","pdamt","freight","coupamt","distamt","rvaddno"});
+
+            double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
+
+            JSONObject r = new JSONObject();
+            r.put("payamt", payamt);
+            r.put("afsano", GenIdUtil.getUnqId());
+
+            return  new Result().success(r);
+        }else{
+            return new Result().fail("未查到【"+orderno+"】支付运费的订单!");
+        }
+
+    }
+
+    @UserPermission(ignore = true)
     public Result prePay(AppContext appContext){
 
         String json = appContext.param.json;
@@ -108,12 +142,12 @@ public class PayModule {
         if(StringUtils.isEmpty(orderno) || compid <=0){
             return new Result().fail("获取订单号或企业码失败!");
         }
-        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid, 0});
-        if(list != null && list.size() > 0){
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
+        if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{ "payamt","odate","otime"});
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime"});
 
-            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
+            double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
 
             try{
                 String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
@@ -128,6 +162,43 @@ public class PayModule {
 
         }else{
             return new Result().fail("未查到【"+orderno+"】支付的订单!");
+        }
+
+    }
+
+    @UserPermission(ignore = true)
+    public Result preFeePay(AppContext appContext){
+
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderno = jsonObject.get("orderno").getAsString();
+        String afsano = jsonObject.get("afsano").getAsString();
+        int compid = jsonObject.get("compid").getAsInt();
+        String paytype = jsonObject.get("paytype").getAsString();
+        if(StringUtils.isEmpty(afsano) || compid <=0){
+            return new Result().fail("获取售后单号或企业码失败!");
+        }
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
+        if(list != null && list.size() > 0){
+            TranOrder[] result = new TranOrder[list.size()];
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate", "otime","pdamt","freight","coupamt","distamt","rvaddno"});
+
+            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
+
+            try{
+                String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, afsano,
+                        "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
+
+                return new Result().success(r);
+            }catch (Exception e){
+                e.printStackTrace();
+                return new Result().fail("生成支付二维码图片失败!");
+            }
+
+
+        }else{
+            return new Result().fail("未查到【"+orderno+"】支付运费的订单!");
         }
 
     }
@@ -163,6 +234,47 @@ public class PayModule {
         }
 
         new SendMsgThread(orderno, tradeStatus ,money, compid, tradeDate).start();
+
+        if(result){
+            return new Result().success(null);
+        }else{
+            return new Result().fail(null);
+        }
+
+    }
+
+    @UserPermission(ignore = true)
+    public Result payFeeCallBack(AppContext appContext){
+
+        String[] arrays = appContext.param.arrays;
+        String afsano = arrays[0];
+        String paytype = arrays[1];
+        String thirdPayNo = arrays[2];
+        String tradeStatus = arrays[3];
+        String tradeDate = arrays[4];
+        double money = Double.parseDouble(arrays[5]);
+        int compid = Integer.parseInt(arrays[6]);
+
+        int paychannel = -1;
+        if(PAY_TYPE_ALI.equals(paytype)){
+            paychannel = 2;
+        }else if(PAY_TYPE_WX.equals(paytype)){
+            paychannel = 1;
+        }
+        Date date = TimeUtils.str_yMd_Hms_2Date(tradeDate);
+        boolean result = false;
+        if("1".equals(tradeStatus)){
+            String tdate = TimeUtils.date_yMd_2String(date);
+            String time = TimeUtils.date_Hms_2String(date);
+            result = successFeeOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+
+        }else if("2".equals(tradeStatus)){
+            String tdate = TimeUtils.date_yMd_2String(date);
+            String time = TimeUtils.date_Hms_2String(date);
+            result = failOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+        }
+
+        new SendMsgThread(afsano, tradeStatus ,money, compid, tradeDate).start();
 
         if(result){
             return new Result().success(null);
@@ -262,6 +374,8 @@ public class PayModule {
             baseDao.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
             //更新活动库存
             baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, tranOrderGoods.length);
+
+            DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
         }
         return b;
     }
@@ -294,6 +408,66 @@ public class PayModule {
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
         return !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
+    }
+
+    /* *
+     * @description 运费支付成功操作
+     * @params [arrays]
+     * @return boolean
+     * @exception
+     * @author jiangwg
+     * @time  2019/4/25 15:56
+     * @version 1.1.1
+     **/
+    private boolean successFeeOpt(String afsano, int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
+        int paysource = 0;
+
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> params = new ArrayList<>();
+        List<Object[]> paramsOne = new ArrayList<>();
+        List<Object[]> paramsTwo = new ArrayList<>();
+
+        sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
+                thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
+//        + "(unqid,compid,payno,eventdesc,resultdesc,"
+//                + "completedate,completetime,cstatus)"
+        sqlList.add(INSERT_TRAN_PAYREC);//新增支付记录
+        params.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, "{}", "{}", tradeDate, tradeTime});
+        String[] sqlNative = new String[sqlList.size()];
+        sqlNative = sqlList.toArray(sqlNative);
+        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid, TimeUtils.getCurrentYear(), sqlNative, params));
+
+        return b;
+    }
+
+    /* *
+     * @description 支付运费失败操作
+     * @params [arrays]
+     * @return boolean
+     * @exception
+     * @author 11842
+     * @time  2019/4/18 20:37
+     * @version 1.1.1
+     **/
+    private boolean failFeeOpt(String afsano, int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
+
+        int paysource = 0;
+
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> params = new ArrayList<>();
+//        + "(unqid,compid,orderno,payno,payprice,payway,paysource,paystatus,"
+//                + "payorderno,tppno,paydate,paytime,completedate,completetime,cstatus)"
+        sqlList.add(INSERT_TRAN_TRANS);
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
+                thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
+//        + "(unqid,compid,payno,eventdesc,resultdesc,"
+//                + "completedate,completetime,cstatus)"
+        sqlList.add(INSERT_TRAN_PAYREC);
+        params.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, "{}", "{}", tradeDate, tradeTime});
+        String[] sqlNative = new String[sqlList.size()];
+        sqlNative = sqlList.toArray(sqlNative);
+        return !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,TimeUtils.getCurrentYear(), sqlNative, params));
     }
 
     class SendMsgThread extends Thread{

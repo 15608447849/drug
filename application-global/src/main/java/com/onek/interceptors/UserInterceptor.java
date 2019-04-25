@@ -37,7 +37,10 @@ public class UserInterceptor implements IServerInterceptor {
                 up = m.getAnnotation(UserPermission.class);
                 permissionStatusMap.put(key, up); //存
             }
-            //判断接口是否对用户权限进行拦截
+            /*判断接口是否对用户权限进行拦截 条件:
+            * 1.调用方法没有注解一定拦截权限
+            * 2.注解显示不忽略拦截,拦截权限(默认不忽略)
+            */
             if(up == null || !up.ignore()){
                 appContext.initialization();//初始化上下文用户信息
                 UserSession userSession = appContext.getUserSession();
@@ -46,21 +49,27 @@ public class UserInterceptor implements IServerInterceptor {
                     return new Result().intercept("用户未登录");
                 }
 
-                if(up != null && up.compAuth()){
-                    if(userSession.comp == null ||  (userSession.comp.authenticationStatus & 256) <= 0){
-                        return new Result().intercept("企业没有认证");
-                    }
-                }
-
                 if (up != null){
-                    long[] roleArr = up.role();
+                    //判断是否需要关联企业
+                    if (!up.allowedUnrelated()){
+                        //必须关联企业
+                        if (userSession.compId == 0) return new Result().intercept("用户未关联企业信息");
+                    }
+                    //判断是否需要认证企业
+                    if(up.needAuthenticated()){
+                        if(userSession.comp == null ||  (userSession.comp.authenticationStatus & 256) <= 0){
+                            return new Result().intercept("企业没有认证");
+                        }
+                    }
+
+                    //允许访问的角色码判断
+                    long[] roleArr = up.allowRoleList();
                     //角色判断
                     if (roleArr.length > 0){
-                        //允许访问的角色码
-                        boolean isAccess = false;
+                        boolean isAccess = false;//默认不允许访问
                         for (long role : roleArr) {
                             if ((userSession.roleCode & role) > 0) {
-                                //有这个角色
+                                //当前进入的用户 有这个角色
                                 isAccess = true;
                                 break;
                             }
@@ -69,6 +78,7 @@ public class UserInterceptor implements IServerInterceptor {
                             return new Result().intercept("用户角色拒绝");
                         }
                     }
+
                 }
             }
 

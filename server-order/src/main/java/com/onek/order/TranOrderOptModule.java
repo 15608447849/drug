@@ -10,20 +10,21 @@ import com.onek.calculate.entity.DiscountResult;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
 import com.onek.context.AppContext;
+import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
-import com.onek.queue.CancelDelayed;
-import com.onek.queue.CancelService;
+import com.onek.queue.delay.DelayedHandler;
+import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.CalculateUtil;
+import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.LccOrderUtil;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GenIdUtil;
-import com.onek.util.IceRemoteUtil;
 import org.hyrdpf.util.LogUtil;
 import util.ArrayUtil;
 import util.ModelUtil;
@@ -40,6 +41,15 @@ import java.util.List;
  * @time 2019/4/16 16:01
  **/
 public class TranOrderOptModule {
+    private static final DelayedHandler<TranOrder> CANCEL_DELAYED =
+            new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
+                    (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
+                    DelayedHandler.TIME_TYPE.MINUTES);
+
+    private static final DelayedHandler<DelayedBase> TAKE_DELAYED =
+            new RedisDelayedHandler<>("_TAKE_ORDERS", 48,
+                    (d) -> new TranOrderOptModule().takeDelivery(d.getOrderNo(), d.getCompid()),
+                    DelayedHandler.TIME_TYPE.HOUR);
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
@@ -207,6 +217,7 @@ public class TranOrderOptModule {
         TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
+        tranOrder.setOrderno(orderNo);
         if (!jsonObject.get("unqid").isJsonNull()) {
             unqid = jsonObject.get("unqid").getAsLong();
         }
@@ -273,7 +284,9 @@ public class TranOrderOptModule {
             if (coupon > 0) {
                 baseDao.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
             }
-            CancelService.getInstance().add(new CancelDelayed(orderNo, tranOrder.getCusno()));
+
+            CANCEL_DELAYED.add(tranOrder);
+
             JsonObject object = new JsonObject();
             object.addProperty("orderno", orderNo);
             object.addProperty("message", "下单成功");
@@ -500,7 +513,7 @@ public class TranOrderOptModule {
         boolean b = cancelOrder(orderNo, cusno);
 
         if (b) {
-            CancelService.getInstance().remove(orderNo);
+            CANCEL_DELAYED.removeByKey(orderNo);
         }
 
         return b ? result.success("取消成功") : result.fail("取消失败");
@@ -533,6 +546,46 @@ public class TranOrderOptModule {
         return tranOrderGoods;
     }
 
+    private int getCompid(String orderno) {
+        if (!StringUtils.isBiggerZero(orderno)) {
+            return 0;
+        }
+
+        List<Object[]> queryResult = baseDao.queryNativeSharding(
+                        0, TimeUtils.getCurrentYear(),
+                        " SELECT cusno "
+                        + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
+                        + " WHERE cstatus&1 = 0 AND orderno = ? ", orderno);
+
+        if (queryResult.isEmpty()) {
+            return 0;
+        }
+
+        return Integer.parseInt(queryResult.get(0)[0].toString());
+    }
+
+    public boolean delivery(String orderno, int compid) {
+        boolean result = true;
+
+        if (result) {
+            PayModule.DELIVERY_DELAYED.removeByKey(orderno);
+            TAKE_DELAYED.add(new DelayedBase(compid, orderno));
+        }
+
+        return result;
+    }
+
+    public boolean takeDelivery(String orderno, int compid) {
+        boolean result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
+                UPDATE_TAKE_DELIVERY, orderno) > 0;
+
+        if (result) {
+            TAKE_DELAYED.removeByKey(orderno);
+        }
+
+        return result;
+    }
+
     /**
      * 发货
      *
@@ -547,8 +600,8 @@ public class TranOrderOptModule {
             return new Result().fail("参数为空");
         }
 
-        int compid = Integer.parseInt(params[0]);
         String orderNo = params[1];
+        int compid = getCompid(orderNo);
 
         if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
@@ -616,22 +669,16 @@ public class TranOrderOptModule {
             return new Result().fail("参数为空");
         }
 
-        int compid = Integer.parseInt(params[0]);
         String orderNo = params[1];
+        int compid = getCompid(orderNo);
 
         if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
         }
 
-        int result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
-                UPDATE_TAKE_DELIVERY, orderNo);
+        boolean result = takeDelivery(orderNo, compid);
 
-        return result > 0 ? new Result().success("已签收") : new Result().fail("操作失败");
+        return result ? new Result().success("已签收") : new Result().fail("操作失败");
     }
 
-//    public static void main(String[] args) {
-//        Gson gson = new Gson();
-//        TranOrderGoods goodsVO = gson.fromJson("{\"pdno\":\"11000000140102\",\"pnum\":\"1\"}", TranOrderGoods.class);
-//        System.out.println("------------" + goodsVO.getPdno());
-//    }
 }

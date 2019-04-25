@@ -61,55 +61,27 @@ public class DiscountResult {
         return freeShipping;
     }
 
-    public void setFreeShipping(boolean freeShipping) {
-        this.freeShipping = freeShipping;
-    }
-
     public double getTotalCurrentPrice() {
         return totalCurrentPrice;
-    }
-
-    public void setTotalCurrentPrice(double totalCurrentPrice) {
-        this.totalCurrentPrice = totalCurrentPrice;
     }
 
     public double getTotalDiscount() {
         return totalDiscount;
     }
 
-    public void setTotalDiscount(double totalDiscount) {
-        this.totalDiscount = totalDiscount;
-    }
-
     public boolean isExCoupon() {
         return exCoupon;
-    }
-
-    public void setExCoupon(boolean exCoupon) {
-        this.exCoupon = exCoupon;
     }
 
     public List<IDiscount> getActivityList() {
         return activityList;
     }
 
-    public void setActivityList(List<IDiscount> activityList) {
-        this.activityList = activityList;
-    }
-
     public int getTotalNums() {
         return totalNums;
     }
 
-    public void setTotalNums(int totalNums) {
-        this.totalNums = totalNums;
-    }
-
     public double getCouponValue() {
         return couponValue;
-    }
-
-    public void setCouponValue(double couponValue) {
-        this.couponValue = couponValue;
     }
 }

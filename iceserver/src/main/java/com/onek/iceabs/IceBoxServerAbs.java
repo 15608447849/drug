@@ -49,7 +49,7 @@ public abstract class IceBoxServerAbs implements Service {
             if (classPath.endsWith("Initialize") && !classPath.equals(IIceInitialize.class.getName())){
 //               p.post(()->{
                    try {
-                       java.lang.Object object = ObjectRefUtil.createObject(classPath,null,null);
+                       java.lang.Object object = ObjectRefUtil.createObject(classPath);
                        if (object instanceof IIceInitialize){
                            initList.add(((IIceInitialize) object));
                        }
