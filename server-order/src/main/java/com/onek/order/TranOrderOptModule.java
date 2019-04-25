@@ -13,8 +13,9 @@ import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
-import com.onek.queue.CancelDelayed;
-import com.onek.queue.CancelService;
+import com.onek.queue.delay.DelayedHandler;
+import com.onek.queue.delay.IDelayedObject;
+import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.CalculateUtil;
 import com.onek.util.LccOrderUtil;
 import com.onek.util.area.AreaEntity;
@@ -40,6 +41,10 @@ import java.util.List;
  * @time 2019/4/16 16:01
  **/
 public class TranOrderOptModule {
+    private static final DelayedHandler<TranOrder> CANCEL_DELAYED =
+            new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
+                    (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
+                    DelayedHandler.TIME_TYPE.MINUTES);
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
@@ -207,6 +212,7 @@ public class TranOrderOptModule {
         TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
+        tranOrder.setOrderno(orderNo);
         if (!jsonObject.get("unqid").isJsonNull()) {
             unqid = jsonObject.get("unqid").getAsLong();
         }
@@ -273,7 +279,9 @@ public class TranOrderOptModule {
             if (coupon > 0) {
                 baseDao.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
             }
-            CancelService.getInstance().add(new CancelDelayed(orderNo, tranOrder.getCusno()));
+
+            CANCEL_DELAYED.add(tranOrder);
+
             JsonObject object = new JsonObject();
             object.addProperty("orderno", orderNo);
             object.addProperty("message", "下单成功");
@@ -500,7 +508,7 @@ public class TranOrderOptModule {
         boolean b = cancelOrder(orderNo, cusno);
 
         if (b) {
-            CancelService.getInstance().remove(orderNo);
+            CANCEL_DELAYED.removeByKey(orderNo);
         }
 
         return b ? result.success("取消成功") : result.fail("取消失败");
@@ -533,6 +541,27 @@ public class TranOrderOptModule {
         return tranOrderGoods;
     }
 
+    private int getCompid(String orderno) {
+        if (!StringUtils.isBiggerZero(orderno)) {
+            return 0;
+        }
+
+        List<Object[]> queryResult = baseDao.queryNative(
+                        " SELECT cusno "
+                        + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
+                        + " WHERE cstatus&1 = 0 AND orderno = ? ");
+
+        if (queryResult.isEmpty()) {
+            return 0;
+        }
+
+        return Integer.parseInt(queryResult.get(0)[0].toString());
+    }
+
+    private boolean delivery(String orderno, int compid) {
+        return true;
+    }
+
     /**
      * 发货
      *
@@ -547,8 +576,8 @@ public class TranOrderOptModule {
             return new Result().fail("参数为空");
         }
 
-        int compid = Integer.parseInt(params[0]);
         String orderNo = params[1];
+        int compid = getCompid(orderNo);
 
         if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
@@ -616,8 +645,8 @@ public class TranOrderOptModule {
             return new Result().fail("参数为空");
         }
 
-        int compid = Integer.parseInt(params[0]);
         String orderNo = params[1];
+        int compid = getCompid(orderNo);
 
         if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
@@ -629,9 +658,27 @@ public class TranOrderOptModule {
         return result > 0 ? new Result().success("已签收") : new Result().fail("操作失败");
     }
 
-//    public static void main(String[] args) {
-//        Gson gson = new Gson();
-//        TranOrderGoods goodsVO = gson.fromJson("{\"pdno\":\"11000000140102\",\"pnum\":\"1\"}", TranOrderGoods.class);
-//        System.out.println("------------" + goodsVO.getPdno());
-//    }
+}
+
+class DelayedBase implements IDelayedObject {
+    private int compid;
+    private String orderNo;
+
+    public DelayedBase(int compid, String orderNo) {
+        this.compid = compid;
+        this.orderNo = orderNo;
+    }
+
+    public int getCompid() {
+        return compid;
+    }
+
+    public String getOrderNo() {
+        return orderNo;
+    }
+
+    @Override
+    public String getUnqKey() {
+        return this.orderNo;
+    }
 }
