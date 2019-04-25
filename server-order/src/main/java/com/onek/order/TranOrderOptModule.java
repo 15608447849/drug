@@ -570,7 +570,7 @@ public class TranOrderOptModule {
         AreaEntity[] areaEntities = IceRemoteUtil.getAncestors(r[0].getRvaddno());
         if(areaEntities != null && areaEntities.length > 0){
             for(int i = areaEntities.length - 1; i>=0; i--){
-                if(Integer.parseInt(areaEntities[i].getLcareac()) > 0){
+                if(areaEntities[i] != null && !StringUtils.isEmpty(areaEntities[i].getLcareac()) && Integer.parseInt(areaEntities[i].getLcareac()) > 0){
                     arriarc = areaEntities[i].getLcareac();
                     break;
                 }
