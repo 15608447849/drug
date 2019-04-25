@@ -1,6 +1,6 @@
 package com.onek.util.prod;
 
-import global.IceRemoteUtil;
+import com.onek.util.IceRemoteUtil;
 import util.StringUtils;
 
 import java.util.HashMap;

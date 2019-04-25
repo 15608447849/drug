@@ -20,7 +20,7 @@ import com.onek.util.prod.ProdInfoStore;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.GenIdUtil;
+import com.onek.util.GenIdUtil;
 import redis.util.RedisUtil;
 import util.NumUtil;
 import util.StringUtils;

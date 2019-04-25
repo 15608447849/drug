@@ -1,7 +1,7 @@
 package com.onek.util.dict;
 
 import com.onek.util.RedisGlobalKeys;
-import global.IceRemoteUtil;
+import com.onek.util.IceRemoteUtil;
 import redis.IRedisCache;
 
 import java.util.Arrays;

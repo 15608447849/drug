@@ -1,6 +1,6 @@
 package com.onek.util.area;
 
-import global.IceRemoteUtil;
+import com.onek.util.IceRemoteUtil;
 import util.MathUtil;
 
 public class AreaFeeUtil {

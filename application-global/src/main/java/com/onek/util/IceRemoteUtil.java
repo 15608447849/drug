@@ -1,4 +1,4 @@
-package global;
+package com.onek.util;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;

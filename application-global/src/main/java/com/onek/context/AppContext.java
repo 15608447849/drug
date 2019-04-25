@@ -5,7 +5,7 @@ import com.onek.entitys.Result;
 import com.onek.server.inf.IRequest;
 import com.onek.server.inf.PushMessageClientPrx;
 import com.onek.server.infimp.IceContext;
-import global.IceRemoteUtil;
+import com.onek.util.IceRemoteUtil;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;

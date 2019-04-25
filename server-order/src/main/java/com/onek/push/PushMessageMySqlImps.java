@@ -2,7 +2,7 @@ package com.onek.push;
 
 import com.onek.server.infimp.IPushMessageStore;
 import dao.BaseDAO;
-import global.IceRemoteUtil;
+import com.onek.util.IceRemoteUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
@@ -11,7 +11,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 import static Ice.Application.communicator;
 import static constant.DSMConst.TD_PUSH_MSG;
-import static global.GenIdUtil.getUnqId;
+import static com.onek.util.GenIdUtil.getUnqId;
 import static util.TimeUtils.getCurrentYear;
 
 /**

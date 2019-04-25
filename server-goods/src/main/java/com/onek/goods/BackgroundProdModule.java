@@ -13,13 +13,11 @@ import com.onek.util.prod.ProduceClassUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.IceRemoteUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
 

@@ -8,7 +8,7 @@ import com.onek.entitys.Result;
 import com.onek.goods.entities.ProdBrandVO;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.GenIdUtil;
+import com.onek.util.GenIdUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;

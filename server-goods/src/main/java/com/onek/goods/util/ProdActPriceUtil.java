@@ -9,7 +9,6 @@ import com.onek.goods.service.PromRuleService;
 import com.onek.goods.service.PromTimeService;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.prod.ProdPriceEntity;
-import global.IceRemoteUtil;
 import redis.provide.RedisStringProvide;
 import redis.util.RedisUtil;
 
