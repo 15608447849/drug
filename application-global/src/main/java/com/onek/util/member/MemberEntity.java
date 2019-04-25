@@ -1,7 +1,7 @@
 package com.onek.util.member;
 
 public class MemberEntity {
-    private int unqid;
+    private long unqid;
     private int compid;
     private int accupoints;
     private int balpoints;
@@ -9,11 +9,11 @@ public class MemberEntity {
 //    private String createtime;
     private int cstatus;
 
-    public int getUnqid() {
+    public long getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(int unqid) {
+    public void setUnqid(long unqid) {
         this.unqid = unqid;
     }
 
