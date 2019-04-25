@@ -2,7 +2,6 @@ package com.onek.global;
 
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
-import com.onek.entitys.Result;
 import com.onek.global.message.MessageTemplateUtil;
 
 /**
@@ -16,13 +15,12 @@ public class MessageModule {
      * @return
      */
     @UserPermission(ignore = true)
-    public Result convertMessage(AppContext appContext) {
+    public String convertMessage(AppContext appContext) {
         int no = Integer.parseInt(appContext.param.arrays[0]);
         Object [] params = new Object[appContext.param.arrays.length-1];
         if (appContext.param.arrays.length - 1 >= 0)
             System.arraycopy(appContext.param.arrays, 1, params, 0, appContext.param.arrays.length - 1);
-        String message = MessageTemplateUtil.templateConvertMessage(no,params);
-        return new Result().success(message);
+        return MessageTemplateUtil.templateConvertMessage(no,params);
     }
 
 
