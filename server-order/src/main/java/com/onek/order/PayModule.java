@@ -121,7 +121,7 @@ public class PayModule {
 
             JSONObject r = new JSONObject();
             r.put("payamt", payamt);
-            r.put("afsano", GenIdUtil.getUnqId());
+            r.put("afsano", GenIdUtil.getAsOrderId());
 
             return  new Result().success(r);
         }else{
@@ -328,12 +328,36 @@ public class PayModule {
                     e.printStackTrace();
                 }
             }else{
-                jsonResult.put("address",IceRemoteUtil.getCompleteName(result[0].getRvaddno()+""));
+                jsonResult.put("address", "");
             }
         }
 
         return new Result().success(jsonResult);
     }
+
+    @UserPermission(ignore = true)
+    public Result getFeePayResult(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderno = jsonObject.get("orderno").getAsString();
+        int compid = jsonObject.get("compid").getAsInt();
+
+        JSONObject jsonResult = new JSONObject();
+
+        List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, new Object[]{orderno, compid});
+        if (trans != null && trans.size() > 0) {
+            TranTransVO[] tranTransVOS = new TranTransVO[trans.size()];
+            baseDao.convToEntity(trans, tranTransVOS, TranTransVO.class,
+                    new String[]{"payprice", "payway", "payno", "orderno", "paysource", "paystatus", "paydate", "paytime", "completedate", "completetime"});
+            jsonResult.put("paystatus", tranTransVOS[0].getPaystatus());
+        } else {
+            jsonResult.put("paystatus", 0);
+        }
+
+        return new Result().success(jsonResult);
+    }
+
 
     /* *
      * @description 支付成功操作
