@@ -14,6 +14,7 @@ import java.util.List;
  * @Date: 2019/3/20 11:00
  */
 public class FileServerUtils {
+
     private static AppProperties fsp = AppProperties.INSTANCE;
 
     //文件上传地址
@@ -28,11 +29,8 @@ public class FileServerUtils {
 
     // 文件下载地址 前缀 ,例如 下载文件 /目录/文件.png -> 下载前缀/目录/文件.png
     public static String fileDownloadPrev(){
-
         return "http://" + fsp.fileServerAddress ;
     }
-
-
 
     public static String defaultHome(){
         return "/" + EncryptUtils.encryption(fsp.fileDefaultDir);
@@ -71,8 +69,9 @@ public class FileServerUtils {
     }
 
 
-
-
+    /**
+     * @return 付款二维码图片链接
+     */
     public static String getPayQrImageLink(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr){
 
         List<String> list = new ArrayList<>();
@@ -101,7 +100,6 @@ public class FileServerUtils {
 
     /**
      * 查询一个订单支付状态
-     * @param orderNo
      * @return 0-待支付 1已支付 -2异常
      */
     public static String getPayCurrentState(String type,String orderNo){
@@ -114,9 +112,18 @@ public class FileServerUtils {
         return rmap.get("data")==null ? null : rmap.get("data").toString();
     }
 
-    public static void main(String[] args) {
-        String res = getPayQrImageLink("alipay","控件",25.02,"15608447849010222",
-                "orderserver","aplipayModule","callback",null);
-        System.out.println(res);
+    /**
+     * 退款
+     * @return 退款申请信息
+     */
+    public static HashMap<String,Object> refund(String type, String refundNo,String tradeNo,double price){
+        HashMap<String,String> map = new HashMap<>();
+        map.put("type",type);
+        map.put("refundNo",refundNo);
+        map.put("price",String.valueOf(price));
+        map.put("tradeNo",tradeNo);
+        String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/refund","POST",map);
+        return GsonUtils.string2Map(json);
     }
+
 }

@@ -6,4 +6,5 @@ package com.onek.server.infimp;
  */
 public interface IIceInitialize {
     void startUp(String serverName);
+    int priority();
 }

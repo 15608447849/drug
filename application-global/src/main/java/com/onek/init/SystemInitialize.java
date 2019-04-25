@@ -19,4 +19,9 @@ public class SystemInitialize implements IIceInitialize {
             communicator().getLogger().error(serverName+" , 初始化错误: "+ e);
         }
     }
+
+    @Override
+    public int priority() {
+        return 0;
+    }
 }

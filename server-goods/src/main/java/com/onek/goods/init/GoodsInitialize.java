@@ -8,8 +8,18 @@ import elasticsearch.ElasticSearchClientFactory;
 public class GoodsInitialize implements IIceInitialize {
     @Override
     public void startUp(String serverName) {
-        new RemoveNewFlagTimer();
-        new HigherProfitsTimer();
         ElasticSearchClientFactory.init();
+        try{
+            Thread.sleep(2000);
+            new RemoveNewFlagTimer();
+            new HigherProfitsTimer();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public int priority() {
+        return 1;
     }
 }

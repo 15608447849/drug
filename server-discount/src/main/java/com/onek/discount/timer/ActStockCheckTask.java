@@ -12,7 +12,7 @@ import java.util.*;
 
 public class ActStockCheckTask extends TimerTask {
 
-    private static final String SQL = "select d.gcode,d.actcode,a.rulecode,d.cstatus from {{?"+ DSMConst.TD_PROM_ASSDRUG +"}} d " +
+    private static final String SQL = "select d.gcode,d.actcode,a.brulecode,d.cstatus from {{?"+ DSMConst.TD_PROM_ASSDRUG +"}} d " +
             "left join {{?"+ DSMConst.TD_PROM_ACT+"}} a " +
             "on d.actcode = a.unqid " +
             "where edate = ? ";

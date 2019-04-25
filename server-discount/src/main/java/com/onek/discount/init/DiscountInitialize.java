@@ -11,8 +11,18 @@ public class DiscountInitialize implements IIceInitialize {
     @Override
     public void startUp(String serverName) {
         communicator().getLogger().error(serverName+" ####### 开始初始化  ####### ");
-        new DiscountRuleTimer();
-        new ActStockCheckTimer();
         ElasticSearchClientFactory.init();
+        try{
+            Thread.sleep(2000);
+            new DiscountRuleTimer();
+            new ActStockCheckTimer();
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public int priority() {
+        return 1;
     }
 }

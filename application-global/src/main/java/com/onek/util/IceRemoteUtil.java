@@ -1,4 +1,4 @@
-package global;
+package com.onek.util;
 
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
@@ -22,27 +22,16 @@ import java.util.HashMap;
  * 远程调用工具
  */
 public class IceRemoteUtil {
-    public static IceClient ic ;
-    static {
-        ic = new IceClient(
-                AppProperties.INSTANCE.masterName,
-                AppProperties.INSTANCE.masterHost,
-                AppProperties.INSTANCE.masterPort);
-      ic.startCommunication();
-    }
+    private final static IceClient ic = new IceClient(
+            AppProperties.INSTANCE.masterName,
+            AppProperties.INSTANCE.masterHost,
+            AppProperties.INSTANCE.masterPort)
+            .startCommunication();
 
+    //获取商品名
     public static String getProduceName(String pclass) {
         try {
-
-            String result = ic.settingProxy("globalServer")
-                    .settingReq("","CommonModule","getProduceName")
-                    .settingParam(new String[]{pclass})
-                    .executeSync();
-            HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-            Object data = hashMap.get("data");
-            if (data!=null) {
-                return data.toString();
-            }
+           return ic.setServerAndRequest("globalServer","CommonModule","getProduceName").setArrayParams(pclass).execute();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -51,16 +40,7 @@ public class IceRemoteUtil {
 
     public static String getCompleteName(String areaCode) {
         try {
-
-            String result = ic.settingProxy("globalServer")
-                    .settingReq("","CommonModule","getCompleteName")
-                    .settingParam(new String[]{areaCode})
-                    .executeSync();
-            HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-            Object data = hashMap.get("data");
-            if (data!=null) {
-                return data.toString();
-            }
+            return ic.setServerAndRequest("globalServer","CommonModule","getCompleteName").setArrayParams(areaCode).execute();
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -69,15 +49,8 @@ public class IceRemoteUtil {
 
     public static ProdEntity getProdBySku(long sku) {
         try {
-            String result = ic.settingProxy("globalServer")
-                    .settingReq("","CommonModule","getProdBySku")
-                    .settingParam(new String[]{sku+""})
-                    .executeSync();
-            HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-            Object data = hashMap.get("data");
-            if (data==null) return null;
-            String json = data.toString();
-            ProdEntity prodEntity = GsonUtils.jsonToJavaBean(json,ProdEntity.class);
+            String result = ic.setServerAndRequest("globalServer","CommonModule","getProdBySku").setArrayParams(sku).execute();
+            ProdEntity prodEntity = GsonUtils.jsonToJavaBean(result,ProdEntity.class);
             return prodEntity;
         } catch (Exception e) {
             e.printStackTrace();
@@ -94,7 +67,7 @@ public class IceRemoteUtil {
             String result = ic.settingProxy("globalServer")
                     .settingReq("","MessageModule","convertMessage")
                     .settingParam(args)
-                    .executeSync();
+                    .execute();
             HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
             Object data = hashMap.get("data");
             if (data==null) return null;
@@ -110,7 +83,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("globalServer")
                 .settingReq("","DictUtilRemoteModule","getId")
                 .settingParam(new String[]{id+""})
-                .executeSync();
+                .execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
         Object data = hashMap.get("data");
         if (data == null) return null;
@@ -122,7 +95,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("globalServer")
                 .settingReq("","CommonModule","getAreaName")
                 .settingParam(new String[]{String.valueOf(areac)})
-                .executeSync();
+                .execute();
 
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
 
@@ -135,7 +108,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("globalServer")
                 .settingReq("","CommonModule","getArea")
                 .settingParam(new String[]{String.valueOf(areac)})
-                .executeSync();
+                .execute();
 
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
 
@@ -149,7 +122,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("globalServer")
                 .settingReq("","CommonModule","getAncestors")
                 .settingParam(new String[]{String.valueOf(areac)})
-                .executeSync();
+                .execute();
 
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
 
@@ -163,7 +136,7 @@ public class IceRemoteUtil {
     public static DictEntity[] queryAll() {
         String result = ic.settingProxy("globalServer")
                 .settingReq("","DictUtilRemoteModule","queryAll")
-                .executeSync();
+                .execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
         Object data = hashMap.get("data");
         if (data == null) return null;
@@ -175,7 +148,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("globalServer")
                 .settingReq("","DictUtilRemoteModule","queryByParams")
                 .settingParam(params)
-                .executeSync();
+                .execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
         Object data = hashMap.get("data");
         if (data == null) return null;
@@ -191,7 +164,7 @@ public class IceRemoteUtil {
 //        String result = ic.settingProxy("discountServer")
 //                .settingReq("","DiscountCalcModule","calcSingleProdActPrize")
 //                .settingParam(jsonObject.toJSONString())
-//                .executeSync();
+//                .execute();
 //        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
 //        Object data = hashMap.get("data");
 //        if (data == null) return null;
@@ -215,7 +188,7 @@ public class IceRemoteUtil {
 //        String result = ic.settingProxy("discountServer")
 //                .settingReq("","DiscountCalcModule","calcMultiProdActPrize")
 //                .settingParam(jsonObject.toJSONString())
-//                .executeSync();
+//                .execute();
 //        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
 //        Object data = hashMap.get("data");
 //        if (data == null) return null;
@@ -230,7 +203,7 @@ public class IceRemoteUtil {
 //        String result = ic.settingProxy("discountServer")
 //                .settingReq("","DiscountCalcModule","calcSingleProdActIntervalPrize")
 //                .settingParam(jsonObject.toJSONString())
-//                .executeSync();
+//                .execute();
 //        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
 //        Object data = hashMap.get("data");
 //        if (data == null) return null;
@@ -242,7 +215,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("orderServer"+getOrderServerNo(compid))
                 .settingReq("","CouponRevModule","insertRevCoupon")
                 .settingParam(content)
-                .executeSync();
+                .execute();
         Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
         return ret.code;
     }
@@ -266,7 +239,7 @@ public class IceRemoteUtil {
         HashMap<String,Object> hashMap = new HashMap<>();
         hashMap.put("compid",compid);
         String result = ic.settingProxy("orderServer"+index).settingReq("","MyFootprintModule","query")
-                .settingParam(GsonUtils.javaBeanToJson(hashMap)).executeSync();
+                .settingParam(GsonUtils.javaBeanToJson(hashMap)).execute();
         hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
         Object data = hashMap.get("data");
         if (data == null) return null;
@@ -278,7 +251,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("discountServer")
                 .settingReq("","DiscountCalcModule","getEffectiveRule")
                 .settingParam(jsonObject.toJSONString())
-                .executeSync();
+                .execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
         Object data = hashMap.get("data");
         if (data == null) return null;
@@ -293,7 +266,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("userServer")
                 .settingReq("","MemberModule","addPoint")
                 .settingParam(jsonObject.toJSONString())
-                .executeSync();
+                .execute();
         Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
         return ret.code;
     }
@@ -305,7 +278,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("userServer")
                 .settingReq("","MemberModule","reducePoint")
                 .settingParam(jsonObject.toJSONString())
-                .executeSync();
+                .execute();
         Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
         return ret.code;
     }
@@ -316,7 +289,7 @@ public class IceRemoteUtil {
         String result = ic.settingProxy("userServer")
                 .settingReq("","MemberModule","getMember")
                 .settingParam(jsonObject.toJSONString())
-                .executeSync();
+                .execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
         Object data = hashMap.get("data");
         if (data == null) return null;
@@ -326,13 +299,12 @@ public class IceRemoteUtil {
 
     /**
      * 获取企业信息 json
-     * @return
      */
     public static String getCompanyJson(int compid) {
         try {
-            String result = ic.settingProxy("userServer").settingParam(new String[]{compid+""}).executeSync();
-            HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-            return hashMap.get("data").toString();
+            return ic.settingProxy("userServer")
+                    .settingReq("","LoginRegistrationModule","getStoreInfo")
+                    .settingParam(new String[]{compid+""}).execute();
         } catch (Exception ignored) {
         }
         return null;

@@ -8,6 +8,9 @@ import com.onek.server.infimp.IceProperties;
 import objectref.ObjectRefUtil;
 
 import java.lang.Exception;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 import static Ice.Application.communicator;
 
@@ -41,19 +44,28 @@ public abstract class IceBoxServerAbs implements Service {
         _communicator.getLogger().print(serverName + " 开始初始化系统");
         long time = System.currentTimeMillis();
 //        IOThreadPool p = new IOThreadPool();
+        List<IIceInitialize> initList = new ArrayList<>();
         ObjectRefUtil.scanJarAllClass(classPath -> {
             if (classPath.endsWith("Initialize") && !classPath.equals(IIceInitialize.class.getName())){
 //               p.post(()->{
                    try {
                        java.lang.Object object = ObjectRefUtil.createObject(classPath,null,null);
                        if (object instanceof IIceInitialize){
-                           ((IIceInitialize) object).startUp(serverName);
+                           initList.add(((IIceInitialize) object));
                        }
                    } catch (Exception ignored) {
                    }
 //               });
             }
         });
+        initList.sort(Comparator.comparingInt(IIceInitialize::priority));
+        StringBuilder sb = new StringBuilder();
+        for (IIceInitialize o : initList){
+            o.startUp(serverName);
+            sb.append(" ").append(o.getClass().getSimpleName()).append("\t").append(">");
+        }
+        sb.deleteCharAt(sb.length()-1);
+        _communicator.getLogger().print(sb.toString());
         _communicator.getLogger().print("初始化完成,耗时:"+ (System.currentTimeMillis() - time)+"ms");
         IceServiceDispatchInterceptor.getInstance().startServer();
     }

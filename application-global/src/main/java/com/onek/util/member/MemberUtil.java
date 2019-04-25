@@ -1,6 +1,6 @@
 package com.onek.util.member;
 
-import global.IceRemoteUtil;
+import com.onek.util.IceRemoteUtil;
 import redis.IRedisPartCache;
 
 public class MemberUtil implements IRedisPartCache {
