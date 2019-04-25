@@ -15,17 +15,16 @@ import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
 import com.onek.queue.delay.DelayedHandler;
-import com.onek.queue.delay.IDelayedObject;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.CalculateUtil;
+import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.LccOrderUtil;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GenIdUtil;
-import com.onek.util.IceRemoteUtil;
 import org.hyrdpf.util.LogUtil;
 import util.ArrayUtil;
 import util.ModelUtil;
@@ -552,10 +551,11 @@ public class TranOrderOptModule {
             return 0;
         }
 
-        List<Object[]> queryResult = baseDao.queryNative(
+        List<Object[]> queryResult = baseDao.queryNativeSharding(
+                        0, TimeUtils.getCurrentYear(),
                         " SELECT cusno "
                         + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
-                        + " WHERE cstatus&1 = 0 AND orderno = ? ");
+                        + " WHERE cstatus&1 = 0 AND orderno = ? ", orderno);
 
         if (queryResult.isEmpty()) {
             return 0;
