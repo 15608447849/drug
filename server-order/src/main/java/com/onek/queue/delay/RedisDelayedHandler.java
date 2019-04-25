@@ -29,12 +29,16 @@ public class RedisDelayedHandler<D extends IDelayedObject> extends DelayedHandle
 
     protected void loadRedisData() {
         execute(() -> {
-            List<D> delayedList = getDelayedList();
+            try {
+                List<D> delayedList = getDelayedList();
 
-            if (!delayedList.isEmpty()) {
-                for (D delayed : delayedList) {
-                    super.addToQueue(delayed);
+                if (!delayedList.isEmpty()) {
+                    for (D delayed : delayedList) {
+                        super.addToQueue(delayed);
+                    }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         });
     }
@@ -55,14 +59,22 @@ public class RedisDelayedHandler<D extends IDelayedObject> extends DelayedHandle
 
     @Override
     protected void addSuccess(D delayed) {
-        RedisUtil.getHashProvide().putElement(
-                this.redisHead, delayed.getUnqKey(),
-                JSONObject.toJSONString(delayed));
+        try {
+            RedisUtil.getHashProvide().putElement(
+                    this.redisHead, delayed.getUnqKey(),
+                    JSONObject.toJSONString(delayed));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
     protected void removeSuccess(D delayed) {
-        RedisUtil.getHashProvide().delByKey(this.redisHead, delayed.getUnqKey());
+        try {
+            RedisUtil.getHashProvide().delByKey(this.redisHead, delayed.getUnqKey());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
 }

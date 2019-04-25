@@ -10,21 +10,21 @@ import com.onek.calculate.entity.DiscountResult;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
 import com.onek.context.AppContext;
+import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
 import com.onek.queue.delay.DelayedHandler;
-import com.onek.queue.delay.IDelayedObject;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.CalculateUtil;
+import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.LccOrderUtil;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GenIdUtil;
-import com.onek.util.IceRemoteUtil;
 import org.hyrdpf.util.LogUtil;
 import util.ArrayUtil;
 import util.ModelUtil;
@@ -45,6 +45,11 @@ public class TranOrderOptModule {
             new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
                     (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
                     DelayedHandler.TIME_TYPE.MINUTES);
+
+    private static final DelayedHandler<DelayedBase> TAKE_DELAYED =
+            new RedisDelayedHandler<>("_TAKE_ORDERS", 48,
+                    (d) -> new TranOrderOptModule().takeDelivery(d.getOrderNo(), d.getCompid()),
+                    DelayedHandler.TIME_TYPE.HOUR);
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
@@ -327,7 +332,7 @@ public class TranOrderOptModule {
         if (discountResult.isFreeShipping()) {//免邮
             tranOrder.setFreight(0);
         } else {
-            tranOrder.setFreight(AreaFeeUtil.getFee(tranOrder.getRvaddno()));//运费(暂无)
+            tranOrder.setFreight(AreaFeeUtil.getFee(tranOrder.getRvaddno()) * 100);//运费(暂无)
         }
         tranOrder.setPayamt((discountResult.getTotalCurrentPrice() * 100));
         tranOrder.setDistamt((discountResult.getTotalDiscount() * 100));
@@ -546,10 +551,11 @@ public class TranOrderOptModule {
             return 0;
         }
 
-        List<Object[]> queryResult = baseDao.queryNative(
+        List<Object[]> queryResult = baseDao.queryNativeSharding(
+                        0, TimeUtils.getCurrentYear(),
                         " SELECT cusno "
                         + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
-                        + " WHERE cstatus&1 = 0 AND orderno = ? ");
+                        + " WHERE cstatus&1 = 0 AND orderno = ? ", orderno);
 
         if (queryResult.isEmpty()) {
             return 0;
@@ -558,8 +564,26 @@ public class TranOrderOptModule {
         return Integer.parseInt(queryResult.get(0)[0].toString());
     }
 
-    private boolean delivery(String orderno, int compid) {
-        return true;
+    public boolean delivery(String orderno, int compid) {
+        boolean result = true;
+
+        if (result) {
+            PayModule.DELIVERY_DELAYED.removeByKey(orderno);
+            TAKE_DELAYED.add(new DelayedBase(compid, orderno));
+        }
+
+        return result;
+    }
+
+    public boolean takeDelivery(String orderno, int compid) {
+        boolean result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
+                UPDATE_TAKE_DELIVERY, orderno) > 0;
+
+        if (result) {
+            TAKE_DELAYED.removeByKey(orderno);
+        }
+
+        return result;
     }
 
     /**
@@ -583,51 +607,9 @@ public class TranOrderOptModule {
             return new Result().fail("非法参数");
         }
 
-        StringBuilder sql = new StringBuilder(QUERY_ORDER_BASE);
-        sql.append(" and orderno = ? ");
-        List<Object> paramList = new ArrayList<>();
-        paramList.add(orderNo);
+        int result  = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
+                UPDATE_DELIVERY, orderNo);
 
-        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                compid, TimeUtils.getCurrentYear(), sql.toString(), paramList.toArray());
-
-        TranOrder[] r = new TranOrder[queryResult.size()];
-
-        BaseDAO.getBaseDAO().convToEntity(queryResult, r, TranOrder.class);
-
-        String arriarc = "";
-        AreaEntity[] areaEntities = IceRemoteUtil.getAncestors(r[0].getRvaddno());
-        if(areaEntities != null && areaEntities.length > 0){
-            for(int i = areaEntities.length - 1; i>=0; i--){
-                if(areaEntities[i] != null && !StringUtils.isEmpty(areaEntities[i].getLcareac()) && Integer.parseInt(areaEntities[i].getLcareac()) > 0){
-                    arriarc = areaEntities[i].getLcareac();
-                    break;
-                }
-            }
-        }
-
-        if(StringUtils.isEmpty(arriarc)){
-            return new Result().fail("未找到一块物流对应的地区码");
-        }
-
-        boolean lccOrderflag = false;
-        String lccResult = LccOrderUtil.addLccOrder(r[0], arriarc);
-        if(!StringUtils.isEmpty(lccResult)){
-            JSONObject jsonObject = JSONObject.parseObject(lccResult);
-            if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
-                lccOrderflag = true;
-            }else{
-                return new Result().fail(jsonObject.get("msg").toString());
-            }
-        }
-
-        int result = 0;
-        if(lccOrderflag){
-
-            result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
-                    UPDATE_DELIVERY, orderNo);
-
-        }
         return result > 0 ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 
@@ -638,6 +620,7 @@ public class TranOrderOptModule {
      * @return
      */
 
+    @UserPermission(ignore = true)
     public Result takeDelivery(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -652,33 +635,9 @@ public class TranOrderOptModule {
             return new Result().fail("非法参数");
         }
 
-        int result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
-                UPDATE_TAKE_DELIVERY, orderNo);
+        boolean result = takeDelivery(orderNo, compid);
 
-        return result > 0 ? new Result().success("已签收") : new Result().fail("操作失败");
+        return result ? new Result().success("已签收") : new Result().fail("操作失败");
     }
 
-}
-
-class DelayedBase implements IDelayedObject {
-    private int compid;
-    private String orderNo;
-
-    public DelayedBase(int compid, String orderNo) {
-        this.compid = compid;
-        this.orderNo = orderNo;
-    }
-
-    public int getCompid() {
-        return compid;
-    }
-
-    public String getOrderNo() {
-        return orderNo;
-    }
-
-    @Override
-    public String getUnqKey() {
-        return this.orderNo;
-    }
 }
