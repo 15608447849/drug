@@ -18,7 +18,7 @@ import com.onek.entitys.Result;
 import com.onek.util.LccOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.GenIdUtil;
+import com.onek.util.GenIdUtil;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.ModelUtil;

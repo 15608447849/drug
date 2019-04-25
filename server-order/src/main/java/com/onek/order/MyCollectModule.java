@@ -5,7 +5,7 @@ import com.onek.entitys.Result;
 import com.onek.util.IOThreadUtils;
 import com.onek.util.prod.ProdEntity;
 import dao.BaseDAO;
-import global.IceRemoteUtil;
+import com.onek.util.IceRemoteUtil;
 import util.GsonUtils;
 import util.StringUtils;
 
@@ -13,7 +13,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static constant.DSMConst.TD_TRAN_COLLE;
-import static global.GenIdUtil.getUnqId;
+import static com.onek.util.GenIdUtil.getUnqId;
 import static util.TimeUtils.getCurrentYear;
 
 /**

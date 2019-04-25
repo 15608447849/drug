@@ -2,24 +2,20 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.alibaba.fastjson.JSONArray;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.CouponListFilterService;
 import com.onek.calculate.entity.*;
-import com.onek.calculate.service.calculate.CouponCalculateService;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entity.CouponPubLadderVO;
 import com.onek.entity.CouponPubVO;
 import com.onek.entity.CouponUseDTO;
-import com.onek.entity.ShoppingCartDTO;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.GenIdUtil;
-import global.IceRemoteUtil;
+import com.onek.util.GenIdUtil;
 import util.GsonUtils;
 import util.MathUtil;
 import util.StringUtils;
@@ -28,7 +24,6 @@ import util.TimeUtils;
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.logging.Logger;
 
 /**
  * @author Administrator

@@ -7,9 +7,9 @@ import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
-import global.GaoDeMapUtil;
-import global.GenIdUtil;
-import global.IceRemoteUtil;
+import com.onek.util.GaoDeMapUtil;
+import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import util.StringUtils;
 
 import java.util.List;

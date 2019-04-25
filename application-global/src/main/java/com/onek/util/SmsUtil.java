@@ -1,4 +1,4 @@
-package global;
+package com.onek.util;
 
 import org.apache.http.client.fluent.Request;
 import properties.abs.ApplicationPropertiesBase;

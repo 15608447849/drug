@@ -1,4 +1,4 @@
-package global;
+package com.onek.util;
 
 import util.GsonUtils;
 import util.StringUtils;
