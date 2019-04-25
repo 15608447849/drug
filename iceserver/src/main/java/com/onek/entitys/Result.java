@@ -87,7 +87,7 @@ public class Result {
       return this;
    }
 
-   public Result error(String msg,Exception e) {
+   public Result error(String msg,Throwable e) {
       this.code = CODE.ERROR;
       this.message = MESSAGE.ERROR;
       this.data = msg  +" , " +e;

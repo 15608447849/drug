@@ -11,7 +11,6 @@ import com.onek.util.dict.DictEntity;
 import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
 import util.GsonUtils;
-import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -27,6 +26,13 @@ public class IceRemoteUtil {
             AppProperties.INSTANCE.masterHost,
             AppProperties.INSTANCE.masterPort)
             .startCommunication();
+
+    /**
+     * 根据企业码 获取 分库分表的订单服务的下标序列
+     */
+    public static int getOrderServerNo(int compid){
+        return compid /  GLOBALConst._DMNUM % GLOBALConst._SMALLINTMAX;
+    }
 
     //获取商品名
     public static String getProduceName(String pclass) {
@@ -50,8 +56,7 @@ public class IceRemoteUtil {
     public static ProdEntity getProdBySku(long sku) {
         try {
             String result = ic.setServerAndRequest("globalServer","CommonModule","getProdBySku").setArrayParams(sku).execute();
-            ProdEntity prodEntity = GsonUtils.jsonToJavaBean(result,ProdEntity.class);
-            return prodEntity;
+            return GsonUtils.jsonToJavaBean(result,ProdEntity.class);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -59,20 +64,14 @@ public class IceRemoteUtil {
     }
 
     /**
-     *
+     * lzp
      * @param args 0短信模板序列id ,1及以后:模板需要的占位符信息参数
      */
     public static String getMessageByNo(String... args){
         try {
-            String result = ic.settingProxy("globalServer")
-                    .settingReq("","MessageModule","convertMessage")
+           return ic.setServerAndRequest("globalServer","MessageModule","convertMessage")
                     .settingParam(args)
                     .execute();
-            HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-            Object data = hashMap.get("data");
-            if (data==null) return null;
-            String message = data.toString();
-           if (!StringUtils.isEmpty(message)) return message;
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -80,38 +79,33 @@ public class IceRemoteUtil {
     }
 
     public static DictEntity getId(Object id) {
-        String result = ic.settingProxy("globalServer")
-                .settingReq("","DictUtilRemoteModule","getId")
-                .settingParam(new String[]{id+""})
-                .execute();
-        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        Object data = hashMap.get("data");
-        if (data == null) return null;
-        String json = data.toString();
-        return GsonUtils.jsonToJavaBean(json,DictEntity.class);
+        try {
+            String result = ic.setServerAndRequest("globalServer","DictUtilRemoteModule","getId")
+                    .setArrayParams(id)
+                    .execute();
+            return GsonUtils.jsonToJavaBean(result,DictEntity.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     public static String getArean(long areac) {
-        String result = ic.settingProxy("globalServer")
-                .settingReq("","CommonModule","getAreaName")
-                .settingParam(new String[]{String.valueOf(areac)})
+        String result = ic.setServerAndRequest("globalServer","CommonModule","getAreaName")
+                .setArrayParams(areac)
                 .execute();
-
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-
+        assert hashMap != null;
         Object data = hashMap.get("data");
-
         return data == null ? "" : data.toString();
     }
 
     public static AreaEntity getAreaByAreac(long areac){
-        String result = ic.settingProxy("globalServer")
-                .settingReq("","CommonModule","getArea")
-                .settingParam(new String[]{String.valueOf(areac)})
+        String result = ic.setServerAndRequest("globalServer","CommonModule","getArea")
+                .setArrayParams(areac)
                 .execute();
-
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-
+        assert hashMap != null;
         Object data = hashMap.get("data");
         if (data == null) return null;
         String json = data.toString();
@@ -119,13 +113,12 @@ public class IceRemoteUtil {
     }
 
     public static AreaEntity[] getAncestors(long areac){
-        String result = ic.settingProxy("globalServer")
-                .settingReq("","CommonModule","getAncestors")
-                .settingParam(new String[]{String.valueOf(areac)})
+        String result = ic.setServerAndRequest("globalServer","CommonModule","getAncestors")
+                .setArrayParams(areac)
                 .execute();
 
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-
+        assert hashMap != null;
         Object data = hashMap.get("data");
         if (data == null) return null;
         String json = data.toString();
@@ -134,10 +127,9 @@ public class IceRemoteUtil {
 
 
     public static DictEntity[] queryAll() {
-        String result = ic.settingProxy("globalServer")
-                .settingReq("","DictUtilRemoteModule","queryAll")
-                .execute();
+        String result = ic.setServerAndRequest("globalServer","DictUtilRemoteModule","queryAll").execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        assert hashMap != null;
         Object data = hashMap.get("data");
         if (data == null) return null;
         String json = data.toString();
@@ -145,16 +137,111 @@ public class IceRemoteUtil {
     }
 
     public static DictEntity[] queryByParams(String [] params) {
-        String result = ic.settingProxy("globalServer")
-                .settingReq("","DictUtilRemoteModule","queryByParams")
-                .settingParam(params)
-                .execute();
+        String result = ic.setServerAndRequest("globalServer","DictUtilRemoteModule","queryByParams").settingParam(params).execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        assert hashMap != null;
         Object data = hashMap.get("data");
         if (data == null) return null;
         String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,DictEntity[].class);
     }
+
+
+    public static int collectCoupons(int compid,String content){
+        String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertRevCoupon")
+                .settingParam(content)
+                .execute();
+        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
+
+    /**
+     * 发送消息到指定客户端
+     * 消息规则 :  push:消息模板ID#消息模板参数1#消息模板参数2#...
+     */
+    public static void sendMessageToClient(int compid,String message){
+        int index = getOrderServerNo(compid);
+        ic.settingProxy("orderServer"+index).sendMessageToClient(compid+"",message);
+    }
+
+    //查询所有足迹
+    public static ArrayList<LinkedTreeMap> queryFootprint(int compid){
+        int index = getOrderServerNo(compid);
+        HashMap<String,Object> hashMap = new HashMap<>();
+        hashMap.put("compid",compid);
+        String result = ic.setServerAndRequest("orderServer"+index,"MyFootprintModule","query")
+                .settingParam(GsonUtils.javaBeanToJson(hashMap)).execute();
+        hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        assert hashMap != null;
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        return (ArrayList<LinkedTreeMap>)data;
+    }
+
+    public static int addPoint(int compid, int point){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("compid", compid);
+        jsonObject.put("point", point);
+        String result = ic.settingProxy("userServer")
+                .settingReq("","MemberModule","addPoint")
+                .settingParam(jsonObject.toJSONString())
+                .execute();
+        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
+
+    public static MemberEntity getMemberByCompid(int compid) {
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("compid", compid);
+        String result = ic.settingProxy("userServer")
+                .settingReq("","MemberModule","getMember")
+                .settingParam(jsonObject.toJSONString())
+                .execute();
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.jsonToJavaBean(json,MemberEntity.class);
+    }
+
+    /**
+     * lzp
+     * 获取企业信息 json
+     */
+    public static String getCompanyJson(int compid) {
+        try {
+            return ic.setServerAndRequest("userServer","LoginRegistrationModule","getStoreInfo").setArrayParams(compid).execute();
+        } catch (Exception ignored) {
+        }
+        return null;
+    }
+}
+
+//
+//    public static HashMap<Object, Object> getEffectiveRule() {
+//        String result = ic.setServerAndRequest("discountServer","DiscountCalcModule","getEffectiveRule")
+//                .execute();
+//        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+//        assert hashMap != null;
+//        Object data = hashMap.get("data");
+//        if (data == null) return null;
+//        String json = data.toString();
+//        return GsonUtils.string2Map(json);
+//    }
+//    public static int reducePoint(int compid, int point){
+//        JSONObject jsonObject = new JSONObject();
+//        jsonObject.put("compid", compid);
+//        jsonObject.put("point", point);
+//        String result = ic.settingProxy("userServer")
+//                .settingReq("","MemberModule","reducePoint")
+//                .settingParam(jsonObject.toJSONString())
+//                .execute();
+//        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+//        assert ret != null;
+//        return ret.code;
+//    }
 
 //    public static ProdPriceEntity calcSingleProdActPrize(long actcode,long sku,double vatp) {
 //        JSONObject jsonObject = new JSONObject();
@@ -211,102 +298,5 @@ public class IceRemoteUtil {
 //        return GsonUtils.jsonToJavaBean(json,ProdPriceEntity.class);
 //    }
 
-    public static int collectCoupons(int compid,String content){
-        String result = ic.settingProxy("orderServer"+getOrderServerNo(compid))
-                .settingReq("","CouponRevModule","insertRevCoupon")
-                .settingParam(content)
-                .execute();
-        Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
-        return ret.code;
-    }
 
-    public static int getOrderServerNo(int compid){
-        return compid /  GLOBALConst._DMNUM % GLOBALConst._SMALLINTMAX;
-    }
 
-    /**
-     * 发送消息到指定客户端
-     * 消息规则 :  push:消息模板ID#消息模板参数1#消息模板参数2#...
-     */
-    public static void sendMessageToClient(int compid,String message){
-        int index = getOrderServerNo(compid);
-        ic.settingProxy("orderServer"+index).sendMessageToClient(compid+"",message);
-    }
-
-    //查询所有足迹
-    public static ArrayList<LinkedTreeMap> queryFootprint(int compid){
-        int index = getOrderServerNo(compid);
-        HashMap<String,Object> hashMap = new HashMap<>();
-        hashMap.put("compid",compid);
-        String result = ic.settingProxy("orderServer"+index).settingReq("","MyFootprintModule","query")
-                .settingParam(GsonUtils.javaBeanToJson(hashMap)).execute();
-        hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        Object data = hashMap.get("data");
-        if (data == null) return null;
-        return (ArrayList<LinkedTreeMap>)data;
-    }
-
-    public static HashMap<Object, Object> getEffectiveRule() {
-        JSONObject jsonObject = new JSONObject();
-        String result = ic.settingProxy("discountServer")
-                .settingReq("","DiscountCalcModule","getEffectiveRule")
-                .settingParam(jsonObject.toJSONString())
-                .execute();
-        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        Object data = hashMap.get("data");
-        if (data == null) return null;
-        String json = data.toString();
-        return GsonUtils.string2Map(json);
-    }
-
-    public static int addPoint(int compid, int point){
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("compid", compid);
-        jsonObject.put("point", point);
-        String result = ic.settingProxy("userServer")
-                .settingReq("","MemberModule","addPoint")
-                .settingParam(jsonObject.toJSONString())
-                .execute();
-        Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
-        return ret.code;
-    }
-
-    public static int reducePoint(int compid, int point){
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("compid", compid);
-        jsonObject.put("point", point);
-        String result = ic.settingProxy("userServer")
-                .settingReq("","MemberModule","reducePoint")
-                .settingParam(jsonObject.toJSONString())
-                .execute();
-        Result ret = GsonUtils.jsonToJavaBean(result,new TypeToken<Result>(){}.getType());
-        return ret.code;
-    }
-
-    public static MemberEntity getMemberByCompid(int compid) {
-        JSONObject jsonObject = new JSONObject();
-        jsonObject.put("compid", compid);
-        String result = ic.settingProxy("userServer")
-                .settingReq("","MemberModule","getMember")
-                .settingParam(jsonObject.toJSONString())
-                .execute();
-        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        Object data = hashMap.get("data");
-        if (data == null) return null;
-        String json = data.toString();
-        return GsonUtils.jsonToJavaBean(json,MemberEntity.class);
-    }
-
-    /**
-     * 获取企业信息 json
-     */
-    public static String getCompanyJson(int compid) {
-        try {
-            return ic.settingProxy("userServer")
-                    .settingReq("","LoginRegistrationModule","getStoreInfo")
-                    .settingParam(new String[]{compid+""}).execute();
-        } catch (Exception ignored) {
-        }
-        return null;
-    }
-}
