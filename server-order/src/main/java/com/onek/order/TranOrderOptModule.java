@@ -332,7 +332,7 @@ public class TranOrderOptModule {
         if (discountResult.isFreeShipping()) {//免邮
             tranOrder.setFreight(0);
         } else {
-            tranOrder.setFreight(AreaFeeUtil.getFee(tranOrder.getRvaddno()));//运费(暂无)
+            tranOrder.setFreight(AreaFeeUtil.getFee(tranOrder.getRvaddno()) * 100);//运费(暂无)
         }
         tranOrder.setPayamt((discountResult.getTotalCurrentPrice() * 100));
         tranOrder.setDistamt((discountResult.getTotalDiscount() * 100));
