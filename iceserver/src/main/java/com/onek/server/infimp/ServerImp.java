@@ -71,12 +71,12 @@ public class ServerImp extends IcePushMessageServerImps {
     //创建拦截器
     private IServerInterceptor createInterceptor(String path) {
         try {
-            Object obj = ObjectRefUtil.createObject(path,null,null);
+            Object obj = ObjectRefUtil.createObject(path);
             if (obj instanceof  IServerInterceptor){
                 return (IServerInterceptor) obj;
             }
         } catch (Exception e) {
-            logger.print("创建拦截器失败,path = " + path);
+            logger.error("创建拦截器失败,path = " + path);
         }
         return  null;
     }
@@ -124,7 +124,7 @@ public class ServerImp extends IcePushMessageServerImps {
     private Object callObjectMethod(String packagePath, String classPath, String method, IceContext iApplicationContext) throws Exception{
         Object obj = ObjectPoolManager.get().getObject(classPath);
         //创建
-        if (obj == null)  obj = ObjectRefUtil.createObject(packagePath+"."+classPath,null,null);
+        if (obj == null)  obj = ObjectRefUtil.createObject(packagePath+"."+classPath);
         Object methodResultValue =  ObjectRefUtil.callMethod(obj,method,new Class[]{contextCls},iApplicationContext);
         ObjectPoolManager.get().putObject(classPath,obj);//使用完毕之后再放入池中,缓存对象
         return methodResultValue;
