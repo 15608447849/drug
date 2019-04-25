@@ -1,5 +1,7 @@
 package com.onek.entity;
 
+import com.onek.queue.delay.IDelayedObject;
+
 import java.util.List;
 
 /**
@@ -8,7 +10,7 @@ import java.util.List;
  * @description 订单实体类
  * @time 2019/4/16 15:27
  **/
-public class TranOrder {
+public class TranOrder implements IDelayedObject {
     private String orderno;//订单号
     private long tradeno;//交易号
     private int cusno;//客户企业码
@@ -254,5 +256,10 @@ public class TranOrder {
 
     public void setCusname(String cusname) {
         this.cusname = cusname;
+    }
+
+    @Override
+    public String getUnqKey() {
+        return this.orderno;
     }
 }
