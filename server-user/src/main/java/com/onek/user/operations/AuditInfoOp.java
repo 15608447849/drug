@@ -108,7 +108,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 "cid,cname,createdate,createtime,submitdate,submittime,auditdate,audittime,examine,cstatus" +
                 " FROM {{?" +DSMConst.D_COMP+ "}}";
                 if(!StringUtils.isEmpty(paramSql)){
-                    sqlPrev = sqlPrev + " WHERE  "+paramSql;
+                    sqlPrev  += " WHERE  "+paramSql;
                 }
         return sqlPrev;
     }
@@ -117,16 +117,14 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         if (lines==null || lines.size() == 0) return  null;
         List<AuditInfo> list = new ArrayList<>();
         AuditInfo info;
+        //获取企业账号-手机号码
+        String selectSql = "SELECT uphone FROM {{?" + DSMConst.D_SYSTEM_USER +"}} WHERE cid=?";
+
         for (Object[] arr : lines){
             try {
-                //获取企业账号
-                String selectSql = "SELECT uphone FROM {{?" + DSMConst.D_SYSTEM_USER +"}} WHERE cid = "+ arr[0];
-                List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql);
-
+                List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql,arr[0]);
                 if (lines2.size() != 1) continue;
-
                 info = new AuditInfoOp();
-
                 info.phone = StringUtils.obj2Str(lines2.get(0)[0],"");
                 info.companyId = StringUtils.obj2Str(arr[0],"");
                 info.company = StringUtils.obj2Str(arr[1],"");
@@ -155,7 +153,9 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                     status = 1024; //停用
                 }
                 queryAptitude(info.cardInfo,arr[0]);
+
                 info.status = StringUtils.obj2Str(status,"");
+
                 list.add(info);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -163,7 +163,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         }
         return list;
     }
-
+    //查询企业的审核资质信息
     private void queryAptitude(AptitudeInfo cardInfo, Object compid) {
         String selectSql = "SELECT atype,certificateno,validitys,validitye FROM {{?" + DSMConst.D_COMP_APTITUDE + "}} WHERE compid=?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,compid);

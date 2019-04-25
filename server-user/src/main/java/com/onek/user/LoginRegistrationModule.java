@@ -62,6 +62,17 @@ public class LoginRegistrationModule {
         assert op!=null;
         return op.execute(appContext);
     }
+    /**
+     * 解锁门店用户锁定
+     */
+    @UserPermission(ignore = true)
+    public Result removeUserLoginLock(AppContext appContext){
+        String json = appContext.param.json;
+        LoginStoreOp op = GsonUtils.jsonToJavaBean(json, LoginStoreOp.class);
+        assert op!=null;
+        op.removeLockCache();
+        return new Result().success("解锁成功");
+    }
 
     /**
      * 管理员登陆后台系统
