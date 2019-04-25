@@ -22,9 +22,8 @@ public class UserInterceptor implements IServerInterceptor {
     private final static Map<String, UserPermission> permissionStatusMap = new HashMap<>();
 
     @Override
-    public Result interceptor( IceContext context)  {
+    public Result interceptor( IceContext context) throws Exception {
 
-        try {
             AppContext appContext =  context.convert();
             String classpath = context.refPkg + "." +context.refCls;
             String method = context.refMed;
@@ -72,11 +71,7 @@ public class UserInterceptor implements IServerInterceptor {
                     }
                 }
             }
-        }catch(Exception e){
-            //e.printStackTrace();
-            context.logger.error("interceptor 捕获错误: "+e );
-            return new Result().error("interceptor()",e);
-        }
+
         return null;
     }
 }

@@ -7,9 +7,11 @@ import com.onek.entitys.Result;
 import com.onek.server.inf.IRequest;
 import objectref.ObjectPoolManager;
 import objectref.ObjectRefUtil;
+import org.hyrdpf.util.LogUtil;
 import util.GsonUtils;
 import util.StringUtils;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -80,7 +82,7 @@ public class ServerImp extends IcePushMessageServerImps {
     }
 
     //打印参数
-    private void printParam(IRequest request, Current __current) {
+    private String printParam(IRequest request, Current __current) {
         try {
             StringBuilder sb = new StringBuilder();
             sb.append(__current.con.toString().split("\n")[1]);
@@ -98,10 +100,11 @@ public class ServerImp extends IcePushMessageServerImps {
                 sb.append("\npaging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
             }
             logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString());
-
+            return sb.toString();
         } catch (Exception e) {
             e.printStackTrace();
         }
+        return "";
     }
 
     //检测,查询配置的包路径 - 优先 客户端指定的全路径
@@ -117,33 +120,27 @@ public class ServerImp extends IcePushMessageServerImps {
         }
     }
 
+    //调用方法
     private Object callObjectMethod(String packagePath, String classPath, String method, IceContext iApplicationContext) throws Exception{
         Object obj = ObjectPoolManager.get().getObject(classPath);
-        if (obj == null){
-            //创建
-            obj = ObjectRefUtil.createObject(packagePath+"."+classPath,null,null);
-            //使用完毕之后再放入池中
-        }
+        //创建
+        if (obj == null)  obj = ObjectRefUtil.createObject(packagePath+"."+classPath,null,null);
         Object methodResultValue =  ObjectRefUtil.callMethod(obj,method,new Class[]{contextCls},iApplicationContext);
-        ObjectPoolManager.get().putObject(classPath,obj); //缓存对象
+        ObjectPoolManager.get().putObject(classPath,obj);//使用完毕之后再放入池中,缓存对象
         return methodResultValue;
     }
 
     //产生平台上下文对象
-    private IceContext generateContext(Current current, IRequest request)  {
-        try {
+    private IceContext generateContext(Current current, IRequest request) throws Exception {
             Object obj = ObjectRefUtil.createObject(
                     contextCls,
                     new Class[]{Current.class, IRequest.class},
-                    new Object[]{current,request}
+                    current,request
                     );
             if (obj instanceof IceContext) return (IceContext) obj;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         return new IceContext(current,request);
     }
-
+    //拦截
     private Result interceptor(IceContext context) throws Exception {
         Result result = null;
         for (IServerInterceptor iServerInterceptor : interceptorList) {
@@ -152,7 +149,7 @@ public class ServerImp extends IcePushMessageServerImps {
         }
         return result;
     }
-
+    //打印结果
     private String printResult(Object result) {
         String resultString = GsonUtils.javaBeanToJson(result);
         logger.print(resultString +"\n\n"); //+"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-"
@@ -163,20 +160,26 @@ public class ServerImp extends IcePushMessageServerImps {
     @Override
     public String accessService(IRequest request, Current __current) {
         Object result;
+        String callInfo = "没有调用信息";
         try {
             check(request);
-            printParam(request,__current);
-            //产生Application上下文
+            callInfo = printParam(request,__current);
+            //产生context
             IceContext context = generateContext(__current,request);
+            //拦截器
             result = interceptor(context);
+            //具体业务实现调用 返回值不限制
             if (result == null) result = callObjectMethod(context.refPkg,context.refCls,context.refMed,context);
             if (isLongConnection && result instanceof Result) {
                 context.longConnectionSetting(_clientsMaps,(Result)result);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            logger.error("accessService 捕获错误:"+e.toString());
-            result = new Result().error("accessService()",e);
+            Throwable targetEx = e;
+            if (e instanceof InvocationTargetException) {
+                targetEx =((InvocationTargetException)e).getTargetException();
+            }
+            LogUtil.getDefaultLogger().error(callInfo,targetEx);
+            result = new Result().error("错误调用",targetEx);
         }
         return printResult(result);
     }
