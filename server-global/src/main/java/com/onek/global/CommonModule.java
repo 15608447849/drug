@@ -11,11 +11,9 @@ import com.onek.global.produce.ProduceStore;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.area.AreaUtil;
 import com.onek.util.dict.DictEntity;
-import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProdEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
-import util.GsonUtils;
 import util.StringUtils;
 
 import java.util.ArrayList;
@@ -125,24 +123,24 @@ public class CommonModule {
     }
 
     @UserPermission(ignore = true)
-    public Result getProduceName(AppContext appContext){
-        return new Result().success(ProduceStore.getProduceName(appContext.param.arrays[0]));
+    public String getProduceName(AppContext appContext){
+        return ProduceStore.getProduceName(appContext.param.arrays[0]);
     }
 
     @UserPermission(ignore = true)
-    public Result getProdBySku(AppContext appContext){
+    public ProdEntity getProdBySku(AppContext appContext){
         ProdEntity entity = ProduceStore.getProdBySku(Long.parseLong(appContext.param.arrays[0]));
-        return new Result().success(GsonUtils.javaBeanToJson(entity));
+        return entity;
     }
     @UserPermission(ignore = true)
-    public Result getCompleteName(AppContext appContext){
+    public String getCompleteName(AppContext appContext){
         long areaCode = Long.parseLong(appContext.param.arrays[0]);
         String[] areas = AreaStore.getCompleteName(areaCode);
         StringBuilder sb = new StringBuilder();
         for (int i = 0; i<areas.length ;i++){
             sb.append(areas[i]);
         }
-        return new Result().success(sb.toString());
+        return sb.toString();
     }
 
     public  static JSONObject getAllDict(){
