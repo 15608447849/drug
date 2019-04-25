@@ -61,7 +61,7 @@ public class GenIdUtil {
      * @return
      */
     private static String format(Long id, String prefix, Date date,
-                                 Integer minLength,int compid){
+                                 Integer minLength,int compid,int type){
         StringBuffer sb = new StringBuffer();
         sb.append(prefix);
         if(date != null){
@@ -78,10 +78,14 @@ public class GenIdUtil {
         }else{
             sb.append(strId);
         }
-        sb.append(compid / GLOBALConst._DMNUM  % GLOBALConst._SMALLINTMAX);
-        sb.append(compid % GLOBALConst._DMNUM  % GLOBALConst._MODNUM_EIGHT);
+        if(type == 0){
+            sb.append(compid / GLOBALConst._DMNUM  % GLOBALConst._SMALLINTMAX);
+            sb.append(compid % GLOBALConst._DMNUM  % GLOBALConst._MODNUM_EIGHT);
+        }
+
         return sb.toString();
     }
+
 
     /**
      * 年（2位）+月（2位）+日（2位）+ 自增位（8位）+ 服务器坐标（3位）+ 数据库坐标（1位）
@@ -89,7 +93,17 @@ public class GenIdUtil {
      */
     public static String getOrderId(int compid){
         long autoId = generateId("order",true);
-        return format(autoId,"",new Date(),8,compid);
+        return format(autoId,"",new Date(),8,compid,0);
+    }
+
+
+    /**
+     * 年（2位）+月（2位）+日（2位）+ 自增位（8位）+ 服务器坐标（3位）+ 数据库坐标（1位）
+     * @return
+     */
+    public static String getAsOrderId(){
+        long autoId = generateId("asorder",true);
+        return format(autoId,"",new Date(),6,0,1);
     }
 
 
@@ -132,24 +146,23 @@ public class GenIdUtil {
     }
 
 
-    public static void main(String[] args) throws InterruptedException {
-        System.out.println(getUnqId());
-//        ExecutorService poolExecutor = Executors.newFixedThreadPool(1000);
-//        long start = System.nanoTime();
-//        System.out.println(new Date());
-//        for(int i = 0; i < 10000; i++){
-//            poolExecutor.execute(new Runnable() {
-//                @Override
-//                public void run() {
-//                    System.out.println(Thread.currentThread().getName()+"  "+ getUnqId());
-//                }
-//            });
-//        }
-//        poolExecutor.shutdown();
-//        poolExecutor.awaitTermination(1, TimeUnit.MINUTES);
-//        long time = System.nanoTime() - start;
-//        System.out.printf("Tasks took %.3f ms to run%n", time/1e6);
+    public static String getDbServerByOrderno(String orderno){
 
+        if(StringUtils.isEmpty(orderno)){
+            return null;
+        }
+        String dbserver = "";
+        switch (orderno.length()) {
+            case 16:
+                dbserver = orderno.substring(orderno.length() - 2);
+                break;
+            case 17:
+                dbserver = orderno.substring(orderno.length() - 3);
+                break;
+            default:
+                dbserver = orderno.substring(orderno.length() - 4);
+        }
+        return dbserver;
     }
-
 }
+
