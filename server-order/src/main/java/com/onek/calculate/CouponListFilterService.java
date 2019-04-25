@@ -87,7 +87,7 @@ public class CouponListFilterService extends BaseDiscountFilterService {
             CouponPubVO couponPubVO = couentLadderIterator.next();
             CouponPubLadderVO couponPubLadderVO = getLadoffable(couponPubVO.getLadderVOS(),priceTotal);
             if(couponPubLadderVO == null){
-                couentIterator.remove();
+                couentLadderIterator.remove();
             }
         }
         return checkCoupon;
