@@ -35,9 +35,12 @@ public class ObjectRefUtil {
      */
     public static Object createObject(String classPath,Class[] parameterTypes,Object... parameters) throws Exception{
             Class cls = Class.forName(classPath);
-            return createObject(cls,parameterTypes,parameterTypes);
+            return createObject(cls,parameterTypes,parameters);
     }
-
+    public static Object createObject(String classPath) throws Exception{
+        Class cls = Class.forName(classPath);
+        return createObject(cls,null);
+    }
     /**
      * 反射调用某个类方法
      * @param holder 方法持有者
