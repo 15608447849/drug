@@ -236,8 +236,9 @@ public class PayModule {
         }
 
         new SendMsgThread(orderno, tradeStatus ,money, compid, tradeDate).start();
-        new GenLccOrderThread(compid, orderno).start();
-
+        if("1".equals(tradeStatus)) {
+            new GenLccOrderThread(compid, orderno).start();
+        }
         if(result){
             return new Result().success(null);
         }else{
