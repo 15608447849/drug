@@ -6,10 +6,13 @@ import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.MessageEvent;
 import com.onek.context.AppContext;
+import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
+import com.onek.queue.delay.DelayedHandler;
+import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.fs.FileServerUtils;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -28,6 +31,10 @@ import java.util.List;
 import static com.onek.order.TranOrderOptModule.getGoodsArr;
 
 public class PayModule {
+    public static final DelayedHandler<DelayedBase> DELIVERY_DELAYED =
+            new RedisDelayedHandler<>("_DELIVERY", 24,
+                    (d) -> new TranOrderOptModule().delivery(d.getOrderNo(), d.getCompid()),
+                    DelayedHandler.TIME_TYPE.HOUR);
 
     public static final String PAY_TYPE_ALI = "alipay";
     public static final String PAY_TYPE_WX = "wxpay";
@@ -262,6 +269,8 @@ public class PayModule {
             baseDao.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
             //更新活动库存
             baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, tranOrderGoods.length);
+
+            DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
         }
         return b;
     }

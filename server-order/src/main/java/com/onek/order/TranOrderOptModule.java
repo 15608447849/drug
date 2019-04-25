@@ -10,6 +10,7 @@ import com.onek.calculate.entity.DiscountResult;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
 import com.onek.context.AppContext;
+import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
@@ -45,6 +46,11 @@ public class TranOrderOptModule {
             new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
                     (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
                     DelayedHandler.TIME_TYPE.MINUTES);
+
+    private static final DelayedHandler<DelayedBase> TAKE_DELAYED =
+            new RedisDelayedHandler<>("_TAKE_ORDERS", 48,
+                    (d) -> new TranOrderOptModule().takeDelivery(d.getOrderNo(), d.getCompid()),
+                    DelayedHandler.TIME_TYPE.HOUR);
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
@@ -558,8 +564,26 @@ public class TranOrderOptModule {
         return Integer.parseInt(queryResult.get(0)[0].toString());
     }
 
-    private boolean delivery(String orderno, int compid) {
-        return true;
+    public boolean delivery(String orderno, int compid) {
+        boolean result = true;
+
+        if (result) {
+            PayModule.DELIVERY_DELAYED.removeByKey(orderno);
+            TAKE_DELAYED.add(new DelayedBase(compid, orderno));
+        }
+
+        return result;
+    }
+
+    public boolean takeDelivery(String orderno, int compid) {
+        boolean result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
+                UPDATE_TAKE_DELIVERY, orderno) > 0;
+
+        if (result) {
+            TAKE_DELAYED.removeByKey(orderno);
+        }
+
+        return result;
     }
 
     /**
@@ -652,33 +676,9 @@ public class TranOrderOptModule {
             return new Result().fail("非法参数");
         }
 
-        int result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
-                UPDATE_TAKE_DELIVERY, orderNo);
+        boolean result = takeDelivery(orderNo, compid);
 
-        return result > 0 ? new Result().success("已签收") : new Result().fail("操作失败");
+        return result ? new Result().success("已签收") : new Result().fail("操作失败");
     }
 
-}
-
-class DelayedBase implements IDelayedObject {
-    private int compid;
-    private String orderNo;
-
-    public DelayedBase(int compid, String orderNo) {
-        this.compid = compid;
-        this.orderNo = orderNo;
-    }
-
-    public int getCompid() {
-        return compid;
-    }
-
-    public String getOrderNo() {
-        return orderNo;
-    }
-
-    @Override
-    public String getUnqKey() {
-        return this.orderNo;
-    }
 }
