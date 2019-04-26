@@ -22,12 +22,15 @@ public class UpdateUserOp implements IOperation<AppContext> {
     String oldPassword;//旧密码 - 明文
     String newPassword; //明文  - 明文
 
+
+
     @Override
     public Result execute(AppContext context) {
         UserSession session = context.getUserSession();
 
         int uid = session.userId;
 
+        //修改手机号码
         if ( !StringUtils.isEmpty(oldPhone,newPhone, smsCode)){
             if (newPhone.length()==11) {
                 String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
@@ -38,10 +41,18 @@ public class UpdateUserOp implements IOperation<AppContext> {
             }
             }
 
-
+        //修改密码
         if (!StringUtils.isEmpty(oldPassword,newPassword)){
             String curPassword = session.password;
             if (EncryptUtils.encryption(oldPassword).equalsIgnoreCase(curPassword)){
+                return changUserByUid(context,"upw='"+ EncryptUtils.encryption(newPassword)+"'","uid = "+ uid);
+            }
+        }
+
+        //忘记密码
+        if (!StringUtils.isEmpty(oldPhone,smsCode,newPassword)){
+            String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
+            if (code.equals(smsCode)){
                 return changUserByUid(context,"upw='"+ EncryptUtils.encryption(newPassword)+"'","uid = "+ uid);
             }
         }
@@ -52,7 +63,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
         String sql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER +"}} SET " + param + " WHERE "+ifs;
         int i = BaseDAO.getBaseDAO().updateNative(sql);
         if (i>0) {
-            context.relationTokenUserSession();;
+            context.relationTokenUserSession();
             return new Result().success("修改成功");
         }
         return new Result().fail("修改失败," +sql);

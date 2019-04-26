@@ -1,7 +1,6 @@
 package com.onek.util;
 
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
 import com.onek.entitys.Result;
@@ -12,8 +11,8 @@ import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
 import util.GsonUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @Author: leeping
@@ -62,16 +61,27 @@ public class IceRemoteUtil {
         }
         return null;
     }
-
     /**
      * lzp
-     * @param args 0短信模板序列id ,1及以后:模板需要的占位符信息参数
+     * 0短信模板序列id ,1及以后:模板需要的占位符信息参数
      */
     public static String getMessageByNo(String... args){
         try {
-           return ic.setServerAndRequest("globalServer","MessageModule","convertMessage")
+            return ic.setServerAndRequest("globalServer","MessageModule","convertMessage")
                     .settingParam(args)
                     .execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    public static String getMessageByNo(int tempNo,String... params){
+        try {
+            String[] args = new String[params.length+1];
+            args[0] = tempNo+"";
+            System.arraycopy(params, 0, args, 1, params.length);
+            return getMessageByNo(args);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -165,19 +175,25 @@ public class IceRemoteUtil {
         ic.settingProxy("orderServer"+index).sendMessageToClient(compid+"",message);
     }
 
-    //查询所有足迹
-    public static ArrayList<LinkedTreeMap> queryFootprint(int compid){
-        int index = getOrderServerNo(compid);
-        HashMap<String,Object> hashMap = new HashMap<>();
-        hashMap.put("compid",compid);
-        String result = ic.setServerAndRequest("orderServer"+index,"MyFootprintModule","query")
-                .settingParam(GsonUtils.javaBeanToJson(hashMap)).execute();
-        hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        assert hashMap != null;
-        Object data = hashMap.get("data");
-        if (data == null) return null;
-        return (ArrayList<LinkedTreeMap>)data;
+    public static void sendTempMessageToClient(int compid,int tempNo,String... params){
+        String message = "push#"+tempNo;
+        if (params!=null && params.length>0){
+            message+="#"+ String.join("#",params);
+        }
+        sendMessageToClient(compid,message);
     }
+
+
+
+    //查询所有足迹
+    public static List<String> queryFootprint(int compid){
+        int index = getOrderServerNo(compid);
+
+        String json = ic.setServerAndRequest("orderServer"+index,"MyFootprintModule","backQuery")
+                .setArrayParams(compid).execute();
+        return GsonUtils.json2List(json,String.class);
+    }
+
 
     public static int addPoint(int compid, int point){
         JSONObject jsonObject = new JSONObject();

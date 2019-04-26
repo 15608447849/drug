@@ -78,4 +78,15 @@ public class SmsUtil  extends ApplicationPropertiesBase {
     }
 
 
+    public static void sendSmsBySystemTemp(String phone,int tempNo,String... params){
+        IOThreadUtils.runTask(()->{
+            //获取短信
+            String message = IceRemoteUtil.getMessageByNo(tempNo,params);
+            SmsUtil.sendMsg(phone,message);
+        });
+    }
+
+
+
+
 }
