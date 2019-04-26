@@ -46,19 +46,19 @@ public class UserInterceptor implements IServerInterceptor {
                 UserSession userSession = appContext.getUserSession();
 
                 if(userSession == null) {
-                    return new Result().intercept("用户未登录");
+                    return new Result().intercept(-2,"用户未登录");
                 }
 
                 if (up != null){
                     //判断是否需要关联企业
                     if (!up.allowedUnrelated()){
                         //必须关联企业
-                        if (userSession.compId == 0) return new Result().intercept("用户未关联企业信息");
+                        if (userSession.compId == 0) return new Result().intercept(-3,"用户未关联企业信息");
                     }
                     //判断是否需要认证企业
                     if(up.needAuthenticated()){
                         if(userSession.comp == null ||  (userSession.comp.authenticationStatus & 256) <= 0){
-                            return new Result().intercept("企业没有认证");
+                            return new Result().intercept(-3,"企业没有认证");
                         }
                     }
 
@@ -75,7 +75,7 @@ public class UserInterceptor implements IServerInterceptor {
                             }
                         }
                         if (!isAccess){
-                            return new Result().intercept("用户角色拒绝");
+                            return new Result().intercept(-4,"用户角色权限拒绝");
                         }
                     }
 

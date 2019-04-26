@@ -30,12 +30,17 @@ public class AppContext extends IceContext {
     public void initialization(){
 
             //加载用户信息
-            if (StringUtils.isEmpty(param.token)) return;
+            if (StringUtils.isEmpty(param.token)) {
+                logger.print("没有token信息,不加载用户信息,匿名访问");
+                return;
+            }
             String key = genUKey();
             String json = RedisUtil.getStringProvide().get(key);
             userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
-
-            if (userSession == null) return;
+            if (userSession == null) {
+                logger.print("KEY : "+ key +" 找不到缓存的用户信息 ");
+                return;
+            };
             if (userSession.compId > 0) {
                 //加载企业信息
                 json = RedisUtil.getStringProvide().get(userSession.compId+"");

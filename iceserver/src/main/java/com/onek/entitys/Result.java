@@ -7,21 +7,15 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import java.util.HashMap;
 
 public class Result {
-
-
-
     interface CODE{
       int FAIL = -1;
-      int INTERCEPT = -2;
-      int ERROR = -3;
+      int ERROR = 0;
       int SUCCESS = 200;
-
    }
 
    interface MESSAGE{
       String FAIL = "调用失败";
       String SUCCESS = "调用成功";
-      String INTERCEPT = "调用拦截";
       String ERROR = "异常捕获";
    }
 
@@ -79,12 +73,12 @@ public class Result {
       this.data = data;
       return this;
    }
-
-   public Result intercept(String cause){
-      this.code = CODE.INTERCEPT;
-      this.message = MESSAGE.INTERCEPT+","+cause;
+   public Result intercept(int code,String cause){
+      this.code = code;
+      this.message = cause;
       return this;
    }
+
 
    public Result error(String msg,Throwable e) {
       this.code = CODE.ERROR;

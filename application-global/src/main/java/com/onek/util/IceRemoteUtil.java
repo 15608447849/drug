@@ -183,11 +183,7 @@ public class IceRemoteUtil {
         sendMessageToClient(compid,message);
     }
 
-    public static void main(String[] args) {
-        int cid = 536862726;
-        String json = ic.settingProxy("orderServer"+getOrderServerNo(cid)).settingReq("ffca91c38eee969bf9871c249b41b0fb","PushMessageModule","queryMessage").execute();
-        System.out.println(json);
-    }
+
 
     //查询所有足迹
     public static List<String> queryFootprint(int compid){
