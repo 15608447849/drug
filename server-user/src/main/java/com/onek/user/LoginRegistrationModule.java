@@ -86,12 +86,22 @@ public class LoginRegistrationModule {
     }
 
     /**
-     * 修改门店
-     *  登陆手机号
-     *  登陆密码
-     *  忘记密码
+     * 修改手机号
+     *  修改密码
+     *
      */
     public Result changeUserInfo(AppContext appContext){
+        String json = appContext.param.json;
+        UpdateUserOp op = GsonUtils.jsonToJavaBean(json, UpdateUserOp.class);
+        assert op!=null;
+        return op.execute(appContext);
+    }
+
+    /**
+     *  忘记密码
+     */
+    @UserPermission(ignore = true)
+    public Result forgetPassword(AppContext appContext){
         String json = appContext.param.json;
         UpdateUserOp op = GsonUtils.jsonToJavaBean(json, UpdateUserOp.class);
         assert op!=null;
