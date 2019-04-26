@@ -1,5 +1,7 @@
 package com.onek.util;
 
+import util.StringUtils;
+
 /**
  * @Author: leeping
  * @Date: 2019/4/26 11:56
@@ -29,4 +31,10 @@ public class SmsTempNo {
     public static final int GROUP_BUYING_END = 9;
     public static final int ORDER_PAYMENT_SUCCESSFUL = 10;
     public static final int NOTICE_OF_COMMODITY_REDUCTION = 11;
+
+
+
+
+
+
 }
