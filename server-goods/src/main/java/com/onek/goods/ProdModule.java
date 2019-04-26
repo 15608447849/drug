@@ -103,8 +103,10 @@ public class ProdModule {
         }};
         Set<Integer> result = new HashSet<>();
         NumUtil.perComAdd(256, bb, result);
+        int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
+        int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        List<ProdVO> newProdList = getFilterProds(result, 2);
+        List<ProdVO> newProdList = getFilterProdsCommon(result, 2, pageIndex, pageSize);
 
         List<ProdVO> filterProdList = loadProd(newProdList, 256);
 
@@ -119,8 +121,11 @@ public class ProdModule {
         }};
         Set<Integer> result1 = new HashSet<>();
         NumUtil.perComAdd(512, bb1, result1);
+        int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
+        int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        List<ProdVO> prodList = getFilterProds(result1, 1);
+
+        List<ProdVO> prodList = getFilterProdsCommon(result1, 1, pageIndex, pageSize);
         List<ProdVO> filterProdList = loadProd(prodList, 128);
 
         return new Result().success(filterProdList);
@@ -128,17 +133,13 @@ public class ProdModule {
 
     @UserPermission(ignore = true)
     public Result getHotMallFloor(AppContext appContext) {
-        List<Integer> bb1 = new ArrayList() {{
-            add(256);
-            add(512);
-        }};
-        Set<Integer> result = new HashSet<>();
-        NumUtil.perComAdd(128, bb1, result);
 
-        List<ProdVO> hotProdList = getFilterProds(result, 1);
-        List<ProdVO> filterProdList = loadProd(hotProdList, 128);
+        int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
+        int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        return new Result().success(filterProdList);
+        List<ProdVO> hotProdList = getFilterProdsCommon(null, 1, pageIndex, pageSize);
+
+        return new Result().success(hotProdList);
     }
 
     @UserPermission(ignore = true)
@@ -319,6 +320,49 @@ public class ProdModule {
     }
 
     @UserPermission(ignore = true)
+    public Result brandMallSearch(AppContext appContext) {
+
+        int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
+        int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+
+        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, pageIndex, pageSize);
+        List<ProdVO> prodList = new ArrayList<>();
+        assembleData(response, prodList);
+
+        Result r = new Result();
+        Page page = new Page();
+        page.pageSize = appContext.param.pageNumber;
+        page.pageIndex = appContext.param.pageIndex;
+        page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
+        PageHolder pageHolder = new PageHolder(page);
+        pageHolder.value = page;
+        return r.setQuery(prodList, pageHolder);
+
+    }
+
+    @UserPermission(ignore = true)
+    public Result newProdSearch(AppContext appContext) {
+        List<Integer> bb = new ArrayList() {{
+            add(128);
+            add(512);
+        }};
+        Set<Integer> result = new HashSet<>();
+        NumUtil.perComAdd(256, bb, result);
+        int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
+        int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+
+        List<ProdVO> newProdList = getFilterProdsCommon(result, 2, pageIndex, pageSize);
+
+        List<ProdVO> filterProdList = loadProd(newProdList, 256);
+
+        return new Result().success(filterProdList);
+    }
+
+    @UserPermission(ignore = true)
     public Result getAllDiscount(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         Long actCode = json.has("actcode") ? json.get("actcode").getAsLong() : 0;
@@ -483,7 +527,9 @@ public class ProdModule {
             List<Long> skuList = new ArrayList<>();
             if (footPrintMap != null && footPrintMap.size() > 0) {
                 for (LinkedTreeMap map : footPrintMap) {
-                    skuList.add(Long.parseLong(map.get("sku").toString()));
+                    if(map != null && map.containsKey("sku") && map.get("sku") != null){
+                        skuList.add(Long.parseLong(map.get("sku").toString()));
+                    }
                 }
             }
             SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, 1, 10);
@@ -643,6 +689,20 @@ public class ProdModule {
         }
         return newProdList;
     }
+
+    private static List<ProdVO> getFilterProdsCommon(Set<Integer> result, int sort,int pageNum, int pageSize) {
+        SearchResponse response = ProdESUtil.searchProdWithStatusList(result, sort, pageNum, pageSize);
+        List<ProdVO> prodList = new ArrayList<>();
+        if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
+            SearchHits hits = response.getHits();
+            if (hits.totalHits > 0) {
+                assembleData(response, prodList);
+            }
+        }
+
+        return prodList;
+    }
+
 
     private static List<ProdVO> getFilterProds(Set<Integer> result, int sort) {
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, sort, 1, 100);
