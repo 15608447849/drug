@@ -1,10 +1,14 @@
 package com.onek.calculate.filter;
 
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.util.area.AreaUtil;
 import com.onek.util.member.MemberStore;
+import com.onek.util.order.RedisOrderUtil;
+import redis.util.RedisUtil;
 
 /**
  * 质资过滤器。用以过滤用户资质。
@@ -30,29 +34,32 @@ public class QualFilter extends BaseFilter {
             return true;
         }
 
-        Activity act = (Activity) activity;
-
         boolean result = true;
-        int qualCode = act.getQualcode();
-        int qualValue = act.getQualvalue();
 
-        switch (qualCode) {
-            case ALL:
-                result = false;
-                break;
-            case ORDER_NUMS:
-                // TODO 根据用户获取订单数
-                result = getCurrentOrdNum() < qualValue;
-                break;
-            case LV:
-                result = getCurrentLV() < qualValue;
-                break;
-            case AREA:
-                // TODO 根据用户获取区域
-                result = qualValue != 0 && !AreaUtil.isChildren(qualValue, getCurrentArea());
-                break;
-            default:
-                break;
+        try {
+            Activity act = (Activity) activity;
+
+            int qualCode = act.getQualcode();
+            int qualValue = act.getQualvalue();
+
+            switch (qualCode) {
+                case ALL:
+                    result = false;
+                    break;
+                case ORDER_NUMS:
+                    result = getCurrentOrdNum() < qualValue;
+                    break;
+                case LV:
+                    result = getCurrentLV() < qualValue;
+                    break;
+                case AREA:
+                    result = qualValue != 0 && !AreaUtil.isChildren(qualValue, getCurrentArea());
+                    break;
+                default:
+                    break;
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
         return result;
@@ -68,7 +75,7 @@ public class QualFilter extends BaseFilter {
 
     private Integer getCurrentOrdNum() {
         if (this.currentOrdNum == null) {
-            this.currentOrdNum = 0;
+            this.currentOrdNum = RedisOrderUtil.getOrderNumByCompid(this.compid);
         }
 
         return this.currentOrdNum;
@@ -76,7 +83,11 @@ public class QualFilter extends BaseFilter {
 
     private Integer getCurrentArea() {
         if (this.currentArea == null) {
-            this.currentArea = 0;
+            String compStr = RedisUtil.getStringProvide()
+                    .get(String.valueOf(this.compid));
+
+            JSONObject compJson = JSON.parseObject(compStr);
+            this.currentArea = compJson.getIntValue("addressCode");
         }
 
         return this.currentArea;
