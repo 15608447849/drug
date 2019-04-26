@@ -54,7 +54,7 @@ public class PayModule {
     private static final String UPDATE_SKU_SALES = "update {{?" + DSMConst.TD_PROD_SKU + "}} set sales = sales + ? where sku = ?";
 
     private static final String QUERY_ORDER_GOODS = "select g.pdno,g.pnum from {{?" + DSMConst.TD_TRAN_ORDER + "}} o,{{?" + DSMConst.TD_TRAN_GOODS + "}} g" +
-            "where g.orderno = o.orderno and o.orderno = ? and o.cusno = ?";
+            " where g.orderno = o.orderno and o.orderno = ? and o.cusno = ?";
 
     private static final String GET_TRAN_TRANS_SQL = "select payprice,payway,payno,orderno,paysource,paystatus,paydate,paytime,completedate,completetime from {{?" + DSMConst.TD_TRAN_TRANS + "}} where orderno=? and compid = ? order by completedate desc,completetime desc limit 1";
 
@@ -601,7 +601,7 @@ public class PayModule {
 
         public void run(){
 
-            List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
+            List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), QUERY_ORDER_GOODS, new Object[]{ orderno, compid});
             if(list != null && list.size() > 0) {
                 for(Object[] obj : list){
                     long sku = Long.parseLong(obj[0].toString());
