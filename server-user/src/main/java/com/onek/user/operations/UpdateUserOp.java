@@ -28,24 +28,26 @@ public class UpdateUserOp implements IOperation<AppContext> {
     public Result execute(AppContext context) {
         UserSession session = context.getUserSession();
 
-        int uid = session.userId;
+        if (session != null){
+            int uid = session.userId;
 
-        //修改手机号码
-        if ( !StringUtils.isEmpty(oldPhone,newPhone, smsCode)){
-            if (newPhone.length()==11) {
-                String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
-                if (code.equals(smsCode) && !newPhone.equals(oldPhone)){
-                    context.getUserSession().phone = newPhone;
-                    return changUserByUid(context,"uphone="+newPhone, "uid = "+ uid);
+            //修改手机号码
+            if ( !StringUtils.isEmpty(oldPhone,newPhone, smsCode)){
+                if (newPhone.length()==11) {
+                    String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
+                    if (code.equals(smsCode) && !newPhone.equals(oldPhone)){
+                        context.getUserSession().phone = newPhone;
+                        return changUserByUid(context,"uphone="+newPhone, "uid = "+ uid);
+                    }
                 }
             }
-            }
 
-        //修改密码
-        if (!StringUtils.isEmpty(oldPassword,newPassword)){
-            String curPassword = session.password;
-            if (EncryptUtils.encryption(oldPassword).equalsIgnoreCase(curPassword)){
-                return changUserByUid(context,"upw='"+ EncryptUtils.encryption(newPassword)+"'","uid = "+ uid);
+            //修改密码
+            if (!StringUtils.isEmpty(oldPassword,newPassword)){
+                String curPassword = session.password;
+                if (EncryptUtils.encryption(oldPassword).equalsIgnoreCase(curPassword)){
+                    return changUserByUid(context,"upw='"+ EncryptUtils.encryption(newPassword)+"'","uid = "+ uid);
+                }
             }
         }
 
@@ -53,7 +55,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
         if (!StringUtils.isEmpty(oldPhone,smsCode,newPassword)){
             String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
             if (code.equals(smsCode)){
-                return changUserByUid(context,"upw='"+ EncryptUtils.encryption(newPassword)+"'","uid = "+ uid);
+                return changUserByUid(context,"upw='"+ EncryptUtils.encryption(newPassword)+"'","uphone = '"+ oldPhone+"' AND roleid");
             }
         }
         return new Result().fail("修改失败");

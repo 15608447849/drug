@@ -21,7 +21,7 @@ public class Result {
    interface MESSAGE{
       String FAIL = "调用失败";
       String SUCCESS = "调用成功";
-      String INTERCEPT = "拒绝访问";
+      String INTERCEPT = "调用拦截";
       String ERROR = "异常捕获";
    }
 
@@ -80,10 +80,9 @@ public class Result {
       return this;
    }
 
-   public Result intercept(Object data){
+   public Result intercept(String cause){
       this.code = CODE.INTERCEPT;
-      this.message = MESSAGE.INTERCEPT;
-      this.data = data;
+      this.message = MESSAGE.INTERCEPT+","+cause;
       return this;
    }
 
