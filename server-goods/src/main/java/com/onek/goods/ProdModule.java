@@ -622,15 +622,14 @@ public class ProdModule {
         UserSession userSession = appContext.getUserSession();
         List<ProdVO> prodList = new ArrayList<>();
         if (userSession != null && userSession.compId > 0) {
-            ArrayList<LinkedTreeMap> footPrintMap = IceRemoteUtil.queryFootprint(userSession.compId);
+            List<String> footPrintMap = IceRemoteUtil.queryFootprint(userSession.compId);
             List<Long> skuList = new ArrayList<>();
             if (footPrintMap != null && footPrintMap.size() > 0) {
-                for (LinkedTreeMap map : footPrintMap) {
-                    try{
-                        if(map != null && map.containsKey("sku") && map.get("sku") != null){
-                            skuList.add(Long.parseLong(map.get("sku").toString()));
-                        }
-                    }catch(Exception e){ }
+                for (String sku  : footPrintMap) {
+                    try {
+                        skuList.add(Long.parseLong(sku));
+                    } catch (NumberFormatException ignored) {
+                    }
                 }
             }
             SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 10);
