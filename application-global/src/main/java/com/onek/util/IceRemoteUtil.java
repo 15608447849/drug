@@ -176,14 +176,18 @@ public class IceRemoteUtil {
     }
 
     public static void sendTempMessageToClient(int compid,int tempNo,String... params){
-        String message = "push#"+tempNo;
+        String message = "push:"+tempNo;
         if (params!=null && params.length>0){
             message+="#"+ String.join("#",params);
         }
         sendMessageToClient(compid,message);
     }
 
-
+    public static void main(String[] args) {
+        int cid = 536862726;
+        String json = ic.settingProxy("orderServer"+getOrderServerNo(cid)).settingReq("ffca91c38eee969bf9871c249b41b0fb","PushMessageModule","queryMessage").execute();
+        System.out.println(json);
+    }
 
     //查询所有足迹
     public static List<String> queryFootprint(int compid){
@@ -193,6 +197,9 @@ public class IceRemoteUtil {
                 .setArrayParams(compid).execute();
         return GsonUtils.json2List(json,String.class);
     }
+
+
+
 
 
     public static int addPoint(int compid, int point){
@@ -233,6 +240,8 @@ public class IceRemoteUtil {
         }
         return null;
     }
+
+
 
 
 

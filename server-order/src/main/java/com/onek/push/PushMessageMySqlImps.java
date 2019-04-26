@@ -1,8 +1,8 @@
 package com.onek.push;
 
 import com.onek.server.infimp.IPushMessageStore;
-import dao.BaseDAO;
 import com.onek.util.IceRemoteUtil;
+import dao.BaseDAO;
 import util.StringUtils;
 
 import java.util.ArrayList;
@@ -10,8 +10,8 @@ import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
 import static Ice.Application.communicator;
-import static constant.DSMConst.TD_PUSH_MSG;
 import static com.onek.util.GenIdUtil.getUnqId;
+import static constant.DSMConst.TD_PUSH_MSG;
 import static util.TimeUtils.getCurrentYear;
 
 /**
@@ -110,27 +110,25 @@ public class PushMessageMySqlImps implements IPushMessageStore {
         return list;
     }
 
+    public static String convertPushMessage(String message){
+        if (message.startsWith("push")) {
+            String arrayStr = message.split(":")[1];
+            String[] array ;
+            if (arrayStr.contains("#")){
+                array = arrayStr.split("#");
+            }else{
+                array = new String[]{arrayStr};
+            }
+            String msg = IceRemoteUtil.getMessageByNo(array);
+            if (!StringUtils.isEmpty(msg)) return msg;
+        }
+        return message;
+    }
+
     @Override
     public String convertMessage(IPMessage message) {
         //规则格式:  push:模板序列#参数内容
-        try {
-
-            if (message.content.startsWith("push")) {
-                String arrayStr = message.content.split(":")[1];
-                String[] array ;
-                if (arrayStr.contains("#")){
-                    array = arrayStr.split("#");
-                }else{
-                    array = new String[]{arrayStr};
-                }
-                String msg = IceRemoteUtil.getMessageByNo(array);
-                if (!StringUtils.isEmpty(msg)) return msg;
-            }
-        } catch (Exception ignored) {
-
-        }
-
-        return message.content;
+        return convertPushMessage(message.content);
     }
 
 

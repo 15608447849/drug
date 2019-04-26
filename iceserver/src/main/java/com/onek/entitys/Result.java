@@ -29,7 +29,7 @@ public class Result {
    public String message = MESSAGE.FAIL;
 
    //请求上线
-   public boolean requestOnline = false;
+   public boolean flag;
 
    public Object data ;
 
@@ -96,7 +96,6 @@ public class Result {
 
    public Result setQuery(Object data, PageHolder pageHolder) {
       success(data);
-
       if (pageHolder != null && pageHolder.value != null) {
          Page page = pageHolder.value;
 
@@ -104,12 +103,11 @@ public class Result {
          this.pageSize = page.pageSize;
          this.total = page.totalItems;
       }
-
       return this;
    }
 
    public Result setRequestOnline(){
-      requestOnline = true;
+      flag = true;
       return this;
    }
 }
