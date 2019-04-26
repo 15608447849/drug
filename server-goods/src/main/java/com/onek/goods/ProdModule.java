@@ -11,8 +11,10 @@ import com.google.gson.JsonParser;
 import com.google.gson.internal.LinkedTreeMap;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
+import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
+import com.onek.goods.entities.AppriseVO;
 import com.onek.goods.entities.MallFloorVO;
 import com.onek.goods.entities.ProdVO;
 import com.onek.goods.service.MallFloorImpl;
@@ -31,10 +33,13 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
+import redis.util.RedisUtil;
+import util.GsonUtils;
 import util.NumUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -1087,6 +1092,45 @@ public class ProdModule {
             }
             return this;
         }
+    }
+
+    /* *
+     * @description 查询商品评价
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/4/20 15:07
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result getGoodsApprise(AppContext appContext) {
+        Result result = new Result();
+        LocalDateTime localDateTime = LocalDateTime.now();
+        String json = appContext.param.json;
+        Page page = new Page();
+        page.pageIndex = appContext.param.pageIndex;
+        page.pageSize = appContext.param.pageNumber;
+        PageHolder pageHolder = new PageHolder(page);
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long sku = jsonObject.get("sku").getAsLong();
+        String selectSQL = "select unqid,orderno,level,descmatch,logisticssrv,"
+                + "content,createtdate,createtime,cstatus,compid from {{?"
+                + DSMConst.TD_TRAN_APPRAISE + "}} where cstatus&1=0 and sku=" + sku;
+        List<Object[]> queryResult = BASE_DAO.queryNativeSharding(0, localDateTime.getYear(),
+                pageHolder, page, selectSQL);
+        AppriseVO[] appriseVOS = new AppriseVO[queryResult.size()];
+        BASE_DAO.convToEntity(queryResult, appriseVOS, AppriseVO.class);
+        for (AppriseVO appriseVO : appriseVOS) {
+            String compStr = RedisUtil.getStringProvide().get(appriseVO.getCompid() + "");
+            //storeName
+            StoreBasicInfo storeBasicInfo = GsonUtils.jsonToJavaBean(compStr, StoreBasicInfo.class);
+            if (storeBasicInfo != null) {
+                appriseVO.setCompName(storeBasicInfo.storeName);//暂无接口。。。。
+            }
+        }
+        return result.setQuery(appriseVOS, pageHolder);
     }
 
 }

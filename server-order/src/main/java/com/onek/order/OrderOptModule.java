@@ -1,16 +1,12 @@
 package com.onek.order;
 
-import cn.hy.otms.rpcproxy.comm.cstruct.Page;
-import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
-import com.onek.calculate.util.DiscountUtil;
 import com.onek.context.AppContext;
-import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.entity.AppriseVO;
 import com.onek.entity.AsAppVO;
@@ -20,7 +16,6 @@ import com.onek.util.LccOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
-import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.MathUtil;
 import util.ModelUtil;
@@ -108,46 +103,6 @@ public class OrderOptModule {
         return b ? result.success("评价成功!") : result.fail("评价失败!");
     }
 
-    /* *
-     * @description 查询商品评价
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/20 15:07
-     * @version 1.1.1
-     **/
-    @UserPermission(ignore = false)
-    public Result getGoodsApprise(AppContext appContext) {
-        Result result = new Result();
-        LocalDateTime localDateTime = LocalDateTime.now();
-        String json = appContext.param.json;
-        Page page = new Page();
-        page.pageIndex = appContext.param.pageIndex;
-        page.pageSize = appContext.param.pageNumber;
-        PageHolder pageHolder = new PageHolder(page);
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        long sku = jsonObject.get("sku").getAsLong();
-        String selectSQL = "select unqid,orderno,level,descmatch,logisticssrv,"
-                + "content,createtdate,createtime,cstatus,compid from {{?"
-                + DSMConst.TD_TRAN_APPRAISE + "}} where cstatus&1=0 and sku=" + sku;
-        List<Object[]> queryResult = baseDao.queryNativeSharding(0, localDateTime.getYear(),
-                pageHolder, page, selectSQL);
-        AppriseVO[] appriseVOS = new AppriseVO[queryResult.size()];
-        baseDao.convToEntity(queryResult, appriseVOS, AppriseVO.class);
-        for (AppriseVO appriseVO : appriseVOS) {
-            String compStr = RedisUtil.getStringProvide().get(appriseVO.getCompid() + "");
-            System.out.println("compStr-->> " + compStr);
-            //storeName
-            StoreBasicInfo storeBasicInfo = GsonUtils.jsonToJavaBean(compStr, StoreBasicInfo.class);
-            if (storeBasicInfo != null) {
-                appriseVO.setCompName(storeBasicInfo.storeName);//暂无接口。。。。
-            }
-        }
-        return result.setQuery(appriseVOS, pageHolder);
-    }
-
 
     /* *
      * @description 售后申请
@@ -185,6 +140,9 @@ public class OrderOptModule {
                 asAppVOS.add(asAppVO);
             }
         }
+        if (doApply(asAppVOS, orderNo)) {
+            return result.fail("该订单售后申请正在处理中！");
+        }
 
         if (asType == 0 || asType == 1 || asType == 2) {
             //更新订单售后状态
@@ -202,7 +160,21 @@ public class OrderOptModule {
                     INSERT_ASAPP_SQL, paramsInsert, asAppVOS.size()));
         }
 
-        return b  ? result.success("申请成功") : result.fail("申请失败");
+        return b ? result.success("申请成功") : result.fail("申请失败");
+    }
+
+    private boolean doApply(List<AsAppVO> asAppVOS, String orderNo) {
+        LocalDateTime localDateTime = LocalDateTime.now();
+        StringBuilder skuBuilder = new StringBuilder();
+        for (AsAppVO asAppVO : asAppVOS) {
+            skuBuilder.append(asAppVO.getPdno()).append(",");
+        }
+        String pdnoStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
+        String sql = "select count(*) from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1=0 "
+                + " and orderno=" + orderNo + " and ckstatus=0 and astype<>3 and pdno in(" + pdnoStr + ")";
+        List<Object[]> queryResult = baseDao.queryNativeSharding(0, localDateTime.getYear(), sql);
+        return (long)queryResult.get(0)[0] > 0;
+
     }
 
     /* *
@@ -370,16 +342,18 @@ public class OrderOptModule {
         int compId = userSession.compId;
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         String updateOrderSql = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|1 where "
-                + " cstatus&1=0 and orderno=" + orderNo;
-        sqlList.add(updateOrderSql);
-        params.add(new Object[]{});
-        String updateGoodsSql = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set cstatus=cstatus|1 where "
-                + " cstatus&1=0 and orderno=" + orderNo;
-        sqlList.add(updateGoodsSql);
-        params.add(new Object[]{});
-        String[] sqlNative = new String[sqlList.size()];
-        sqlNative = sqlList.toArray(sqlNative);
-        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compId, year, sqlNative, params));
-        return b ? result.success("删除成功") : result.fail("删除失败");
+                + " cstatus&1=0 and ostatus in(-4,3) and orderno=" + orderNo;
+        int re = baseDao.updateNativeSharding(compId, year, updateOrderSql);
+//        sqlList.add(updateOrderSql);
+//        params.add(new Object[]{});
+//        String updateGoodsSql = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set cstatus=cstatus|1 where "
+//                + " cstatus&1=0 and orderno=" + orderNo;
+//        sqlList.add(updateGoodsSql);
+//        params.add(new Object[]{});
+//        String[] sqlNative = new String[sqlList.size()];
+//        sqlNative = sqlList.toArray(sqlNative);
+//        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compId, year, sqlNative, params));
+        return re > 0 ? result.success("删除成功") : result.fail("删除失败");
     }
+
 }
