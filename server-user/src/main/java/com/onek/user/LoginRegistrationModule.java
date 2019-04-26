@@ -62,6 +62,17 @@ public class LoginRegistrationModule {
         assert op!=null;
         return op.execute(appContext);
     }
+    /**
+     * 解锁门店用户锁定
+     */
+    @UserPermission(ignore = true)
+    public Result removeUserLoginLock(AppContext appContext){
+        String json = appContext.param.json;
+        LoginStoreOp op = GsonUtils.jsonToJavaBean(json, LoginStoreOp.class);
+        assert op!=null;
+        op.removeLockCache();
+        return new Result().success("解锁成功");
+    }
 
     /**
      * 管理员登陆后台系统
@@ -78,6 +89,7 @@ public class LoginRegistrationModule {
      * 修改门店
      *  登陆手机号
      *  登陆密码
+     *  忘记密码
      */
     public Result changeUserInfo(AppContext appContext){
         String json = appContext.param.json;
@@ -113,7 +125,7 @@ public class LoginRegistrationModule {
     /**
      * 获取门店用户信息
      */
-    @UserPermission(allowRoleList = {2})
+    @UserPermission(allowRoleList = {2},allowedUnrelated = true)
     public Result getStoreSession(AppContext appContext){
         if (appContext.getUserSession().compId > 0){
             StoreBasicInfo info = new StoreBasicInfo(appContext.getUserSession().compId);

@@ -27,7 +27,5 @@ public class USProperties extends ApplicationPropertiesBase {
     @PropertiesName("store.login.fail.lock.time")
     public int sLoginLockTime;
 
-    @PropertiesName("store.login.fail.index.time")
-    public int sLoginIndexTime;
 
 }

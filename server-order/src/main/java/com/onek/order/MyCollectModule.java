@@ -3,17 +3,17 @@ package com.onek.order;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.IOThreadUtils;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.prod.ProdEntity;
 import dao.BaseDAO;
-import com.onek.util.IceRemoteUtil;
 import util.GsonUtils;
 import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static constant.DSMConst.TD_TRAN_COLLE;
 import static com.onek.util.GenIdUtil.getUnqId;
+import static constant.DSMConst.TD_TRAN_COLLE;
 import static util.TimeUtils.getCurrentYear;
 
 /**
@@ -61,14 +61,26 @@ public class MyCollectModule {
         assert p != null;
         if (p.sku > 0) {
             int compId = appContext.getUserSession().compId;
-            long unqid = getUnqId();
-            String insertSql = "INSERT INTO {{?"+TD_TRAN_COLLE+"}} ( unqid, sku, prize, promtype, compid, createdate, createtime ) " +
-                    "VALUES " +
-                    "( ?, ?, ?, ?, ?, CURRENT_DATE,CURRENT_TIME )";
 
+            //更新
+            String updateSql = "UPDATE {{?"+TD_TRAN_COLLE+"}} SET promtype=?,prize=?,createdate = CURRENT_DATE ,createtime = CURRENT_TIME WHERE compid = ? AND sku = ?";
             int i = BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(),
-                    insertSql,
-                    unqid, p.sku, p.prize * 100, p.promtype, compId);
+                    updateSql,
+                    p.promtype,p.prize * 100, compId,p.sku);
+
+            if (i <= 0){
+                //更新失败 - 插入
+                long unqid = getUnqId();
+                String insertSql = "INSERT INTO {{?"+TD_TRAN_COLLE+"}} ( unqid, sku, prize, promtype, compid, createdate, createtime ) " +
+                        "VALUES " +
+                        "( ?, ?, ?, ?, ?, CURRENT_DATE,CURRENT_TIME )";
+
+                i = BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(),
+                        insertSql,
+                        unqid, p.sku, p.prize * 100, p.promtype, compId);
+
+            }
+
 
             if (i > 0){
                 //如果超过指定条数 ,删除时间最小的数据 / 异步执行

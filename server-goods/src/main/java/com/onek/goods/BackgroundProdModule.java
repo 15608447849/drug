@@ -120,7 +120,7 @@ public class BackgroundProdModule {
             return new Result().fail("参数存在非法值");
         }
 
-        int status = ProdESUtil.updateProdStatusDocList(skuList, 0);
+        int status = ProdESUtil.updateProdStatusDocList(skuList, 1);
         if(status > 0){
             BASE_DAO.updateBatchNative(sql, p, params.length);
         }

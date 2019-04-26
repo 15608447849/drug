@@ -46,15 +46,18 @@ public class SecKillModule {
 
     private AccessLimitService accessLimitService = new AccessLimitServiceImpl();
 
-    @UserPermission(ignore = false)
+    @UserPermission(ignore = false, needAuthenticated = true)
     public Result beforeSecKill(AppContext appContext) {
         UserSession userSession = appContext.getUserSession();
-        int compid = userSession.compId;
+        int compid = userSession != null ? userSession.compId : 0;
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long sku = jsonObject.get("sku").getAsLong();
         long actno = jsonObject.get("actno").getAsLong();
+        if (actno <= 0 || compid <= 0 || sku<=0) {
+            return new Result().fail("秒杀活动非法参数!");
+        }
         List<Product> products = new ArrayList<>();
         Product product = new Product();
         product.setSku(sku);
@@ -80,10 +83,10 @@ public class SecKillModule {
     }
 
 
-    @UserPermission(ignore = false)
+    @UserPermission(ignore = false, needAuthenticated = true)
     public Result attendSecKill(AppContext appContext) {
         UserSession userSession = appContext.getUserSession();
-        int compid = userSession.compId;
+        int compid = userSession != null ? userSession.compId : 0;
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
@@ -92,8 +95,8 @@ public class SecKillModule {
         long unqid = jsonObject.get("unqid").getAsLong();
         int stock = jsonObject.get("stock").getAsInt();
 
-        if (actno <= 0 || compid <= 0 || stock <= 0) {
-            return new Result().fail("非法参数!");
+        if (actno <= 0 || compid <= 0 || stock <= 0 || sku<=0) {
+            return new Result().fail("参加秒杀活动非法参数!");
         }
         if (!accessLimitService.tryAcquireSecKill()) {
             return new Result().fail("当前秒杀人数过多!", null);

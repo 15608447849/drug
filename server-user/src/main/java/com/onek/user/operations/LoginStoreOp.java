@@ -37,10 +37,11 @@ public class LoginStoreOp implements IOperation<AppContext> {
         try {
             if (StringUtils.isEmpty(phone) || StringUtils.isEmpty(password)) return new Result().fail("手机号或密码不能为空");
 
-            if (checkLock()) return new Result().fail("用户已锁定,请在"+formatDuring(lockRemainderTime * 1000L)+"后再尝试登陆");
-
             //检测验证码是否正确
             if (!checkVerification()) return new Result().fail("验证码不正确");
+
+            if (checkLock()) return new Result().fail("用户已锁定,请在"+formatDuring(lockRemainderTime * 1000L)+"后再尝试登陆");
+
 
             //检测用户名/密码是否正确 创建会话
             if (!checkSqlAndUserExist(context)) {
@@ -84,14 +85,16 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
         if (lines.size()>0){
             Object[] objects = lines.get(0);
-            communicator().getLogger().print("门店登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1] +" 企业码:" + objects[3]);
             //忽略MD5大小写
             if (objects[2].toString().equalsIgnoreCase(password)) {
+                communicator().getLogger().print("门店登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1] +" 企业码:" + objects[3]);
                 //密码正确 - 记录登陆时间 IP
                 String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} " +
                         "SET ip = ?,logindate = CURRENT_DATE,logintime = CURRENT_TIME " +
                         "WHERE cstatus&1 = 0 AND uid = ?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql, context.remoteIp,objects[0]);
+                //锁定次数初始化-移除锁定
+                removeLockCache();
                 if (i > 0){
                     userSession = UserSession.createStoreUser(
                             StringUtils.checkObjectNull(objects[0],0),
@@ -109,6 +112,12 @@ public class LoginStoreOp implements IOperation<AppContext> {
         }
         return false;
     }
+    //锁定次数初始化-移除锁定
+    public void removeLockCache() {
+        if (StringUtils.isEmpty(phone)) return;
+        RedisUtil.getStringProvide().delete("USER-"+phone);
+        RedisUtil.getStringProvide().delete("USER-LOCK-"+phone);
+    }
 
     //用户-登陆失败处理
     private void loginFailHandle() {
@@ -116,20 +125,19 @@ public class LoginStoreOp implements IOperation<AppContext> {
         //当次数到达指定次数 , 锁定账户, 指定时间
         String indexStr = RedisUtil.getStringProvide().get("USER-"+phone);
         if (StringUtils.isEmpty(indexStr)) indexStr = "0"; //初始化
+
         failIndex = Integer.parseInt(indexStr);
         failIndex++;
         if (failIndex > USProperties.INSTANCE.sLoginNumMax) {
-            //移除下标记录
-            RedisUtil.getStringProvide().delete("USER-"+phone);
             //锁定用户
             RedisUtil.getStringProvide().set("USER-LOCK-"+phone,"LOCK");
-            //设置时效性 1 小时
+            //设置时效性 ? 小时queryAuditInfo
             RedisUtil.getStringProvide().expire("USER-LOCK-"+phone,  USProperties.INSTANCE.sLoginLockTime);
+            communicator().getLogger().print("用户("+phone+")已锁定");
         }else{
             //记录次数
             RedisUtil.getStringProvide().set("USER-"+phone,String.valueOf(failIndex));
-            //30分钟后失效
-            RedisUtil.getStringProvide().expire("USER--"+phone, USProperties.INSTANCE.sLoginIndexTime);
+            communicator().getLogger().print("用户("+phone+")登陆失败记录:"+failIndex);
         }
     }
 
@@ -145,11 +153,16 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
     //检测是否锁定用户
     private boolean checkLock() {
-        lockRemainderTime = RedisUtil.getStringProvide().remainingSurvivalTime("USER-LOCK-"+phone); //判断是否锁定
-        if (lockRemainderTime > 0) {
+        String val = RedisUtil.getStringProvide().get("USER-LOCK-"+phone);
+        if (val!=null){
+            lockRemainderTime = RedisUtil.getStringProvide().remainingSurvivalTime("USER-LOCK-"+phone); //判断是否锁定
+            if (lockRemainderTime <= 0) {
+                lockRemainderTime = USProperties.INSTANCE.sLoginLockTime;
+            }
             communicator().getLogger().print(" 门店用户手机号 - "+ phone +" 剩余锁定时间: "+ lockRemainderTime);
             return true;
         }
+
         return false;
     }
 

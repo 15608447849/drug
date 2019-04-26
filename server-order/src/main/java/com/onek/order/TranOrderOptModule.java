@@ -607,51 +607,9 @@ public class TranOrderOptModule {
             return new Result().fail("非法参数");
         }
 
-        StringBuilder sql = new StringBuilder(QUERY_ORDER_BASE);
-        sql.append(" and orderno = ? ");
-        List<Object> paramList = new ArrayList<>();
-        paramList.add(orderNo);
+        int result  = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
+                UPDATE_DELIVERY, orderNo);
 
-        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                compid, TimeUtils.getCurrentYear(), sql.toString(), paramList.toArray());
-
-        TranOrder[] r = new TranOrder[queryResult.size()];
-
-        BaseDAO.getBaseDAO().convToEntity(queryResult, r, TranOrder.class);
-
-        String arriarc = "";
-        AreaEntity[] areaEntities = IceRemoteUtil.getAncestors(r[0].getRvaddno());
-        if(areaEntities != null && areaEntities.length > 0){
-            for(int i = areaEntities.length - 1; i>=0; i--){
-                if(areaEntities[i] != null && !StringUtils.isEmpty(areaEntities[i].getLcareac()) && Integer.parseInt(areaEntities[i].getLcareac()) > 0){
-                    arriarc = areaEntities[i].getLcareac();
-                    break;
-                }
-            }
-        }
-
-        if(StringUtils.isEmpty(arriarc)){
-            return new Result().fail("未找到一块物流对应的地区码");
-        }
-
-        boolean lccOrderflag = false;
-        String lccResult = LccOrderUtil.addLccOrder(r[0], arriarc);
-        if(!StringUtils.isEmpty(lccResult)){
-            JSONObject jsonObject = JSONObject.parseObject(lccResult);
-            if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
-                lccOrderflag = true;
-            }else{
-                return new Result().fail(jsonObject.get("msg").toString());
-            }
-        }
-
-        int result = 0;
-        if(lccOrderflag){
-
-            result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
-                    UPDATE_DELIVERY, orderNo);
-
-        }
         return result > 0 ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 

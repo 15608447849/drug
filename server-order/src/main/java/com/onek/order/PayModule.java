@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
+import com.onek.consts.ESConstant;
 import com.onek.consts.MessageEvent;
 import com.onek.context.AppContext;
 import com.onek.entity.DelayedBase;
@@ -13,21 +14,25 @@ import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
+import com.onek.util.LccOrderUtil;
+import com.onek.util.area.AreaEntity;
 import com.onek.util.fs.FileServerUtils;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GLOBALConst;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import elasticsearch.ElasticSearchProvider;
 import org.apache.http.client.utils.DateUtils;
+import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.update.UpdateResponse;
+import org.elasticsearch.rest.RestStatus;
 import util.MathUtil;
 import util.ModelUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 import static com.onek.order.TranOrderOptModule.getGoodsArr;
 
@@ -44,7 +49,12 @@ public class PayModule {
 
     private static final String GET_TO_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ? and ostatus=?";
 
-    private static final String GET_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ?";
+    private static final String GET_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,orderno,IFNULL(address,'') address,pdnum,IFNULL(consignee,'') consignee,IFNULL(contact,'') contact from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ?";
+
+    private static final String UPDATE_SKU_SALES = "update {{?" + DSMConst.TD_PROD_SKU + "}} set sales = sales + ? where sku = ?";
+
+    private static final String QUERY_ORDER_GOODS = "select g.pdno,g.pnum from {{?" + DSMConst.TD_TRAN_ORDER + "}} o,{{?" + DSMConst.TD_TRAN_GOODS + "}} g" +
+            " where g.orderno = o.orderno and o.orderno = ? and o.cusno = ?";
 
     private static final String GET_TRAN_TRANS_SQL = "select payprice,payway,payno,orderno,paysource,paystatus,paydate,paytime,completedate,completetime from {{?" + DSMConst.TD_TRAN_TRANS + "}} where orderno=? and compid = ? order by completedate desc,completetime desc limit 1";
 
@@ -147,7 +157,7 @@ public class PayModule {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime"});
 
-            double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
+            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
 
             try{
                 String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
@@ -184,7 +194,7 @@ public class PayModule {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate", "otime","pdamt","freight","coupamt","distamt","rvaddno"});
 
-            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
+            double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
 
             try{
                 String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, afsano,
@@ -234,7 +244,10 @@ public class PayModule {
         }
 
         new SendMsgThread(orderno, tradeStatus ,money, compid, tradeDate).start();
-
+        if("1".equals(tradeStatus)) {
+            new GenLccOrderThread(compid, orderno).start();
+            new UpdateSalesThread(compid, orderno).start();
+        }
         if(result){
             return new Result().success(null);
         }else{
@@ -448,8 +461,6 @@ public class PayModule {
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
-        List<Object[]> paramsOne = new ArrayList<>();
-        List<Object[]> paramsTwo = new ArrayList<>();
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
         params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0, price, paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
@@ -521,6 +532,101 @@ public class PayModule {
             jsonObject.put("event", MessageEvent.PAY_CALLBACK.getState());
             jsonObject.put("body", body);
             IceRemoteUtil.sendMessageToClient(compid, jsonObject.toJSONString());
+
+        }
+    }
+
+    class GenLccOrderThread extends  Thread{
+        private int compid;
+        private String orderno;
+
+        public GenLccOrderThread(int compid, String orderno){
+            this.compid = compid;
+            this.orderno = orderno;
+        }
+
+
+        public void run(){
+
+            System.out.println("## 541 line "+compid+ ";"+orderno+" ####");
+            List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
+            if(list != null && list.size() > 0) {
+                TranOrder[] result = new TranOrder[list.size()];
+                BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime", "pdamt", "freight", "coupamt", "distamt", "rvaddno", "orderno", "address","pdnum","consignee","contact"});
+
+                TranOrder tranOrder = result[0];
+
+                String arriarc = "";
+                AreaEntity[] areaEntities = IceRemoteUtil.getAncestors(tranOrder.getRvaddno());
+                if(areaEntities != null && areaEntities.length > 0){
+                    for(int i = areaEntities.length - 1; i>=0; i--){
+                        if(areaEntities[i] != null && !StringUtils.isEmpty(areaEntities[i].getLcareac()) && Integer.parseInt(areaEntities[i].getLcareac()) > 0){
+                            arriarc = areaEntities[i].getLcareac();
+                            break;
+                        }
+                    }
+                }
+
+                if(StringUtils.isEmpty(arriarc) && tranOrder.getRvaddno() > 0){
+                    arriarc = "10" + String.valueOf(tranOrder.getRvaddno()).substring(0,7);
+                }
+
+                if(StringUtils.isEmpty(arriarc)){
+                    arriarc = "10";
+                }
+
+                String lccResult = LccOrderUtil.addLccOrder(tranOrder, arriarc);
+                if(!StringUtils.isEmpty(lccResult)){
+                    JSONObject jsonObject = JSONObject.parseObject(lccResult);
+                    if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
+                        System.out.println("## 生成一块物流订单成功 ####");
+                    }else{
+                        System.out.println("## 生成一块物流订单失败 ####");
+                    }
+                }
+            }
+
+        }
+    }
+
+    class UpdateSalesThread extends  Thread{
+
+        private int compid;
+        private String orderno;
+
+        public UpdateSalesThread(int compid, String orderno){
+            this.compid = compid;
+            this.orderno = orderno;
+        }
+
+        public void run(){
+
+            List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), QUERY_ORDER_GOODS, new Object[]{ orderno, compid});
+            if(list != null && list.size() > 0) {
+                for(Object[] obj : list){
+                    long sku = Long.parseLong(obj[0].toString());
+                    int sales = Integer.parseInt(obj[1].toString());
+
+                    GetResponse response = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku +"");
+                    boolean updateSuccess = false;
+                    if(response != null){
+                        Map<String, Object> data = response.getSourceAsMap();
+                        int orgsales = data.get(ESConstant.PROD_COLUMN_SALES) != null ? Integer.parseInt(data.get(ESConstant.PROD_COLUMN_SALES).toString()) : 0;
+                        data.put(ESConstant.PROD_COLUMN_SALES, sales + orgsales);
+                        HashMap detail = (HashMap) data.get("detail");
+                        data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(detail));
+                        data.put(ESConstant.PROD_COLUMN_TIME, data.get(ESConstant.PROD_COLUMN_TIME).toString());
+                        UpdateResponse updateResponse = ElasticSearchProvider.updateDocumentById(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
+                        if(response != null && RestStatus.OK == updateResponse.status()) {
+                            updateSuccess = true;
+                        }
+                    }
+                    if(updateSuccess){
+                        BaseDAO.getBaseDAO().updateNative(UPDATE_SKU_SALES, new Object[]{ sales, sku});
+                    }
+                }
+            }
+
 
         }
     }

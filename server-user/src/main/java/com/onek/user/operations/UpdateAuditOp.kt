@@ -5,7 +5,10 @@ import com.onek.entitys.IOperation
 import com.onek.entitys.Result
 import com.onek.user.interactive.AptitudeInfo
 import com.onek.user.operations.StoreBasicInfoOp.updateCompInfoToCacheById
+import com.onek.util.IceRemoteUtil
 import com.onek.util.RedisGlobalKeys
+import com.onek.util.SmsTempNo.AUTHENTICATION_FAILURE
+import com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS
 import constant.DSMConst
 import dao.BaseDAO
 
@@ -53,9 +56,13 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
             //修改 门店信息
             val updateSql = "UPDATE {{?" + DSMConst.D_COMP + "}} SET cstatus=cstatus&~$status|$auditStatus,examine=?,auditdate=CURRENT_DATE,audittime=CURRENT_TIME WHERE cstatus&1=0 AND cid=?"
+
             val i = BaseDAO.getBaseDAO().updateNative(updateSql,auditCause,companyId)
+
             if (i > 0) {
-                updateCompInfoToCacheById(companyId!!.toInt())//更新企业信息到缓存
+                updateCompInfoToCacheById(companyId!!.toInt()) //更新企业信息到缓存
+                if(auditStatus == 256) IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_SUCCESS)
+                if(auditStatus == 512) IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_FAILURE,auditCause)
                return Result().success("审核保存提交成功")
             }
         }

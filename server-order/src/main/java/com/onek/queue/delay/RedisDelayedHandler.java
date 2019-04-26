@@ -1,12 +1,19 @@
 package com.onek.queue.delay;
 
-import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.TypeReference;
+import com.alibaba.fastjson.parser.ParserConfig;
+import com.alibaba.fastjson.serializer.SerializerFeature;
 import redis.util.RedisUtil;
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class RedisDelayedHandler<D extends IDelayedObject> extends DelayedHandler<D> {
+    static {
+        ParserConfig.getGlobalInstance().setAutoTypeSupport(true);
+    }
+
     private String redisHead;
 
     public RedisDelayedHandler(String redisHead, long delayTime,
@@ -30,10 +37,10 @@ public class RedisDelayedHandler<D extends IDelayedObject> extends DelayedHandle
     protected void loadRedisData() {
         execute(() -> {
             try {
-                List<D> delayedList = getDelayedList();
+                List<DelayedObject> delayedList = getDelayedList();
 
                 if (!delayedList.isEmpty()) {
-                    for (D delayed : delayedList) {
+                    for (DelayedObject delayed : delayedList) {
                         super.addToQueue(delayed);
                     }
                 }
@@ -43,14 +50,17 @@ public class RedisDelayedHandler<D extends IDelayedObject> extends DelayedHandle
         });
     }
 
-    private List<D> getDelayedList() {
-        List<D> result = new ArrayList<>();
+    private List<DelayedObject> getDelayedList() {
+        List<DelayedObject> result = new ArrayList<>();
 
         List<String> allVals = RedisUtil.getHashProvide().getAllVals(this.redisHead);
 
+
         if (allVals != null && !allVals.isEmpty()) {
             for (int i = 0; i < allVals.size(); i++) {
-                result.add((D) JSONObject.parse(allVals.get(i)));
+                result.add(JSON.parseObject(
+                        allVals.get(i),
+                        new TypeReference<DelayedObject>() {}));
             }
         }
 
@@ -58,20 +68,20 @@ public class RedisDelayedHandler<D extends IDelayedObject> extends DelayedHandle
     }
 
     @Override
-    protected void addSuccess(D delayed) {
+    protected void addSuccess(DelayedObject delayed) {
         try {
             RedisUtil.getHashProvide().putElement(
-                    this.redisHead, delayed.getUnqKey(),
-                    JSONObject.toJSONString(delayed));
+                    this.redisHead, delayed.getObj().getUnqKey(),
+                    JSON.toJSONString(delayed, SerializerFeature.WriteClassName));
         } catch (Exception e) {
             e.printStackTrace();
         }
     }
 
     @Override
-    protected void removeSuccess(D delayed) {
+    protected void removeSuccess(DelayedObject delayed) {
         try {
-            RedisUtil.getHashProvide().delByKey(this.redisHead, delayed.getUnqKey());
+            RedisUtil.getHashProvide().delByKey(this.redisHead, delayed.getObj().getUnqKey());
         } catch (Exception e) {
             e.printStackTrace();
         }

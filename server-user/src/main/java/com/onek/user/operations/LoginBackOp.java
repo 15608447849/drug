@@ -53,8 +53,9 @@ public class LoginBackOp implements IOperation<AppContext> {
 
         if (lines.size()>0){
             Object[] objects = lines.get(0);
-            communicator().getLogger().print("管理员登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1]+" ,姓名:"+objects[5]);
+
             if (objects[2].toString().equalsIgnoreCase(password)) { //忽略MD5大小写
+                communicator().getLogger().print("管理员登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1]+" ,姓名:"+objects[5]);
                 //密码正确 - 记录登陆时间 IP
                 String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} " +
                         "SET ip = ?,logindate = CURRENT_DATE,logintime = CURRENT_TIME " +
