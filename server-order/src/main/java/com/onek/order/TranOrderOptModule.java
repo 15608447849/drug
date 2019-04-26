@@ -44,12 +44,12 @@ public class TranOrderOptModule {
     private static final DelayedHandler<TranOrder> CANCEL_DELAYED =
             new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
                     (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
-                    DelayedHandler.TIME_TYPE.MINUTES);
+                    DelayedHandler.TIME_TYPE.MINUTES, TranOrder.class);
 
     private static final DelayedHandler<DelayedBase> TAKE_DELAYED =
             new RedisDelayedHandler<>("_TAKE_ORDERS", 48,
                     (d) -> new TranOrderOptModule().takeDelivery(d.getOrderNo(), d.getCompid()),
-                    DelayedHandler.TIME_TYPE.HOUR);
+                    DelayedHandler.TIME_TYPE.HOUR, DelayedBase.class);
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 

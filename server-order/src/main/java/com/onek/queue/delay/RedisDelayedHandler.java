@@ -1,6 +1,7 @@
 package com.onek.queue.delay;
 
 import com.alibaba.fastjson.JSONObject;
+import com.alibaba.fastjson.TypeReference;
 import redis.util.RedisUtil;
 
 import java.util.ArrayList;
@@ -8,11 +9,14 @@ import java.util.List;
 
 public class RedisDelayedHandler<D extends IDelayedObject> extends DelayedHandler<D> {
     private String redisHead;
+    private Class<D> clazz;
 
     public RedisDelayedHandler(String redisHead, long delayTime,
-                               IDelayedHandler<D> handlerCall) {
+                               IDelayedHandler<D> handlerCall,
+                               Class<D> clazz) {
         super(delayTime, handlerCall);
         this.redisHead = redisHead;
+        this.clazz = clazz;
 
         loadRedisData();
     }
@@ -20,9 +24,11 @@ public class RedisDelayedHandler<D extends IDelayedObject> extends DelayedHandle
 
     public RedisDelayedHandler(String redisHead, long delayTime,
                                IDelayedHandler<D> handlerCall,
-                               TIME_TYPE time_type) {
+                               TIME_TYPE time_type,
+                               Class<D> clazz) {
         super(delayTime, handlerCall, time_type);
         this.redisHead = redisHead;
+        this.clazz = clazz;
 
         loadRedisData();
     }
@@ -50,7 +56,7 @@ public class RedisDelayedHandler<D extends IDelayedObject> extends DelayedHandle
 
         if (allVals != null && !allVals.isEmpty()) {
             for (int i = 0; i < allVals.size(); i++) {
-                result.add((D) JSONObject.parse(allVals.get(i)));
+                result.add(JSONObject.parseObject(allVals.get(i), this.clazz));
             }
         }
 
