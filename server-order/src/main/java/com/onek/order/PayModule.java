@@ -17,6 +17,8 @@ import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.LccOrderUtil;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.fs.FileServerUtils;
+import com.onek.util.order.RedisOrderUtil;
+import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GLOBALConst;
@@ -27,6 +29,7 @@ import org.apache.http.client.utils.DateUtils;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.rest.RestStatus;
+import redis.util.RedisUtil;
 import util.MathUtil;
 import util.ModelUtil;
 import util.StringUtils;
@@ -603,6 +606,7 @@ public class PayModule {
 
             List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), QUERY_ORDER_GOODS, new Object[]{ orderno, compid});
             if(list != null && list.size() > 0) {
+
                 for(Object[] obj : list){
                     long sku = Long.parseLong(obj[0].toString());
                     int sales = Integer.parseInt(obj[1].toString());
@@ -625,8 +629,11 @@ public class PayModule {
                         BaseDAO.getBaseDAO().updateNative(UPDATE_SKU_SALES, new Object[]{ sales, sku});
                     }
                 }
-            }
 
+                try{
+                    RedisOrderUtil.addOrderNumByCompid(compid);
+                }catch (Exception e){}
+            }
 
         }
     }

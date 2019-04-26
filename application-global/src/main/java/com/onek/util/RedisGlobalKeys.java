@@ -53,6 +53,9 @@ public class RedisGlobalKeys {
     // 字典前缀
     public static final String DICT_PREFIX = "DRUG_DICT";
 
+    // 订单数前缀
+    public static final String ORDER_NUM_PREFIX = "ORDER_NUM_DICT";
+
 
     /**
      * 获取用户ID
