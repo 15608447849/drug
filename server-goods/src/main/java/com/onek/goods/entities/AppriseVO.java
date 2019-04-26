@@ -1,4 +1,4 @@
-package com.onek.entity;
+package com.onek.goods.entities;
 
 /**
  * @author 11842
