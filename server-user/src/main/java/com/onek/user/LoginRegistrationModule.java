@@ -89,6 +89,7 @@ public class LoginRegistrationModule {
      * 修改门店
      *  登陆手机号
      *  登陆密码
+     *  忘记密码
      */
     public Result changeUserInfo(AppContext appContext){
         String json = appContext.param.json;

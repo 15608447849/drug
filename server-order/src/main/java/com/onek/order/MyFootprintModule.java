@@ -4,17 +4,17 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.IOThreadUtils;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.prod.ProdEntity;
 import dao.BaseDAO;
-import com.onek.util.IceRemoteUtil;
 import util.GsonUtils;
 import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static constant.DSMConst.TD_FOOTPRINT;
 import static com.onek.util.GenIdUtil.getUnqId;
+import static constant.DSMConst.TD_FOOTPRINT;
 import static util.TimeUtils.getCurrentYear;
 
 /**
@@ -114,37 +114,57 @@ public class MyFootprintModule {
         String date; //日期
         List<ProdEntity> list = new ArrayList<>(); //商品信息
     }
+
+    //后台查询
+    @UserPermission(ignore = true)
+    public List<String> backQuery(AppContext appContext){
+        List<String> list = new ArrayList<>();
+        try {
+            int compId  = Integer.parseInt(appContext.param.arrays[0]);
+            List<Param> plist = selectInfoByComp(compId);
+            for (Param p : plist) list.add(p.sku);
+        } catch (Exception ignored) {
+        }
+        return list;
+    }
+
+    private List<Param> selectInfoByComp(int compId){
+        ArrayList<Param> list = new ArrayList<>();
+
+        String selectSql = "SELECT unqid,sku,browsedate,browsetime " +
+                "FROM {{?"+TD_FOOTPRINT+"}} " +
+                "WHERE compid = ?";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
+                selectSql,compId);
+        assert lines!=null;
+        Param data;
+        for (Object[] arr: lines){
+            data = new Param();
+            data.compid = compId+"";
+            data.unqid = StringUtils.checkObjectNull(arr[0],"");
+            data.sku = StringUtils.checkObjectNull(arr[1],"");
+            data.data = StringUtils.checkObjectNull(arr[2],"");
+            data.time = StringUtils.checkObjectNull(arr[3],"");
+            list.add(data);
+        }
+        return list;
+    }
+
     /**
      * 查询
      */
-    @UserPermission(ignore = true)
     public Result query(AppContext appContext){
         List<ResultItem> items = new ArrayList<>();
         try {
-            int compId = 0;
-            String json = appContext.param.json;
-            Param p = GsonUtils.jsonToJavaBean(json, Param.class);
-            if (p!=null && !StringUtils.isEmpty(p.compid )) {
-                try { compId = Integer.parseInt(p.compid); } catch (NumberFormatException ignored) { }
-            }
+            int compId = appContext.getUserSession().compId;
+
             String selectSql = "SELECT unqid,sku,browsedate,browsetime " +
                     "FROM {{?"+TD_FOOTPRINT+"}} " +
                     "WHERE compid = ?";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
                     selectSql,compId);
             assert lines!=null;
-            ArrayList<Param> list = new ArrayList<>();
-            Param data;
-            for (Object[] arr: lines){
-                data = new Param();
-                data.compid = compId+"";
-                data.unqid = StringUtils.checkObjectNull(arr[0],"");
-                data.sku = StringUtils.checkObjectNull(arr[1],"");
-                data.data = StringUtils.checkObjectNull(arr[2],"");
-                data.time = StringUtils.checkObjectNull(arr[3],"");
-                list.add(data);
-            }
-
+            List<Param> list = selectInfoByComp(compId);
             for (Param it : list){
                 ResultItem rit = null;
                 boolean isAdd = true;

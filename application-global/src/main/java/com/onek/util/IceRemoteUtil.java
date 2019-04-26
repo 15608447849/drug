@@ -1,7 +1,6 @@
 package com.onek.util;
 
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
 import com.onek.entitys.Result;
@@ -12,8 +11,8 @@ import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
 import util.GsonUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 /**
  * @Author: leeping
@@ -187,18 +186,14 @@ public class IceRemoteUtil {
 
 
     //查询所有足迹
-    public static ArrayList<LinkedTreeMap> queryFootprint(int compid){
+    public static List<String> queryFootprint(int compid){
         int index = getOrderServerNo(compid);
-        HashMap<String,Object> hashMap = new HashMap<>();
-        hashMap.put("compid",compid);
-        String result = ic.setServerAndRequest("orderServer"+index,"MyFootprintModule","query")
-                .settingParam(GsonUtils.javaBeanToJson(hashMap)).execute();
-        hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-        assert hashMap != null;
-        Object data = hashMap.get("data");
-        if (data == null) return null;
-        return (ArrayList<LinkedTreeMap>)data;
+
+        String json = ic.setServerAndRequest("orderServer"+index,"MyFootprintModule","backQuery")
+                .setArrayParams(compid).execute();
+        return GsonUtils.json2List(json,String.class);
     }
+
 
     public static int addPoint(int compid, int point){
         JSONObject jsonObject = new JSONObject();

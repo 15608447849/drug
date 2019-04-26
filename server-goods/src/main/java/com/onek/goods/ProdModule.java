@@ -8,7 +8,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-import com.google.gson.internal.LinkedTreeMap;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.context.UserSession;
@@ -19,13 +18,13 @@ import com.onek.goods.service.MallFloorImpl;
 import com.onek.goods.service.PromTimeService;
 import com.onek.goods.util.ProdActPriceUtil;
 import com.onek.goods.util.ProdESUtil;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.fs.FileServerUtils;
 import com.onek.util.prod.ProdPriceEntity;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.IceRemoteUtil;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
@@ -517,18 +516,19 @@ public class ProdModule {
         return new Result().success(prodVOList);
     }
 
-    @UserPermission(ignore = false)
+
     public Result guessYouLikeArea(AppContext appContext) {
 
         UserSession userSession = appContext.getUserSession();
         List<ProdVO> prodList = new ArrayList<>();
         if (userSession != null && userSession.compId > 0) {
-            ArrayList<LinkedTreeMap> footPrintMap = IceRemoteUtil.queryFootprint(userSession.compId);
+            List<String> footPrintMap = IceRemoteUtil.queryFootprint(userSession.compId);
             List<Long> skuList = new ArrayList<>();
             if (footPrintMap != null && footPrintMap.size() > 0) {
-                for (LinkedTreeMap map : footPrintMap) {
-                    if(map != null && map.containsKey("sku") && map.get("sku") != null){
-                        skuList.add(Long.parseLong(map.get("sku").toString()));
+                for (String sku  : footPrintMap) {
+                    try {
+                        skuList.add(Long.parseLong(sku));
+                    } catch (NumberFormatException ignored) {
                     }
                 }
             }
