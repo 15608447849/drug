@@ -57,9 +57,8 @@ public class StringUtils {
         return def;
     }
 
-    public static String obj2Str(Object object,String def){
-        if (object == null) return def;
-        return  String.valueOf(object);
+    public static String obj2Str(Object object){
+        return  checkObjectNull(object,"");
     }
 
     /**

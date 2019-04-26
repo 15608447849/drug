@@ -27,33 +27,42 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         page.pageIndex = appContext.param.pageIndex;
         page.pageSize  = appContext.param.pageNumber;
 
-        Result result = null;
-        //根据手机号码查询企业审核信息
-        if(!StringUtils.isEmpty(phone))
-            result = queryByPhone();
-
-        if (StringUtils.isEmpty(phone) && result == null){
             //根据所选条件查询
             StringBuilder sb = new StringBuilder();
+            int i = 0;
+            if (!StringUtils.isEmpty(phone)){
+                sb.append("a.uphone LIKE '%"+phone+"%'");
+                i++;
+            }
             if (!StringUtils.isEmpty(company)){
-                sb.append("cname="+company);
+                if (i>0) sb.append(" AND ");
+                sb.append("b.cname LIKE '%"+company+"%'");
+                i++;
             }
             if (!StringUtils.isEmpty(submitDate)){
-                sb.append(" AND submitdate="+submitDate);
+                if (i>0) sb.append(" AND ");
+                sb.append("b.submitdate='"+submitDate+"'");
+                i++;
             }
             if (!StringUtils.isEmpty(submitTime)){
-                sb.append(" AND submittime="+submitTime);
+                if (i>0) sb.append(" AND ");
+                sb.append("b.submittime='"+submitTime+"'");
+                i++;
             }
             if (!StringUtils.isEmpty(auditDate)){
-                sb.append(" AND auditdate="+auditDate);
+                if (i>0) sb.append(" AND ");
+                sb.append("b.auditdate='"+auditDate+"'");
+                i++;
             }
             if (!StringUtils.isEmpty(auditTime)){
-                sb.append(" AND audittime="+auditTime);
+                sb.append("b.audittime='"+auditTime+"'");
+                i++;
             }
             if (!StringUtils.isEmpty(status)){
                 try {
+                    if (i>0) sb.append(" AND ");
                     int istatus = Integer.parseInt(status);
-                    sb.append(" AND cstatus&"+istatus+"="+istatus);
+                    sb.append("b.cstatus&"+istatus+"="+istatus);
                 } catch (NumberFormatException e) {
                     e.printStackTrace();
                 }
@@ -68,45 +77,16 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                     return new Result().setQuery(list,pageHolder);
                 }
             }
-        }
+
         return new Result().setQuery(new ArrayList<>(),pageHolder);
     }
 
-    //根据手机账号查询
-    private Result queryByPhone() {
-        //手机号 -> 企业码
-        String selectSql = "SELECT cid FROM {{?" + DSMConst.D_SYSTEM_USER +"}} WHERE cstatus&1 = 0 AND roleid&2>0 AND uphone = ?";
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
-        if (lines.size() == 0) return null;
-        //用户码-> 企业审核信息
-
-        selectSql = generationAuditSelectSql("cid=?");
-        lines = BaseDAO.getBaseDAO().queryNative(selectSql,lines.get(0));
-        if (lines.size() > 0) {
-            List<AuditInfo> list = filterObject2Result(lines);
-            if (list!=null){
-                return new Result().setQuery(list,pageHolder);
-            }
-        }
-        return  null;
-    }
-
-
-
-    /**
-     *  public String company; //公司名
-     *     public String submitDate; //提交日期
-     *     public String submitTime; //提交时间
-     *     public String auditDate; //审核日期
-     *     public String auditTime; //审核时间
-     *     public String status; //状态
-     *     public String auditer;//审核人
-     */
+    //连表查询
     private String generationAuditSelectSql(String paramSql) {
 
         String sqlPrev = "SELECT " +
-                "cid,cname,createdate,createtime,submitdate,submittime,auditdate,audittime,examine,cstatus" +
-                " FROM {{?" +DSMConst.D_COMP+ "}}";
+                "a.cid,b.cname,b.createdate,b.createtime,b.submitdate,b.submittime,b.auditdate,b.audittime,b.examine,b.cstatus,a.uphone" +
+                " FROM {{?"+DSMConst.D_SYSTEM_USER+"}} AS a INNER JOIN {{?" +DSMConst.D_COMP+ "}} AS b ON a.cid=b.cid";
                 if(!StringUtils.isEmpty(paramSql)){
                     sqlPrev  += " WHERE  "+paramSql;
                 }
@@ -117,28 +97,24 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         if (lines==null || lines.size() == 0) return  null;
         List<AuditInfo> list = new ArrayList<>();
         AuditInfo info;
-        //获取企业账号-手机号码
-        String selectSql = "SELECT uphone FROM {{?" + DSMConst.D_SYSTEM_USER +"}} WHERE cid=?";
-
         for (Object[] arr : lines){
             try {
-                List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql,arr[0]);
-                if (lines2.size() != 1) continue;
+
                 info = new AuditInfoOp();
-                info.phone = StringUtils.obj2Str(lines2.get(0)[0],"");
-                info.companyId = StringUtils.obj2Str(arr[0],"");
-                info.company = StringUtils.obj2Str(arr[1],"");
 
-                info.createDate = StringUtils.obj2Str(arr[2],"");
-                info.createTime = StringUtils.obj2Str(arr[3],"");
+                info.companyId = StringUtils.obj2Str(arr[0]);
+                info.company = StringUtils.obj2Str(arr[1]);
 
-                info.submitDate = StringUtils.obj2Str(arr[4],"");
-                info.submitTime = StringUtils.obj2Str(arr[5],"");
+                info.createDate = StringUtils.obj2Str(arr[2]);
+                info.createTime = StringUtils.obj2Str(arr[3]);
 
-                info.auditDate = StringUtils.obj2Str(arr[6],"");
-                info.auditTime = StringUtils.obj2Str(arr[7],"");
+                info.submitDate = StringUtils.obj2Str(arr[4]);
+                info.submitTime = StringUtils.obj2Str(arr[5]);
 
-                info.examine = StringUtils.obj2Str(arr[8],"");
+                info.auditDate = StringUtils.obj2Str(arr[6]);
+                info.auditTime = StringUtils.obj2Str(arr[7]);
+
+                info.examine = StringUtils.obj2Str(arr[8]);
 
                 int status = (int)arr[9];
                 if ((status&64) == 64){
@@ -152,9 +128,10 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 }else if ((status&1024) == 1024){
                     status = 1024; //停用
                 }
-                queryAptitude(info.cardInfo,arr[0]);
+                info.status = StringUtils.obj2Str(status);
+                info.phone = StringUtils.obj2Str(arr[10]);
 
-                info.status = StringUtils.obj2Str(status,"");
+                queryAptitude(info);
 
                 list.add(info);
             } catch (Exception e) {
@@ -164,23 +141,24 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         return list;
     }
     //查询企业的审核资质信息
-    private void queryAptitude(AptitudeInfo cardInfo, Object compid) {
+    private void queryAptitude(AuditInfo info) {
+        AptitudeInfo cardInfo = info.cardInfo;
         String selectSql = "SELECT atype,certificateno,validitys,validitye FROM {{?" + DSMConst.D_COMP_APTITUDE + "}} WHERE compid=?";
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,compid);
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,info.companyId);
         for (Object[] row : lines){
             int type = StringUtils.checkObjectNull(row[0],0);
             if (type == 10){
-                cardInfo.businessId = StringUtils.obj2Str(row[1],"");
-                cardInfo.businessIdStart = StringUtils.obj2Str(row[2],"");
-                cardInfo.businessIdEnd = StringUtils.obj2Str(row[3],"");
+                cardInfo.businessId = StringUtils.obj2Str(row[1]);
+                cardInfo.businessIdStart = StringUtils.obj2Str(row[2]);
+                cardInfo.businessIdEnd = StringUtils.obj2Str(row[3]);
             }else if (type == 11){
-                cardInfo.permitId = StringUtils.obj2Str(row[1],"");
-                cardInfo.permitIdStart = StringUtils.obj2Str(row[2],"");
-                cardInfo.permitIdEnd = StringUtils.obj2Str(row[3],"");
+                cardInfo.permitId = StringUtils.obj2Str(row[1]);
+                cardInfo.permitIdStart = StringUtils.obj2Str(row[2]);
+                cardInfo.permitIdEnd = StringUtils.obj2Str(row[3]);
             }else if (type == 12){
-                cardInfo.gspId = StringUtils.obj2Str(row[1],"");
-                cardInfo.gspIdStart = StringUtils.obj2Str(row[2],"");
-                cardInfo.gspIdEnd = StringUtils.obj2Str(row[3],"");
+                cardInfo.gspId = StringUtils.obj2Str(row[1]);
+                cardInfo.gspIdStart = StringUtils.obj2Str(row[2]);
+                cardInfo.gspIdEnd = StringUtils.obj2Str(row[3]);
             }
         }
     }

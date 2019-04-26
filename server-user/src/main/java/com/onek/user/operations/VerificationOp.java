@@ -3,17 +3,17 @@ package com.onek.user.operations;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.context.AppContext;
-import com.onek.util.IOThreadUtils;
-import com.onek.util.fs.FileServerUtils;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.user.service.USProperties;
-import com.onek.util.IceRemoteUtil;
+import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
+import com.onek.util.fs.FileServerUtils;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.ImageVerificationUtils;
+import util.StringUtils;
 import util.http.HttpRequest;
 
 import java.io.InputStream;
@@ -45,10 +45,13 @@ public class VerificationOp implements IOperation<AppContext> {
     @Override
     public Result execute(AppContext context) {
         if (type == 1) return generateImageCode();//获取图形验证码
-        if (type == 2) return sendSmsCode();//获取短信验证码
+        if (type == 2) return sendSmsCode(SmsTempNo.MESSAGE_AUTHENTICATION_CODE);//获取注册短信验证码
+        if (type == 3) return sendSmsCode(SmsTempNo.MODIFY_THE_PHONE);//获取修改手机 短信验证码
+        if (type == 4) return sendSmsCode(SmsTempNo.CHANGE_PASSWORD);//获取修改密码 短信验证码
         return new Result().fail("未知的操作类型");
     }
 
+    //生成图形验证码
     private Result generateImageCode() {
         try {
             String code = getRandomCode(4);
@@ -80,19 +83,24 @@ public class VerificationOp implements IOperation<AppContext> {
     }
 
     //发送短信验证码-等待接入短信接口
-    private Result sendSmsCode() {
+    private Result sendSmsCode(int tempNo) {
+        String code = genSmsCodeStoreCache(phone);
+        if (!StringUtils.isEmpty(code)){
+            SmsUtil.sendSmsBySystemTemp(phone,tempNo,code);
+            return new Result().success("已发送手机短信验证码,请查收");
+        }
+        return new Result().fail("获取短信验证码失败");
+    }
+
+    private static String genSmsCodeStoreCache(String phone){
         String code = getRandomCodeByNum(6);
         //存入缓存
         String res = RedisUtil.getStringProvide().set("SMS"+phone,code);
         if (res.equals("OK")){
             RedisUtil.getStringProvide().expire("SMS"+phone, USProperties.INSTANCE.smsSurviveTime); // 5分钟内有效
-            //获取短信
-            String message = IceRemoteUtil.getMessageByNo("1",code);
-            IOThreadUtils.runTask(()->{
-                SmsUtil.sendMsg(phone,message);
-            });
-            return new Result().success("已发送手机短信验证码,请查收");
+            return code;
         }
-        return new Result().fail("获取短信验证码失败");
+        return null;
     }
+
 }

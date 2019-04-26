@@ -124,7 +124,7 @@ public class LoginRegistrationModule {
     /**
      * 获取门店用户信息
      */
-    @UserPermission(allowRoleList = {2})
+    @UserPermission(allowRoleList = {2},allowedUnrelated = true)
     public Result getStoreSession(AppContext appContext){
         if (appContext.getUserSession().compId > 0){
             StoreBasicInfo info = new StoreBasicInfo(appContext.getUserSession().compId);

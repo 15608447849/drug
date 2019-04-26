@@ -66,7 +66,7 @@ public class MyCollectModule {
             String updateSql = "UPDATE {{?"+TD_TRAN_COLLE+"}} SET promtype=?,prize=?,createdate = CURRENT_DATE ,createtime = CURRENT_TIME WHERE compid = ? AND sku = ?";
             int i = BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(),
                     updateSql,
-                     p.prize * 100, p.promtype, compId,p.sku);
+                    p.promtype,p.prize * 100, compId,p.sku);
 
             if (i <= 0){
                 //更新失败 - 插入

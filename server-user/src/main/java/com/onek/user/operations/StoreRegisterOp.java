@@ -3,6 +3,8 @@ package com.onek.user.operations;
 import com.onek.context.AppContext;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
+import com.onek.util.SmsTempNo;
+import com.onek.util.SmsUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
@@ -86,6 +88,8 @@ public class StoreRegisterOp implements IOperation<AppContext> {
                     2
             );
             if (i > 0) {
+                //发送短信提醒
+                SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.REGISTERED_SUCCESSFULLY);
                 return new Result().success("注册成功");
             }
         return new Result().fail("注册失败");
