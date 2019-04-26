@@ -6,19 +6,16 @@ import java.util.concurrent.*;
 public class DelayedHandler<D extends IDelayedObject> implements IDelayedService<D> {
     private final ThreadPoolExecutor executor;
     private volatile CancelHandler cancelHndler;
-    private volatile DelayQueue<DelayedObject> delayQueue;
-    private Map<String, DelayedObject> objStore = new ConcurrentHashMap<>();
-    private final TIME_TYPE time_type;
-    private final long removeTime;
-    private IDelayedHandler<D> handlerCall;
+    private volatile DelayQueue<DelayedObject<D>> delayQueue;
+    private final Map<String, DelayedObject<D>> objStore = new ConcurrentHashMap<>();
+    private final long deleyTime;
+    private final IDelayedHandler<D> handlerCall;
 
     public DelayedHandler(long delayTime, IDelayedHandler<D> handlerCall, TIME_TYPE time_type) {
-        this.time_type = time_type;
         this.handlerCall = handlerCall;
-        this.removeTime = convToRemoveTime(delayTime);
-
-        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
+        this.deleyTime = convToMillsecond(delayTime, time_type);
         this.delayQueue = new DelayQueue<>();
+        this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 
         executeThread();
     }
@@ -33,10 +30,10 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
         this.cancelHndler.start();
     }
 
-    private long convToRemoveTime(long delayTime) {
+    private long convToMillsecond(long delayTime, TIME_TYPE time_type) {
         long result = delayTime;
 
-        switch (this.time_type) {
+        switch (time_type) {
             case DAY:
                 result *= 24;
             case HOUR:
@@ -63,22 +60,22 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
                 return ;
             }
 
-            boolean addResult = addToQueue(delayed);
+            DelayedObject<D> obj = new DelayedObject(delayed, this.deleyTime);
+
+            boolean addResult = addToQueue(obj);
 
             if (addResult) {
-                addSuccess(delayed);
+                addSuccess(obj);
             }
         });
 
     }
 
-    protected boolean addToQueue(D delayed) {
-        if (!objStore.containsKey(delayed.getUnqKey())) {
-            DelayedObject obj = new DelayedObject(delayed);
+    protected boolean addToQueue(DelayedObject<D> delayed) {
+        if (!this.objStore.containsKey(delayed.getObj().getUnqKey())) {
+            this.objStore.put(delayed.getObj().getUnqKey(), delayed);
 
-            objStore.put(delayed.getUnqKey(), obj);
-
-            return delayQueue.add(obj);
+            return delayQueue.add(delayed);
         }
 
         return false;
@@ -91,48 +88,55 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
                 return ;
             }
 
+            DelayedObject<D> obj = this.objStore.get(delayed.getUnqKey());
+
+            if (obj == null) {
+                return ;
+            }
+
             boolean removeResult = removeFromQueue(delayed.getUnqKey());
 
             if (removeResult) {
-                removeSuccess(delayed);
+                removeSuccess(obj);
             }
         });
     }
 
     public void removeByKey(String key) {
-        DelayedObject delayed = this.objStore.get(key);
+        DelayedObject<D> delayed = this.objStore.get(key);
 
         if (delayed != null) {
-            remove(delayed.obj);
+            remove(delayed.getObj());
         }
     }
 
     protected boolean removeFromQueue(String unqKey) {
-        DelayedObject obj = this.objStore.remove(unqKey);
+        DelayedObject<D> obj = this.objStore.remove(unqKey);
 
         return obj != null && delayQueue.remove(obj);
     }
 
-    protected void addSuccess(D delayed) {}
+    protected void addSuccess(DelayedObject<D> delayed) {}
 
-    protected void removeSuccess(D delayed) {}
+    protected void removeSuccess(DelayedObject<D> delayed) {}
 
-    protected void handlerSuccess(D delayed) { removeSuccess(delayed); }
+    protected void handlerSuccess(DelayedObject<D> delayed) { removeSuccess(delayed); }
 
     class CancelHandler extends Thread {
         @Override
         public void run() {
             while (true) {
                 try {
-                    DelayedObject delayed = DelayedHandler.this.delayQueue.take();
+                    DelayedObject<D> delayed = DelayedHandler.this.delayQueue.take();
 
                     if (delayed != null) {
                         // TODO 取消订单接口
                         boolean cancelResult =
-                                DelayedHandler.this.handlerCall.handlerCall(delayed.obj);
+                                DelayedHandler.this.handlerCall.
+                                        handlerCall(delayed.getObj());
 
                         if (cancelResult) {
-                            DelayedHandler.this.handlerSuccess(delayed.obj);
+                            DelayedHandler.this.handlerSuccess(delayed);
                         }
                     }
 
@@ -143,13 +147,19 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
         }
     }
 
-    private class DelayedObject implements Delayed {
+    public enum TIME_TYPE {
+        DAY, HOUR, MINUTES, SECOND, MILLSECOND
+    }
+
+    protected static class DelayedObject<D extends IDelayedObject> implements Delayed {
         private D obj;
         private long removeTime;
 
-        public DelayedObject(D obj) {
+        public DelayedObject() {}
+
+        DelayedObject(D obj, long delayedTime) {
             this.obj = obj;
-            this.removeTime = DelayedHandler.this.removeTime + System.currentTimeMillis();
+            this.removeTime = delayedTime + System.currentTimeMillis();
         }
 
         @Override
@@ -164,7 +174,7 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
                 return 0;
             }
 
-            if (o instanceof DelayedHandler.DelayedObject) {
+            if (o instanceof DelayedObject) {
                 DelayedObject cd = (DelayedObject) o;
 
                 long diff = getRemoveTime() - cd.getRemoveTime();
@@ -177,6 +187,18 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
 
         public long getRemoveTime() {
             return this.removeTime;
+        }
+
+        public D getObj() {
+            return this.obj;
+        }
+
+        public void setObj(D obj) {
+            this.obj = obj;
+        }
+
+        public void setRemoveTime(long removeTime) {
+            this.removeTime = removeTime;
         }
 
         @Override
@@ -193,9 +215,5 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
         public int hashCode() {
             return this.obj != null ? this.obj.getUnqKey().hashCode() : 0;
         }
-    }
-
-    public enum TIME_TYPE {
-        DAY, HOUR, MINUTES, SECOND, MILLSECOND
     }
 }

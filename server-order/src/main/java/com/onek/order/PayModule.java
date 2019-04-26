@@ -40,7 +40,7 @@ public class PayModule {
     public static final DelayedHandler<DelayedBase> DELIVERY_DELAYED =
             new RedisDelayedHandler<>("_DELIVERY", 24,
                     (d) -> new TranOrderOptModule().delivery(d.getOrderNo(), d.getCompid()),
-                    DelayedHandler.TIME_TYPE.HOUR, DelayedBase.class);
+                    DelayedHandler.TIME_TYPE.HOUR);
 
     public static final String PAY_TYPE_ALI = "alipay";
     public static final String PAY_TYPE_WX = "wxpay";

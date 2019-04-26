@@ -22,6 +22,9 @@ public class AsAppVO {
     private int cstatus;//综合状态码
     private String apdata;//申请日期
     private String aptime;//申请时间
+    private String apdesc;//退款描述
+    private double refamt;//退款金额
+    private int asnum;//退款数量
 
 
     public String getOrderno() {
@@ -142,5 +145,29 @@ public class AsAppVO {
 
     public void setAptime(String aptime) {
         this.aptime = aptime;
+    }
+
+    public String getApdesc() {
+        return apdesc;
+    }
+
+    public void setApdesc(String apdesc) {
+        this.apdesc = apdesc;
+    }
+
+    public double getRefamt() {
+        return refamt;
+    }
+
+    public void setRefamt(double refamt) {
+        this.refamt = refamt;
+    }
+
+    public int getAsnum() {
+        return asnum;
+    }
+
+    public void setAsnum(int asnum) {
+        this.asnum = asnum;
     }
 }

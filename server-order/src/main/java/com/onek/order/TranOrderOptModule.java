@@ -44,12 +44,12 @@ public class TranOrderOptModule {
     private static final DelayedHandler<TranOrder> CANCEL_DELAYED =
             new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
                     (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
-                    DelayedHandler.TIME_TYPE.MINUTES, TranOrder.class);
+                    DelayedHandler.TIME_TYPE.MINUTES);
 
     private static final DelayedHandler<DelayedBase> TAKE_DELAYED =
             new RedisDelayedHandler<>("_TAKE_ORDERS", 48,
                     (d) -> new TranOrderOptModule().takeDelivery(d.getOrderNo(), d.getCompid()),
-                    DelayedHandler.TIME_TYPE.HOUR, DelayedBase.class);
+                    DelayedHandler.TIME_TYPE.HOUR);
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
@@ -535,13 +535,13 @@ public class TranOrderOptModule {
     }
 
     static TranOrderGoods[] getGoodsArr(String orderNo, int cusno) {
-        String selectGoodsSql = "select pdno, pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
+        String selectGoodsSql = "select pdno, pnum, payamt from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
                 + " and orderno=" + orderNo;
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, selectGoodsSql);
         TranOrderGoods[] tranOrderGoods = new TranOrderGoods[queryResult.size()];
         baseDao.convToEntity(queryResult, tranOrderGoods, TranOrderGoods.class, new String[]{
-                "pdno", "pnum"
+                "pdno", "pnum", "payamt"
         });
         return tranOrderGoods;
     }
