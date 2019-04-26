@@ -358,10 +358,14 @@ public class ProdESUtil {
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdWithStatusList(Set<Integer> statusSet, int sort,int pagenum, int pagesize){
+    public static SearchResponse searchProdWithStatusList(Set<Integer> statusSet,String keyword, int sort,int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            if(!StringUtils.isEmpty(keyword)){
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+                boolQuery.must(matchQuery);
+            }
             if(statusSet!=null && statusSet.size() >0){
                 Object [] resultArray = new Integer[statusSet.size()];
                 resultArray = statusSet.toArray(resultArray);
@@ -539,12 +543,17 @@ public class ProdESUtil {
      * 根据sku列表检索商品
      *
      * @param skuList
+     * @param keyword
      * @return
      */
-    public static SearchResponse searchProdBySpuList(List<Long> skuList,int pagenum, int pagesize){
+    public static SearchResponse searchProdBySpuList(List<Long> skuList,String keyword,int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            if(!StringUtils.isEmpty(keyword)){
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+                boolQuery.must(matchQuery);
+            }
             if(skuList != null && skuList.size() > 0){
                 Object [] spuArray = new Long[skuList.size()];
                 spuArray = skuList.toArray(spuArray);
