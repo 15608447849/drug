@@ -1,5 +1,6 @@
 package com.onek.calculate.service.filter;
 
+import com.onek.calculate.entity.Product;
 import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.IProduct;
@@ -30,6 +31,7 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         List<IDiscount> result = new ArrayList<>();
         List<IDiscount> temp;
         int index;
+        IDiscount i;
         for (IProduct product : products) {
             temp = getCurrentDiscounts(product.getSKU());
 
@@ -43,11 +45,20 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
                     activity.addProduct(product);
                     result.add(activity);
                 } else {
-                    result.get(index).setLimits(
+                    i = result.get(index);
+                    i.setLimits(
                             product.getSKU(), activity.getLimits(product.getSKU()));
-                    result.get(index).setActionPrice(
+                    i.setActionPrice(
                             product.getSKU(), activity.getActionPrice(product.getSKU()));
-                    result.get(index).addProduct(product);
+                    i.addProduct(product);
+
+                    if (activity.getBRule() == 1113 && product instanceof Product) {
+                        // 秒杀特殊处理
+                        Product p = (Product) product;
+
+                        p.autoSetCurrentPrice(i.getActionPrice(p.getSKU()), p.getNums());
+                    }
+
                 }
 
             }
