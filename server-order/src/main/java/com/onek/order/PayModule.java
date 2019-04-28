@@ -94,8 +94,8 @@ public class PayModule {
             "(unqid,compid,istatus,integral,busid,createdate,createtime,cstatus) values(?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";
 
 
-    private static final String UPD_ASAPP_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set cstatus=1 "
-            + " where cstatus&1=0 and asno=? ";
+    private static final String UPD_ASAPP_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set cstatus=0 "
+            + " where cstatus&1>0 and asno=? ";
 
     @UserPermission(ignore = true)
     public Result showPayInfo(AppContext appContext){
