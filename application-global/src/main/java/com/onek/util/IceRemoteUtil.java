@@ -220,6 +220,21 @@ public class IceRemoteUtil {
         return GsonUtils.json2List(json,String.class);
     }
 
+    //查询所有足迹
+    public static List<String> addIntegralDetail(int compid,int istatus,int integral,long busid){
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("compid", compid);
+        jsonObject.put("istatus", istatus);
+        jsonObject.put("integral", integral);
+        jsonObject.put("busid", busid);
+        int index = getOrderServerNo(compid);
+
+        String json = ic.setServerAndRequest("orderServer"+index,"IntegralModule","addIntegral")
+                .settingParam(jsonObject.toJSONString()).execute();
+        return GsonUtils.json2List(json,String.class);
+    }
+
 
     public static int addPoint(int compid, int point){
         JSONObject jsonObject = new JSONObject();
