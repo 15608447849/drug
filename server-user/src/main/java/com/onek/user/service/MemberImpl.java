@@ -12,7 +12,7 @@ public class MemberImpl implements IRedisPartCache {
 
     private static final BaseDAO baseDao = BaseDAO.getBaseDAO();
 
-    private static final String GET_SQL = "select unqid,compid,accupoints,balpoints,cstatus from {{?" + DSMConst.TD_MEMBER + "}} where compid = ? and cstatus&1=0";
+    private static final String GET_SQL = "select unqid,compid,accupoints,balpoints,expirepoint,cstatus from {{?" + DSMConst.TD_MEMBER + "}} where compid = ? and cstatus&1=0";
     private static final String UPDATE_SQL = "update {{?" + DSMConst.TD_MEMBER + "}} set accupoints = ?, balpoints = ? where compid = ?";
 
     @Override

@@ -29,6 +29,19 @@ public class MemberStore {
         return level;
     }
 
+    public static int getIntegralByCompid(int compid){
+
+        if(compid > 0){
+
+            MemberEntity memberEntity = (MemberEntity) memProxy.getId(compid);
+            if(memberEntity != null){
+                return memberEntity.getBalpoints();
+            }
+
+        }
+        return 0;
+    }
+
     public static void main(String[] args) {
         System.out.println(MemberStore.getLevelByCompid(536862722));
     }
