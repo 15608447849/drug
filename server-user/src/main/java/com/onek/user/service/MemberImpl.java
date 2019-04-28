@@ -35,8 +35,11 @@ public class MemberImpl implements IRedisPartCache {
 
         List<Object[]> result = baseDao.queryNative(GET_SQL, new Object[]{ id});
         MemberEntity[] levels = new MemberEntity[result.size()];
-        baseDao.convToEntity(result, levels, MemberEntity.class);
-        return levels[0];
+        if(levels != null && levels.length > 0){
+            baseDao.convToEntity(result, levels, MemberEntity.class);
+            return levels[0];
+        }
+        return null;
     }
 
     @Override
