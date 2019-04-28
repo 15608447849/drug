@@ -1,16 +1,21 @@
 package com.onek.user.operations
 
+import com.onek.consts.IntegralConstant
 import com.onek.context.AppContext
 import com.onek.entitys.IOperation
 import com.onek.entitys.Result
 import com.onek.user.interactive.AptitudeInfo
 import com.onek.user.operations.StoreBasicInfoOp.updateCompInfoToCacheById
+import com.onek.user.service.MemberImpl
 import com.onek.util.IceRemoteUtil
 import com.onek.util.RedisGlobalKeys
 import com.onek.util.SmsTempNo.AUTHENTICATION_FAILURE
 import com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS
+import com.onek.util.member.MemberEntity
 import constant.DSMConst
 import dao.BaseDAO
+import redis.IRedisPartCache
+import redis.proxy.CacheProxyInstance
 
 /**
  * @Author: leeping
@@ -23,6 +28,7 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
     var auditCause:String? = null //审核失败原因
     var auditStatus:Int = 0; //审核状态
 
+    private val memProxy = CacheProxyInstance.createPartInstance(MemberImpl()) as IRedisPartCache
 
     override fun execute(context: AppContext?): Result {
 
@@ -74,7 +80,21 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
     //赠送积分
     private fun giftPoints(companyId: Int) {
+        var point = 888;
+        val memberVO = memProxy.getId(companyId) as MemberEntity
+        if (memberVO != null) {
+            val accupoints = memberVO.accupoints
+            val balpoints = memberVO.balpoints
 
+            val updateMemberVO = MemberEntity()
+            updateMemberVO.compid = companyId
+            updateMemberVO.accupoints = accupoints + point
+            updateMemberVO.balpoints = balpoints + point
+            var r = memProxy.update(companyId, updateMemberVO)
+            if(r > 0){
+                IceRemoteUtil.addIntegralDetail(companyId, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
+            }
+        }
     }
 
     private fun updateIds(companyId: String, id: String, idStartTime: String, idEndTime: String, type:Int) :Boolean{
