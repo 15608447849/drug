@@ -5,6 +5,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.ESConstant;
+import com.onek.consts.IntegralConstant;
 import com.onek.consts.MessageEvent;
 import com.onek.context.AppContext;
 import com.onek.entity.DelayedBase;
@@ -88,6 +89,9 @@ public class PayModule {
             + "completedate,completetime,cstatus)"
             + " values(?,?,?,?,?,"
             + "?,?,0)";
+
+    private static String INSERT_INTEGRAL_DETAIL_SQL = "insert into {{?"+ DSMConst.TD_INTEGRAL_DETAIL + "}} " +
+            "(unqid,compid,istatus,integral,busid,createdate,createtime,cstatus) values(?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";
 
     @UserPermission(ignore = true)
     public Result showPayInfo(AppContext appContext){
@@ -590,6 +594,12 @@ public class PayModule {
                         System.out.println("## 生成一块物流订单失败 ####");
                     }
                 }
+
+                long unqid = GenIdUtil.getUnqId();
+                int payamt = MathUtil.exactDiv(result[0].getFreight(), 100).intValue();
+                int code = IceRemoteUtil.addPoint(compid, payamt);
+                if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_ORDER_GIVE, payamt, orderno,0 });
+
             }
 
         }
@@ -636,6 +646,7 @@ public class PayModule {
                 try{
                     RedisOrderUtil.addOrderNumByCompid(compid);
                 }catch (Exception e){}
+
             }
 
         }
