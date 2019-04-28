@@ -7,6 +7,7 @@ import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderDetail;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
+import com.onek.util.member.MemberStore;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
@@ -14,6 +15,7 @@ import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.*;
 
+import java.sql.Time;
 import java.util.*;
 
 public class OrderInfoModule {
@@ -65,6 +67,14 @@ public class OrderInfoModule {
                     + " ON  app.cstatus&1 = 0 "
                     + " AND app.orderno = ord.orderno "
             + " WHERE ord.cstatus&1 = 0 AND ord.orderno = ? ";
+
+    public static final String QUERY_COMP_ORDER_INFO_BASE =
+            "SELECT COUNT(ostatus = 0 OR NULL), COUNT(ostatus = 1 OR NULL),"
+                + " COUNT(ostatus = 2 OR NULL), COUNT(ostatus = 3 OR NULL),"
+                + " COUNT(ostatus IN (-2, -3) OR NULL) "
+                + " FROM {{?" + DSMConst.TD_TRAN_ORDER + "}} "
+                + " WHERE cstatus&1 = 0 AND compid = ? ";
+
 
     public Result getOrderDetail(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -227,6 +237,21 @@ public class OrderInfoModule {
         }
 
         return new ArrayList<>(Arrays.asList(result));
+    }
+
+    public Result countCompInfo(AppContext appContext) {
+        int compid = appContext.getUserSession().compId;
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
+                                        compid, TimeUtils.getCurrentYear(),
+                                        QUERY_COMP_ORDER_INFO_BASE, compid);
+
+        int couponCount = new CouponRevModule().couponRevCount(compid);
+        int pointsCount = MemberStore.getIntegralByCompid(compid);
+
+        Object[] result = ArrayUtil.unshift(queryResult.get(0), couponCount, pointsCount);
+
+        return new Result().success(result);
     }
 
 }
