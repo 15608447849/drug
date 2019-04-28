@@ -5,6 +5,7 @@ public class MemberEntity {
     private int compid;
     private int accupoints;
     private int balpoints;
+    private int expirepoint;
 //    private String createdate;
 //    private String createtime;
     private int cstatus;
