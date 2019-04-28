@@ -14,7 +14,7 @@ public class ActivityVO {
     private int incpriority;//互斥优先级
     private int cpriority;//兼容优先级
     private int qualcode;//资格码
-    private int qualvalue;//资格值
+    private long qualvalue;//资格值
     private String actdesc;//活动描述
     private int excdiscount;//排斥优惠券
     private int acttype;//活动周期类型
@@ -81,11 +81,11 @@ public class ActivityVO {
         this.qualcode = qualcode;
     }
 
-    public int getQualvalue() {
+    public long getQualvalue() {
         return qualvalue;
     }
 
-    public void setQualvalue(int qualvalue) {
+    public void setQualvalue(long qualvalue) {
         this.qualvalue = qualvalue;
     }
 

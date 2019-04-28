@@ -164,10 +164,8 @@ public class OrderOptModule {
                     asAppVOS.get(0).getCkstatus(), asAppVOS.get(0).getCkdesc(), asAppVOS.get(0).getInvoice(),1,
                     asAppVOS.get(0).getApdesc(), asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum()};
             int res = baseDao.updateNativeSharding(0,localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
-            System.out.println("------------res--------------- " + res);
-            Result r =  res > 0 ? result.success(asOrderId) : result.fail("申请失败");
-            System.out.println(" --- "+ r);
-            return r;
+
+            return res > 0 ? result.success(asOrderId) : result.fail("申请失败");
         }
         return b ? result.success("申请成功") : result.fail("申请失败");
     }
