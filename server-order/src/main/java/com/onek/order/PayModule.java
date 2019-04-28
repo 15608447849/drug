@@ -93,6 +93,10 @@ public class PayModule {
     private static String INSERT_INTEGRAL_DETAIL_SQL = "insert into {{?"+ DSMConst.TD_INTEGRAL_DETAIL + "}} " +
             "(unqid,compid,istatus,integral,busid,createdate,createtime,cstatus) values(?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";
 
+
+    private static final String UPD_ASAPP_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set cstatus=1 "
+            + " where cstatus&1=0 and asno=? ";
+
     @UserPermission(ignore = true)
     public Result showPayInfo(AppContext appContext){
         String json = appContext.param.json;
@@ -139,7 +143,7 @@ public class PayModule {
 
             JSONObject r = new JSONObject();
             r.put("payamt", payamt);
-            r.put("afsano", GenIdUtil.getAsOrderId());
+//            r.put("afsano", GenIdUtil.getAsOrderId());
 
             return  new Result().success(r);
         }else{
@@ -482,7 +486,9 @@ public class PayModule {
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid, TimeUtils.getCurrentYear(), sqlNative, params));
-
+        if(b){
+            baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_SQL, afsano);
+        }
         return b;
     }
 
