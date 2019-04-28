@@ -1,7 +1,5 @@
 package com.onek.util;
 
-import util.StringUtils;
-
 /**
  * @Author: leeping
  * @Date: 2019/4/26 11:56
@@ -33,6 +31,13 @@ public class SmsTempNo {
     public static final int NOTICE_OF_COMMODITY_REDUCTION = 11;
 
 
+    public static String genPushMessageBySystemTemp(int tempNo,String... params){
+        String message = "push:"+tempNo;
+        if (params!=null && params.length>0){
+            message+="#"+ String.join("#",params);
+        }
+        return  message;
+    }
 
 
 

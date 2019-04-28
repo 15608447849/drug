@@ -110,7 +110,10 @@ public class PushMessageMySqlImps implements IPushMessageStore {
         return list;
     }
 
+
+
     public static String convertPushMessage(String message){
+
         if (message.startsWith("push")) {
             String arrayStr = message.split(":")[1];
             String[] array ;
@@ -130,6 +133,8 @@ public class PushMessageMySqlImps implements IPushMessageStore {
         //规则格式:  push:模板序列#参数内容
         return convertPushMessage(message.content);
     }
+
+
 
 
 }

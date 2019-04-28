@@ -61,12 +61,20 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
             if (i > 0) {
                 updateCompInfoToCacheById(companyId!!.toInt()) //更新企业信息到缓存
-                if(auditStatus == 256) IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_SUCCESS)
+                if(auditStatus == 256) {
+                    IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_SUCCESS)
+                    giftPoints(companyId!!.toInt())
+                }
                 if(auditStatus == 512) IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_FAILURE,auditCause)
                return Result().success("审核保存提交成功")
             }
         }
         return Result().fail("审核修改失败")
+    }
+
+    //赠送积分
+    private fun giftPoints(companyId: Int) {
+
     }
 
     private fun updateIds(companyId: String, id: String, idStartTime: String, idEndTime: String, type:Int) :Boolean{

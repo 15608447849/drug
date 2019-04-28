@@ -10,6 +10,7 @@ import java.security.MessageDigest;
 import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
+import java.util.List;
 
 /**
  * @description: 发送短信工具
@@ -86,6 +87,22 @@ public class SmsUtil  extends ApplicationPropertiesBase {
         });
     }
 
+    //发送短信到所有人
+    public static void sendMsgToAllBySystemTemp(int tempNo,String... params){
+        IOThreadUtils.runTask(()->{
+            //获取消息
+            String message = IceRemoteUtil.getMessageByNo(tempNo,params);
+
+            //获取所有用户手机号码
+           List<String> list =  IceRemoteUtil.getAllStorePhone();
+
+            //循环发送
+            for (String phone : list){
+                SmsUtil.sendMsg(phone,message);
+            }
+
+        });
+    }
 
 
 
