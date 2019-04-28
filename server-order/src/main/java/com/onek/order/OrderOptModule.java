@@ -16,10 +16,7 @@ import com.onek.util.LccOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
-import util.GsonUtils;
-import util.MathUtil;
-import util.ModelUtil;
-import util.StringUtils;
+import util.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -48,7 +45,7 @@ public class OrderOptModule {
             + "ckdesc,invoice,cstatus,apdata,aptime,apdesc,refamt,asnum) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "0,CURRENT_DATE,CURRENT_TIME,?,?,?)";
+            + "?,CURRENT_DATE,CURRENT_TIME,?,?,?)";
 
     //更新订单售后状态
     private static final String UPD_ORDER_SQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
@@ -155,7 +152,7 @@ public class OrderOptModule {
         }
         if (b) {
             //向售后表插入申请数据
-            getInsertSql(asAppVOS, paramsInsert);
+            getInsertSql(asAppVOS, paramsInsert, asType);
             b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNativeSharding(0,localDateTime.getYear(),
                     INSERT_ASAPP_SQL, paramsInsert, asAppVOS.size()));
         }
@@ -225,12 +222,15 @@ public class OrderOptModule {
      * @time  2019/4/26 11:10
      * @version 1.1.1
      **/
-    private void getInsertSql(List<AsAppVO> asAppVOS, List<Object[]> paramsInsert) {
+    private void getInsertSql(List<AsAppVO> asAppVOS, List<Object[]> paramsInsert, int asType) {
         for (AsAppVO asAppVO : asAppVOS) {
-            paramsInsert.add(new Object[]{asAppVO.getOrderno(), asAppVO.getPdno(), asAppVO.getAsno(),
+            if (asType==3 || asType==4){
+                asAppVO.setCstatus(1);
+            }
+            paramsInsert.add(new Object[]{asAppVO.getOrderno(), asAppVO.getPdno(), GenIdUtil.getAsOrderId(),
                     asAppVO.getCompid(), asAppVO.getAstype(), asAppVO.getGstatus(), asAppVO.getReason(),
-                    asAppVO.getCkstatus(), asAppVO.getCkdesc(), asAppVO.getInvoice(),asAppVO.getApdesc(),
-                    asAppVO.getRefamt() * 100, asAppVO.getAsnum()});
+                    asAppVO.getCkstatus(), asAppVO.getCkdesc(), asAppVO.getInvoice(),asAppVO.getCstatus(),
+                    asAppVO.getApdesc(), asAppVO.getRefamt() * 100, asAppVO.getAsnum()});
         }
     }
 
@@ -316,7 +316,9 @@ public class OrderOptModule {
         int asno = jsonObject.get("asno").getAsInt();
         String reason = jsonObject.get("reason").getAsString();
         int type =  jsonObject.get("type").getAsInt();
-        int ret = baseDao.updateNative(UPD_ASAPP_CK_SQL, type, userSession.userId, reason, asno);
+        int astype =  jsonObject.get("astype").getAsInt();
+        int ret = baseDao.updateNativeSharding(0,
+                TimeUtils.getCurrentYear(),UPD_ASAPP_CK_SQL, type, userSession.userId, reason, asno);
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
     }
 

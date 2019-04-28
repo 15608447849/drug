@@ -9,46 +9,27 @@ import util.TimeUtils;
 
 import java.util.*;
 
+/**
+ * 每年1月1号就过年的积分余额转换为过期积分
+ */
 public class LastYearIntegralTask extends TimerTask {
 
-    private static final String SQL = "select d.gcode,d.actcode,a.brulecode,d.cstatus from {{?"+ DSMConst.TD_PROM_ASSDRUG +"}} d " +
-            "left join {{?"+ DSMConst.TD_PROM_ACT+"}} a " +
-            "on d.actcode = a.unqid " +
-            "where edate = ? ";
+    private static final String SQL = "update {{?" + DSMConst.TD_MEMBER + "}} set expirepoint = balpoints";
 
     @Override
     public void run() {
-        Date date = TimeUtils.addDay(new Date(), -1);
-        String y = TimeUtils.date_yMd_2String(date);
-        List<Object[]> results = BaseDAO.getBaseDAO().queryNative(SQL, y);
-        if(results != null && results.size() > 0){
-            ActivityManageServer server = new ActivityManageServer();
-            server.registerObserver(new ProdDiscountObserver());
 
-            Map<Integer,List<String>> map = new HashMap<>();
-            for(Object[] result : results){
-                Long gcode = (Long) result[0];
-//                String actcode = (String) result[1];
-                int rulecode = (Integer) result[2];
-                int cstatus = (Integer) result[3];
 
-                JSONObject jsonObject = new JSONObject();
-                jsonObject.put("discount", "1");
-                jsonObject.put("gcode",  gcode);
-                jsonObject.put("cstatus", cstatus);
-                jsonObject.put("rulecode", rulecode);
+        System.out.println("#### [" + TimeUtils.getCurrentDate() + "] expire intergal convert start ########");
+        Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.MONTH, Calendar.JANUARY);
+        calendar.set(Calendar.DAY_OF_MONTH, 1);
+        if(TimeUtils.getCurrentDate() != TimeUtils.date_yMd_2String(calendar.getTime())){
 
-                List<String> list = map.get(rulecode);
-                if(list == null || list.size() <=0){
-                    list = new ArrayList<>();
-                }
-                list.add(jsonObject.toJSONString());
-                map.put(rulecode, list);
-            }
-
-            for(Integer rulecode : map.keySet()){
-                server.setProd(map.get(rulecode));
-            }
+            int result = BaseDAO.getBaseDAO().updateNative(SQL, new Object[]{});
+            System.out.println("#### [" + TimeUtils.getCurrentDate() + "] expire intergal result:["+ result+"] ########");
         }
+
+        System.out.println("#### [" + TimeUtils.getCurrentDate() + "] expire intergal convert end ########");
     }
 }

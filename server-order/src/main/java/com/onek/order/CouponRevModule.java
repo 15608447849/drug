@@ -8,20 +8,21 @@ import com.onek.calculate.CouponListFilterService;
 import com.onek.calculate.entity.*;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
-import com.onek.entity.CouponPubLadderVO;
-import com.onek.entity.CouponPubVO;
-import com.onek.entity.CouponUseDTO;
+import com.onek.entity.*;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
+import io.netty.util.internal.SocketUtils;
+import org.hyrdpf.ds.AppConfig;
 import util.GsonUtils;
 import util.MathUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -50,6 +51,13 @@ public class CouponRevModule {
             "DATE_FORMAT(enddate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where cstatus = 0 ";
+
+    private final String QUERY_COUPONREV_COUNT =
+            " SELECT COUNT(0) "
+            + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
+            + " WHERE cstatus = 0 AND "
+            + " startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
+            + " AND compid = ?  ";
 
     /**
      * 查询领取的优惠券列表
@@ -88,6 +96,21 @@ public class CouponRevModule {
      */
     private final String QUERY_COUP_EXT_SQL = "select count(1) from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where compid = ? and coupno = ? and  cstatus = 0 and ctype = 0 and  CURRENT_DATE <= enddate ";
+
+
+
+    /**
+     * 查询活动优惠券
+     */
+    private final String QUERY_ACCOUP_SQL = "select unqid coupno,glbno,brulecode,validday,validflag,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} "+
+            " where cstatus & 128 > 0 and  cstatus & 1= 0 and actstock > 0 ";
+
+
+    //领取活动优惠券
+    private final String INSERT_ACCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
+            + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
+            + "rulename,goods,ladder,glbno,accode,ctype,reqflag,cstatus) "
+            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 
 
@@ -451,6 +474,7 @@ public class CouponRevModule {
         List<CouponUseDTO> couponUseDTOS = new ArrayList<>();
         Gson gson = new Gson();
         List<Product> productList = new ArrayList<>();
+        BigDecimal subCalRet = BigDecimal.ZERO;
         for (JsonElement coupn : jsonArray) {
             CouponUseDTO couponUseDTO = gson.fromJson(coupn, CouponUseDTO.class);
             if (couponUseDTO != null) {
@@ -458,15 +482,15 @@ public class CouponRevModule {
                 Product product = new Product();
                 product.setSku(couponUseDTO.getPdno());
                 product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
                 productList.add(product);
             }
         }
         int compid = couponUseDTOS.get(0).getCompid();
-        DiscountResult calculate = CalculateUtil.calculate(compid, productList, couponUseDTOS.get(0).getCoupon());
+        DiscountResult calculate = CalculateUtil.calculate(compid,
+                productList, couponUseDTOS.get(0).getCoupon());
 
-
-
-        resultMap.put("tprice",calculate.getTotalCurrentPrice());
+        resultMap.put("tprice",subCalRet.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
         resultMap.put("tdiscount",calculate.getTotalDiscount());
         resultMap.put("cpvalue",calculate.getCouponValue());
         double acvalue = MathUtil.exactSub(calculate.getTotalDiscount(), calculate.getCouponValue()).
@@ -481,8 +505,104 @@ public class CouponRevModule {
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
         }
         resultMap.put("payamt",payamt);
+
+
+//        Activity activity = null;
+//        if(calculate.getActivityList() != null
+//                && !calculate.getActivityList().isEmpty()){
+//            activity = (Activity)calculate.getActivityList().get(0);
+//        }
+//        //判断秒杀，计算优惠价
+//        if(activity != null && activity.getBRule() == 1113){
+//            double skillDctPrice = MathUtil.exactSub(subCalRet.doubleValue(),
+//                    MathUtil.exactAdd(calculate.getTotalDiscount(),
+//                            calculate.getTotalCurrentPrice()).doubleValue()).doubleValue();
+//
+//            resultMap.put("tdiscount",MathUtil.exactAdd(skillDctPrice,
+//                    calculate.getTotalDiscount()).doubleValue());
+//
+//            resultMap.put("acvalue",skillDctPrice);
+//        }
+
         return result.success(resultMap);
     }
 
+    public int couponRevCount(int compid) {
+        if (compid <= 0) {
+            return 0;
+        }
 
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                QUERY_COUPONREV_COUNT, compid);
+
+
+        return Integer.parseInt(queryResult.get(0)[0].toString());
+    }
+
+    public int insertGiftCoupon(List<ActivityGiftVO> activityGiftVOList){
+
+
+
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+//        Date curDate = new Date();
+//        String startDate = dateFormat.format(curDate);
+//        Calendar calendar = Calendar.getInstance();
+//        calendar.setTime(curDate);
+//        calendar.add(Calendar.DATE, couponVO.getValidday());
+//        String endDate = dateFormat.format(calendar.getTime());
+//        if(couponVO.getValidflag() == 1){
+//            calendar.setTime(curDate);
+//            calendar.add(Calendar.DATE, 1);
+//            startDate = dateFormat.format(calendar.getTime());
+//            calendar.add(Calendar.DATE, couponVO.getValidday());
+//            endDate = dateFormat.format(calendar.getTime());
+//        }
+//        String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
+//        return  baseDao.updateNativeSharding(couponVO.getCompid(),
+//                TimeUtils.getCurrentYear(),INSERT_COUPONREV_SQL,
+//                new Object[]{GenIdUtil.getUnqId(),couponVO.getCoupno(),
+//                        couponVO.getCompid(),startDate,"00:00:00",
+//                        endDate,"00:00:00",couponVO.getBrulecode(),
+//                        couponVO.getRulename(),couponVO.getGoods(),
+//                        ladderJson,couponVO.getGlbno(),0});
+
+        return 0;
+    }
+
+
+    public static void main(String[] args) {
+        CouponRevModule couponRevModule = new CouponRevModule();
+            List<Product> productList = new ArrayList<>();
+            Product product = new Product();
+            product.setSku(11000000001201L);
+            product.autoSetCurrentPrice(80,10);
+            productList.add(product);
+            DiscountResult calculate = CalculateUtil.calculate(536862721,
+            productList, 10157621633876992L);
+
+        Activity activity = null;
+        if(calculate.getActivityList() != null
+                && !calculate.getActivityList().isEmpty()){
+            activity = (Activity)calculate.getActivityList().get(0);
+        }
+
+
+        if(activity != null && activity.getBRule() == 1113) {
+            double skillDctPrice = MathUtil.exactSub(80 * 10,
+                    MathUtil.exactAdd(calculate.getTotalDiscount(),
+                            calculate.getTotalCurrentPrice()).doubleValue()).doubleValue();
+
+            System.out.println(skillDctPrice);
+            System.out.println(MathUtil.exactAdd(skillDctPrice,
+                    calculate.getTotalDiscount()).doubleValue());
+        }
+//            resultMap.put("tdiscount",MathUtil.exactAdd(skillDctPrice,
+//                    calculate.getTotalDiscount()).doubleValue());
+
+         //   resultMap.put("acvalue",skillDctPrice);
+
+        System.out.println(calculate.getTotalCurrentPrice());
+        System.out.println(calculate.getTotalDiscount());
+        System.out.println(calculate.getCouponValue());
+    }
 }
