@@ -48,7 +48,7 @@ public class OrderOptModule {
             + "ckdesc,invoice,cstatus,apdata,aptime,apdesc,refamt,asnum) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "0,CURRENT_DATE,CURRENT_TIME,?,?,?)";
+            + "?,CURRENT_DATE,CURRENT_TIME,?,?,?)";
 
     //更新订单售后状态
     private static final String UPD_ORDER_SQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
@@ -155,7 +155,7 @@ public class OrderOptModule {
         }
         if (b) {
             //向售后表插入申请数据
-            getInsertSql(asAppVOS, paramsInsert);
+            getInsertSql(asAppVOS, paramsInsert, asType);
             b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNativeSharding(0,localDateTime.getYear(),
                     INSERT_ASAPP_SQL, paramsInsert, asAppVOS.size()));
         }
@@ -225,12 +225,15 @@ public class OrderOptModule {
      * @time  2019/4/26 11:10
      * @version 1.1.1
      **/
-    private void getInsertSql(List<AsAppVO> asAppVOS, List<Object[]> paramsInsert) {
+    private void getInsertSql(List<AsAppVO> asAppVOS, List<Object[]> paramsInsert, int asType) {
         for (AsAppVO asAppVO : asAppVOS) {
-            paramsInsert.add(new Object[]{asAppVO.getOrderno(), asAppVO.getPdno(), asAppVO.getAsno(),
+            if (asType==3 || asType==4){
+                asAppVO.setCstatus(1);
+            }
+            paramsInsert.add(new Object[]{asAppVO.getOrderno(), asAppVO.getPdno(), GenIdUtil.getAsOrderId(),
                     asAppVO.getCompid(), asAppVO.getAstype(), asAppVO.getGstatus(), asAppVO.getReason(),
-                    asAppVO.getCkstatus(), asAppVO.getCkdesc(), asAppVO.getInvoice(),asAppVO.getApdesc(),
-                    asAppVO.getRefamt() * 100, asAppVO.getAsnum()});
+                    asAppVO.getCkstatus(), asAppVO.getCkdesc(), asAppVO.getInvoice(),asAppVO.getCstatus(),
+                    asAppVO.getApdesc(), asAppVO.getRefamt() * 100, asAppVO.getAsnum()});
         }
     }
 
