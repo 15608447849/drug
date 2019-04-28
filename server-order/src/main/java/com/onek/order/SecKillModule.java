@@ -124,7 +124,7 @@ public class SecKillModule {
             shoppingCartVO.setUnqid(0);
             shoppingCartVO.setCounpon(0);
             shoppingCartVO.setAcamt(stock * shoppingCartVO.getDiscount());
-            shoppingCartVO.setAmt(shoppingCartVO.getPdprice() * stock - shoppingCartVO.getAcamt());
+            shoppingCartVO.setAmt(0);
         }
 
         int currentStock = RedisStockUtil.getActStockBySkuAndActno(sku, actno);
@@ -164,7 +164,7 @@ public class SecKillModule {
 
             ProdEntity entity =  ProdInfoStore.getProdBySku(Long.parseLong(sku));
             if(entity != null){
-                shoppingCartVO.setPdprice(NumUtil.div(entity.getVatp(), 100));
+                shoppingCartVO.setPdprice(NumUtil.div(prize, 100));
                 shoppingCartVO.setPtitle(entity.getProdname());
                 shoppingCartVO.setVerdor(entity.getManuName());
                 shoppingCartVO.setVperiod(entity.getVaildedate());
