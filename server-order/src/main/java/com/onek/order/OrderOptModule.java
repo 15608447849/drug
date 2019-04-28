@@ -16,10 +16,7 @@ import com.onek.util.LccOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
-import util.GsonUtils;
-import util.MathUtil;
-import util.ModelUtil;
-import util.StringUtils;
+import util.*;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -316,7 +313,9 @@ public class OrderOptModule {
         int asno = jsonObject.get("asno").getAsInt();
         String reason = jsonObject.get("reason").getAsString();
         int type =  jsonObject.get("type").getAsInt();
-        int ret = baseDao.updateNative(UPD_ASAPP_CK_SQL, type, userSession.userId, reason, asno);
+        int astype =  jsonObject.get("astype").getAsInt();
+        int ret = baseDao.updateNativeSharding(0,
+                TimeUtils.getCurrentYear(),UPD_ASAPP_CK_SQL, type, userSession.userId, reason, asno);
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
     }
 
