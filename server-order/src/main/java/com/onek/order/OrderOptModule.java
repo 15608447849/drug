@@ -16,6 +16,7 @@ import com.onek.util.LccOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
+import org.hyrdpf.ds.AppConfig;
 import util.*;
 
 import java.time.LocalDateTime;
@@ -124,7 +125,6 @@ public class OrderOptModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         JsonArray asAppArr = jsonObject.get("asAppArr").getAsJsonArray();
         String orderNo = jsonObject.get("orderno").getAsString();
-        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         int compid = appContext.getUserSession().compId;
         int asType = jsonObject.get("asType").getAsInt();//astype 售后类型(0 换货 1退款退货 2 仅退款 3 开发票)
         if (StringUtils.isEmpty(orderNo) || compid <= 0) {
@@ -137,11 +137,12 @@ public class OrderOptModule {
                 asAppVOS.add(asAppVO);
             }
         }
-        if (doApply(asAppVOS, orderNo)) {
+        if (doApply(asAppVOS, orderNo, asType)) {
             return result.fail("该订单售后申请正在处理中！");
         }
 
         if (asType == 0 || asType == 1 || asType == 2) {
+            int year = Integer.parseInt("20" + orderNo.substring(0, 2));
             //更新订单售后状态
             sqlList.add(UPD_ORDER_SQL);
             params.add(new Object[]{-1, orderNo});
@@ -149,26 +150,44 @@ public class OrderOptModule {
             String[] sqlNative = new String[sqlList.size()];
             sqlNative = sqlList.toArray(sqlNative);
             b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid, year, sqlNative, params));
-        }
-        if (b) {
+            if (b) {
+                //向售后表插入申请数据
+                getInsertSql(asAppVOS, paramsInsert);
+                b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNativeSharding(0,localDateTime.getYear(),
+                        INSERT_ASAPP_SQL, paramsInsert, asAppVOS.size()));
+            }
+        } else {
             //向售后表插入申请数据
-            getInsertSql(asAppVOS, paramsInsert, asType);
-            b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNativeSharding(0,localDateTime.getYear(),
-                    INSERT_ASAPP_SQL, paramsInsert, asAppVOS.size()));
+            String asOrderId = GenIdUtil.getAsOrderId();
+            Object[] pramsObj = new Object[]{asAppVOS.get(0).getOrderno(), asAppVOS.get(0).getPdno(), asOrderId,
+                    asAppVOS.get(0).getCompid(), asAppVOS.get(0).getAstype(), asAppVOS.get(0).getGstatus(), asAppVOS.get(0).getReason(),
+                    asAppVOS.get(0).getCkstatus(), asAppVOS.get(0).getCkdesc(), asAppVOS.get(0).getInvoice(),1,
+                    asAppVOS.get(0).getApdesc(), asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum()};
+            int res = baseDao.updateNativeSharding(0,localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
+            System.out.println("------------res--------------- " + res);
+            Result r =  res > 0 ? result.success(asOrderId) : result.fail("申请失败");
+            System.out.println(" --- "+ r);
+            return r;
         }
-
         return b ? result.success("申请成功") : result.fail("申请失败");
     }
 
-    private boolean doApply(List<AsAppVO> asAppVOS, String orderNo) {
+    private boolean doApply(List<AsAppVO> asAppVOS, String orderNo, int asType) {
+        String sql;
         LocalDateTime localDateTime = LocalDateTime.now();
-        StringBuilder skuBuilder = new StringBuilder();
-        for (AsAppVO asAppVO : asAppVOS) {
-            skuBuilder.append(asAppVO.getPdno()).append(",");
+        if (asType == 3 || asType == 4){
+            sql = "select count(*) from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1=0 "
+                    + " and orderno=" + orderNo + " and ckstatus=0 and astype in(3,4)";
+        } else {
+            StringBuilder skuBuilder = new StringBuilder();
+            for (AsAppVO asAppVO : asAppVOS) {
+                skuBuilder.append(asAppVO.getPdno()).append(",");
+            }
+            String pdnoStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
+            sql = "select count(*) from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1=0 "
+                    + " and orderno=" + orderNo + " and ckstatus=0 and astype not in(3,4) and pdno "
+                    + "in(" + pdnoStr + ")";
         }
-        String pdnoStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
-        String sql = "select count(*) from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1=0 "
-                + " and orderno=" + orderNo + " and ckstatus=0 and astype<>3 and pdno in(" + pdnoStr + ")";
         List<Object[]> queryResult = baseDao.queryNativeSharding(0, localDateTime.getYear(), sql);
         return (long)queryResult.get(0)[0] > 0;
 
@@ -222,14 +241,11 @@ public class OrderOptModule {
      * @time  2019/4/26 11:10
      * @version 1.1.1
      **/
-    private void getInsertSql(List<AsAppVO> asAppVOS, List<Object[]> paramsInsert, int asType) {
+    private void getInsertSql(List<AsAppVO> asAppVOS, List<Object[]> paramsInsert) {
         for (AsAppVO asAppVO : asAppVOS) {
-            if (asType==3 || asType==4){
-                asAppVO.setCstatus(1);
-            }
             paramsInsert.add(new Object[]{asAppVO.getOrderno(), asAppVO.getPdno(), GenIdUtil.getAsOrderId(),
                     asAppVO.getCompid(), asAppVO.getAstype(), asAppVO.getGstatus(), asAppVO.getReason(),
-                    asAppVO.getCkstatus(), asAppVO.getCkdesc(), asAppVO.getInvoice(),asAppVO.getCstatus(),
+                    asAppVO.getCkstatus(), asAppVO.getCkdesc(), asAppVO.getInvoice(),0,
                     asAppVO.getApdesc(), asAppVO.getRefamt() * 100, asAppVO.getAsnum()});
         }
     }
@@ -357,5 +373,17 @@ public class OrderOptModule {
 //        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compId, year, sqlNative, params));
         return re > 0 ? result.success("删除成功") : result.fail("删除失败");
     }
+
+//    static {
+//        AppConfig.initLogger();
+//        AppConfig.initialize();
+//    }
+
+//    public static void main(String[] args) {
+//        Object[] pramsObj = new Object[]{"1904260000002305", 0, "190428000010", 536862725, 3, 0, 81, 0, null,
+//                "{\"invoiceInfo\":{\"compName\":\"315诚信大药房\",\"address\":\"庐山大道156号\",\"bankers\":\"123456789123431\",\"account\":\"中国银行\",\"taxpayer\":\"\",\"tel\":\"\"},\"address\":{\"consignee\":\"六七\",\"contact\":\"18736367887\",\"compName\":\"315诚信大药房\",\"address\":\"庐山大道156号\"}}", 1, "打算大撒大", 0, 0};
+//        LocalDateTime localDateTime = LocalDateTime.now();
+//        baseDao.updateNativeSharding(0,localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
+//    }
 
 }
