@@ -220,8 +220,8 @@ public class IceRemoteUtil {
         return GsonUtils.json2List(json,String.class);
     }
 
-    //查询所有足迹
-    public static List<String> addIntegralDetail(int compid,int istatus,int integral,long busid){
+    //添加积分明细
+    public static int addIntegralDetail(int compid,int istatus,int integral,long busid){
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("compid", compid);
@@ -232,7 +232,9 @@ public class IceRemoteUtil {
 
         String json = ic.setServerAndRequest("orderServer"+index,"IntegralModule","addIntegral")
                 .settingParam(jsonObject.toJSONString()).execute();
-        return GsonUtils.json2List(json,String.class);
+        Result ret = GsonUtils.jsonToJavaBean(json,Result.class);
+        assert ret != null;
+        return ret.code;
     }
 
 
