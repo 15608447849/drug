@@ -22,6 +22,7 @@ import util.StringUtils;
 import util.TimeUtils;
 
 import java.math.BigDecimal;
+import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -50,6 +51,13 @@ public class CouponRevModule {
             "DATE_FORMAT(enddate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where cstatus = 0 ";
+
+    private final String QUERY_COUPONREV_COUNT =
+            " SELECT COUNT(0) "
+            + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
+            + " WHERE cstatus = 0 AND "
+            + " startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
+            + " AND compid = ?  ";
 
     /**
      * 查询领取的优惠券列表
@@ -519,6 +527,17 @@ public class CouponRevModule {
         return result.success(resultMap);
     }
 
+    public int couponRevCount(int compid) {
+        if (compid <= 0) {
+            return 0;
+        }
+
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                QUERY_COUPONREV_COUNT, compid);
+
+
+        return Integer.parseInt(queryResult.get(0)[0].toString());
+    }
 
     public int insertGiftCoupon(List<ActivityGiftVO> activityGiftVOList){
 
