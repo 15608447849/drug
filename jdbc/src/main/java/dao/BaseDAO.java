@@ -749,11 +749,14 @@ public class BaseDAO {
 		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(Integer.parseInt(resultSQL[0]));
 
 		//异步同步到备份库
-		SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),2);
-		synDbData.setNativeSQL(nativeSQL);
-		synDbData.setParams(params);
-		synDbData.setSharding(0);
-		Future<Object> future = ASYN_THREAD.submit(synDbData);
+		Future<Object> future = null;
+		if(SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))) {
+			SynDbData synDbData = new SynDbData(resultSQL, null, master.get(), 2);
+			synDbData.setNativeSQL(nativeSQL);
+			synDbData.setParams(params);
+			synDbData.setSharding(0);
+			future = ASYN_THREAD.submit(synDbData);
+		}
 
 		try {
 			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
@@ -767,7 +770,8 @@ public class BaseDAO {
 		} catch (DAOException e) {
 			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 			e.printStackTrace();
-			if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
+			if(SynDbLog.isBaseSqlError(e.getCause().getCause())
+			|| !SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
 				return null;
 			}
 			//写入日志
@@ -797,12 +801,17 @@ public class BaseDAO {
 		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(sharding,Integer.parseInt(resultSQL[0]));
 
 		//异步同步到备份库
-        SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),2);
-        synDbData.setNativeSQL(nativeSQL);
-        synDbData.setParams(params);
-        synDbData.setSharding(sharding);
-        synDbData.setTbSharding(tbSharding);
-        Future<Object> future = ASYN_THREAD.submit(synDbData);
+		Future<Object> future = null;
+		SynDbData synDbData = null;
+		if(SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+			synDbData = new SynDbData(resultSQL,null,master.get(),2);
+			synDbData.setNativeSQL(nativeSQL);
+			synDbData.setParams(params);
+			synDbData.setSharding(sharding);
+			synDbData.setTbSharding(tbSharding);
+			future = ASYN_THREAD.submit(synDbData);
+		}
+
 
         //异步同步到订单运营后台
         if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
@@ -828,7 +837,8 @@ public class BaseDAO {
 		} catch (DAOException e) {
 			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 			e.printStackTrace();
-			if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
+			if(SynDbLog.isBaseSqlError(e.getCause().getCause())
+					|| !SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
 				return null;
 			}
 			//写入日志
@@ -1043,12 +1053,15 @@ public class BaseDAO {
 			LogUtil.getDefaultLogger().debug("【Debug】" + Arrays.toString(objects));
 		}
 		int[] result = null;
-		SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),4);
-		synDbData.setBatchSize(batchSize);
-		synDbData.setParams(params);
-		synDbData.setNativeSQL(new String[]{nativeSQL});
-		synDbData.setSharding(0);
-		Future<Object> future = ASYN_THREAD.submit(synDbData);
+		Future<Object> future = null;
+		if(SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+			SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),4);
+			synDbData.setBatchSize(batchSize);
+			synDbData.setParams(params);
+			synDbData.setNativeSQL(new String[]{nativeSQL});
+			synDbData.setSharding(0);
+			future = ASYN_THREAD.submit(synDbData);
+		}
 		try{
 			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
@@ -1056,7 +1069,8 @@ public class BaseDAO {
 		}catch (DAOException e) {
 			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 			e.printStackTrace();
-			if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
+			if(SynDbLog.isBaseSqlError(e.getCause().getCause())
+					|| !SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
 				return null;
 			}
 			//写入日志
@@ -1086,14 +1100,16 @@ public class BaseDAO {
 			LogUtil.getDefaultLogger().debug("【Debug】" + Arrays.toString(objects));
 		}
 		int[] result = null;
-
-		SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),4);
-		synDbData.setBatchSize(batchSize);
-		synDbData.setParams(params);
-		synDbData.setSharding(sharding);
-		synDbData.setTbSharding(tbSharding);
-		synDbData.setNativeSQL(new String[]{nativeSQL});
-		Future<Object> future = ASYN_THREAD.submit(synDbData);
+		Future<Object> future = null;
+		if(SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+			SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),4);
+			synDbData.setBatchSize(batchSize);
+			synDbData.setParams(params);
+			synDbData.setSharding(sharding);
+			synDbData.setTbSharding(tbSharding);
+			synDbData.setNativeSQL(new String[]{nativeSQL});
+			future = ASYN_THREAD.submit(synDbData);
+		}
 		try{
 			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
@@ -1101,7 +1117,8 @@ public class BaseDAO {
 		}catch (DAOException e){
 			LogUtil.getDefaultLogger().error(getClass().getSimpleName(),e);
 			e.printStackTrace();
-			if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
+			if(SynDbLog.isBaseSqlError(e.getCause().getCause())
+					|| !SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
 				return null;
 			}
 			//写入日志

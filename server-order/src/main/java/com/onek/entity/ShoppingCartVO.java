@@ -1,5 +1,7 @@
 package com.onek.entity;
 
+import com.onek.calculate.entity.Gift;
+
 import java.util.List;
 
 /**
@@ -66,7 +68,7 @@ public class ShoppingCartVO {
 
     private long areano;
 
-    private long actcode;
+    private List<Long> actcode;
 
     //运费
     private double freight;
@@ -84,13 +86,7 @@ public class ShoppingCartVO {
 
     private int pstatus;
 
-    public long getActcode() {
-        return actcode;
-    }
 
-    public void setActcode(long actcode) {
-        this.actcode = actcode;
-    }
 
     public long getAreano() {
         return areano;
@@ -306,5 +302,13 @@ public class ShoppingCartVO {
 
     public void setSeckill(boolean seckill) {
         this.seckill = seckill;
+    }
+
+    public List<Long> getActcode() {
+        return actcode;
+    }
+
+    public void setActcode(List<Long> actcode) {
+        this.actcode = actcode;
     }
 }
