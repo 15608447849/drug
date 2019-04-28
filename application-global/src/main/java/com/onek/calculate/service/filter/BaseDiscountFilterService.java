@@ -41,6 +41,7 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
             for (IDiscount activity : temp) {
                 index = result.indexOf(activity);
 
+
                 if (index == -1) {
                     activity.addProduct(product);
                     result.add(activity);
@@ -51,14 +52,12 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
                     i.setActionPrice(
                             product.getSKU(), activity.getActionPrice(product.getSKU()));
                     i.addProduct(product);
+                }
 
-                    if (activity.getBRule() == 1113 && product instanceof Product) {
-                        // 秒杀特殊处理
-                        Product p = (Product) product;
-
-                        p.autoSetCurrentPrice(i.getActionPrice(p.getSKU()), p.getNums());
-                    }
-
+                if (activity.getBRule() == 1113 && product instanceof Product) {
+                    // 秒杀特殊处理
+                    Product p = (Product) product;
+                    p.autoSetCurrentPrice(activity.getActionPrice(p.getSKU()), p.getNums());
                 }
 
             }

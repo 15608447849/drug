@@ -1046,9 +1046,14 @@ public class CouponManageModule {
         page.pageIndex = pageIndex;
         Result result = new Result();
 
+
+        if(!jsonObject.has("gcode")
+                ||!jsonObject.has("compid")){
+            return result.fail("参数错误！");
+        }
+
         int compid = jsonObject.get("compid").getAsInt();
         long gcode = jsonObject.get("gcode").getAsLong();
-
         int curpageCount = 0;
         StringBuilder sbSql = new StringBuilder(QUERY_COUP_PUB);
         if(page.pageIndex > 0){

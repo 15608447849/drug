@@ -98,7 +98,7 @@ public class GenIdUtil {
 
 
     /**
-     * 年（2位）+月（2位）+日（2位）+ 自增位（8位）+ 服务器坐标（3位）+ 数据库坐标（1位）
+     * 年（2位）+月（2位）+日（2位）+ 自增位（6位）
      * @return
      */
     public static String getAsOrderId(){
