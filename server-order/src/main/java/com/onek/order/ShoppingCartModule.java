@@ -399,6 +399,7 @@ public class ShoppingCartModule {
         //获取活动
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
            List<DiscountRule> ruleList = new ArrayList<>();
+           List<Long> actCodeList = new ArrayList<>();
             for(IDiscount discount : discountList){
                 Activity activity = (Activity)discount;
                 int brule = (int)discount.getBRule();
@@ -408,15 +409,22 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
-                        shoppingCartVO.setActcode(activity.getUnqid());
+                        actCodeList.add(activity.getUnqid());
+                        if(activity.getLimits(product.getSKU()) == 0){
+                            shoppingCartVO.setStatus(3);
+                        }
+                        //判断秒杀
                         if(brule == 1113){
-                            System.out.println("活动为秒杀");
                             shoppingCartVO.setStatus(1);
                         }
                         ruleList.add(discountRule);
                     }
                 }
             }
+            if(shoppingCartVO.getInventory() == 0){
+                shoppingCartVO.setStatus(3);
+            }
+            shoppingCartVO.setActcode(actCodeList);
             shoppingCartVO.setRule(ruleList);
         }
         DiscountResult discountResult
