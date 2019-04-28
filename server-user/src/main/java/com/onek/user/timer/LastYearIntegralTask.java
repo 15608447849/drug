@@ -9,7 +9,7 @@ import util.TimeUtils;
 
 import java.util.*;
 
-public class DiscountRuleTask extends TimerTask {
+public class LastYearIntegralTask extends TimerTask {
 
     private static final String SQL = "select d.gcode,d.actcode,a.brulecode,d.cstatus from {{?"+ DSMConst.TD_PROM_ASSDRUG +"}} d " +
             "left join {{?"+ DSMConst.TD_PROM_ACT+"}} a " +
