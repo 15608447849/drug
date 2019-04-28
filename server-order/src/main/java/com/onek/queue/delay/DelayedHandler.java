@@ -30,7 +30,26 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
         this.cancelHndler.start();
     }
 
-    private long convToMillsecond(long delayTime, TIME_TYPE time_type) {
+    public static void main(String[] args) {
+        long times = 10000000000L;
+        long curr = System.currentTimeMillis();
+        for (int i = 0; i < times; i++) {
+            convToMillseconds(i, TIME_TYPE.DAY);
+        }
+
+        System.out.println("+++++++++++++++++");
+        System.out.println((System.currentTimeMillis() - curr));
+
+        curr = System.currentTimeMillis();
+        for (int i = 0; i < times; i++) {
+            convToMillsecond(i, TIME_TYPE.DAY);
+        }
+
+        System.out.println("+++++++++++++++++");
+        System.out.println((System.currentTimeMillis() - curr));
+    }
+
+    private static long convToMillseconds(long delayTime, TIME_TYPE time_type) {
         long result = delayTime;
 
         switch (time_type) {
@@ -42,6 +61,30 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
                 result *= 60;
             case SECOND:
                 result *= 1000;
+            case MILLSECOND:
+                break;
+        }
+
+        return result;
+    }
+
+    private static long convToMillsecond(long delayTime, TIME_TYPE time_type) {
+        long result = delayTime;
+
+        switch (time_type) {
+            case DAY:
+                result <<= 3;
+                result = (result << 1) + (result << 0);
+            case HOUR:
+                result <<= 2;
+                result = (result << 3) + (result << 2) + (result << 1) + (result << 0);
+            case MINUTES:
+                result <<= 2;
+                result = (result << 3) + (result << 2) + (result << 1) + (result << 0);
+            case SECOND:
+                result <<= 3;
+                result = (result << 6) + (result << 5) + (result << 4)
+                       + (result << 3) + (result << 2) + (result << 0);
             case MILLSECOND:
                 break;
         }
