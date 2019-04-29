@@ -11,9 +11,9 @@ import java.util.Date;
 public class TimeUtils {
 
     /**
-     * 一周间隔时间
+     * 一个月间隔时间
      */
-    public static final long PERIOD_WEEK = 7 * 24 * 60 * 60 * 1000;
+    public static final long PERIOD_MONTH = 30 * 24 * 60 * 60 * 1000;
 
     /**
      * 一天得间隔时间

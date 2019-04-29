@@ -38,7 +38,7 @@ public class StoreManageModule {
     public List<String> getAllUserPhone(AppContext appContext){
         List<String> list = new ArrayList<>();
         try {
-        String selectSql = "SELECT uphone FROM {{?"+ D_SYSTEM_USER +"}} as a INNER JOIN {{?"+D_COMP+"}} AS b ON a.cid=b.cid WHERE b.ctype = 0";
+            String selectSql = "SELECT uphone FROM {{?"+ D_SYSTEM_USER +"}} as a INNER JOIN {{?"+D_COMP+"}} AS b ON a.cid=b.cid WHERE b.ctype = 0";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
             for (Object[] row : lines){
                 String val = StringUtils.checkObjectNull(row[0],"");
@@ -69,3 +69,4 @@ public class StoreManageModule {
         return list;
     }
 }
+

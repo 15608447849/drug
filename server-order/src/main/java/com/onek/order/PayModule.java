@@ -5,7 +5,6 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.ESConstant;
-import com.onek.consts.IntegralConstant;
 import com.onek.consts.MessageEvent;
 import com.onek.context.AppContext;
 import com.onek.entity.DelayedBase;
@@ -90,13 +89,6 @@ public class PayModule {
             + " values(?,?,?,?,?,"
             + "?,?,0)";
 
-    private static String INSERT_INTEGRAL_DETAIL_SQL = "insert into {{?"+ DSMConst.TD_INTEGRAL_DETAIL + "}} " +
-            "(unqid,compid,istatus,integral,busid,createdate,createtime,cstatus) values(?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";
-
-
-    private static final String UPD_ASAPP_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set cstatus=cstatus&~1 "
-            + " where cstatus&1>0 and asno=? ";
-
     @UserPermission(ignore = true)
     public Result showPayInfo(AppContext appContext){
         String json = appContext.param.json;
@@ -143,7 +135,7 @@ public class PayModule {
 
             JSONObject r = new JSONObject();
             r.put("payamt", payamt);
-//            r.put("afsano", GenIdUtil.getAsOrderId());
+            r.put("afsano", GenIdUtil.getAsOrderId());
 
             return  new Result().success(r);
         }else{
@@ -486,9 +478,7 @@ public class PayModule {
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid, TimeUtils.getCurrentYear(), sqlNative, params));
-        if(b){
-            baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_SQL, afsano);
-        }
+
         return b;
     }
 
@@ -600,12 +590,6 @@ public class PayModule {
                         System.out.println("## 生成一块物流订单失败 ####");
                     }
                 }
-
-                long unqid = GenIdUtil.getUnqId();
-                int payamt = MathUtil.exactDiv(result[0].getFreight(), 100).intValue();
-                int code = IceRemoteUtil.addPoint(compid, payamt);
-                if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_ORDER_GIVE, payamt, orderno,0 });
-
             }
 
         }
@@ -652,7 +636,6 @@ public class PayModule {
                 try{
                     RedisOrderUtil.addOrderNumByCompid(compid);
                 }catch (Exception e){}
-
             }
 
         }

@@ -79,25 +79,22 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     @Override
     public void online(Identity identity, Current __current) {
         pool.post(()->{
-            clientOnline(identity,__current);
+            clientOnile(identity,__current);
         });
     }
 
-    private void clientOnline(Identity identity, Current __current) {
-        pool.post(()->{
-            try {
-                Ice.ObjectPrx base = __current.con.createProxy(identity);
-                String identityName = communicator.identityToString(identity);
-                PushMessageClientPrx client = PushMessageClientPrxHelper.uncheckedCast(base);
-                addClient(identityName,client);
-                communicator.getLogger().print(Thread.currentThread()+" , "+"添加客户端,id = "+ identityName );
-                //检测是否存在可推送的消息
-                checkOfflineMessageFromDbByIdentityName(identityName);
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        });
-
+    private void clientOnile(Identity identity,Current __current) {
+        try {
+            Ice.ObjectPrx base = __current.con.createProxy(identity);
+            String identityName = communicator.identityToString(identity);
+            PushMessageClientPrx client = PushMessageClientPrxHelper.uncheckedCast(base);
+            _clientsMaps.put(identityName,client);
+            communicator.getLogger().print(Thread.currentThread()+" , "+"添加客户端,id = "+ identityName );
+            //异步检测是否存在可推送的消息
+            checkOfflineMessageFromDbByIdentityName(identityName);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Override
@@ -107,12 +104,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         });
     }
 
-    private synchronized void addClient(String identityName, PushMessageClientPrx clientPrx){
-        _clientsMaps.put(identityName,clientPrx);
-        communicator.getLogger().print(Thread.currentThread()+" , "+"添加客户端,id = "+ identityName );
-    }
-
-    private synchronized void removeClient(String identityName) {
+    private void removeClient(String identityName) {
         _clientsMaps.remove(identityName);
         communicator.getLogger().print(Thread.currentThread()+" , "+"移除客户端,id = "+ identityName );
     }
@@ -158,8 +150,8 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                     }
                 }
         } catch (Exception e) {
-
-            communicator.getLogger().error(Thread.currentThread()+" , "+"发送失败,id =  '"+message.identityName+"' msg:"+message.content+" ,错误原因:"+ e);
+            e.printStackTrace();
+            communicator.getLogger().print(Thread.currentThread()+" , "+"发送失败,id =  '"+message.identityName+"' msg:"+message.content);
         }
         return false;
     }
@@ -219,7 +211,6 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     }
 
 
-    //消息发送线程
     private Runnable pushRunnable() {
         return () -> {
             while (!communicator.isShutdown()){
@@ -240,8 +231,6 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         };
     }
 
-
-
     @Override
     public void run() {
         //循环检测 -保活
@@ -261,7 +250,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                         prx.ice_ping();
                     } catch (Exception e) {
                         iterator.remove();
-//                        communicator.getLogger().print(Thread.currentThread()+" , "+"@offline client :"+ communicator.identityToString(prx.ice_getIdentity()));
+                        communicator.getLogger().print(Thread.currentThread()+" , "+"@offline client :"+ communicator.identityToString(prx.ice_getIdentity()));
                     }
                 }
             } catch (Exception e) {

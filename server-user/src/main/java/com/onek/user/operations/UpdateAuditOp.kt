@@ -71,7 +71,7 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
                     giftPoints(companyId!!.toInt())
                 }
                 if(auditStatus == 512) IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_FAILURE,auditCause)
-               return Result().success("审核保存提交成功")
+                return Result().success("审核保存提交成功")
             }
         }
         return Result().fail("审核修改失败")
