@@ -39,7 +39,7 @@ public class QualFilter extends BaseFilter {
         try {
             Activity act = (Activity) activity;
 
-            int qualCode = act.getQualcode();
+            int qualCode   = act.getQualcode();
             long qualValue = act.getQualvalue();
 
             switch (qualCode) {
@@ -53,7 +53,8 @@ public class QualFilter extends BaseFilter {
                     result = getCurrentLV() < qualValue;
                     break;
                 case AREA:
-                    result = qualValue != 0 && !AreaUtil.isChildren(qualValue, getCurrentArea());
+                    result = qualValue != 0
+                            && (qualValue == getCurrentArea() || !AreaUtil.isChildren(qualValue, getCurrentArea()));
                     break;
                 default:
                     break;
