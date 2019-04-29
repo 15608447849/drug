@@ -114,8 +114,13 @@ public class PayModule {
             double freight = result[0].getFreight() > 0 ? MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue() : 0;
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
 
+            double money = MathUtil.exactAdd(payamt, freight).doubleValue();
+
+            if(money <= 0){
+                return new Result().fail("支付金额不能小于0!");
+            }
             JSONObject r = new JSONObject();
-            r.put("payamt", MathUtil.exactAdd(payamt, freight));
+            r.put("payamt", money);
             r.put("odate", result[0].getOdate());
             r.put("otime", result[0].getOtime());
             r.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
@@ -141,6 +146,10 @@ public class PayModule {
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate", "otime","pdamt","freight","coupamt","distamt","rvaddno"});
 
             double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
+
+            if(payamt <= 0){
+                return new Result().fail("支付金额不能小于0!");
+            }
 
             JSONObject r = new JSONObject();
             r.put("payamt", payamt);
@@ -173,6 +182,10 @@ public class PayModule {
             double freight = result[0].getFreight() > 0 ? MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue() : 0;
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
             double money = MathUtil.exactAdd(payamt, freight).doubleValue();
+
+            if(money <= 0){
+                return new Result().fail("支付金额不能小于0!");
+            }
 
             try{
                 String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", money, orderno,
@@ -211,6 +224,9 @@ public class PayModule {
 
             double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
 
+            if(payamt <= 0){
+                return new Result().fail("支付金额不能小于0!");
+            }
             try{
                 String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, afsano,
                         "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
@@ -606,7 +622,7 @@ public class PayModule {
                 }
 
                 long unqid = GenIdUtil.getUnqId();
-                int payamt = MathUtil.exactDiv(result[0].getFreight(), 100).intValue();
+                int payamt = MathUtil.exactDiv(tranOrder.getPayamt(), 100).intValue();
                 int code = IceRemoteUtil.addPoint(compid, payamt);
                 if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_ORDER_GIVE, payamt, orderno,0 });
 
