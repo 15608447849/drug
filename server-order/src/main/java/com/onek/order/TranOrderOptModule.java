@@ -1,6 +1,8 @@
 package com.onek.order;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.entity.DiscountResult;
@@ -195,24 +197,23 @@ public class TranOrderOptModule {
         List<Object[]> params = new ArrayList<>();
         List<TranOrderGoods> tranOrderGoods = new ArrayList<>();
         String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        JSONObject jsonObject = JSON.parseObject(json);
         int orderType = 0;//下单类型 0普通
-        if (jsonObject.has("orderType") && !jsonObject.get("orderType").isJsonNull()) {
-            orderType = jsonObject.get("orderType").getAsInt();
+        if (jsonObject.containsKey("orderType") && !jsonObject.getString("orderType").isEmpty()) {
+            orderType = jsonObject.getInteger("orderType");
         }
-        int placeType = jsonObject.get("placeType").getAsInt();//1、直接下单 2、购物车下单
-        JsonObject orderObj = jsonObject.get("orderObj").getAsJsonObject();
-        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
-        TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
+        int placeType = jsonObject.getInteger("placeType");//1、直接下单 2、购物车下单
+        JSONObject orderObj = jsonObject.getJSONObject("orderObj");
+        JSONArray goodsArr = jsonObject.getJSONArray("goodsArr");
+        TranOrder tranOrder = JSON.parseObject(orderObj.toJSONString(), TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
         tranOrder.setOrderno(orderNo);
-        if (!jsonObject.get("unqid").isJsonNull()) {
-            unqid = jsonObject.get("unqid").getAsLong();
+        if (!jsonObject.getString("unqid").isEmpty()) {
+            unqid = jsonObject.getLong("unqid");
         }
-        if (!jsonObject.get("coupon").isJsonNull()) {
-            coupon = jsonObject.get("coupon").getAsLong();
+        if (!jsonObject.getString("coupon").isEmpty()) {
+            coupon = jsonObject.getLong("coupon");
         }
         int pdnum = 0;
         for (int i = 0; i < goodsArr.size(); i++) {
@@ -244,8 +245,8 @@ public class TranOrderOptModule {
         } else if (orderType == 1) { // 秒杀
             //库存判断
             long actcode = 0;
-            if (jsonObject.has("actcode") && !jsonObject.get("actcode").isJsonNull()) {
-                actcode = jsonObject.get("actcode").getAsLong();
+            if (jsonObject.containsKey("actcode") && !jsonObject.getString("actcode").isEmpty()) {
+                actcode = jsonObject.getLong("actcode");
             }
             List<TranOrderGoods> goodsList = secKillStockIsEnough(actcode, tranOrderGoods);
             if (goodsList.size() != tranOrderGoods.size()) {
@@ -413,14 +414,14 @@ public class TranOrderOptModule {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             String actCodeStr = tranOrderGoods.getActcode();
             List<Long> list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i) > 0) {
+            for (Long aList : list) {
+                if (aList > 0) {
                     if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
-                            tranOrderGoods.getPnum(), list.get(i))) {
+                            tranOrderGoods.getPnum(), aList)) {
                         result = true;
                     } else {
                         GoodsStock goodsStock = new GoodsStock();
-                        goodsStock.setActCode(list.get(i));
+                        goodsStock.setActCode(aList);
                         goodsStock.setSku(tranOrderGoods.getPdno());
                         goodsStock.setStock(tranOrderGoods.getPnum());
                         goodsStockList.add(goodsStock);
@@ -431,7 +432,7 @@ public class TranOrderOptModule {
                         result = true;
                     } else {
                         GoodsStock goodsStock = new GoodsStock();
-                        goodsStock.setActCode(list.get(i));
+                        goodsStock.setActCode(aList);
                         goodsStock.setSku(tranOrderGoods.getPdno());
                         goodsStock.setStock(tranOrderGoods.getPnum());
                         goodsStockList.add(goodsStock);
@@ -698,5 +699,4 @@ public class TranOrderOptModule {
             this.actCode = actCode;
         }
     }
-
 }

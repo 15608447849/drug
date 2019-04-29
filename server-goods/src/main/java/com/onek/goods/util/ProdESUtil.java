@@ -74,7 +74,7 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
             data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
             data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus() == null ? 0 : prodVO.getProdstatus());
-            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus());
+            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus() == null ? 256 : prodVO.getSkuCstatus());
             data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
             data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
             data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
@@ -120,6 +120,7 @@ public class ProdESUtil {
             String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"").trim();
 
             prodVO.clone();
+            GetResponse getResponse = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             Map<String, Object> data = new HashMap<>();
             data.put(ESConstant.PROD_COLUMN_SKU, sku);
             data.put(ESConstant.PROD_COLUMN_CONTENT, keyword);
@@ -129,14 +130,13 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_MANUNAME, manuname);
             data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
             data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
-            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus() == null ? 0 : prodVO.getProdstatus());
-            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus());
+            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_PRODSTATUS));
+            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_SKUCSTATUS));
             data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
             data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
             data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
-            GetResponse getResponse = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             data.put(ESConstant.PROD_COLUMN_TIME, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_TIME).toString());
             UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             if(response == null || RestStatus.OK != response.status()) {
