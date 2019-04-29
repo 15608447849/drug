@@ -176,14 +176,40 @@ public class IceRemoteUtil {
     }
 
     public static void sendTempMessageToClient(int compid,int tempNo,String... params){
-        String message = "push:"+tempNo;
-        if (params!=null && params.length>0){
-            message+="#"+ String.join("#",params);
-        }
-        sendMessageToClient(compid,message);
+        sendMessageToClient(compid,SmsTempNo.genPushMessageBySystemTemp(tempNo,params));
     }
 
+    //发送消息到全部客户端
+    public static void sendMessageToAllClient(String message){
+        List<String> list = getAllCompId();
+        for (String compid : list)
+            try {
+                sendMessageToClient(Integer.parseInt(compid), message);
+            } catch (NumberFormatException e) {
+            }
+    }
 
+    //发送消息到全部客户端
+    public static void sendMessageToAllClient(int tempNo,String... params){
+        List<String> list = getAllCompId();
+        for (String compid : list)
+            try {
+                sendMessageToClient(Integer.parseInt(compid), SmsTempNo.genPushMessageBySystemTemp(tempNo,params));
+            } catch (NumberFormatException ignored) {
+            }
+    }
+
+    //获取全部的公司码ID
+    public static List<String> getAllCompId() {
+        String json = ic.setServerAndRequest("userServer","StoreManageModule","getAllCompId").execute();
+        return GsonUtils.json2List(json,String.class);
+    }
+
+    //获取全部门店用户手机号码
+    public static List<String> getAllStorePhone() {
+        String json = ic.setServerAndRequest("userServer","StoreManageModule","getAllUserPhone").execute();
+        return GsonUtils.json2List(json,String.class);
+    }
 
     //查询所有足迹
     public static List<String> queryFootprint(int compid){
@@ -194,8 +220,22 @@ public class IceRemoteUtil {
         return GsonUtils.json2List(json,String.class);
     }
 
+    //添加积分明细
+    public static int addIntegralDetail(int compid,int istatus,int integral,long busid){
 
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("compid", compid);
+        jsonObject.put("istatus", istatus);
+        jsonObject.put("integral", integral);
+        jsonObject.put("busid", busid);
+        int index = getOrderServerNo(compid);
 
+        String json = ic.setServerAndRequest("orderServer"+index,"IntegralModule","addIntegral")
+                .settingParam(jsonObject.toJSONString()).execute();
+        Result ret = GsonUtils.jsonToJavaBean(json,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
 
 
     public static int addPoint(int compid, int point){
@@ -236,9 +276,6 @@ public class IceRemoteUtil {
         }
         return null;
     }
-
-
-
 
 
 

@@ -10,6 +10,7 @@ public class ActStockCheckTimer {
 
     static {
         Calendar calendar = Calendar.getInstance();
+        calendar.set(Calendar.MINUTE, calendar.get(Calendar.MINUTE) + 1);
         Date date  =calendar.getTime(); //第一次执行定时任务的时间
         Timer timer = new Timer();
         ActStockCheckTask task = new ActStockCheckTask();

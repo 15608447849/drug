@@ -16,7 +16,8 @@ public class BackOrderOptModule {
     private static final String QUERY_ASAPP_BASE =
             " SELECT orderno, pdno, asno, compid, astype, "
             + " gstatus, reason, ckstatus, ckdate, cktime, "
-            + " ckdesc, invoice, cstatus, apdata, aptime "
+            + " ckdesc, invoice, cstatus, apdata, aptime, "
+            + " apdesc, checker, refamt, asnum "
             + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
             + " WHERE cstatus&1 = 0 ";
 
@@ -101,6 +102,10 @@ public class BackOrderOptModule {
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, AsAppVO.class);
 
         return new Result().setQuery(result, pageHolder);
+    }
+
+    public Result getAppDetail(AppContext appContext) {
+        return queryAsapp(appContext);
     }
 
 }

@@ -4,10 +4,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
-import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
-import com.onek.util.prod.ProdEntity;
-import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
@@ -16,7 +13,9 @@ import util.MathUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 
 public class BackOrderInfoModule {
     private static final String QUERY_TRAN_ORDER_PARAMS =
@@ -26,23 +25,12 @@ public class BackOrderInfoModule {
                     + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
                     + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address ";
 
-    private static final String QUERY_TRAN_GOODS_PARAMS =
-            " goods.unqid, goods.orderno, goods.compid, goods.pdno, goods.pdprice, "
-                    + " goods.distprice, goods.payamt, goods.coupamt, goods.promtype, goods.pkgno,  "
-                    + " goods.asstatus, goods.createdate, goods.createtime, goods.cstatus, goods.pnum ";
-
     private static final String FROM_BK_ORDER = " {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} ord ";
-    private static final String FROM_BK_GOODS = " {{?" + DSMConst.TD_BK_TRAN_GOODS + "}} goods ";
 
     private static final String QUERY_ORDER_BASE =
             " SELECT " + QUERY_TRAN_ORDER_PARAMS
                     + " FROM " + FROM_BK_ORDER
                     + " WHERE 1=1 ";
-
-    private static final String QUERY_ORDER_GOODS =
-            " SELECT " + QUERY_TRAN_GOODS_PARAMS
-                    + " FROM " + FROM_BK_GOODS
-                    + " WHERE goods.orderno = ? ";
 
     public Result queryOrders(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -124,7 +112,7 @@ public class BackOrderInfoModule {
                 tranOrder.setCusname(compMap.get("storeName"));
             }
 
-            tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
+//            tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
             tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
             tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
             tranOrder.setPdamt(MathUtil.exactDiv(tranOrder.getPdamt(), 100).doubleValue());
@@ -134,39 +122,4 @@ public class BackOrderInfoModule {
 
         return result;
     }
-
-    private List<TranOrderGoods> getOrderGoods(String orderno, int compid) {
-        if (!StringUtils.isBiggerZero(orderno)) {
-            return Collections.EMPTY_LIST;
-        }
-
-        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                compid, TimeUtils.getCurrentYear(), QUERY_ORDER_GOODS, orderno);
-
-        TranOrderGoods[] result = new TranOrderGoods[queryResult.size()];
-
-        BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrderGoods.class);
-
-        ProdEntity prod;
-        for (TranOrderGoods tranOrderGoods : result) {
-            prod = ProdInfoStore.getProdBySku(tranOrderGoods.getPdno());
-            tranOrderGoods.setPayamt(MathUtil.exactDiv(tranOrderGoods.getPayamt(), 100).doubleValue());
-            tranOrderGoods.setPdprice(MathUtil.exactDiv(tranOrderGoods.getPdprice(), 100).doubleValue());
-            tranOrderGoods.setDistprice(MathUtil.exactDiv(tranOrderGoods.getDistprice(), 100).doubleValue());
-            tranOrderGoods.setCoupamt(MathUtil.exactDiv(tranOrderGoods.getCoupamt(), 100).doubleValue());
-            tranOrderGoods.setSpu(
-                    String.valueOf(tranOrderGoods.getPdno())
-                            .substring(0, 12));
-
-            if (prod != null) {
-                tranOrderGoods.setPname(prod.getProdname());
-                tranOrderGoods.setPspec(prod.getSpec());
-                tranOrderGoods.setManun(prod.getManuName());
-            }
-
-        }
-
-        return new ArrayList<>(Arrays.asList(result));
-    }
-
 }

@@ -40,7 +40,7 @@ public class QualFilter extends BaseFilter {
             Activity act = (Activity) activity;
 
             int qualCode = act.getQualcode();
-            int qualValue = act.getQualvalue();
+            long qualValue = act.getQualvalue();
 
             switch (qualCode) {
                 case ALL:

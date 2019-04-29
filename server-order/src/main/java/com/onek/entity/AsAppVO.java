@@ -26,6 +26,12 @@ public class AsAppVO {
     private double refamt;//退款金额
     private int asnum;//退款数量
 
+    private String brandname;
+    private String manuname;
+    private String prodname;
+    private String spec;
+    private String spu;
+    private String reasonName;
 
     public String getOrderno() {
         return orderno;
@@ -169,5 +175,53 @@ public class AsAppVO {
 
     public void setAsnum(int asnum) {
         this.asnum = asnum;
+    }
+
+    public String getProdname() {
+        return prodname;
+    }
+
+    public void setProdname(String prodname) {
+        this.prodname = prodname;
+    }
+
+    public String getSpec() {
+        return spec;
+    }
+
+    public void setSpec(String spec) {
+        this.spec = spec;
+    }
+
+    public String getBrandname() {
+        return brandname;
+    }
+
+    public void setBrandname(String brandname) {
+        this.brandname = brandname;
+    }
+
+    public String getManuname() {
+        return manuname;
+    }
+
+    public void setManuname(String manuname) {
+        this.manuname = manuname;
+    }
+
+    public String getSpu() {
+        return spu;
+    }
+
+    public void setSpu(String spu) {
+        this.spu = spu;
+    }
+
+    public String getReasonName() {
+        return reasonName;
+    }
+
+    public void setReasonName(String reasonName) {
+        this.reasonName = reasonName;
     }
 }
