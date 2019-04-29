@@ -30,7 +30,7 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
         this.cancelHndler.start();
     }
 
-    private long convToMillsecond(long delayTime, TIME_TYPE time_type) {
+    private static long convToMillsecond(long delayTime, TIME_TYPE time_type) {
         long result = delayTime;
 
         switch (time_type) {
@@ -48,6 +48,30 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
 
         return result;
     }
+
+//    private static long convToMillsecond(long delayTime, TIME_TYPE time_type) {
+//        long result = delayTime;
+//
+//        switch (time_type) {
+//            case DAY:
+//                result <<= 3;
+//                result = (result << 1) + (result << 0);
+//            case HOUR:
+//                result <<= 2;
+//                result = (result << 3) + (result << 2) + (result << 1) + (result << 0);
+//            case MINUTES:
+//                result <<= 2;
+//                result = (result << 3) + (result << 2) + (result << 1) + (result << 0);
+//            case SECOND:
+//                result <<= 3;
+//                result = (result << 6) + (result << 5) + (result << 4)
+//                       + (result << 3) + (result << 2) + (result << 0);
+//            case MILLSECOND:
+//                break;
+//        }
+//
+//        return result;
+//    }
 
     protected void execute(Runnable runnable) {
         this.executor.execute(runnable);

@@ -31,11 +31,11 @@ public class ArrayUtil {
     }
 
     public static <T> T[] concat(T[] front, T[] tail) {
-        if (front.length == 0) {
+        if (isEmpty(front)) {
             return tail;
         }
 
-        if (tail.length == 0) {
+        if (isEmpty(tail)) {
             return front;
         }
 
