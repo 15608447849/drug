@@ -22,7 +22,7 @@ public class IntegralResetTask extends TimerTask {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.MONTH, Calendar.MARCH);
         calendar.set(Calendar.DAY_OF_MONTH, 1);
-        if(TimeUtils.getCurrentDate() != TimeUtils.date_yMd_2String(calendar.getTime())){
+        if(TimeUtils.getCurrentDate() == TimeUtils.date_yMd_2String(calendar.getTime())){
             int result = BaseDAO.getBaseDAO().updateNative(SQL, new Object[]{});
 
             System.out.println("#### [" + TimeUtils.getCurrentDate() + "] reset intergal result:[" + result + "] ########");

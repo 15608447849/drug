@@ -18,7 +18,7 @@ public class ExpireIntegralRemindTask extends TimerTask {
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.MONTH, Calendar.FEBRUARY);
         calendar.set(Calendar.DAY_OF_MONTH, 1);
-        if(TimeUtils.getCurrentDate() != TimeUtils.date_yMd_2String(calendar.getTime())){
+        if(TimeUtils.getCurrentDate() == TimeUtils.date_yMd_2String(calendar.getTime())){
 
         }
     }
