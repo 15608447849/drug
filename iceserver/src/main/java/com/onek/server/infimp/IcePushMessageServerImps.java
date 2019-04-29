@@ -261,7 +261,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                         prx.ice_ping();
                     } catch (Exception e) {
                         iterator.remove();
-//                        communicator.getLogger().print(Thread.currentThread()+" , "+"@offline client :"+ communicator.identityToString(prx.ice_getIdentity()));
+                        communicator.getLogger().print(Thread.currentThread()+" , "+"客户端移除: "+ communicator.identityToString(prx.ice_getIdentity())+",当前在线客户端数:"+_clientsMaps.size());
                     }
                 }
             } catch (Exception e) {

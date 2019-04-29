@@ -37,9 +37,8 @@ public class PushMessageModule {
             List<String> list = new ArrayList<>();
             for (Object[] arr: lines){
                 String msg = StringUtils.obj2Str(arr[0]);
-                appContext.logger.print(msg);
                 if (StringUtils.isEmpty(msg) || !msg.startsWith("push")) continue;
-                list.add(convertPushMessage(msg));
+                list.add(convertPushMessage("",msg));
             }
         result.success(list);
         } catch (Exception e) {
