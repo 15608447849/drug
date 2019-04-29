@@ -38,11 +38,12 @@ public class StoreManageModule {
     public List<String> getAllUserPhone(AppContext appContext){
         List<String> list = new ArrayList<>();
         try {
-            String selectSql = "SELECT uphone FROM {{?"+ D_SYSTEM_USER +"}} as a INNER JOIN {{?"+D_COMP+"}} AS b ON a.cid=b.cid WHERE b.ctype = 0";
+        String selectSql = "SELECT uphone FROM {{?"+ D_SYSTEM_USER +"}} as a INNER JOIN {{?"+D_COMP+"}} AS b ON a.cid=b.cid WHERE b.ctype = 0";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
             for (Object[] row : lines){
-                String val = StringUtils.checkObjectNull(row[0],"");
-                if (!StringUtils.isEmpty(val)) list.add(val+"");
+                int cid = StringUtils.checkObjectNull(row[0],0);
+                if (cid > 0)
+                    list.add(cid+"");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -57,11 +58,12 @@ public class StoreManageModule {
     public List<String> getAllCompId(AppContext appContext){
         List<String> list = new ArrayList<>();
         try {
-            String selectSql = "SELECT cid FROM {{?"+D_COMP+"}} WHERE ctype = 0";
+            String selectSql = "SELECT cid {{?"+D_COMP+" WHERE ctype = 0";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
             for (Object[] row : lines){
-                String val = StringUtils.checkObjectNull(row[0],"");
-                if (!StringUtils.isEmpty(val)) list.add(val+"");
+                int cid = StringUtils.checkObjectNull(row[0],0);
+                if (cid > 0)
+                    list.add(cid+"");
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -69,4 +71,3 @@ public class StoreManageModule {
         return list;
     }
 }
-
