@@ -74,7 +74,7 @@ public class OrderOptModule {
     //查询售后详情
     private static final String QUERY_ASAPP_INFO_SQL = " select asapp.orderno,asapp.compid,asapp.asno,asapp.pdno,"+
             "asapp.asnum,goods.pdprice/100 spdprice,"+
-            "goods.payamt/100 spayamt,distprice/100 sdistprice,goods.pnum,astype,reason,apdesc,refamt,"+
+            "goods.payamt/100 spayamt,distprice/100 sdistprice,goods.pnum,astype,reason,apdesc,refamt/100 refamt,"+
             "ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,refamt/100 refamt "+
             " from {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp inner join {{?"+
             DSMConst.TD_BK_TRAN_GOODS+"}} goods on asapp.orderno = goods.orderno and "+
@@ -342,7 +342,7 @@ public class OrderOptModule {
      * @exception
      * @version 1.1.1
      **/
-    @UserPermission(ignore = true)
+    @UserPermission(ignore = false)
     public Result afterSaleReview(AppContext appContext) {
         String json = appContext.param.json;
         Result result = new Result();

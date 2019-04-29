@@ -1,5 +1,6 @@
 package com.onek.order;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -420,11 +421,14 @@ public class PayModule {
             TranOrderGoods[] tranOrderGoods = getGoodsArr(orderno, compid);
             for (TranOrderGoods tranOrderGood : tranOrderGoods) {
                 paramsOne.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPnum(), tranOrderGood.getPdno()});
-                paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(),tranOrderGood.getActCode()});
+                List<Long> list = JSON.parseArray(tranOrderGood.getActcode()).toJavaList(Long.class);
+                for (Long aList : list) {
+                    paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
+                }
             }
             baseDao.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
             //更新活动库存
-            baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, tranOrderGoods.length);
+            baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size());
 
             DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
         }
