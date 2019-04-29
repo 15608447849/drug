@@ -90,9 +90,15 @@ public class OrderOptModule {
             " inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders" +
             " on orders.orderno = goods.orderno where asno != 0 ";
 
+    //查询发票售后详情
+    private static final String QUERY_ASAPP_INVOICE_INFO_SQL = "  select asapp.orderno,asapp.compid,asapp.asno,asapp.pdno,asapp.asnum," +
+            "astype,reason,apdesc,refamt,ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,invoice " +
+            " from {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp  inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders " +
+            " on asapp.orderno = orders.orderno where asapp.asno = ? and asno != 0";
 
-
-
+    //查询发票售后详情
+    private static final String QUERY_GOODS_SQL = " select goods.pdno,goods.pnum,goods.pdprice,goods.distprice,goods.payamt from {{?"+
+            DSMConst.TD_BK_TRAN_GOODS+"}} goods where goods.orderno = ? and goods.compid = ?";
 
 
     /* *
@@ -459,6 +465,74 @@ public class OrderOptModule {
             }
         }
         return result.success(asAppDtVO);
+    }
+
+    /* *
+     * @description 查询售后订单详情[补开发票]
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author jiangwenguang
+     * @time  2019/4/29 17:44
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result queryAsOrderInvoiceInfo(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String asno = jsonObject.get("asno").getAsString();
+
+        List<Object[]> queryResult = baseDao.queryNativeSharding(0,
+                TimeUtils.getCurrentYear(), QUERY_ASAPP_INVOICE_INFO_SQL, asno);
+
+
+        if (queryResult.isEmpty()) {
+            return null;
+        }
+
+        AsAppDtVO[] asAppDtVOs = new AsAppDtVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, asAppDtVOs, AsAppDtVO.class,
+                new String[]{"orderno", "compid", "asno", "pdno", "asnum",
+                        "astype", "reason", "apdesc", "refamt", "ckstatus", "ckdesc", "gstatus",
+                        "ckdate", "cktime", "apdata", "aptime", "cstatus", "invoice"});
+
+        JSONObject resultObject = new JSONObject();
+        AsAppDtVO asAppDtVO = asAppDtVOs[0];
+        if (asAppDtVO != null) {
+            asAppDtVO.setPaytype(2);
+            resultObject.put("asapp", asAppDtVO);
+            queryResult = baseDao.queryNativeSharding(0,
+                    TimeUtils.getCurrentYear(), QUERY_GOODS_SQL, asAppDtVO.getOrderno(), asAppDtVO.getCompid());
+            List<TranOrderGoods> list = new ArrayList<>();
+            if(queryResult != null && queryResult.size() > 0){
+                for(Object[] arr : queryResult){
+                    TranOrderGoods goods = new TranOrderGoods();
+                    goods.setPdno(Long.parseLong(arr[0].toString()));
+                    ProdEntity prodBySku = null;
+                    try {
+                        prodBySku = ProdInfoStore.getProdBySku(goods.getPdno());
+
+                        if (prodBySku != null) {
+                            goods.setPname(prodBySku.getProdname());
+                            goods.setPspec(prodBySku.getSpec());
+                            goods.setManun(prodBySku.getManuName());
+                        }
+                    } catch (Exception e) {
+                        e.printStackTrace();
+                    }
+                    goods.setPnum(Integer.parseInt(arr[1].toString()));
+                    goods.setPdprice(MathUtil.exactDiv(Double.parseDouble(arr[2].toString()), 100).doubleValue());
+                    goods.setDistprice(MathUtil.exactDiv(Double.parseDouble(arr[3].toString()), 100).doubleValue());
+                    goods.setPayamt(MathUtil.exactDiv(Double.parseDouble(arr[4].toString()), 100).doubleValue());
+                    list.add(goods);
+                }
+            }
+            resultObject.put("goodslist", list);
+
+        }
+        return result.success(resultObject);
     }
 
 

@@ -36,7 +36,6 @@ public class AsAppDtVO {
     private String spec; //商品规格
     private double acprice; //实付单价
     private double distprice; //实付优惠单价
-
     public double getDistprice() {
         return distprice;
     }
