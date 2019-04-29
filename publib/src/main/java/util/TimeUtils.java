@@ -32,6 +32,15 @@ public class TimeUtils {
         startDT.add(Calendar.DAY_OF_MONTH, num);
         return startDT.getTime();
     }
+
+    /**添加x天*/
+    public static Date subtractDay(Date date, int num) {
+        Calendar startDT = Calendar.getInstance();
+        startDT.setTime(date);
+        startDT.add(Calendar.DAY_OF_MONTH, -num);
+        return startDT.getTime();
+    }
+
     /**string -> date ,  参数:"11:00:00"  如果小于当前时间,向后加一天*/
     public static Date str_Hms_2Date(String timeString) {
         try {

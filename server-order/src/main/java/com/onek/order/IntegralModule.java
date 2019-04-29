@@ -2,6 +2,8 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSONArray;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -36,12 +38,15 @@ public class IntegralModule {
     /**
      * 签到
      * */
-    @UserPermission(ignore = true)
+    @UserPermission(ignore = false, needAuthenticated = true)
     public Result signIn(AppContext appContext){
 
 //        int compid = 536862720;
         UserSession userSession = appContext.getUserSession();
-        int compid = userSession.compId;
+        int compid = userSession != null ? userSession.compId : 0;
+        if(compid <= 0){
+            return new Result().fail("获取企业码失败!");
+        }
         List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_SIGNIN_BY_COMP, new Object[]{ compid});
         int times = 0;
         String date = "";
@@ -78,6 +83,38 @@ public class IntegralModule {
         if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_SIGNIN, integral, 0,0 });
 
         return new Result().success(null);
+    }
+
+    @UserPermission(ignore = false, needAuthenticated = true)
+    public Result getHisSignIn(AppContext appContext){
+
+        UserSession userSession = appContext.getUserSession();
+        int compid = userSession != null ? userSession.compId : 0;
+        if(compid <= 0){
+            return new Result().fail("获取企业码失败!");
+        }
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_SIGNIN_BY_COMP, new Object[]{ compid});
+        int times = 0;
+        String date = "";
+        JSONArray dates = new JSONArray();
+        if(list != null && list.size() > 0){
+            date = list.get(0)[0].toString();
+            times = Integer.parseInt(list.get(0)[1].toString());
+            dates.add(date);
+            if(times > 1){
+                for(int i = 1; i<times;i++){
+                    Date d = TimeUtils.subtractDay(TimeUtils.str_yMd_2Date(date), 1);
+                    date = TimeUtils.date_yMd_2String(d);
+                    dates.add(date);
+                }
+            }
+
+
+        }
+        JSONObject result = new JSONObject();
+        result.put("times", times);
+        result.put("dates", dates);
+        return new Result().success(result);
     }
 
     @UserPermission(ignore = true)
