@@ -61,8 +61,12 @@ public abstract class IceBoxServerAbs implements Service {
         initList.sort(Comparator.comparingInt(IIceInitialize::priority));
         StringBuilder sb = new StringBuilder();
         for (IIceInitialize o : initList){
-            o.startUp(serverName);
-            sb.append(" ").append(o.getClass().getSimpleName()).append("\t").append(">");
+            try {
+                o.startUp(serverName);
+            } catch (Exception e) {
+                _communicator.getLogger().error(o.getClass().getSimpleName()+" 初始化错误:"+ e);
+            }
+            sb.append(" ").append(o.getClass().getSimpleName()).append(" ").append(">");
         }
         sb.deleteCharAt(sb.length()-1);
         _communicator.getLogger().print(sb.toString());

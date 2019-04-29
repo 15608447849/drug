@@ -28,7 +28,6 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
     var auditCause:String? = null //审核失败原因
     var auditStatus:Int = 0; //审核状态
 
-    private val memProxy = CacheProxyInstance.createPartInstance(MemberImpl()) as IRedisPartCache
 
     override fun execute(context: AppContext?): Result {
 
@@ -80,9 +79,10 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
     //赠送积分
     private fun giftPoints(companyId: Int) {
-        var point = 888;
-        val memberVO = memProxy.getId(companyId) as MemberEntity
-        if (memberVO != null) {
+        try {
+            val memProxy = CacheProxyInstance.createPartInstance(MemberImpl()) as IRedisPartCache
+            val point = 888;
+            val memberVO = memProxy.getId(companyId) as MemberEntity
             val accupoints = memberVO.accupoints
             val balpoints = memberVO.balpoints
 
@@ -90,10 +90,11 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
             updateMemberVO.compid = companyId
             updateMemberVO.accupoints = accupoints + point
             updateMemberVO.balpoints = balpoints + point
-            var r = memProxy.update(companyId, updateMemberVO)
+            val r = memProxy.update(companyId, updateMemberVO)
             if(r > 0){
                 IceRemoteUtil.addIntegralDetail(companyId, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
             }
+        } catch (e: Exception) {
         }
     }
 

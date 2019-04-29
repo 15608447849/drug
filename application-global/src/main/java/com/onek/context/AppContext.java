@@ -104,13 +104,17 @@ public class AppContext extends IceContext {
             PushMessageClientPrx clientPrx = map.get(key);
             if (clientPrx == null) {
                 result.setRequestOnline();
-            } else {
-                try {
-                    clientPrx.ice_ping();
-                } catch (Exception e) {
-                    result.setRequestOnline();
-                }
             }
+//            else {
+//                try {
+//                    logger.print(key+" 存在在线长连接 "+clientPrx+", 测试ping...");
+//                    clientPrx.ice_ping();
+//                    logger.print(key+" 存在在线长连接 "+clientPrx+", 测试ping...over");
+//                } catch (Exception e) {
+//                    e.printStackTrace();
+//                    result.setRequestOnline();
+//                }
+//            }
         } catch (Exception e) {
             e.printStackTrace();
         }
