@@ -105,16 +105,6 @@ public class AppContext extends IceContext {
             if (clientPrx == null) {
                 result.setRequestOnline();
             }
-//            else {
-//                try {
-//                    logger.print(key+" 存在在线长连接 "+clientPrx+", 测试ping...");
-//                    clientPrx.ice_ping();
-//                    logger.print(key+" 存在在线长连接 "+clientPrx+", 测试ping...over");
-//                } catch (Exception e) {
-//                    e.printStackTrace();
-//                    result.setRequestOnline();
-//                }
-//            }
         } catch (Exception e) {
             e.printStackTrace();
         }

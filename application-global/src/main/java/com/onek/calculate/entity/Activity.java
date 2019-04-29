@@ -303,7 +303,7 @@ public class Activity extends AccurateMath implements IDiscount {
         return incpriority;
     }
 
-    public long getQualcode() {
+    public int getQualcode() {
         return qualcode;
     }
 

@@ -151,8 +151,15 @@ public class ServerImp extends IcePushMessageServerImps {
     }
     //打印结果
     private String printResult(Object result) {
-        String resultString = GsonUtils.javaBeanToJson(result);
-        logger.print("↓↓↓↓ 返 ↓↓ 回 ↓↓ 值↓↓↓↓\n\t"+resultString ); //+"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-"
+        String resultString;
+        if (result instanceof String){
+            resultString = String.valueOf(result);
+        }else{
+            resultString = GsonUtils.javaBeanToJson(result);
+        }
+        logger.print("↓↓↓↓ 返 ↓↓ 回 ↓↓ 值↓↓↓↓\n\t"
+                +resultString );
+        //+"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-"
         return resultString;
     }
 

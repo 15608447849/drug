@@ -130,9 +130,8 @@ public class ProdModule {
 
 
         List<ProdVO> prodList = getFilterProdsCommon(result1,  "",1, pageIndex, pageSize);
-        List<ProdVO> filterProdList = loadProd(prodList, 128);
 
-        return new Result().success(filterProdList);
+        return new Result().success(prodList);
     }
 
     @UserPermission(ignore = true)

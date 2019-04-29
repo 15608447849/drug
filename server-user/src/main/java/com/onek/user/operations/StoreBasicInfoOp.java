@@ -9,6 +9,7 @@ import util.GsonUtils;
 import java.math.BigDecimal;
 import java.util.List;
 
+import static com.onek.util.IceRemoteUtil.getCompleteName;
 import static util.StringUtils.checkObjectNull;
 
 /**
@@ -76,6 +77,7 @@ public class StoreBasicInfoOp {
         info.storeName = checkObjectNull(rows[2],"");
         info.address = checkObjectNull(rows[3],"未设置");
         info.addressCode = checkObjectNull(rows[4],0L);
+        info.addressCodeStr = getCompleteName(checkObjectNull(rows[4],""));
         info.latitude = new BigDecimal(checkObjectNull(rows[5],"0.00")); //纬度
         info.longitude = new BigDecimal(checkObjectNull(rows[6],"0.00")); //精度
 

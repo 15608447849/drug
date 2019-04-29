@@ -112,7 +112,7 @@ public class PushMessageMySqlImps implements IPushMessageStore {
 
 
 
-    public static String convertPushMessage(String message){
+    public static String convertPushMessage(String prev,String message){
 
         if (message.startsWith("push")) {
             String arrayStr = message.split(":")[1];
@@ -123,7 +123,7 @@ public class PushMessageMySqlImps implements IPushMessageStore {
                 array = new String[]{arrayStr};
             }
             String msg = IceRemoteUtil.getMessageByNo(array);
-            if (!StringUtils.isEmpty(msg)) return msg;
+            if (!StringUtils.isEmpty(msg)) return prev+msg;
         }
         return message;
     }
@@ -131,7 +131,7 @@ public class PushMessageMySqlImps implements IPushMessageStore {
     @Override
     public String convertMessage(IPMessage message) {
         //规则格式:  push:模板序列#参数内容
-        return convertPushMessage(message.content);
+        return convertPushMessage("sys:" ,message.content);
     }
 
 

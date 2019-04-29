@@ -43,13 +43,18 @@ public class IceRemoteUtil {
         return null;
     }
 
+    //地区码->地区详细名
     public static String getCompleteName(String areaCode) {
         try {
-            return ic.setServerAndRequest("globalServer","CommonModule","getCompleteName").setArrayParams(areaCode).execute();
+            return ic.setServerAndRequest("globalServer","CommonModule","getCompleteName").setArrayParams(areaCode).execute().replace("\"","").trim();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    public static void main(String[] args) {
+
     }
 
     public static ProdEntity getProdBySku(long sku) {
@@ -69,12 +74,13 @@ public class IceRemoteUtil {
         try {
             return ic.setServerAndRequest("globalServer","MessageModule","convertMessage")
                     .settingParam(args)
-                    .execute();
+                    .execute().replace("\"","").trim();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
+
 
     public static String getMessageByNo(int tempNo,String... params){
         try {

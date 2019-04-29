@@ -16,6 +16,7 @@ public class StoreBasicInfo {
     public String authenticationMessage = "未关联";//认证消息
     public String address;//营业执照地址
     public Long addressCode;//地区码
+    public String addressCodeStr;//地区码对应的详细信息
     public BigDecimal longitude;//营业执照地址纬度
     public BigDecimal latitude;//营业执照地址经度
 

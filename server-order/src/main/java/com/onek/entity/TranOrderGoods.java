@@ -22,12 +22,13 @@ public class TranOrderGoods {
     private String createtime;//创建时间
     private int cstatus;
     private int pnum;//商品数量
-    private long actCode;//活动码
+    private String actcode;//活动码(前台传数组)
 
     private String pname;  // 商品名
     private String pspec; // 商品规格
     private String manun; // 厂商名
     private String spu; // spu
+//    private String actCodeStr;//商品参与的活动码
 
     public long getUnqid() {
         return unqid;
@@ -173,13 +174,21 @@ public class TranOrderGoods {
         this.manun = manun;
     }
 
-    public long getActCode() {
-        return actCode;
+    public String getActcode() {
+        return actcode;
     }
 
-    public void setActCode(long actCode) {
-        this.actCode = actCode;
+    public void setActcode(String actcode) {
+        this.actcode = actcode;
     }
+
+    //    public String getActCodeStr() {
+//        return actCodeStr;
+//    }
+//
+//    public void setActCodeStr(String actCodeStr) {
+//        this.actCodeStr = actCodeStr;
+//    }
 
     public String getSpu() {
         return spu;
