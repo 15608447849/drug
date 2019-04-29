@@ -47,7 +47,7 @@ public class QualFilter extends BaseFilter {
                     result = false;
                     break;
                 case ORDER_NUMS:
-                    result = getCurrentOrdNum() < qualValue;
+                    result = qualValue == 0 ? getCurrentOrdNum() > 0 : getCurrentOrdNum() < qualValue;
                     break;
                 case LV:
                     result = getCurrentLV() < qualValue;
