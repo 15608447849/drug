@@ -20,6 +20,7 @@ import util.GsonUtils;
 import util.StringUtils;
 import util.TimeUtils;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -96,7 +97,7 @@ public class IntegralModule {
         List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_SIGNIN_BY_COMP, new Object[]{ compid});
         int times = 0;
         String date = "";
-        JSONArray dates = new JSONArray();
+        List<String> dates = new ArrayList<>();
         if(list != null && list.size() > 0){
             date = list.get(0)[0].toString();
             times = Integer.parseInt(list.get(0)[1].toString());
@@ -108,12 +109,25 @@ public class IntegralModule {
                     dates.add(date);
                 }
             }
-
-
+        }
+        JSONArray dateArray = new JSONArray();
+        String d = TimeUtils.getCurrentDate();
+        for(int i = 0; i < 7; i++){
+            if(i > 0){
+                Date dd = TimeUtils.subtractDay(TimeUtils.str_yMd_2Date(d), 1);
+                d = TimeUtils.date_yMd_2String(dd);
+            }
+            JSONObject json = new JSONObject();
+            json.put("date", TimeUtils.date_Md_2String(TimeUtils.str_yMd_2Date(d)));
+            json.put("status", "0");
+            if(dates.contains(d)){
+                json.put("status", "1");
+            }
+            dateArray.add(json);
         }
         JSONObject result = new JSONObject();
         result.put("times", times);
-        result.put("dates", dates);
+        result.put("dates", dateArray);
         return new Result().success(result);
     }
 

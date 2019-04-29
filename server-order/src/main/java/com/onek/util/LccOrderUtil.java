@@ -8,6 +8,7 @@ import com.hsf.framework.order.OrderICE;
 import com.hsf.framework.order.OrderServicePrx;
 import com.onek.entity.TranOrder;
 import com.onek.property.LccProperties;
+import util.MathUtil;
 import util.StringUtils;
 
 import java.util.Set;
@@ -41,10 +42,11 @@ public class LccOrderUtil {
         orderIce.vldictc = "1";
         orderIce.vtdictc = "11";
         orderIce.tndictarr = new int[] { 71 };
-        orderIce.price = tranOrder.getFreight();
+        double freight = MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue();
+        orderIce.price = freight;
         orderIce.codamt = 0;
 
-        orderIce.pmdictc = "84";
+        orderIce.pmdictc = "81"; // 整单
         orderIce.insureamt = 0;
 
         orderIce.consignee = tranOrder.getConsignee();
