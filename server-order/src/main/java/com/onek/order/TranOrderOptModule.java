@@ -412,15 +412,20 @@ public class TranOrderOptModule {
         List<GoodsStock> goodsStockList = new ArrayList<>();
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             String actCodeStr = tranOrderGoods.getActcode();
+            try {
+                Long.parseLong(actCodeStr);
+            } catch (NumberFormatException e) {
+                actCodeStr = "[" + actCodeStr + "]";
+            }
             List<Long> list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
-            for (int i = 0; i < list.size(); i++) {
-                if (list.get(i) > 0) {
+            for (Long aList : list) {
+                if (aList > 0) {
                     if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
-                            tranOrderGoods.getPnum(), list.get(i))) {
+                            tranOrderGoods.getPnum(), aList)) {
                         result = true;
                     } else {
                         GoodsStock goodsStock = new GoodsStock();
-                        goodsStock.setActCode(list.get(i));
+                        goodsStock.setActCode(aList);
                         goodsStock.setSku(tranOrderGoods.getPdno());
                         goodsStock.setStock(tranOrderGoods.getPnum());
                         goodsStockList.add(goodsStock);
@@ -431,7 +436,7 @@ public class TranOrderOptModule {
                         result = true;
                     } else {
                         GoodsStock goodsStock = new GoodsStock();
-                        goodsStock.setActCode(list.get(i));
+                        goodsStock.setActCode(aList);
                         goodsStock.setSku(tranOrderGoods.getPdno());
                         goodsStock.setStock(tranOrderGoods.getPnum());
                         goodsStockList.add(goodsStock);
@@ -698,5 +703,4 @@ public class TranOrderOptModule {
             this.actCode = actCode;
         }
     }
-
 }
