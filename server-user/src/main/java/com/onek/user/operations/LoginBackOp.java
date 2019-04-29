@@ -43,12 +43,16 @@ public class LoginBackOp implements IOperation<AppContext> {
         return context.relationTokenUserSession();
     }
 
+
+
     //检查用户是否正确
     private boolean checkSqlAndUserExist(AppContext context) {
 
         String selectSql = "SELECT uid,roleid,upw,uaccount,uphone,urealname " +
                 "FROM {{?" + DSMConst.D_SYSTEM_USER + "}} " +
-                "WHERE cstatus&1 = 0 AND roleid&1 > 0 AND uaccount = ? OR uphone = ?";
+                "WHERE cstatus&1 = 0 AND cstatus&32=0 " +
+                "AND roleid&2=0 AND roleid&4=0 AND roleid&4=0 " +
+                "AND uaccount = ? OR uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,account,account);
 
         if (lines.size()>0){

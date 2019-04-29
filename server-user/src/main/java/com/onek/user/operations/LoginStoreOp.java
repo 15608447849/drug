@@ -80,7 +80,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
         String selectSql = "SELECT uid,roleid,upw,cid " +
                 "FROM {{?" + DSMConst.D_SYSTEM_USER + "}} " +
-                "WHERE cstatus&1 = 0 AND roleid&2>0 AND uphone = ?";
+                "WHERE cstatus&1 = 0 AND roleid&2=2  AND uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
 
         if (lines.size()>0){
