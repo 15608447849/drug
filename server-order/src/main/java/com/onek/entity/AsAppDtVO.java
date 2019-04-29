@@ -30,7 +30,7 @@ public class AsAppDtVO {
     private double spdprice; //订单商品原价
     private double sdistprice; //优惠单价
     private double payamt; //商品合计金额
-    private int paytype; //支付方式
+    private int paytype = 2; //支付方式
     private int pnum;//商品数量
     private String pname;//商品名称
     private String spec; //商品规格

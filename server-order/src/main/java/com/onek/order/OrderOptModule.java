@@ -2,6 +2,7 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -19,6 +20,7 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
 import org.hyrdpf.ds.AppConfig;
+import redis.util.RedisUtil;
 import util.*;
 
 import java.math.BigDecimal;
@@ -99,6 +101,16 @@ public class OrderOptModule {
     //查询发票售后详情
     private static final String QUERY_GOODS_SQL = " select goods.pdno,goods.pnum,goods.pdprice,goods.distprice,goods.payamt from {{?"+
             DSMConst.TD_BK_TRAN_GOODS+"}} goods where goods.orderno = ? and goods.compid = ?";
+
+    //查询售后发票列表
+    private static final String QUERY_ASAPP_BILL_LIST_SQL = "select distinct asapp.orderno,asapp.compid,asapp.asno,astype,"+
+            "ckstatus,gstatus,apdata,aptime,checkern,contact,address,compn from "+
+            " {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp " +
+            " inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders" +
+            " on asapp.orderno = orders.orderno where asno != 0 and asapp.astype in (3,4) ";
+
+
+
 
 
     /* *
@@ -600,25 +612,106 @@ public class OrderOptModule {
             return result.setQuery(asAppDtListVOS, pageHolder);
         }
 
-
         baseDao.convToEntity(queryResult, asAppDtListVOS, AsAppDtListVO.class,
                 new String[]{"orderno", "compid", "asno", "astype", "ckstatus",
                         "gstatus", "apdata", "aptime", "checkern",
                         "contact", "address","refamt","compn"});
 
+        for(AsAppDtListVO asAppDtListVO: asAppDtListVOS){
+            String compStr = RedisUtil.getStringProvide()
+                    .get(String.valueOf(asAppDtListVO.getCompid()));
+            if(!StringUtils.isEmpty(compStr)){
+                JSONObject compJson = JSON.parseObject(compStr);
+                asAppDtListVO.setCompn(compJson.getString("storeName"));
+            }
+        }
+
         return result.setQuery(asAppDtListVOS, pageHolder);
     }
 
-//    static {
-//        AppConfig.initLogger();
-//        AppConfig.initialize();
-//    }
 
-//    public static void main(String[] args) {
-//        Object[] pramsObj = new Object[]{"1904260000002305", 0, "190428000010", 536862725, 3, 0, 81, 0, null,
-//                "{\"invoiceInfo\":{\"compName\":\"315诚信大药房\",\"address\":\"庐山大道156号\",\"bankers\":\"123456789123431\",\"account\":\"中国银行\",\"taxpayer\":\"\",\"tel\":\"\"},\"address\":{\"consignee\":\"六七\",\"contact\":\"18736367887\",\"compName\":\"315诚信大药房\",\"address\":\"庐山大道156号\"}}", 1, "打算大撒大", 0, 0};
-//        LocalDateTime localDateTime = LocalDateTime.now();
-//        baseDao.updateNativeSharding(0,localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
-//    }
+
+    /* *
+     * @description 查询售后订单发票列表
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/4/24 11:04
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result queryAsOrderBillList(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int pageSize = jsonObject.get("pageSize").getAsInt();
+        int pageIndex = jsonObject.get("pageNo").getAsInt();
+        Page page = new Page();
+        page.pageSize = pageSize;
+        page.pageIndex = pageIndex;
+        PageHolder pageHolder = new PageHolder(page);
+        Result result = new Result();
+
+
+        StringBuilder sqlBuilder = new StringBuilder(QUERY_ASAPP_BILL_LIST_SQL);
+
+        int astype = jsonObject.get("astype").getAsInt();
+
+        String sdate = jsonObject.get("sdate").getAsString();
+
+        String edate = jsonObject.get("edate").getAsString();
+
+        int ckstatus =jsonObject.get("ckstatus").getAsInt();
+
+        if(astype > 0){
+            sqlBuilder.append(" and asapp.astype = ");
+            sqlBuilder.append(astype);
+        }
+
+        if(ckstatus != -2){
+            sqlBuilder.append(" and asapp.ckstatus = ");
+            sqlBuilder.append(ckstatus);
+        }
+
+
+        if(!StringUtils.isEmpty(sdate) && StringUtils.isEmpty(edate)){
+            sqlBuilder.append(" and apdata >= '").append(sdate).append("' ");
+        }
+
+        if(StringUtils.isEmpty(sdate) && !StringUtils.isEmpty(edate)){
+            sqlBuilder.append(" and apdata <= '").append(edate).append("' ");
+        }
+
+        if(!StringUtils.isEmpty(sdate) && !StringUtils.isEmpty(edate)){
+            sqlBuilder.append(" and apdata between '").append(sdate).append("' and '").append(edate).append("' ");
+        }
+        List<Object[]> queryResult = baseDao.queryNativeSharding(0,
+                TimeUtils.getCurrentYear(), pageHolder, page,sqlBuilder.toString());
+
+
+        AsAppDtListVO[] asAppDtListVOS = new AsAppDtListVO[queryResult.size()];
+        if (queryResult == null || queryResult.isEmpty()) {
+            return result.setQuery(asAppDtListVOS, pageHolder);
+        }
+
+        baseDao.convToEntity(queryResult, asAppDtListVOS, AsAppDtListVO.class,
+                new String[]{"orderno", "compid", "asno", "astype", "ckstatus",
+                        "gstatus", "apdata", "aptime", "checkern",
+                        "contact", "address","compn"});
+
+        for(AsAppDtListVO asAppDtListVO: asAppDtListVOS){
+            String compStr = RedisUtil.getStringProvide()
+                    .get(String.valueOf(asAppDtListVO.getCompid()));
+            if(!StringUtils.isEmpty(compStr)){
+                JSONObject compJson = JSON.parseObject(compStr);
+                asAppDtListVO.setCompn(compJson.getString("storeName"));
+            }
+        }
+
+
+        return result.setQuery(asAppDtListVOS, pageHolder);
+    }
+
 
 }
