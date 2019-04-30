@@ -130,7 +130,6 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-
         List<ProdVO> prodList = getFilterProdsCommon(result1,  "",1, pageIndex, pageSize);
 
         return new Result().success(prodList);
@@ -188,7 +187,7 @@ public class ProdModule {
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
                     prodVO.setBuynum(0);
-                    prodVO.setStartnum(1);
+                    prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.get(prodVO.getSku()));
                 }
             }
@@ -222,7 +221,7 @@ public class ProdModule {
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
                     prodVO.setBuynum(0);
-                    prodVO.setStartnum(1);
+                    prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.get(prodVO.getSku()));
                 }
             }
@@ -426,7 +425,7 @@ public class ProdModule {
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
                     prodVO.setBuynum(0);
-                    prodVO.setStartnum(1);
+                    prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.get(prodVO.getSku()));
                 }
             }
