@@ -450,6 +450,7 @@ public class CouponRevModule {
                 product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
                 productList.add(product);
             }
+            couponUseDTOS.add(couponUseDTO);
         }
         boolean excoupon = false;
         if(couponUseDTOS.get(0).getFlag() == 1){
