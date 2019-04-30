@@ -107,6 +107,7 @@ public class ProdModule {
         }};
         Set<Integer> result = new HashSet<>();
         NumUtil.perComAdd(256, bb, result);
+        result.add(256);
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
@@ -125,6 +126,7 @@ public class ProdModule {
         }};
         Set<Integer> result1 = new HashSet<>();
         NumUtil.perComAdd(512, bb1, result1);
+        result1.add(512);
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
@@ -353,6 +355,7 @@ public class ProdModule {
         }};
         Set<Integer> result = new HashSet<>();
         NumUtil.perComAdd(256, bb, result);
+        result.add(256);
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
@@ -446,6 +449,7 @@ public class ProdModule {
         }};
         Set<Integer> result1 = new HashSet<>();
         NumUtil.perComAdd(512, bb1, result1);
+        result1.add(512);
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
@@ -598,6 +602,7 @@ public class ProdModule {
         }};
         Set<Integer> result1 = new HashSet<>();
         NumUtil.perComAdd(128, bb1, result1);
+        result1.add(128);
 
         SearchResponse searchResponse = ProdESUtil.searchProdWithHotAndSpu(result1, spu, 1, 10);
         List<ProdVO> prodVOList = new ArrayList<>();
@@ -647,6 +652,7 @@ public class ProdModule {
                 }};
                 Set<Integer> result1 = new HashSet<>();
                 NumUtil.perComAdd(512, bb1, result1);
+                result1.add(512);
 
                 response = ProdESUtil.searchProdWithStatusList(result1, "", 1, 1, 100);
             }
