@@ -1,12 +1,13 @@
 package com.onek.util.member;
 
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.RedisGlobalKeys;
 import redis.IRedisPartCache;
 
 public class MemberUtil implements IRedisPartCache {
     @Override
     public String getPrefix() {
-        return "member";
+        return RedisGlobalKeys.MEMBER_PREFIX;
     }
 
     @Override

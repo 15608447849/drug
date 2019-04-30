@@ -10,6 +10,7 @@ import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.stock.RedisStockUtil;
 import util.StringUtils;
 import util.TimeUtils;
@@ -100,6 +101,7 @@ public class CalculateModule {
                 return new Result().success(jsonObject);
             }
 
+            jsonObject.put("currNums", IceRemoteUtil.getGroupCount(actcode));
             // 团购
             jsonObject.put("ladoffs", ladoffs);
         } else if (currDiscount.getBRule() == 1113) {
