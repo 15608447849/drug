@@ -1095,7 +1095,7 @@ public class CouponManageModule {
                         "validday","validflag","glbno","goods","qlfno","qlfval"});
 
         List<CouponPubVO> couponPubVOList = new ArrayList(Arrays.asList(couponPubVOS));
-        filterCoupon(couponPubVOList);
+        filterCoupon(couponPubVOList,compid);
         for (CouponPubVO couponPubVO:couponPubVOList){
             String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer from {{?" + DSMConst.TD_PROM_RELA
                     + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
@@ -1120,7 +1120,7 @@ public class CouponManageModule {
 
 
 
-    public List<CouponPubVO> filterCoupon(List<CouponPubVO> couponPubVOS){
+    public List<CouponPubVO> filterCoupon(List<CouponPubVO> couponPubVOS,int compid){
         Iterator<CouponPubVO> couentIterator = couponPubVOS.iterator();
         while(couentIterator.hasNext()){
             CouponPubVO couponPubVO = couentIterator.next();
@@ -1132,21 +1132,21 @@ public class CouponManageModule {
                 case 0:
                     break;
                 case 1:
-                    if(!compIsVerify(couponPubVO.getCompid())
-                            || !getOrderCnt(couponPubVO.getCompid())){
+                    if(!compIsVerify(compid)
+                            || !getOrderCnt(compid)){
                         rvflag = true;
                     }
                     break;
                 case 2:
                     int mlevel = MemberStore.
-                            getLevelByCompid(couponPubVO.getCompid());
+                            getLevelByCompid(compid);
                     if(mlevel < qlfval){
                         rvflag = true;
                     }
                     break;
                 case 3:
                     rvflag = qlfval != 0 && !AreaUtil.
-                            isChildren(qlfval, getCurrentArea(couponPubVO.getCompid()));
+                            isChildren(qlfval, getCurrentArea(compid));
                     break;
                 default:
                     break;
@@ -1187,7 +1187,15 @@ public class CouponManageModule {
 
 
     private boolean getOrderCnt(int compid) {
-        return IceRemoteUtil.getOrderCntByCompid(compid) == 0;
+        try{
+            if(compid > 0){
+                return IceRemoteUtil.getOrderCntByCompid(compid) == 0;
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return false;
+        }
+        return  false;
     }
 
 
