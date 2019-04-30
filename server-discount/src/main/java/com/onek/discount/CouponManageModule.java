@@ -19,9 +19,11 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.GsonUtils;
+import util.MathUtil;
 import util.ModelUtil;
 import util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
@@ -1105,8 +1107,10 @@ public class CouponManageModule {
             baseDao.convToEntity(queryRet, ladderVOS, CouponPubLadderVO.class,
                     new String[]{"unqid","ladamt","ladnum","offercode","offer"});
             for (CouponPubLadderVO ladderVO:ladderVOS) {
-                ladderVO.setLadamt(ladderVO.getLadamt()/100);
-                ladderVO.setOffer(ladderVO.getOffer()/100);
+                ladderVO.setLadamt(MathUtil.exactDiv(ladderVO.getLadamt(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                ladderVO.setOffer(MathUtil.exactDiv(ladderVO.getOffer(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
             }
             couponPubVO.setLadderVOS(Arrays.asList(ladderVOS));
             couponPubVO.setCompid(compid);
