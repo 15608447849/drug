@@ -109,7 +109,7 @@ public class PayModule {
         List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL, new Object[]{ orderno, compid, 0});
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime"});
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno"});
 
             double freight = result[0].getFreight() > 0 ? MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue() : 0;
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
@@ -177,7 +177,7 @@ public class PayModule {
         List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime"});
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno"});
 
             double freight = result[0].getFreight() > 0 ? MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue() : 0;
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
