@@ -359,9 +359,10 @@ public class TranOrderOptModule {
                 }
             }
             goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
-            goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
+            if (goodsPrice.getPayamt() == 0) {
+                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
+            }
         }
-//        return tranOrderGoodsList;
     }
 
     /**

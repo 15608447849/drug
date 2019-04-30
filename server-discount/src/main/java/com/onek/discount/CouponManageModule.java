@@ -11,19 +11,21 @@ import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
-import com.onek.util.area.AreaUtil;
-import com.onek.util.member.MemberStore;
-import com.onek.util.member.MemberUtil;
-import constant.DSMConst;
-import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.area.AreaUtil;
+import com.onek.util.member.MemberStore;
+import constant.DSMConst;
+import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.ModelUtil;
 import util.StringUtils;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Iterator;
+import java.util.List;
 
 import static com.onek.discount.CommonModule.getLaderNo;
 
@@ -1185,10 +1187,7 @@ public class CouponManageModule {
 
 
     private boolean getOrderCnt(int compid) {
-        if(IceRemoteUtil.getOrderCntByCompid(compid) == 0){
-            return true;
-        }
-        return false;
+        return IceRemoteUtil.getOrderCntByCompid(compid) == 0;
     }
 
 
