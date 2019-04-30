@@ -11,6 +11,12 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
     @Override
     public void calculate(List<? extends IDiscount> discountList) {
         for (IDiscount iDiscount : discountList) {
+            if (iDiscount.getBRule() == 1133
+             || iDiscount.getBRule() == 1113) {
+                // 不计算团购和秒杀
+                continue;
+            }
+
             discountHandler(iDiscount);
         }
 
