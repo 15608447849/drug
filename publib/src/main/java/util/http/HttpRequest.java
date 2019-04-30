@@ -1,7 +1,11 @@
 package util.http;
 
+import util.GsonUtils;
+
 import java.io.File;
 import java.io.InputStream;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.*;
 
 /**
@@ -106,6 +110,24 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
     public String getRespondContent(){
         return text;
     }
+
+    //删除文件
+    public void deleteFile(String url,String ...fileItem){
+        try {
+            if (fileItem == null || fileItem.length == 0) return;
+            HashMap<String,String> headParams = new HashMap<>();
+            headParams.put("delete-list", URLEncoder.encode(GsonUtils.javaBeanToJson(fileItem),"UTF-8"));
+            new HttpUtil.Request(url, HttpUtil.Request.POST, this)
+                    .setParams(headParams)
+                    .setReadTimeout(1000).
+                    setConnectTimeout(1000)
+                    .text()
+                    .execute();
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+    }
+
 
     @Override
     public void onResult(HttpUtil.Response response) {
