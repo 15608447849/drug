@@ -53,9 +53,7 @@ public class IceRemoteUtil {
         return null;
     }
 
-    public static void main(String[] args) {
 
-    }
 
     public static ProdEntity getProdBySku(long sku) {
         try {
@@ -288,8 +286,8 @@ public class IceRemoteUtil {
                 .setArrayParams(compid)
                 .execute();
         return Long.parseLong(result);
-
     }
+
 
 
 

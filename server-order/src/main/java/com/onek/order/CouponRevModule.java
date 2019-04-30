@@ -556,15 +556,8 @@ public class CouponRevModule {
     @UserPermission(ignore = true)
     public String getOrderCntByCompid(AppContext appContext){
         String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-
-        int compid = jsonObject.get("compid").getAsInt();
-        Result result = new Result();
+        int compid = Integer.parseInt(appContext.param.arrays[0]);
         List<Object[]> queryResult = baseDao.queryNativeSharding(compid,TimeUtils.getCurrentYear(),QUERY_ORDER_CNT,compid);
-
-        Map map = new HashMap();
-        map.put("cnt",-1);
         if (queryResult == null || queryResult.isEmpty()) {
            return "-1";
         }
