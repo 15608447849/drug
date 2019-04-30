@@ -133,7 +133,7 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_PRODSTATUS, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_PRODSTATUS));
             data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_SKUCSTATUS));
             data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
-            data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales() == null ? 0 :prodVO.getSales());
+            data.put(ESConstant.PROD_COLUMN_SALES, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_SALES));
             data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
@@ -402,9 +402,47 @@ public class ProdESUtil {
         return response;
     }
 
+    /**
+     * 根据条件全文检索热销商品
+     *
+     * @param keyword
+     * @param pagenum
+     * @param pagesize
+     * @return
+     */
+    public static SearchResponse searchHotProd(String keyword,int pagenum, int pagesize){
+        SearchResponse response = null;
+        try {
+            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+            RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SALES);
+            rangeQuery.gt(0);
+            boolQuery.must(rangeQuery);
+            if(!StringUtils.isEmpty(keyword)){
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+                boolQuery.must(matchQuery);
+            }
+            MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
+            boolQuery.must(builder);
+
+            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+            int from = pagenum * pagesize - pagesize;
+            response = client.prepareSearch(ESConstant.PROD_INDEX)
+                    .setQuery(boolQuery)
+                    .setFrom(from)
+                    .setSize(pagesize)
+                    .addSort(ESConstant.PROD_COLUMN_SALES, SortOrder.DESC)
+                    .execute().actionGet();
+
+        }catch(Exception e) {
+            e.printStackTrace();
+        }
+
+        return response;
+    }
+
 
     /**
-     * 根据条件全文检索商品
+     * 根据条件全文检索品牌商品
      *
      * @param keyword
      * @param pagenum

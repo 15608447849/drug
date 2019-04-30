@@ -354,14 +354,15 @@ public class TranOrderOptModule {
                 if (goodsPrice.getPdno() == finalGoods.getPdno()) {
                     goodsPrice.setCompid(tranOrder.getCusno());
                     goodsPrice.setPdprice(finalGoods.getPdprice());
-                    goodsPrice.setPayamt(finalGoods.getPayamt());
+                    goodsPrice.setPayamt(finalGoods.getPayamt() * 100);
                     goodsPrice.setPromtype(finalGoods.getPromtype());
                 }
             }
             goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
-            goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
+            if (goodsPrice.getPayamt() == 0) {
+                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
+            }
         }
-//        return tranOrderGoodsList;
     }
 
     /**

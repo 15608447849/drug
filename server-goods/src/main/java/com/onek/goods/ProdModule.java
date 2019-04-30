@@ -113,9 +113,7 @@ public class ProdModule {
 
         List<ProdVO> newProdList = getFilterProdsCommon(result, "",2, pageIndex, pageSize);
 
-        List<ProdVO> filterProdList = loadProd(newProdList, 256);
-
-        return new Result().success(filterProdList);
+        return new Result().success(newProdList);
     }
 
     @UserPermission(ignore = true)
@@ -141,7 +139,7 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        List<ProdVO> hotProdList = getFilterProdsCommon(null,"", 1, pageIndex, pageSize);
+        List<ProdVO> hotProdList = getFilterHotProds("",  pageIndex, pageSize);
 
         return new Result().success(hotProdList);
     }
@@ -381,7 +379,7 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        List<ProdVO> hotProdList = getFilterProdsCommon(null,keyword, 1, pageIndex, pageSize);
+        List<ProdVO> hotProdList = getFilterHotProds(keyword,  pageIndex, pageSize);
 
         Result r = new Result();
         Page page = new Page();
@@ -791,6 +789,19 @@ public class ProdModule {
         return newProdList;
     }
 
+    private static List<ProdVO> getFilterHotProds(String keyword, int pageNum, int pageSize) {
+        SearchResponse response = ProdESUtil.searchHotProd(keyword, pageNum, pageSize);
+        List<ProdVO> prodList = new ArrayList<>();
+        if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
+            SearchHits hits = response.getHits();
+            if (hits.totalHits > 0) {
+                assembleData(response, prodList);
+            }
+        }
+
+        return prodList;
+    }
+
     private static List<ProdVO> getFilterProdsCommon(Set<Integer> result, String keyword, int sort,int pageNum, int pageSize) {
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, keyword, sort, pageNum, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
@@ -803,7 +814,6 @@ public class ProdModule {
 
         return prodList;
     }
-
 
     private static List<ProdVO> getFilterProds(Set<Integer> result, int sort) {
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, "", sort, 1, 100);
