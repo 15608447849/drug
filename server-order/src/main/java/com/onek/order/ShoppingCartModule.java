@@ -477,7 +477,6 @@ public class ShoppingCartModule {
         List<IDiscount> activityList =
                 new ActivityFilterService(
                         new ActivitiesFilter[] {
-                                new TypeFilter(),
                                 new CycleFilter(),
                                 new QualFilter(compid),
                                 new PriorityFilter(),

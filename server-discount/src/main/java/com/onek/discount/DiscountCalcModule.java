@@ -179,7 +179,6 @@ public class DiscountCalcModule {
         List<IDiscount> activityList =
                 new ActivityFilterService(
                         new ActivitiesFilter[] {
-                            new TypeFilter(),
                             new CycleFilter(),
                             new QualFilter(appContext.getUserSession().compId),
                             new PriorityFilter(),
