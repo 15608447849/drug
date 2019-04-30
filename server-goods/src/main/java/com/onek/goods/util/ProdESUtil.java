@@ -446,6 +446,7 @@ public class ProdESUtil {
      * 根据状态码列表和sku全文筛选商品
      *
      * @param statusSet
+     * @param spu
      * @param pagenum
      * @param pagesize
      * @return
@@ -485,6 +486,7 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
+                     .addSort(ESConstant.PROD_COLUMN_SALES, SortOrder.DESC)
                     .addSort(ESConstant.PROD_COLUMN_TIME, SortOrder.DESC)
                     .execute().actionGet();
 

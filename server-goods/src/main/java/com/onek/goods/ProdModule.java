@@ -596,21 +596,14 @@ public class ProdModule {
     public Result getProdDetailHotArea(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         int spu = json.get("spu").getAsInt();
-        List<Integer> bb1 = new ArrayList() {{
-            add(256);
-            add(512);
-        }};
-        Set<Integer> result1 = new HashSet<>();
-        NumUtil.perComAdd(128, bb1, result1);
-        result1.add(128);
 
-        SearchResponse searchResponse = ProdESUtil.searchProdWithHotAndSpu(result1, spu, 1, 10);
+        SearchResponse searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, spu, 1, 10);
         List<ProdVO> prodVOList = new ArrayList<>();
         if (searchResponse == null || searchResponse.getHits().totalHits < 5) {
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
                 assembleData(searchResponse, prodVOList);
             }
-            searchResponse = ProdESUtil.searchProdWithHotAndSpu(result1, spu, 1, 10);
+            searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, spu, 1, 10);
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
                 assembleData(searchResponse, prodVOList);
             }
