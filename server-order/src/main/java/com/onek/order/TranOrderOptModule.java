@@ -354,7 +354,7 @@ public class TranOrderOptModule {
                 if (goodsPrice.getPdno() == finalGoods.getPdno()) {
                     goodsPrice.setCompid(tranOrder.getCusno());
                     goodsPrice.setPdprice(finalGoods.getPdprice());
-                    goodsPrice.setPayamt(finalGoods.getPayamt());
+                    goodsPrice.setPayamt(finalGoods.getPayamt() * 100);
                     goodsPrice.setPromtype(finalGoods.getPromtype());
                 }
             }
