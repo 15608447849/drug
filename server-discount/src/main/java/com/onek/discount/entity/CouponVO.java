@@ -24,7 +24,7 @@ public class CouponVO {
     private int qlfno;
 
     //资格值
-    private int qlfval;
+    private long qlfval;
 
     //优惠券描述
     private String desc;
@@ -154,11 +154,11 @@ public class CouponVO {
         this.qlfno = qlfno;
     }
 
-    public int getQlfval() {
+    public long getQlfval() {
         return qlfval;
     }
 
-    public void setQlfval(int qlfval) {
+    public void setQlfval(long qlfval) {
         this.qlfval = qlfval;
     }
 
