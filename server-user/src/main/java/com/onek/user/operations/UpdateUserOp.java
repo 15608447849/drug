@@ -28,46 +28,52 @@ public class UpdateUserOp implements IOperation<AppContext> {
     public Result execute(AppContext context) {
         UserSession session = context.getUserSession();
 
+        boolean flag = false;
         if (session != null){
-            int uid = session.userId;
 
+            int uid = session.userId;
             //修改手机号码
             if ( !StringUtils.isEmpty(oldPhone,newPhone, smsCode)){
-                if (newPhone.length()==11) {
-                    String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
-                    if (code.equals(smsCode) && !newPhone.equals(oldPhone)){
-                        context.getUserSession().phone = newPhone;
-                        return changUserByUid(context,"uphone="+newPhone, "uid = "+ uid);
+                if (newPhone.length()==11) { // 判断手机号码
+                    if (!newPhone.equals(oldPhone)){ //判断新号码不等于旧号码
+                        String code = RedisUtil.getStringProvide().get("SMS"+oldPhone); //获取短信验证码
+                        if (code.equals(smsCode)){ //判断短信验证
+                            session.phone = newPhone;
+                            flag = changUserByUid("uphone="+newPhone, "uid = "+ uid);
+                        }
                     }
                 }
             }
 
             //修改密码
-            if (!StringUtils.isEmpty(oldPassword,newPassword)){
-                String curPassword = session.password;
-                if (EncryptUtils.encryption(oldPassword).equalsIgnoreCase(curPassword)){
-                    return changUserByUid(context,"upw='"+ EncryptUtils.encryption(newPassword)+"'","uid = "+ uid);
+            if (!StringUtils.isEmpty(oldPassword,newPassword)){ //判断不为空
+
+                String curPassword = session.password; //当前密码
+                String inputOldPassword = EncryptUtils.encryption(oldPassword);
+                String inputNewPassword = EncryptUtils.encryption(newPassword);
+                if (inputOldPassword.equalsIgnoreCase(curPassword) && !inputNewPassword.equalsIgnoreCase(curPassword)){
+                    //如果当前密码与输入的旧密码相同 并且 新密码与旧密码不相同
+                    session.password = inputNewPassword;
+                    flag = changUserByUid("upw='"+ inputNewPassword +"'","uid = "+ uid);
                 }
             }
+            if (flag)  context.relationTokenUserSession(); //修改成功 关联用户信息
         }
 
         //忘记密码
         if (!StringUtils.isEmpty(oldPhone,smsCode,newPassword)){
             String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
             if (code.equals(smsCode)){
-                return changUserByUid(context,"upw='"+ EncryptUtils.encryption(newPassword)+"'","uphone = '"+ oldPhone+"' AND roleid");
+                flag = changUserByUid("upw='"+ EncryptUtils.encryption(newPassword)+"'","uphone = '"+ oldPhone+"' AND roleid");
             }
         }
+
+        if (flag) return new Result().success("修改成功");
         return new Result().fail("修改失败");
     }
 
-    private Result changUserByUid(AppContext context,String param ,String ifs) {
+    private Boolean changUserByUid(String param ,String ifs) {
         String sql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER +"}} SET " + param + " WHERE "+ifs;
-        int i = BaseDAO.getBaseDAO().updateNative(sql);
-        if (i>0) {
-            context.relationTokenUserSession();
-            return new Result().success("修改成功");
-        }
-        return new Result().fail("修改失败," +sql);
+        return BaseDAO.getBaseDAO().updateNative(sql) > 0;
     }
 }

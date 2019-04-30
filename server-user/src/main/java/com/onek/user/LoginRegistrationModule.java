@@ -9,6 +9,7 @@ import com.onek.user.operations.*;
 import util.GsonUtils;
 
 import static com.onek.user.operations.StoreBasicInfoOp.getStoreInfoById;
+import static com.onek.user.operations.StoreBasicInfoOp.infoToCache;
 
 /**
  * 登陆 / 注册 模块
@@ -130,6 +131,7 @@ public class LoginRegistrationModule {
         int compid = Integer.parseInt(appContext.param.arrays[0]);
         StoreBasicInfo info = new StoreBasicInfo(compid);
         getStoreInfoById(info);
+        infoToCache(info); //保存信息到缓存
         return info;
     }
     /**

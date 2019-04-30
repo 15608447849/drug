@@ -40,7 +40,7 @@ public class LoginBackOp implements IOperation<AppContext> {
 
     private boolean relationTokenUserSession(AppContext context) {
         context.setUserSession(userSession);
-        return context.relationTokenUserSession();
+        return context.relationTokenUserSession();//后台管理登陆-关联企业信息
     }
 
 
