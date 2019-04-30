@@ -1,6 +1,8 @@
 package com.onek.util;
 
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
 import com.onek.entitys.Result;
@@ -10,6 +12,7 @@ import com.onek.util.dict.DictEntity;
 import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
 import util.GsonUtils;
+import util.StringUtils;
 
 import java.util.HashMap;
 import java.util.List;
@@ -281,6 +284,26 @@ public class IceRemoteUtil {
         } catch (Exception ignored) {
         }
         return null;
+    }
+
+    public static long getOrderCntByCompid(int compid){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("compid", compid);
+        String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","getOrderCntByCompid")
+                .settingParam(jsonObject.toJSONString())
+                .execute();
+
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        assert hashMap != null;
+        Object data = hashMap.get("data");
+        if (data == null) return -1;
+        String json = data.toString();
+        if(StringUtils.isEmpty(json)){
+            return -1;
+        }
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonResultObj = jsonParser.parse(json).getAsJsonObject();
+        return jsonResultObj.get("cnt").getAsLong();
     }
 
 

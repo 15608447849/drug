@@ -69,7 +69,7 @@ public class CouponRevModule {
 
 
     private static final String INSERT_COURCD =  "insert into {{?" + DSMConst.TD_PROM_COURCD + "}}" +
-            " (unqid,coupno,compid,offercode,gettime) values (?,?,?,?,now())";
+            " (unqid,coupno,compid,offercode,gettime,cstatus) values (?,?,?,?,now(),?)";
 
     private static final String DEL_COURCD =  "update {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " SET cstatus = cstatus | " + CSTATUS.DELETE +" WHERE unqid = ? ";
@@ -113,6 +113,9 @@ public class CouponRevModule {
             + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 
+    private final String QUERY_ORDER_CNT = "select count(1) cnt from {{?"+DSMConst.TD_TRAN_ORDER+"}} where cusno = ?";
+
+
 
     /**
      * @description 优惠券新增
@@ -136,7 +139,7 @@ public class CouponRevModule {
         String startDate = dateFormat.format(curDate);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(curDate);
-        calendar.add(Calendar.DATE, couponVO.getValidday());
+        calendar.add(Calendar.DATE, couponVO.getValidday()+1);
         String endDate = dateFormat.format(calendar.getTime());
         if(couponVO.getValidflag() == 1){
             calendar.setTime(curDate);
@@ -251,9 +254,13 @@ public class CouponRevModule {
         long rcdid = 0L;
         if(crdResult == null || crdResult.isEmpty()){
             rcdid = GenIdUtil.getUnqId();
+            int cstatus = 0;
+            if(couponVO.getQlfno() == 1){
+                cstatus = 64;
+            }
             ret = baseDao.updateNative(INSERT_COURCD,
                     new Object[]{rcdid,couponVO.getCoupno(),
-                            couponVO.getCompid(),0});
+                            couponVO.getCompid(),0,cstatus});
         }else{
             rcdid = Long.parseLong(crdResult.get(0)[0].toString());
             ret = baseDao.updateNative(UPDATE_COURCD,
@@ -308,7 +315,7 @@ public class CouponRevModule {
         String startDate = dateFormat.format(curDate);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(curDate);
-        calendar.add(Calendar.DATE, couponVO.getValidday());
+        calendar.add(Calendar.DATE, couponVO.getValidday()+1);
         String endDate = dateFormat.format(calendar.getTime());
         if(couponVO.getValidflag() == 1){
             calendar.setTime(curDate);
@@ -539,6 +546,31 @@ public class CouponRevModule {
         return Integer.parseInt(queryResult.get(0)[0].toString());
     }
 
+    /**
+     * 查询企业订单统计数量
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result getOrderCntByCompid(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+
+        int compid = jsonObject.get("compid").getAsInt();
+        Result result = new Result();
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compid,TimeUtils.getCurrentYear(),QUERY_ORDER_CNT,compid);
+
+        Map map = new HashMap();
+        map.put("cnt",-1);
+        if (queryResult == null || queryResult.isEmpty()) {
+            return result.success(map);
+        }
+        map.put("cnt",Long.parseLong(queryResult.get(0)[0].toString()));
+        return result.success(map);
+
+    }
+
     public int insertGiftCoupon(List<ActivityGiftVO> activityGiftVOList){
 
 
@@ -605,4 +637,6 @@ public class CouponRevModule {
         System.out.println(calculate.getTotalDiscount());
         System.out.println(calculate.getCouponValue());
     }
+
+
 }

@@ -2,16 +2,23 @@ package com.onek.discount;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
+import com.onek.context.StoreBasicInfo;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
+import com.onek.util.area.AreaUtil;
+import com.onek.util.member.MemberStore;
+import com.onek.util.member.MemberUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.ModelUtil;
 import util.StringUtils;
@@ -182,15 +189,15 @@ public class CouponManageModule {
 //            " and not exists (select 1 from {{?" + DSMConst.TB_PROM_COURCD + "}} "+
 //            " where coupno = tpcp.unqid and offercode = prf.offercode  and compid = ? and cstatus & 1 = 0)";
 
-    private static final String QUERY_COUP_PUB = "select coupno,brulecode,rulename,validday,validflag,glbno,goods from ("+
-            "select coupno,brulecode,rulename,validday,validflag,periodtype,periodday,actstock,glbno,goods from ("+
-            "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,0 goods "+
+    private static final String QUERY_COUP_PUB = "select coupno,brulecode,rulename,validday,validflag,glbno,goods,qlfno,qlfval from ("+
+            "select coupno,brulecode,rulename,validday,validflag,periodtype,periodday,actstock,glbno,goods,qlfno,qlfval from ("+
+            "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,0 goods,qlfno,qlfval "+
             "from {{?" + DSMConst.TD_PROM_COUPON + "}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}}" +
             " tpcr on tpcp.brulecode = tpcr.brulecode  "+
             " inner join {{?" + DSMConst.TD_PROM_ASSDRUG + "}} assd on assd.actcode = tpcp.unqid "+
             " where assd.gcode = 0  and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 "+
             " union "+
-            "select distinct tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods  from {{?"+
+            "select distinct tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods,qlfno,qlfval  from {{?"+
             DSMConst.TD_PROM_COUPON +"}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode " +
             " inner join {{?" +DSMConst.TD_PROM_ASSDRUG+"}} assd on assd.actcode = tpcp.unqid "+
             " where assd.gcode in (?,?) "+
@@ -1039,51 +1046,55 @@ public class CouponManageModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int pageSize = jsonObject.get("pageSize").getAsInt();
-        int pageIndex = jsonObject.get("pageNo").getAsInt();
-        Page page = new Page();
-        page.pageSize = pageSize;
-        page.pageIndex = pageIndex;
+//        int pageSize = jsonObject.get("pageSize").getAsInt();
+//        int pageIndex = jsonObject.get("pageNo").getAsInt();
+//        Page page = new Page();
+//        page.pageSize = pageSize;
+//        page.pageIndex = pageIndex;
         Result result = new Result();
 
 
         if(!jsonObject.has("gcode")
                 ||!jsonObject.has("compid")){
-            return result.fail("参数错误！");
+            return  result.success(null);
         }
 
         int compid = jsonObject.get("compid").getAsInt();
         long gcode = jsonObject.get("gcode").getAsLong();
-        int curpageCount = 0;
+       // int curpageCount = 0;
         StringBuilder sbSql = new StringBuilder(QUERY_COUP_PUB);
-        if(page.pageIndex > 0){
-            curpageCount = (page.pageIndex - 1) * page.pageSize;
-        }
-        sbSql.append("LIMIT ").append(curpageCount).append(",").append(page.pageSize);
-        int count = 0;
+//        if(page.pageIndex > 0){
+//            curpageCount = (page.pageIndex - 1) * page.pageSize;
+//        }
+//        sbSql.append("LIMIT ").append(curpageCount).append(",").append(page.pageSize);
+     //   int count = 0;
 
         String gtype = "-1";
         if(gcode > 0){
             gtype = String.valueOf(gcode).substring(1, 7);
         }
 
-        List<Object[]> listCount = baseDao.queryNative(QUERY_COUP_CNT_PUB,new Object[]{gtype,gcode,compid});
-        if(!listCount.isEmpty()){
-            count = Integer.parseInt(listCount.get(0)[0].toString());
-        }
-        page.totalItems = count;
+//        List<Object[]> listCount = baseDao.queryNative(QUERY_COUP_CNT_PUB,new Object[]{gtype,gcode,compid});
+//        if(!listCount.isEmpty()){
+//            count = Integer.parseInt(listCount.get(0)[0].toString());
+//        }
+        //page.totalItems = count;
         List<Object[]> queryResult = baseDao.queryNative(sbSql.toString(),gtype,gcode,compid);
         CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
-        PageHolder pageHolder = new PageHolder(page);
+       // PageHolder pageHolder = new PageHolder(page);
         if(queryResult == null || queryResult.isEmpty()){
-            return result.setQuery(couponPubVOS, pageHolder);
+
+            return result.success(couponPubVOS);
+            //return result.setQuery(couponPubVOS, pageHolder);
         }
 
         baseDao.convToEntity(queryResult, couponPubVOS, CouponPubVO.class,
                 new String[]{"coupno","brulecode","rulename",
-                        "validday","validflag","glbno","goods"});
+                        "validday","validflag","glbno","goods","qlfno","qlfval"});
 
-        for (CouponPubVO couponPubVO:couponPubVOS){
+        List<CouponPubVO> couponPubVOList = new ArrayList(Arrays.asList(couponPubVOS));
+        filterCoupon(couponPubVOList);
+        for (CouponPubVO couponPubVO:couponPubVOList){
             String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer from {{?" + DSMConst.TD_PROM_RELA
                     + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
                     + " and a.actcode=" + couponPubVO.getCoupno() + " order by ladamt desc ";
@@ -1099,8 +1110,88 @@ public class CouponManageModule {
             couponPubVO.setCompid(compid);
         }
 
-        return result.setQuery(couponPubVOS, pageHolder);
+        return result.success(couponPubVOList);
+       // return result.setQuery(couponPubVOS, pageHolder);
     }
+
+
+
+
+
+    public List<CouponPubVO> filterCoupon(List<CouponPubVO> couponPubVOS){
+        Iterator<CouponPubVO> couentIterator = couponPubVOS.iterator();
+        while(couentIterator.hasNext()){
+            CouponPubVO couponPubVO = couentIterator.next();
+            int qlfno = couponPubVO.getQlfno();
+            long qlfval = couponPubVO.getQlfval();
+
+            boolean rvflag = false;
+            switch (qlfno){
+                case 0:
+                    break;
+                case 1:
+                    if(!compIsVerify(couponPubVO.getCompid())
+                            || !getOrderCnt(couponPubVO.getCompid())){
+                        rvflag = true;
+                    }
+                    break;
+                case 2:
+                    int mlevel = MemberStore.
+                            getLevelByCompid(couponPubVO.getCompid());
+                    if(mlevel < qlfval){
+                        rvflag = true;
+                    }
+                    break;
+                case 3:
+                    rvflag = qlfval != 0 && !AreaUtil.
+                            isChildren(qlfval, getCurrentArea(couponPubVO.getCompid()));
+                    break;
+                default:
+                    break;
+            }
+            if(rvflag){
+                couentIterator.remove();
+            }
+
+        }
+        return couponPubVOS;
+    }
+
+    private Integer getCurrentArea(int compid) {
+        String compStr = RedisUtil.getStringProvide()
+                .get(String.valueOf(compid));
+        if(!StringUtils.isEmpty(compStr)){
+            JSONObject compJson = JSON.parseObject(compStr);
+            return compJson.getIntValue("addressCode");
+        }
+        return 0;
+    }
+
+
+    private boolean compIsVerify(int compid) {
+        String compStr = RedisUtil.getStringProvide()
+                .get(String.valueOf(compid));
+        System.out.println("企业信息："+compStr);
+        if(!StringUtils.isEmpty()){
+            StoreBasicInfo storeBasicInfo
+                    = GsonUtils.jsonToJavaBean(compStr, StoreBasicInfo.class);
+            if(storeBasicInfo != null
+                    && (storeBasicInfo.authenticationStatus & 256 )> 0){
+                return true;
+            }
+        }
+        return false;
+    }
+
+
+    private boolean getOrderCnt(int compid) {
+        if(IceRemoteUtil.getOrderCntByCompid(compid) == 0){
+            return true;
+        }
+        return false;
+    }
+
+
 
 
     public Result revCoupon(AppContext appContext){
@@ -1131,6 +1222,9 @@ public class CouponManageModule {
         }
         return result.success("领取失败");
     }
+
+
+
 
 
 

@@ -265,9 +265,18 @@ public class ShoppingCartModule {
     public Result queryUnCheckShopCartList(AppContext appContext){
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int compid = jsonObject.get("compid").getAsInt();
         Result result = new Result();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        if(!jsonObject.has("compid")){
+            return  result.success(null);
+        }
+
+        int compid = jsonObject.get("compid").getAsInt();
+
+        if(compid <= 0){
+            return  result.success(null);
+        }
+
         List<Object[]> queryResult = baseDao.queryNativeSharding(compid,TimeUtils.getCurrentYear(),QUERY_SHOPCART_SQL,compid);
         ShoppingCartDTO[] shoppingCartVOS = new ShoppingCartDTO[queryResult.size()];
         if (queryResult == null || queryResult.isEmpty()) {

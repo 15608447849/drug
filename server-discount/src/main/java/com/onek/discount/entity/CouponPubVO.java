@@ -50,6 +50,26 @@ public class CouponPubVO {
 
     private int goods;
 
+    private int qlfno;
+
+    private long qlfval;
+
+    public int getQlfno() {
+        return qlfno;
+    }
+
+    public void setQlfno(int qlfno) {
+        this.qlfno = qlfno;
+    }
+
+    public long getQlfval() {
+        return qlfval;
+    }
+
+    public void setQlfval(long qlfval) {
+        this.qlfval = qlfval;
+    }
+
     public int getGlbno() {
         return glbno;
     }
@@ -134,10 +154,5 @@ public class CouponPubVO {
     public void setUnqid(long unqid) {
         this.unqid = unqid;
     }
-    public static void main(String[] args) {
 
-        int a = 536862733 / 8192 % 65535;
-        System.out.println(a);
-      //  536862733
-    }
 }

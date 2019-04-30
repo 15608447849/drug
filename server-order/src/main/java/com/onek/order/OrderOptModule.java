@@ -360,15 +360,15 @@ public class OrderOptModule {
      * @exception
      * @version 1.1.1
      **/
-    @UserPermission(ignore = false)
+    @UserPermission(ignore = false,allowedUnrelated =true)
     public Result afterSaleReview(AppContext appContext) {
         String json = appContext.param.json;
         Result result = new Result();
         JsonParser jsonParser = new JsonParser();
         UserSession userSession = appContext.getUserSession();
-//        if(userSession == null || (userSession.roleCode & (128+1) )== 0){
-//            return result.fail("当前用户没有该权限");
-//        }
+        if(userSession == null || (userSession.roleCode & (128+1) )== 0){
+            return result.fail("当前用户没有该权限");
+        }
 
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long asno = jsonObject.get("asno").getAsLong();
@@ -581,7 +581,7 @@ public class OrderOptModule {
 
         int ckstatus =jsonObject.get("ckstatus").getAsInt();
 
-        if(astype > 0){
+        if(astype > -1){
             sqlBuilder.append(" and asapp.astype = ");
             sqlBuilder.append(astype);
         }
@@ -664,7 +664,7 @@ public class OrderOptModule {
 
         int ckstatus =jsonObject.get("ckstatus").getAsInt();
 
-        if(astype > 0){
+        if(astype > -1){
             sqlBuilder.append(" and asapp.astype = ");
             sqlBuilder.append(astype);
         }

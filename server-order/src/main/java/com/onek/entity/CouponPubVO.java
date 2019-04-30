@@ -58,6 +58,26 @@ public class CouponPubVO {
 
     private double offerAmt;
 
+    private int qlfno;
+
+    private long qlfval;
+
+    public int getQlfno() {
+        return qlfno;
+    }
+
+    public void setQlfno(int qlfno) {
+        this.qlfno = qlfno;
+    }
+
+    public long getQlfval() {
+        return qlfval;
+    }
+
+    public void setQlfval(long qlfval) {
+        this.qlfval = qlfval;
+    }
+
     public double getOfferAmt() {
         return offerAmt;
     }
