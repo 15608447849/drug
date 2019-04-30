@@ -10,12 +10,6 @@ public class IntegralResetTimer {
 
     static {
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.MONTH, Calendar.MARCH);
-        calendar.set(Calendar.DAY_OF_MONTH, 1);
-        calendar.set(Calendar.HOUR_OF_DAY, 0); //凌晨0点
-        calendar.set(Calendar.MINUTE, 0);
-        calendar.set(Calendar.SECOND, 0);
-        calendar.set(Calendar.MILLISECOND, 1);
         Date date  =calendar.getTime(); //第一次执行定时任务的时间
         Timer timer = new Timer();
         IntegralResetTask task = new IntegralResetTask();

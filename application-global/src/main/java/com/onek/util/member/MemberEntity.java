@@ -58,6 +58,15 @@ public class MemberEntity {
 //        this.createtime = createtime;
 //    }
 
+
+    public int getExpirepoint() {
+        return expirepoint;
+    }
+
+    public void setExpirepoint(int expirepoint) {
+        this.expirepoint = expirepoint;
+    }
+
     public int getCstatus() {
         return cstatus;
     }
