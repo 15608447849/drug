@@ -27,6 +27,10 @@ public class FileServerUtils {
         return "http://" + fsp.fileServerAddress +"/ergodic";
     }
 
+    public static String fileDeleteAddress() {
+        return "http://" + fsp.fileServerAddress +"/delete";
+    }
+
     // 文件下载地址 前缀 ,例如 下载文件 /目录/文件.png -> 下载前缀/目录/文件.png
     public static String fileDownloadPrev(){
         return "http://" + fsp.fileServerAddress ;
@@ -35,6 +39,8 @@ public class FileServerUtils {
     public static String defaultHome(){
         return "/" + EncryptUtils.encryption(fsp.fileDefaultDir);
     }
+
+
 
     private static final int MOD = 500;
 
@@ -125,5 +131,6 @@ public class FileServerUtils {
         String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/refund","POST",map);
         return GsonUtils.string2Map(json);
     }
+
 
 }

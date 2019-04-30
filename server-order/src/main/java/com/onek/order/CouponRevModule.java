@@ -5,24 +5,26 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.CouponListFilterService;
-import com.onek.calculate.entity.*;
+import com.onek.calculate.entity.Activity;
+import com.onek.calculate.entity.DiscountResult;
+import com.onek.calculate.entity.Product;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
-import com.onek.entity.*;
+import com.onek.entity.ActivityGiftVO;
+import com.onek.entity.CouponPubLadderVO;
+import com.onek.entity.CouponPubVO;
+import com.onek.entity.CouponUseDTO;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
+import com.onek.util.GenIdUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GenIdUtil;
-import io.netty.util.internal.SocketUtils;
-import org.hyrdpf.ds.AppConfig;
 import util.GsonUtils;
 import util.MathUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
 import java.math.BigDecimal;
-import java.sql.Time;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -553,23 +555,14 @@ public class CouponRevModule {
      * @return
      */
     @UserPermission(ignore = true)
-    public Result getOrderCntByCompid(AppContext appContext){
+    public String getOrderCntByCompid(AppContext appContext){
         String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-
-        int compid = jsonObject.get("compid").getAsInt();
-        Result result = new Result();
+        int compid = Integer.parseInt(appContext.param.arrays[0]);
         List<Object[]> queryResult = baseDao.queryNativeSharding(compid,TimeUtils.getCurrentYear(),QUERY_ORDER_CNT,compid);
-
-        Map map = new HashMap();
-        map.put("cnt",-1);
         if (queryResult == null || queryResult.isEmpty()) {
-            return result.success(map);
+           return "-1";
         }
-        map.put("cnt",Long.parseLong(queryResult.get(0)[0].toString()));
-        return result.success(map);
-
+        return queryResult.get(0)[0].toString();
     }
 
     public int insertGiftCoupon(List<ActivityGiftVO> activityGiftVOList){

@@ -19,6 +19,8 @@ import util.http.HttpRequest;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import static util.ImageVerificationUtils.getRandomCode;
 import static util.ImageVerificationUtils.getRandomCodeByNum;
@@ -29,6 +31,11 @@ import static util.ImageVerificationUtils.getRandomCodeByNum;
  * 验证码操作
  */
 public class VerificationOp implements IOperation<AppContext> {
+
+
+
+
+
     public int type = 0;
     public String phone; //手机号
 
@@ -56,12 +63,20 @@ public class VerificationOp implements IOperation<AppContext> {
         try {
             String code = getRandomCode(4);
             InputStream inputStream = ImageVerificationUtils.generateImage(77,33,code);
-            HttpRequest result = new HttpRequest();
-            String key = EncryptUtils.encryption(code); //k = code 的MD5 ,v = code, 存入redis
 
-            String json = result.addStream(inputStream,EncryptUtils.encryption("image_verification_code"),key+".png")
-                    .fileUploadUrl(FileServerUtils.fileUploadAddress())
-                    .getRespondContent(); // k作为文件名 文件链接传递到前端
+            String key = EncryptUtils.encryption(code);
+
+            RedisUtil.getStringProvide().set(key,code); //k = code 的MD5 ,v = code, 存入redis
+            RedisUtil.getStringProvide().expire(key, USProperties.INSTANCE.vciSurviveTime); // 3分钟内有效
+
+            HttpRequest result = new HttpRequest();
+            String json = result.addStream(
+                    inputStream,
+                    EncryptUtils.encryption("image_verification_code"),  //远程路径
+                    key+".png"  //k作为文件名
+                    )
+                    .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
+                    .getRespondContent();
 
 
             HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
@@ -71,10 +86,15 @@ public class VerificationOp implements IOperation<AppContext> {
             map.put("key",key);//前端需要传递到后台系统,从而验证code
             map.put("url",list.get(0).get("httpUrl").toString());
 
-            String res = RedisUtil.getStringProvide().set(key,code);
-            if (res.equals("OK")){
-                RedisUtil.getStringProvide().expire(key, USProperties.INSTANCE.vciSurviveTime); // 3分钟内有效
-            }
+            final String filePath = list.get(0).get("relativePath").toString();
+            //开启定时器
+            new Timer().schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    new HttpRequest().deleteFile(FileServerUtils.fileDeleteAddress(),filePath);
+                }
+            },USProperties.INSTANCE.vciSurviveTime * 1000);
+            // 文件链接传递到前端
            return new Result().success(GsonUtils.javaBeanToJson(map));
         } catch (Exception e) {
             e.printStackTrace();
