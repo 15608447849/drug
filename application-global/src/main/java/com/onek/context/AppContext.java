@@ -35,7 +35,7 @@ public class AppContext extends IceContext {
                 return;
             }
             String key = genUKey();
-            String json = RedisUtil.getStringProvide().get(key);
+            String json = RedisUtil.getStringProvide().get(key); //获取用户信息
             userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
             if (userSession == null) {
                 logger.print("KEY : "+ key +" 找不到缓存的用户信息 ");
@@ -63,33 +63,50 @@ public class AppContext extends IceContext {
 
 
     //创建用户会话KRY lzp
-    public String genUKey() {
+    private String genUKey() {
         return EncryptUtils.encryption(param.token + "@" + remoteIp);
     }
 
     //创建多端检测key
-    public String genUKeyByMore(){
-        return EncryptUtils.encryption(userSession.roleCode+ "@" +userSession.userId);
+    private String genUKeyByMore(){
+        return  userSession.userId+ "@" +userSession.compId ;//EncryptUtils.encryption();
     }
 
     //创建用户会话到缓存 lzp
+    //用户登陆时 - 存入 用户信息,同时存入 用户信息对应的在线用户信息
     public boolean relationTokenUserSession() {
         if (userSession == null) return false;
         //创建token 标识
-        String key = genUKey();
-        String json = GsonUtils.javaBeanToJson(userSession);
-
-        String res = RedisUtil.getStringProvide().set(key,json);
-//        logger.print( key + " ||===写入用户信息到缓存======== "+ res +" =======>> "+ json);
-        return  res.equals("OK");
+        return  RedisUtil.getStringProvide().set(genUKey(), GsonUtils.javaBeanToJson(userSession)).equals("OK"); //写入用户信息到缓存
     }
 
+    //存储多点登陆判断条件-仅对门用户登陆有效
+    public void storeUserMappingToken() {
+        checkMorePointLogin();
+        //防止多点登陆 - 存入  当前登陆用户k = 已存在的token
+        RedisUtil.getStringProvide().set(genUKeyByMore(),genUKey());
+        logger.print("登陆成功, 设置当前用户("+genUKeyByMore()+") 唯一token = " +" = "+ genUKey());
+    }
+
+    //检测是存在多端登陆的情况
+    private void checkMorePointLogin() {
+
+        String token = RedisUtil.getStringProvide().get(genUKeyByMore());
+        logger.print(genUKeyByMore()+" - 检测是否存在多点登陆,上一个用户信息token = "+token+", 当前用户信息token = "+ genUKey());
+        if (StringUtils.isEmpty(token)) return;
+        if (!token.equals(genUKey())){
+            //删除上一个用户token
+            RedisUtil.getStringProvide().delete(token);
+            logger.print(genUKeyByMore()+" - 检测多点登陆,删除上一个用户token缓存信息 = "+token);
+        }
+
+    }
+
+    //清理用户会话
     public boolean clearTokenByUserSession(){
         if (userSession!=null){
-            String key = genUKey();
-            RedisUtil.getStringProvide().delete(key);
-            String key2 = genUKeyByMore();
-            RedisUtil.getStringProvide().delete(key2);
+            RedisUtil.getStringProvide().delete(genUKey());
+            RedisUtil.getStringProvide().delete(genUKeyByMore());
             userSession = null;
             return true;
         }
@@ -110,17 +127,4 @@ public class AppContext extends IceContext {
         }
     }
 
-    public void checkMorePointLogin() {
-        //检测是存在多端登陆的情况
-        String key = genUKeyByMore();
-        String val = RedisUtil.getStringProvide().get(key);
-        String val2 = genUKey();
-        if (!StringUtils.isEmpty(val)) {
-            if (!val.equals(val2)){
-                //删除上一个
-                RedisUtil.getStringProvide().delete(val);
-            }
-        }
-        RedisUtil.getStringProvide().set(key,val2);//防止多点登陆使用
-    }
 }

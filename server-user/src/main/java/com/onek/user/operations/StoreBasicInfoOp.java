@@ -18,6 +18,7 @@ import static util.StringUtils.checkObjectNull;
  * 企业信息
  */
 public class StoreBasicInfoOp {
+    //更新企业信息到缓存
     public static void updateCompInfoToCache() {
         final String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,cid FROM {{?"+ DSMConst.D_COMP+"}} WHERE ctype=0";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
@@ -28,19 +29,20 @@ public class StoreBasicInfoOp {
             infoToCache(info);
         }
     }
-
+    //更具企业码更新企业信息到缓存
     public static void updateCompInfoToCacheById(int cid){
         StoreBasicInfo info = new StoreBasicInfo(cid);
         getStoreInfoById(info);
        infoToCache(info);
     }
 
-    private static void infoToCache(StoreBasicInfo info) {
-        String json = GsonUtils.javaBeanToJson(info);
-        String res = RedisUtil.getStringProvide().set(""+info.storeId,json );
-//        communicator().getLogger().print("更新信息 - Redis - "+ res +" :" + json);
+    //企业信息json保存到缓存 -> 企业码 = 企业信息json
+    public static void infoToCache(StoreBasicInfo info) {
+        if (info.storeId>0){
+            RedisUtil.getStringProvide().set(""+info.storeId, GsonUtils.javaBeanToJson(info) );
+        }
     }
-
+    //获取企业信息
     public static boolean getStoreInfoById(StoreBasicInfo info) {
         //通过企业码获取企业信息
         String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng" +
@@ -55,6 +57,7 @@ public class StoreBasicInfoOp {
         }
       return false;
     }
+    //设置认证信息等
     private static void objArrToStoreInfo(Object[] rows,StoreBasicInfo info){
         int status = (int) rows[0];
         if ((status&64) == 64){
