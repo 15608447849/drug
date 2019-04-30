@@ -69,7 +69,7 @@ public class ShoppingCartModule {
     private static final String QUERY_PROD_BASE =
             " SELECT  spu.prodname ptitle,m.manuname verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
-                    "sku.store inventory, sku.spec, sku.prodstatus,spu.spu "
+                    "sku.store inventory, sku.spec, sku.prodstatus,spu.spu,sku.limits "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
@@ -340,7 +340,8 @@ public class ShoppingCartModule {
         }
         ShoppingCartVO[] returnResults = new ShoppingCartVO[queryResult.size()];
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
-                new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory","spec","pstatus","spu"});
+                new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory",
+                        "spec","pstatus","spu","limitnum"});
 
 
 
@@ -409,19 +410,25 @@ public class ShoppingCartModule {
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
            List<DiscountRule> ruleList = new ArrayList<>();
            List<Long> actCodeList = new ArrayList<>();
+            int count = 0;
             for(IDiscount discount : discountList){
                 Activity activity = (Activity)discount;
                 int brule = (int)discount.getBRule();
                 List<IProduct> pList =  discount.getProductList();
                 for (IProduct product: pList){
                     if(product.getSKU() == shoppingCartVO.getPdno()){
+                        count++;
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
                         actCodeList.add(activity.getUnqid());
-                        if(activity.getLimits(product.getSKU()) == 0){
+                        if(count == 1  &&  activity.getLimits(product.getSKU()) == 0){
                             shoppingCartVO.setStatus(3);
                         }
+                        if(count == 1){
+                            shoppingCartVO.setLimitnum(activity.getLimits(product.getSKU()));
+                        }
+
                         //判断秒杀
                         if(brule == 1113){
                             shoppingCartVO.setStatus(1);

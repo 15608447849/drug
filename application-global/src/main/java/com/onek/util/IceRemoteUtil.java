@@ -1,5 +1,6 @@
 package com.onek.util;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
@@ -213,6 +214,26 @@ public class IceRemoteUtil {
     public static List<String> getAllStorePhone() {
         String json = ic.setServerAndRequest("userServer","StoreManageModule","getAllUserPhone").execute();
         return GsonUtils.json2List(json,String.class);
+    }
+
+    //获取此团购的团购数
+    public static int getGroupCount(long actCode) {
+        String json = ic.setServerAndRequest(
+                "userServer","GroupBuyModule","getGroupCount")
+                .setArrayParams(actCode).execute();
+
+        Result result = JSON.parseObject(json, Result.class);
+
+        if (result == null
+                || result.data == null) {
+            return 0;
+        }
+
+        return (int) result.data;
+    }
+
+    public static void main(String[] args) {
+        System.out.println("----- " + getGroupCount(11879432960607232L));
     }
 
     //查询所有足迹
