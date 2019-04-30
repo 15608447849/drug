@@ -58,8 +58,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
             //关联token-用户信息
             if (relationTokenUserSession(context)){
-                //查看是否存在多端登陆的情况
-                context.checkMorePointLogin();
+
                 return new Result().success("登陆成功");
             }
             else return new Result().success("无法关联用户信息");
@@ -72,7 +71,8 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
     private boolean relationTokenUserSession(AppContext context) {
         context.setUserSession(userSession);
-        return context.relationTokenUserSession();
+        context.storeUserMappingToken();//门店登陆-防止多点你登录设置
+        return context.relationTokenUserSession();//门店登陆-关联用户信息
     }
 
     //检查用户是否正确
@@ -80,7 +80,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
         String selectSql = "SELECT uid,roleid,upw,cid " +
                 "FROM {{?" + DSMConst.D_SYSTEM_USER + "}} " +
-                "WHERE cstatus&1 = 0 AND roleid&2>0 AND uphone = ?";
+                "WHERE cstatus&1 = 0 AND roleid&2=2  AND uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
 
         if (lines.size()>0){

@@ -101,7 +101,7 @@ public class HigherProfitsTask extends TimerTask {
                 for (SearchHit searchHit : response.getHits()) {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                     long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
-                    int skucstatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS).toString());
+                    int skucstatus = sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS) != null ? Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS).toString()): 0;
                     sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, skucstatus&~512);
                     bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
@@ -149,7 +149,7 @@ public class HigherProfitsTask extends TimerTask {
                 for (SearchHit searchHit : response.getHits()) {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                     long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
-                    int skucstatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS).toString());
+                    int skucstatus = sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS) != null ? Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS).toString()): 0;
                     sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, skucstatus|512);
                     bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 

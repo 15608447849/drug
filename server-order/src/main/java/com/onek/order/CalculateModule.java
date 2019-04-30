@@ -67,7 +67,6 @@ public class CalculateModule {
         List<IDiscount> discounts
                 = new ActivityFilterService(
                         new ActivitiesFilter[] {
-//                                new TypeFilter(),
                                 new CycleFilter(),
                                 new QualFilter(compid),
                                 new PriorityFilter(), })

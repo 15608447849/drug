@@ -117,7 +117,7 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
                 if (i > 0) return true
             }else{
                 //修改
-                val updateSql = "UPDATE {{?${DSMConst.D_COMP_APTITUDE}}} SET certificateno=$id,validitys='$idStartTime',validitye='$idEndTime' WHERE aptid =${lines[0][0]}"
+                val updateSql = "UPDATE {{?${DSMConst.D_COMP_APTITUDE}}} SET certificateno='$id',validitys='$idStartTime',validitye='$idEndTime' WHERE aptid ='${lines[0][0]}'"
                 val i = BaseDAO.getBaseDAO().updateNative(updateSql)
                 if (i > 0) return true
             }

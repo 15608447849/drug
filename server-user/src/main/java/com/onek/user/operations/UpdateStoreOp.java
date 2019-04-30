@@ -139,11 +139,10 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 }
 
                 session.compId = (int)compid;
-                if (!context.relationTokenUserSession()){
-                    updateCompInfoToCacheById(session.compId);//更新企业信息到缓存
-                    //重新保存用户信息
+                if (!context.relationTokenUserSession()){ //保存用户信息到缓存
                     return new Result().fail("保存用户信息失败");
                 }
+                updateCompInfoToCacheById(session.compId);//更新企业信息到缓存
                 //企业关联会员
                 compLinkMember(session.compId);
 

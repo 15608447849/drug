@@ -47,7 +47,6 @@ public class CalculateUtil {
         List<IDiscount> activityList =
                 new ActivityFilterService(
                         new ActivitiesFilter[] {
-                                new TypeFilter(),
                                 new CycleFilter(),
                                 new QualFilter(compid),
                                 new PriorityFilter(),
