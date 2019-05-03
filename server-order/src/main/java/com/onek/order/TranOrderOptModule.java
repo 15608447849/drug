@@ -110,7 +110,7 @@ public class TranOrderOptModule {
                     + " WHERE cstatus&1 = 0 AND ostatus = 2 AND orderno = ? ";
 
     private static final String UPDATE_PROM_COURCD = "update {{?" + DSMConst.TD_PROM_COURCD
-            + "}} set cstatus=cstatus|1 where cstatus&1=0 and coupno=? and compid=?";
+            + "}} set cstatus=cstatus|1 where cstatus&1=0 and cstatus&64=0 and coupno=? and compid=?";
 
 
 
