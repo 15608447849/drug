@@ -344,6 +344,8 @@ public class TranOrderOptModule {
                 tranOrderGoods.setCompid(tranOrder.getCusno());
                 tranOrderGoods.setPdno(iDiscount.getProductList().get(i).getSKU());
                 tranOrderGoods.setPdprice(iDiscount.getProductList().get(i).getOriginalPrice());
+                tranOrderGoods.setDistprice(iDiscount.getProductList().get(i).getDiscounted());
+                System.out.println("");
                 tranOrderGoods.setPayamt(iDiscount.getProductList().get(i).getCurrentPrice());
                 tranOrderGoods.setPromtype((int) iDiscount.getBRule());
                 finalTranOrderGoods.add(tranOrderGoods);
@@ -354,6 +356,7 @@ public class TranOrderOptModule {
                 if (goodsPrice.getPdno() == finalGoods.getPdno()) {
                     goodsPrice.setCompid(tranOrder.getCusno());
                     goodsPrice.setPdprice(finalGoods.getPdprice());
+                    goodsPrice.setDistprice(finalGoods.getDistprice() * 100);
                     goodsPrice.setPayamt(finalGoods.getPayamt() * 100);
                     goodsPrice.setPromtype(finalGoods.getPromtype());
                 }
