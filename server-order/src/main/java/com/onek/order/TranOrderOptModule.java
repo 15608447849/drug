@@ -334,7 +334,7 @@ public class TranOrderOptModule {
         } else {
             tranOrder.setFreight(AreaFeeUtil.getFee(tranOrder.getRvaddno()) * 100);//运费(暂无)
         }
-        tranOrder.setPayamt((discountResult.getTotalCurrentPrice() * 100));
+        tranOrder.setPayamt((discountResult.getTotalCurrentPrice() * 100) + tranOrder.getFreight());
         tranOrder.setDistamt((discountResult.getTotalDiscount() * 100));
 
         List<IDiscount> iDiscountList = discountResult.getActivityList();

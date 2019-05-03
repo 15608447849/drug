@@ -124,6 +124,7 @@ public class OrderOptModule {
      **/
     @UserPermission(ignore = false)
     public Result insertApprise(AppContext appContext) {
+        boolean b = false;
         Result result = new Result();
         Gson gson = new Gson();
         LocalDateTime localDateTime = LocalDateTime.now();
@@ -134,13 +135,20 @@ public class OrderOptModule {
         String orderNo = jsonObject.get("orderno").getAsString();
         int compid = jsonObject.get("compid").getAsInt();
         JsonArray appriseArr = jsonObject.get("appriseArr").getAsJsonArray();
-        for (int i = 0; i < appriseArr.size(); i++) {
-            AppriseVO appriseVO = gson.fromJson(appriseArr.get(i).toString(), AppriseVO.class);
-            params.add(new Object[]{GenIdUtil.getUnqId(), orderNo, appriseVO.getLevel(), appriseVO.getDescmatch(),
-                    appriseVO.getLogisticssrv(), appriseVO.getContent(), compid, appriseVO.getSku()});
+        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+        //更新订单状态为以评价
+        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=4 "
+                + " where cstatus&1=0 and orderno="+ orderNo + " and ostatus=3";
+        if (baseDao.updateNativeSharding(compid, year, updSQL) > 0){
+            for (int i = 0; i < appriseArr.size(); i++) {
+                AppriseVO appriseVO = gson.fromJson(appriseArr.get(i).toString(), AppriseVO.class);
+                params.add(new Object[]{GenIdUtil.getUnqId(), orderNo, appriseVO.getLevel(), appriseVO.getDescmatch(),
+                        appriseVO.getLogisticssrv(), appriseVO.getContent(), compid, appriseVO.getSku()});
+            }
+            b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNativeSharding(0, localDateTime.getYear(),
+                    INSERT_APPRISE_SQL, params, params.size()));
         }
-        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNativeSharding(0, localDateTime.getYear(),
-                INSERT_APPRISE_SQL, params, params.size()));
+
         return b ? result.success("评价成功!") : result.fail("评价失败!");
     }
 
