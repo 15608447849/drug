@@ -5,9 +5,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.CouponListFilterService;
-import com.onek.calculate.entity.Activity;
-import com.onek.calculate.entity.DiscountResult;
-import com.onek.calculate.entity.Product;
+import com.onek.calculate.entity.*;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entity.ActivityGiftVO;
@@ -19,10 +17,8 @@ import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import util.GsonUtils;
-import util.MathUtil;
-import util.StringUtils;
-import util.TimeUtils;
+import org.hyrdpf.ds.AppConfig;
+import util.*;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
@@ -92,12 +88,16 @@ public class CouponRevModule {
             + " set actstock = actstock - 1 " +
             "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
 
+    private static final String UPDATE_COUPON_STOCK_NUM = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
+            + " set actstock = actstock - ? " +
+            "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
+
 
     /**
      * 查询领取的优惠券列表
      */
     private final String QUERY_COUP_EXT_SQL = "select count(1) from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
-            " where compid = ? and coupno = ? and  cstatus = 0 and ctype = 0 and  CURRENT_DATE <= enddate ";
+            " where compid = ? and coupno = ? and  cstatus = 0  and  CURRENT_DATE <= enddate ";
 
 
 
@@ -105,18 +105,37 @@ public class CouponRevModule {
      * 查询活动优惠券
      */
     private final String QUERY_ACCOUP_SQL = "select unqid coupno,glbno,brulecode,validday,validflag,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} "+
-            " where cstatus & 128 > 0 and  cstatus & 1= 0 and actstock > 0 ";
+            " where cstatus & 128 > 0 and brulecode = ? and cstatus & 1= 0 and actstock > 0 ";
 
 
     //领取活动优惠券
     private final String INSERT_ACCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
-            + "rulename,goods,ladder,glbno,accode,ctype,reqflag,cstatus) "
+            + "rulename,goods,ladder,glbno,actcode,ctype,reqflag,cstatus) "
             + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 
     private final String QUERY_ORDER_CNT = "select count(1) cnt from {{?"+DSMConst.TD_TRAN_ORDER+"}} where cusno = ?";
 
+
+    private final String QUERY_ORDER_PRODUCT = "select pdno,pnum,convert(pdprice/100,decimal(10,2)) pdprice from {{?"+DSMConst.TD_TRAN_ORDER+"}} orders, "+
+            "{{?"+DSMConst.TD_TRAN_GOODS+"}} goods where orders.orderno = goods.orderno and orders.orderno = ? "+
+            " and orders.ostatus > 0 and orders.cstatus &1 = 0 and goods.cstatus & 1 = 0 ";
+
+    private final String QUERY_COUPON_ACT = "select unqid,brulecode,validday,validflag,actstock,reqflag from " +
+            "{{?"+DSMConst.TD_PROM_COUPON+"}}  where cstatus & 128 > 0 and brulecode = ? and  cstatus & 1 = 0 ";
+
+
+    private final String QUERY_ACTCOUPON_LADD = "select lad.unqid,lad.ladamt,lad.ladnum,lad.offercode,lad.offer from {{?"+
+            DSMConst.TD_PROM_RELA +"}} rela,{{?"+DSMConst.TD_PROM_LADOFF+"}} lad where rela.ladid = lad.unqid and rela.actcode = ? "+
+            "  and rela.cstatus & 1 = 0 and lad.cstatus & 1 = 0 ";
+
+
+    //新增领取活动优惠券
+    private final String INSERT_ACTCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
+            + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
+            + "rulename,goods,ladder,glbno,ctype,reqflag,actcode,cstatus) "
+            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 
     /**
@@ -340,94 +359,6 @@ public class CouponRevModule {
 
 
 
-
-
-////    /**
-////     * 查询可以使用的优惠券
-////     * @param appContext
-////     * @return
-////     */
-////    @UserPermission(ignore = true)
-////    public Result queryActCouponList(AppContext appContext){
-////        String json = appContext.param.json;
-////       JsonParser jsonParser = new JsonParser();
-////        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
-////        Result result = new Result();
-////
-////        List<CouponUseDTO> couponUseDTOS = new ArrayList<>();
-//        StringBuilder sqlBuilder = new StringBuilder(QUERY_COUPONREV_SQL);
-////        sqlBuilder.append(" and  CURRENT_DATE <= enddate ");
-////
-////        Gson gson = new Gson();
-////        List<Product> productList = new ArrayList<>();
-////        for (JsonElement coupn : jsonArray) {
-////            CouponUseDTO couponUseDTO = gson.fromJson(coupn, CouponUseDTO.class);
-////            if (couponUseDTO != null) {
-////                couponUseDTOS.add(couponUseDTO);
-////                Product product = new Product();
-////                product.setSku(couponUseDTO.getPdno());
-////                product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
-////                productList.add(product);
-////            }
-////        }
-////        sqlBuilder.append(" and compid = ").append(couponUseDTOS.get(0).getCompid());
-////
-////
-////        if(couponUseDTOS.get(0).getFlag() == 1){
-////            sqlBuilder.append(" and glbno = 1 ");
-////        }
-////
-////
-////
-//        List<Object[]> queryResult = baseDao.queryNativeSharding(couponUseDTOS.get(0).getCompid(),
-////                TimeUtils.getCurrentYear(),
-////                sqlBuilder.toString());
-////
-////        CouponPubVO[] couponListVOS = new CouponPubVO[queryResult.size()];
-////        if (queryResult == null || queryResult.isEmpty()) {
-////            return result.success(couponListVOS);
-////        }
-////
-////        baseDao.convToEntity(queryResult, couponListVOS, CouponPubVO.class,
-////                new String[]{"unqid","coupno","compid","startdate","enddate","brulecode",
-////                        "rulename","goods","ladder","glbno","ctype","reqflag"});
-////
-////        List<CouponPubVO> cuseList = new ArrayList<>();
-////        for(CouponPubVO cvs :couponListVOS){
-////            String ldjson = cvs.getLadder();
-////            if(!StringUtils.isEmpty(ldjson)){
-////                JsonArray jsonArrayLadder = jsonParser.parse(ldjson).getAsJsonArray();
-////                List<CouponPubLadderVO> ladderVOS = new ArrayList<>();
-////                for (JsonElement goodvo : jsonArrayLadder){
-////                    CouponPubLadderVO ldvo = gson.fromJson(goodvo, CouponPubLadderVO.class);
-////                    ladderVOS.add(ldvo);
-////
-////                }
-////                cvs.setLadderVOS(ladderVOS);
-////                double samt = couponUseDTOS.get(0).getSamt();
-////                CouponPubLadderVO couponPubLadderVO
-////                        = getLadoffable(ladderVOS,couponUseDTOS.get(0).getSamt());
-////                if(couponPubLadderVO != null){
-////                    int offerCode = couponPubLadderVO.getOffercode();
-////                    if(offerCode != 0){
-////                       // int ruleno = Integer.parseInt((offerCode+"").substring(0,4));
-////                        DiscountResult disResult = CalculateUtil.calculate(cvs.getCompid(),
-////                                productList, cvs.getUnqid());
-////                        cvs.setOfferAmt(couponPubLadderVO.getOffer());
-//////                        if(ruleno == 2130){
-//////                           double calAmt = samt - (samt * (couponPubLadderVO.getOffer()/100));
-//////                           cvs.setOfferAmt(calAmt);
-//////                        }
-////                        cvs.setOfferAmt(disResult.getCouponValue());
-////                    }
-////                    cuseList.add(cvs);
-////                }
-////            }
-////        }
-////        return result.success(cuseList);
-////    }
-
-
     /**
      * 查询可以使用的优惠券
      * @param appContext
@@ -516,24 +447,6 @@ public class CouponRevModule {
         }
         resultMap.put("payamt",payamt);
 
-
-//        Activity activity = null;
-//        if(calculate.getActivityList() != null
-//                && !calculate.getActivityList().isEmpty()){
-//            activity = (Activity)calculate.getActivityList().get(0);
-//        }
-//        //判断秒杀，计算优惠价
-//        if(activity != null && activity.getBRule() == 1113){
-//            double skillDctPrice = MathUtil.exactSub(subCalRet.doubleValue(),
-//                    MathUtil.exactAdd(calculate.getTotalDiscount(),
-//                            calculate.getTotalCurrentPrice()).doubleValue()).doubleValue();
-//
-//            resultMap.put("tdiscount",MathUtil.exactAdd(skillDctPrice,
-//                    calculate.getTotalDiscount()).doubleValue());
-//
-//            resultMap.put("acvalue",skillDctPrice);
-//        }
-
         return result.success(resultMap);
     }
 
@@ -565,71 +478,138 @@ public class CouponRevModule {
         return queryResult.get(0)[0].toString();
     }
 
-    public int insertGiftCoupon(List<ActivityGiftVO> activityGiftVOList){
 
 
+    public boolean revGiftCoupon(long orderno,int compid){
 
-//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-//        Date curDate = new Date();
-//        String startDate = dateFormat.format(curDate);
-//        Calendar calendar = Calendar.getInstance();
-//        calendar.setTime(curDate);
-//        calendar.add(Calendar.DATE, couponVO.getValidday());
-//        String endDate = dateFormat.format(calendar.getTime());
-//        if(couponVO.getValidflag() == 1){
-//            calendar.setTime(curDate);
-//            calendar.add(Calendar.DATE, 1);
-//            startDate = dateFormat.format(calendar.getTime());
-//            calendar.add(Calendar.DATE, couponVO.getValidday());
-//            endDate = dateFormat.format(calendar.getTime());
-//        }
-//        String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
-//        return  baseDao.updateNativeSharding(couponVO.getCompid(),
-//                TimeUtils.getCurrentYear(),INSERT_COUPONREV_SQL,
-//                new Object[]{GenIdUtil.getUnqId(),couponVO.getCoupno(),
-//                        couponVO.getCompid(),startDate,"00:00:00",
-//                        endDate,"00:00:00",couponVO.getBrulecode(),
-//                        couponVO.getRulename(),couponVO.getGoods(),
-//                        ladderJson,couponVO.getGlbno(),0});
+        if(compid <= 0){
+            return false;
+        }
 
-        return 0;
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                QUERY_ORDER_PRODUCT,orderno);
+
+        if(queryResult == null || queryResult.isEmpty()){
+            return false;
+        }
+
+        Product[] productArray = new Product[queryResult.size()];
+        baseDao.convToEntity(queryResult, productArray, Product.class,
+                new String[]{"sku","nums","originalPrice"});
+
+        for(Product product: productArray){
+            product.autoSetCurrentPrice(product.getOriginalPrice(),product.getNums());
+        }
+        List<Product> productList = Arrays.asList(productArray);
+        DiscountResult discountResult = CalculateUtil.calculate(compid, productList, 0);
+        List<IDiscount> activityList = discountResult.getActivityList();
+        return insertGiftCoupon(compid,activityList);
     }
+
+
+    
+    public boolean insertGiftCoupon(int compid ,List<IDiscount> discounts){
+
+        List<Object[]> coupParams = new ArrayList<>();
+        List<Object[]> stockParams = new ArrayList<>();
+        List<String> sqlList = new ArrayList<>();
+        if(discounts == null || discounts.isEmpty()){
+            return false;
+        }
+        for (IDiscount discount: discounts){
+            Activity activity = (Activity) discount;
+            List<Gift> giftList = activity.getGiftList();
+            int brule = 0;
+            if(giftList == null || giftList.isEmpty()){
+                continue;
+            }
+
+            for (Gift gift: giftList){
+
+                if(brule > 0){
+                    break;
+                }
+
+                switch (gift.getType()){
+                    case 0:
+                        brule = 2120;
+                        break;
+                    case 1:
+                        brule = 2110;
+                        break;
+                    case 2:
+                        brule = 2130;
+                        break;
+                    default:
+                        break;
+                }
+                List<Object[]> queryResult = baseDao.queryNative(QUERY_ACCOUP_SQL, brule);
+
+                if (queryResult == null || queryResult.isEmpty()) {
+                    break;
+                }
+
+                CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
+
+                baseDao.convToEntity(queryResult, couponPubVOS, CouponPubVO.class,
+                        new String[]{"coupno","glbno","brulecode","validday","validflag",
+                                "reqflag"});
+                CouponPubVO couponResult = setCoupValidDay(couponPubVOS[0]);
+
+                CouponPubLadderVO couponPubLadderVO = new CouponPubLadderVO();
+                couponPubLadderVO.setUnqid(0);
+                couponPubLadderVO.setOffercode(0);
+                couponPubLadderVO.setOffer(gift.getGiftValue());
+                couponResult.setLadder(GsonUtils.
+                        javaBeanToJson(new CouponPubLadderVO[]{couponPubLadderVO}));
+
+                sqlList.add(UPDATE_COUPON_STOCK_NUM);
+                stockParams.add(new Object[]{gift.getNums(),couponResult.getCoupno()});
+                for (int i = 0; i < gift.getNums(); i++){
+                    coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,
+                            couponResult.getStartdate(), "00:00:00",couponResult.getEnddate(),"00:00:00",
+                            couponResult.getBrulecode(), gift.getGiftName(),0,couponResult.getLadder(),
+                            couponResult.getGlbno(),activity.getUnqid(),1,couponResult.getReqflag(),0});
+                }
+            }
+        }
+
+        int[] result = baseDao.updateBatchNativeSharding(compid,TimeUtils.getCurrentYear(),INSERT_ACCOUPONREV_SQL, coupParams, coupParams.size());
+
+        String[] nativeSQL = new String[sqlList.size()];
+        nativeSQL = sqlList.toArray(nativeSQL);
+        if(nativeSQL.length != 0){
+            baseDao.updateTransNative(nativeSQL,stockParams);
+        }
+        return !ModelUtil.updateTransEmpty(result);
+    }
+
+
+    public CouponPubVO setCoupValidDay(CouponPubVO couponVO){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date curDate = new Date();
+        String startDate = dateFormat.format(curDate);
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(curDate);
+        calendar.add(Calendar.DATE, couponVO.getValidday()+1);
+        String endDate = dateFormat.format(calendar.getTime());
+        if(couponVO.getValidflag() == 1){
+            calendar.setTime(curDate);
+            calendar.add(Calendar.DATE, 1);
+            startDate = dateFormat.format(calendar.getTime());
+            calendar.add(Calendar.DATE, couponVO.getValidday());
+            endDate = dateFormat.format(calendar.getTime());
+        }
+        couponVO.setStartdate(startDate);
+        couponVO.setEnddate(endDate);
+        return couponVO;
+    }
+
 
 
     public static void main(String[] args) {
         CouponRevModule couponRevModule = new CouponRevModule();
-            List<Product> productList = new ArrayList<>();
-            Product product = new Product();
-            product.setSku(11000000001201L);
-            product.autoSetCurrentPrice(80,10);
-            productList.add(product);
-            DiscountResult calculate = CalculateUtil.calculate(536862721,
-            productList, 10157621633876992L);
-
-        Activity activity = null;
-        if(calculate.getActivityList() != null
-                && !calculate.getActivityList().isEmpty()){
-            activity = (Activity)calculate.getActivityList().get(0);
-        }
-
-
-        if(activity != null && activity.getBRule() == 1113) {
-            double skillDctPrice = MathUtil.exactSub(80 * 10,
-                    MathUtil.exactAdd(calculate.getTotalDiscount(),
-                            calculate.getTotalCurrentPrice()).doubleValue()).doubleValue();
-
-            System.out.println(skillDctPrice);
-            System.out.println(MathUtil.exactAdd(skillDctPrice,
-                    calculate.getTotalDiscount()).doubleValue());
-        }
-//            resultMap.put("tdiscount",MathUtil.exactAdd(skillDctPrice,
-//                    calculate.getTotalDiscount()).doubleValue());
-
-         //   resultMap.put("acvalue",skillDctPrice);
-
-        System.out.println(calculate.getTotalCurrentPrice());
-        System.out.println(calculate.getTotalDiscount());
-        System.out.println(calculate.getCouponValue());
+        couponRevModule.revGiftCoupon(1904180003111203L,536862723);
     }
 
 

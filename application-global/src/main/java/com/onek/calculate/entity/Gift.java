@@ -18,7 +18,7 @@ public class Gift {
         Gift gift = new Gift();
         gift.giftValue = giftValue;
         gift.nums = nums;
-        gift.giftName = "满减券";
+        gift.giftName = "现金券";
         gift.type = TYPE.SUB;
 
         return gift;
@@ -26,7 +26,7 @@ public class Gift {
 
     public static Gift getFreeShipping(int nums) {
         Gift gift = new Gift();
-        gift.giftName = "免邮券";
+        gift.giftName = "包邮券";
         gift.nums = nums;
         gift.type = TYPE.FREESHIPPING;
 

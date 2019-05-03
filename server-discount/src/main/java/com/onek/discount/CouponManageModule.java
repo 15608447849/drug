@@ -1149,8 +1149,10 @@ public class CouponManageModule {
                     }
                     break;
                 case 3:
-                    rvflag = qlfval != 0 && !AreaUtil.
-                            isChildren(qlfval, getCurrentArea(compid));
+                    if(qlfval == 0 || (qlfval != getCurrentArea(compid)
+                            && !AreaUtil.isChildren(qlfval, getCurrentArea(compid)))){
+                        rvflag = true;
+                    }
                     break;
                 default:
                     break;
