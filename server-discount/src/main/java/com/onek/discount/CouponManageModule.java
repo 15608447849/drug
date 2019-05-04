@@ -17,6 +17,7 @@ import com.onek.util.area.AreaUtil;
 import com.onek.util.member.MemberStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import redis.provide.RedisStringProvide;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.MathUtil;
@@ -243,6 +244,12 @@ public class CouponManageModule {
 
     private static final String INSERT_RELA_SQL = "insert into {{?" + DSMConst.TD_PROM_RELA + "}} "
             + "(unqid,actcode,ladid) values(?,?,?)";
+
+
+    private static final String UPDATE_COMP_BAL = "update {{?" + DSMConst.D_COMP + "}} "
+            + "set balance = balance + ? where cid = ? ";
+
+
 
     //查询库存版本号
 //    private static final String SELECT_COUPON_VER_ = " select ver from {{?" + DSMConst.TD_PROM_COUPON + "}}"
@@ -1085,11 +1092,8 @@ public class CouponManageModule {
         //page.totalItems = count;
         List<Object[]> queryResult = baseDao.queryNative(sbSql.toString(),gtype,gcode,compid);
         CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
-       // PageHolder pageHolder = new PageHolder(page);
         if(queryResult == null || queryResult.isEmpty()){
-
             return result.success(couponPubVOS);
-            //return result.setQuery(couponPubVOS, pageHolder);
         }
 
         baseDao.convToEntity(queryResult, couponPubVOS, CouponPubVO.class,
@@ -1165,12 +1169,13 @@ public class CouponManageModule {
         return couponPubVOS;
     }
 
-    private Integer getCurrentArea(int compid) {
+    private long getCurrentArea(int compid) {
         String compStr = RedisUtil.getStringProvide()
                 .get(String.valueOf(compid));
         if(!StringUtils.isEmpty(compStr)){
             JSONObject compJson = JSON.parseObject(compStr);
-            return compJson.getIntValue("addressCode");
+            System.out.println("企业信息缓存："+compJson);
+            return compJson.getLongValue("addressCode");
         }
         return 0;
     }
@@ -1236,6 +1241,14 @@ public class CouponManageModule {
         return result.success("领取失败");
     }
 
+    public int updateCompBal(int compid,int amt){
+
+        int ret = baseDao.updateNative(UPDATE_COMP_BAL,
+                new Object[]{amt,compid});
+
+        return ret;
+    }
+
 
 
 
@@ -1263,8 +1276,11 @@ public class CouponManageModule {
 //        return Arrays.asList(assGiftVOS);
 //    }
 
-    public static void main(String[] args) {
-
-    }
+//    public static void main(String[] args) {
+//        RedisStringProvide stringProvide = new RedisStringProvide();
+//        stringProvide.get()
+//        //List<CouponPubVO> couponPubVOS,int compid
+//        //filterCoupon()
+//    }
 
 }
