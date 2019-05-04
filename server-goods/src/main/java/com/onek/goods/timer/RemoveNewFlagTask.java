@@ -59,7 +59,7 @@ public class RemoveNewFlagTask extends TimerTask {
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
 
             SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
-                    .setQuery(boolQuery);
+                    .setQuery(boolQuery).setSize(skuList.size());
 
 
             response = requestBuilder
@@ -71,11 +71,11 @@ public class RemoveNewFlagTask extends TimerTask {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                     long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
                     int skucstatus = Integer.parseInt(sourceMap.get(ESConstant.PROD_COLUMN_SKUCSTATUS).toString());
-                    sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, skucstatus&~  256);
+                    sourceMap.put(ESConstant.PROD_COLUMN_SKUCSTATUS, (skucstatus&~  256));
                     bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
                 }
-                BulkResponse bulkResponse = bulkRequest.get();
+                BulkResponse bulkResponse =  bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
                     for(BulkItemResponse item : bulkResponse.getItems()){
                         System.out.println(item.getFailureMessage());

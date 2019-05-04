@@ -138,7 +138,7 @@ public class AreaStore {
         int[] params = REG_TIMES[layer];
 
         head = String.valueOf(areac).substring(0, params[0]);
-        anys  = String.valueOf(params[1]);
+        anys = String.valueOf(params[1]);
         anye = String.valueOf(params[2]);
         zero = String.valueOf(params[3]);
 

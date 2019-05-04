@@ -12,6 +12,7 @@ import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entity.IntegralDetailVO;
 import com.onek.entitys.Result;
+import com.onek.util.member.MemberStore;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
@@ -80,7 +81,7 @@ public class IntegralModule {
             integral = base[times];
         }
         long unqid = GenIdUtil.getUnqId();
-        int code = IceRemoteUtil.addPoint(compid, integral);
+        int code = MemberStore.addPoint(compid, integral);
         if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_SIGNIN, integral, 0,0 });
 
         return new Result().success(null);

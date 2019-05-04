@@ -35,11 +35,12 @@ public class MemberUtil implements IRedisPartCache {
 
     @Override
     public int add(Object id, Object obj) {
-        return 0;
+        return IceRemoteUtil.addPoint((int)id, (int)obj);
     }
 
     @Override
     public int update(Object id, Object obj) {
         return 0;
     }
+
 }

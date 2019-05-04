@@ -1,8 +1,8 @@
 package com.onek.calculate;
 
-import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import com.onek.calculate.entity.Couent;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.StringUtils;
@@ -20,7 +20,9 @@ public class CouponFilterService extends BaseDiscountFilterService {
     private Couent couent;
 
     private static final String GET_COUPON =
-            " SELECT * "
+            " SELECT oid, unqid, coupno, compid, startdate, "
+            + " starttime, enddate, endtime, brulecode, rulename, "
+            + " goods, ladder, glbno, ctype, cstatus, reqflag "
             + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + " WHERE cstatus = 0 "
             + " AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "

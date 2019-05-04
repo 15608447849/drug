@@ -418,32 +418,42 @@ public class TranOrderOptModule {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             String actCodeStr = tranOrderGoods.getActcode();
             List<Long> list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
-            for (Long aList : list) {
-                if (aList > 0) {
-                    if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
-                            tranOrderGoods.getPnum(), aList)) {
-                        result = true;
-                    } else {
-                        GoodsStock goodsStock = new GoodsStock();
-                        goodsStock.setActCode(aList);
-                        goodsStock.setSku(tranOrderGoods.getPdno());
-                        goodsStock.setStock(tranOrderGoods.getPnum());
-                        goodsStockList.add(goodsStock);
-                    }
+            if (list.size() == 0) {//无活动码
+                if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
+                        tranOrderGoods.getPnum()) != 2) {
+                    result = true;
                 } else {
-                    if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
-                            tranOrderGoods.getPnum()) != 2) {
-                        result = true;
+                    setGoodsStock(tranOrderGoods, 0L, goodsStockList);
+                }
+            } else {
+                for (Long aList : list) {
+                    if (aList > 0) {
+                        if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
+                                tranOrderGoods.getPnum(), aList)) {
+                            result = true;
+                        } else {
+                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
+                        }
                     } else {
-                        GoodsStock goodsStock = new GoodsStock();
-                        goodsStock.setActCode(aList);
-                        goodsStock.setSku(tranOrderGoods.getPdno());
-                        goodsStock.setStock(tranOrderGoods.getPnum());
-                        goodsStockList.add(goodsStock);
+                        if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
+                                tranOrderGoods.getPnum()) != 2) {
+                            result = true;
+                        } else {
+                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
+                        }
                     }
                 }
             }
         }
+        return goodsStockList;
+    }
+
+    private List<GoodsStock> setGoodsStock(TranOrderGoods tranOrderGoods, Long aList, List<GoodsStock> goodsStockList) {
+        GoodsStock goodsStock = new GoodsStock();
+        goodsStock.setActCode(aList);
+        goodsStock.setSku(tranOrderGoods.getPdno());
+        goodsStock.setStock(tranOrderGoods.getPnum());
+        goodsStockList.add(goodsStock);
         return goodsStockList;
     }
 

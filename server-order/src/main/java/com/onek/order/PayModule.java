@@ -19,6 +19,7 @@ import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.LccOrderUtil;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.fs.FileServerUtils;
+import com.onek.util.member.MemberStore;
 import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
@@ -111,16 +112,13 @@ public class PayModule {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno"});
 
-            double freight = result[0].getFreight() > 0 ? MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue() : 0;
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
 
-            double money = MathUtil.exactAdd(payamt, freight).doubleValue();
-
-            if(money <= 0){
+            if(payamt <= 0){
                 return new Result().fail("支付金额不能小于0!");
             }
             JSONObject r = new JSONObject();
-            r.put("payamt", money);
+            r.put("payamt", payamt);
             r.put("odate", result[0].getOdate());
             r.put("otime", result[0].getOtime());
             r.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
@@ -179,16 +177,14 @@ public class PayModule {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno"});
 
-            double freight = result[0].getFreight() > 0 ? MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue() : 0;
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
-            double money = MathUtil.exactAdd(payamt, freight).doubleValue();
 
-            if(money <= 0){
+            if(payamt <= 0){
                 return new Result().fail("支付金额不能小于0!");
             }
 
             try{
-                String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", money, orderno,
+                String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
                         "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
 
                 return new Result().success(r);
@@ -623,7 +619,7 @@ public class PayModule {
 
                 long unqid = GenIdUtil.getUnqId();
                 int payamt = MathUtil.exactDiv(tranOrder.getPayamt(), 100).intValue();
-                int code = IceRemoteUtil.addPoint(compid, payamt);
+                int code = MemberStore.addPoint(compid, payamt);
                 if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_ORDER_GIVE, payamt, orderno,0 });
 
             }

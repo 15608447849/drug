@@ -17,11 +17,11 @@ public class PromRuleService {
 
     private static final String QUERY_PRECISE_PROD_BRULE  = "select gcode,brulecode from ( " +
             "select (select sku from td_prod_sku where cstatus&1=0 and spu like CONCAT('_', d.gcode,'%')) gcode,a.brulecode from {{?" + DSMConst.TD_PROM_ACT +"}} a, {{?"+ DSMConst.TD_PROM_ASSDRUG +"}} d where a.unqid = d.actcode  " +
-            "and d.cstatus &1 =0  " +
+            "and d.cstatus &1 =0  and a.cstatus &1 =0 " +
             "and a.sdate <= CURRENT_DATE and CURRENT_DATE<= a.edate and length(d.gcode) < 14 and d.gcode !=0 " +
             "union all " +
             "select gcode,a.brulecode from {{?" + DSMConst.TD_PROM_ACT +"}} a, {{?"+ DSMConst.TD_PROM_ASSDRUG +"}} d where a.unqid = d.actcode " +
-            "and d.cstatus &1 =0  and length(d.gcode) >= 14 and a.sdate <= CURRENT_DATE and CURRENT_DATE<= a.edate " +
+            "and d.cstatus &1 =0 and a.cstatus &1 =0  and length(d.gcode) >= 14 and a.sdate <= CURRENT_DATE and CURRENT_DATE<= a.edate " +
             ") tab where tab.gcode is not null group by gcode,brulecode";
 
 
