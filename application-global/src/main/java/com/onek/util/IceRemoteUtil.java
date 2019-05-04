@@ -307,7 +307,19 @@ public class IceRemoteUtil {
                 .setArrayParams(compid)
                 .execute();
         return Long.parseLong(result);
+
     }
+
+    public static int updateCompBal(int compid,int amt){
+        String result = ic.setServerAndRequest("discountServer",
+                "CouponManageModule","updateCompBal")
+                .setArrayParams(compid,amt)
+                .execute();
+        return Integer.parseInt(result);
+    }
+
+
+
 
 
 
