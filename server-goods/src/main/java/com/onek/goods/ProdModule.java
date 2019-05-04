@@ -1045,6 +1045,7 @@ public class ProdModule {
                         prodVO.setMutiact(false);
                         prodVO.setMinprize(prodVO.getVatp());
                         prodVO.setMaxprize(prodVO.getVatp());
+                        prodVO.setActprize(prodVO.getVatp());
                         prodVO.setActcode(prizeEntity.getActcode());
                     } else {
                         prodVO.setSdate(sdate);
@@ -1054,6 +1055,7 @@ public class ProdModule {
                         prodVO.setActinitstock(initStock);
                         prodVO.setSurplusstock(surplusStock);
                         prodVO.setBuynum(initStock - surplusStock);
+                        prodVO.setActprize(prizeEntity.getMinactprize());
                     }
                 }
             }
