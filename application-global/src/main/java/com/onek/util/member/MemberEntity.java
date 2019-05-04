@@ -9,6 +9,8 @@ public class MemberEntity {
 //    private String createdate;
 //    private String createtime;
     private int cstatus;
+    private int levelid;
+    private String levelname;
 
     public long getUnqid() {
         return unqid;
@@ -73,5 +75,21 @@ public class MemberEntity {
 
     public void setCstatus(int cstatus) {
         this.cstatus = cstatus;
+    }
+
+    public int getLevelid() {
+        return levelid;
+    }
+
+    public void setLevelid(int levelid) {
+        this.levelid = levelid;
+    }
+
+    public String getLevelname() {
+        return levelname;
+    }
+
+    public void setLevelname(String levelname) {
+        this.levelname = levelname;
     }
 }

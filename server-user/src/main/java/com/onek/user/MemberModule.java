@@ -5,10 +5,14 @@ import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.user.entity.MemberLevelVO;
 import com.onek.user.service.MemberImpl;
+import com.onek.user.service.MemberLevelImpl;
 import com.onek.util.member.MemberEntity;
+import com.onek.util.member.MemberStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import redis.IRedisCache;
 import redis.IRedisPartCache;
 import redis.proxy.CacheProxyInstance;
 
@@ -20,6 +24,8 @@ public class MemberModule {
 
     private static final String GET_SQL = "select unqid,compid,accupoints,balpoints,expirepoint,cstatus from {{?" + DSMConst.TD_MEMBER + "}} where compid = ? and cstatus&1=0";
     private static final String UPDATE_SQL = "update {{?" + DSMConst.TD_MEMBER + "}} set accupoints = ?, balpoints = ? where compid = ?";
+
+    private static IRedisCache memLevelProxy =(IRedisCache) CacheProxyInstance.createInstance(new MemberLevelImpl());
 
 //    private static IRedisPartCache memProxy =(IRedisPartCache) CacheProxyInstance.createPartInstance(new MemberImpl());
 
@@ -74,6 +80,14 @@ public class MemberModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int compid = jsonObject.get("compid").getAsInt();
         MemberEntity memberVO = (MemberEntity) getId(compid);
+        if(memberVO != null){
+            int level = MemberStore.getLevelByPoint(memberVO.getAccupoints());
+            MemberLevelVO memberLevelVO = (MemberLevelVO)memLevelProxy.getId(level);
+            memberVO.setLevelid(level);
+            if(memberLevelVO != null){
+                memberVO.setLevelname(memberLevelVO.getLname());
+            }
+        }
         return new Result().success(memberVO);
     }
 
