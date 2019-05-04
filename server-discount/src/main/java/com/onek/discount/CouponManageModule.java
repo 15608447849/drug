@@ -560,7 +560,7 @@ public class CouponManageModule {
             List<Long> gcList = getAllGoods(skuStr, actCode);
             for (int i = 0; i < goodsVOS.size(); i++) {
                 for(int j = 0; j < gcList.size(); j++){
-                    if(goodsVOS.get(i).getGcode() == gcList.get(i)){
+                    if(goodsVOS.get(i).getGcode() == gcList.get(j)){
                         updateGoodsVOS.add(goodsVOS.get(i));
                     }else{
                         insertGoodsVOS.add(goodsVOS.get(i));
