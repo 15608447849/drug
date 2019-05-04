@@ -17,6 +17,11 @@ public class ActStockCheckTask extends TimerTask {
             "on d.actcode = a.unqid " +
             "where edate = ? ";
 
+    private static final String UPDATE_SQL = "update {{?"+ DSMConst.TD_PROM_ASSDRUG +"}} d " +
+            "left join {{?"+ DSMConst.TD_PROM_ACT+"}} a " +
+            "on d.actcode = a.unqid set actstock = 0 " +
+            "where edate = ? ";
+
     @Override
     public void run() {
         System.out.println("####### act stock check ["+ TimeUtils.date_yMd_Hms_2String(new Date())+"] start #########");
@@ -37,6 +42,7 @@ public class ActStockCheckTask extends TimerTask {
             }
 
         }
+        BaseDAO.getBaseDAO().updateNative(UPDATE_SQL, y);
         System.out.println("####### act stock check end #########");
     }
 }

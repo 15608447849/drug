@@ -47,8 +47,8 @@ public class RedisStockUtil {
      * @return
      */
     public static int clearActStock(long sku, long actCode) {
-        Long r = RedisUtil.getStringProvide().delete(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
-        return r.intValue();
+        String result = RedisUtil.getStringProvide().set(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, "0");
+        return SUCCESS.equals(result) ? 1 : 0;
     }
 
     /**
@@ -59,8 +59,8 @@ public class RedisStockUtil {
      * @return
      */
     public static int clearActInitStock(long sku, long actCode) {
-        Long r = RedisUtil.getStringProvide().delete(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode);
-        return r.intValue();
+        String result = RedisUtil.getStringProvide().set(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode, "0");
+        return SUCCESS.equals(result) ? 1 : 0;
     }
 
     public static boolean deductionActStock(long sku, int stock, long actCode) {
