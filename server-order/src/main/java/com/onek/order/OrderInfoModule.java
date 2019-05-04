@@ -17,6 +17,7 @@ import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.*;
 
+import java.sql.Time;
 import java.util.*;
 
 public class OrderInfoModule {
@@ -70,13 +71,21 @@ public class OrderInfoModule {
             + " WHERE ord.cstatus&1 = 0 AND ord.orderno = ?"
             + " LIMIT 1 ";
 
-    public static final String QUERY_COMP_ORDER_INFO_BASE =
+    private static final String QUERY_COMP_ORDER_INFO_BASE =
             "SELECT COUNT(ostatus = 0 OR NULL), COUNT(ostatus = 1 OR NULL),"
                 + " COUNT(ostatus = 2 OR NULL), COUNT(ostatus = 3 OR NULL),"
                 + " COUNT(ostatus IN (-2, -3) OR NULL) "
                 + " FROM {{?" + DSMConst.TD_TRAN_ORDER + "}} "
                 + " WHERE cstatus&1 = 0 AND cusno = ? ";
 
+
+    private static final String QUERY_ASAPP_BASE =
+            " SELECT orderno, pdno, asno, compid, astype, "
+                    + " gstatus, reason, ckstatus, ckdate, cktime, "
+                    + " ckdesc, invoice, cstatus, apdata, aptime, "
+                    + " apdesc, refamt, asnum "
+                    + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
+                    + " WHERE cstatus&1 = 0 AND compid = ? ";
 
     public Result getOrderDetail(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -92,7 +101,7 @@ public class OrderInfoModule {
         int compid = Integer.parseInt(params[0]);
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                compid, TimeUtils.getCurrentYear(), QUERY_ORDER_DETAIL, params[1]);
+                compid, TimeUtils.getYearByOrderno(params[1]), QUERY_ORDER_DETAIL, params[1]);
 
         TranOrderDetail[] result = new TranOrderDetail[queryResult.size()];
 
@@ -125,32 +134,41 @@ public class OrderInfoModule {
     public Result queryOrders(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
-        if (params == null || params.length == 0) {
+        if (ArrayUtil.isEmpty(params)) {
             return new Result().fail("参数为空");
         }
 
         int compid = appContext.getUserSession().compId;
-
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
         page.pageSize = appContext.param.pageNumber;
 
         PageHolder pageHolder = new PageHolder(page);
 
-        params = ArrayUtil.unshift(params, String.valueOf(compid));
+        String year = params[0];
 
-        TranOrder[] result = queryOrders(params, compid, pageHolder, page);
+        if (!StringUtils.isBiggerZero(year)) {
+            year = "0";
+        }
+
+        params = ArrayUtil.unshift(ArrayUtil.shift(params), String.valueOf(compid));
+
+        TranOrder[] result = queryOrders(params, compid, Integer.parseInt(year), pageHolder, page);
 
         return new Result().setQuery(result, pageHolder);
     }
 
-    private TranOrder[] queryOrders(String[] params, int compid,
+    private TranOrder[] queryOrders(String[] params, int compid, int year,
                                     PageHolder pageHolder, Page page) {
+        if (year == 0) {
+            year = TimeUtils.getCurrentYear();
+        }
+
         StringBuilder sql = new StringBuilder(QUERY_ORDER_BASE);
 
         List<Object> paramList = new ArrayList<>();
 
-        String param = null;
+        String param;
         for (int i = 0; i < params.length; i++) {
             param = params[i];
 
@@ -181,7 +199,7 @@ public class OrderInfoModule {
         }
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                compid, TimeUtils.getCurrentYear(), pageHolder, page,
+                compid, year, pageHolder, page,
                 " ord.oid DESC ", sql.toString(), paramList.toArray());
 
         TranOrder[] result = new TranOrder[queryResult.size()];
@@ -190,7 +208,7 @@ public class OrderInfoModule {
 
         Map<String, String> compMap;
 
-        Map<Long, List<TranOrderGoods>> og = getOrderGoods(compid);
+        Map<Long, List<TranOrderGoods>> og = getOrderGoods(compid, year);
 
         for (TranOrder tranOrder : result) {
             String compStr = RedisUtil.getStringProvide().get(String.valueOf(tranOrder.getCusno()));
@@ -212,13 +230,14 @@ public class OrderInfoModule {
         return result;
     }
 
-    private Map<Long, List<TranOrderGoods>> getOrderGoods(int compid) {
+    private Map<Long, List<TranOrderGoods>> getOrderGoods(int compid, int year) {
         String sql = " SELECT " + QUERY_TRAN_GOODS_PARAMS
                 + " FROM " + FROM_GOODS
-                + " WHERE goods.cstatus&1 = 0 AND goods.compid = ? ";
+                + " WHERE goods.cstatus&1 = 0 AND goods.compid = ? "
+                + " AND goods.orderno > 0 ";
 
         List<Object[]> queryResult =
-                BaseDAO.getBaseDAO().queryNativeSharding(compid, TimeUtils.getCurrentYear(), sql, compid);
+                BaseDAO.getBaseDAO().queryNativeSharding(compid, year, sql, compid);
 
         TranOrderGoods[] result = new TranOrderGoods[queryResult.size()];
 
@@ -248,7 +267,7 @@ public class OrderInfoModule {
         }
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                compid, TimeUtils.getCurrentYear(), QUERY_ORDER_GOODS, orderno);
+                compid, TimeUtils.getYearByOrderno(orderno), QUERY_ORDER_GOODS, orderno);
 
         TranOrderGoods[] result = new TranOrderGoods[queryResult.size()];
 
@@ -260,7 +279,7 @@ public class OrderInfoModule {
     }
 
     private void convTranGoods(TranOrderGoods[] result) {
-        ProdEntity prod = null;
+        ProdEntity prod;
         for (TranOrderGoods tranOrderGoods : result) {
             try {
                 prod = ProdInfoStore.getProdBySku(tranOrderGoods.getPdno());
@@ -301,19 +320,11 @@ public class OrderInfoModule {
         return new Result().success(result);
     }
 
-    private static final String QUERY_ASAPP_BASE =
-            " SELECT orderno, pdno, asno, compid, astype, "
-                    + " gstatus, reason, ckstatus, ckdate, cktime, "
-                    + " ckdesc, invoice, cstatus, apdata, aptime, "
-                    + " apdesc, checker, refamt, asnum "
-                    + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
-                    + " WHERE cstatus&1 = 0 AND compid = ? ";
-
     public Result queryAsapp(AppContext appContext) {
         int compid = appContext.getUserSession().compId;
 
         if (compid <= 0) {
-            return new Result().success(new AsAppVO[0]);
+            return new Result().fail("企业为空");
         }
 
         String[] params = appContext.param.arrays;
@@ -321,6 +332,8 @@ public class OrderInfoModule {
         if (params == null) {
             return new Result().fail("参数为空");
         }
+
+        int year = TimeUtils.getCurrentYear();
 
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
@@ -346,6 +359,7 @@ public class OrderInfoModule {
                 switch (i) {
                     case 0:
                         sql.append(" AND orderno = ? ");
+                        year = TimeUtils.getYearByOrderno(param);
                         break;
                     case 1:
                         sql.append(" AND pdno = ? ");
@@ -389,7 +403,7 @@ public class OrderInfoModule {
         }
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                0, TimeUtils.getCurrentYear(), pageHolder, page,
+                0, year, pageHolder, page,
                 " apdata DESC, aptime DESC ",
                 sql.toString(), paramList.toArray());
 
@@ -399,6 +413,7 @@ public class OrderInfoModule {
 
         ProdEntity prod = null;
         for (AsAppVO asAppVO : result) {
+            asAppVO.setRefamt(MathUtil.exactDiv(asAppVO.getRefamt(), 100.0).doubleValue());
             try {
                 asAppVO.setReasonName(DictStore.getDictById(asAppVO.getReason()).getText());
             } catch (Exception e) {}

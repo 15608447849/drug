@@ -271,5 +271,12 @@ public class TimeUtils {
         return d1.after(d2);
     }
 
+    public static int getYearByOrderno(String orderno) {
+        if (StringUtils.isEmpty(orderno)) {
+            return getCurrentYear();
+        }
+
+        return Integer.parseInt("20" + orderno.substring(0, 2));
+    }
 
 }
