@@ -1,18 +1,15 @@
 package com.onek.goods.calculate;
 
+import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
-import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.MathUtil;
 import util.StringUtils;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 public class ActivityFilterService extends BaseDiscountFilterService {
     private static final String GET_ACTIVITIES_BY_SKU =
@@ -60,8 +57,8 @@ public class ActivityFilterService extends BaseDiscountFilterService {
         for (IDiscount discount : returnResult) {
             a = (Activity) discount;
             discount.setLimits(sku, a.getLimitnum());
-            a.setActPrice(
-                    MathUtil.exactDiv(a.getActPrice(), 100).doubleValue());
+            a.setActPrice(MathUtil.exactDiv(a.getActPrice(), 100).doubleValue());
+            discount.setActionPrice(sku, a.getActPrice());
         }
 
         return returnResult;
