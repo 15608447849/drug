@@ -20,13 +20,7 @@ public class MemberStore {
             }
 
         }
-        double val = Math.abs(Math.sqrt((point + 250) / 1000)) - 0.5;
-
-        int level = BigDecimal.valueOf(val).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
-        if(level < 0){
-            level = 1;
-        }
-        return level;
+        return getLevelByPoint(point);
     }
 
     public static int getIntegralByCompid(int compid){
@@ -48,6 +42,16 @@ public class MemberStore {
             return memProxy.add(compid, point);
         }
         return 0;
+    }
+
+    public static int getLevelByPoint(int point){
+        double val = Math.abs(Math.sqrt((point + 250) / 1000)) - 0.5;
+
+        int level = BigDecimal.valueOf(val).setScale(0, BigDecimal.ROUND_HALF_UP).intValue();
+        if(level < 0){
+            level = 1;
+        }
+        return level;
     }
 //
 //    public static void main(String[] args) {
