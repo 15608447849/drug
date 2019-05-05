@@ -87,6 +87,10 @@ public class ActivityManageModule {
     private static final String UPDATE_ACT_CP = "update {{?" + DSMConst.TD_PROM_ACT + "}} set cpriority=? "
             + " where cstatus&1=0 and incpriority=? and cpriority=?";
 
+    private static final String UPDATE_ACT_CPONE = "update {{?" + DSMConst.TD_PROM_ACT + "}} set cpriority=? "
+            + " where cstatus&1=0 ";
+
+
 
     //启用
     private static final String OPEN_ACT =
@@ -265,13 +269,15 @@ public class ActivityManageModule {
                     activityVO.getEdate(), bRuleCode, actCode);
             b = re > 0;
         } else {
+            long otherCode = selectActCode(activityVO.getIncpriority(), activityVO.getCpriority());
             List<Object[]> params = new ArrayList<>();
-            params.add(new Object[]{cpt, activityVO.getIncpriority(), activityVO.getCpriority()});
+            params.add(new Object[]{cpt});
             params.add(new Object[]{activityVO.getActname(),
-                    activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
+                    activityVO.getIncpriority(), activityVO.getCpriority() , activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
                     activityVO.getEdate(), activityVO.getBrulecode(),actCode});
-            int[] actResult = baseDao.updateTransNative(new String[]{UPDATE_ACT_CP,UPD_ACT_SQL}, params);
+            int[] actResult = baseDao.updateTransNative(new String[]{UPDATE_ACT_CPONE + " and unqid=" + otherCode,
+                    UPD_ACT_SQL}, params);
             b = !ModelUtil.updateTransEmpty(actResult);
         }
         if (b) {
@@ -330,6 +336,14 @@ public class ActivityManageModule {
         List<Object[]> queryResult = baseDao.queryNative(sql);
         return Integer.parseInt(String.valueOf(queryResult.get(0)[0]));
     }
+
+    private long selectActCode(int incpriority, int cpriority) {
+        String sql = "select unqid from {{?" + DSMConst.TD_PROM_ACT + "}} where cstatus&1=0 "
+                + " and incpriority=" + incpriority + " and cpriority=" + cpriority;
+        List<Object[]> queryResult = baseDao.queryNative(sql);
+        return Long.parseLong(String.valueOf(queryResult.get(0)[0]));
+    }
+
 
     /* *
      * @description 新增活动场次
@@ -496,7 +510,7 @@ public class ActivityManageModule {
         if (queryResult == null || queryResult.isEmpty()) {
             return cpriority;//优先级全部可用
         }
-        if (queryResult.size() > 9) {
+        if (queryResult.size() > 8) {
             return -1;//优先级超出
         }
         int[] points = new int[queryResult.size()];
@@ -504,14 +518,16 @@ public class ActivityManageModule {
             points[i] = (int) queryResult.get(i)[0];
         }
         if (valueExit(points, cpriority)) {
-            return BUSUtil.getBreak(points, 0, 9);
+            return BUSUtil.getBreak(points, 1, 9);
         }
         return cpriority;
     }
 
     private boolean valueExit(int[] arr, int value) {
         for (int anArr : arr) {
-            return anArr == value;
+            if (anArr == value){
+                return true;
+            }
         }
         return false;
     }

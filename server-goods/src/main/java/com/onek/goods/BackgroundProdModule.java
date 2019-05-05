@@ -483,6 +483,11 @@ public class BackgroundProdModule {
             }
         }
 
+
+        bgProdVO.setVatp(MathUtil.exactDiv(bgProdVO.getVatp(), 100).intValue());
+        bgProdVO.setMp(MathUtil.exactDiv(bgProdVO.getMp(), 100).intValue());
+        bgProdVO.setRrp(MathUtil.exactDiv(bgProdVO.getRrp(), 100).intValue());
+
         return new Result().success(bgProdVO);
     }
 

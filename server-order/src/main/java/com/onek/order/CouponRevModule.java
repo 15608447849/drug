@@ -633,7 +633,7 @@ public class CouponRevModule {
 
 
 
-
+    @UserPermission(ignore = true)
     public int insertBalCoup(AppContext appContext){
         int compid = Integer.parseInt(appContext.param.arrays[0]);
         int amt = Integer.parseInt(appContext.param.arrays[1]);
