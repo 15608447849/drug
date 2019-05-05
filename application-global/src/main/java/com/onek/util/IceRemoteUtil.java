@@ -1,6 +1,7 @@
 package com.onek.util;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
@@ -13,6 +14,7 @@ import com.onek.util.prod.ProdEntity;
 import util.GsonUtils;
 import util.TimeUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
@@ -261,6 +263,22 @@ public class IceRemoteUtil {
         Result ret = GsonUtils.jsonToJavaBean(json,Result.class);
         assert ret != null;
         return ret.code;
+    }
+
+    //
+    public static ArrayList queryTeamBuyOrder(String sdate,String edate,String actno){
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("sdate", sdate);
+        jsonObject.put("edate", edate);
+        jsonObject.put("actno", actno);
+        int index = getOrderServerNo(RedisGlobalKeys.COMP_INIT_VAR);
+
+        String json = ic.setServerAndRequest("orderServer"+index,"OrderOptModule","queryTeamBuyOrder")
+                .settingParam(jsonObject.toJSONString()).execute();
+        Result ret = GsonUtils.jsonToJavaBean(json,Result.class);
+        ArrayList jsonArray = (ArrayList) ret.data;
+        return jsonArray;
     }
 
 
