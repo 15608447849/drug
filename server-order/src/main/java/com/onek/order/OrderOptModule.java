@@ -3,6 +3,7 @@ package com.onek.order;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -110,7 +111,10 @@ public class OrderOptModule {
             " on asapp.orderno = orders.orderno where asno != 0 and asapp.astype in (3,4) ";
 
 
-
+    //查询团购订单记录
+    private static final String QUERY_TEAM_BUY_ORDER_SQL = "select orderno,payamt,compid from "+
+            " {{?"+ DSMConst.TD_BK_TRAN_GOODS+"}} g " +
+            " where g.createdate >= ? and g.createdate <= ? and g.promtype& 4096 > 0 and actcode like ?";
 
 
     /* *
@@ -727,5 +731,31 @@ public class OrderOptModule {
         return result.setQuery(asAppDtListVOS, pageHolder);
     }
 
+    /**
+     * 根据活动起始时间和结束时间和活动码查询团购订单记录
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result queryTeamBuyOrder(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String sdate = jsonObject.get("sdate").getAsString();
+        String edate = jsonObject.get("edate").getAsString();
+        String actno = jsonObject.get("actno").getAsString();
 
+        JSONArray jsonArray = new JSONArray();
+        List<Object[]> queryList = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), QUERY_TEAM_BUY_ORDER_SQL, new Object[]{sdate, edate, "'%"+actno+"%'"});
+        if(queryList != null && queryList.size() > 0){
+            for(Object [] obj : queryList){
+                JSONObject j = new JSONObject();
+                j.put("orderno", obj[0].toString());
+                j.put("payamt", obj[1].toString());
+                j.put("compid", obj[2].toString());
+                jsonArray.add(j);
+            }
+        }
+        return new Result().success(jsonArray);
+    }
 }
