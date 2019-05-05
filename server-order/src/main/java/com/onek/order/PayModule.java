@@ -68,7 +68,7 @@ public class PayModule {
 
     //支付回调更新订单状态
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,settstatus=?,"
-            + "settdate=?,setttime=? where cstatus&1=0 and orderno=? and ostatus=? ";
+            + "settdate=?,setttime=?, payway=? where cstatus&1=0 and orderno=? and ostatus=? ";
 
     //释放商品冻结库存
     private static final String UPD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
@@ -421,7 +421,7 @@ public class PayModule {
         List<Object[]> paramsOne = new ArrayList<>();
         List<Object[]> paramsTwo = new ArrayList<>();
         sqlList.add(UPD_ORDER_STATUS);//更新订单状态
-        params.add(new Object[]{1,1,tradeDate,tradeTime,orderno,0});
+        params.add(new Object[]{1,1,tradeDate,tradeTime,paytype == 4 ? 2 : 1,orderno,0});
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
         params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
