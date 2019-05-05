@@ -38,6 +38,7 @@ import util.NumUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
@@ -1137,6 +1138,9 @@ public class ProdModule {
             if (storeBasicInfo != null) {
                 appriseVO.setCompName(storeBasicInfo.storeName);//暂无接口。。。。
             }
+            double compEval = BigDecimal.valueOf((appriseVO.getLevel()
+                    + appriseVO.getDescmatch() + appriseVO.getLogisticssrv()) / 3.0).setScale(1,BigDecimal.ROUND_CEILING).doubleValue();
+            appriseVO.setCompEval(compEval);
         }
         return result.setQuery(appriseVOS, pageHolder);
     }
