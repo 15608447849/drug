@@ -126,7 +126,7 @@ public class OrderInfoModule {
             tranOrder.setDistamt(MathUtil.exactDiv(tranOrder.getDistamt(), 100).doubleValue());
             tranOrder.setCoupamt(MathUtil.exactDiv(tranOrder.getCoupamt(), 100).doubleValue());
             tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
-        }
+        }   
 
         return new Result().success(result);
     }
@@ -158,7 +158,7 @@ public class OrderInfoModule {
         return new Result().setQuery(result, pageHolder);
     }
 
-    private TranOrder[] queryOrders(String[] params, int compid, int year,
+    public TranOrder[] queryOrders(String[] params, int compid, int year,
                                     PageHolder pageHolder, Page page) {
         if (year == 0) {
             year = TimeUtils.getCurrentYear();
@@ -411,7 +411,7 @@ public class OrderInfoModule {
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, AsAppVO.class);
 
-        ProdEntity prod = null;
+        ProdEntity prod;
         for (AsAppVO asAppVO : result) {
             asAppVO.setRefamt(MathUtil.exactDiv(asAppVO.getRefamt(), 100.0).doubleValue());
             try {

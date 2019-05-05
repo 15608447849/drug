@@ -3,7 +3,10 @@ package com.onek.order;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.*;
+import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.entity.DiscountResult;
 import com.onek.calculate.entity.IDiscount;
@@ -619,18 +622,32 @@ public class TranOrderOptModule {
     }
 
     public boolean delivery(String orderno, int compid) {
-        boolean result = true;
+        boolean result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getYearByOrderno(orderno),
+                UPDATE_DELIVERY, orderno) > 0;
 
         if (result) {
             PayModule.DELIVERY_DELAYED.removeByKey(orderno);
-            TAKE_DELAYED.add(new DelayedBase(compid, orderno));
+
+            String sql = " SELECT payway "
+                        + " FROM {{?" + DSMConst.TD_TRAN_TRANS + "}} "
+                        + " WHERE cstatus&1 = 0 AND compid = ? AND orderno = ? ";
+
+            List<Object[]> queryResult =
+                    baseDao.queryNativeSharding(compid, TimeUtils.getYearByOrderno(orderno), sql, compid, orderno);
+
+            if (!queryResult.isEmpty()) {
+                if (Integer.parseInt(queryResult.get(0)[0].toString()) != 4) {
+                    TAKE_DELAYED.add(new DelayedBase(compid, orderno));
+                }
+            }
+
         }
 
         return result;
     }
 
     public boolean takeDelivery(String orderno, int compid) {
-        boolean result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
+        boolean result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getYearByOrderno(orderno),
                 UPDATE_TAKE_DELIVERY, orderno) > 0;
 
         if (result) {
@@ -661,10 +678,9 @@ public class TranOrderOptModule {
             return new Result().fail("非法参数");
         }
 
-        int result  = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getCurrentYear(),
-                UPDATE_DELIVERY, orderNo);
+        boolean result = delivery(orderNo, compid);
 
-        return result > 0 ? new Result().success("已发货") : new Result().fail("操作失败");
+        return result ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 
     /**

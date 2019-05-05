@@ -38,6 +38,7 @@ import util.ModelUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 import static com.onek.order.TranOrderOptModule.getGoodsArr;
@@ -50,6 +51,7 @@ public class PayModule {
 
     public static final String PAY_TYPE_ALI = "alipay";
     public static final String PAY_TYPE_WX = "wxpay";
+    public static final String PAY_TYPE_HDFK = "hdfk";
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
@@ -257,7 +259,10 @@ public class PayModule {
             paychannel = 2;
         }else if(PAY_TYPE_WX.equals(paytype)){
             paychannel = 1;
+        }else if(PAY_TYPE_HDFK.equals(paytype)){
+            paychannel = 4;
         }
+
         Date date = TimeUtils.str_yMd_Hms_2Date(tradeDate);
         boolean result = false;
         if("1".equals(tradeStatus)){
@@ -442,7 +447,9 @@ public class PayModule {
             //更新活动库存
             baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size());
 
-            DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
+            if (paytype != 4) {
+                DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
+            }
         }
         return b;
     }
@@ -671,6 +678,46 @@ public class PayModule {
 
             }
 
+        }
+    }
+
+    @UserPermission(ignore = true)
+    public Result offlinePay(AppContext appContext) {
+        String json = appContext.param.json;
+        JSONObject jsonObject = JSON.parseObject(json);
+        String orderno = jsonObject.getString("orderno");
+        int compid = jsonObject.getIntValue("compid");
+        if(!StringUtils.isBiggerZero(orderno) || compid <= 0){
+            return new Result().fail("获取订单号或企业码失败!");
+        }
+
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                GET_PAY_SQL + " AND ostatus = 0 ", new Object[]{ orderno, compid });
+
+        if(!list.isEmpty()) {
+            TranOrder[] result = new TranOrder[list.size()];
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno"});
+
+            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100)
+                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+            if(payamt <= 0){
+                return new Result().fail("支付金额不能小于0!");
+            }
+
+            appContext.param.arrays = new String[7];
+            appContext.param.arrays[0] = orderno;
+            appContext.param.arrays[1] = PAY_TYPE_HDFK;
+            appContext.param.arrays[2] = "";
+            appContext.param.arrays[3] = "1";
+            appContext.param.arrays[4] = TimeUtils.date_yMd_Hms_2String(new Date());
+            appContext.param.arrays[5] = String.valueOf(payamt);
+            appContext.param.arrays[6] = String.valueOf(compid);
+            payCallBack(appContext);
+
+            return new Result().success("支付成功");
+        }else{
+            return new Result().fail("未查到/已支付【"+orderno+"】的订单!");
         }
     }
 
