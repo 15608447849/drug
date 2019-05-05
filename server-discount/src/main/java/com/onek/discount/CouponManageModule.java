@@ -250,6 +250,9 @@ public class CouponManageModule {
             + "set balance = balance + ? where cid = ? ";
 
 
+    private static final String QUERY_COMP_BAL = " select balance from {{?" + DSMConst.D_COMP + "}} "
+            + " where cid = ? ";
+
 
     //查询库存版本号
 //    private static final String SELECT_COUPON_VER_ = " select ver from {{?" + DSMConst.TD_PROM_COUPON + "}}"
@@ -1247,6 +1250,16 @@ public class CouponManageModule {
                 new Object[]{amt,compid});
 
         return ret;
+    }
+
+    public int queryCompBal(int compid){
+
+        List<Object[]> bal = baseDao.queryNative(QUERY_COMP_BAL,
+                compid);
+
+        if(bal == null || bal.isEmpty()) return 0;
+
+        return Integer.parseInt(bal.get(0)[0].toString());
     }
 
 
