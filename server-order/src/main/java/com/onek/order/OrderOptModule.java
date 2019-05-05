@@ -114,7 +114,7 @@ public class OrderOptModule {
     //查询团购订单记录
     private static final String QUERY_TEAM_BUY_ORDER_SQL = "select orderno,payamt,compid from "+
             " {{?"+ DSMConst.TD_BK_TRAN_GOODS+"}} g " +
-            " where g.createdate >= ? and g.createdate <= ? and g.promtype& 4096 > 0 and actcode like ?";
+            " where g.createdate >= ? and g.createdate <= ? and g.promtype& 4096 > 0 and actcode like concat('%',?,'%')";
 
 
     /* *
@@ -746,7 +746,7 @@ public class OrderOptModule {
         String actno = jsonObject.get("actno").getAsString();
 
         JSONArray jsonArray = new JSONArray();
-        List<Object[]> queryList = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), QUERY_TEAM_BUY_ORDER_SQL, new Object[]{sdate, edate, "'%"+actno+"%'"});
+        List<Object[]> queryList = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), QUERY_TEAM_BUY_ORDER_SQL, new Object[]{sdate, edate, actno});
         if(queryList != null && queryList.size() > 0){
             for(Object [] obj : queryList){
                 JSONObject j = new JSONObject();

@@ -8,6 +8,7 @@ import com.onek.propagation.prod.ProdDiscountObserver;
 import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.TimeUtils;
 
 import java.math.BigDecimal;
@@ -28,7 +29,7 @@ public class TeamBuyTask extends TimerTask {
 
     @Override
     public void run() {
-        System.out.println("++++++ TeamBuyTask execute start +++++++");
+        LogUtil.getDefaultLogger().info("++++++ TeamBuyTask execute start +++++++");
         Date date = TimeUtils.addDay(new Date(), -1);
         String y = TimeUtils.date_yMd_2String(date);
         List<Object[]> results = BaseDAO.getBaseDAO().queryNative(SQL, y);
@@ -38,7 +39,7 @@ public class TeamBuyTask extends TimerTask {
                 String sdate = obj[1].toString();
                 String edate = obj[2].toString();
 
-                System.out.println("++++++ TeamBuyTask execute actCode:["+actCode+"]; sdate:["+sdate+"]; edate:["+edate+"] +++++++");
+                LogUtil.getDefaultLogger().info("++++++ TeamBuyTask execute actCode:["+actCode+"]; sdate:["+sdate+"]; edate:["+edate+"] +++++++");
 
                 List<Object[]> ladOffList = BaseDAO.getBaseDAO().queryNative(TEAM_BUY_LADOFF_SQL, new Object[]{actCode});
                 JSONArray ladOffArray = new JSONArray();
@@ -66,21 +67,27 @@ public class TeamBuyTask extends TimerTask {
                          }
                     }
                     if(offer > 0){
+                        Map<Integer, Integer> dataMap = new HashMap<>();
                         for(Object o : array){
                             LinkedTreeMap map = ((LinkedTreeMap) o);
                             String compid = map.get("compid").toString();
                             String payamt = map.get("payamt").toString();
                             double f1 = new BigDecimal((float)(100 -offer) /100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             double money = Integer.parseInt(payamt) * f1;
-                            System.out.println("++++++ TeamBuyTask compid:["+ compid+"]; money:["+ money+"] +++++++");
                             int result = BaseDAO.getBaseDAO().updateNative(UPDATE_COMP_BAL, money, compid);
-                            System.out.println("++++++ TeamBuyTask compid:["+ compid+"]; result:["+ result+"] +++++++");
+                            LogUtil.getDefaultLogger().info("++++++ TeamBuyTask compid:["+ compid+"]; money:["+ money+"] result:["+ result+"] +++++++");
+                            dataMap.put(Integer.parseInt(compid), (int)money);
+                        }
+
+                        for(Integer compid : dataMap.keySet()){
+                            IceRemoteUtil.insertBalCoup(compid, dataMap.get(compid));
                         }
                     }
 
                 }
             }
         }
-        System.out.println("++++++ TeamBuyTask execute end +++++++");
+        LogUtil.getDefaultLogger().info("++++++ TeamBuyTask execute end +++++++");
     }
+
 }
