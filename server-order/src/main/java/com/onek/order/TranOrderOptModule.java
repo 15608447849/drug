@@ -18,6 +18,7 @@ import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
 import com.onek.util.area.AreaFeeUtil;
+import com.onek.util.discount.DiscountRuleStore;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -238,6 +239,7 @@ public class TranOrderOptModule {
             try {
                 calculatePrice(tranOrderGoods, tranOrder, unqid);
             } catch (Exception e) {
+                e.printStackTrace();
                 stockRecovery(goodsStockList);
                 LogUtil.getDefaultLogger().info("计算活动价格异常！");
                 return result.fail("下单失败");
@@ -345,10 +347,18 @@ public class TranOrderOptModule {
                 tranOrderGoods.setPdno(iDiscount.getProductList().get(i).getSKU());
                 tranOrderGoods.setPdprice(iDiscount.getProductList().get(i).getOriginalPrice());
                 tranOrderGoods.setDistprice(iDiscount.getProductList().get(i).getDiscounted());
-                System.out.println("");
                 tranOrderGoods.setPayamt(iDiscount.getProductList().get(i).getCurrentPrice());
-                tranOrderGoods.setPromtype((int) iDiscount.getBRule());
                 finalTranOrderGoods.add(tranOrderGoods);
+                for (TranOrderGoods finalTranOrderGood : finalTranOrderGoods) {
+                    if (finalTranOrderGood.getPdno() == iDiscount.getProductList().get(i).getSKU()) {
+                        int ruleCode = DiscountRuleStore.getRuleByBRule((int) iDiscount.getBRule());
+//                        System.out.println("ruleCode11111111111--- " + iDiscount.getBRule());
+//                        System.out.println("ruleCode22222222222--- " + finalTranOrderGood.getPromtype());
+                        tranOrderGoods.setPromtype(ruleCode | finalTranOrderGood.getPromtype());
+                        break;
+                    }
+                }
+//                if (finalTranOrderGoods.)
             }
         }
         for (TranOrderGoods goodsPrice : tranOrderGoodsList) {//传进来的
@@ -713,4 +723,5 @@ public class TranOrderOptModule {
             this.actCode = actCode;
         }
     }
+
 }
