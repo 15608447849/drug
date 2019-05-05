@@ -15,6 +15,7 @@ import com.onek.entity.CouponUseDTO;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.ds.AppConfig;
@@ -452,8 +453,26 @@ public class CouponRevModule {
             payamt = MathUtil.exactAdd(calculate.getTotalCurrentPrice(), sfee).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
         }
+        double bal = IceRemoteUtil.queryCompBal(compid);
+        resultMap.put("bal",0);
+        resultMap.put("debal",0);
+        resultMap.put("acpay",payamt);
         resultMap.put("payamt",payamt);
-
+        resultMap.put("payflag",0);
+        if(bal > 0){
+            bal = MathUtil.exactDiv(bal,100L).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+            resultMap.put("bal",bal);
+            if(bal >= payamt){
+                resultMap.put("debal",payamt);
+                resultMap.put("acpay",0);
+                resultMap.put("payflag",1);
+            }else{
+                resultMap.put("debal",bal);
+                resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            }
+        }
         return result.success(resultMap);
     }
 
@@ -614,7 +633,10 @@ public class CouponRevModule {
 
 
 
-    public int insertBalCoup(int compid,int amt){
+
+    public int insertBalCoup(AppContext appContext){
+        int compid = Integer.parseInt(appContext.param.arrays[0]);
+        int amt = Integer.parseInt(appContext.param.arrays[1]);
         return baseDao.updateNativeSharding(compid,TimeUtils.getCurrentYear(),
                 INSERT_GLBCOUPONREV_SQL,
                 new Object[]{GenIdUtil.getUnqId(),666666L,compid,2110,"全局现金券",1,2,0,amt});
@@ -624,7 +646,6 @@ public class CouponRevModule {
 
     public static void main(String[] args) {
         CouponRevModule couponRevModule = new CouponRevModule();
-        System.out.println(couponRevModule.insertBalCoup(536862723,8888));
        // couponRevModule.revGiftCoupon(1904180003111203L,536862723);
     }
 
