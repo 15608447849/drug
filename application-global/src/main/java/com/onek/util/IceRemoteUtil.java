@@ -12,6 +12,7 @@ import com.onek.util.dict.DictEntity;
 import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
 import util.GsonUtils;
+import util.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -332,6 +333,22 @@ public class IceRemoteUtil {
         String result = ic.setServerAndRequest("discountServer",
                 "CouponManageModule","updateCompBal")
                 .setArrayParams(compid,amt)
+                .execute();
+        return Integer.parseInt(result);
+    }
+
+    public static int insertBalCoup(int compid,int amt){
+        String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertBalCoup")
+                .setArrayParams(compid,amt)
+                .execute();
+        return Integer.parseInt(result);
+    }
+
+
+    public static int queryCompBal(int compid){
+        String result = ic.setServerAndRequest("discountServer",
+                "CouponManageModule","queryCompBal")
+                .setArrayParams(compid)
                 .execute();
         return Integer.parseInt(result);
     }

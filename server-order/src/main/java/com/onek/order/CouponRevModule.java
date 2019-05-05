@@ -138,6 +138,13 @@ public class CouponRevModule {
             + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 
+    private final String INSERT_GLBCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
+            + "(unqid,coupno,compid,brulecode,rulename,glbno,ctype,cstatus,amt,gettime) "
+            + "values (?,?,?,?,?,?,?,?,?,now())";
+
+
+
+
     /**
      * @description 优惠券新增
      * @params [appContext]
@@ -336,7 +343,7 @@ public class CouponRevModule {
         String startDate = dateFormat.format(curDate);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(curDate);
-        calendar.add(Calendar.DATE, couponVO.getValidday()+1);
+        calendar.add(Calendar.DATE, couponVO.getValidday());
         String endDate = dateFormat.format(calendar.getTime());
         if(couponVO.getValidflag() == 1){
             calendar.setTime(curDate);
@@ -591,7 +598,7 @@ public class CouponRevModule {
         String startDate = dateFormat.format(curDate);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(curDate);
-        calendar.add(Calendar.DATE, couponVO.getValidday()+1);
+        calendar.add(Calendar.DATE, couponVO.getValidday());
         String endDate = dateFormat.format(calendar.getTime());
         if(couponVO.getValidflag() == 1){
             calendar.setTime(curDate);
@@ -607,9 +614,18 @@ public class CouponRevModule {
 
 
 
+    public int insertBalCoup(int compid,int amt){
+        return baseDao.updateNativeSharding(compid,TimeUtils.getCurrentYear(),
+                INSERT_GLBCOUPONREV_SQL,
+                new Object[]{GenIdUtil.getUnqId(),666666L,compid,2110,"全局现金券",1,2,0,amt});
+    }
+
+
+
     public static void main(String[] args) {
         CouponRevModule couponRevModule = new CouponRevModule();
-        couponRevModule.revGiftCoupon(1904180003111203L,536862723);
+        System.out.println(couponRevModule.insertBalCoup(536862723,8888));
+       // couponRevModule.revGiftCoupon(1904180003111203L,536862723);
     }
 
 
