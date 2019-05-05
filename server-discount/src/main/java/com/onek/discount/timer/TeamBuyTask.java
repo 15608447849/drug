@@ -73,9 +73,12 @@ public class TeamBuyTask extends TimerTask {
                             String compid = map.get("compid").toString();
                             String payamt = map.get("payamt").toString();
                             double f1 = new BigDecimal((float)(100 -offer) /100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                            double money = Integer.parseInt(payamt) * f1;
+                            int money = (int)(Integer.parseInt(payamt) * f1);
                             int result = BaseDAO.getBaseDAO().updateNative(UPDATE_COMP_BAL, money, compid);
                             LogUtil.getDefaultLogger().info("++++++ TeamBuyTask compid:["+ compid+"]; money:["+ money+"] result:["+ result+"] +++++++");
+                            if(dataMap.containsKey(Integer.parseInt(compid))){
+                                money += dataMap.get(Integer.parseInt(compid));
+                            }
                             dataMap.put(Integer.parseInt(compid), (int)money);
                         }
 
