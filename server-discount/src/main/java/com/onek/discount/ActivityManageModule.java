@@ -186,6 +186,9 @@ public class ActivityManageModule {
         int cpt = getCPCount(activityVO.getIncpriority(), activityVO.getCpriority());
         if (cpt == -1) return result.fail("优先级已超过");
         if (activityVO.getUnqid() > 0) {//修改
+            if (theActInProgress(activityVO.getUnqid())) {
+                return result.fail("活动正在进行中，无法修改！");
+            }
             return updateActivity(activityVO, cpt);
         } else {//新增
             return insertActivity(activityVO, cpt);
@@ -653,6 +656,10 @@ public class ActivityManageModule {
         int type = jsonObject.get("type").getAsInt();//1:全部商品  3部分商品  2 部分类别
         long actCode = jsonObject.get("actCode").getAsLong();
         int ruleCode = jsonObject.get("rulecode").getAsInt();
+        //判断活动是否在进行中。。。
+        if (theActInProgress(actCode)) {
+            return result.fail("活动正在进行中，无法修改！");
+        }
         switch (type) {
             case 1://全部商品
                 re = relationAllGoods(jsonObject, actCode, ruleCode);
@@ -676,6 +683,24 @@ public class ActivityManageModule {
                 return result.success("关联商品成功");
         }
         return re ? result.success("关联商品成功") : result.fail("操作失败");
+    }
+
+    /* *
+     * @description 判断活动是否正在进行
+     * @params [actCode]
+     * @return boolean
+     * @exception
+     * @author 11842
+     * @time  2019/5/6 10:31
+     * @version 1.1.1
+     **/
+    private boolean theActInProgress(long actCode) {
+        String selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
+                + "where a.cstatus&1=0 and a.unqid=" + actCode + " and a.sdate<=CURRENT_DATE"
+                + " and a.edate>=CURRENT_DATE and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        return (long)queryResult.get(0)[0] > 0;
     }
 
 
