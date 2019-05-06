@@ -1244,19 +1244,21 @@ public class CouponManageModule {
         return result.success("领取失败");
     }
 
-    public int updateCompBal(int compid,int amt){
-
+    @UserPermission(ignore = true)
+    public int updateCompBal(AppContext appContext){
+        int compid = Integer.parseInt(appContext.param.arrays[0]);
+        int amt = Integer.parseInt(appContext.param.arrays[1]);
         int ret = baseDao.updateNative(UPDATE_COMP_BAL,
                 new Object[]{amt,compid});
 
         return ret;
     }
 
-    public int queryCompBal(int compid){
-
+    @UserPermission(ignore = true)
+    public int queryCompBal(AppContext appContext){
+        int compid = Integer.parseInt(appContext.param.arrays[0]);
         List<Object[]> bal = baseDao.queryNative(QUERY_COMP_BAL,
                 compid);
-
         if(bal == null || bal.isEmpty()) return 0;
 
         return Integer.parseInt(bal.get(0)[0].toString());
