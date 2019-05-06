@@ -128,7 +128,7 @@ public class SecKillModule {
         }
 
         int currentStock = RedisStockUtil.getActStockBySkuAndActno(sku, actno);
-        if(currentStock <= 0 || (currentStock - stock) <= 0){
+        if(currentStock <= 0 || (currentStock - stock) < 0){
             return new Result().fail("库存不够!", null);
         }
 
