@@ -3,7 +3,10 @@ package com.onek.propagation.prod;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.propagation.queue.DelayStockQueueManager;
 import com.onek.propagation.queue.DelayStockWorker;
+import com.onek.util.RedisGlobalKeys;
+import com.onek.util.discount.DiscountRuleStore;
 import com.onek.util.stock.RedisStockUtil;
+import redis.util.RedisUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +30,7 @@ public class ProdDiscountObserver implements ProdObserver {
                     if(gcode.length() >= 14){
                         long actcode = Long.parseLong(jsonObject.get("actcode").toString());
                         int stock = Integer.parseInt(jsonObject.get("stock").toString());
+                        int rulecode = Integer.parseInt(jsonObject.get("rulecode").toString());
                         int result = 0;
                         if (Integer.parseInt(jsonObject.get("cstatus").toString()) == 0) {
                             result = RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, stock);

@@ -61,7 +61,7 @@ public class PayModule {
 
     private static final String UPDATE_SKU_SALES = "update {{?" + DSMConst.TD_PROD_SKU + "}} set sales = sales + ? where sku = ?";
 
-    private static final String QUERY_ORDER_GOODS = "select g.pdno,g.pnum from {{?" + DSMConst.TD_TRAN_ORDER + "}} o,{{?" + DSMConst.TD_TRAN_GOODS + "}} g" +
+    private static final String QUERY_ORDER_GOODS = "select g.pdno,g.pnum,g.promtype,g.actcode from {{?" + DSMConst.TD_TRAN_ORDER + "}} o,{{?" + DSMConst.TD_TRAN_GOODS + "}} g" +
             " where g.orderno = o.orderno and o.orderno = ? and o.cusno = ?";
 
     private static final String GET_TRAN_TRANS_SQL = "select payprice,payway,payno,orderno,paysource,paystatus,paydate,paytime,completedate,completetime from {{?" + DSMConst.TD_TRAN_TRANS + "}} where orderno=? and compid = ? order by completedate desc,completetime desc limit 1";
@@ -74,6 +74,7 @@ public class PayModule {
     private static final String UPD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "store=store-?, freezestore=freezestore-? where cstatus&1=0 and sku=? ";
 
+    private static final String INSERT_PROM_GROUP = "insert into {{?" + DSMConst.TD_PROM_GROUP + "}} (unqid,actcode,compid,joindate,jointime) values(?,?,?,CURRENT_DATE,CURRENT_TIME) ";
 
     //更新活动库存
     private static final String UPD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
@@ -676,6 +677,17 @@ public class PayModule {
                     RedisOrderUtil.addOrderNumByCompid(compid);
                 }catch (Exception e){}
 
+                for(Object[] obj : list) {
+                    int promtype = Integer.parseInt(obj[2].toString());
+                    String actCodeStr = obj[3].toString();
+                    if((promtype & 4096) > 0 && !StringUtils.isEmpty(actCodeStr)){
+                        List<Long> actCodeList = JSON.parseArray(actCodeStr).toJavaList(Long.class);
+                        for (Long actCode: actCodeList) {
+                            baseDao.updateNative(INSERT_PROM_GROUP, GenIdUtil.getUnqId(), actCode, compid);
+                        }
+
+                    }
+                }
             }
 
         }
