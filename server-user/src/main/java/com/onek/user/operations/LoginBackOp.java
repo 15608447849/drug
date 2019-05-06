@@ -44,12 +44,6 @@ public class LoginBackOp implements IOperation<AppContext> {
         return context.relationTokenUserSession();//后台管理登陆-关联企业信息
     }
 
-
-    public static void main(String[] args) {
-        int i = 386;
-        System.out.println(i&128);
-    }
-
     //检查用户是否正确
     private boolean checkSqlAndUserExist(AppContext context) {
 
