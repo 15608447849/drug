@@ -52,6 +52,7 @@ public class PayModule {
     public static final String PAY_TYPE_ALI = "alipay";
     public static final String PAY_TYPE_WX = "wxpay";
     public static final String PAY_TYPE_HDFK = "hdfk";
+    public static final String PAY_TYPE_ZZ = "zz";
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
@@ -260,6 +261,8 @@ public class PayModule {
             paychannel = 2;
         }else if(PAY_TYPE_WX.equals(paytype)){
             paychannel = 1;
+        }else if(PAY_TYPE_ZZ.equals(paytype)){
+            paychannel = 5;
         }else if(PAY_TYPE_HDFK.equals(paytype)){
             paychannel = 4;
         }
@@ -422,7 +425,11 @@ public class PayModule {
         List<Object[]> paramsOne = new ArrayList<>();
         List<Object[]> paramsTwo = new ArrayList<>();
         sqlList.add(UPD_ORDER_STATUS);//更新订单状态
-        params.add(new Object[]{1,1,tradeDate,tradeTime,paytype == 4 ? 2 : 1,orderno,0});
+        params.add(new Object[]{1,1,
+                tradeDate,tradeTime,
+                paytype == 4 ? 2 :
+                paytype == 5 ? 3 : 1,
+                orderno,0});
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
         params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
@@ -448,7 +455,7 @@ public class PayModule {
             //更新活动库存
             baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size());
 
-            if (paytype != 4) {
+            if (paytype != 4 && paytype != 5) {
                 DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
             }
         }
@@ -693,12 +700,13 @@ public class PayModule {
         }
     }
 
-    @UserPermission(ignore = true)
     public Result offlinePay(AppContext appContext) {
         String json = appContext.param.json;
         JSONObject jsonObject = JSON.parseObject(json);
         String orderno = jsonObject.getString("orderno");
         int compid = jsonObject.getIntValue("compid");
+        String paytype = jsonObject.getString("paytype");
+
         if(!StringUtils.isBiggerZero(orderno) || compid <= 0){
             return new Result().fail("获取订单号或企业码失败!");
         }
@@ -718,13 +726,21 @@ public class PayModule {
             }
 
             appContext.param.arrays = new String[7];
+            // 订单号
             appContext.param.arrays[0] = orderno;
-            appContext.param.arrays[1] = PAY_TYPE_HDFK;
+            // 支付类型
+            appContext.param.arrays[1] = paytype;
+            // 第三方支付码
             appContext.param.arrays[2] = "";
+            // 支付状态
             appContext.param.arrays[3] = "1";
+            // 支付时间
             appContext.param.arrays[4] = TimeUtils.date_yMd_Hms_2String(new Date());
+            // 支付金额
             appContext.param.arrays[5] = String.valueOf(payamt);
+            // 支付企业
             appContext.param.arrays[6] = String.valueOf(compid);
+
             payCallBack(appContext);
 
             return new Result().success("支付成功");

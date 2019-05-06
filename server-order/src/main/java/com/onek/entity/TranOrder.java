@@ -36,7 +36,7 @@ public class TranOrder implements IDelayedObject {
     private String consignee;//收货人
     private String contact;//收货人联系方式
     private String address;//收货详细地址
-
+    private String payway; // 支付方式
 
     private List<TranOrderGoods> goods;
 
@@ -262,4 +262,6 @@ public class TranOrder implements IDelayedObject {
     public String getUnqKey() {
         return this.orderno;
     }
+
+
 }

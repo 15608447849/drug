@@ -23,7 +23,7 @@ public class BackOrderInfoModule {
                     + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
                     + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
                     + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
-                    + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address ";
+                    + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.payway ";
 
     private static final String FROM_BK_ORDER = " {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} ord ";
 
