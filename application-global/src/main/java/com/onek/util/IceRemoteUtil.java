@@ -1,7 +1,6 @@
 package com.onek.util;
 
 import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
@@ -12,7 +11,6 @@ import com.onek.util.dict.DictEntity;
 import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
 import util.GsonUtils;
-import util.TimeUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -235,9 +233,7 @@ public class IceRemoteUtil {
         return (int) result.data;
     }
 
-    public static void main(String[] args) {
-        System.out.println("----- " + getGroupCount(11879432960607232L));
-    }
+
 
     //查询所有足迹
     public static List<String> queryFootprint(int compid){
@@ -353,8 +349,14 @@ public class IceRemoteUtil {
         return Integer.parseInt(result);
     }
 
-
-
+    /**
+     * 获取财务的手机号码/姓名
+     * lzp
+     */
+    public static HashMap<String,String> getUserByFinance(){
+        String result = ic.setServerAndRequest("userServer","StoreManageModule","getRoleCode256_Name_Phone").execute();
+        return GsonUtils.string2Map(result);
+    }
 
 
 

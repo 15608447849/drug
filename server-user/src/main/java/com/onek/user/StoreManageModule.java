@@ -9,6 +9,7 @@ import util.GsonUtils;
 import util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import static constant.DSMConst.D_COMP;
@@ -67,5 +68,25 @@ public class StoreManageModule {
             e.printStackTrace();
         }
         return list;
+    }
+
+    /*
+    * 获取财务 -> 手机号码/姓名
+     */
+    @UserPermission(ignore = true)
+    public HashMap<String,String> getRoleCode256_Name_Phone(AppContext appContext){
+        HashMap<String,String> map = new HashMap<>();
+        try {
+            String selectSql = "SELECT urealname,uphone FROM {{?"+D_SYSTEM_USER+"}} WHERE roleid&256=256";
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
+            for (Object[] row : lines){
+                String name = StringUtils.checkObjectNull(row[0],"");
+                String phone = StringUtils.checkObjectNull(row[1],"");
+                map.put(phone,name);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return map;
     }
 }
