@@ -24,4 +24,15 @@ public interface ESConstant {
     String PROD_COLUMN_TIME = "time";
     // 产品 ###########
 
+    // 收藏 ###########
+    String COLLECT_INDEX = "collect";
+    String COLLECT_TYPE = "collect_type";
+
+    String COLLECT_COLUMN_UNQID = "unqid";
+    String COLLECT_COLUMN_COMPID = "compid";
+    String COLLECT_COLUMN_SKU = "sku";
+    String COLLECT_COLUMN_PRIZE ="prize";
+    String COLLECT_COLUMN_PROMTYPE ="promtype";
+    String COLLECT_COLUMN_CREATEDATE = "createdate";
+    // 收藏 ###########
 }
