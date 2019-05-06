@@ -21,8 +21,8 @@ public class LoginBackOp implements IOperation<AppContext> {
     String account;
     String password;
     private UserSession userSession = null;
-
     private String error = "用户名或密码不正确";
+
     @Override
     public Result execute(AppContext context) {
         try {
@@ -46,8 +46,8 @@ public class LoginBackOp implements IOperation<AppContext> {
 
 
     public static void main(String[] args) {
-        int i = 3;
-        System.out.println(i&2);
+        int i = 386;
+        System.out.println(i&128);
     }
 
     //检查用户是否正确
@@ -67,13 +67,13 @@ public class LoginBackOp implements IOperation<AppContext> {
 
                  //判断角色
                 int role = StringUtils.checkObjectNull(objects[1],0);
-                //获取管理员列表
-                selectSql = "SELECT rname,roleid FROM {{?" + DSMConst.D_SYSTEM_ROLE+"}} ";
+                //获取有效角色列表
+                selectSql = "SELECT cstatus,roleid, FROM {{?" + DSMConst.D_SYSTEM_ROLE+"}} ";
                 List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql);
                 boolean isAllow = false;
                 for (Object[] o : lines2){
-                    String roleName = StringUtils.obj2Str(o[0]);
-                    if (roleName.contains("管理员")){
+                    int cstatus = StringUtils.checkObjectNull(o[0],0);
+                    if ((cstatus& 256) == 256){
                         int roleid = StringUtils.checkObjectNull(o[1],0);
                         if ((role & roleid) == roleid) {
                             isAllow = true;
@@ -82,7 +82,7 @@ public class LoginBackOp implements IOperation<AppContext> {
                     }
                 }
                 if (!isAllow){
-                    error = "角色权限拒绝登陆";
+                    error = "用户("+objects[5]+")角色权限拒绝登陆";
                     return false;
                 }
 

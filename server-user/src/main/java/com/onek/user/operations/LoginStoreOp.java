@@ -27,10 +27,9 @@ public class LoginStoreOp implements IOperation<AppContext> {
     String verification; //图形验证码
 
     private int failIndex = -1;//剩余次数
-
     private long lockRemainderTime = -1;
-
     private UserSession userSession = null;
+
 
     @Override
     public Result execute(AppContext context) {
@@ -88,6 +87,35 @@ public class LoginStoreOp implements IOperation<AppContext> {
             //忽略MD5大小写
             if (objects[2].toString().equalsIgnoreCase(password)) {
                 communicator().getLogger().print("门店登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1] +" 企业码:" + objects[3]);
+
+                //判断角色
+                int role = StringUtils.checkObjectNull(objects[1],0);
+                //获取有效角色列表
+                selectSql = "SELECT cstatus,roleid, FROM {{?" + DSMConst.D_SYSTEM_ROLE+"}} ";
+                List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql);
+                boolean isAllow = false;
+                for (Object[] o : lines2){
+                    int cstatus = StringUtils.checkObjectNull(o[0],0);
+                    if ((cstatus& 128) == 128){
+                        int roleid = StringUtils.checkObjectNull(o[1],0);
+                        if ((role & roleid) == roleid) {
+                            isAllow = true;
+                            break;
+                        }
+                    }
+                }
+                if (!isAllow){
+                    return false;
+                }
+
+                //门店用户被停用功能 暂时不开放
+//                int cstatus = StringUtils.checkObjectNull(objects[6],0);
+//                if ((cstatus&32)==32){
+//                    error = "用户("+objects[5]+")已被停止使用";
+//                    return false;
+//                }
+
+
                 //密码正确 - 记录登陆时间 IP
                 String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} " +
                         "SET ip = ?,logindate = CURRENT_DATE,logintime = CURRENT_TIME " +
