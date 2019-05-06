@@ -24,4 +24,13 @@ public interface ESConstant {
     String PROD_COLUMN_TIME = "time";
     // 产品 ###########
 
+    // 足迹 ###########
+    String FOOTPRINT_INDEX = "footprint";
+    String FOOTPRINT_TYPE = "footprint_type";
+
+    String FOOTPRINT_COLUMN_UNQID = "unqid";
+    String FOOTPRINT_COLUMN_COMPID = "compid";
+    String FOOTPRINT_COLUMN_SKU = "sku";
+    String FOOTPRINT_COLUMN_BROWSEDATE = "browsedate";
+    // 足迹 ###########
 }
