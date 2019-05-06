@@ -18,7 +18,7 @@ public class CollectESUtil {
      * 添加收藏数据到ES中
      * @return
      */
-    public static int addCollectDocument(long unqid,int compid,int promtype,int prize,int sku){
+    public static int addCollectDocument(long unqid,int compid,int promtype,int prize,long sku){
 
         try {
             Map<String, Object> data = new HashMap<>();
@@ -40,7 +40,7 @@ public class CollectESUtil {
     }
 
     /**
-     * 修改足迹数据ES
+     * 删除收藏数据ES
      * @return
      */
     public static int deleteCollectDocument(long unqid){
@@ -58,10 +58,10 @@ public class CollectESUtil {
     }
 
     /**
-     * 修改足迹数据ES
+     * 修改收藏数据ES
      * @return
      */
-    public static int updateCollectDocument(long unqid,int compid,int promtype,int prize,int sku){
+    public static int updateCollectDocument(long unqid,int compid,int promtype,int prize,long sku){
 
         try {
             Map<String, Object> data = new HashMap<>();

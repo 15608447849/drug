@@ -609,7 +609,7 @@ public class TranOrderOptModule {
         }
 
         List<Object[]> queryResult = baseDao.queryNativeSharding(
-                        0, TimeUtils.getCurrentYear(),
+                        0, TimeUtils.getYearByOrderno(orderno),
                         " SELECT cusno "
                         + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
                         + " WHERE cstatus&1 = 0 AND orderno = ? ", orderno);
@@ -636,7 +636,8 @@ public class TranOrderOptModule {
                     baseDao.queryNativeSharding(compid, TimeUtils.getYearByOrderno(orderno), sql, compid, orderno);
 
             if (!queryResult.isEmpty()) {
-                if (Integer.parseInt(queryResult.get(0)[0].toString()) != 4) {
+                int t = Integer.parseInt(queryResult.get(0)[0].toString());
+                if (t != 4 && t != 5) {
                     TAKE_DELAYED.add(new DelayedBase(compid, orderno));
                 }
             }
