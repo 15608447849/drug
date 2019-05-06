@@ -71,9 +71,13 @@ public class PushMessageMySqlImps implements IPushMessageStore {
         try {
             if (message.id == 0) return;
             int compid = Integer.parseInt(message.identityName);
-            String updateSql = "UPDATE {{?"+TD_PUSH_MSG+"}} SET cstatus=1 WHERE unqid = ? AND cstatus=0";
+            int status = 1;
+            if (!message.content.startsWith("push")){
+                status++;
+            }
+            String updateSql = "UPDATE {{?"+TD_PUSH_MSG+"}} SET cstatus=? WHERE unqid = ? AND cstatus=0";
             BaseDAO.getBaseDAO().updateNativeSharding(compid,getCurrentYear(),
-                    updateSql, message.id);
+                    updateSql,status, message.id);
 
         } catch (Exception e) {
             e.printStackTrace();

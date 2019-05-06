@@ -205,6 +205,20 @@ public class IceRemoteUtil {
             }
     }
 
+
+    public static void main(String[] args) {
+
+        while (true) {
+            sendMessageToAllClient( 4,"平爸爸太帅很烦恼");
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            System.out.println(".....");
+        }
+    }
+
     //获取全部的公司码ID
     public static List<String> getAllCompId() {
         String json = ic.setServerAndRequest("userServer","StoreManageModule","getAllCompId").execute();
