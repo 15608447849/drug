@@ -102,8 +102,7 @@ public class MyDrugStoreInfoModule {
                 return Integer.parseInt(String.valueOf(queryResult.get(0)[0]));
             case 2:
                 selectSQL = "select count(*) from {{?" + DSMConst.D_COMP_SHIP_INFO
-                        + "}} where cstatus&1=0 and compid=" + compid
-                        + " and contactphone=" + contactPhone + " and shipid<>" + shipId;
+                        + "}} where cstatus&1=0 and compid=" + compid;
                 queryResult = baseDao.queryNative(selectSQL);
                 return Integer.parseInt(String.valueOf(queryResult.get(0)[0]));
             default:
