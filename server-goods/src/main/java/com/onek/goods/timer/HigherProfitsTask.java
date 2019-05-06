@@ -25,7 +25,7 @@ public class HigherProfitsTask extends TimerTask {
 
     private static final String SELECT_HIGHPROFIT_SQL = "select sku,rate from ( " +
             "select sku,(sku.mp-sku.vatp)/sku.vatp as rate from {{?"+ DSMConst.TD_PROD_SKU+"}} sku " +
-            ") t where t.rate > 0 order by t.rate desc limit 100";
+            ") t where t.rate > 0 order by t.rate desc limit 30";
 
     private static final String UPDATE_CLEAR_HIGHPROFIT_SQL = "update {{?"+ DSMConst.TD_PROD_SKU+"}} set cstatus = cstatus&~512 where cstatus&512 > 0";
     private static final String UPDATE_ADD_HIGHPROFIT_SQL = "update {{?"+ DSMConst.TD_PROD_SKU+"}} set cstatus = cstatus|512 where 1=1";

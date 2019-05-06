@@ -91,7 +91,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
                 //判断角色
                 int role = StringUtils.checkObjectNull(objects[1],0);
                 //获取有效角色列表
-                selectSql = "SELECT cstatus,roleid, FROM {{?" + DSMConst.D_SYSTEM_ROLE+"}} ";
+                selectSql = "SELECT cstatus,roleid FROM {{?" + DSMConst.D_SYSTEM_ROLE+"}} ";
                 List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql);
                 boolean isAllow = false;
                 for (Object[] o : lines2){

@@ -171,13 +171,15 @@ public class ProdModule {
         List<ProdVO> prodVOList = new ArrayList<>();
         if (list != null && list.size() > 0) {
             List<Long> skuList = new ArrayList<>();
-            Map<Long, Integer> dataMap = new HashMap<>();
+            Map<Long, String[]> dataMap = new HashMap<>();
             for (Object[] objects : list) {
-                Long gcode = Long.parseLong(objects[1].toString());
-                int limitnum = Integer.parseInt(objects[3].toString());
+//                Long actCode = Long.parseLong(objects[0].toString());
+                Long gCode = Long.parseLong(objects[1].toString());
+//                int actStock = Integer.parseInt(objects[2].toString());
+//                int limitNum = Integer.parseInt(objects[3].toString());
 
-                skuList.add(gcode);
-                dataMap.put(gcode, limitnum);
+                skuList.add(gCode);
+                dataMap.put(gCode, new String[]{objects[3].toString(), objects[0].toString()});
 
             }
 
@@ -188,9 +190,15 @@ public class ProdModule {
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
-                    prodVO.setBuynum(0);
                     prodVO.setStartnum(prodVO.getMedpacknum());
-                    prodVO.setActlimit(dataMap.get(prodVO.getSku()));
+                    prodVO.setActlimit(Integer.parseInt(dataMap.get(prodVO.getSku())[0]));
+                    int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
+                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
+                    prodVO.setBuynum(initStock - surplusStock);
+                    prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
+                    prodVO.setActinitstock(initStock);
+                    prodVO.setSurplusstock(surplusStock);
+
                 }
             }
         }
@@ -414,13 +422,15 @@ public class ProdModule {
         SearchResponse response  = null;
         if (list != null && list.size() > 0) {
             List<Long> skuList = new ArrayList<>();
-            Map<Long, Integer> dataMap = new HashMap<>();
+            Map<Long, String[]> dataMap = new HashMap<>();
             for (Object[] objects : list) {
-                Long gcode = Long.parseLong(objects[1].toString());
-                int limitnum = Integer.parseInt(objects[3].toString());
+//                Long actCode = Long.parseLong(objects[0].toString());
+                Long gCode = Long.parseLong(objects[1].toString());
+//                int actStock = Integer.parseInt(objects[2].toString());
+//                int limitNum = Integer.parseInt(objects[3].toString());
 
-                skuList.add(gcode);
-                dataMap.put(gcode, limitnum);
+                skuList.add(gCode);
+                dataMap.put(gCode, new String[]{objects[3].toString(), objects[0].toString()});
 
             }
 
@@ -433,7 +443,13 @@ public class ProdModule {
                 for (ProdVO prodVO : prodVOList) {
                     prodVO.setBuynum(0);
                     prodVO.setStartnum(prodVO.getMedpacknum());
-                    prodVO.setActlimit(dataMap.get(prodVO.getSku()));
+                    prodVO.setActlimit(Integer.parseInt(dataMap.get(prodVO.getSku())[0]));
+                    int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
+                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
+                    prodVO.setBuynum(initStock - surplusStock);
+                    prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
+                    prodVO.setActinitstock(initStock);
+                    prodVO.setSurplusstock(surplusStock);
                 }
             }
         }
@@ -780,24 +796,6 @@ public class ProdModule {
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
         return r.setQuery(resultList, pageHolder);
-    }
-
-    private static List<ProdVO> loadProd(List<ProdVO> prodList, int type) {
-        List<ProdVO> newProdList = new ArrayList<>();
-        for (ProdVO prodVO : prodList) {
-            if ((prodVO.getCstatus() & type) > 0) {
-                newProdList.add(prodVO);
-            }
-        }
-        if (newProdList.size() <= 20) {
-            int i = newProdList.size();
-            for (ProdVO prodVO : prodList) {
-                if (i++ <= 20) {
-                    newProdList.add(prodVO);
-                }
-            }
-        }
-        return newProdList;
     }
 
     private static Map<String, Object> getFilterHotProds(String keyword, int pageNum, int pageSize) {

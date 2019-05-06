@@ -12,6 +12,7 @@ import util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.onek.util.CollectESUtil.*;
 import static com.onek.util.GenIdUtil.getUnqId;
 import static constant.DSMConst.TD_TRAN_COLLE;
 import static util.TimeUtils.getCurrentYear;
@@ -56,21 +57,33 @@ public class MyCollectModule {
      * 参数: sku prize promtype
      */
     public Result add(AppContext appContext){
+        int compId = appContext.getUserSession().compId;
+        autoDelete(compId);
         String json = appContext.param.json;
         Param p = GsonUtils.jsonToJavaBean(json, Param.class);
         assert p != null;
         if (p.sku > 0) {
-            int compId = appContext.getUserSession().compId;
 
-            //更新
-            String updateSql = "UPDATE {{?"+TD_TRAN_COLLE+"}} SET promtype=?,prize=?,createdate = CURRENT_DATE ,createtime = CURRENT_TIME WHERE compid = ? AND sku = ?";
-            int i = BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(),
-                    updateSql,
-                    p.promtype,p.prize * 100, compId,p.sku);
-
-            if (i <= 0){
-                //更新失败 - 插入
-                long unqid = getUnqId();
+            //查询
+            String selectSql = "SELECT unqid FROM {{?"+TD_TRAN_COLLE+"}} WHERE compid = ? AND sku = ?";
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
+                   selectSql,compId,p.sku);
+            int i;
+            long unqid;
+            if (lines.size()==1){
+                unqid = StringUtils.checkObjectNull(lines.get(0)[0],0L);
+                //更新
+                String updateSql = "UPDATE {{?"+TD_TRAN_COLLE+"}} SET promtype=?,prize=?,createdate = CURRENT_DATE ,createtime = CURRENT_TIME WHERE unqid = ?";
+                i = BaseDAO.getBaseDAO().updateNativeSharding(compId,getCurrentYear(),
+                        updateSql,
+                        p.promtype,p.prize * 100, unqid);
+                if (i>0){
+                    //更新缓存
+                    updateCollectDocument(unqid,compId,p.promtype, (int) (p.prize * 100),p.sku);
+                }
+            }else{
+                //插入
+                unqid = getUnqId();
                 String insertSql = "INSERT INTO {{?"+TD_TRAN_COLLE+"}} ( unqid, sku, prize, promtype, compid, createdate, createtime ) " +
                         "VALUES " +
                         "( ?, ?, ?, ?, ?, CURRENT_DATE,CURRENT_TIME )";
@@ -79,28 +92,36 @@ public class MyCollectModule {
                         insertSql,
                         unqid, p.sku, p.prize * 100, p.promtype, compId);
 
+                if (i>0){
+                    //插入缓存
+                    addCollectDocument(unqid,compId,p.promtype, (int) (p.prize * 100),p.sku);
+                }
             }
-
-
             if (i > 0){
-                //如果超过指定条数 ,删除时间最小的数据 / 异步执行
-                IOThreadUtils.runTask(() -> {
-                    String selectSql = "SELECT sku FROM {{?"+TD_TRAN_COLLE+"}} WHERE compid=? ORDER BY createdate,createtime";
-                    List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),selectSql,compId);
-                    assert lines!=null;
-                    delOldData(lines,compId);
-                });
                 return new Result().success("收藏成功");
             }
         }
         return new Result().fail("收藏失败");
     }
 
+    //自动删除
+    private void autoDelete(int compId) {
+        //如果超过指定条数 ,删除时间最小的数据 / 异步执行
+        IOThreadUtils.runTask(() -> {
+            String selectSql = "SELECT unqid,sku FROM {{?"+TD_TRAN_COLLE+"}} WHERE compid=? ORDER BY createdate,createtime";
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),selectSql,compId);
+            assert lines!=null;
+            delOldData(lines,compId);
+        });
+    }
+
     private void delOldData(List<Object[]> lines,int compid) {
         if (lines.size()>20){
             Object[] arr = lines.remove(0);
-            int i = delDataById((long)arr[0],compid);
-            if (i > 0) delOldData(lines,compid);
+            int i = delDataById((long)arr[0],(long)arr[1],compid);
+            if (i > 0) {
+                delOldData(lines, compid);
+            }
         }
     }
 
@@ -123,8 +144,7 @@ public class MyCollectModule {
            data.unqid = StringUtils.checkObjectNull(arr[0],0L);
            data.sku = StringUtils.checkObjectNull(arr[1],0L);
            int i = (int)arr[2];
-           float p = i/100.f;
-           data.prize = p;
+           data.prize = i/100.f;
            data.promtype = StringUtils.checkObjectNull(arr[3],0);
            data.data = StringUtils.checkObjectNull(arr[4],"");
            data.time = StringUtils.checkObjectNull(arr[5],"");
@@ -148,7 +168,7 @@ public class MyCollectModule {
         Param p = GsonUtils.jsonToJavaBean(json,Param.class);
         assert p != null;
         int compId = appContext.getUserSession().compId;
-        int i = delDataById(p.sku,compId);
+        int i = delDataById(p.unqid,p.sku,compId);
         if (i > 0){
             return new Result().success("删除成功");
         }
@@ -156,8 +176,9 @@ public class MyCollectModule {
     }
 
     //根据ID删除数据
-    private int delDataById(long sku, int compid) {
+    private int delDataById(long unqid,long sku, int compid) {
         String delSql = "DELETE FROM {{?"+TD_TRAN_COLLE+"}} WHERE sku = ? AND compid = ?";
+        deleteCollectDocument(unqid);
         return BaseDAO.getBaseDAO().updateNativeSharding(compid,getCurrentYear(),
                 delSql,
                 sku, compid);
