@@ -56,7 +56,13 @@ public class IceRemoteUtil {
     }
 
 
-
+    /**
+     * 根据sku查询商品信息
+     *
+     * @param sku
+     * @return
+     * @author jiangwenguang
+     */
     public static ProdEntity getProdBySku(long sku) {
         try {
             String result = ic.setServerAndRequest("globalServer","CommonModule","getProdBySku").setArrayParams(sku).execute();
@@ -94,6 +100,13 @@ public class IceRemoteUtil {
         return null;
     }
 
+    /**
+     * 根据id获取字典信息
+     *
+     * @param id
+     * @return
+     * @author jiangwenguang
+     */
     public static DictEntity getId(Object id) {
         try {
             String result = ic.setServerAndRequest("globalServer","DictUtilRemoteModule","getId")
@@ -244,7 +257,15 @@ public class IceRemoteUtil {
         return GsonUtils.json2List(json,String.class);
     }
 
-    //添加积分明细
+    /**
+     * 添加积分明细
+     *
+     * @param compid 企业id
+     * @param istatus 来源
+     * @param integral 积分数
+     * @param busid 相关业务id
+     * @return
+     */
     public static int addIntegralDetail(int compid,int istatus,int integral,long busid){
 
         JSONObject jsonObject = new JSONObject();
@@ -261,7 +282,16 @@ public class IceRemoteUtil {
         return ret.code;
     }
 
-    //
+    /**
+     * 查询团购订单信息
+     *
+     * @param sdate 团购活动起始时间
+     * @param edate 团购活动结束时间
+     * @param actno 活动码
+     * @return
+     * @author jiangwenguang
+     * @since 1.0
+     */
     public static ArrayList queryTeamBuyOrder(String sdate,String edate,String actno){
 
         JSONObject jsonObject = new JSONObject();
@@ -277,7 +307,14 @@ public class IceRemoteUtil {
         return jsonArray;
     }
 
-
+    /**
+     * 增加积分
+     *
+     * @param compid 企业id
+     * @return
+     * @author jiangwenguang
+     * @since 1.0
+     */
     public static int addPoint(int compid, int point){
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("compid", compid);
@@ -291,6 +328,14 @@ public class IceRemoteUtil {
         return ret.code;
     }
 
+    /**
+     * 根据企业id查询会员信息
+     *
+     * @param compid 企业id
+     * @return
+     * @author jiangwenguang
+     * @since 1.0
+     * */
     public static MemberEntity getMemberByCompid(int compid) {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("compid", compid);
