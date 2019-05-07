@@ -561,6 +561,8 @@ public class ProdESUtil {
                     .should(rangeQuery1);
             boolQuery.must(postFilterBool);
         }
+        MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
+        boolQuery.must(builder);
 
         TransportClient client = ElasticSearchClientFactory.getClientInstance();
         SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX).setQuery(boolQuery);

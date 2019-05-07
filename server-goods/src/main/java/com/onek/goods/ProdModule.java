@@ -755,6 +755,23 @@ public class ProdModule {
     }
 
     @UserPermission(ignore = true)
+    public Result intelligentFullTextsearch(AppContext appContext) {
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+
+        List<String> contentList = new ArrayList<>();
+        SearchResponse response = ProdESUtil.searchProdMall(keyword, 0, null, null, null, 1, 1, 10);
+        if (response != null) {
+            for (SearchHit searchHit : response.getHits()) {
+                String content = searchHit.getSourceAsMap().get("content").toString().replace("|", " ");
+                contentList.add(content);
+            }
+
+        }
+        return new Result().success(contentList);
+    }
+
+    @UserPermission(ignore = true)
     public Result fullTextsearchProd(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
