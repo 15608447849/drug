@@ -25,10 +25,7 @@ import util.ModelUtil;
 import util.StringUtils;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.List;
+import java.util.*;
 
 import static com.onek.discount.CommonModule.getLaderNo;
 
@@ -1266,6 +1263,31 @@ public class CouponManageModule {
         if(bal == null || bal.isEmpty()) return 0;
 
         return Integer.parseInt(bal.get(0)[0].toString());
+    }
+
+
+    @UserPermission(ignore = true)
+    public Result queryCompAllBal(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+
+        int compid = jsonObject.get("compid").getAsInt();
+        Map map = new HashMap<>();
+        map.put("balamt",0);
+        if(compid <= 0){
+            return result.success(map);
+        }
+        List<Object[]> bal = baseDao.queryNative(QUERY_COMP_BAL,
+                compid);
+        if(bal == null || bal.isEmpty()) return result.success(map);
+
+        double balamt = MathUtil.exactDiv(Double.parseDouble(bal.get(0)[0].toString()), 100L)
+                .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+        map.put("balamt",balamt);
+        return  result.success(map);
     }
 
 
