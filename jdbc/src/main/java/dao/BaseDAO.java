@@ -1101,14 +1101,27 @@ public class BaseDAO {
 		}
 		int[] result = null;
 		Future<Object> future = null;
+		SynDbData synDbData = null;
 		if(SynDbLog.isSynBackDB(Integer.parseInt(resultSQL[0]))){
-			SynDbData synDbData = new SynDbData(resultSQL,null,master.get(),4);
+			synDbData = new SynDbData(resultSQL,null,master.get(),4);
 			synDbData.setBatchSize(batchSize);
 			synDbData.setParams(params);
 			synDbData.setSharding(sharding);
 			synDbData.setTbSharding(tbSharding);
 			synDbData.setNativeSQL(new String[]{nativeSQL});
 			future = ASYN_THREAD.submit(synDbData);
+		}
+
+		//异步同步到订单运营后台
+		if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
+				|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS){
+			synDbData = new SynDbData(resultSQL,null,master.get(),7);
+			synDbData.setNativeSQL(new String[]{nativeSQL});
+			synDbData.setBatchSize(batchSize);
+			synDbData.setParams(params);
+			synDbData.setSharding(sharding);
+			synDbData.setTbSharding(tbSharding);
+			ASYN_THREAD.submit(synDbData);
 		}
 		try{
 			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
