@@ -156,4 +156,12 @@ public class LoginRegistrationModule {
         UserSession userSession = appContext.getUserSession().cloneBackUserInfo();
         return new Result().success(userSession);
     }
+
+    /**
+     * 判断是否已经登陆
+     */
+    @UserPermission(ignore = true,ignoreButInitialize = true)
+    public Result checkStoreLoginStatus(AppContext appContext){
+        return new Result().success(appContext.getUserSession() != null);
+    }
 }
