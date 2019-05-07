@@ -33,6 +33,7 @@ public class TranOrderDetail {
     private String consignee;
     private String contact;
     private String address;
+    private double balamt;
 
     /**      trans         **/
     private int payno;
@@ -441,5 +442,13 @@ public class TranOrderDetail {
 
     public void setCusname(String cusname) {
         this.cusname = cusname;
+    }
+
+    public double getBalamt() {
+        return balamt;
+    }
+
+    public void setBalamt(double balamt) {
+        this.balamt = balamt;
     }
 }

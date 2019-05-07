@@ -20,17 +20,16 @@ import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.discount.DiscountRuleStore;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
-import util.ArrayUtil;
-import util.ModelUtil;
-import util.StringUtils;
-import util.TimeUtils;
+import util.*;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -66,11 +65,11 @@ public class TranOrderOptModule {
     private static final String INSERT_TRAN_ORDER = "insert into {{?" + DSMConst.TD_TRAN_ORDER + "}} "
             + "(orderno,tradeno,cusno,busno,ostatus,asstatus,pdnum," +
             "pdamt,freight,payamt,coupamt,distamt,rvaddno," +
-            "settstatus,otype,odate,otime,cstatus,consignee,contact,address) "
+            "settstatus,otype,odate,otime,cstatus,consignee,contact,address,balamt) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "CURRENT_DATE,CURRENT_TIME,0,?,?,?)";
+            + "CURRENT_DATE,CURRENT_TIME,0,?,?,?,?)";
 
     //订单商品表新增
     private static final String INSERT_TRAN_GOODS = "insert into {{?" + DSMConst.TD_TRAN_GOODS + "}} "
@@ -262,11 +261,28 @@ public class TranOrderOptModule {
             //订单费用计算（费用分摊以及总费用计算）
             calculatePrice(tranOrderGoods, tranOrder, unqid);
         }
+        double payamt = tranOrder.getPayamt();
+        double bal = 0;
         //数据库相关操作
+        try{
+            bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
+            if(bal > 0) {
+                if(bal >= payamt){
+                    payamt = 0;
+                    bal = tranOrder.getPayamt();
+                }else{
+                    payamt = MathUtil.exactSub(payamt,bal).
+                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+                }
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
         sqlList.add(INSERT_TRAN_ORDER);
         params.add(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
-                tranOrder.getPdamt(), tranOrder.getFreight(), tranOrder.getPayamt(), tranOrder.getCoupamt(), tranOrder.getDistamt(),
-                tranOrder.getRvaddno(), 0, 0, tranOrder.getConsignee(), tranOrder.getContact(), tranOrder.getAddress()});
+                tranOrder.getPdamt(), tranOrder.getFreight(), payamt, tranOrder.getCoupamt(), tranOrder.getDistamt(),
+                tranOrder.getRvaddno(), 0, 0, tranOrder.getConsignee(), tranOrder.getContact(), tranOrder.getAddress(),bal});
 
         if (unqid > 0) {
             //使用优惠券
@@ -302,6 +318,9 @@ public class TranOrderOptModule {
             return result.fail("下单失败");
         }
     }
+
+
+
 
     private boolean updateSku(List<TranOrderGoods> tranOrderGoodsList) {
         List<Object[]> paramOne = new ArrayList<>();

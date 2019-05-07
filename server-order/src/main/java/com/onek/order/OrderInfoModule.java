@@ -26,7 +26,7 @@ public class OrderInfoModule {
           + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
           + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
           + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
-          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address ";
+          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt ";
 
     private static final String QUERY_TRAN_TRANS_PARAMS =
             " trans.payno, trans.payprice, "
@@ -126,7 +126,9 @@ public class OrderInfoModule {
             tranOrder.setDistamt(MathUtil.exactDiv(tranOrder.getDistamt(), 100).doubleValue());
             tranOrder.setCoupamt(MathUtil.exactDiv(tranOrder.getCoupamt(), 100).doubleValue());
             tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
-        }   
+            tranOrder.setBalamt(MathUtil.exactDiv(tranOrder.getBalamt(), 100).doubleValue());
+
+        }
 
         return new Result().success(result);
     }
@@ -225,6 +227,7 @@ public class OrderInfoModule {
             tranOrder.setPdamt(MathUtil.exactDiv(tranOrder.getPdamt(), 100).doubleValue());
             tranOrder.setDistamt(MathUtil.exactDiv(tranOrder.getDistamt(), 100).doubleValue());
             tranOrder.setCoupamt(MathUtil.exactDiv(tranOrder.getCoupamt(), 100).doubleValue());
+            tranOrder.setBalamt(MathUtil.exactDiv(tranOrder.getBalamt(), 100).doubleValue());
         }
 
         return result;

@@ -506,7 +506,7 @@ public class CouponRevModule {
 
 
 
-    public boolean revGiftCoupon(long orderno,int compid){
+    public  boolean revGiftCoupon(long orderno,int compid){
 
         if(compid <= 0){
             return false;

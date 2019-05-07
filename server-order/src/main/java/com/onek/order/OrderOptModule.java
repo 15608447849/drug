@@ -29,6 +29,8 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static constant.DSMConst.TD_BK_TRAN_GOODS;
+
 /**
  * @author 11842
  * @version 1.1.1
@@ -78,9 +80,9 @@ public class OrderOptModule {
     private static final String QUERY_ASAPP_INFO_SQL = " select asapp.orderno,asapp.compid,asapp.asno,asapp.pdno,"+
             "asapp.asnum,goods.pdprice/100 spdprice,"+
             "goods.payamt/100 spayamt,distprice/100 sdistprice,goods.pnum,astype,reason,apdesc,refamt/100 refamt,"+
-            "ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,refamt/100 refamt "+
+            "ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus "+
             " from {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp inner join {{?"+
-            DSMConst.TD_BK_TRAN_GOODS+"}} goods on asapp.orderno = goods.orderno and "+
+            TD_BK_TRAN_GOODS+"}} goods on asapp.orderno = goods.orderno and "+
             " asapp.pdno = goods.pdno where asapp.asno = ? and asno != 0 ";
 
 
@@ -88,7 +90,7 @@ public class OrderOptModule {
     private static final String QUERY_ASAPP_LIST_SQL = "  select distinct asapp.orderno,asapp.compid,asapp.asno,astype,"+
             "ckstatus,gstatus,apdata,aptime,checkern,contact,address,refamt/100 refamt,compn from "+
             " {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp inner join {{?"+
-            DSMConst.TD_BK_TRAN_GOODS+"}} goods on asapp.orderno = goods.orderno and "+
+            TD_BK_TRAN_GOODS+"}} goods on asapp.orderno = goods.orderno and "+
             " asapp.pdno = goods.pdno" +
             " inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders" +
             " on orders.orderno = goods.orderno where asno != 0 ";
@@ -101,7 +103,7 @@ public class OrderOptModule {
 
     //查询发票售后详情
     private static final String QUERY_GOODS_SQL = " select goods.pdno,goods.pnum,goods.pdprice,goods.distprice,goods.payamt from {{?"+
-            DSMConst.TD_BK_TRAN_GOODS+"}} goods where goods.orderno = ? and goods.compid = ?";
+            TD_BK_TRAN_GOODS+"}} goods where goods.orderno = ? and goods.compid = ?";
 
     //查询售后发票列表
     private static final String QUERY_ASAPP_BILL_LIST_SQL = "select distinct asapp.orderno,asapp.compid,asapp.asno,astype,"+
@@ -113,9 +115,16 @@ public class OrderOptModule {
 
     //查询团购订单记录
     private static final String QUERY_TEAM_BUY_ORDER_SQL = "select orderno,payamt,compid from "+
-            " {{?"+ DSMConst.TD_BK_TRAN_GOODS+"}} g " +
+            " {{?"+ TD_BK_TRAN_GOODS+"}} g " +
             " where g.createdate >= ? and g.createdate <= ? and g.promtype& 4096 > 0 and actcode like concat('%',?,'%')";
 
+    //更新订单售后状态
+    private static final String UPD_ORDER_CK_SQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
+            + " where cstatus&1=0 and orderno=? and ostatus = ?";
+
+    //更新订单相关商品售后状态
+    private static final String UPD_ORDER_GOODS_CK_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
+            + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=?";
 
     /* *
      * @description 评价
@@ -389,9 +398,26 @@ public class OrderOptModule {
         int astype =  jsonObject.get("astype").getAsInt();
         double refamt = jsonObject.get("refamt").getAsDouble();
 
+        String queryOrderno = "select orderno,compid,pdno from {?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+
+        List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
+
+        if(queryRet == null || queryRet.isEmpty()){
+            return result.fail("操作失败");
+        }
+
         int ret = baseDao.updateNativeSharding(0,
                 TimeUtils.getCurrentYear(),UPD_ASAPP_CK_SQL,
                 ckstatus, userSession.userId,userSession.userName, astype, ckdesc,refamt*100,asno);
+
+        if (ret > 0){
+            int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
+            List<Object[]> params = new ArrayList<>();
+            params.add(new Object[]{-2, queryRet.get(0)[0],-1});
+            params.add(new Object[]{-2, queryRet.get(0)[2],-1,queryRet.get(0)[0]});
+            baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()),year,
+            new String[]{UPD_ORDER_CK_SQL,UPD_ORDER_GOODS_CK_SQL},params);
+        }
 
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
     }
@@ -458,6 +484,7 @@ public class OrderOptModule {
         }
 
         AsAppDtVO[] asAppDtVOs = new AsAppDtVO[queryResult.size()];
+
         baseDao.convToEntity(queryResult, asAppDtVOs, AsAppDtVO.class,
                 new String[]{"orderno", "compid", "asno", "pdno", "asnum",
                         "spdprice", "spayamt", "sdistprice", "pnum",
@@ -473,8 +500,7 @@ public class OrderOptModule {
                     setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
             asAppDtVO.setDistprice(disprice);
             asAppDtVO.setAcprice(acprice);
-            asAppDtVO.setPayamt(MathUtil.exactMul(acprice, asAppDtVO.getAsnum()).
-                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            asAppDtVO.setPayamt(asAppDtVO.getRefamt());
 
             ProdEntity prodBySku = null;
             try {
@@ -757,5 +783,9 @@ public class OrderOptModule {
             }
         }
         return new Result().success(jsonArray);
+    }
+
+    public static void main(String[] args) {
+
     }
 }

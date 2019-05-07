@@ -686,8 +686,12 @@ public class CouponManageModule {
         for (int i = 0; i < ladderVOS.size(); i++) {
             if (offerCode != null) {
                 long ladderId = GenIdUtil.getUnqId();
+                double offer = ladderVOS.get(i).getOffer()*100;
+                if(laddrno.indexOf("213") == 0){
+                    offer = ladderVOS.get(i).getOffer()*1000;
+                }
                 ladOffParams.add(new Object[]{ladderId, ladderVOS.get(i).getLadamt()*100,
-                        ladderVOS.get(i).getLadnum(),ladderVOS.get(i).getOffer()*100,offerCode[i]});
+                        ladderVOS.get(i).getLadnum(),offer,offerCode[i]});
 
                 System.out.println("===============11活动码"+actCode);
                 relaParams.add(new Object[]{GenIdUtil.getUnqId(),actCode,ladderId});
