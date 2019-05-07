@@ -140,8 +140,8 @@ public class LccOrderUtil {
         return traceJson;
     }
 
-    public static void main(String[] args) {
-        JSONObject result = LccOrderUtil.queryTraceByOrderno("1905040000007404");
-        System.out.println(result.toJSONString());
-    }
+//    public static void main(String[] args) {
+//        JSONObject result = LccOrderUtil.queryTraceByOrderno("1905040000007404");
+//        System.out.println(result.toJSONString());
+//    }
 }
