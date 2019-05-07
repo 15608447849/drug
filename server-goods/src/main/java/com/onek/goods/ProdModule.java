@@ -112,7 +112,7 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        Map<String, Object> resultMap= getFilterProdsCommon(result, "",2, pageIndex, pageSize);
+        Map<String, Object> resultMap= getFilterProdsCommon(appContext, result, "",2, pageIndex, pageSize);
         List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
 
         return new Result().success(prodList);
@@ -130,7 +130,7 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        Map<String, Object> resultMap  = getFilterProdsCommon(result1,  "",1, pageIndex, pageSize);
+        Map<String, Object> resultMap  = getFilterProdsCommon(appContext, result1,  "",1, pageIndex, pageSize);
         List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
 
         return new Result().success(prodList);
@@ -142,7 +142,7 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        Map<String, Object> resultMap = getFilterHotProds("",  pageIndex, pageSize);
+        Map<String, Object> resultMap = getFilterHotProds(appContext,"",  pageIndex, pageSize);
         List<ProdVO> hotProdList = (List<ProdVO>)resultMap.get("prodList");
 
         return new Result().success(hotProdList);
@@ -158,7 +158,7 @@ public class ProdModule {
 
         SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, pageIndex, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
-        assembleData(response, prodList);
+        assembleData(appContext, response, prodList);
 
         return new Result().success(prodList);
     }
@@ -186,7 +186,7 @@ public class ProdModule {
             SearchResponse response = ProdESUtil.searchProdBySpuList(skuList,"", 1, 100);
 
             if (response != null && response.getHits().totalHits > 0) {
-                assembleData(response, prodVOList);
+                assembleData(appContext, response, prodVOList);
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
@@ -226,7 +226,7 @@ public class ProdModule {
             SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 100);
 
             if (response != null && response.getHits().totalHits > 0) {
-                assembleData(response, prodVOList);
+                assembleData(appContext, response, prodVOList);
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
@@ -261,7 +261,7 @@ public class ProdModule {
             SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 100);
 
             if (response != null && response.getHits().totalHits > 0) {
-                assembleData(response, prodVOList);
+                assembleData(appContext, response, prodVOList);
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
@@ -311,7 +311,7 @@ public class ProdModule {
             SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 100);
 
             if (response != null && response.getHits().totalHits > 0) {
-                assembleData(response, prodVOList);
+                assembleData(appContext, response, prodVOList);
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
@@ -343,7 +343,7 @@ public class ProdModule {
 
         SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, pageIndex, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
-        assembleData(response, prodList);
+        assembleData(appContext, response, prodList);
 
         Result r = new Result();
         Page page = new Page();
@@ -370,7 +370,7 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        Map<String, Object> resultMap = getFilterProdsCommon(result, keyword, 2, pageIndex, pageSize);
+        Map<String, Object> resultMap = getFilterProdsCommon(appContext, result, keyword, 2, pageIndex, pageSize);
         List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
         SearchResponse response = (SearchResponse)resultMap.get("response");
 
@@ -393,7 +393,7 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        Map<String, Object> resultMap = getFilterHotProds(keyword,  pageIndex, pageSize);
+        Map<String, Object> resultMap = getFilterHotProds(appContext,keyword,  pageIndex, pageSize);
         List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
         SearchResponse response = (SearchResponse)resultMap.get("response");
 
@@ -437,7 +437,7 @@ public class ProdModule {
             response = ProdESUtil.searchProdBySpuList(skuList, keyword, pageIndex, pageSize);
 
             if (response != null && response.getHits().totalHits > 0) {
-                assembleData(response, prodVOList);
+                assembleData(appContext,response, prodVOList);
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
@@ -478,7 +478,7 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        Map<String, Object> resultMap = getFilterProdsCommon(result1,  keyword,1, pageIndex, pageSize);
+        Map<String, Object> resultMap = getFilterProdsCommon(appContext, result1,  keyword,1, pageIndex, pageSize);
         List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
         SearchResponse response = (SearchResponse)resultMap.get("response");
 
@@ -533,7 +533,7 @@ public class ProdModule {
             SearchResponse response = ProdESUtil.searchProdBySpuListAndKeyword(skuList, keyword);
 
             if (response != null && response.getHits().totalHits > 0) {
-                assembleData(response, prodVOList);
+                assembleData(appContext, response, prodVOList);
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
@@ -597,7 +597,7 @@ public class ProdModule {
             SearchResponse response = ProdESUtil.searchProdBySpuListAndKeyword(skuList, keyword);
 
             if (response != null && response.getHits().totalHits > 0) {
-                assembleData(response, prodVOList);
+                assembleData(appContext,response, prodVOList);
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
@@ -625,18 +625,18 @@ public class ProdModule {
         List<ProdVO> prodVOList = new ArrayList<>();
         if (searchResponse == null || searchResponse.getHits().totalHits < 5) {
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
-                assembleData(searchResponse, prodVOList);
+                assembleData(appContext,searchResponse, prodVOList);
             }
             searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, spu, 1, 10);
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
-                assembleData(searchResponse, prodVOList);
+                assembleData(appContext, searchResponse, prodVOList);
             }
             if (prodVOList.size() < 5) {
                 searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, spu, 1, 10);
-                assembleData(searchResponse, prodVOList);
+                assembleData(appContext, searchResponse, prodVOList);
             }
         } else {
-            assembleData(searchResponse, prodVOList);
+            assembleData(appContext, searchResponse, prodVOList);
         }
         return new Result().success(prodVOList);
     }
@@ -661,7 +661,7 @@ public class ProdModule {
             if (response == null || response.getHits().totalHits <= 5) {
                 long totalHits = response != null ? response.getHits().totalHits : 0;
                 if (totalHits > 0) {
-                    assembleData(response, prodList);
+                    assembleData(appContext, response, prodList);
                 }
                 List<Integer> bb1 = new ArrayList() {{
                     add(218);
@@ -674,7 +674,7 @@ public class ProdModule {
                 response = ProdESUtil.searchProdWithStatusList(result1, "", 1, 1, 100);
             }
 
-            assembleData(response, prodList);
+            assembleData(appContext, response, prodList);
 
         }
         return new Result().success(prodList);
@@ -815,14 +815,14 @@ public class ProdModule {
         return r.setQuery(resultList, pageHolder);
     }
 
-    private static Map<String, Object> getFilterHotProds(String keyword, int pageNum, int pageSize) {
+    private static Map<String, Object> getFilterHotProds(AppContext appContext, String keyword, int pageNum, int pageSize) {
         Map<String, Object> resultMap = new HashMap<>();
         SearchResponse response = ProdESUtil.searchHotProd(keyword, pageNum, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
             SearchHits hits = response.getHits();
             if (hits.totalHits > 0) {
-                assembleData(response, prodList);
+                assembleData(appContext, response, prodList);
             }
         }
 
@@ -831,14 +831,14 @@ public class ProdModule {
         return resultMap;
     }
 
-    private static Map<String, Object> getFilterProdsCommon(Set<Integer> result, String keyword, int sort,int pageNum, int pageSize) {
+    private static Map<String, Object> getFilterProdsCommon(AppContext context, Set<Integer> result, String keyword, int sort,int pageNum, int pageSize) {
         Map<String, Object> resultMap = new HashMap<>();
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, keyword, sort, pageNum, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
             SearchHits hits = response.getHits();
             if (hits.totalHits > 0) {
-                assembleData(response, prodList);
+                assembleData(context, response, prodList);
             }
         }
         resultMap.put("response", response);
@@ -846,7 +846,7 @@ public class ProdModule {
         return resultMap;
     }
 
-    private static void assembleData(SearchResponse response, List<ProdVO> prodList) {
+    private static void assembleData(AppContext context, SearchResponse response, List<ProdVO> prodList) {
         if (response == null || response.getHits().totalHits <= 0) {
             return;
         }
@@ -861,9 +861,15 @@ public class ProdModule {
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
             int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(ruleStatus);
-            prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
-            prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
-            prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+            if(!context.isAnonymous()){ // 有权限
+                prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+                prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+                prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+            }else{
+                prodVO.setVatp(-1);
+                prodVO.setMp(-1);
+                prodVO.setRrp(-1);
+            }
             prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
             try{
                 DictStore.translate(prodVO);
