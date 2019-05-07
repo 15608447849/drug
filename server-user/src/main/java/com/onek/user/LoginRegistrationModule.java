@@ -160,7 +160,7 @@ public class LoginRegistrationModule {
     /**
      * 判断是否已经登陆
      */
-    @UserPermission(ignore = true,ignoreButInitialize = true)
+    @UserPermission(ignore = true)
     public Result checkStoreLoginStatus(AppContext appContext){
         return new Result().success(appContext.getUserSession() != null);
     }
