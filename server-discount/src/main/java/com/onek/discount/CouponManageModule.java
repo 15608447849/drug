@@ -773,7 +773,7 @@ public class CouponManageModule {
         }
 
         if(rulecode != 0){
-            sqlBuilder.append(" and rulecode = ");
+            sqlBuilder.append(" and cop.brulecode = ");
             sqlBuilder.append(rulecode);
         }
 
@@ -816,7 +816,7 @@ public class CouponManageModule {
         StringBuilder sqlBuilder = new StringBuilder(QUERY_ASSCOUPON_LIST_SQL);
 
         if(rulecode != 0){
-            sqlBuilder.append(" and rulecode = ");
+            sqlBuilder.append(" and cop.brulecode = ");
             sqlBuilder.append(rulecode);
         }
 

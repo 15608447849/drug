@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.hsf.framework.api.cstruct.UserParam;
 import com.hsf.framework.api.myOrder.MyOrderServerPrx;
 import com.hsf.framework.order.OrderICE;
+import com.hsf.framework.order.OrderService;
 import com.hsf.framework.order.OrderServicePrx;
 import com.onek.entity.TranOrder;
 import com.onek.property.LccProperties;
@@ -85,14 +86,15 @@ public class LccOrderUtil {
         userParam.compid = LccProperties.INSTANCE.pubercompid + "";
         String result = myOrderServerPrx.getOrderTraByOrderid(userParam, new String[]{orderno}, 0);
         JSONObject traceJson = new JSONObject();
-        System.out.println(result);
         if(!StringUtils.isEmpty(result)){
             JSONObject jsonObject = JSONObject.parseObject(result);
             if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
                  JSONObject data = (JSONObject) jsonObject.get("obj");
+                String carrierName = "";
                  if(data == null){
                      traceJson.put("billno", "");
                      traceJson.put("logictype", "0");
+                     traceJson.put("carriername", "");
                      traceJson.put("node", new JSONArray());
                      return traceJson;
                  }
@@ -101,6 +103,19 @@ public class LccOrderUtil {
                      String key = keys.iterator().next();
                      traceJson.put("billno", key);
                      traceJson.put("logictype", "0");
+                     try{
+                         OrderServicePrx orderService =(OrderServicePrx) RpcClientUtil.getServicePrx(OrderServicePrx.class);
+                         String r = orderService.getOrderDetail(new String[] {key,LccProperties.INSTANCE.puberid+"",LccProperties.INSTANCE.pubercompid+""});
+                         if(!StringUtils.isEmpty(r)){
+                             JSONObject j = JSONObject.parseObject(r);
+                             if(Integer.parseInt(j.get("code").toString()) == 0) {
+                                 JSONObject d = (JSONObject) j.get("obj");
+                                 carrierName = d.getString("puberCarrier");
+                             }
+                         }
+                     }catch(Exception e){}
+
+                     traceJson.put("carriername", carrierName);
                      JSONArray array = data.getJSONArray(key);
                      JSONArray node = new JSONArray();
                      for(Object obj : array){
@@ -125,13 +140,8 @@ public class LccOrderUtil {
         return traceJson;
     }
 
-//    static {
-//        AppConfig.initLogger("log4j2.xml");
-//        AppConfig.initialize();
-//    }
-//
 //    public static void main(String[] args) {
-//        JSONObject result = LccOrderUtil.queryTraceByOrderno("1904220003127703");
+//        JSONObject result = LccOrderUtil.queryTraceByOrderno("1905040000007404");
 //        System.out.println(result.toJSONString());
 //    }
 }
