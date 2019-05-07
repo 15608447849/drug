@@ -18,6 +18,7 @@ import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.LccOrderUtil;
 import com.onek.util.area.AreaEntity;
+import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.fs.FileServerUtils;
 import com.onek.util.member.MemberStore;
 import com.onek.util.order.RedisOrderUtil;
@@ -158,10 +159,11 @@ public class PayModule {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate", "otime","pdamt","freight","coupamt","distamt","rvaddno","balamt"});
 
-            double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
+//            double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
 
+            double payamt = AreaFeeUtil.getFee(result[0].getRvaddno());
             if(payamt <= 0){
-                return new Result().fail("支付金额不能小于0!");
+                return new Result().fail("该地区暂不支持在线开票，请联系客服");
             }
 
             JSONObject r = new JSONObject();
@@ -247,10 +249,11 @@ public class PayModule {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate", "otime","pdamt","freight","coupamt","distamt","rvaddno","balamt"});
 
-            double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
+//            double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
 
+            double payamt = AreaFeeUtil.getFee(result[0].getRvaddno());
             if(payamt <= 0){
-                return new Result().fail("支付金额不能小于0!");
+                return new Result().fail("该地区暂不支持在线开票，请联系客服");
             }
             try{
                 String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, afsano,
