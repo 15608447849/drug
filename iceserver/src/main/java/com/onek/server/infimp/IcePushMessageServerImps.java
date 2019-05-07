@@ -11,6 +11,7 @@ import objectref.ObjectRefUtil;
 import threadpool.IOThreadPool;
 import util.StringUtils;
 
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -22,10 +23,18 @@ import java.util.concurrent.ConcurrentHashMap;
  * 消息推送 服务端实现
  */
 public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMessageStore,Runnable {
+
+
     /**
-     * 在线客户端
+     *  k - 客户端类型 ,v - Map(公司码-客户端)
+     *  暂不实现
      */
-    protected Map<String, PushMessageClientPrx> _clientsMaps ;
+    private HashMap<String,ConcurrentHashMap<String, PushMessageClientPrx>> allMap;
+
+    /**
+     * 在线客户端-PC
+     */
+    private Map<String, PushMessageClientPrx> _clientsMaps_pc;
 
     protected IOThreadPool pool ;
 
@@ -33,32 +42,36 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
 
     private IPushMessageStore iPushMessageStore;
 
-    protected volatile boolean isLongConnection = false;
-
     private volatile boolean lockQueue = false;
 
-    public IcePushMessageServerImps(Communicator communicator,String serverName) {
+    IcePushMessageServerImps(Communicator communicator,String serverName) {
         this.communicator = communicator;
         startPushMessageServer(serverName);
+    }
+
+    public boolean checkClientOnlineStatus(String clientType,String identity){
+        boolean flag = false;
+        if (_clientsMaps_pc.containsKey(identity)){
+            flag = true;
+        }
+        //检查客户端是否在线
+        communicator.getLogger().print("检查客户端是否在线 : "+ clientType+" , "+ identity +" status: "+ flag);
+        return !flag;
     }
 
     private void startPushMessageServer(String serverName){
         if (StringUtils.isEmpty(IceProperties.INSTANCE.allowPushMessageServer)) return;
         if (!IceProperties.INSTANCE.allowPushMessageServer.contains(serverName)) return;
         pool = new IOThreadPool();
-        _clientsMaps = new ConcurrentHashMap<>();
+        _clientsMaps_pc = new ConcurrentHashMap<>();
         //注入消息存储实现
         createMessageStoreImps();
-        isLongConnection = true;
-        pool.post(this);//心跳线程
-        pool.post(pushRunnable());
-//        new Thread(this).start();
-
-
+        new Thread(this).start();//心跳线程
+        new Thread(pushRunnable()).start();//消息发送
     }
 
 
-    private void createMessageStoreImps() {
+    private void createMessageStoreImps() {//创建消息存储实例
         if (StringUtils.isEmpty(IceProperties.INSTANCE.pmStoreImp)) return;
         try {
             java.lang.Object object = ObjectRefUtil.createObject(IceProperties.INSTANCE.pmStoreImp);
@@ -79,6 +92,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     @Override
     public void online(Identity identity, Current __current) {
         pool.post(()->{
+            //后期根据类型分发客户端 -
             clientOnline(identity,__current);
         });
     }
@@ -97,7 +111,6 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                 e.printStackTrace();
             }
         });
-
     }
 
     @Override
@@ -108,13 +121,14 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     }
 
     private synchronized void addClient(String identityName, PushMessageClientPrx clientPrx){
-        _clientsMaps.put(identityName,clientPrx);
-        communicator.getLogger().print(Thread.currentThread()+" , "+"添加客户端,id = "+ identityName );
+        final PushMessageClientPrx _clientPrx = _clientsMaps_pc.get(identityName); //已存在的旧的客户端
+        _clientsMaps_pc.put(identityName,clientPrx);
+        communicator.getLogger().print(" --@@@@@@@@@@@@---> "+"添加客户端,id = "+ identityName +" ,当前客户端数量:"+ _clientsMaps_pc.size());
     }
 
     private synchronized void removeClient(String identityName) {
-        _clientsMaps.remove(identityName);
-        communicator.getLogger().print(Thread.currentThread()+" , "+"移除客户端,id = "+ identityName );
+        _clientsMaps_pc.remove(identityName);
+        communicator.getLogger().print("--XXXXXXXXXXXX---> "+"移除客户端,id = "+ identityName+" ,当前客户端数量:"+ _clientsMaps_pc.size() );
     }
 
     @Override
@@ -124,6 +138,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         });
     }
 
+    //添加消息到队列
     private void addMessage(String identityName, String message) {
         //放入队列
         storeMessageToQueue(new IPMessage(identityName, message));
@@ -136,6 +151,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         }
     }
 
+    //发送消息到客户端
     private boolean sendMessage(IPMessage message) {
         try {
 
@@ -145,7 +161,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                 }
 
                 //获取客户端
-                PushMessageClientPrx clientPrx = _clientsMaps.get(message.identityName);
+                PushMessageClientPrx clientPrx = _clientsMaps_pc.get(message.identityName);
                 if (clientPrx!=null){
                     try {
 
@@ -249,23 +265,26 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         while (!communicator.isShutdown()){
             try {
                 Thread.sleep( 5 * 1000);
-
-                if (_clientsMaps.size() == 0) continue;
-
-                Iterator<Map.Entry<String,PushMessageClientPrx>> iterator = _clientsMaps.entrySet().iterator();
-                PushMessageClientPrx prx;
-
-                while (iterator.hasNext()){
-                    prx = iterator.next().getValue();
-                    try {
-                        prx.ice_ping();
-                    } catch (Exception e) {
-                        iterator.remove();
-                        communicator.getLogger().print(Thread.currentThread()+" , "+"客户端移除: "+ communicator.identityToString(prx.ice_getIdentity())+",当前在线客户端数:"+_clientsMaps.size());
-                    }
-                }
+                checkPc(); //监测Pc端
             } catch (Exception e) {
                 e.printStackTrace();
+            }
+        }
+    }
+
+    private void checkPc() {
+        if (_clientsMaps_pc.size() == 0) return;
+
+        Iterator<Map.Entry<String,PushMessageClientPrx>> iterator = _clientsMaps_pc.entrySet().iterator();
+        PushMessageClientPrx prx;
+
+        while (iterator.hasNext()){
+            prx = iterator.next().getValue();
+            try {
+                prx.ice_ping();
+            } catch (Exception e) {
+                iterator.remove();
+                communicator.getLogger().print(Thread.currentThread()+" , "+"在线监测,PC-客户端移除: "+ communicator.identityToString(prx.ice_getIdentity())+",当前在线客户端数:"+ _clientsMaps_pc.size());
             }
         }
     }

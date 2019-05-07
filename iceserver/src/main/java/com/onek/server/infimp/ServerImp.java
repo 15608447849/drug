@@ -177,9 +177,7 @@ public class ServerImp extends IcePushMessageServerImps {
             result = interceptor(context);
             //具体业务实现调用 返回值不限制
             if (result == null) result = callObjectMethod(context.refPkg,context.refCls,context.refMed,context);
-            if (isLongConnection && result instanceof Result) {
-                context.longConnectionSetting(_clientsMaps,(Result)result);
-            }
+            if (result instanceof Result) context.isAllowOnline(this,(Result) result);
         } catch (Exception e) {
             Throwable targetEx = e;
             if (e instanceof InvocationTargetException) {
