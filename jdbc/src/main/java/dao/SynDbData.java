@@ -66,6 +66,8 @@ public class SynDbData implements Callable<Object> {
                 return updateNativeBk();
             case 6:
                 return updateTransNativeBk();
+            case 7:
+                return updateBatchNativeBK();
         }
         return null;
     }
@@ -287,6 +289,26 @@ public class SynDbData implements Callable<Object> {
             List<Object[]> paramList = new ArrayList<>();
             paramList.add(getParam());
             SynDbLog.updateTransNative(getNativeSQL(),paramList,0,0,dbs,false);
+        }
+        return result;
+    }
+
+
+    public int[] updateBatchNativeBK(){
+        String[] resultSQL = baseDao.getNativeReplaceSQL(nativeSQL[0],tbSharding);
+        LogUtil.getDefaultLogger().debug("【Debug】SYN Native SQL：" + resultSQL[1]);
+        int[] result = null;
+        JdbcBaseDao jdbcBaseDao = null;
+        try {
+            jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
+            jdbcBaseDao.setManager(baseDao.getSessionMgr(0,DSMConst.TD_BK_TRAN_ORDER));
+            result = jdbcBaseDao.updateBatch(resultSQL[1], params,batchSize);
+        } catch (DAOException e) {
+            e.printStackTrace();
+            int dbs = master;
+            List<Object[]> paramList = new ArrayList<>();
+            paramList.add(getParam());
+            SynDbLog.updateTransNative(getNativeSQL(),paramList,0,0,dbs,true);
         }
         return result;
     }
