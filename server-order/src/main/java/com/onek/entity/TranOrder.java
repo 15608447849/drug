@@ -36,7 +36,9 @@ public class TranOrder implements IDelayedObject {
     private String consignee;//收货人
     private String contact;//收货人联系方式
     private String address;//收货详细地址
+    private double balamt;//余额扣除
     private String payway; // 支付方式
+
 
     private List<TranOrderGoods> goods;
 
@@ -263,5 +265,19 @@ public class TranOrder implements IDelayedObject {
         return this.orderno;
     }
 
+    public String getPayway() {
+        return payway;
+    }
 
+    public void setPayway(String payway) {
+        this.payway = payway;
+    }
+
+    public double getBalamt() {
+        return balamt;
+    }
+
+    public void setBalamt(double balamt) {
+        this.balamt = balamt;
+    }
 }

@@ -37,12 +37,16 @@ public class UserInterceptor implements IServerInterceptor {
                 up = m.getAnnotation(UserPermission.class);
                 permissionStatusMap.put(key, up); //存
             }
+
+
+            appContext.initialization();//初始化上下文用户信息
+
             /*判断接口是否对用户权限进行拦截 条件:
             * 1.调用方法没有注解一定拦截权限
             * 2.注解显示不忽略拦截,拦截权限(默认不忽略)
             */
             if(up == null || !up.ignore()){
-                appContext.initialization();//初始化上下文用户信息
+
                 UserSession userSession = appContext.getUserSession();
 
                 if(userSession == null) {

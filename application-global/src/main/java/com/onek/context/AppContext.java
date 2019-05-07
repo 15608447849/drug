@@ -113,6 +113,12 @@ public class AppContext extends IceContext {
         return false;
     }
 
+    //是否匿名访问
+    public boolean isAnonymous(){
+        if (userSession == null || userSession.compId == 0 || userSession.comp == null) return true;
+        return userSession.comp.authenticationStatus != 256;//认证成功
+    }
+
     @Override
     protected void longConnectionSetting(Map<String, PushMessageClientPrx> map, Result result) {
         try {

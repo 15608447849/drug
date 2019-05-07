@@ -14,4 +14,6 @@ public @interface UserPermission {
     long[] allowRoleList() default {}; // 允许访问的角色码 , 默认全部
     boolean allowedUnrelated() default false;//默认false 必须关联企业 , true:允许不关联企业
     boolean needAuthenticated() default false; //默认false 不需要认证, true:企业需要认证
+
+
 }
