@@ -49,12 +49,12 @@ public class CouponRevModule {
     private final String QUERY_COUPONREV_SQL = "select unqid,coupno,compid,DATE_FORMAT(startdate,'%Y-%m-%d') startdate," +
             "DATE_FORMAT(enddate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
-            " where cstatus = 0 ";
+            " where ctype != 2 and compid = ? ";
 
     private final String QUERY_COUPONREV_COUNT =
             " SELECT COUNT(0) "
             + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
-            + " WHERE cstatus = 0 AND "
+            + " WHERE cstatus = 0 AND ctype != 2 "
             + " startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
             + " AND compid = ?  ";
 
@@ -144,6 +144,13 @@ public class CouponRevModule {
             + "values (?,?,?,?,?,?,?,?,?,now())";
 
 
+    //新增领取优惠券
+    private final String INSERT_COUPON_EXCG_REV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
+            + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
+            + "rulename,goods,ladder,glbno,cstatus,ctype) "
+            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,3)";
+
+
 
 
     /**
@@ -168,7 +175,7 @@ public class CouponRevModule {
         String startDate = dateFormat.format(curDate);
         Calendar calendar = Calendar.getInstance();
         calendar.setTime(curDate);
-        calendar.add(Calendar.DATE, couponVO.getValidday()+1);
+        calendar.add(Calendar.DATE, couponVO.getValidday());
         String endDate = dateFormat.format(calendar.getTime());
         if(couponVO.getValidflag() == 1){
             calendar.setTime(curDate);
@@ -181,6 +188,30 @@ public class CouponRevModule {
         int ret = baseDao.updateNativeSharding(couponVO.getCompid(), TimeUtils.getCurrentYear(),INSERT_COUPONREV_SQL,new Object[]{unqid,couponVO.getCoupno(),
         couponVO.getCompid(),startDate,"00:00:00",endDate,"00:00:00",couponVO.getBrulecode(),
         couponVO.getRulename(),couponVO.getGoods(),ladderJson,couponVO.getGlbno(),0});
+        if(ret > 0){
+            return result.success("新增成功");
+        }
+        return result.fail("新增失败");
+    }
+
+
+
+    @UserPermission(ignore = true)
+    public Result insertRevExcgCoupon(AppContext appContext) {
+
+        Result result = new Result();
+        String json = appContext.param.json;
+
+        CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
+        long unqid = GenIdUtil.getUnqId();
+
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date curDate = new Date();
+        String startDate = dateFormat.format(curDate);
+        String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
+        int ret = baseDao.updateNativeSharding(couponVO.getCompid(), TimeUtils.getCurrentYear(),INSERT_COUPON_EXCG_REV_SQL,new Object[]{unqid,couponVO.getCoupno(),
+                couponVO.getCompid(),startDate,"00:00:00","2099-01-01","00:00:00",couponVO.getBrulecode(),
+                couponVO.getRulename(),couponVO.getGoods(),ladderJson,couponVO.getGlbno(),0});
         if(ret > 0){
             return result.success("新增成功");
         }
@@ -218,7 +249,7 @@ public class CouponRevModule {
 
         switch (type){
             case 0:
-                sqlBuilder.append(" and  CURRENT_DATE <= enddate ");
+                sqlBuilder.append(" and  cstatus = 0 and  CURRENT_DATE <= enddate ");
                 break;
             case 1:
                 sqlBuilder.append(" and  cstatus & 64 > 0 ");
@@ -228,7 +259,7 @@ public class CouponRevModule {
         }
 
 
-        List<Object[]> queryResult = baseDao.queryNativeSharding(compid,TimeUtils.getCurrentYear(),pageHolder, page, sqlBuilder.toString());
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compid,TimeUtils.getCurrentYear(),pageHolder, page, sqlBuilder.toString(),compid);
         CouponPubVO[] couponListVOS = new CouponPubVO[queryResult.size()];
         if (queryResult == null || queryResult.isEmpty()) {
             return result.setQuery(couponListVOS, pageHolder);
