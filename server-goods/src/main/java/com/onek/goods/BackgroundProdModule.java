@@ -240,13 +240,13 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-//        if (appContext.getUserSession() == null) {
-//            for (BgProdVO returnResult : returnResults) {
-//                returnResult.setRrp(0);
-//                returnResult.setMp(0);
-//                returnResult.setVatp(0);
-//            }
-//        }
+        if (!appContext.isAnonymous()) {
+            for (BgProdVO returnResult : returnResults) {
+                returnResult.setRrp(-1);
+                returnResult.setMp(-1);
+                returnResult.setVatp(-1);
+            }
+        }
 
         return new Result().success(returnResults);
     }
@@ -277,13 +277,13 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-//        if (appContext.getUserSession() == null) {
-//            for (BgProdVO returnResult : returnResults) {
-//                returnResult.setRrp(0);
-//                returnResult.setMp(0);
-//                returnResult.setVatp(0);
-//            }
-//        }
+        if (!appContext.isAnonymous()) {
+            for (BgProdVO returnResult : returnResults) {
+                returnResult.setRrp(-1);
+                returnResult.setMp(-1);
+                returnResult.setVatp(-1);
+            }
+        }
 
         return new Result().success(returnResults[0]);
     }
@@ -310,6 +310,14 @@ public class BackgroundProdModule {
         BASE_DAO.convToEntity(queryResult, returnResults, BgProdVO.class);
 
         convProds(returnResults);
+
+        if (!appContext.isAnonymous()) {
+            for (BgProdVO returnResult : returnResults) {
+                returnResult.setRrp(-1);
+                returnResult.setMp(-1);
+                returnResult.setVatp(-1);
+            }
+        }
 
         return new Result().success(returnResults[0]);
     }
