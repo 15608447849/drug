@@ -46,10 +46,9 @@ public class PushMessageModule {
             String selectSql = "SELECT message,date,time " +
                     "FROM {{?"+TD_PUSH_MSG+"}} " +
                     "WHERE cstatus=1 AND identity = ? " +
-                    "ORDER BY date,time DESC";
+                    "ORDER BY date DESC,time DESC";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compid,getCurrentYear(),
                     pageHolder, page,selectSql,compid);
-
 
             for (Object[] arr: lines){
                 String msg = StringUtils.obj2Str(arr[0]);
