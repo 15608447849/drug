@@ -119,7 +119,7 @@ public class PushMessageMySqlImps implements IPushMessageStore {
     public static String convertPushMessage(String prev,String message){
 
         if (message.startsWith("push")) {
-            String arrayStr = message.split(":")[1];
+            String arrayStr = message.replace("push:","");
             String[] array ;
             if (arrayStr.contains("#")){
                 array = arrayStr.split("#");

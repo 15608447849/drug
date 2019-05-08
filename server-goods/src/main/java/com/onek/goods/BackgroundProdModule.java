@@ -258,7 +258,7 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-        if (!appContext.isAnonymous()) {
+        if (appContext.isAnonymous()) {
             for (BgProdVO returnResult : returnResults) {
                 returnResult.setRrp(-1);
                 returnResult.setMp(-1);
@@ -295,7 +295,7 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-        if (!appContext.isAnonymous()) {
+        if (appContext.isAnonymous()) {
             for (BgProdVO returnResult : returnResults) {
                 returnResult.setRrp(-1);
                 returnResult.setMp(-1);
@@ -329,7 +329,7 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-        if (!appContext.isAnonymous()) {
+        if (appContext.isAnonymous()) {
             for (BgProdVO returnResult : returnResults) {
                 returnResult.setRrp(-1);
                 returnResult.setMp(-1);

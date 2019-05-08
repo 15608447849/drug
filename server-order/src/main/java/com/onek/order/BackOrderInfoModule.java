@@ -23,7 +23,7 @@ public class BackOrderInfoModule {
                     + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
                     + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
                     + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
-                    + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.payway ";
+                    + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway ";
 
     private static final String FROM_BK_ORDER = " {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} ord ";
 
@@ -118,6 +118,7 @@ public class BackOrderInfoModule {
             tranOrder.setPdamt(MathUtil.exactDiv(tranOrder.getPdamt(), 100).doubleValue());
             tranOrder.setDistamt(MathUtil.exactDiv(tranOrder.getDistamt(), 100).doubleValue());
             tranOrder.setCoupamt(MathUtil.exactDiv(tranOrder.getCoupamt(), 100).doubleValue());
+            tranOrder.setBalamt(MathUtil.exactDiv(tranOrder.getBalamt(), 100).doubleValue());
         }
 
         return result;

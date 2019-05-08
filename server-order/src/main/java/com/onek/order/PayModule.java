@@ -190,27 +190,10 @@ public class PayModule {
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt"});
-
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
-            double bal = 0;
             if(payamt <= 0){
                 return new Result().fail("支付金额不能小于0!");
             }
-
-            //获取余额
-            bal = IceRemoteUtil.queryCompBal(compid);
-            //余额
-            bal = MathUtil.exactDiv(bal,100L).
-                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-            if(bal > 0){
-                if(bal >= payamt){
-                    payamt = 0;
-                }else{
-                    payamt = MathUtil.exactSub(payamt,bal).
-                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                }
-            }
-
             try{
                 String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
                         "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
@@ -220,8 +203,6 @@ public class PayModule {
                 e.printStackTrace();
                 return new Result().fail("生成支付二维码图片失败!");
             }
-
-
         }else{
             return new Result().fail("未查到【"+orderno+"】支付的订单!");
         }

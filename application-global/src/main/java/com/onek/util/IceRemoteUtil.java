@@ -2,16 +2,21 @@ package com.onek.util;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
 import com.onek.entitys.Result;
 import com.onek.prop.AppProperties;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.dict.DictEntity;
+import com.onek.util.fs.FileServerUtils;
 import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
+import util.EncryptUtils;
 import util.GsonUtils;
+import util.http.HttpRequest;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -176,6 +181,12 @@ public class IceRemoteUtil {
     }
 
 
+    /**
+     * 优惠券领取
+     * @param compid
+     * @param content
+     * @return
+     */
     public static int collectCoupons(int compid,String content){
         String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertRevCoupon")
                 .settingParam(content)
@@ -184,6 +195,22 @@ public class IceRemoteUtil {
         assert ret != null;
         return ret.code;
     }
+
+    /**
+     * 优惠券兑换
+     * @param compid
+     * @param content
+     * @return
+     */
+    public static int collectExcgCoupons(int compid,String content){
+        String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertRevExcgCoupon")
+                .settingParam(content)
+                .execute();
+        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
+
 
     /**
      * 发送消息到指定客户端
@@ -208,9 +235,6 @@ public class IceRemoteUtil {
             }
     }
 
-    public static void main(String[] args) {
-        sendTempMessageToClient(536862722,1,"你妈的娘希匹");
-    }
 
     //发送消息到全部客户端
     public static void sendMessageToAllClient(int tempNo,String... params){
@@ -430,6 +454,32 @@ public class IceRemoteUtil {
         return GsonUtils.string2Map(result);
     }
 
+    /**
+     * 添加公告
+     * lzp
+     */
+    public static String addNotice(String title , String type, String editor,int priority, File image){
+
+        //上传图片
+        String json = new HttpRequest().addFile(
+                image,
+                FileServerUtils.defaultNotice(),  //远程路径
+                EncryptUtils.encryption(type+title+editor)+".png")//文件名
+                .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
+                .getRespondContent();
+        HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
+        ArrayList<LinkedTreeMap<String,Object>> list = (ArrayList<LinkedTreeMap<String, Object>>) maps.get("data");
+        assert list != null;
+        String img = list.get(0).get("relativePath").toString();
+
+        HashMap<String,Object> map = new HashMap<>();
+        map.put("title",title);
+        map.put("type",type);
+        map.put("editor",editor);
+        map.put("img",img);
+        map.put("priority",priority);
+        return ic.setServerAndRequest("globalServer","NoticeModule","add").setJsonParams(map).execute();
+    }
 
 
 

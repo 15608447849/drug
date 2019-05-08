@@ -13,6 +13,7 @@ import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.SmsTempNo;
 import com.onek.util.area.AreaUtil;
 import com.onek.util.member.MemberStore;
 import constant.DSMConst;
@@ -25,7 +26,11 @@ import util.ModelUtil;
 import util.StringUtils;
 
 import java.math.BigDecimal;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.onek.discount.CommonModule.getLaderNo;
 
@@ -293,6 +298,18 @@ public class CouponManageModule {
 
         } else {
             return result.fail("新增失败");
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            long startTime = dateFormat.parse(couponVO.getStartdate()).getTime();
+            if (startTime > new Date().getTime()) {
+                ExecutorService executors = Executors.newSingleThreadExecutor();
+                executors.execute(() -> IceRemoteUtil.sendMessageToAllClient(SmsTempNo.NEW_COUPONS,
+                        "", "【" + couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
+                        " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行"));
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
         return result.success("新增成功");
     }
@@ -865,6 +882,18 @@ public class CouponManageModule {
             }
         } else {
             return result.fail("修改失败");
+        }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            long startTime = dateFormat.parse(couponVO.getStartdate()).getTime();
+            if (startTime > new Date().getTime()) {
+                ExecutorService executors = Executors.newSingleThreadExecutor();
+                executors.execute(() -> IceRemoteUtil.sendMessageToAllClient(SmsTempNo.NEW_COUPONS,
+                        "", "【" +couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
+                                " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行"));
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
         }
         return result.success("修改成功");
     }
