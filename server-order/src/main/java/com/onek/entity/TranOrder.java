@@ -39,7 +39,6 @@ public class TranOrder implements IDelayedObject {
     private double balamt;//余额扣除
     private String payway; // 支付方式
 
-
     private List<TranOrderGoods> goods;
 
     private String cusname;
@@ -280,4 +279,6 @@ public class TranOrder implements IDelayedObject {
     public void setBalamt(double balamt) {
         this.balamt = balamt;
     }
+
+
 }

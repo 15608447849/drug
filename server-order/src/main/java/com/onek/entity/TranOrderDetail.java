@@ -34,6 +34,7 @@ public class TranOrderDetail {
     private String contact;
     private String address;
     private double balamt;
+    private int opayway;
 
     /**      trans         **/
     private int payno;
@@ -450,5 +451,13 @@ public class TranOrderDetail {
 
     public void setBalamt(double balamt) {
         this.balamt = balamt;
+    }
+
+    public int getOpayway() {
+        return opayway;
+    }
+
+    public void setOpayway(int opayway) {
+        this.opayway = opayway;
     }
 }
