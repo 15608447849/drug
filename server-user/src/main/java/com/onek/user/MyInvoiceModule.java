@@ -65,18 +65,24 @@ public class MyInvoiceModule {
 
         InvoiceVO[] query = (InvoiceVO[]) getInvoice(appContext).data;
 
-        if (query.length == 0) {
-            // insert
-            BaseDAO.getBaseDAO().updateNative(INSERT_INVOICE, compId,
-                    frontVO.getTaxpayer(), frontVO.getBankers(),
-                    frontVO.getAccount (), frontVO.getTel(), compId);
-        } else {
-            // update
-            BaseDAO.getBaseDAO().updateNative(UPDATE_INVOICE,
-                    frontVO.getTaxpayer(), frontVO.getBankers(),
-                    frontVO.getAccount (), frontVO.getTel(), compId);
+        int result = 0;
+
+        try {
+            if (query.length == 0) {
+                // insert
+                result = BaseDAO.getBaseDAO().updateNative(INSERT_INVOICE, compId,
+                            frontVO.getTaxpayer(), frontVO.getBankers(),
+                            frontVO.getAccount (), frontVO.getTel(), compId);
+            } else {
+                // update
+                result = BaseDAO.getBaseDAO().updateNative(UPDATE_INVOICE,
+                            frontVO.getTaxpayer(), frontVO.getBankers(),
+                            frontVO.getAccount (), frontVO.getTel(), compId);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
 
-        return new Result().success("操作成功");
+        return result > 0 ? new Result().success("操作成功") : new Result().fail("操作失败");
     }
 }
