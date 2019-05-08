@@ -114,7 +114,7 @@ public class OrderOptModule {
 
 
     //查询团购订单记录
-    private static final String QUERY_TEAM_BUY_ORDER_SQL = "select orderno,payamt,compid from "+
+    private static final String QUERY_TEAM_BUY_ORDER_SQL = "select orderno,payamt,compid,pnum from "+
             " {{?"+ TD_BK_TRAN_GOODS+"}} g " +
             " where g.createdate >= ? and g.createdate <= ? and g.promtype& 4096 > 0 and actcode like concat('%',?,'%')";
 
@@ -786,6 +786,7 @@ public class OrderOptModule {
                 j.put("orderno", obj[0].toString());
                 j.put("payamt", obj[1].toString());
                 j.put("compid", obj[2].toString());
+                j.put("pnum", obj[3].toString());
                 jsonArray.add(j);
             }
         }
