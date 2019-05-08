@@ -160,7 +160,7 @@ public class MyFootprintModule {
 
             String selectSql = "SELECT unqid,sku,browsedate,browsetime " +
                     "FROM {{?"+TD_FOOTPRINT+"}} " +
-                    "WHERE compid = ?";
+                    "WHERE compid = ? ORDER BY date,time DESC";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
                     selectSql,compId);
             assert lines!=null;
