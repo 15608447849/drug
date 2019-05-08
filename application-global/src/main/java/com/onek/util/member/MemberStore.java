@@ -44,6 +44,13 @@ public class MemberStore {
         return 0;
     }
 
+    public static int reducePoint(int compid, int point){
+        if(compid > 0){
+            return memProxy.update(compid, point);
+        }
+        return 0;
+    }
+
     public static int getLevelByPoint(int point){
         double val = Math.abs(Math.sqrt((point + 250) / 1000)) - 0.5;
 

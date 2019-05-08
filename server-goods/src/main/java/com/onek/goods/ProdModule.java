@@ -1057,35 +1057,37 @@ public class ProdModule {
                 prodVO.setMutiact(true);
             }
 
-            ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
-            if (prizeEntity != null) {
-                prodVO.setMinprize(prizeEntity.getMinactprize());
-                prodVO.setMaxprize(prizeEntity.getMaxactprize());
-                prodVO.setActcode(prizeEntity.getActcode());
-                // 代表值存在一个活动
-                if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
-                    List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
-                    GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
-                    String sdate = getEffectiveTimeByActCode.getSdate();
-                    String edate = getEffectiveTimeByActCode.getEdate();
+            if((ruleStatus & 2048 ) > 0){ // 秒杀
+                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
+                if (prizeEntity != null) {
+                    prodVO.setMinprize(prizeEntity.getMinactprize());
+                    prodVO.setMaxprize(prizeEntity.getMaxactprize());
+                    prodVO.setActcode(prizeEntity.getActcode());
+                    // 代表值存在一个活动
+                    if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
+                        List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
+                        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
+                        String sdate = getEffectiveTimeByActCode.getSdate();
+                        String edate = getEffectiveTimeByActCode.getEdate();
 
-                    if (StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate)) { // // 表示搜索的商品不在活动时间内
-                        prodVO.setRulestatus(0);
-                        prodVO.setActprod(false);
-                        prodVO.setMutiact(false);
-                        prodVO.setMinprize(prodVO.getVatp());
-                        prodVO.setMaxprize(prodVO.getVatp());
-                        prodVO.setActprize(prodVO.getVatp());
-                        prodVO.setActcode(prizeEntity.getActcode());
-                    } else {
-                        prodVO.setSdate(sdate);
-                        prodVO.setEdate(edate);
-                        int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), prizeEntity.getActcode());
-                        int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
-                        prodVO.setActinitstock(initStock);
-                        prodVO.setSurplusstock(surplusStock);
-                        prodVO.setBuynum(initStock - surplusStock);
-                        prodVO.setActprize(prizeEntity.getMinactprize());
+                        if (StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate)) { // // 表示搜索的商品不在活动时间内
+                            prodVO.setRulestatus(0);
+                            prodVO.setActprod(false);
+                            prodVO.setMutiact(false);
+                            prodVO.setMinprize(prodVO.getVatp());
+                            prodVO.setMaxprize(prodVO.getVatp());
+                            prodVO.setActprize(prodVO.getVatp());
+                            prodVO.setActcode(prizeEntity.getActcode());
+                        } else {
+                            prodVO.setSdate(sdate);
+                            prodVO.setEdate(edate);
+                            int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), prizeEntity.getActcode());
+                            int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
+                            prodVO.setActinitstock(initStock);
+                            prodVO.setSurplusstock(surplusStock);
+                            prodVO.setBuynum(initStock - surplusStock);
+                            prodVO.setActprize(prizeEntity.getMinactprize());
+                        }
                     }
                 }
             }

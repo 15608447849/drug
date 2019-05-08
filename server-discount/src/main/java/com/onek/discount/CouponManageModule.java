@@ -7,12 +7,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.CSTATUS;
+import com.onek.consts.IntegralConstant;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.SmsTempNo;
 import com.onek.util.area.AreaUtil;
 import com.onek.util.member.MemberStore;
@@ -209,8 +211,34 @@ public class CouponManageModule {
             " inner join {{?" +DSMConst.TD_PROM_ASSDRUG+"}} assd on assd.actcode = tpcp.unqid "+
             " where assd.gcode in (?,?) "+
             " and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 ) a "+
-            " where a.actstock > 0 and 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) "+
+            " where a.actstock > 0 and 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) and a.glbno = 0 "+
             " and not exists (select 1 from td_prom_courcd where coupno = a.coupno and compid = ? and cstatus & 1 = 0)) a ";
+
+
+    private static final String QUERY_COUP_ALL_PUB = "select coupno,brulecode,rulename,validday,validflag,glbno,goods,qlfno,qlfval from ("+
+            "select coupno,brulecode,rulename,validday,validflag,periodtype,periodday,actstock,glbno,goods,qlfno,qlfval from ("+
+            "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,0 goods,qlfno,qlfval "+
+            "from {{?" + DSMConst.TD_PROM_COUPON + "}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}}" +
+            " tpcr on tpcp.brulecode = tpcr.brulecode  "+
+            " inner join {{?" + DSMConst.TD_PROM_ASSDRUG + "}} assd on assd.actcode = tpcp.unqid "+
+            " where assd.gcode = 0  and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 "+
+            " union "+
+            "select distinct tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods,qlfno,qlfval  from {{?"+
+            DSMConst.TD_PROM_COUPON +"}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode " +
+            " where exists (select 1 from {{?" +DSMConst.TD_PROM_ASSDRUG +"}}  a where tpcp.unqid = actcode and gcode != 0  and cstatus & 1 = 0) "+
+            " and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 ) a "+
+            " where a.actstock > 0 and 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) and a.glbno = 0 "+
+            " and not exists (select 1 from td_prom_courcd where coupno = a.coupno and compid = ? and cstatus & 1 = 0)) a ";
+
+
+
+//    select distinct tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods,qlfno,qlfval td_prom_cou from
+//    td_prom_coupon tpcp inner join td_prom_rule tpcr on tpcp.brulecode = tpcr.brulecode
+//
+//
+//    where exists (select 1 from td_prom_assdrug a where tpcp.unqid = actcode and gcode != 0
+//            and cstatus & 1 = 0)
+
 
 
     private static final String QUERY_COUP_CNT_PUB = "select count(1) from ("+
@@ -256,6 +284,16 @@ public class CouponManageModule {
             + " where cid = ? ";
 
 
+    private static final String QUERY_COUP_EXCG = " select tpcp.unqid coupno,tpcp.brulecode,rulename,validday," +
+            "validflag,periodtype,periodday,tpcp.actstock,0 glbno," +
+            "0 goods,0 qlfno,0 qlfval " +
+            " from {{?" + DSMConst.TD_PROM_COUPON + "}} tpcp " +
+            " inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr "
+            + " on tpcp.brulecode = tpcr.brulecode  where tpcp.brulecode in (2110,2120)" +
+            " and tpcp.cstatus & 256 > 0 and tpcp.cstatus & 1 = 0 " +
+            " and  1 = fun_prom_cycle(tpcp.unqid,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) ";
+
+
     //查询库存版本号
 //    private static final String SELECT_COUPON_VER_ = " select ver from {{?" + DSMConst.TD_PROM_COUPON + "}}"
 //            + "  where unqid = ? cstatus & 33 = 0";
@@ -298,18 +336,6 @@ public class CouponManageModule {
 
         } else {
             return result.fail("新增失败");
-        }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
-        try {
-            long startTime = dateFormat.parse(couponVO.getStartdate()).getTime();
-            if (startTime > new Date().getTime()) {
-                ExecutorService executors = Executors.newSingleThreadExecutor();
-                executors.execute(() -> IceRemoteUtil.sendMessageToAllClient(SmsTempNo.NEW_COUPONS,
-                        "", "【" + couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
-                        " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行"));
-            }
-        } catch (ParseException e) {
-            e.printStackTrace();
         }
         return result.success("新增成功");
     }
@@ -1077,6 +1103,50 @@ public class CouponManageModule {
 
 
 
+    /**
+     * 查询兑换券发布列表
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result queryCouponExcgPub(AppContext appContext){
+
+        Result result = new Result();
+        StringBuilder sbSql = new StringBuilder(QUERY_COUP_EXCG);
+
+        List<Object[]> queryResult = baseDao.queryNative(sbSql.toString());
+        CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
+        if(queryResult == null || queryResult.isEmpty()){
+            return result.success(couponPubVOS);
+        }
+
+        baseDao.convToEntity(queryResult, couponPubVOS, CouponPubVO.class,
+                new String[]{"coupno","brulecode","rulename",
+                        "validday","validflag","glbno","goods","qlfno","qlfval"});
+
+        List<CouponPubVO> couponPubVOList = new ArrayList(Arrays.asList(couponPubVOS));
+        for (CouponPubVO couponPubVO:couponPubVOList){
+            String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer from {{?" + DSMConst.TD_PROM_RELA
+                    + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
+                    + " and a.actcode=" + couponPubVO.getCoupno() + " order by ladamt desc ";
+            List<Object[]> queryRet = baseDao.queryNative(selectSQL);
+            CouponPubLadderVO[] ladderVOS = new CouponPubLadderVO[queryRet.size()];
+            baseDao.convToEntity(queryRet, ladderVOS, CouponPubLadderVO.class,
+                    new String[]{"unqid","ladamt","ladnum","offercode","offer"});
+
+
+            for (CouponPubLadderVO ladderVO:ladderVOS) {
+                ladderVO.setLadamt(MathUtil.exactDiv(ladderVO.getLadamt(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                ladderVO.setOffer(MathUtil.exactDiv(ladderVO.getOffer(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            }
+            couponPubVO.setLadderVOS(Arrays.asList(ladderVOS));
+            couponPubVO.setCompid(0);
+        }
+        return result.success(couponPubVOList);
+    }
+
 
 
 
@@ -1155,6 +1225,54 @@ public class CouponManageModule {
 
         return result.success(couponPubVOList);
        // return result.setQuery(couponPubVOS, pageHolder);
+    }
+
+
+
+    /**
+     * 查询优惠券发布列表
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result queryCouponAllPub(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+        if(!jsonObject.has("compid")){
+            return  result.success(null);
+        }
+        int compid = jsonObject.get("compid").getAsInt();
+        StringBuilder sbSql = new StringBuilder(QUERY_COUP_ALL_PUB);
+        List<Object[]> queryResult = baseDao.queryNative(sbSql.toString(),compid);
+        CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
+        if(queryResult == null || queryResult.isEmpty()){
+            return result.success(couponPubVOS);
+        }
+        baseDao.convToEntity(queryResult, couponPubVOS, CouponPubVO.class,
+                new String[]{"coupno","brulecode","rulename",
+                        "validday","validflag","glbno","goods","qlfno","qlfval"});
+        List<CouponPubVO> couponPubVOList = new ArrayList(Arrays.asList(couponPubVOS));
+        filterCoupon(couponPubVOList,compid);
+        for (CouponPubVO couponPubVO:couponPubVOList){
+            String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer from {{?" + DSMConst.TD_PROM_RELA
+                    + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
+                    + " and a.actcode=" + couponPubVO.getCoupno() + " order by ladamt desc ";
+            List<Object[]> queryRet = baseDao.queryNative(selectSQL);
+            CouponPubLadderVO[] ladderVOS = new CouponPubLadderVO[queryRet.size()];
+            baseDao.convToEntity(queryRet, ladderVOS, CouponPubLadderVO.class,
+                    new String[]{"unqid","ladamt","ladnum","offercode","offer"});
+            for (CouponPubLadderVO ladderVO:ladderVOS) {
+                ladderVO.setLadamt(MathUtil.exactDiv(ladderVO.getLadamt(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                ladderVO.setOffer(MathUtil.exactDiv(ladderVO.getOffer(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            }
+            couponPubVO.setLadderVOS(Arrays.asList(ladderVOS));
+            couponPubVO.setCompid(compid);
+        }
+        return result.success(couponPubVOList);
     }
 
 
@@ -1240,6 +1358,68 @@ public class CouponManageModule {
             return false;
         }
         return  false;
+    }
+
+
+    @UserPermission(ignore = true)
+    public Result revExcgCoupon(AppContext appContext){
+        Result result = new Result();
+        String json = appContext.param.json;
+        CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
+        if(couponVO == null){
+            return result.fail("领取失败");
+        }
+        if(couponVO.getLadderVOS() == null || couponVO.getLadderVOS().isEmpty()){
+            return result.fail("领取失败");
+        }
+        long rcdid = GenIdUtil.getUnqId();
+        CouponPubLadderVO  CouponPubLadderVO = couponVO.getLadderVOS().get(0);
+        int oret = 0;
+        try{
+            double integralByCompid
+                    = MathUtil.exactDiv(MemberStore.
+                    getIntegralByCompid(couponVO.getCompid()), 1000).doubleValue();
+
+            System.out.println("获取积分："+MemberStore.
+                    getIntegralByCompid(couponVO.getCompid()));
+            System.out.println("剩余积分："+integralByCompid);
+            if(couponVO.getBrulecode() == 2120){
+                long area =  getCurrentArea(couponVO.getCompid());
+                if(area <= 0){
+                    return result.fail("积分不够,领取失败！");
+                }
+                double fee = AreaFeeUtil.getFee(area);
+                if(integralByCompid < fee){
+                    return result.fail("积分不够,领取失败！");
+                }
+            }
+           if(integralByCompid < CouponPubLadderVO.getOffer()){
+               return result.fail("积分不够,领取失败！");
+           }
+
+           oret = IceRemoteUtil.collectExcgCoupons(couponVO.getCompid(),json);
+        }catch (Exception e){
+            e.printStackTrace();
+           return result.fail("领取失败");
+        }
+
+        if(oret > 0){
+            Double offer = CouponPubLadderVO.getOffer();
+            int reducePoint = offer.intValue() * 1000;
+
+            try{
+                int pret = MemberStore.reducePoint(couponVO.getCompid(), reducePoint);
+                if(pret > 0){
+                    IceRemoteUtil.addIntegralDetail(couponVO.getCompid(),
+                            IntegralConstant.SOURCE_EXCHANGE_COUPON, reducePoint, rcdid);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return result.success("领取成功");
+
+        }
+        return result.success("领取失败");
     }
 
 
