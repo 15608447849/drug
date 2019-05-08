@@ -208,6 +208,10 @@ public class IceRemoteUtil {
             }
     }
 
+    public static void main(String[] args) {
+        sendTempMessageToClient(536862722,1,"你妈的娘希匹");
+    }
+
     //发送消息到全部客户端
     public static void sendMessageToAllClient(int tempNo,String... params){
         List<String> list = getAllCompId();

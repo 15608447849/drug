@@ -3,15 +3,13 @@ package com.onek.context;
 import Ice.Current;
 import com.onek.entitys.Result;
 import com.onek.server.inf.IRequest;
-import com.onek.server.inf.PushMessageClientPrx;
 import com.onek.server.infimp.IceContext;
+import com.onek.server.infimp.IcePushMessageServerImps;
 import com.onek.util.IceRemoteUtil;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
-
-import java.util.Map;
 
 /**
  * 平台上下文对象
@@ -120,17 +118,16 @@ public class AppContext extends IceContext {
     }
 
     @Override
-    protected void longConnectionSetting(Map<String, PushMessageClientPrx> map, Result result) {
-        try {
-            if (userSession==null || userSession.compId == 0) return;
-            String key = userSession.compId+"";
-            PushMessageClientPrx clientPrx = map.get(key);
-            if (clientPrx == null) {
-                result.setRequestOnline();
+    protected void isAllowOnline(IcePushMessageServerImps server, Result result) {
+            try {
+                if (userSession == null || userSession.compId == 0) return;
+                String key = String.valueOf(userSession.compId);
+                if (server.checkClientOnlineStatus(param.token,key)) {
+                    result.setRequestOnline(); //设置请求客户端上线
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
 }

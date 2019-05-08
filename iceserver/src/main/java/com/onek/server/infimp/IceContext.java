@@ -5,9 +5,6 @@ import Ice.Logger;
 import com.onek.entitys.Result;
 import com.onek.server.inf.IParam;
 import com.onek.server.inf.IRequest;
-import com.onek.server.inf.PushMessageClientPrx;
-
-import java.util.Map;
 
 
 /**
@@ -43,7 +40,9 @@ public class IceContext {
     public void initialization()  {
 
     }
-    protected void longConnectionSetting(Map<String, PushMessageClientPrx> map, Result result){
+
+    //关于长连接 请求前端用户上线
+    protected void isAllowOnline(IcePushMessageServerImps server, Result result){
 
     }
     /**
