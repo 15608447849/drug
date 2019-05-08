@@ -158,7 +158,7 @@ public class ShoppingCartModule {
         String skuStr = parmSql.toString().substring(0, parmSql.toString().length() - 1);
 
         String querySql = " select unqid,pdno from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
-                + " where orderno = 0 and compid = " + compid;
+                + " where orderno = 0 and cstatus&1 = 0 and compid = " + compid;
         querySql = querySql + " and pdno in (" + skuStr + ")";
 
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
