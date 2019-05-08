@@ -418,6 +418,7 @@ public class BackgroundProdModule {
             bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
             bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp(), 100).intValue());
             bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp(), 100).intValue());
+            bgProdVO.setSkuCstatus(bgProdVO.getSkuCstatus() | 256);
         } catch (Exception e) {
             e.printStackTrace();
             return new Result().fail(e.getMessage());
@@ -486,7 +487,7 @@ public class BackgroundProdModule {
                     bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                     bgProdVO.getStore(), bgProdVO.getLimits(),
                     bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getUnit(),
-                    bgProdVO.getSpec(), bgProdVO.getSkuCstatus() | 256
+                    bgProdVO.getSpec(), bgProdVO.getSkuCstatus()
             });
 
             RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
