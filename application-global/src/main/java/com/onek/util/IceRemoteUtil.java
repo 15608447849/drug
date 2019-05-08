@@ -176,6 +176,12 @@ public class IceRemoteUtil {
     }
 
 
+    /**
+     * 优惠券领取
+     * @param compid
+     * @param content
+     * @return
+     */
     public static int collectCoupons(int compid,String content){
         String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertRevCoupon")
                 .settingParam(content)
@@ -184,6 +190,22 @@ public class IceRemoteUtil {
         assert ret != null;
         return ret.code;
     }
+
+    /**
+     * 优惠券兑换
+     * @param compid
+     * @param content
+     * @return
+     */
+    public static int collectExcgCoupons(int compid,String content){
+        String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertRevExcgCoupon")
+                .settingParam(content)
+                .execute();
+        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
+
 
     /**
      * 发送消息到指定客户端
