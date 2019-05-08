@@ -16,7 +16,7 @@ import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
-import com.onek.util.LccOrderUtil;
+import com.onek.util.*;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.fs.FileServerUtils;
@@ -25,9 +25,6 @@ import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GLOBALConst;
-import com.onek.util.GenIdUtil;
-import com.onek.util.IceRemoteUtil;
 import elasticsearch.ElasticSearchProvider;
 import org.apache.http.client.utils.DateUtils;
 import org.elasticsearch.action.get.GetResponse;
@@ -636,6 +633,9 @@ public class PayModule {
             jsonObject.put("body", body);
             IceRemoteUtil.sendMessageToClient(compid, jsonObject.toJSONString());
 
+            if(orderno.length() >= 16 &&  "1".equals(tradeStatus)){
+                IceRemoteUtil.sendMessageToClient(compid, SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.ORDER_PAYMENT_SUCCESSFUL,orderno));
+            }
         }
     }
 

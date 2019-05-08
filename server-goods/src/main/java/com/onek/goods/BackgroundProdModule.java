@@ -4,22 +4,39 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.Gson;
 import com.onek.annotation.UserPermission;
+import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.util.ProdESUtil;
+import com.onek.util.IceRemoteUtil;
+import com.onek.util.SmsTempNo;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceClassUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import elasticsearch.ElasticSearchClientFactory;
+import elasticsearch.ElasticSearchProvider;
+import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.client.transport.TransportClient;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermsQueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
 import util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
+
+import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
 public class BackgroundProdModule {
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
@@ -197,6 +214,7 @@ public class BackgroundProdModule {
                 bgProdVO.getWholenum(), bgProdVO.getMedpacknum(),
                 bgProdVO.getSku());
 
+        new ProdReducePriceThread(bgProdVO.getSku(), bgProdVO.getProdname(), bgProdVO.getVatp()).start();
         return new Result().success(null);
     }
 
@@ -688,5 +706,59 @@ public class BackgroundProdModule {
         }
     }
 
+    /**
+     * 药品减价通知
+     */
+    class ProdReducePriceThread extends Thread{
 
+        long sku;
+        String prodname;
+        double vatp;
+
+        public ProdReducePriceThread(long sku,String prodname,double vatp){
+            this.sku = sku;
+            this.prodname = prodname;
+            this.vatp = vatp;
+        }
+
+        @Override
+        public void run() {
+            LogUtil.getDefaultLogger().info("++++++ prod reduce price sendMsg start +++++++");
+            SearchResponse response = null;
+            try {
+                BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.COLLECT_COLUMN_SKU, sku+"");
+                boolQuery.must(builder);
+
+                TransportClient client = ElasticSearchClientFactory.getClientInstance();
+                response = client.prepareSearch(ESConstant.COLLECT_INDEX)
+                        .setQuery(boolQuery).setSize(100000)
+                        .execute().actionGet();
+                List<Map<String,Object>> dataList = new ArrayList<>();
+                if(response != null && response.getHits() != null){
+                    for(SearchHit hit : response.getHits()){
+                        dataList.add(hit.getSourceAsMap());
+                    }
+                }
+
+                LogUtil.getDefaultLogger().info("++++++ prod reduce price sendMsg dataList size: "+ dataList.size()+" +++++++");
+                if(dataList != null && dataList.size() > 0){
+                    for(Map<String,Object> data : dataList){
+                        double prize = Integer.parseInt(data.get("prize").toString());
+                        if(prize > vatp){
+                            double p = MathUtil.exactDiv(prize, 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                            double v = MathUtil.exactDiv(vatp, 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                            IceRemoteUtil.sendMessageToClient(Integer.parseInt(data.get("compid").toString()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname,String.valueOf(p), String.valueOf(v)));
+                        }
+                    }
+                }
+
+
+            }catch(Exception e) {
+                e.printStackTrace();
+            }
+
+            LogUtil.getDefaultLogger().info("++++++ prod reduce price sendMsg end +++++++");
+        }
+    }
 }
