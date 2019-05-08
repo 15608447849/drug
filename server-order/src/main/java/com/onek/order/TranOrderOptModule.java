@@ -21,12 +21,15 @@ import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.RedisGlobalKeys;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.discount.DiscountRuleStore;
+import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
+import redis.util.RedisUtil;
 import util.*;
 
 import java.math.BigDecimal;
@@ -258,6 +261,10 @@ public class TranOrderOptModule {
                 secKillStockRecovery(actcode, goodsList);
                 return result.fail("秒杀商品库存发生改变！");
             }
+            int num = RedisOrderUtil.getActBuyNum(tranOrder.getCusno(), tranOrderGoods.get(0).getPdno() ,actcode);
+            if(num > 0){
+                return new Result().fail("秒杀商品不要重复下单!");
+            }
             //订单费用计算（费用分摊以及总费用计算）
             calculatePrice(tranOrderGoods, tranOrder, unqid);
         }
@@ -309,6 +316,9 @@ public class TranOrderOptModule {
             CANCEL_DELAYED.add(tranOrder);
 
             JsonObject object = new JsonObject();
+
+            addActBuyNum(tranOrder.getCusno(), goodsStockList);
+
             object.addProperty("orderno", orderNo);
             object.addProperty("message", "下单成功");
             return result.success(object);
@@ -554,6 +564,21 @@ public class TranOrderOptModule {
         }
     }
 
+    /**
+     * 添加活动购买量
+     *
+     * @param compid
+     * @param goodsStockList
+     */
+    private void addActBuyNum(int compid,List<GoodsStock> goodsStockList) {
+
+        for (GoodsStock goodsStock : goodsStockList) {
+            if(goodsStock.getActCode() > 0){
+                RedisOrderUtil.addActBuyNum(compid, goodsStock.getSku(), goodsStock.getActCode(), goodsStock.getStock());
+            }
+        }
+    }
+
 
     /**
      * @return com.onek.entitys.Result
@@ -599,6 +624,7 @@ public class TranOrderOptModule {
                 for (Long actcode: list) {
                     if (actcode > 0) {
                         RedisStockUtil.addActStock(tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
+                        RedisOrderUtil.subtractActBuyNum(tranOrderGood.getCompid(), tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
                     } else {
                         RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
                     }

@@ -732,7 +732,7 @@ public class BackgroundProdModule {
 
                 TransportClient client = ElasticSearchClientFactory.getClientInstance();
                 response = client.prepareSearch(ESConstant.COLLECT_INDEX)
-                        .setQuery(boolQuery).setSize(100000)
+                        .setQuery(boolQuery).setSize(10000)
                         .execute().actionGet();
                 List<Map<String,Object>> dataList = new ArrayList<>();
                 if(response != null && response.getHits() != null){
