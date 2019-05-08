@@ -3,6 +3,8 @@ package com.onek.util.fs;
 import com.onek.prop.AppProperties;
 import util.EncryptUtils;
 import util.GsonUtils;
+import util.StringUtils;
+import util.http.HttpRequest;
 import util.http.HttpUtil;
 
 import java.util.ArrayList;
@@ -36,11 +38,20 @@ public class FileServerUtils {
         return "http://" + fsp.fileServerAddress ;
     }
 
+    //默认的主目录
     public static String defaultHome(){
         return "/" + EncryptUtils.encryption(fsp.fileDefaultDir);
     }
 
+    //公告目录
+    public static String defaultNotice(){
+        return  "/" + EncryptUtils.encryption("_notice");
+    }
 
+
+    public static String defaultVerificationDir() {
+        return   "/" + EncryptUtils.encryption("image_verification_code");
+    }
 
     private static final int MOD = 500;
 
@@ -74,7 +85,17 @@ public class FileServerUtils {
         return path;
     }
 
-
+    //检查文件是否存在
+    public static boolean isFileExist(String imgPath) {
+        String json = new HttpRequest().getTargetDirFileList(fileErgodicAddress(),imgPath,false).getRespondContent();
+        if (StringUtils.isEmpty(json)) return false;
+        HashMap<String,Object> map = GsonUtils.string2Map(json);
+        if (map!=null){
+            Object data = map.get("data");
+            try { return Boolean.parseBoolean(data.toString()); } catch (Exception ignored) { }
+        }
+        return false;
+    }
     /**
      * @return 付款二维码图片链接
      */

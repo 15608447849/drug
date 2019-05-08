@@ -49,10 +49,17 @@ public class NoticeModule {
             if (p.type.length()>6) return new Result().fail("类型长度不可超过6位");
             if (p.editor.length()>10) return new Result().fail("发布者名称不可超过10位");
             if (!isFileExist(p.img)) return new Result().fail("图片文件:"+ p.img +" 不存在!");
-            String insertSql = "INSERT INTO {{?"+ TD_NOTICE+"}} (title, type,editor,img,date,time,priority) VALUES (?, ?, ?, ?,CURRENT_DATE,CURRENT_TIME,?)";
-            int i = BaseDAO.getBaseDAO().updateNative(insertSql,
-                    p.type,p.type,p.editor,p.img,p.priority
+            //判断title是否重复
+            String updateSql = "UPDATE {{?"+ TD_NOTICE+"}} SET type=?,editor=?,img=?,date=CURRENT_DATE,time=CURRENT_TIME,priority=?,cstatus=0 WHERE title = ?";
+            int i = BaseDAO.getBaseDAO().updateNative(updateSql,
+                   p.type,p.editor,p.img,p.priority, p.title
             );
+            if (i<=0){
+                String insertSql = "INSERT INTO {{?"+ TD_NOTICE+"}} (title, type,editor,img,date,time,priority) VALUES (?, ?, ?, ?,CURRENT_DATE,CURRENT_TIME,?)";
+                i = BaseDAO.getBaseDAO().updateNative(insertSql,
+                        p.title,p.type,p.editor,p.img,p.priority
+                );
+            }
             if (i > 0) return new Result().fail("添加成功");
         } catch (Exception e) {
             e.printStackTrace();
@@ -78,7 +85,7 @@ public class NoticeModule {
     public Result query(AppContext context){
         List<Param> list = new ArrayList<>();
         try {
-            String selectSql = "SELECT * FROM {{?"+TD_NOTICE+"}} WHERE cstatus&1=0 ORDER BY date,time DESC"; //时间倒叙
+            String selectSql = "SELECT * FROM {{?"+TD_NOTICE+"}} WHERE cstatus&1=0 ORDER BY priority DESC,date,time DESC"; //优先级+时间 倒叙
             List<Object[]> result = BaseDAO.getBaseDAO().queryNative(selectSql);
             Param[] params = new Param[result.size()];
             BaseDAO.getBaseDAO().convToEntity(result, params, Param.class);
@@ -106,7 +113,7 @@ public class NoticeModule {
             String json = context.param.json;
             Param p = GsonUtils.jsonToJavaBean(json,Param.class);
             if (p!=null){
-                String updateSql = "UPDATE {{?" +TD_NOTICE+ "}} cstatus=1 WHERE oid=?";
+                String updateSql = "UPDATE {{?" +TD_NOTICE+ "}} SET cstatus=1 WHERE oid=?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql,p.oid);
                 if (i>0) return new Result().success("删除成功");
             }
