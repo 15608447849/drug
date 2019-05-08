@@ -15,6 +15,8 @@ import com.onek.entitys.Result;
 import com.onek.service.AccessLimitService;
 import com.onek.service.impl.AccessLimitServiceImpl;
 import com.onek.util.RedisGlobalKeys;
+import com.onek.util.area.AreaFeeUtil;
+import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import com.onek.util.stock.RedisStockUtil;
@@ -87,6 +89,7 @@ public class SecKillModule {
     public Result attendSecKill(AppContext appContext) {
         UserSession userSession = appContext.getUserSession();
         int compid = userSession != null ? userSession.compId : 0;
+        long addressCode = userSession != null && userSession.comp != null ? userSession.comp.addressCode : 0;
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
@@ -97,6 +100,9 @@ public class SecKillModule {
 
         if (actno <= 0 || compid <= 0 || stock <= 0 || sku<=0) {
             return new Result().fail("参加秒杀活动非法参数!");
+        }
+        if(addressCode <= 0){
+            return new Result().fail("获取用户的地区失败!");
         }
         if (!accessLimitService.tryAcquireSecKill()) {
             return new Result().fail("当前秒杀人数过多!", null);
@@ -111,8 +117,8 @@ public class SecKillModule {
         if(unqid != Long.parseLong(key)){
             return new Result().fail("请勿重复提交!", null);
         }
-        boolean exist = RedisUtil.getSetProvide().existElement(RedisGlobalKeys.SECKILLPREFIX + sku, compid);
-        if(exist){
+        int num = RedisOrderUtil.getActBuyNum(compid, sku ,actno);
+        if(num > 0){
             return new Result().fail("不要重复秒杀!");
         }
 
@@ -125,6 +131,10 @@ public class SecKillModule {
             shoppingCartVO.setCounpon(0);
             shoppingCartVO.setAcamt(stock * shoppingCartVO.getDiscount());
             shoppingCartVO.setAmt(0);
+
+            if(addressCode > 0){
+                shoppingCartVO.setFreight(AreaFeeUtil.getFee(addressCode));
+            }
         }
 
         int currentStock = RedisStockUtil.getActStockBySkuAndActno(sku, actno);
@@ -132,7 +142,6 @@ public class SecKillModule {
             return new Result().fail("库存不够!", null);
         }
 
-        RedisUtil.getSetProvide().addElement(RedisGlobalKeys.SECKILLPREFIX + sku, compid);
         RedisUtil.getStringProvide().delete(RedisGlobalKeys.SECKILL_TOKEN_PREFIX + compid);
 
         List<ShoppingCartVO> shoppingCartVOS = new ArrayList<>();
