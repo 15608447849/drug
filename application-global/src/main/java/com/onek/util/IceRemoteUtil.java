@@ -335,6 +335,27 @@ public class IceRemoteUtil {
     }
 
     /**
+     * 减少积分
+     *
+     * @param compid 企业id
+     * @return
+     * @author jiangwenguang
+     * @since 1.0
+     */
+    public static int reducePoint(int compid, int point){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("compid", compid);
+        jsonObject.put("point", point);
+        String result = ic.settingProxy("userServer")
+                .settingReq("","MemberModule","reducePoint")
+                .settingParam(jsonObject.toJSONString())
+                .execute();
+        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
+
+    /**
      * 根据企业id查询会员信息
      *
      * @param compid 企业id
