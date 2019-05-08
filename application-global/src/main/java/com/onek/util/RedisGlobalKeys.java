@@ -56,6 +56,8 @@ public class RedisGlobalKeys {
     // 订单数前缀
     public static final String ORDER_NUM_PREFIX = "ORDER_NUM_DICT";
 
+    // 活动购买量前缀
+    public static final String ACT_BUY_NUM_PREFIX = "ACT_BUY_NUM";
 
     /**
      * 获取用户ID

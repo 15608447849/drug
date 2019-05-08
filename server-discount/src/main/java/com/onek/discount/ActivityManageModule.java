@@ -14,6 +14,8 @@ import com.onek.entitys.Result;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdCurrentActPriceObserver;
 import com.onek.propagation.prod.ProdDiscountObserver;
+import com.onek.util.IceRemoteUtil;
+import com.onek.util.SmsTempNo;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -22,7 +24,11 @@ import util.BUSUtil;
 import util.GsonUtils;
 import util.ModelUtil;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.onek.discount.CommonModule.getLaderNo;
 
@@ -189,10 +195,23 @@ public class ActivityManageModule {
             if (theActInProgress(activityVO.getUnqid())) {
                 return result.fail("活动正在进行中，无法修改！");
             }
-            return updateActivity(activityVO, cpt);
+            result =  updateActivity(activityVO, cpt);
         } else {//新增
-            return insertActivity(activityVO, cpt);
+            result = insertActivity(activityVO, cpt);
         }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            long startTime = dateFormat.parse(activityVO.getSdate()).getTime();
+            if (startTime > new Date().getTime()) {
+                ExecutorService executors = Executors.newSingleThreadExecutor();
+                executors.execute(() -> IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
+                        "", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
+                                " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行"));
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        return result;
     }
 
     /**

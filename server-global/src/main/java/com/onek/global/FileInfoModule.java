@@ -3,15 +3,12 @@ package com.onek.global;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
-import com.onek.util.fs.FileServerUtils;
-import org.apache.logging.log4j.core.util.JsonUtils;
 import util.GsonUtils;
 import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 
-import static Ice.Application.communicator;
 import static com.onek.util.fs.FileServerUtils.*;
 
 /**
@@ -37,10 +34,11 @@ public class FileInfoModule {
         String json = appContext.param.json;
 
         HashMap<String,Object> map = new HashMap<>();
-            map.put("upUrl", fileUploadAddress());
-            map.put("ergodicUrl",fileErgodicAddress());
-            map.put("downPrev",fileDownloadPrev());
-            map.put("home",defaultHome());
+            map.put("upUrl", fileUploadAddress());//上传url
+            map.put("ergodicUrl",fileErgodicAddress());//遍历url
+            map.put("downPrev",fileDownloadPrev());//下载地址url
+            map.put("home",defaultHome());//资源主目录-轮播图等存放
+            map.put("notice",defaultNotice());//公告目录
 
         if (!StringUtils.isEmpty(json)){
             QueryParam queryParam = GsonUtils.jsonToJavaBean(json,QueryParam.class);
