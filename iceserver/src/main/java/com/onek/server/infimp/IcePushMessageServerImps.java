@@ -50,13 +50,21 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     }
 
     public boolean checkClientOnlineStatus(String clientType,String identity){
-        boolean flag = false;
-        if (_clientsMaps_pc.containsKey(identity)){
-            flag = true;
+        if (_clientsMaps_pc != null){
+            try {
+                boolean flag = false;
+                if (_clientsMaps_pc.containsKey(identity)){
+                    flag = true;
+                }
+                //检查客户端是否在线
+                communicator.getLogger().print("检查客户端是否在线 : "+ clientType+" , "+ identity +" status: "+ flag);
+                return !flag;
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-        //检查客户端是否在线
-        communicator.getLogger().print("检查客户端是否在线 : "+ clientType+" , "+ identity +" status: "+ flag);
-        return !flag;
+
+        return false;
     }
 
     private void startPushMessageServer(String serverName){
