@@ -36,6 +36,9 @@ public class AsAppDtVO {
     private String spec; //商品规格
     private double acprice; //实付单价
     private double distprice; //实付优惠单价
+
+    private String areaAllName; //
+
     public double getDistprice() {
         return distprice;
     }
@@ -258,5 +261,13 @@ public class AsAppDtVO {
 
     public void setSpec(String spec) {
         this.spec = spec;
+    }
+
+    public String getAreaAllName() {
+        return areaAllName;
+    }
+
+    public void setAreaAllName(String areaAllName) {
+        this.areaAllName = areaAllName;
     }
 }

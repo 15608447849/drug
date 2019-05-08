@@ -14,6 +14,7 @@ import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entity.*;
 import com.onek.entitys.Result;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.LccOrderUtil;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
@@ -559,6 +560,15 @@ public class OrderOptModule {
         AsAppDtVO asAppDtVO = asAppDtVOs[0];
         if (asAppDtVO != null) {
             asAppDtVO.setPaytype(2);
+            String compStr = RedisUtil.getStringProvide()
+                    .get(String.valueOf(asAppDtVO.getCompid()));
+
+            JSONObject compJson = JSON.parseObject(compStr);
+
+            if (compJson != null) {
+                asAppDtVO.setAreaAllName(
+                        IceRemoteUtil.getCompleteName(compJson.getString("addressCode")));
+            }
             resultObject.put("asapp", asAppDtVO);
             queryResult = baseDao.queryNativeSharding(0,
                     TimeUtils.getCurrentYear(), QUERY_GOODS_SQL, asAppDtVO.getOrderno(), asAppDtVO.getCompid());
