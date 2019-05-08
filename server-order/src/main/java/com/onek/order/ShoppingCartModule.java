@@ -164,15 +164,17 @@ public class ShoppingCartModule {
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
                 querySql, new Object[]{});
 
-        if (queryRet != null && !queryRet.isEmpty()) {
+
             boolean flag = true;
             for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
-                for (Object[] objects : queryRet) {
-                    if (shoppingCartDTO.getPdno() == Long.parseLong(objects[1].toString())) {
-                        updateParm.add(new Object[]{shoppingCartDTO.getPnum(), objects[0]});
-                        flag = false;
-                        break;
-                    }
+                if (queryRet != null && !queryRet.isEmpty()) {
+                    for (Object[] objects : queryRet) {
+                        if (shoppingCartDTO.getPdno() == Long.parseLong(objects[1].toString())) {
+                            updateParm.add(new Object[]{shoppingCartDTO.getPnum(), objects[0]});
+                            flag = false;
+                            break;
+                        }
+                     }
                 }
                 if (flag) {
                     insertParm.add(new Object[]{GenIdUtil.getUnqId(), 0,
@@ -190,7 +192,6 @@ public class ShoppingCartModule {
             if (!ModelUtil.updateTransEmpty(uret) || !ModelUtil.updateTransEmpty(iret)) {
                 return result.success("添加成功");
             }
-        }
         return result.fail("添加失败");
     }
 

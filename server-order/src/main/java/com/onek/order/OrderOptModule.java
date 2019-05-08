@@ -398,7 +398,7 @@ public class OrderOptModule {
         int astype =  jsonObject.get("astype").getAsInt();
         double refamt = jsonObject.get("refamt").getAsDouble();
 
-        String queryOrderno = "select orderno,compid,pdno from {?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+        String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
 
         List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
 
@@ -411,10 +411,17 @@ public class OrderOptModule {
                 ckstatus, userSession.userId,userSession.userName, astype, ckdesc,refamt*100,asno);
 
         if (ret > 0){
+            //退货失败
+            int ostatus = -5;
+            int gstatus = 200;
+            if(ckstatus == 1){
+                ostatus = -2;
+                gstatus = 3;
+            }
             int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
             List<Object[]> params = new ArrayList<>();
-            params.add(new Object[]{-2, queryRet.get(0)[0],-1});
-            params.add(new Object[]{-2, queryRet.get(0)[2],-1,queryRet.get(0)[0]});
+            params.add(new Object[]{ostatus, queryRet.get(0)[0],-1});
+            params.add(new Object[]{gstatus, queryRet.get(0)[2],-1,queryRet.get(0)[0]});
             baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()),year,
             new String[]{UPD_ORDER_CK_SQL,UPD_ORDER_GOODS_CK_SQL},params);
         }
