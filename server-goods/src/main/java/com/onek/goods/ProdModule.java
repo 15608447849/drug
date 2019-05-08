@@ -740,7 +740,7 @@ public class ProdModule {
         List<ProdVO> prodList = new ArrayList<>();
         if (response != null) {
             for (SearchHit searchHit : response.getHits()) {
-                convertSearchData(prodList, searchHit);
+                convertSearchData(appContext, prodList, searchHit);
             }
 
         }
@@ -1024,11 +1024,12 @@ public class ProdModule {
      * @param prodList
      * @param searchHit
      */
-    private static void convertSearchData(List<ProdVO> prodList, SearchHit searchHit) {
+    private static void convertSearchData(AppContext context,List<ProdVO> prodList, SearchHit searchHit) {
         Map<String, Object> sourceMap = searchHit.getSourceAsMap();
         ProdVO prodVO = new ProdVO();
         HashMap detail = (HashMap) sourceMap.get("detail");
         assembleObjectFromEs(prodVO, sourceMap, detail);
+
         prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
         prodVO.setMutiact(false); // 初始化标记没有活动
         prodVO.setActprod(false);
@@ -1037,9 +1038,16 @@ public class ProdModule {
         int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
 
         prodVO.setRulestatus(ruleStatus);
-        prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
-        prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
-        prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+
+        if(!context.isAnonymous()){ // 有权限
+            prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+            prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+            prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+        }else{
+            prodVO.setVatp(-1);
+            prodVO.setMp(-1);
+            prodVO.setRrp(-1);
+        }
 
         // 表示存在活动
         if (ruleStatus > 0) {

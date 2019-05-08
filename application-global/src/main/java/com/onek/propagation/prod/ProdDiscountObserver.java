@@ -5,6 +5,7 @@ import com.onek.propagation.queue.DelayStockQueueManager;
 import com.onek.propagation.queue.DelayStockWorker;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.discount.DiscountRuleStore;
+import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import redis.util.RedisUtil;
 
@@ -40,6 +41,12 @@ public class ProdDiscountObserver implements ProdObserver {
                         if (Integer.parseInt(jsonObject.get("cstatus").toString()) == 1) {
                             result = RedisStockUtil.clearActStock(Long.parseLong(gcode), actcode);
 
+                        }
+                        if(jsonObject.containsKey("limitnum")){
+                            int limitnum = Integer.parseInt(jsonObject.get("limitnum").toString());
+                            if(limitnum > 0){
+                                RedisOrderUtil.setActLimit(Long.parseLong(gcode), actcode, limitnum);
+                            }
                         }
 
                         if(result <= 0){
