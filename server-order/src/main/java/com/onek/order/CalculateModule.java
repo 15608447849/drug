@@ -95,7 +95,7 @@ public class CalculateModule {
 
         if (currDiscount.getBRule() == 1133) {
             Ladoff[] ladoffs =
-                new ActivityCalculateService().getLadoffs(currDiscount.getBRule());
+                new ActivityCalculateService().getLadoffs(actcode);
 
             if (ladoffs.length == 0) {
                 return new Result().success(jsonObject);
