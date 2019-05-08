@@ -112,7 +112,7 @@ public class BackgroundProdModule {
             + " SET vatp = ?, mp = ?, rrp = ?, unit = ?, spec = ?, "
             + " vaildsdate = STR_TO_DATE(?, '%Y-%m-%d'), vaildedate = STR_TO_DATE(?, '%Y-%m-%d'), "
             + " prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
-            + " store = ?, limits = ?, wholenum = ?, medpacknum = ? "
+            + " store = ?, limits = ?, wholenum = ?, medpacknum = ?, cstatus = ? "
             + " WHERE sku = ? ";
 
     public Result onProd(AppContext appContext) {
@@ -211,7 +211,7 @@ public class BackgroundProdModule {
                 bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
                 bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                 bgProdVO.getStore(), bgProdVO.getLimits(),
-                bgProdVO.getWholenum(), bgProdVO.getMedpacknum(),
+                bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getSkuCstatus(),
                 bgProdVO.getSku());
 
         new ProdReducePriceThread(bgProdVO.getSku(), bgProdVO.getProdname(), bgProdVO.getVatp()).start();
