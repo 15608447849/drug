@@ -85,7 +85,7 @@ public class NoticeModule {
     public Result query(AppContext context){
         List<Param> list = new ArrayList<>();
         try {
-            String selectSql = "SELECT * FROM {{?"+TD_NOTICE+"}} WHERE cstatus&1=0 ORDER BY priority DESC,date,time DESC"; //优先级+时间 倒叙
+            String selectSql = "SELECT * FROM {{?"+TD_NOTICE+"}} WHERE cstatus&1=0 ORDER BY priority DESC,date DESC,time DESC"; //优先级+时间 倒叙
             List<Object[]> result = BaseDAO.getBaseDAO().queryNative(selectSql);
             Param[] params = new Param[result.size()];
             BaseDAO.getBaseDAO().convToEntity(result, params, Param.class);
