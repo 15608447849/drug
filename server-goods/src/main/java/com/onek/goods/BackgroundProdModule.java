@@ -81,7 +81,7 @@ public class BackgroundProdModule {
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, "
-                    + " CURRENT_DATE, CURRENT_TIME, ?, 256) ";
+                    + " CURRENT_DATE, CURRENT_TIME, ?, ?) ";
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -476,7 +476,7 @@ public class BackgroundProdModule {
             // prodsdate, prodedate,
             // store, limits,
             // wholenum, medpacknum, unit,
-            // spec, "
+            // spec, cstatus "
             params.add(new Object[] {
                     bgProdVO.getSpu(), bgProdVO.getSku(),
                     bgProdVO.getVatp(),
@@ -486,7 +486,7 @@ public class BackgroundProdModule {
                     bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                     bgProdVO.getStore(), bgProdVO.getLimits(),
                     bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getUnit(),
-                    bgProdVO.getSpec()
+                    bgProdVO.getSpec(), bgProdVO.getSkuCstatus() | 256
             });
 
             RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
