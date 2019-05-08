@@ -17,7 +17,6 @@ import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.*;
 
-import java.sql.Time;
 import java.util.*;
 
 public class OrderInfoModule {
@@ -405,10 +404,17 @@ public class OrderInfoModule {
             paramList.add(param);
         }
 
-        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                0, year, pageHolder, page,
-                " apdata DESC, aptime DESC ",
-                sql.toString(), paramList.toArray());
+        List<Object[]> queryResult;
+
+        try {
+            queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
+                    0, year, pageHolder, page,
+                    " apdata DESC, aptime DESC ",
+                    sql.toString(), paramList.toArray());
+        } catch (Exception e) {
+            return new Result().setQuery(new AsAppVO[0], pageHolder);
+        }
+
 
         AsAppVO[] result = new AsAppVO[queryResult.size()];
 
