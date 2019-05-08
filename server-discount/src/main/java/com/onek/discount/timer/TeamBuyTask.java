@@ -5,10 +5,13 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdDiscountObserver;
+import com.onek.util.IOThreadUtils;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.SmsTempNo;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
+import util.MathUtil;
 import util.TimeUtils;
 
 import java.math.BigDecimal;
@@ -68,10 +71,14 @@ public class TeamBuyTask extends TimerTask {
                     }
                     if(offer > 0){
                         Map<Integer, Integer> dataMap = new HashMap<>();
+                        List<TeamBuyMsgBody> msgBodyList = new ArrayList<>();
                         for(Object o : array){
                             LinkedTreeMap map = ((LinkedTreeMap) o);
+                            String orderno = map.get("orderno").toString();
                             String compid = map.get("compid").toString();
                             String payamt = map.get("payamt").toString();
+                            String pnum = map.get("pnum").toString();
+                            double f2 = new BigDecimal((float)(offer) /100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             double f1 = new BigDecimal((float)(100 -offer) /100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             int money = (int)(Integer.parseInt(payamt) * f1);
                             int result = BaseDAO.getBaseDAO().updateNative(UPDATE_COMP_BAL, money, compid);
@@ -80,17 +87,102 @@ public class TeamBuyTask extends TimerTask {
                                 money += dataMap.get(Integer.parseInt(compid));
                             }
                             dataMap.put(Integer.parseInt(compid), (int)money);
+                            msgBodyList.add(new TeamBuyMsgBody(orderno, compid, pnum, f2, money));
                         }
 
                         for(Integer compid : dataMap.keySet()){
                             IceRemoteUtil.insertBalCoup(compid, dataMap.get(compid));
                         }
+
+                        new SendMsgThread(msgBodyList).start();
                     }
 
                 }
             }
         }
         LogUtil.getDefaultLogger().info("++++++ TeamBuyTask execute end +++++++");
+    }
+
+    class TeamBuyMsgBody{
+        String orderno;
+        String compid;
+        String pnum;
+        double endprice;
+        double minusprice;
+
+        public TeamBuyMsgBody(String orderno, String compid, String pnum, double endprice, double minusprice) {
+            this.orderno = orderno;
+            this.compid = compid;
+            this.pnum = pnum;
+            this.endprice = endprice;
+            this.minusprice = minusprice;
+        }
+
+        public String getOrderno() {
+            return orderno;
+        }
+
+        public void setOrderno(String orderno) {
+            this.orderno = orderno;
+        }
+
+        public String getCompid() {
+            return compid;
+        }
+
+        public void setCompid(String compid) {
+            this.compid = compid;
+        }
+
+        public String getPnum() {
+            return pnum;
+        }
+
+        public void setPnum(String pnum) {
+            this.pnum = pnum;
+        }
+
+        public double getEndprice() {
+            return endprice;
+        }
+
+        public void setEndprice(double endprice) {
+            this.endprice = endprice;
+        }
+
+        public double getMinusprice() {
+            return minusprice;
+        }
+
+        public void setMinusprice(double minusprice) {
+            this.minusprice = minusprice;
+        }
+    }
+
+    /**
+     * 发送团购消息线程
+     */
+    class SendMsgThread extends Thread{
+
+        List<TeamBuyMsgBody> msgBodyList;
+
+        public SendMsgThread(List<TeamBuyMsgBody> msgBodyList){
+            this.msgBodyList = msgBodyList;
+        }
+
+        @Override
+        public void run() {
+            LogUtil.getDefaultLogger().info("++++++ TeamBuyTask sendMsg start +++++++");
+
+            if(msgBodyList != null && msgBodyList.size() > 0){
+                for(TeamBuyMsgBody body : msgBodyList){
+                    double endp = MathUtil.exactDiv(body.getEndprice(), 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                    double minusp = MathUtil.exactDiv(body.getMinusprice(), 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                    IceRemoteUtil.sendMessageToClient(Integer.parseInt(body.getCompid()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.GROUP_BUYING_END, body.getOrderno(), body.getPnum() ,String.valueOf(endp), String.valueOf(minusp)));
+                }
+            }
+            LogUtil.getDefaultLogger().info("++++++ TeamBuyTask sendMsg end +++++++");
+        }
     }
 
 }

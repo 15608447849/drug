@@ -69,15 +69,13 @@ public class VerificationOp implements IOperation<AppContext> {
             RedisUtil.getStringProvide().set(key,code); //k = code 的MD5 ,v = code, 存入redis
             RedisUtil.getStringProvide().expire(key, USProperties.INSTANCE.vciSurviveTime); // 3分钟内有效
 
-            HttpRequest result = new HttpRequest();
-            String json = result.addStream(
+            String json = new HttpRequest().addStream(
                     inputStream,
-                    EncryptUtils.encryption("image_verification_code"),  //远程路径
+                    FileServerUtils.defaultVerificationDir(),  //远程路径
                     key+".png"  //k作为文件名
                     )
                     .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
                     .getRespondContent();
-
 
             HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
             ArrayList<LinkedTreeMap<String,Object>> list = (ArrayList<LinkedTreeMap<String, Object>>) maps.get("data");
