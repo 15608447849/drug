@@ -727,7 +727,7 @@ public class BackgroundProdModule {
             SearchResponse response = null;
             try {
                 BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.COLLECT_COLUMN_SKU, sku);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.COLLECT_COLUMN_SKU, sku+"");
                 boolQuery.must(builder);
 
                 TransportClient client = ElasticSearchClientFactory.getClientInstance();
