@@ -2,12 +2,15 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.onek.context.AppContext;
 import com.onek.entity.AsAppVO;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderDetail;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.member.MemberStore;
 import com.onek.util.prod.ProdEntity;
@@ -106,14 +109,16 @@ public class OrderInfoModule {
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrderDetail.class);
 
-        Map<String, String> compMap;
+        JSONObject compJson;
         for (TranOrderDetail tranOrder : result) {
             String compStr = RedisUtil.getStringProvide().get(String.valueOf(tranOrder.getCusno()));
 
-            compMap = GsonUtils.string2Map(compStr);
+            compJson = JSON.parseObject(compStr);
 
-            if (compMap != null) {
-                tranOrder.setCusname(compMap.get("storeName"));
+            if (compJson != null) {
+                tranOrder.setCusname(compJson.getString("storeName"));
+                tranOrder.setAreaAllName(
+                        IceRemoteUtil.getCompleteName(compJson.getString("addressCode")));
             }
 
             tranOrder.setPayprice(

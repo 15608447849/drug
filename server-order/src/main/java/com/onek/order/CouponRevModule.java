@@ -55,7 +55,7 @@ public class CouponRevModule {
             " SELECT COUNT(0) "
             + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + " WHERE cstatus = 0 AND ctype != 2 "
-            + " startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
+            + " AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
             + " AND compid = ?  ";
 
     /**

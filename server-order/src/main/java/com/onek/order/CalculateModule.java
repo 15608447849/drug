@@ -6,11 +6,15 @@ import com.onek.calculate.ActivityFilterService;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.entity.Product;
-import com.onek.calculate.filter.*;
+import com.onek.calculate.filter.ActivitiesFilter;
+import com.onek.calculate.filter.CycleFilter;
+import com.onek.calculate.filter.PriorityFilter;
+import com.onek.calculate.filter.QualFilter;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import util.StringUtils;
 import util.TimeUtils;
@@ -101,10 +105,15 @@ public class CalculateModule {
                 return new Result().success(jsonObject);
             }
 
+            jsonObject.put("currBuy",
+                    RedisOrderUtil.getActBuyNum(compid, sku, actcode));
+
             jsonObject.put("currNums", IceRemoteUtil.getGroupCount(actcode));
             // 团购
             jsonObject.put("ladoffs", ladoffs);
         } else if (currDiscount.getBRule() == 1113) {
+            jsonObject.put("currBuy",
+                    RedisOrderUtil.getActBuyNum(compid, sku, actcode));
             jsonObject.put("killPrice", currDiscount.getActionPrice(sku));
             jsonObject.put("actRealStore", RedisStockUtil.getActStockBySkuAndActno(sku, actcode));
         }

@@ -66,6 +66,15 @@ public class TranOrderDetail {
     /**         ex           **/
     private String pname;
     private String cusname;
+    private String areaAllName;
+
+    public String getAreaAllName() {
+        return areaAllName;
+    }
+
+    public void setAreaAllName(String areaAllName) {
+        this.areaAllName = areaAllName;
+    }
 
     private List<TranOrderGoods> goods;
 

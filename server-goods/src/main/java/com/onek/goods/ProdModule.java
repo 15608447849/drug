@@ -627,12 +627,8 @@ public class ProdModule {
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
                 assembleData(appContext,searchResponse, prodVOList);
             }
-            searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, spu, 1, 10);
+            searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, 0, 1, 10);
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
-                assembleData(appContext, searchResponse, prodVOList);
-            }
-            if (prodVOList.size() < 5) {
-                searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, spu, 1, 10);
                 assembleData(appContext, searchResponse, prodVOList);
             }
         } else {
@@ -763,12 +759,36 @@ public class ProdModule {
         SearchResponse response = ProdESUtil.searchProdMall(keyword, 0, null, null, null, 1, 1, 10);
         if (response != null) {
             for (SearchHit searchHit : response.getHits()) {
-                String content = searchHit.getSourceAsMap().get("content").toString().replace("|", " ");
-                contentList.add(content);
+                String content = searchHit.getSourceAsMap().get("content").toString();
+                String [] arr = content.split("[|]");
+                contentList.add(arr[1] + " " + arr[2] + " " + arr[3]);
             }
 
         }
         return new Result().success(contentList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result usualKeyword(AppContext appContext) {
+
+        List<String> contentList = new ArrayList<>();
+        SearchResponse response = ProdESUtil.searchProdMall("", 0, null, null, null, 1, 1, 100);
+        List<String> keywords = new ArrayList<>();
+        List<String> filterKeywords = new ArrayList<>();
+        if (response != null) {
+            for (SearchHit searchHit : response.getHits()) {
+                Map<String,Object> sourceMap = searchHit.getSourceAsMap();
+                HashMap detail = (HashMap) sourceMap.get("detail");
+                String popname = detail.get("popname") != null ? detail.get("popname").toString() : "";
+                if(!keywords.contains(popname)){
+                    keywords.add(popname);
+                }
+            }
+        }
+        if(keywords != null && keywords.size() > 0 && keywords.size() >= 6){
+            filterKeywords = keywords.subList(0, 6);
+        }
+        return new Result().success(filterKeywords);
     }
 
     @UserPermission(ignore = true)
@@ -1157,7 +1177,7 @@ public class ProdModule {
         long sku = jsonObject.get("sku").getAsLong();
         String selectSQL = "select unqid,orderno,level,descmatch,logisticssrv,"
                 + "content,createtdate,createtime,cstatus,compid from {{?"
-                + DSMConst.TD_TRAN_APPRAISE + "}} where cstatus&1=0 and sku=" + sku;
+                + DSMConst.TD_TRAN_APPRAISE + "}} where cstatus&1=0 and sku=" + sku + " order by oid desc";
         List<Object[]> queryResult = BASE_DAO.queryNativeSharding(0, localDateTime.getYear(),
                 pageHolder, page, selectSQL);
         AppriseVO[] appriseVOS = new AppriseVO[queryResult.size()];
