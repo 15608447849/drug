@@ -118,8 +118,10 @@ public class SecKillModule {
             return new Result().fail("请勿重复提交!", null);
         }
         int num = RedisOrderUtil.getActBuyNum(compid, sku ,actno);
-        if(num > 0){
-            return new Result().fail("不要重复秒杀!");
+        int limitNum = RedisOrderUtil.getActLimit(sku, actno);
+//        System.out.println("#### num:"+num + "; limitNum:"+limitNum+"; stock:"+stock);
+        if(num > 0 && limitNum > 0 && (limitNum - (num + stock)) < 0){
+            return new Result().fail("您秒杀的数量过多或次数过于频繁!");
         }
 
         ShoppingCartVO shoppingCartVO = getCartSku(actno,sku+"");

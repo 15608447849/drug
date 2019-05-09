@@ -4,6 +4,7 @@ import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.rule.RuleParser;
 import com.onek.calculate.util.DiscountUtil;
+import util.ArrayUtil;
 
 import java.util.List;
 
@@ -28,21 +29,12 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
 
         Ladoff[] ladoff = getLadoffs(actNo);
 
-        if (ladoff == null || ladoff.length == 0) {
+        if (ArrayUtil.isEmpty(ladoff)) {
             return;
         }
 
-//        List<IProduct> prods = discount.getProductList();
-
         double priceTotal = DiscountUtil.getCurrentPriceTotal(discount.getProductList());
         int numsTotal = DiscountUtil.getNumTotal(discount.getProductList());
-
-        /*for (IProduct prod : prods) {
-            priceTotal = MathUtil.exactAdd(
-                    prod.getCurrentPrice(), priceTotal).doubleValue();
-            numsTotal = MathUtil.exactAdd(
-                    prod.getNums(), numsTotal).intValue();
-        }*/
 
         Ladoff currentLadoff = getLadoffable(ladoff, priceTotal, numsTotal);
 

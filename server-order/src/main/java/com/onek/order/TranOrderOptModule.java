@@ -262,8 +262,9 @@ public class TranOrderOptModule {
                 return result.fail("秒杀商品库存发生改变！");
             }
             int num = RedisOrderUtil.getActBuyNum(tranOrder.getCusno(), tranOrderGoods.get(0).getPdno() ,actcode);
-            if(num > 0){
-                return new Result().fail("秒杀商品不要重复下单!");
+            int limitNum = RedisOrderUtil.getActLimit(tranOrderGoods.get(0).getPdno(), actcode);
+            if(num > 0 && limitNum > 0 && (limitNum - (num + tranOrderGoods.get(0).getPnum())) < 0){
+                return new Result().fail("秒杀商品下单数量过多或秒杀次数过于频繁!");
             }
             //订单费用计算（费用分摊以及总费用计算）
             calculatePrice(tranOrderGoods, tranOrder, unqid);
@@ -317,7 +318,7 @@ public class TranOrderOptModule {
 
             JsonObject object = new JsonObject();
 
-            addActBuyNum(tranOrder.getCusno(), goodsStockList);
+            addActBuyNum(tranOrder.getCusno(), tranOrderGoods);
 
             object.addProperty("orderno", orderNo);
             object.addProperty("message", "下单成功");
@@ -568,13 +569,23 @@ public class TranOrderOptModule {
      * 添加活动购买量
      *
      * @param compid
-     * @param goodsStockList
+     * @param tranOrderGoodsList
      */
-    private void addActBuyNum(int compid,List<GoodsStock> goodsStockList) {
+    private void addActBuyNum(int compid,List<TranOrderGoods> tranOrderGoodsList) {
 
-        for (GoodsStock goodsStock : goodsStockList) {
-            if(goodsStock.getActCode() > 0){
-                RedisOrderUtil.addActBuyNum(compid, goodsStock.getSku(), goodsStock.getActCode(), goodsStock.getStock());
+        for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
+            String actCodeStr = tranOrderGoods.getActcode();
+            List<Long> list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
+            if (list.size() > 0) {
+                for (Long aList : list) {
+                    if (aList > 0) {
+                        if (aList > 0) {
+                            RedisOrderUtil.addActBuyNum(compid, tranOrderGoods.getPdno(), aList, tranOrderGoods.getPnum());
+                        }
+                    }
+
+                }
+
             }
         }
     }

@@ -4,8 +4,10 @@ import com.alibaba.fastjson.JSONObject;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdDiscountObserver;
 import com.onek.util.RedisGlobalKeys;
+import com.onek.util.order.RedisOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.TimeUtils;
 
@@ -22,6 +24,8 @@ public class DiscountRuleTask extends TimerTask {
 
     @Override
     public void run() {
+
+        LogUtil.getDefaultLogger().info("###### DiscountRuleTask run start ###########");
         Date date = TimeUtils.addDay(new Date(), -1);
         String y = TimeUtils.date_yMd_2String(date);
         List<Object[]> results = BaseDAO.getBaseDAO().queryNative(SQL, y);
@@ -32,7 +36,7 @@ public class DiscountRuleTask extends TimerTask {
             Map<Integer,List<String>> map = new HashMap<>();
             for(Object[] result : results){
                 Long gcode = (Long) result[0];
-//                String actcode = (String) result[1];
+                String actcode = (String) result[1];
                 int rulecode = (Integer) result[2];
                 int cstatus = (Integer) result[3];
 
@@ -49,8 +53,14 @@ public class DiscountRuleTask extends TimerTask {
                 list.add(jsonObject.toJSONString());
                 map.put(rulecode, list);
 
-                if(rulecode == 1113){
-                    RedisUtil.getSetProvide().delete(RedisGlobalKeys.SECKILLPREFIX + gcode);
+//                if(rulecode == 1113){
+//                    RedisUtil.getSetProvide().delete(RedisGlobalKeys.SECKILLPREFIX + gcode);
+//                }
+                if(Long.parseLong(actcode) > 0 &&  String.valueOf(result[0]).length() >= 14){
+                    try {
+                        LogUtil.getDefaultLogger().info("###### DiscountRuleTask reset act buy num actcode:["+actcode+"] gcode:["+ gcode+"]###########");
+                        RedisOrderUtil.resetActBuyNum(gcode, Long.parseLong(actcode));
+                    }catch (Exception e){ e.printStackTrace();}
                 }
             }
 
@@ -58,5 +68,7 @@ public class DiscountRuleTask extends TimerTask {
                 server.setProd(map.get(rulecode));
             }
         }
+        LogUtil.getDefaultLogger().info("###### DiscountRuleTask run end ###########");
+
     }
 }

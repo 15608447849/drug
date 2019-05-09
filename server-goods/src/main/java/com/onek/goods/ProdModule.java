@@ -627,12 +627,8 @@ public class ProdModule {
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
                 assembleData(appContext,searchResponse, prodVOList);
             }
-            searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, spu, 1, 10);
+            searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, 0, 1, 10);
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
-                assembleData(appContext, searchResponse, prodVOList);
-            }
-            if (prodVOList.size() < 5) {
-                searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, spu, 1, 10);
                 assembleData(appContext, searchResponse, prodVOList);
             }
         } else {
@@ -740,7 +736,7 @@ public class ProdModule {
         List<ProdVO> prodList = new ArrayList<>();
         if (response != null) {
             for (SearchHit searchHit : response.getHits()) {
-                convertSearchData(prodList, searchHit);
+                convertSearchData(appContext, prodList, searchHit);
             }
 
         }
@@ -763,12 +759,36 @@ public class ProdModule {
         SearchResponse response = ProdESUtil.searchProdMall(keyword, 0, null, null, null, 1, 1, 10);
         if (response != null) {
             for (SearchHit searchHit : response.getHits()) {
-                String content = searchHit.getSourceAsMap().get("content").toString().replace("|", " ");
-                contentList.add(content);
+                String content = searchHit.getSourceAsMap().get("content").toString();
+                String [] arr = content.split("[|]");
+                contentList.add(arr[1] + " " + arr[2] + " " + arr[3]);
             }
 
         }
         return new Result().success(contentList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result usualKeyword(AppContext appContext) {
+
+        List<String> contentList = new ArrayList<>();
+        SearchResponse response = ProdESUtil.searchProdMall("", 0, null, null, null, 1, 1, 100);
+        List<String> keywords = new ArrayList<>();
+        List<String> filterKeywords = new ArrayList<>();
+        if (response != null) {
+            for (SearchHit searchHit : response.getHits()) {
+                Map<String,Object> sourceMap = searchHit.getSourceAsMap();
+                HashMap detail = (HashMap) sourceMap.get("detail");
+                String popname = detail.get("popname") != null ? detail.get("popname").toString() : "";
+                if(!keywords.contains(popname)){
+                    keywords.add(popname);
+                }
+            }
+        }
+        if(keywords != null && keywords.size() > 0 && keywords.size() >= 6){
+            filterKeywords = keywords.subList(0, 6);
+        }
+        return new Result().success(filterKeywords);
     }
 
     @UserPermission(ignore = true)
@@ -1024,11 +1044,12 @@ public class ProdModule {
      * @param prodList
      * @param searchHit
      */
-    private static void convertSearchData(List<ProdVO> prodList, SearchHit searchHit) {
+    private static void convertSearchData(AppContext context,List<ProdVO> prodList, SearchHit searchHit) {
         Map<String, Object> sourceMap = searchHit.getSourceAsMap();
         ProdVO prodVO = new ProdVO();
         HashMap detail = (HashMap) sourceMap.get("detail");
         assembleObjectFromEs(prodVO, sourceMap, detail);
+
         prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
         prodVO.setMutiact(false); // 初始化标记没有活动
         prodVO.setActprod(false);
@@ -1037,9 +1058,16 @@ public class ProdModule {
         int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
 
         prodVO.setRulestatus(ruleStatus);
-        prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
-        prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
-        prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+
+        if(!context.isAnonymous()){ // 有权限
+            prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+            prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+            prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+        }else{
+            prodVO.setVatp(-1);
+            prodVO.setMp(-1);
+            prodVO.setRrp(-1);
+        }
 
         // 表示存在活动
         if (ruleStatus > 0) {
@@ -1049,35 +1077,37 @@ public class ProdModule {
                 prodVO.setMutiact(true);
             }
 
-            ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
-            if (prizeEntity != null) {
-                prodVO.setMinprize(prizeEntity.getMinactprize());
-                prodVO.setMaxprize(prizeEntity.getMaxactprize());
-                prodVO.setActcode(prizeEntity.getActcode());
-                // 代表值存在一个活动
-                if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
-                    List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
-                    GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
-                    String sdate = getEffectiveTimeByActCode.getSdate();
-                    String edate = getEffectiveTimeByActCode.getEdate();
+            if((ruleStatus & 2048 ) > 0){ // 秒杀
+                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
+                if (prizeEntity != null) {
+                    prodVO.setMinprize(prizeEntity.getMinactprize());
+                    prodVO.setMaxprize(prizeEntity.getMaxactprize());
+                    prodVO.setActcode(prizeEntity.getActcode());
+                    // 代表值存在一个活动
+                    if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
+                        List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
+                        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
+                        String sdate = getEffectiveTimeByActCode.getSdate();
+                        String edate = getEffectiveTimeByActCode.getEdate();
 
-                    if (StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate)) { // // 表示搜索的商品不在活动时间内
-                        prodVO.setRulestatus(0);
-                        prodVO.setActprod(false);
-                        prodVO.setMutiact(false);
-                        prodVO.setMinprize(prodVO.getVatp());
-                        prodVO.setMaxprize(prodVO.getVatp());
-                        prodVO.setActprize(prodVO.getVatp());
-                        prodVO.setActcode(prizeEntity.getActcode());
-                    } else {
-                        prodVO.setSdate(sdate);
-                        prodVO.setEdate(edate);
-                        int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), prizeEntity.getActcode());
-                        int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
-                        prodVO.setActinitstock(initStock);
-                        prodVO.setSurplusstock(surplusStock);
-                        prodVO.setBuynum(initStock - surplusStock);
-                        prodVO.setActprize(prizeEntity.getMinactprize());
+                        if (StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate)) { // // 表示搜索的商品不在活动时间内
+                            prodVO.setRulestatus(0);
+                            prodVO.setActprod(false);
+                            prodVO.setMutiact(false);
+                            prodVO.setMinprize(prodVO.getVatp());
+                            prodVO.setMaxprize(prodVO.getVatp());
+                            prodVO.setActprize(prodVO.getVatp());
+                            prodVO.setActcode(prizeEntity.getActcode());
+                        } else {
+                            prodVO.setSdate(sdate);
+                            prodVO.setEdate(edate);
+                            int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), prizeEntity.getActcode());
+                            int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
+                            prodVO.setActinitstock(initStock);
+                            prodVO.setSurplusstock(surplusStock);
+                            prodVO.setBuynum(initStock - surplusStock);
+                            prodVO.setActprize(prizeEntity.getMinactprize());
+                        }
                     }
                 }
             }

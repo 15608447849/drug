@@ -6,6 +6,7 @@ import com.onek.propagation.prod.ProdDiscountObserver;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.TimeUtils;
 
 import java.util.*;
@@ -24,7 +25,7 @@ public class ActStockCheckTask extends TimerTask {
 
     @Override
     public void run() {
-        System.out.println("####### act stock check ["+ TimeUtils.date_yMd_Hms_2String(new Date())+"] start #########");
+        LogUtil.getDefaultLogger().info("####### act stock check ["+ TimeUtils.date_yMd_Hms_2String(new Date())+"] start #########");
         Date date = TimeUtils.addDay(new Date(), -1);
         String y = TimeUtils.date_yMd_2String(date);
         List<Object[]> results = BaseDAO.getBaseDAO().queryNative(SQL, y);
@@ -43,6 +44,6 @@ public class ActStockCheckTask extends TimerTask {
 
         }
         BaseDAO.getBaseDAO().updateNative(UPDATE_SQL, y);
-        System.out.println("####### act stock check end #########");
+        LogUtil.getDefaultLogger().info("####### act stock check end #########");
     }
 }

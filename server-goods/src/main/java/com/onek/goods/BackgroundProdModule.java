@@ -81,7 +81,7 @@ public class BackgroundProdModule {
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, "
-                    + " CURRENT_DATE, CURRENT_TIME, ?, 256) ";
+                    + " CURRENT_DATE, CURRENT_TIME, ?, ?) ";
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -112,7 +112,7 @@ public class BackgroundProdModule {
             + " SET vatp = ?, mp = ?, rrp = ?, unit = ?, spec = ?, "
             + " vaildsdate = STR_TO_DATE(?, '%Y-%m-%d'), vaildedate = STR_TO_DATE(?, '%Y-%m-%d'), "
             + " prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
-            + " store = ?, limits = ?, wholenum = ?, medpacknum = ? "
+            + " store = ?, limits = ?, wholenum = ?, medpacknum = ?, cstatus = ? "
             + " WHERE sku = ? ";
 
     public Result onProd(AppContext appContext) {
@@ -211,7 +211,7 @@ public class BackgroundProdModule {
                 bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
                 bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                 bgProdVO.getStore(), bgProdVO.getLimits(),
-                bgProdVO.getWholenum(), bgProdVO.getMedpacknum(),
+                bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getSkuCstatus(),
                 bgProdVO.getSku());
 
         new ProdReducePriceThread(bgProdVO.getSku(), bgProdVO.getProdname(), bgProdVO.getVatp()).start();
@@ -418,6 +418,7 @@ public class BackgroundProdModule {
             bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
             bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp(), 100).intValue());
             bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp(), 100).intValue());
+            bgProdVO.setSkuCstatus(bgProdVO.getSkuCstatus() | 256);
         } catch (Exception e) {
             e.printStackTrace();
             return new Result().fail(e.getMessage());
@@ -476,7 +477,7 @@ public class BackgroundProdModule {
             // prodsdate, prodedate,
             // store, limits,
             // wholenum, medpacknum, unit,
-            // spec, "
+            // spec, cstatus "
             params.add(new Object[] {
                     bgProdVO.getSpu(), bgProdVO.getSku(),
                     bgProdVO.getVatp(),
@@ -486,7 +487,7 @@ public class BackgroundProdModule {
                     bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                     bgProdVO.getStore(), bgProdVO.getLimits(),
                     bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getUnit(),
-                    bgProdVO.getSpec()
+                    bgProdVO.getSpec(), bgProdVO.getSkuCstatus()
             });
 
             RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());

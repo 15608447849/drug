@@ -70,8 +70,7 @@ public class RedisHashProvide<T> extends RedisProvide {
 	/**
 	 * 根据集合名字获取元素个数
 	 * 
-	 * @param colname 集合名字 
-	 * @param key 哈希表 key
+	 * @param colname 集合名字
 	 */
 	public Long size(String colname) {
 		return jedisCluster.hlen(colname);
@@ -80,8 +79,7 @@ public class RedisHashProvide<T> extends RedisProvide {
 	/**
 	 * 根据集合名字获取所有哈希表 key
 	 * 
-	 * @param colname 集合名字 
-	 * @param key 哈希表 key
+	 * @param colname 集合名字
 	 * @return
 	 */
 	public Set<String> getAllKeys(String colname) {
@@ -91,8 +89,7 @@ public class RedisHashProvide<T> extends RedisProvide {
 	/**
 	 * 根据集合名字获取所有哈希表 value
 	 * 
-	 * @param colname 集合名字 
-	 * @param key 哈希表 key
+	 * @param colname 集合名字
 	 * @return
 	 */
 	public List<String> getAllVals(String colname) {

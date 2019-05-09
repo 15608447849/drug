@@ -1,5 +1,7 @@
 package util;
 
+import IceInternal.Ex;
+
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -276,7 +278,12 @@ public class TimeUtils {
             return getCurrentYear();
         }
 
-        return Integer.parseInt("20" + orderno.substring(0, 2));
+        try {
+            return Integer.parseInt("20" + orderno.substring(0, 2));
+        } catch (Exception e) {
+            return 0;
+        }
+
     }
 
 }

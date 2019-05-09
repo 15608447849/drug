@@ -32,6 +32,7 @@ public class TeamBuyTask extends TimerTask {
 
     @Override
     public void run() {
+
         LogUtil.getDefaultLogger().info("++++++ TeamBuyTask execute start +++++++");
         Date date = TimeUtils.addDay(new Date(), -1);
         String y = TimeUtils.date_yMd_2String(date);
@@ -78,8 +79,8 @@ public class TeamBuyTask extends TimerTask {
                             String compid = map.get("compid").toString();
                             String payamt = map.get("payamt").toString();
                             String pnum = map.get("pnum").toString();
-                            double f2 = new BigDecimal((float)(offer) /100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                            double f1 = new BigDecimal((float)(100 -offer) /100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                            double f2 = new BigDecimal((float)(offer) /10).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                            double f1 = new BigDecimal((float)(10 -offer) /10).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             int money = (int)(Integer.parseInt(payamt) * f1);
                             int result = BaseDAO.getBaseDAO().updateNative(UPDATE_COMP_BAL, money, compid);
                             LogUtil.getDefaultLogger().info("++++++ TeamBuyTask compid:["+ compid+"]; money:["+ money+"] result:["+ result+"] +++++++");
@@ -101,6 +102,7 @@ public class TeamBuyTask extends TimerTask {
             }
         }
         LogUtil.getDefaultLogger().info("++++++ TeamBuyTask execute end +++++++");
+
     }
 
     class TeamBuyMsgBody{
