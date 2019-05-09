@@ -10,16 +10,19 @@ import com.onek.consts.CSTATUS;
 import com.onek.consts.IntegralConstant;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
+import com.onek.context.UserSession;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.SmsUtil;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.SmsTempNo;
 import com.onek.util.area.AreaUtil;
 import com.onek.util.member.MemberStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import redis.provide.RedisStringProvide;
 import redis.util.RedisUtil;
 import util.GsonUtils;
@@ -293,6 +296,15 @@ public class CouponManageModule {
             " and tpcp.cstatus & 256 > 0 and tpcp.cstatus & 1 = 0 " +
             " and  1 = fun_prom_cycle(tpcp.unqid,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) ";
 
+    private static final String QUERY_COUP_NEWPERSON = "select unqid,coupname,offer from " +
+            " {{?" + DSMConst.TD_PROM_COUPON + "}} cp  inner join (select min(offer) offer,actcode from " +
+            " {{?" + DSMConst.TD_PROM_RELA + "}} rela join {{?" + DSMConst.TD_PROM_LADOFF + "}} lad on rela.ladid = lad.unqid and offer > 0 " +
+            "  and rela.cstatus & 1 = 0 and lad.cstatus & 1 = 0 group by actcode) a on cp.unqid = a.actcode " +
+            " where cp.qlfno = 1 and cp.glbno = 1 and cp.cstatus & 1 = 0 " +
+            " and cp.cstatus & 64 > 0 and 1 = fun_prom_cycle(unqid,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) ";
+
+    private static final  String QUERY_COURCD_EXT = "select 1 from {{?"+DSMConst.TD_PROM_COURCD+"}} "+
+            " where compid = ? and cstatus & 128 > 0 ";
 
     //查询库存版本号
 //    private static final String SELECT_COUPON_VER_ = " select ver from {{?" + DSMConst.TD_PROM_COUPON + "}}"
@@ -1110,8 +1122,16 @@ public class CouponManageModule {
      */
     @UserPermission(ignore = true)
     public Result queryCouponExcgPub(AppContext appContext){
-
         Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+
+        if(!jsonObject.has("compid")){
+            return  result.success(null);
+        }
+        int compid = jsonObject.get("compid").getAsInt();
+
         StringBuilder sbSql = new StringBuilder(QUERY_COUP_EXCG);
 
         List<Object[]> queryResult = baseDao.queryNative(sbSql.toString());
@@ -1125,7 +1145,23 @@ public class CouponManageModule {
                         "validday","validflag","glbno","goods","qlfno","qlfval"});
 
         List<CouponPubVO> couponPubVOList = new ArrayList(Arrays.asList(couponPubVOS));
-        for (CouponPubVO couponPubVO:couponPubVOList){
+        Iterator<CouponPubVO> couentIterator = couponPubVOList.iterator();
+        while(couentIterator.hasNext()){
+            CouponPubVO couponPubVO = couentIterator.next();
+            double fee = 0;
+            if(couponPubVO.getBrulecode() == 2120){
+                long area =  getCurrentArea(compid);
+                if(area <= 0){
+                    couentIterator.remove();
+                    continue;
+                }
+                fee = AreaFeeUtil.getFee(area);
+                if(fee <= 0){
+                    couentIterator.remove();
+                    continue;
+                }
+            }
+
             String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer from {{?" + DSMConst.TD_PROM_RELA
                     + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
                     + " and a.actcode=" + couponPubVO.getCoupno() + " order by ladamt desc ";
@@ -1133,16 +1169,25 @@ public class CouponManageModule {
             CouponPubLadderVO[] ladderVOS = new CouponPubLadderVO[queryRet.size()];
             baseDao.convToEntity(queryRet, ladderVOS, CouponPubLadderVO.class,
                     new String[]{"unqid","ladamt","ladnum","offercode","offer"});
-
-
+            boolean rvflag = false;
             for (CouponPubLadderVO ladderVO:ladderVOS) {
                 ladderVO.setLadamt(MathUtil.exactDiv(ladderVO.getLadamt(),100L).
                         setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
                 ladderVO.setOffer(MathUtil.exactDiv(ladderVO.getOffer(),100L).
                         setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                if(couponPubVO.getBrulecode() == 2120){
+                    ladderVO.setOffer(fee);
+                }else if(ladderVO.getOffer() <=0){
+                    rvflag = true;
+                    break;
+                }
+            }
+            if(rvflag){
+                couentIterator.remove();
+                continue;
             }
             couponPubVO.setLadderVOS(Arrays.asList(ladderVOS));
-            couponPubVO.setCompid(0);
+            couponPubVO.setCompid(compid);
         }
         return result.success(couponPubVOList);
     }
@@ -1230,7 +1275,7 @@ public class CouponManageModule {
 
 
     /**
-     * 查询优惠券发布列表
+     * 查询领券专场发布列表
      * @param appContext
      * @return
      */
@@ -1274,6 +1319,7 @@ public class CouponManageModule {
         }
         return result.success(couponPubVOList);
     }
+
 
 
 
@@ -1367,10 +1413,10 @@ public class CouponManageModule {
         String json = appContext.param.json;
         CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
         if(couponVO == null){
-            return result.fail("领取失败");
+            return result.fail("兑换失败");
         }
         if(couponVO.getLadderVOS() == null || couponVO.getLadderVOS().isEmpty()){
-            return result.fail("领取失败");
+            return result.fail("兑换失败");
         }
         long rcdid = GenIdUtil.getUnqId();
         CouponPubLadderVO  CouponPubLadderVO = couponVO.getLadderVOS().get(0);
@@ -1380,21 +1426,20 @@ public class CouponManageModule {
                     = MathUtil.exactDiv(MemberStore.
                     getIntegralByCompid(couponVO.getCompid()), 1000).doubleValue();
 
-            System.out.println("获取积分："+MemberStore.
-                    getIntegralByCompid(couponVO.getCompid()));
-            System.out.println("剩余积分："+integralByCompid);
-            if(couponVO.getBrulecode() == 2120){
-                long area =  getCurrentArea(couponVO.getCompid());
-                if(area <= 0){
-                    return result.fail("积分不够,领取失败！");
-                }
-                double fee = AreaFeeUtil.getFee(area);
-                if(integralByCompid < fee){
-                    return result.fail("积分不够,领取失败！");
-                }
-            }
+            LogUtil.getDefaultLogger().debug("获取积分/1000："+integralByCompid);
+
+//            if(couponVO.getBrulecode() == 2120){
+//                long area =  getCurrentArea(couponVO.getCompid());
+//                if(area <= 0){
+//                    return result.fail("积分不够,兑换失败！");
+//                }
+//                double fee = AreaFeeUtil.getFee(area);
+//                if(integralByCompid < fee){
+//                    return result.fail("积分不够,兑换失败！");
+//                }
+//            }
            if(integralByCompid < CouponPubLadderVO.getOffer()){
-               return result.fail("积分不够,领取失败！");
+               return result.fail("积分不够,兑换失败！");
            }
 
            oret = IceRemoteUtil.collectExcgCoupons(couponVO.getCompid(),json);
@@ -1450,6 +1495,58 @@ public class CouponManageModule {
                 //删除优惠记录
                 baseDao.updateNative(DEL_COURCD,rcdid);
             }
+        }
+        return result.success("领取失败");
+    }
+
+
+    @UserPermission(ignore = true)
+    public Result revNewComerCoupon(AppContext appContext){
+        Result result = new Result();
+        int compid = Integer.parseInt(appContext.param.arrays[0]);
+        long uph = Long.parseLong(appContext.param.arrays[1]);
+        List<Object[]> crdRet = baseDao.queryNative(QUERY_COURCD_EXT, compid);
+        if(crdRet != null && !crdRet.isEmpty()){
+            return result.fail("已领取过新人专享！");
+        }
+        List<Object[]> coupRet = baseDao.queryNative(QUERY_COUP_NEWPERSON,new Object[]{});
+
+        if(coupRet == null || coupRet.isEmpty()){
+            return result.fail("没有开启新人专享活动！");
+        }
+
+        int bal = 0;
+        List<Object[]> parm = new ArrayList<>();
+        List<Map> parmList = new ArrayList<>();
+        String courdSql = "insert into {{?" + DSMConst.TD_PROM_COURCD + "}}" +
+                " (unqid,coupno,compid,offercode,gettime,cstatus) values (?,?,?,?,now(),?)";
+        for (Object[] objects : coupRet){
+            bal = bal + Integer.parseInt(objects[2].toString());
+            Map<String,String> map = new HashMap();
+            map.put("coupno",objects[0].toString());
+            map.put("coupname",objects[1].toString());
+            map.put("offer",objects[2].toString());
+            map.put("compid",compid+"");
+            parmList.add(map);
+        }
+        long rcdid = GenIdUtil.getUnqId();
+        parm.add(new Object[]{bal,compid});
+
+        parm.add(new Object[]{rcdid,coupRet.get(0)[0],
+                compid,0,128});
+        int[] ret = baseDao.updateTransNative(new String[]{UPDATE_COMP_BAL,courdSql}, parm);
+
+        if(!ModelUtil.updateTransEmpty(ret)){
+            try{
+                String jsonDto = GsonUtils.javaBeanToJson(parmList);
+                LogUtil.getDefaultLogger().debug("jsonDTO:"+jsonDto);
+                IceRemoteUtil.insertNewComerBalCoup(compid,jsonDto);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            //TODO  短信发送 ！bal
+          //  SmsUtil.sendSmsBySystemTemp(uph+"",0,new String[]{});
+            return result.success("领取成功");
         }
         return result.success("领取失败");
     }
@@ -1532,5 +1629,8 @@ public class CouponManageModule {
 //        //List<CouponPubVO> couponPubVOS,int compid
 //        //filterCoupon()
 //    }
+public static void main(String[] args) {
+
+}
 
 }

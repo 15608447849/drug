@@ -55,7 +55,7 @@ public class CouponRevModule {
             " SELECT COUNT(0) "
             + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + " WHERE cstatus = 0 AND ctype != 2 "
-            + " startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
+            + " AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
             + " AND compid = ?  ";
 
     /**
@@ -672,6 +672,42 @@ public class CouponRevModule {
                 INSERT_GLBCOUPONREV_SQL,
                 new Object[]{GenIdUtil.getUnqId(),666666L,compid,2110,"全局现金券",1,2,0,amt});
     }
+
+
+    /**
+     * 记录新人专享领取记录
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result insertNewComerBalCoupon(AppContext appContext){
+        Result result = new Result();
+        String json = appContext.param.json;
+        List<HashMap<String,String>> hashMaps = new ArrayList<>();
+        Gson gson = new Gson();
+        JsonArray array = new JsonParser().parse(json).getAsJsonArray();
+        for (JsonElement element : array) {
+            HashMap<String,String> map = gson.fromJson(element, HashMap.class);
+            hashMaps.add(map);
+        }
+        List<Object[]> parms = new ArrayList<>();
+
+        for (HashMap map : hashMaps){
+            parms.add(new Object[]{GenIdUtil.getUnqId(),map.get("coupno"),
+                    map.get("compid"),2110,"全局现金券",1,4,0,map.get("offer")});
+        }
+
+        int[] ret = baseDao.updateBatchNativeSharding(Integer.parseInt(hashMaps.get(0).get("compid")),
+                TimeUtils.getCurrentYear(), INSERT_GLBCOUPONREV_SQL, parms, parms.size());
+
+        if(!ModelUtil.updateTransEmpty(ret)){
+            return result.success("领取成功");
+        }
+        return result.fail("领取失败");
+    }
+
+
+
 
 
 

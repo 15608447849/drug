@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
+import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.prop.AppProperties;
 import com.onek.util.area.AreaEntity;
@@ -413,6 +414,11 @@ public class IceRemoteUtil {
         return null;
     }
 
+    /**
+     * 根据企业码获取订单数
+     * @param compid
+     * @return
+     */
     public static long getOrderCntByCompid(int compid){
         String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","getOrderCntByCompid")
                 .setArrayParams(compid)
@@ -421,6 +427,12 @@ public class IceRemoteUtil {
 
     }
 
+    /**
+     * 更新余额
+     * @param compid
+     * @param amt
+     * @return
+     */
     public static int updateCompBal(int compid,int amt){
         String result = ic.setServerAndRequest("discountServer",
                 "CouponManageModule","updateCompBal")
@@ -429,6 +441,12 @@ public class IceRemoteUtil {
         return Integer.parseInt(result);
     }
 
+    /**
+     * 新增余额
+     * @param compid
+     * @param amt
+     * @return
+     */
     public static int insertBalCoup(int compid,int amt){
         String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertBalCoup")
                 .setArrayParams(compid,amt)
@@ -437,6 +455,11 @@ public class IceRemoteUtil {
     }
 
 
+    /**
+     * 查询企业余额
+     * @param compid
+     * @return
+     */
     public static int queryCompBal(int compid){
         String result = ic.setServerAndRequest("discountServer",
                 "CouponManageModule","queryCompBal")
@@ -480,6 +503,40 @@ public class IceRemoteUtil {
         map.put("priority",priority);
         return ic.setServerAndRequest("globalServer","NoticeModule","add").setJsonParams(map).execute();
     }
+
+
+    /**
+     * 记录新人有礼活动领取优惠券记录
+     * @param compid
+     * @param content
+     * @return
+     */
+    public static int insertNewComerBalCoup(int compid,String content){
+        String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertNewComerBalCoupon")
+                .settingParam(content)
+                .execute();
+        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
+
+    /**
+     * 领取新人有礼活动领取优惠券记录
+     * @param compid
+     * @return
+     */
+    public static int revNewComerCoupon(int compid,long pho){
+        String result = ic.setServerAndRequest("discountServer","CouponManageModule","revNewComerCoupon")
+                .setArrayParams(compid,pho)
+                .execute();
+        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
+
+
+
+
 
 
 

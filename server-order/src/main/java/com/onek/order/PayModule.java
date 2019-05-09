@@ -353,7 +353,10 @@ public class PayModule {
         List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
-            baseDao.convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight", "coupamt","distamt","rvaddno","balamt"});
+//            "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,balamt,orderno," +
+//                    "IFNULL(address,'') address,pdnum,IFNULL(consignee,'') consignee,IFNULL(contact,'') contact
+            baseDao.convToEntity(list, result, TranOrder.class, new String[]{
+                    "payamt","odate","otime","pdamt","freight", "coupamt","distamt","rvaddno","balamt"});
 
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
             double pdamt = MathUtil.exactDiv(result[0].getPdamt(), 100).doubleValue();
@@ -371,6 +374,8 @@ public class PayModule {
             jsonResult.put("coupamt", coupamt);
             jsonResult.put("distamt", distamt);
             jsonResult.put("balamt", balamt);
+            jsonResult.put("consignee", String.valueOf(list.get(0)[12]));
+            jsonResult.put("contact", String.valueOf(list.get(0)[13]));
 
             List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, new Object[]{ orderno, compid});
             if(trans != null && trans.size() > 0){
