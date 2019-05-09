@@ -349,6 +349,19 @@ public class CouponManageModule {
         } else {
             return result.fail("新增失败");
         }
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        try {
+            long startTime = dateFormat.parse(couponVO.getStartdate() +
+                    " " + couponVO.getTimeVOS().get(0).getSdate()).getTime();
+            if (startTime > new Date().getTime()) {
+                ExecutorService executors = Executors.newSingleThreadExecutor();
+                executors.execute(() -> IceRemoteUtil.sendMessageToAllClient(SmsTempNo.NEW_COUPONS,
+                        "", "【" +couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
+                                " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行"));
+            }
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
         return result.success("新增成功");
     }
 
@@ -921,9 +934,10 @@ public class CouponManageModule {
         } else {
             return result.fail("修改失败");
         }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         try {
-            long startTime = dateFormat.parse(couponVO.getStartdate()).getTime();
+            long startTime = dateFormat.parse(couponVO.getStartdate() +
+                    " " + couponVO.getTimeVOS().get(0).getSdate()).getTime();
             if (startTime > new Date().getTime()) {
                 ExecutorService executors = Executors.newSingleThreadExecutor();
                 executors.execute(() -> IceRemoteUtil.sendMessageToAllClient(SmsTempNo.NEW_COUPONS,
