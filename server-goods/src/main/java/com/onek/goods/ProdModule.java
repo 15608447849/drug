@@ -102,38 +102,58 @@ public class ProdModule {
 
     @UserPermission(ignore = true)
     public Result getNewMallFloor(AppContext appContext) {
-        List<Integer> bb = new ArrayList() {{
-            add(128);
-            add(512);
-        }};
-        Set<Integer> result = new HashSet<>();
-        NumUtil.perComAdd(256, bb, result);
-        result.add(256);
-        int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
-        int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        Map<String, Object> resultMap= getFilterProdsCommon(appContext, result, "",2, pageIndex, pageSize);
-        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
+        List<ProdVO> prodList = getFloorByState(1, appContext);
 
         return new Result().success(prodList);
     }
 
     @UserPermission(ignore = true)
     public Result getChooseForYouMallFloor(AppContext appContext) {
-        List<Integer> bb1 = new ArrayList() {{
-            add(218);
-            add(256);
-        }};
-        Set<Integer> result1 = new HashSet<>();
-        NumUtil.perComAdd(512, bb1, result1);
-        result1.add(512);
+
+        List<ProdVO> prodList = getFloorByState(2, appContext);
+
+        return new Result().success(prodList);
+    }
+
+    @UserPermission(ignore = true)
+    public Result getFamousPrescriptionFloor(AppContext appContext) {
+
+        List<ProdVO> prodList = getFloorByState(3, appContext);
+
+        return new Result().success(prodList);
+    }
+
+    public List<ProdVO> getFloorByState(int state, AppContext appContext){
+
+        Set<Integer> result = new HashSet<>();
+        if(state == 1){ // 新品
+            List<Integer> bb = new ArrayList() {{
+                add(128); add(512); add(1024);
+            }};
+            NumUtil.perComAdd(256, bb, result);
+            result.add(256);
+        }else if(state == 2){ // 为你精选
+            List<Integer> bb1 = new ArrayList() {{
+                add(218); add(256); add(1024);
+            }};
+            NumUtil.perComAdd(512, bb1, result);
+            result.add(512);
+        }else if(state == 3){ // 名方
+            List<Integer> bb1 = new ArrayList() {{
+                add(218); add(256); add(512);
+            }};
+            NumUtil.perComAdd(1024, bb1, result);
+            result.add(1024);
+        }
+
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        Map<String, Object> resultMap  = getFilterProdsCommon(appContext, result1,  "",1, pageIndex, pageSize);
+        Map<String, Object> resultMap  = getFilterProdsCommon(appContext, result,  "",1, pageIndex, pageSize);
         List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
 
-        return new Result().success(prodList);
+        return prodList;
     }
 
     @UserPermission(ignore = true)
@@ -357,34 +377,6 @@ public class ProdModule {
     }
 
     @UserPermission(ignore = true)
-    public Result newProdSearch(AppContext appContext) {
-        List<Integer> bb = new ArrayList() {{
-            add(128);
-            add(512);
-        }};
-        Set<Integer> result = new HashSet<>();
-        NumUtil.perComAdd(256, bb, result);
-        result.add(256);
-        int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
-        int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
-        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
-        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
-
-        Map<String, Object> resultMap = getFilterProdsCommon(appContext, result, keyword, 2, pageIndex, pageSize);
-        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
-        SearchResponse response = (SearchResponse)resultMap.get("response");
-
-        Result r = new Result();
-        Page page = new Page();
-        page.pageSize = appContext.param.pageNumber;
-        page.pageIndex = appContext.param.pageIndex;
-        page.totalItems = response != null  && response.getHits() != null ?  (int)response.getHits().getTotalHits() : 0;
-        PageHolder pageHolder = new PageHolder(page);
-        pageHolder.value = page;
-        return r.setQuery(prodList, pageHolder);
-    }
-
-    @UserPermission(ignore = true)
     public Result hotProdSearch(AppContext appContext) {
 
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
@@ -464,21 +456,54 @@ public class ProdModule {
     }
 
     @UserPermission(ignore = true)
+    public Result newProdSearch(AppContext appContext) {
+
+        return searchByState(1, appContext);
+
+    }
+
+    @UserPermission(ignore = true)
     public Result chooseForYouSearch(AppContext appContext) {
-        List<Integer> bb1 = new ArrayList() {{
-            add(218);
-            add(256);
-        }};
-        Set<Integer> result1 = new HashSet<>();
-        NumUtil.perComAdd(512, bb1, result1);
-        result1.add(512);
+
+        return searchByState(2, appContext);
+
+    }
+
+    @UserPermission(ignore = true)
+    public Result famousPrescriptionSearch(AppContext appContext) {
+
+        return searchByState(3, appContext);
+    }
+
+    public Result searchByState(int state,AppContext appContext){
+
+        Set<Integer> result = new HashSet<>();
+        if(state == 1){ // 新品
+            List<Integer> bb = new ArrayList() {{
+                add(128);  add(512); ; add(1024);
+            }};
+            NumUtil.perComAdd(256, bb, result);
+            result.add(256);
+        }else if(state == 2){ // 为你精选
+            List<Integer> bb1 = new ArrayList() {{
+                add(218); add(256); add(1024);
+            }};
+            NumUtil.perComAdd(512, bb1, result);
+            result.add(512);
+        }else if(state == 3){ // 中华名方
+            List<Integer> bb1 = new ArrayList() {{
+                add(218); add(256); add(512);
+            }};;
+            NumUtil.perComAdd(1024, bb1, result);
+            result.add(1024);
+        }
+
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
-
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        Map<String, Object> resultMap = getFilterProdsCommon(appContext, result1,  keyword,1, pageIndex, pageSize);
+        Map<String, Object> resultMap = getFilterProdsCommon(appContext, result, keyword, 2, pageIndex, pageSize);
         List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
         SearchResponse response = (SearchResponse)resultMap.get("response");
 
@@ -490,6 +515,7 @@ public class ProdModule {
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
         return r.setQuery(prodList, pageHolder);
+
     }
 
     @UserPermission(ignore = true)
@@ -660,8 +686,7 @@ public class ProdModule {
                     assembleData(appContext, response, prodList);
                 }
                 List<Integer> bb1 = new ArrayList() {{
-                    add(218);
-                    add(256);
+                    add(218);  add(256); add(1024);
                 }};
                 Set<Integer> result1 = new HashSet<>();
                 NumUtil.perComAdd(512, bb1, result1);
