@@ -1177,7 +1177,7 @@ public class ProdModule {
         long sku = jsonObject.get("sku").getAsLong();
         String selectSQL = "select unqid,orderno,level,descmatch,logisticssrv,"
                 + "content,createtdate,createtime,cstatus,compid from {{?"
-                + DSMConst.TD_TRAN_APPRAISE + "}} where cstatus&1=0 and sku=" + sku;
+                + DSMConst.TD_TRAN_APPRAISE + "}} where cstatus&1=0 and sku=" + sku + " order by oid desc";
         List<Object[]> queryResult = BASE_DAO.queryNativeSharding(0, localDateTime.getYear(),
                 pageHolder, page, selectSQL);
         AppriseVO[] appriseVOS = new AppriseVO[queryResult.size()];
