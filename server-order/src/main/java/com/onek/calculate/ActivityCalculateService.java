@@ -37,7 +37,7 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
             Gift[] gArray = new Gift[queryResult.size()];
 
             BaseDAO.getBaseDAO().convToEntity(queryResult, gArray, Gift.class,
-                    new String[] { "id", "giftName", "giftValue" });
+                    new String[] { "id", "giftName", "giftDesc" });
 
             result.addAll(Arrays.asList(gArray));
         }
