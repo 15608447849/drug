@@ -133,7 +133,7 @@ public class MyFootprintModule {
 
         String selectSql = "SELECT unqid,sku,browsedate,browsetime " +
                 "FROM {{?"+TD_FOOTPRINT+"}} " +
-                "WHERE compid = ?";
+                "WHERE compid = ? ORDER BY browsedate DESC,browsetime DESC";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
                 selectSql,compId);
         assert lines!=null;
@@ -157,13 +157,6 @@ public class MyFootprintModule {
         List<ResultItem> items = new ArrayList<>();
         try {
             int compId = appContext.getUserSession().compId;
-
-            String selectSql = "SELECT unqid,sku,browsedate,browsetime " +
-                    "FROM {{?"+TD_FOOTPRINT+"}} " +
-                    "WHERE compid = ? ORDER BY browsedate DESC,browsetime DESC";
-            List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
-                    selectSql,compId);
-            assert lines!=null;
             List<Param> list = selectInfoByComp(compId);
             for (Param it : list){
                 ResultItem rit = null;

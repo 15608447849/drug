@@ -11,8 +11,10 @@ import com.onek.util.IceRemoteUtil
 import com.onek.util.RedisGlobalKeys
 import com.onek.util.SmsTempNo.AUTHENTICATION_FAILURE
 import com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS
+import com.onek.util.SmsUtil
 import com.onek.util.member.MemberEntity
 import constant.DSMConst
+import constant.DSMConst.D_SYSTEM_USER
 import dao.BaseDAO
 import redis.IRedisPartCache
 import redis.proxy.CacheProxyInstance
@@ -67,7 +69,13 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
             if (i > 0) {
                 updateCompInfoToCacheById(companyId!!.toInt()) //更新企业信息到缓存
                 if(auditStatus == 256) {
+                    val tempLines = BaseDAO.getBaseDAO().queryNative("SELECT uphone FROM {{?$D_SYSTEM_USER}} WHERE cid = ?", companyId)
+                    if (lines.size == 1) {
+                        val phone =  tempLines[0][0].toString()
+                        SmsUtil.sendSmsBySystemTemp(phone,AUTHENTICATION_SUCCESS)
+                    }
                     IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_SUCCESS)
+
                     giftPoints(companyId!!.toInt())
                     try {
                         IceRemoteUtil.revNewComerCoupon(companyId!!.toInt(), context!!.userSession.phone.toLong())

@@ -4,6 +4,7 @@ import org.apache.http.client.fluent.Request;
 import properties.abs.ApplicationPropertiesBase;
 import properties.annotations.PropertiesFilePath;
 import properties.annotations.PropertiesName;
+import util.StringUtils;
 
 import java.net.URLEncoder;
 import java.security.MessageDigest;
@@ -11,6 +12,8 @@ import java.text.SimpleDateFormat;
 import java.util.Base64;
 import java.util.Date;
 import java.util.List;
+
+import static com.onek.util.SmsTempNo.isSmsAllow;
 
 /**
  * @description: 发送短信工具
@@ -34,15 +37,16 @@ public class SmsUtil  extends ApplicationPropertiesBase {
     @PropertiesName("sms.password")
     public String password;
 
-    public static String sendMsg(String phone, String context) {
+    public static String sendMsg(String phone, String content) {
         try {
+            if (StringUtils.isEmpty(content)) return null;
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
             String timestamp = sdf.format(new Date());
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             md5.update(INSTANCE.username.getBytes("utf8"));
             md5.update(INSTANCE.password.getBytes("utf8"));
             md5.update(timestamp.getBytes("utf8"));
-            md5.update(context.getBytes("utf8"));
+            md5.update(content.getBytes("utf8"));
 
             Base64.Encoder encoder = Base64.getEncoder();
             String passwordMd5 = encoder.encodeToString(md5.digest());
@@ -52,7 +56,7 @@ public class SmsUtil  extends ApplicationPropertiesBase {
             // 短信相关的必须参数
             String mobile = phone;
             /*        String extendCode = "4443";*/
-            String message = context;
+            String message = content;
 
             // 装配GET所需的参数
             StringBuilder sb = new StringBuilder();
@@ -78,9 +82,10 @@ public class SmsUtil  extends ApplicationPropertiesBase {
         return null;
     }
 
-
+    //发送系统消息到指定号码
     public static void sendSmsBySystemTemp(String phone,int tempNo,String... params){
         IOThreadUtils.runTask(()->{
+            if (!isSmsAllow(tempNo)) return;
             //获取短信
             String message = IceRemoteUtil.getMessageByNo(tempNo,params);
             SmsUtil.sendMsg(phone,message);
@@ -90,12 +95,11 @@ public class SmsUtil  extends ApplicationPropertiesBase {
     //发送短信到所有人
     public static void sendMsgToAllBySystemTemp(int tempNo,String... params){
         IOThreadUtils.runTask(()->{
+            if (!isSmsAllow(tempNo)) return;
             //获取消息
             String message = IceRemoteUtil.getMessageByNo(tempNo,params);
-
             //获取所有用户手机号码
            List<String> list =  IceRemoteUtil.getAllStorePhone();
-
             //循环发送
             for (String phone : list){
                 SmsUtil.sendMsg(phone,message);

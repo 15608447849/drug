@@ -7,7 +7,7 @@ import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GaoDeMapUtil;
+import util.GaoDeMapUtil;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import util.StringUtils;
@@ -28,7 +28,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
     String addressCode; //地区码
     public double longitude;//营业执照地址纬度
     public double latitude;//营业执照地址经度
-
+    public String compid; //返回前端的企业ID
 
     @Override
     public Result execute(AppContext context) {
@@ -110,7 +110,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 );
                 if (i > 0){
                     updateCompInfoToCacheById(session.compId);//更新企业信息到缓存
-                    return new Result().success("门店修改信息成功");
+                    return new Result().success("门店修改信息成功").setHashMap("compid", session.compId);
                 }
             }
         }else{
@@ -145,8 +145,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 updateCompInfoToCacheById(session.compId);//更新企业信息到缓存
                 //企业关联会员
                 compLinkMember(session.compId);
-
-                return new Result().success("新增门店信息,关联成功");
+                return new Result().success("新增门店信息,关联成功").setHashMap("compid",session.compId);
             }
         }
         return new Result().fail("关联异常");

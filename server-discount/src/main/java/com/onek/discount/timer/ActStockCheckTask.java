@@ -3,6 +3,7 @@ package com.onek.discount.timer;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdDiscountObserver;
+import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -39,6 +40,12 @@ public class ActStockCheckTask extends TimerTask {
                 if(goodsCode > 0 && String.valueOf(goodsCode).length() >= 14){
                     RedisStockUtil.clearActStock(goodsCode, actCode);
                     RedisStockUtil.clearActInitStock(goodsCode, actCode);
+                }
+                if(actCode > 0 &&  String.valueOf(result[0]).length() >= 14){
+                    try {
+                        LogUtil.getDefaultLogger().info("###### DiscountRuleTask reset act buy num actcode:["+actCode+"] gcode:["+ goodsCode+"]###########");
+                        RedisOrderUtil.resetActBuyNum(goodsCode, actCode);
+                    }catch (Exception e){ e.printStackTrace();}
                 }
             }
 
