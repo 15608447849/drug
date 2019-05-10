@@ -39,6 +39,7 @@ import util.TimeUtils;
 import java.math.BigDecimal;
 import java.util.*;
 
+import static com.onek.order.TranOrderOptModule.CANCEL_DELAYED;
 import static com.onek.order.TranOrderOptModule.getGoodsArr;
 
 public class PayModule {
@@ -46,6 +47,12 @@ public class PayModule {
             new RedisDelayedHandler<>("_DELIVERY", 24,
                     (d) -> new TranOrderOptModule().delivery(d.getOrderNo(), d.getCompid()),
                     DelayedHandler.TIME_TYPE.HOUR);
+
+    //线下即付变为待发货一小时轮询
+    public static final DelayedHandler<DelayedBase> CANCEL_XXJF =
+            new RedisDelayedHandler<>("_CANEL_XXJF", 60,
+                    (d) -> toBeShipped(d.getOrderNo(), d.getCompid()),
+                    DelayedHandler.TIME_TYPE.MINUTES);
 
     public static final String PAY_TYPE_ALI = "alipay";
     public static final String PAY_TYPE_WX = "wxpay";
@@ -585,6 +592,7 @@ public class PayModule {
 
     @UserPermission(ignore = false)
     public Result offlinePay(AppContext appContext) {
+        int result;
         String json = appContext.param.json;
         JSONObject jsonObject = JSON.parseObject(json);
         String orderno = jsonObject.getString("orderno");
@@ -595,31 +603,23 @@ public class PayModule {
         if(!StringUtils.isBiggerZero(orderno) || compid <= 0){
             return new Result().fail("获取订单号或企业码失败!");
         }
+        String updateSQL =  "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,"
+                + "odate=CURRENT_DATE,otime=CURRENT_TIME, payway=? where cstatus&1=0 and orderno=? and ostatus=? ";
         //线下到付、线下即付订单状态改为待发货，结算状态仍为未结算
-        int result = baseDao.updateNativeSharding(compid, year, UPD_ORDER_STATUS, 1,0, null,null,paytype, orderno, 0);
+        if (paytype == 4){
+            result = baseDao.updateNativeSharding(compid, year, updateSQL, 0,paytype, orderno, 0);
+            if (result > 0) {
+                CANCEL_DELAYED.removeByKey(orderno);
+                CANCEL_XXJF.add(new DelayedBase(compid, orderno));
+            }
+        } else {
+            result = baseDao.updateNativeSharding(compid, year, updateSQL,
+                    1, paytype, orderno, 0);
+            if (result > 0) {
+                DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
+            }
+        }
         return result > 0 ? new Result().success("订单提交成功") : new Result().fail("订单提交失败");
-//        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
-//                GET_PAY_SQL + " AND ostatus = 0 ", new Object[]{ orderno, compid });
-//
-//        if(!list.isEmpty()) {
-//            TranOrder[] result = new TranOrder[list.size()];
-//            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt"});
-//
-//            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100)
-//                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-//
-//            double balamt = MathUtil.exactDiv(result[0].getBalamt(), 100)
-//                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-//
-//            if(payamt <= 0){
-//                return new Result().fail("支付金额不能小于0!");
-//            }
-//            payCallBack(appContext);
-//
-//            return new Result().success("支付成功");
-//        }else{
-//            return new Result().fail("未查到/已支付【"+orderno+"】的订单!");
-//        }
     }
 
     public static int getPaySpreadBal(int compid,String orderno){
@@ -675,5 +675,27 @@ public class PayModule {
 
     public static int getOrderServerNo(int compid){
         return compid /  GLOBALConst._DMNUM % GLOBALConst._SMALLINTMAX;
+    }
+
+    
+    /* *
+     * @description 线下即付将订单状态 未付款--->>待发货
+     * @params [orderNo, compid]
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/5/10 15:44
+     * @version 1.1.1
+     **/
+    private static boolean toBeShipped(String orderNo, int compid) {
+        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+        String updateSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
+                + " where cstatus&1=0 and orderno=? and ostatus=? and payway=?";
+        int result = baseDao.updateNativeSharding(compid, year, updateSQL, 1, orderNo, 0, 4);
+        if (result > 0) {
+            CANCEL_XXJF.removeByKey(orderNo);
+            DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
+        }
+        return result > 0;
     }
 }
