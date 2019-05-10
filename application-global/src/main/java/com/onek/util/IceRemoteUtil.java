@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
-import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.prop.AppProperties;
 import com.onek.util.area.AreaEntity;
@@ -483,25 +482,30 @@ public class IceRemoteUtil {
      */
     public static String addNotice(String title , String type, String editor,int priority, File image){
 
-        //上传图片
-        String json = new HttpRequest().addFile(
-                image,
-                FileServerUtils.defaultNotice(),  //远程路径
-                EncryptUtils.encryption(type+title+editor)+".png")//文件名
-                .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
-                .getRespondContent();
-        HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
-        ArrayList<LinkedTreeMap<String,Object>> list = (ArrayList<LinkedTreeMap<String, Object>>) maps.get("data");
-        assert list != null;
-        String img = list.get(0).get("relativePath").toString();
+        try {
+            //上传图片
+            String json = new HttpRequest().addFile(
+                    image,
+                    FileServerUtils.defaultNotice(),  //远程路径
+                    EncryptUtils.encryption(type+title+editor)+".png")//文件名
+                    .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
+                    .getRespondContent();
+            HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
+            ArrayList<LinkedTreeMap<String,Object>> list = (ArrayList<LinkedTreeMap<String, Object>>) maps.get("data");
+            assert list != null;
+            String img = list.get(0).get("relativePath").toString();
 
-        HashMap<String,Object> map = new HashMap<>();
-        map.put("title",title);
-        map.put("type",type);
-        map.put("editor",editor);
-        map.put("img",img);
-        map.put("priority",priority);
-        return ic.setServerAndRequest("globalServer","NoticeModule","add").setJsonParams(map).execute();
+            HashMap<String,Object> map = new HashMap<>();
+            map.put("title",title);
+            map.put("type",type);
+            map.put("editor",editor);
+            map.put("img",img);
+            map.put("priority",priority);
+            return ic.setServerAndRequest("globalServer","NoticeModule","add").setJsonParams(map).execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
 
@@ -512,12 +516,17 @@ public class IceRemoteUtil {
      * @return
      */
     public static int insertNewComerBalCoup(int compid,String content){
-        String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertNewComerBalCoupon")
-                .settingParam(content)
-                .execute();
-        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
-        assert ret != null;
-        return ret.code;
+        try {
+            String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertNewComerBalCoupon")
+                    .settingParam(content)
+                    .execute();
+            Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+            assert ret != null;
+            return ret.code;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
     /**
@@ -526,12 +535,17 @@ public class IceRemoteUtil {
      * @return
      */
     public static int revNewComerCoupon(int compid,long pho){
-        String result = ic.setServerAndRequest("discountServer","CouponManageModule","revNewComerCoupon")
-                .setArrayParams(compid,pho)
-                .execute();
-        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
-        assert ret != null;
-        return ret.code;
+        try {
+            String result = ic.setServerAndRequest("discountServer","CouponManageModule","revNewComerCoupon")
+                    .setArrayParams(compid,pho)
+                    .execute();
+            Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+            assert ret != null;
+            return ret.code;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
     }
 
 
