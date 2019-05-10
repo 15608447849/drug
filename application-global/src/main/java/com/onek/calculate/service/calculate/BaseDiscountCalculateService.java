@@ -9,23 +9,27 @@ import util.ArrayUtil;
 import java.util.List;
 
 public abstract class BaseDiscountCalculateService implements ICalculateService {
+    protected IDiscount currDiscount = null;
+
     @Override
     public void calculate(List<? extends IDiscount> discountList) {
         for (IDiscount iDiscount : discountList) {
-            if (iDiscount.getBRule() == 1133
-             || iDiscount.getBRule() == 1113) {
+            currDiscount = iDiscount;
+
+            if (currDiscount.getBRule() == 1133
+             || currDiscount.getBRule() == 1113) {
                 // 不计算团购和秒杀
                 continue;
             }
 
-            discountHandler(iDiscount);
+            discountHandler();
         }
 
         DiscountUtil.updateAllPrices(DiscountUtil.getProds(discountList));
     }
 
-    protected void discountHandler(IDiscount discount) {
-        long actNo = discount.getDiscountNo();
+    protected void discountHandler() {
+        long actNo = currDiscount.getDiscountNo();
 
         Ladoff[] ladoff = getLadoffs(actNo);
 
@@ -33,8 +37,8 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             return;
         }
 
-        double priceTotal = DiscountUtil.getCurrentPriceTotal(discount.getProductList());
-        int numsTotal = DiscountUtil.getNumTotal(discount.getProductList());
+        double priceTotal = DiscountUtil.getCurrentPriceTotal(currDiscount.getProductList());
+        int numsTotal = DiscountUtil.getNumTotal(currDiscount.getProductList());
 
         Ladoff currentLadoff = getLadoffable(ladoff, priceTotal, numsTotal);
 
@@ -42,7 +46,7 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             return;
         }
 
-        new RuleParser(currentLadoff.getOffercode()).parser(discount, currentLadoff);
+        new RuleParser(currentLadoff.getOffercode()).parser(currDiscount, currentLadoff);
     }
 
     protected final Ladoff getLadoffable(Ladoff[] ladoffs, double price, int nums) {
@@ -72,6 +76,7 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
         return null;
     }
 
+    /* 按照最高满足持续降序排列 */
     protected abstract Ladoff[] getLadoffs(long actCode);
 }
 
