@@ -15,7 +15,6 @@ import com.onek.util.SmsUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceClassUtil;
 import com.onek.util.stock.RedisStockUtil;
-import com.sun.org.apache.xml.internal.resolver.readers.ExtendedXMLCatalogReader;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchClientFactory;
