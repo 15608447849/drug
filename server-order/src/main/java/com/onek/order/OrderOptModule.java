@@ -92,7 +92,7 @@ public class OrderOptModule {
             "ckstatus,gstatus,apdata,aptime,checkern,contact,address,refamt/100 refamt,compn from "+
             " {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp inner join {{?"+
             TD_BK_TRAN_GOODS+"}} goods on asapp.orderno = goods.orderno and "+
-            " asapp.pdno = goods.pdno" +
+            " asapp.pdno = goods.pdno and asapp.compid = goods.compid " +
             " inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders" +
             " on orders.orderno = goods.orderno where asno != 0 ";
 
