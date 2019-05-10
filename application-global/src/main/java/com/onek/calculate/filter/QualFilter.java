@@ -54,7 +54,8 @@ public class QualFilter extends BaseFilter {
                     break;
                 case AREA:
                     result = qualValue != 0
-                            && (qualValue == getCurrentArea() || !AreaUtil.isChildren(qualValue, getCurrentArea()));
+                            && qualValue != getCurrentArea()
+                            && !AreaUtil.isChildren(qualValue, getCurrentArea());
                     break;
                 default:
                     break;
