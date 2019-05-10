@@ -8,6 +8,7 @@ import com.onek.propagation.prod.ProdDiscountObserver;
 import com.onek.util.IOThreadUtils;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
+import com.onek.util.SmsUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
@@ -180,7 +181,19 @@ public class TeamBuyTask extends TimerTask {
                 for(TeamBuyMsgBody body : msgBodyList){
                     double endp = MathUtil.exactDiv(body.getEndprice(), 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                     double minusp = MathUtil.exactDiv(body.getMinusprice(), 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                    IceRemoteUtil.sendMessageToClient(Integer.parseInt(body.getCompid()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.GROUP_BUYING_END, body.getOrderno(), body.getPnum() ,String.valueOf(endp), String.valueOf(minusp)));
+                    try{
+                        IceRemoteUtil.sendMessageToClient(Integer.parseInt(body.getCompid()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.GROUP_BUYING_END, body.getOrderno(), body.getPnum() ,String.valueOf(endp), String.valueOf(minusp)));
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+
+                    try{
+                        String phone = IceRemoteUtil.getSpecifyStorePhone(Integer.parseInt(body.getCompid()));
+                        SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.GROUP_BUYING_END,body.getOrderno(), body.getPnum() ,String.valueOf(endp), String.valueOf(minusp));
+                    }catch(Exception e){
+                        e.printStackTrace();
+                    }
+
                 }
             }
             LogUtil.getDefaultLogger().info("++++++ TeamBuyTask sendMsg end +++++++");
