@@ -742,53 +742,43 @@ public class PayModule {
         }
     }
 
+    @UserPermission(ignore = false)
     public Result offlinePay(AppContext appContext) {
         String json = appContext.param.json;
         JSONObject jsonObject = JSON.parseObject(json);
         String orderno = jsonObject.getString("orderno");
+        int year = Integer.parseInt("20" + orderno.substring(0, 2));
         int compid = jsonObject.getIntValue("compid");
-        String paytype = jsonObject.getString("paytype");
+        Integer paytype = jsonObject.getInteger("paytype");
 
         if(!StringUtils.isBiggerZero(orderno) || compid <= 0){
             return new Result().fail("获取订单号或企业码失败!");
         }
-
-        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
-                GET_PAY_SQL + " AND ostatus = 0 ", new Object[]{ orderno, compid });
-
-        if(!list.isEmpty()) {
-            TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt"});
-
-            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100)
-                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-            if(payamt <= 0){
-                return new Result().fail("支付金额不能小于0!");
-            }
-
-            appContext.param.arrays = new String[7];
-            // 订单号
-            appContext.param.arrays[0] = orderno;
-            // 支付类型
-            appContext.param.arrays[1] = paytype;
-            // 第三方支付码
-            appContext.param.arrays[2] = "";
-            // 支付状态
-            appContext.param.arrays[3] = "1";
-            // 支付时间
-            appContext.param.arrays[4] = TimeUtils.date_yMd_Hms_2String(new Date());
-            // 支付金额
-            appContext.param.arrays[5] = String.valueOf(payamt);
-            // 支付企业
-            appContext.param.arrays[6] = String.valueOf(compid);
-
-            payCallBack(appContext);
-
-            return new Result().success("支付成功");
-        }else{
-            return new Result().fail("未查到/已支付【"+orderno+"】的订单!");
-        }
+        //线下到付、线下即付订单状态改为待发货，结算状态仍为未结算
+        int result = baseDao.updateNativeSharding(compid, year, UPD_ORDER_STATUS, 1,0, null,null,paytype, orderno, 0);
+        return result > 0 ? new Result().success("订单提交成功") : new Result().fail("订单提交失败");
+//        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+//                GET_PAY_SQL + " AND ostatus = 0 ", new Object[]{ orderno, compid });
+//
+//        if(!list.isEmpty()) {
+//            TranOrder[] result = new TranOrder[list.size()];
+//            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt"});
+//
+//            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100)
+//                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+//
+//            double balamt = MathUtil.exactDiv(result[0].getBalamt(), 100)
+//                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+//
+//            if(payamt <= 0){
+//                return new Result().fail("支付金额不能小于0!");
+//            }
+//            payCallBack(appContext);
+//
+//            return new Result().success("支付成功");
+//        }else{
+//            return new Result().fail("未查到/已支付【"+orderno+"】的订单!");
+//        }
     }
 
     public static int getPaySpreadBal(int compid,String orderno){
@@ -798,7 +788,7 @@ public class PayModule {
             BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime", "pdamt", "freight", "coupamt", "distamt", "rvaddno","balamt"});
             double payamt = result[0].getPayamt();
             double bal = result[0].getBalamt();
-            if(bal > 0 && payamt > 0){
+            if(bal > 0 && payamt >= 0){
                 return new Double(bal).intValue();
             }
         }
