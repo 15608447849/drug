@@ -11,29 +11,6 @@ public class Product extends AccurateMath implements IProduct {
     private double originalPrice;
     private double currentPrice;
     private double discounted;
-    private long packageId;
-    private Set<Long> activityList = new HashSet<>();
-//    private List<Gift> giftList = new ArrayList<Gift>();
-
-    /**
-    //商品标题
-    private String ptitle;
-
-    //规格
-    private String spec;
-
-    //厂商
-    private String verdor;
-
-    //有效期
-    private String vperiod;
-
-    //库存量
-    private int inventory;
-     */
-
-
-
 
     public long getSku() {
         return sku;
@@ -57,34 +34,6 @@ public class Product extends AccurateMath implements IProduct {
         return discounted;
     }
 
-    public void setDiscounted(double discounted) {
-        this.discounted = discounted;
-    }
-
-    public long getPackageId() {
-        return packageId;
-    }
-
-    public void setPackageId(long packageId) {
-        this.packageId = packageId;
-    }
-
-    public Set<Long> getActivityList() {
-        return activityList;
-    }
-
-    public void setActivityList(Set<Long> activityList) {
-        this.activityList = activityList;
-    }
-
-//    public List<Gift> getGiftList() {
-//        return giftList;
-//    }
-//
-//    public void setGiftList(List<Gift> giftList) {
-//        this.giftList = giftList;
-//    }
-
     public void setSku(long sku) { this.sku = sku; }
 
     public long getSKU() {
@@ -93,19 +42,6 @@ public class Product extends AccurateMath implements IProduct {
 
     public int getNums() {
         return this.nums;
-    }
-
-//    public void addGift(Gift gift) {
-//        this.giftList.add(gift);
-//    }
-//
-//    @Override
-//    public void addGifts(List<Gift> gifts) {
-//        this.giftList.addAll(gifts);
-//    }
-
-    public void addActivity(long activity) {
-        this.activityList.add(activity);
     }
 
     public double getOriginalPrice() {

@@ -329,14 +329,6 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-        if (appContext.isAnonymous()) {
-            for (BgProdVO returnResult : returnResults) {
-                returnResult.setRrp(-1);
-                returnResult.setMp(-1);
-                returnResult.setVatp(-1);
-            }
-        }
-
         return new Result().success(returnResults[0]);
     }
 
