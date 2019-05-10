@@ -199,9 +199,10 @@ public class ActivityManageModule {
         } else {//新增
             result = insertActivity(activityVO, cpt);
         }
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         try {
-            long startTime = dateFormat.parse(activityVO.getSdate()).getTime();
+            long startTime = dateFormat.parse(activityVO.getSdate()+
+                    " " + activityVO.getTimeVOS().get(0).getSdate()).getTime();
             if (startTime > new Date().getTime()) {
                 ExecutorService executors = Executors.newSingleThreadExecutor();
                 executors.execute(() -> IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
