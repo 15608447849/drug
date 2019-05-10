@@ -59,8 +59,6 @@ public class PayModule {
 
     private static final String GET_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,balamt,orderno,IFNULL(address,'') address,pdnum,IFNULL(consignee,'') consignee,IFNULL(contact,'') contact from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ?";
 
-    private static final String UPDATE_SKU_SALES = "update {{?" + DSMConst.TD_PROD_SKU + "}} set sales = sales + ? where sku = ?";
-
     private static final String QUERY_ORDER_GOODS = "select g.pdno,g.pnum,g.promtype,g.actcode from {{?" + DSMConst.TD_TRAN_ORDER + "}} o,{{?" + DSMConst.TD_TRAN_GOODS + "}} g" +
             " where g.orderno = o.orderno and o.orderno = ? and o.cusno = ?";
 
@@ -73,8 +71,6 @@ public class PayModule {
     //释放商品冻结库存
     private static final String UPD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "store=store-?, freezestore=freezestore-? where cstatus&1=0 and sku=? ";
-
-    private static final String INSERT_PROM_GROUP = "insert into {{?" + DSMConst.TD_PROM_GROUP + "}} (unqid,actcode,compid,joindate,jointime) values(?,?,?,CURRENT_DATE,CURRENT_TIME) ";
 
     //更新活动库存
     private static final String UPD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
@@ -94,10 +90,6 @@ public class PayModule {
             + "completedate,completetime,cstatus)"
             + " values(?,?,?,?,?,"
             + "?,?,0)";
-
-    private static String INSERT_INTEGRAL_DETAIL_SQL = "insert into {{?"+ DSMConst.TD_INTEGRAL_DETAIL + "}} " +
-            "(unqid,compid,istatus,integral,busid,createdate,createtime,cstatus) values(?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";
-
 
     private static final String UPD_ASAPP_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set cstatus=cstatus&~1 "
             + " where cstatus&1>0 and asno=? ";
@@ -287,10 +279,10 @@ public class PayModule {
             result = failOpt(orderno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
 
-        new SendMsgThread(orderno, tradeStatus ,money, compid, tradeDate).start();
+        OrderUtil.sendMsg(orderno, tradeStatus ,money, compid, tradeDate);
         if("1".equals(tradeStatus)) {
-            new GenLccOrderThread(compid, orderno).start();
-            new UpdateSalesThread(compid, orderno).start();
+            OrderUtil.generateLccOrder(compid, orderno);
+            OrderUtil.updateSales(compid, orderno);
         }
         if(result){
             return new Result().success(null);
@@ -331,7 +323,7 @@ public class PayModule {
             result = failOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
 
-        new SendMsgThread(afsano, tradeStatus ,money, compid, tradeDate).start();
+        OrderUtil.sendMsg(afsano, tradeStatus ,money, compid, tradeDate);
 
         if(result){
             return new Result().success(null);
@@ -589,157 +581,6 @@ public class PayModule {
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
         return !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,TimeUtils.getCurrentYear(), sqlNative, params));
-    }
-
-    class SendMsgThread extends Thread{
-        private String orderno;
-        private String tradeStatus;
-        private double money;
-        private int compid;
-        private String tradeDate;
-
-        public SendMsgThread(String orderno, String tradeStatus, double money, int compid, String tradeDate){
-            this.orderno = orderno;
-            this.tradeStatus = tradeStatus;
-            this.money = money;
-            this.compid = compid;
-            this.tradeDate = tradeDate;
-        }
-
-        @Override
-        public void run() {
-            JSONObject jsonObject = new JSONObject();
-            JSONObject body = new JSONObject();
-            body.put("orderNo", orderno);
-            body.put("tradeStatus", tradeStatus);
-            body.put("money", money);
-            body.put("compid", compid);
-            body.put("tradeDate", tradeDate);
-            jsonObject.put("event", MessageEvent.PAY_CALLBACK.getState());
-            jsonObject.put("body", body);
-            IceRemoteUtil.sendMessageToClient(compid, jsonObject.toJSONString());
-
-            if(orderno.length() >= 16 &&  "1".equals(tradeStatus)){
-                IceRemoteUtil.sendMessageToClient(compid, SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.ORDER_PAYMENT_SUCCESSFUL,orderno));
-            }
-        }
-    }
-
-    class GenLccOrderThread extends  Thread{
-        private int compid;
-        private String orderno;
-
-        public GenLccOrderThread(int compid, String orderno){
-            this.compid = compid;
-            this.orderno = orderno;
-        }
-
-
-        public void run(){
-
-            System.out.println("## 541 line "+compid+ ";"+orderno+" ####");
-            List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
-            if(list != null && list.size() > 0) {
-                TranOrder[] result = new TranOrder[list.size()];
-                BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt", "odate", "otime", "pdamt", "freight", "coupamt", "distamt", "rvaddno","balamt", "orderno", "address","pdnum","consignee","contact"});
-
-                TranOrder tranOrder = result[0];
-
-                String arriarc = "";
-                AreaEntity[] areaEntities = IceRemoteUtil.getAncestors(tranOrder.getRvaddno());
-                if(areaEntities != null && areaEntities.length > 0){
-                    for(int i = areaEntities.length - 1; i>=0; i--){
-                        if(areaEntities[i] != null && !StringUtils.isEmpty(areaEntities[i].getLcareac()) && Integer.parseInt(areaEntities[i].getLcareac()) > 0){
-                            arriarc = areaEntities[i].getLcareac();
-                            break;
-                        }
-                    }
-                }
-
-                if(StringUtils.isEmpty(arriarc) && tranOrder.getRvaddno() > 0){
-                    arriarc = "10" + String.valueOf(tranOrder.getRvaddno()).substring(0,7);
-                }
-
-                if(StringUtils.isEmpty(arriarc)){
-                    arriarc = "10";
-                }
-
-                String lccResult = LccOrderUtil.addLccOrder(tranOrder, arriarc);
-                if(!StringUtils.isEmpty(lccResult)){
-                    JSONObject jsonObject = JSONObject.parseObject(lccResult);
-                    if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
-                        System.out.println("## 生成一块物流订单成功 ####");
-                    }else{
-                        System.out.println("## 生成一块物流订单失败 ####");
-                    }
-                }
-
-                long unqid = GenIdUtil.getUnqId();
-                int payamt = MathUtil.exactDiv(tranOrder.getPayamt(), 100).intValue();
-                int code = MemberStore.addPoint(compid, payamt);
-                if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_ORDER_GIVE, payamt, orderno,0 });
-
-            }
-
-        }
-    }
-
-    class UpdateSalesThread extends  Thread{
-
-        private int compid;
-        private String orderno;
-
-        public UpdateSalesThread(int compid, String orderno){
-            this.compid = compid;
-            this.orderno = orderno;
-        }
-
-        public void run(){
-
-            List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), QUERY_ORDER_GOODS, new Object[]{ orderno, compid});
-            if(list != null && list.size() > 0) {
-
-                for(Object[] obj : list){
-                    long sku = Long.parseLong(obj[0].toString());
-                    int sales = Integer.parseInt(obj[1].toString());
-
-                    GetResponse response = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku +"");
-                    boolean updateSuccess = false;
-                    if(response != null){
-                        Map<String, Object> data = response.getSourceAsMap();
-                        int orgsales = data.get(ESConstant.PROD_COLUMN_SALES) != null ? Integer.parseInt(data.get(ESConstant.PROD_COLUMN_SALES).toString()) : 0;
-                        data.put(ESConstant.PROD_COLUMN_SALES, sales + orgsales);
-                        HashMap detail = (HashMap) data.get("detail");
-                        data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(detail));
-                        data.put(ESConstant.PROD_COLUMN_TIME, data.get(ESConstant.PROD_COLUMN_TIME).toString());
-                        UpdateResponse updateResponse = ElasticSearchProvider.updateDocumentById(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
-                        if(response != null && RestStatus.OK == updateResponse.status()) {
-                            updateSuccess = true;
-                        }
-                    }
-                    if(updateSuccess){
-                        BaseDAO.getBaseDAO().updateNative(UPDATE_SKU_SALES, new Object[]{ sales, sku});
-                    }
-                }
-
-                try{
-                    RedisOrderUtil.addOrderNumByCompid(compid);
-                }catch (Exception e){}
-
-                for(Object[] obj : list) {
-                    int promtype = Integer.parseInt(obj[2].toString());
-                    String actCodeStr = obj[3].toString();
-                    if((promtype & 4096) > 0 && !StringUtils.isEmpty(actCodeStr)){
-                        List<Long> actCodeList = JSON.parseArray(actCodeStr).toJavaList(Long.class);
-                        for (Long actCode: actCodeList) {
-                            baseDao.updateNative(INSERT_PROM_GROUP, GenIdUtil.getUnqId(), actCode, compid);
-                        }
-
-                    }
-                }
-            }
-
-        }
     }
 
     @UserPermission(ignore = false)
