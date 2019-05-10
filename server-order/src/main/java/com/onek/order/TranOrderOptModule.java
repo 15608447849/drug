@@ -85,7 +85,7 @@ public class TranOrderOptModule {
     private static final String UPD_TRAN_GOODS = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set "
             + "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
             + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME, actcode=? where cstatus&1=0 and "
-            + " pdno=? and orderno=0";
+            + " pdno=? and compid = ? and orderno=0";
 
     //是否要减商品总库存
     private static final String UPD_GOODS = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
@@ -561,7 +561,7 @@ public class TranOrderOptModule {
 //                    + " pdno=? and orderno=0";
             params.add(new Object[]{orderNo, tranOrderGoods.getPdprice(), tranOrderGoods.getDistprice(), tranOrderGoods.getPayamt(),
                     tranOrderGoods.getCoupamt(), tranOrderGoods.getPromtype(), tranOrderGoods.getPkgno(), tranOrderGoods.getActcode(),
-                    tranOrderGoods.getPdno()});
+                    tranOrderGoods.getPdno(),tranOrderGoods.getCompid()});
         }
     }
 
