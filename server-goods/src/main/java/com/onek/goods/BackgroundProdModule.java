@@ -2,12 +2,15 @@ package com.onek.goods;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
+import com.onek.goods.util.CalculateUtil;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
@@ -300,7 +303,12 @@ public class BackgroundProdModule {
             }
         }
 
-        return new Result().success(returnResults[0]);
+        JSONObject jo = JSON.parseObject(JSON.toJSONString(returnResults[0]));
+
+        jo.put("minPrice", CalculateUtil.getProdMinPrice(
+                returnResults[0].getSku(), returnResults[0].getVatp()));
+
+        return new Result().success(jo);
     }
 
     public Result getSPUInfo(AppContext appContext) {
