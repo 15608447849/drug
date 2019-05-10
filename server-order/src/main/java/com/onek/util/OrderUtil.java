@@ -1,5 +1,6 @@
 package com.onek.util;
 
+import IceInternal.Ex;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.consts.ESConstant;
@@ -100,9 +101,18 @@ public class OrderUtil {
             jsonObject.put("body", body);
             IceRemoteUtil.sendMessageToClient(compid, jsonObject.toJSONString());
 
-            if(orderno.length() >= 16 &&  "1".equals(tradeStatus)){
-                IceRemoteUtil.sendMessageToClient(compid, SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.ORDER_PAYMENT_SUCCESSFUL,orderno));
-//                SmsUtil.sendSmsBySystemTemp();
+            if(orderno.length() >= 16 &&  "1".equals(tradeStatus)){ // 交易成功
+                try{
+                    IceRemoteUtil.sendMessageToClient(compid, SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.ORDER_PAYMENT_SUCCESSFUL,orderno));
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
+                try{
+                    String phone = IceRemoteUtil.getSpecifyStorePhone(compid);
+                    SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.ORDER_PAYMENT_SUCCESSFUL,orderno);
+                }catch(Exception e){
+                    e.printStackTrace();
+                }
             }
         }
     }

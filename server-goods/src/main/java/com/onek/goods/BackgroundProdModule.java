@@ -11,9 +11,11 @@ import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
+import com.onek.util.SmsUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceClassUtil;
 import com.onek.util.stock.RedisStockUtil;
+import com.sun.org.apache.xml.internal.resolver.readers.ExtendedXMLCatalogReader;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchClientFactory;
@@ -749,7 +751,17 @@ public class BackgroundProdModule {
                         if(prize > vatp){
                             double p = MathUtil.exactDiv(prize, 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             double v = MathUtil.exactDiv(vatp, 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                            IceRemoteUtil.sendMessageToClient(Integer.parseInt(data.get("compid").toString()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname,String.valueOf(p), String.valueOf(v)));
+                            try{
+                                IceRemoteUtil.sendMessageToClient(Integer.parseInt(data.get("compid").toString()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname,String.valueOf(p), String.valueOf(v)));
+                            }catch (Exception e){
+                                e.printStackTrace();
+                            }
+                            try{
+                                String phone = IceRemoteUtil.getSpecifyStorePhone(Integer.parseInt(data.get("compid").toString()));
+                                SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname,String.valueOf(p), String.valueOf(v));
+                            }catch(Exception e){
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }
