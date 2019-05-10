@@ -5,8 +5,12 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.onek.context.AppContext;
 import com.onek.entity.AsAppVO;
 import com.onek.entitys.Result;
+import com.onek.util.dict.DictStore;
+import com.onek.util.prod.ProdEntity;
+import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import util.MathUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
@@ -100,6 +104,27 @@ public class BackOrderOptModule {
         AsAppVO[] result = new AsAppVO[queryResult.size()];
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, AsAppVO.class);
+
+        ProdEntity prod;
+        for (AsAppVO asAppVO : result) {
+            asAppVO.setRefamt(MathUtil.exactDiv(asAppVO.getRefamt(), 100.0).doubleValue());
+            try {
+                asAppVO.setReasonName(DictStore.getDictById(asAppVO.getReason()).getText());
+            } catch (Exception e) {}
+
+            try {
+                prod = ProdInfoStore.getProdBySku(asAppVO.getPdno());
+            } catch (Exception e) { prod=null; }
+
+            if (prod != null) {
+                asAppVO.setProdname(prod.getProdname());
+                asAppVO.setSpec(prod.getSpec());
+                asAppVO.setBrandname(prod.getBrandName());
+                asAppVO.setManuname(prod.getManuName());
+                asAppVO.setSpu(String.valueOf(asAppVO.getPdno())
+                        .substring(0, 12));
+            }
+        }
 
         return new Result().setQuery(result, pageHolder);
     }
