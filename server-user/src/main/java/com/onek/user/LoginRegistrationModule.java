@@ -6,7 +6,12 @@ import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.user.operations.*;
+import com.onek.util.SmsUtil;
+import util.GaoDeMapUtil;
 import util.GsonUtils;
+import util.TimeUtils;
+
+import java.util.Date;
 
 import static com.onek.user.operations.StoreBasicInfoOp.getStoreInfoById;
 import static com.onek.user.operations.StoreBasicInfoOp.infoToCache;
@@ -116,7 +121,13 @@ public class LoginRegistrationModule {
         try {
 //            UserSession userSession = appContext.getUserSession();
 //            appContext.logger.print("用户:"+ userSession+" 登出中...");
-            if (appContext.clearTokenByUserSession())  return new Result().success("登出成功");
+            String phone = appContext.getUserSession().phone;
+            String ip = appContext.remoteIp;
+            if (appContext.clearTokenByUserSession()) {
+                SmsUtil.sendMsg(phone,
+                        "尊敬的用户,您在北京时间" + TimeUtils.date_yMd_Hms_2String(new Date())+"在"+ GaoDeMapUtil.ipConvertAddress(ip)+"登出一块物流直采平台,期待您的下次使用。");
+                return new Result().success("登出成功");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

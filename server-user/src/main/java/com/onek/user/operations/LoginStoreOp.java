@@ -5,11 +5,15 @@ import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.user.service.USProperties;
+import com.onek.util.SmsUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
+import util.GaoDeMapUtil;
 import util.StringUtils;
+import util.TimeUtils;
 
+import java.util.Date;
 import java.util.List;
 
 import static Ice.Application.communicator;
@@ -57,7 +61,9 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
             //关联token-用户信息
             if (relationTokenUserSession(context)){
-
+                    //发送登陆成功消息
+                    SmsUtil.sendMsg(userSession.phone,
+                            "尊敬的用户,您已于北京时间" + TimeUtils.date_yMd_Hms_2String(new Date())+"在"+ GaoDeMapUtil.ipConvertAddress(userSession.lastIp)+"成功登陆一块物流直采平台,欢迎您的使用。如非本人操作请及时修改密码");
                 return new Result().success("登陆成功");
             }
             else return new Result().success("无法关联用户信息");
