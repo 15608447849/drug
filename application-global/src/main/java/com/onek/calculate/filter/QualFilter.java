@@ -23,7 +23,7 @@ public class QualFilter extends BaseFilter {
 
     private Integer currentLV;
     private Integer currentOrdNum;
-    private Integer currentArea;
+    private Long currentArea;
 
     public QualFilter(int compid) {
         this.compid = compid;
@@ -54,7 +54,8 @@ public class QualFilter extends BaseFilter {
                     break;
                 case AREA:
                     result = qualValue != 0
-                            && (qualValue == getCurrentArea() || !AreaUtil.isChildren(qualValue, getCurrentArea()));
+                            && qualValue != getCurrentArea()
+                            && !AreaUtil.isChildren(qualValue, getCurrentArea());
                     break;
                 default:
                     break;
@@ -82,13 +83,13 @@ public class QualFilter extends BaseFilter {
         return this.currentOrdNum;
     }
 
-    private Integer getCurrentArea() {
+    private Long getCurrentArea() {
         if (this.currentArea == null) {
             String compStr = RedisUtil.getStringProvide()
                     .get(String.valueOf(this.compid));
 
             JSONObject compJson = JSON.parseObject(compStr);
-            this.currentArea = compJson.getIntValue("addressCode");
+            this.currentArea = compJson.getLongValue("addressCode");
         }
 
         return this.currentArea;

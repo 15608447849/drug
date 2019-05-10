@@ -2,12 +2,15 @@ package com.onek.goods;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
+import com.onek.goods.util.CalculateUtil;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
@@ -15,15 +18,12 @@ import com.onek.util.SmsUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceClassUtil;
 import com.onek.util.stock.RedisStockUtil;
-import com.sun.org.apache.xml.internal.resolver.readers.ExtendedXMLCatalogReader;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchClientFactory;
-import elasticsearch.ElasticSearchProvider;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -37,8 +37,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
 public class BackgroundProdModule {
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
@@ -305,7 +303,12 @@ public class BackgroundProdModule {
             }
         }
 
-        return new Result().success(returnResults[0]);
+        JSONObject jo = JSON.parseObject(JSON.toJSONString(returnResults[0]));
+
+        jo.put("minPrice", CalculateUtil.getProdMinPrice(
+                returnResults[0].getSku(), returnResults[0].getVatp()));
+
+        return new Result().success(jo);
     }
 
     public Result getSPUInfo(AppContext appContext) {
@@ -330,14 +333,6 @@ public class BackgroundProdModule {
         BASE_DAO.convToEntity(queryResult, returnResults, BgProdVO.class);
 
         convProds(returnResults);
-
-        if (appContext.isAnonymous()) {
-            for (BgProdVO returnResult : returnResults) {
-                returnResult.setRrp(-1);
-                returnResult.setMp(-1);
-                returnResult.setVatp(-1);
-            }
-        }
 
         return new Result().success(returnResults[0]);
     }

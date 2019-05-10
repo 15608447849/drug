@@ -8,8 +8,10 @@ import com.onek.calculate.entity.*;
 import com.onek.calculate.filter.*;
 import com.onek.calculate.service.calculate.CouponCalculateService;
 import com.onek.calculate.util.DiscountUtil;
-import util.StringUtils;
+import util.ArrayUtil;
+import util.MathUtil;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 public class CalculateUtil {
@@ -20,7 +22,6 @@ public class CalculateUtil {
         }
     };
 
-
     public static List<IDiscount> getDiscount(int compid, List<? extends IProduct> products) {
         if (compid <= 0) {
             return Collections.EMPTY_LIST;
@@ -28,18 +29,18 @@ public class CalculateUtil {
 
         List<IDiscount> discounts
                 = new ActivityFilterService(
-                        new ActivitiesFilter[] {
-                                new CycleFilter(),
-                                new QualFilter(compid),
-                                new PriorityFilter(),})
-                 .getCurrentActivities(products);
+                new ActivitiesFilter[] {
+                        new CycleFilter(),
+                        new QualFilter(compid),
+                        new PriorityFilter(), })
+                .getCurrentActivities(products);
 
         return discounts;
     }
 
     public static DiscountResult calculate(int compid,
-                                     List<? extends IProduct> products,
-                                     long couponUnqid) {
+                                           List<? extends IProduct> products,
+                                           long couponUnqid) {
         if (compid <= 0) {
             return new DiscountResult(Collections.EMPTY_LIST, 0.0, products);
         }

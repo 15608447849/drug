@@ -64,17 +64,18 @@ public class OrderOptModule {
 
     //更新订单相关商品售后状态
     private static final String UPD_ORDER_GOODS_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
-            + " where cstatus&1=0 and pdno=? and asstatus=? and orderno=?";
+            + " where cstatus&1=0 and pdno=? and asstatus=? and orderno=? and compid = ? ";
 
     //更新售后表售后状态
-    private static final String UPD_ASAPP_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set ckstatus=? "
-            + " where cstatus&1=0 and pdno=? ";
+    private static final String UPD_ASAPP_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set ckstatus=?,"
+            + " where cstatus&1=0 and pdno=? and orderno = ? and compid = ?";
 
 
 
     //更新售后表售后审核状态(-1－拒绝； 0－未审核 ；1－审核通过)
     private static final String UPD_ASAPP_CK_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set ckstatus=?, "
-            + "ckdate = CURRENT_DATE,cktime = CURRENT_TIME,checker = ?,checkern = ?,astype = ?,ckdesc = ?,refamt = ? where cstatus&1=0 and asno=? ";
+            + "ckdate = CURRENT_DATE,cktime = CURRENT_TIME,checker = ?,checkern = ?,astype = ?,ckdesc = ?,refamt = ?" +
+            " where cstatus&1=0 and  ckstatus = 0 and asno=?  ";
 
 
     //查询售后详情
@@ -94,13 +95,13 @@ public class OrderOptModule {
             TD_BK_TRAN_GOODS+"}} goods on asapp.orderno = goods.orderno and "+
             " asapp.pdno = goods.pdno and asapp.compid = goods.compid " +
             " inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders" +
-            " on orders.orderno = goods.orderno where asno != 0 ";
+            " on orders.orderno = goods.orderno where asapp.cstatus & 1 = 0 and asno != 0 ";
 
     //查询发票售后详情
     private static final String QUERY_ASAPP_INVOICE_INFO_SQL = "  select asapp.orderno,asapp.compid,asapp.asno,asapp.pdno,asapp.asnum," +
             "astype,reason,apdesc,refamt,ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,invoice " +
             " from {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp  inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders " +
-            " on asapp.orderno = orders.orderno where asapp.asno = ? and asno != 0";
+            " on asapp.orderno = orders.orderno where asapp.cstatus & 1 = 0 and asapp.asno = ? and asno != 0";
 
     //查询发票售后详情
     private static final String QUERY_GOODS_SQL = " select goods.pdno,goods.pnum,goods.pdprice,goods.distprice,goods.payamt from {{?"+
@@ -111,7 +112,7 @@ public class OrderOptModule {
             "ckstatus,gstatus,apdata,aptime,checkern,contact,address,compn from "+
             " {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp " +
             " inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders" +
-            " on asapp.orderno = orders.orderno where asno != 0 and asapp.astype in (3,4) ";
+            " on asapp.orderno = orders.orderno where asno != 0 and asapp.cstatus & 1 = 0 and asapp.astype in (3,4) ";
 
 
     //查询团购订单记录
@@ -121,11 +122,11 @@ public class OrderOptModule {
 
     //更新订单售后状态
     private static final String UPD_ORDER_CK_SQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
-            + " where cstatus&1=0 and orderno=? and ostatus = ?";
+            + " where cstatus&1=0 and orderno=? and ostatus = ? ";
 
     //更新订单相关商品售后状态
     private static final String UPD_ORDER_GOODS_CK_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
-            + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=?";
+            + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=? and compid  = ? ";
 
     /* *
      * @description 评价
@@ -284,13 +285,13 @@ public class OrderOptModule {
         if (skuList.size() == tranOrderGoods.length) {
             for (TranOrderGoods tog : tranOrderGoods) {
                 sqlList.add(UPD_ORDER_GOODS_SQL);
-                params.add(new Object[]{1,tog.getPdno(),0, orderNo});
+                params.add(new Object[]{1,tog.getPdno(),0, orderNo,compid});
             }
         } else {
             for (AsAppVO asAppVO : asAppVOS) {
                 long sku = asAppVO.getPdno();
                 sqlList.add(UPD_ORDER_GOODS_SQL);
-                params.add(new Object[]{1, sku, 0, orderNo});
+                params.add(new Object[]{1, sku, 0, orderNo,compid});
             }
         }
     }
@@ -335,17 +336,20 @@ public class OrderOptModule {
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         int compId = jsonObject.get("compid").getAsInt();
         long sku = jsonObject.get("sku").getAsLong();
+
 //        String updOrderSql = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set "
 //                + "asstatus=? where cstatus&1=0 and orderno=? and asstatus in(1,2,3)";
         //更新订单商品售后状态
         String updOrderGoodsSql = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
-                + " where cstatus&1=0 and pdno=? and asstatus in(1,2,3)";
-        int resultCode = baseDao.updateNativeSharding(compId, year, updOrderGoodsSql, -1, sku);
+                + " where cstatus&1=0 and pdno=? and orderno = ? and compid = ? and asstatus in(1,2,3)";
+        int resultCode = baseDao.updateNativeSharding(compId, year, updOrderGoodsSql,
+                -1, sku,orderNo,compId);
 
         if (resultCode > 0) {
             //更新售后表状态
             resultCode = baseDao.updateNativeSharding(0,localDateTime.getYear(),
-                    UPD_ASAPP_SQL, -2, sku);
+                    UPD_ASAPP_SQL, -2, sku,orderNo,compId);
+
         }
         return resultCode > 0 ? result.success("取消成功") : result.fail("取消失败");
 //        sqlList.add(updOrderSql);
@@ -413,8 +417,8 @@ public class OrderOptModule {
 
         if (ret > 0){
             //退货失败
-            int ostatus = -5;
-            int gstatus = 200;
+            int ostatus = 3;
+            int gstatus = 4;
             if(ckstatus == 1){
                 ostatus = -2;
                 gstatus = 3;
@@ -422,7 +426,7 @@ public class OrderOptModule {
             int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
             List<Object[]> params = new ArrayList<>();
             params.add(new Object[]{ostatus, queryRet.get(0)[0],-1});
-            params.add(new Object[]{gstatus, queryRet.get(0)[2],-1,queryRet.get(0)[0]});
+            params.add(new Object[]{gstatus, queryRet.get(0)[2],1,queryRet.get(0)[0],queryRet.get(0)[1]});
             baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()),year,
             new String[]{UPD_ORDER_CK_SQL,UPD_ORDER_GOODS_CK_SQL},params);
         }
