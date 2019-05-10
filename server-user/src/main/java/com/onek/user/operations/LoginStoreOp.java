@@ -63,7 +63,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
             if (relationTokenUserSession(context)){
                     //发送登陆成功消息
                     SmsUtil.sendMsg(userSession.phone,
-                            "尊敬的用户,您已于北京时间" + TimeUtils.date_yMd_Hms_2String(new Date())+"在"+ GaoDeMapUtil.ipConvertAddress(userSession.lastIp)+"成功登陆一块物流直采平台,欢迎您的使用。如非本人操作请及时修改密码");
+                            "尊敬的用户,您已于北京时间" + TimeUtils.date_yMd_Hms_2String(new Date())+"在"+ GaoDeMapUtil.ipConvertAddress(userSession.lastIp)+"成功登陆一块医药直采平台,欢迎您的使用。如非本人操作请及时修改密码");
                 return new Result().success("登陆成功");
             }
             else return new Result().success("无法关联用户信息");
