@@ -575,6 +575,11 @@ module myOrder{
          * 查询企业动态
          */
         string queryEnterpriseDynamics(int pubcompid, cstruct::Page page, out cstruct::Page pageOut);
+
+        /**
+        * 根据订单号查询最后承运商名称（一块医药专用）
+        */
+        string getCarrierName(long orderno, int pubcompid);
     };
 
 };

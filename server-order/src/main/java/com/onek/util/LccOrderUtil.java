@@ -104,14 +104,10 @@ public class LccOrderUtil {
                      traceJson.put("billno", key);
                      traceJson.put("logictype", "0");
                      try{
-                         OrderServicePrx orderService =(OrderServicePrx) RpcClientUtil.getServicePrx(OrderServicePrx.class);
-                         String r = orderService.getOrderDetail(new String[] {key,LccProperties.INSTANCE.puberid+"",LccProperties.INSTANCE.pubercompid+""});
+                         MyOrderServerPrx myOrderServer =(MyOrderServerPrx) RpcClientUtil.getServicePrx(MyOrderServerPrx.class);
+                         String r = myOrderServer.getCarrierName(Long.parseLong(key), LccProperties.INSTANCE.pubercompid);
                          if(!StringUtils.isEmpty(r)){
-                             JSONObject j = JSONObject.parseObject(r);
-                             if(Integer.parseInt(j.get("code").toString()) == 0) {
-                                 JSONObject d = (JSONObject) j.get("obj");
-                                 carrierName = d.getString("puberCarrier");
-                             }
+                             carrierName = r;
                          }
                      }catch(Exception e){}
 
@@ -140,8 +136,8 @@ public class LccOrderUtil {
         return traceJson;
     }
 
-//    public static void main(String[] args) {
-//        JSONObject result = LccOrderUtil.queryTraceByOrderno("1905040000007404");
-//        System.out.println(result.toJSONString());
-//    }
+    public static void main(String[] args) {
+        JSONObject result = LccOrderUtil.queryTraceByOrderno("1905040000007404");
+        System.out.println(result.toJSONString());
+    }
 }
