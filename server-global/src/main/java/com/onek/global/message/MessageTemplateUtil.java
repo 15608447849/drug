@@ -1,16 +1,15 @@
 package com.onek.global.message;
 
-import constant.DSMConst;
 import dao.BaseDAO;
 
 import java.util.List;
 import java.util.Locale;
 
+import static constant.DSMConst.D_SMS_TEMPLATE;
+
 /**
- * @author 11842
- * @version 1.1.1
- * @description
- * @time 2019/3/19 16:28
+ * lzp
+ * 消息模板处理工具
  **/
 public class MessageTemplateUtil {
     //模板编号+参数 -> 内容
@@ -22,11 +21,20 @@ public class MessageTemplateUtil {
     }
     //数据库获取模板
     private static String getTmpByTno(int tno) {
-        String selectSql = "SELECT tcontext FROM {{?" + DSMConst.D_SMS_TEMPLATE + "}} WHERE cstatus&1=0 and tno=" +tno;
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
+        String selectSql = "SELECT tcontext FROM {{?" + D_SMS_TEMPLATE + "}} WHERE cstatus&1=0 and tno= ?";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,tno);
         if (lines.size() == 1){
             return lines.get(0)[0].toString();
         }
         return null;
+    }
+
+    public static String messageTempStatus(int tno) {
+        String selectSql = "SELECT cstatus FROM {{?" +D_SMS_TEMPLATE+ "}} WHERE tno = ?";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,tno);
+        if (lines.size() == 1){
+            return lines.get(0)[0].toString();
+        }
+        return "0";
     }
 }

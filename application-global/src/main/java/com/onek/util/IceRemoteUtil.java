@@ -14,6 +14,7 @@ import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
 import util.EncryptUtils;
 import util.GsonUtils;
+import util.StringUtils;
 import util.http.HttpRequest;
 
 import java.io.File;
@@ -60,10 +61,8 @@ public class IceRemoteUtil {
         return null;
     }
 
-
     /**
      * 根据sku查询商品信息
-     *
      * @param sku
      * @return
      * @author jiangwenguang
@@ -77,6 +76,7 @@ public class IceRemoteUtil {
         }
         return null;
     }
+
     /**
      * lzp
      * 0短信模板序列id ,1及以后:模板需要的占位符信息参数
@@ -85,14 +85,27 @@ public class IceRemoteUtil {
         try {
             return ic.setServerAndRequest("globalServer","MessageModule","convertMessage")
                     .settingParam(args)
-                    .execute().replace("\"","").trim();
+                    .execute().trim();
         } catch (Exception e) {
             e.printStackTrace();
         }
         return null;
     }
 
+    //lzp 获取模板权限值
+    public static int getMessagePower(int tempNo){
+        try {
+          String status =  ic.setServerAndRequest("globalServer","MessageModule","getMessageTempPower")
+                    .setArrayParams(tempNo)
+                    .execute().trim();
+          return Integer.parseInt(status);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 
+    //lzp , 模板id转换成系统消息
     public static String getMessageByNo(int tempNo,String... params){
         try {
             String[] args = new String[params.length+1];
@@ -215,35 +228,39 @@ public class IceRemoteUtil {
     /**
      * 发送消息到指定客户端
      * 消息规则 :  push:消息模板ID#消息模板参数1#消息模板参数2#...
+     * push:1#60030
      */
     public static void sendMessageToClient(int compid,String message){
         int index = getOrderServerNo(compid);
         ic.settingProxy("orderServer"+index).sendMessageToClient(compid+"",message);
     }
 
-    public static void sendTempMessageToClient(int compid,int tempNo,String... params){
-        sendMessageToClient(compid,SmsTempNo.genPushMessageBySystemTemp(tempNo,params));
-    }
-
     //发送消息到全部客户端
     public static void sendMessageToAllClient(String message){
         List<String> list = getAllCompId();
-        for (String compid : list)
+        for (String compid : list){
             try {
                 sendMessageToClient(Integer.parseInt(compid), message);
-            } catch (NumberFormatException e) {
+            } catch (NumberFormatException ignored) {
             }
+        }
     }
 
+    //发送系统消息到指定客户端
+    public static void sendTempMessageToClient(int compid,int tempNo,String... params){
+        if (!SmsTempNo.isPmAllow(tempNo)) return;
+        sendMessageToClient(compid,SmsTempNo.genPushMessageBySystemTemp(tempNo,params));
+    }
 
-    //发送消息到全部客户端
+    //发送系统消息到全部客户端
     public static void sendMessageToAllClient(int tempNo,String... params){
         List<String> list = getAllCompId();
-        for (String compid : list)
+        for (String compid : list){
             try {
                 sendMessageToClient(Integer.parseInt(compid), SmsTempNo.genPushMessageBySystemTemp(tempNo,params));
             } catch (NumberFormatException ignored) {
             }
+        }
     }
 
 
@@ -258,6 +275,12 @@ public class IceRemoteUtil {
     public static List<String> getAllStorePhone() {
         String json = ic.setServerAndRequest("userServer","StoreManageModule","getAllUserPhone").execute();
         return GsonUtils.json2List(json,String.class);
+    }
+
+    //获取指定门店的手机号码
+    public static String getSpecifyStorePhone(int compid) {
+        String phone =  ic.setServerAndRequest("userServer","StoreManageModule","getSpecifyUserPhone").setArrayParams(compid).execute();
+        return StringUtils.isEmpty(phone)? null : phone;
     }
 
     //获取此团购的团购数
