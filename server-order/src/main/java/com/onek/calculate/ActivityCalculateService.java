@@ -20,7 +20,7 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
             + " WHERE 1 = 1 ";
 
     private static final String GET_GIFT =
-            " SELECT * "
+            " SELECT gift.unqid, gift.giftname, gift.giftdesc "
                     + " FROM {{?" + DSMConst.TD_PROM_GIFT + "}} gift "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_ASSGIFT + "}} ass "
                     + " ON gift.unqid = ass.assgiftno AND ass.offercode = ? "
@@ -36,7 +36,8 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
 
             Gift[] gArray = new Gift[queryResult.size()];
 
-            BaseDAO.getBaseDAO().convToEntity(queryResult, gArray, Gift.class);
+            BaseDAO.getBaseDAO().convToEntity(queryResult, gArray, Gift.class,
+                    new String[] { "id", "giftName", "giftValue" });
 
             result.addAll(Arrays.asList(gArray));
         }

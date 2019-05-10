@@ -10,6 +10,7 @@ public class Gift {
 
     private long id;
     private String giftName;
+    private String giftDesc;
     private double giftValue;
     private int nums = 1;
     private int type = TYPE.GIFT;
@@ -81,5 +82,13 @@ public class Gift {
 
     public void setType(int type) {
         this.type = type;
+    }
+
+    public String getGiftDesc() {
+        return giftDesc;
+    }
+
+    public void setGiftDesc(String giftDesc) {
+        this.giftDesc = giftDesc;
     }
 }
