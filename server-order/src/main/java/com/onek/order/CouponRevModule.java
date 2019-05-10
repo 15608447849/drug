@@ -51,11 +51,12 @@ public class CouponRevModule {
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where ctype != 2 and compid = ? ";
 
+
     private final String QUERY_COUPONREV_COUNT =
             " SELECT COUNT(0) "
             + " FROM {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + " WHERE cstatus = 0 AND ctype != 2 "
-            + " AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
+            + " AND  CURRENT_DATE <= enddate "
             + " AND compid = ?  ";
 
     /**
@@ -570,9 +571,11 @@ public class CouponRevModule {
         List<Object[]> coupParams = new ArrayList<>();
         List<Object[]> stockParams = new ArrayList<>();
         List<String> sqlList = new ArrayList<>();
+        List<String> coupSqlList = new ArrayList<>();
         if(discounts == null || discounts.isEmpty()){
             return false;
         }
+        int bal = 0;
         for (IDiscount discount: discounts){
             Activity activity = (Activity) discount;
             List<Gift> giftList = activity.getGiftList();
@@ -600,6 +603,7 @@ public class CouponRevModule {
                     default:
                         break;
                 }
+
                 List<Object[]> queryResult = baseDao.queryNative(QUERY_ACCOUP_SQL, brule);
 
                 if (queryResult == null || queryResult.isEmpty()) {
@@ -611,6 +615,7 @@ public class CouponRevModule {
                 baseDao.convToEntity(queryResult, couponPubVOS, CouponPubVO.class,
                         new String[]{"coupno","glbno","brulecode","validday","validflag",
                                 "reqflag"});
+
                 CouponPubVO couponResult = setCoupValidDay(couponPubVOS[0]);
 
                 CouponPubLadderVO couponPubLadderVO = new CouponPubLadderVO();
@@ -623,15 +628,27 @@ public class CouponRevModule {
                 sqlList.add(UPDATE_COUPON_STOCK_NUM);
                 stockParams.add(new Object[]{gift.getNums(),couponResult.getCoupno()});
                 for (int i = 0; i < gift.getNums(); i++){
-                    coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,
-                            couponResult.getStartdate(), "00:00:00",couponResult.getEnddate(),"00:00:00",
-                            couponResult.getBrulecode(), gift.getGiftName(),0,couponResult.getLadder(),
-                            couponResult.getGlbno(),activity.getUnqid(),1,couponResult.getReqflag(),0});
+                    if(brule == 2110){
+                        bal = bal + new Double(gift.getGiftValue() * 100).intValue();
+                        coupSqlList.add(INSERT_GLBCOUPONREV_SQL);
+                        coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,2110,"全局现金券",1,5,0,new Double(gift.getGiftValue() * 100).intValue()});
+                    }else{
+                        coupSqlList.add(INSERT_ACCOUPONREV_SQL);
+                        coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,
+                                couponResult.getStartdate(), "00:00:00",couponResult.getEnddate(),"00:00:00",
+                                couponResult.getBrulecode(), gift.getGiftName(),0,couponResult.getLadder(),
+                                couponResult.getGlbno(),activity.getUnqid(),1,couponResult.getReqflag(),0});
+                    }
                 }
             }
         }
 
-        int[] result = baseDao.updateBatchNativeSharding(compid,TimeUtils.getCurrentYear(),INSERT_ACCOUPONREV_SQL, coupParams, coupParams.size());
+        String[] sqlArry = new String[coupSqlList.size()];
+        sqlArry = coupSqlList.toArray(sqlArry);
+        //添加余额
+        IceRemoteUtil.updateCompBal(compid,bal);
+        int[] result = baseDao.updateTransNativeSharding(compid,
+                TimeUtils.getCurrentYear(), sqlArry, coupParams);
 
         String[] nativeSQL = new String[sqlList.size()];
         nativeSQL = sqlList.toArray(nativeSQL);
@@ -712,7 +729,7 @@ public class CouponRevModule {
 
 
     public static void main(String[] args) {
-        CouponRevModule couponRevModule = new CouponRevModule();
+       // CouponRevModule couponRevModule = new CouponRevModule();
        // couponRevModule.revGiftCoupon(1904180003111203L,536862723);
     }
 
