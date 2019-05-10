@@ -25,7 +25,7 @@ public class TimeUtils {
     /**
      * 一小时间隔时间
      */
-    public static final long PERIOD_HOUR = 24 * 60 * 60 * 1000;
+    public static final long PERIOD_HOUR = 1 * 60 * 60 * 1000;
 
     /**添加x天*/
     public static Date addDay(Date date, int num) {

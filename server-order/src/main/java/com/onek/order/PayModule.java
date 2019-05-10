@@ -138,7 +138,7 @@ public class PayModule {
 
             return  new Result().success(r);
         }else{
-            return new Result().fail("未查到【"+orderno+"】支付的订单!");
+            return new Result().fail("该订单已支付!");
         }
 
     }
@@ -169,7 +169,7 @@ public class PayModule {
 
             return  new Result().success(r);
         }else{
-            return new Result().fail("未查到【"+orderno+"】支付运费的订单!");
+            return new Result().fail("运费已支付!");
         }
 
     }
