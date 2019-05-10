@@ -23,7 +23,12 @@ public class MessageModule {
         return MessageTemplateUtil.templateConvertMessage(no,params);
     }
 
-
-
-
+    /**
+     * 消息编号获取消息发送权限
+     */
+    @UserPermission(ignore = true)
+    public String getMessageTempPower(AppContext appContext){
+        int no = Integer.parseInt(appContext.param.arrays[0]);
+        return MessageTemplateUtil.messageTempStatus(no);
+    }
 }

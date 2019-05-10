@@ -30,7 +30,12 @@ public class SmsTempNo {
     public static final int ORDER_PAYMENT_SUCCESSFUL = 10;
     public static final int NOTICE_OF_COMMODITY_REDUCTION = 11;
 
+    //发送推送消息的权限值
+    public static final int PUSH_MESSAGE_POWER =  2;
+    //发送短信消息的权限值
+    public static final int POWER_SMS =  4;
 
+    //生成系统消息
     public static String genPushMessageBySystemTemp(int tempNo,String... params){
         String message = "push:"+tempNo;
         if (params!=null && params.length>0){
@@ -39,7 +44,12 @@ public class SmsTempNo {
         return  message;
     }
 
-
-
-
+    //判断短信是否可发送
+    public static boolean isSmsAllow(int tempNo){
+        return (IceRemoteUtil.getMessagePower(tempNo) & SmsTempNo.POWER_SMS) != 0;
+    }
+    //判断短信是否可发送
+    public static boolean isPmAllow(int tempNo){
+        return (IceRemoteUtil.getMessagePower(tempNo) & SmsTempNo.PUSH_MESSAGE_POWER) != 0;
+    }
 }

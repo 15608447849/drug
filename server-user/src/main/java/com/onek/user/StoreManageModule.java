@@ -89,4 +89,18 @@ public class StoreManageModule {
         }
         return map;
     }
+
+    /**
+     * 根据企业码->手机号码
+     */
+    @UserPermission(ignore = true)
+    public String getSpecifyUserPhone(AppContext context){
+        String compId = context.param.arrays[0];
+        String selectSql = "SELECT uphone FROM {{?"+D_SYSTEM_USER+"}} WHERE cid = ?";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,compId);
+        if (lines.size() == 1){
+            return lines.get(0)[0].toString();
+        }
+        return "";
+    }
 }
