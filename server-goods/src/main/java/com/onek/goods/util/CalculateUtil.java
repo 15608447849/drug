@@ -77,8 +77,8 @@ public class CalculateUtil {
                     ls = new ActivityCalculateService().getLadoffs(discount.getDiscountNo());
 
                     if (!ArrayUtil.isEmpty(ls)) {
-                        // 获取最后一个
-                        curr = ls[ls.length - 1];
+                        // 获取第一个
+                        curr = ls[0];
                         if (Character.digit(String.valueOf(curr.getOffercode()).charAt(1), 10) == 1) {
                             value = curr.getOffer();
                             amt = curr.getLadamt();
