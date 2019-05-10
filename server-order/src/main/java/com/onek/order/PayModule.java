@@ -37,6 +37,7 @@ import util.StringUtils;
 import util.TimeUtils;
 
 import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 import static com.onek.order.TranOrderOptModule.getGoodsArr;
@@ -670,6 +671,37 @@ public class PayModule {
         }else{
             return new Result().fail("未查到/已支付【"+orderno+"】的订单!");
         }
+    }
+
+
+    public static int refundBal(String orderno,int compid,int refbal,String remark){
+
+        int ret = 0;
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> params = new ArrayList<>();
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        Date curDate = new Date();
+        String dateStr[] = dateFormat.format(curDate).split(" ");
+        sqlList.add(INSERT_TRAN_TRANS);
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, refbal, 0, 0, -3, GenIdUtil.getUnqId(),
+                    0,dateStr[0],dateStr[1],dateStr[0],dateStr[1],0});
+        sqlList.add(INSERT_TRAN_PAYREC);//新增支付记录
+        String evtInfo = "{"+remark+"}";
+        params.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, evtInfo, "{}", dateStr[0], dateStr[1]});
+        int year = Integer.parseInt("20" + orderno.substring(0,2));
+        String[] sqlNative = new String[sqlList.size()];
+        sqlNative = sqlList.toArray(sqlNative);
+        try{
+            ret = IceRemoteUtil.updateCompBal(compid,refbal);
+        }catch (Exception e){
+            e.printStackTrace();
+            return 0;
+        }
+
+        if(ret > 0){
+            boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
+        }
+        return ret;
     }
 
 
