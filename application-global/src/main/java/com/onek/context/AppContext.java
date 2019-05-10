@@ -84,7 +84,12 @@ public class AppContext extends IceContext {
         //防止多点登陆 - 存入  当前登陆用户k = 已存在的token
         RedisUtil.getStringProvide().set(genUKeyByMore(),genUKey());
         logger.print("登陆成功, 设置当前用户("+genUKeyByMore()+") 唯一token = " +" = "+ genUKey());
+
     }
+
+
+
+
 
     //检测是存在多端登陆的情况
     private void checkMorePointLogin() {

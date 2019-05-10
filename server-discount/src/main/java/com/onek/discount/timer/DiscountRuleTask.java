@@ -44,6 +44,7 @@ public class DiscountRuleTask extends TimerTask {
                 jsonObject.put("discount", "1");
                 jsonObject.put("gcode",  gcode);
                 jsonObject.put("cstatus", cstatus);
+                jsonObject.put("actcode", actcode);
                 jsonObject.put("rulecode", rulecode);
 
                 List<String> list = map.get(rulecode);
@@ -56,12 +57,6 @@ public class DiscountRuleTask extends TimerTask {
 //                if(rulecode == 1113){
 //                    RedisUtil.getSetProvide().delete(RedisGlobalKeys.SECKILLPREFIX + gcode);
 //                }
-                if(Long.parseLong(actcode) > 0 &&  String.valueOf(result[0]).length() >= 14){
-                    try {
-                        LogUtil.getDefaultLogger().info("###### DiscountRuleTask reset act buy num actcode:["+actcode+"] gcode:["+ gcode+"]###########");
-                        RedisOrderUtil.resetActBuyNum(gcode, Long.parseLong(actcode));
-                    }catch (Exception e){ e.printStackTrace();}
-                }
             }
 
             for(Integer rulecode : map.keySet()){

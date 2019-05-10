@@ -116,7 +116,11 @@ public class LoginRegistrationModule {
         try {
 //            UserSession userSession = appContext.getUserSession();
 //            appContext.logger.print("用户:"+ userSession+" 登出中...");
-            if (appContext.clearTokenByUserSession())  return new Result().success("登出成功");
+            String phone = appContext.getUserSession().phone;
+            String ip = appContext.remoteIp;
+            if (appContext.clearTokenByUserSession()) {
+                return new Result().success("登出成功");
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }

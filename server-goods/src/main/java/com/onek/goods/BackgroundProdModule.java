@@ -11,17 +11,16 @@ import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
+import com.onek.util.SmsUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.prod.ProduceClassUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchClientFactory;
-import elasticsearch.ElasticSearchProvider;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.BoolQueryBuilder;
-import org.elasticsearch.index.query.MatchQueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
 import org.elasticsearch.index.query.TermsQueryBuilder;
 import org.elasticsearch.search.SearchHit;
@@ -35,8 +34,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-
-import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
 public class BackgroundProdModule {
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
@@ -741,7 +738,17 @@ public class BackgroundProdModule {
                         if(prize > vatp){
                             double p = MathUtil.exactDiv(prize, 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             double v = MathUtil.exactDiv(vatp, 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                            IceRemoteUtil.sendMessageToClient(Integer.parseInt(data.get("compid").toString()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname,String.valueOf(p), String.valueOf(v)));
+                            try{
+                                IceRemoteUtil.sendMessageToClient(Integer.parseInt(data.get("compid").toString()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname,String.valueOf(p), String.valueOf(v)));
+                            }catch (Exception e){
+                                e.printStackTrace();
+                            }
+                            try{
+                                String phone = IceRemoteUtil.getSpecifyStorePhone(Integer.parseInt(data.get("compid").toString()));
+                                SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname,String.valueOf(p), String.valueOf(v));
+                            }catch(Exception e){
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }

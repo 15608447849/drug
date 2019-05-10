@@ -37,16 +37,16 @@ public class SmsUtil  extends ApplicationPropertiesBase {
     @PropertiesName("sms.password")
     public String password;
 
-    public static String sendMsg(String phone, String context) {
+    public static String sendMsg(String phone, String content) {
         try {
-            if (StringUtils.isEmpty(context)) return null;
+            if (StringUtils.isEmpty(content)) return null;
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
             String timestamp = sdf.format(new Date());
             MessageDigest md5 = MessageDigest.getInstance("MD5");
             md5.update(INSTANCE.username.getBytes("utf8"));
             md5.update(INSTANCE.password.getBytes("utf8"));
             md5.update(timestamp.getBytes("utf8"));
-            md5.update(context.getBytes("utf8"));
+            md5.update(content.getBytes("utf8"));
 
             Base64.Encoder encoder = Base64.getEncoder();
             String passwordMd5 = encoder.encodeToString(md5.digest());
@@ -56,7 +56,7 @@ public class SmsUtil  extends ApplicationPropertiesBase {
             // 短信相关的必须参数
             String mobile = phone;
             /*        String extendCode = "4443";*/
-            String message = context;
+            String message = content;
 
             // 装配GET所需的参数
             StringBuilder sb = new StringBuilder();
