@@ -617,10 +617,10 @@ public class CouponRevModule {
                                 "reqflag"});
 
                 CouponPubVO couponResult = setCoupValidDay(couponPubVOS[0]);
-
                 CouponPubLadderVO couponPubLadderVO = new CouponPubLadderVO();
                 couponPubLadderVO.setUnqid(0);
-                couponPubLadderVO.setOffercode(0);
+
+                couponPubLadderVO.setOffercode(Integer.parseInt(brule+"201"));
                 couponPubLadderVO.setOffer(gift.getGiftValue());
                 couponResult.setLadder(GsonUtils.
                         javaBeanToJson(new CouponPubLadderVO[]{couponPubLadderVO}));
@@ -656,6 +656,51 @@ public class CouponRevModule {
             baseDao.updateTransNative(nativeSQL,stockParams);
         }
         return !ModelUtil.updateTransEmpty(result);
+    }
+
+
+    /**
+     * 获取赠品
+     * @param orderno
+     * @param compid
+     * @return
+     */
+    public List<Gift> revGiftGoods(long orderno,int compid){
+
+        if(compid <= 0){
+            return null;
+        }
+
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                QUERY_ORDER_PRODUCT,orderno);
+
+        if(queryResult == null || queryResult.isEmpty()){
+            return null;
+        }
+
+        Product[] productArray = new Product[queryResult.size()];
+        baseDao.convToEntity(queryResult, productArray, Product.class,
+                new String[]{"sku","nums","originalPrice"});
+
+        for(Product product: productArray){
+            product.autoSetCurrentPrice(product.getOriginalPrice(),product.getNums());
+        }
+        List<Product> productList = Arrays.asList(productArray);
+        DiscountResult discountResult = CalculateUtil.calculate(compid, productList, 0);
+        List<IDiscount> activityList = discountResult.getActivityList();
+
+        List<Gift> giftList = new ArrayList<>();
+        for (IDiscount discount : activityList){
+            Activity activity = (Activity)discount;
+            List<Gift> gifts = activity.getGiftList();
+            for (Gift gift : gifts){
+                if(gift.getType() == 3){
+                    giftList.add(gift);
+                }
+            }
+
+        }
+        return giftList;
     }
 
 
