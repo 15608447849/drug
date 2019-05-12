@@ -723,12 +723,14 @@ public class TranOrderOptModule {
         int cusno = jsonObject.get("cusno").getAsInt(); //企业码
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         String selectSQL = "select payway, balamt,payamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
+        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, settstatus=? "
+                + " where cstatus&1=0 and orderno=? and ostatus=?";
         List<Object[]> list = baseDao.queryNativeSharding(cusno, TimeUtils.getCurrentYear(), selectSQL, orderNo);
         if(list != null && list.size() > 0) {
             int payway = (int)list.get(0)[0];//支付方式
             int balamt = (int)list.get(0)[1];//订单使用的余额
             int payamt = (int)list.get(0)[2];//订单支付金额
-            int res = baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, -4, orderNo, 1);
+            int res = baseDao.updateNativeSharding(cusno, year, updSQL, -4, -1, orderNo, 1);
             if (res > 0) {//退款
                 if (payway == 4 || payway == 5) {//线下即付退款???
                     //库存操作(redis库存返还)
@@ -748,7 +750,7 @@ public class TranOrderOptModule {
                        b = refundBal(orderNo,cusno,balamt,"客服取消订单") > 0;
                        if (!b) {
                            //退款失败订单处理
-                           baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, 1, orderNo, -4);
+                           baseDao.updateNativeSharding(cusno, year, updSQL, 1, 1, orderNo, -4);
                            return result.fail("订单取消失败(退款失败)");
                        }
                     }
@@ -775,7 +777,7 @@ public class TranOrderOptModule {
                 }
             }
         }
-        return result;
+        return result.success("取消成功，且退款成功");
     }
 
     static TranOrderGoods[] getGoodsArr(String orderNo, int cusno) {
