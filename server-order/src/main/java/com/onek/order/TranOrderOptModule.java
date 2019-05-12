@@ -18,10 +18,7 @@ import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
-import com.onek.util.CalculateUtil;
-import com.onek.util.GenIdUtil;
-import com.onek.util.IceRemoteUtil;
-import com.onek.util.RedisGlobalKeys;
+import com.onek.util.*;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.discount.DiscountRuleStore;
 import com.onek.util.order.RedisOrderUtil;
@@ -34,8 +31,9 @@ import util.*;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
-import static com.onek.order.PayModule.CANCEL_XXJF;
+import static com.onek.order.PayModule.*;
 
 /**
  * @author 11842
@@ -54,6 +52,12 @@ public class TranOrderOptModule {
                     (d) -> new TranOrderOptModule().takeDelivery(d.getOrderNo(), d.getCompid()),
                     DelayedHandler.TIME_TYPE.HOUR);
 
+
+    public static final DelayedHandler<DelayedBase> CONFIRM_RECEIPT =
+            new RedisDelayedHandler<>("_CONFIRM_RECEIPT", 48,
+                    (d) -> new OrderOptModule().comReceipt(d.getOrderNo(), d.getCompid()),
+                    DelayedHandler.TIME_TYPE.HOUR);
+
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
     private static final String QUERY_TRAN_ORDER_PARAMS =
@@ -69,11 +73,11 @@ public class TranOrderOptModule {
     private static final String INSERT_TRAN_ORDER = "insert into {{?" + DSMConst.TD_TRAN_ORDER + "}} "
             + "(orderno,tradeno,cusno,busno,ostatus,asstatus,pdnum," +
             "pdamt,freight,payamt,coupamt,distamt,rvaddno," +
-            "settstatus,otype,odate,otime,cstatus,consignee,contact,address,balamt) "
+            "settstatus,otype,odate,otime,cstatus,consignee,contact,address,balamt,payway) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "CURRENT_DATE,CURRENT_TIME,0,?,?,?,?)";
+            + "CURRENT_DATE,CURRENT_TIME,0,?,?,?,?,-1)";
 
     //订单商品表新增
     private static final String INSERT_TRAN_GOODS = "insert into {{?" + DSMConst.TD_TRAN_GOODS + "}} "
@@ -620,12 +624,12 @@ public class TranOrderOptModule {
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         int res = baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, -4, orderNo, 0);
         if (res > 0) {
-            recoverGoodsStock(orderNo, cusno);
+            recoverGoodsStock(orderNo, cusno,0);
         }
         return res > 0;
     }
 
-    private void recoverGoodsStock(String orderNo, int cusno) {
+    private void recoverGoodsStock(String orderNo, int cusno, int type) {
         List<Object[]> params = new ArrayList<>();
         TranOrderGoods[] tranOrderGoods = getGoodsArr(orderNo, cusno);
         for (TranOrderGoods tranOrderGood : tranOrderGoods) {
@@ -641,12 +645,14 @@ public class TranOrderOptModule {
             }
             params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
         }
-        baseDao.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
+        if (type == 0) {//线上支付释放锁定库存
+            baseDao.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
+        }
     }
 
 
     /**
-     * @description 线下即付、线下到付门店取消
+     * @description 线下即付、线下到付门店30分钟内取消
      * @params [appContext]
      * @return com.onek.entitys.Result
      * @exception
@@ -656,6 +662,7 @@ public class TranOrderOptModule {
      **/
     @UserPermission(ignore = false)
     public Result cancelOffLineOrder(AppContext appContext) {
+        //此时数据库库存已更新
         Result result = new Result();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
@@ -676,18 +683,24 @@ public class TranOrderOptModule {
             } else {//线下到付（待发货状态）30分钟内可取消
                 updateSQL = updateSQL + " and payway=5 and ostatus=1";
             }
-            code = baseDao.updateNativeSharding(cusno, year, updateSQL, -4, orderNo, 0);
+            code = baseDao.updateNativeSharding(cusno, year, updateSQL, -4, orderNo);
             if (code > 0) {
                 if (payway == 4) {//取消线下即付一小时轮询
                     CANCEL_XXJF.removeByKey(orderNo);
                 }
-                //库存操作(库存返还)
-                recoverGoodsStock(orderNo, cusno);
+                if (payway == 5) {
+                    //取消24小时轮询
+                    DELIVERY_DELAYED.removeByKey(orderNo);
+                }
+                //库存操作(redis库存返还)
+                recoverGoodsStock(orderNo, cusno, 1);
+                //门店自己取消返还数据库相关库存
+                addGoodsDbStock(orderNo, cusno);
             }
         } else {
             return result.fail("订单提交已超过30分钟，取消失败");
         }
-        return result;
+        return result.success("取消成功");
     }
 
 
@@ -700,7 +713,7 @@ public class TranOrderOptModule {
      * @time  2019/5/10 16:33
      * @version 1.1.1
      **/
-    @UserPermission(ignore = false)
+    @UserPermission(ignore = true)
     public Result cancelBackOrder(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
@@ -718,13 +731,46 @@ public class TranOrderOptModule {
             int res = baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, -4, orderNo, 1);
             if (res > 0) {//退款
                 if (payway == 4 || payway == 5) {//线下即付退款???
-                    return result.success("订单取消成功，订单为线下支付订单");
+                    //库存操作(redis库存返还)
+                    recoverGoodsStock(orderNo, cusno, 1);
+                    //客服取消返还数据库相关库存
+                    addGoodsDbStock(orderNo, cusno);
+                    if (payway == 4) {
+                        //取消1小时轮询
+                        CANCEL_XXJF.removeByKey(orderNo);
+                    }
+                    //取消24小时轮询
+                    DELIVERY_DELAYED.removeByKey(orderNo);
+                    return result.success("订单取消成功，线下支付订单退款请相关人员线下处理");
                 } else {//线上支付退款
+                    boolean b = true;
                     if (balamt > 0) {//退回余额
-
+                       b = refundBal(orderNo,cusno,balamt,"客服取消订单") > 0;
+                       if (!b) {
+                           //退款失败订单处理
+                           baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, 1, orderNo, -4);
+                           return result.fail("订单取消失败(退款失败)");
+                       }
                     }
                     if (payamt > 0) {//退回微信或者支付宝
-
+                        Map<String,String> map = OrderUtil.refund(cusno, orderNo);
+                        if (Integer.parseInt(map.get("result")) == 1) {
+                            //库存操作(redis和锁定库存返还)
+                            recoverGoodsStock(orderNo, cusno, 0);
+                            //客服取消返还数据库相关库存
+                            addGoodsDbStock(orderNo, cusno);
+                            //取消24小时轮询
+                            DELIVERY_DELAYED.removeByKey(orderNo);
+                            return result.success("订单取消成功，且退款成功");
+                        } else {
+                            //退款失败订单处理
+                            baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, 1, orderNo, -4);
+                            //微信支付宝退款失败余额处理
+                            if (balamt > 0) {
+                                IceRemoteUtil.updateCompBal(cusno,-balamt);
+                            }
+                            return result.fail("订单取消失败(退款失败)");
+                        }
                     }
                 }
             }
@@ -788,12 +834,42 @@ public class TranOrderOptModule {
         return result;
     }
 
+
+    /**
+     * 收货
+     *
+     * @param appContext
+     * @return
+     */
+
+    @UserPermission(ignore = true)
+    public Result takeDelivery(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (ArrayUtil.isEmpty(params)) {
+            return new Result().fail("参数为空");
+        }
+
+        String orderNo = params[1];
+        int compid = getCompid(orderNo);
+
+        if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
+            return new Result().fail("非法参数");
+        }
+
+        boolean result = takeDelivery(orderNo, compid);
+
+        return result ? new Result().success("已签收") : new Result().fail("操作失败");
+    }
+
+
     public boolean takeDelivery(String orderno, int compid) {
         boolean result = BaseDAO.getBaseDAO().updateNativeSharding(compid, TimeUtils.getYearByOrderno(orderno),
                 UPDATE_TAKE_DELIVERY, orderno) > 0;
 
         if (result) {
             TAKE_DELAYED.removeByKey(orderno);
+            CONFIRM_RECEIPT.add(new DelayedBase(compid, orderno));
         }
 
         return result;
@@ -826,12 +902,12 @@ public class TranOrderOptModule {
     }
 
     /**
-     * 确认收款
+     * 确认收款（线下订单）
      * @param appContext
      * @return
      */
     @UserPermission(ignore = true)
-    public Result takeDelivery(AppContext appContext) {
+    public Result confirmCash(AppContext appContext) {
         boolean b = false;
         String[] params = appContext.param.arrays;
         if (ArrayUtil.isEmpty(params)) {
@@ -898,13 +974,20 @@ public class TranOrderOptModule {
             if (b) {
                 if (paytype == 4) {//取消线下即付一小时轮询
                     CANCEL_XXJF.removeByKey(orderNo);
+                    //生成订单到一块物流
+                    OrderUtil.generateLccOrder(compid, orderNo);
+                    try{
+                        //满赠赠优惠券
+                        new CouponRevModule().revGiftCoupon(Long.parseLong(orderNo),compid);
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
                 }
                 //更新销量
-                
+                OrderUtil.updateSales(compid, orderNo);
 
             }
         }
-//        boolean result = takeDelivery(orderNo, compid);
 
         return b ? new Result().success("操作成功") : new Result().fail("操作失败");
     }

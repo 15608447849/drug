@@ -84,6 +84,15 @@ public class PayModule {
     private static final String UPD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
             + "actstock=actstock-? where cstatus&1=0 and gcode=? and actcode=?";
 
+
+    //取消时加库存
+    private static final String ADD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
+            + "store=store+? where cstatus&1=0 and sku=? ";
+
+    //取消时加活动库存
+    private static final String ADD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
+            + "actstock=actstock+? where cstatus&1=0 and gcode=? and actcode=? ";
+
     //订单交易表新增
     private static final String INSERT_TRAN_TRANS = "insert into {{?" + DSMConst.TD_TRAN_TRANS + "}} "
             + "(unqid,compid,orderno,payno,payprice,payway,paysource,paystatus,"
@@ -438,8 +447,6 @@ public class PayModule {
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
-        List<Object[]> paramsOne = new ArrayList<>();
-        List<Object[]> paramsTwo = new ArrayList<>();
 
         int paySpreadBal = getPaySpreadBal(compid,orderno);
         if(paySpreadBal > 0 && paytype != 0){
@@ -451,8 +458,7 @@ public class PayModule {
         sqlList.add(UPD_ORDER_STATUS);//更新订单状态
         params.add(new Object[]{1,1,
                 tradeDate,tradeTime,
-                paytype == 4 ? 2 :
-                paytype == 5 ? 3 : 1,
+                paytype,
                 orderno,0});
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
@@ -467,19 +473,9 @@ public class PayModule {
         sqlNative = sqlList.toArray(sqlNative);
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
         if (b) {
-            TranOrderGoods[] tranOrderGoods = getGoodsArr(orderno, compid);
-            for (TranOrderGoods tranOrderGood : tranOrderGoods) {
-                paramsOne.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPnum(), tranOrderGood.getPdno()});
-                List<Long> list = JSON.parseArray(tranOrderGood.getActcode()).toJavaList(Long.class);
-                for (Long aList : list) {
-                    paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
-                }
-            }
-            baseDao.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
-            //更新活动库存
-            baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size());
-
-            if(paySpreadBal > 0){
+            //减数据库库存
+            reduceGoodsDbStock(orderno, compid);
+            if(paySpreadBal > 0 && paytype != 0){
                 IceRemoteUtil.updateCompBal(compid,-paySpreadBal);
             }
 
@@ -499,6 +495,57 @@ public class PayModule {
             }
         }
         return b;
+    }
+
+    /* *
+     * @description 减数据库库存
+     * @params [orderno, compid]
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/5/11 15:53
+     * @version 1.1.1
+     **/
+    public static void reduceGoodsDbStock(String orderno, int compid) {
+        List<Object[]> paramsOne = new ArrayList<>();
+        List<Object[]> paramsTwo = new ArrayList<>();
+        TranOrderGoods[] tranOrderGoods = getGoodsArr(orderno, compid);
+        for (TranOrderGoods tranOrderGood : tranOrderGoods) {
+            paramsOne.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPnum(), tranOrderGood.getPdno()});
+            List<Long> list = JSON.parseArray(tranOrderGood.getActcode()).toJavaList(Long.class);
+            for (Long aList : list) {
+                paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
+            }
+        }
+        baseDao.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+        //更新活动库存
+        baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size());
+    }
+
+
+    /* *
+     * @description 加数据库库存
+     * @params [orderno, compid]
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/5/11 15:53
+     * @version 1.1.1
+     **/
+    public static void addGoodsDbStock(String orderno, int compid) {
+        List<Object[]> paramsOne = new ArrayList<>();
+        List<Object[]> paramsTwo = new ArrayList<>();
+        TranOrderGoods[] tranOrderGoods = getGoodsArr(orderno, compid);
+        for (TranOrderGoods tranOrderGood : tranOrderGoods) {
+            paramsOne.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
+            List<Long> list = JSON.parseArray(tranOrderGood.getActcode()).toJavaList(Long.class);
+            for (Long aList : list) {
+                paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
+            }
+        }
+        baseDao.updateBatchNative(ADD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+        //更新活动库存
+        baseDao.updateBatchNative(ADD_ACT_STORE, paramsTwo, paramsTwo.size());
     }
 
     /* *
@@ -605,11 +652,14 @@ public class PayModule {
             return new Result().fail("获取订单号或企业码失败!");
         }
         String updateSQL =  "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,"
-                + "odate=CURRENT_DATE,otime=CURRENT_TIME, payway=? where cstatus&1=0 and orderno=? and ostatus=? ";
+                + "odate=CURRENT_DATE,otime=CURRENT_TIME, payway=? where cstatus&1=0 and orderno=? and ostatus=? "
+                + " and payway=-1";
         //线下到付、线下即付订单状态改为待发货，结算状态仍为未结算
         if (paytype == 4){
             result = baseDao.updateNativeSharding(compid, year, updateSQL, 0,paytype, orderno, 0);
             if (result > 0) {
+                //线下即付减数据库库存
+                reduceGoodsDbStock(orderno, compid);
                 CANCEL_DELAYED.removeByKey(orderno);
                 CANCEL_XXJF.add(new DelayedBase(compid, orderno));
             }
@@ -617,6 +667,10 @@ public class PayModule {
             result = baseDao.updateNativeSharding(compid, year, updateSQL,
                     1, paytype, orderno, 0);
             if (result > 0) {
+                //线下到付减数据库库存
+                reduceGoodsDbStock(orderno, compid);
+                //生成订单到一块物流
+                OrderUtil.generateLccOrder(compid, orderno);
                 DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
             }
         }
@@ -697,7 +751,7 @@ public class PayModule {
         params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, refbal, 0, 0, -3, GenIdUtil.getUnqId(),
                     0,dateStr[0],dateStr[1],dateStr[0],dateStr[1],0});
         sqlList.add(INSERT_TRAN_PAYREC);//新增支付记录
-        String evtInfo = "{"+remark+"}";
+        String evtInfo = "{'remark':"+remark+"}";
         params.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, evtInfo, "{}", dateStr[0], dateStr[1]});
         int year = Integer.parseInt("20" + orderno.substring(0,2));
         String[] sqlNative = new String[sqlList.size()];
@@ -736,6 +790,8 @@ public class PayModule {
                 + " where cstatus&1=0 and orderno=? and ostatus=? and payway=?";
         int result = baseDao.updateNativeSharding(compid, year, updateSQL, 1, orderNo, 0, 4);
         if (result > 0) {
+            //生成订单到一块物流
+            OrderUtil.generateLccOrder(compid, orderNo);
             CANCEL_XXJF.removeByKey(orderNo);
             DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
         }

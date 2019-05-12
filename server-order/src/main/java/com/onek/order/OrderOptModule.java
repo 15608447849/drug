@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.onek.order.TranOrderOptModule.CONFIRM_RECEIPT;
 import static constant.DSMConst.TD_BK_TRAN_GOODS;
 
 /**
@@ -151,9 +152,9 @@ public class OrderOptModule {
         int compid = jsonObject.get("compid").getAsInt();
         JsonArray appriseArr = jsonObject.get("appriseArr").getAsJsonArray();
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
-        //更新订单状态为以评价
-        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=4 "
-                + " where cstatus&1=0 and orderno="+ orderNo + " and ostatus=3";
+        //更新订单状态为已评价
+        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|128 "
+                + " where cstatus&1=0 and orderno="+ orderNo + " and ostatus in(3,4)";
         if (baseDao.updateNativeSharding(compid, year, updSQL) > 0){
             for (int i = 0; i < appriseArr.size(); i++) {
                 AppriseVO appriseVO = gson.fromJson(appriseArr.get(i).toString(), AppriseVO.class);
@@ -807,7 +808,38 @@ public class OrderOptModule {
         return new Result().success(jsonArray);
     }
 
-    public static void main(String[] args) {
+
+    /* *
+     * @description 确认签收
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/5/11 16:18
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result confirmReceipt(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.get("orderno").getAsString();//订单号
+        int cusno = jsonObject.get("cusno").getAsInt(); //企业码
+        if (comReceipt(orderNo, cusno)) {
+            //移出队列
+            CONFIRM_RECEIPT.removeByKey(orderNo);
+            return result.success("操作成功");
+        }
+        return result.fail("操作失败");
+    }
+
+    public boolean comReceipt(String orderNo,int cusno ) {
+        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+        //更新订单状态为交易完成
+        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=4 "
+                + " where cstatus&1=0 and orderno="+ orderNo + " and ostatus=3";
+       return baseDao.updateNativeSharding(cusno, year, updSQL) > 0;
 
     }
 }
