@@ -671,7 +671,8 @@ public class TranOrderOptModule {
         int cusno = jsonObject.get("cusno").getAsInt(); //企业码
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         String selectSQL = "select payway from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? "
-                + "and (payway=4 and ostatus=0) or (payway=5 and ostatus=1) and (current_timestamp - unix_timestamp())<30*60*1000";
+                + "and ((payway=4 and ostatus=0) or (payway=5 and ostatus=1)) and" +
+                " ( unix_timestamp(CURRENT_TIMESTAMP) - unix_timestamp(CONCAT(odate,' ', otime)) ) < 30 * 60";
         String updateSQL =  "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
                 + " where cstatus&1=0 and orderno=? ";
         List<Object[]> list = baseDao.queryNativeSharding(cusno, TimeUtils.getCurrentYear(), selectSQL, orderNo);
