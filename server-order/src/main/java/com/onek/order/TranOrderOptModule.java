@@ -1010,7 +1010,7 @@ public class TranOrderOptModule {
                     OrderUtil.generateLccOrder(compid, orderNo);
                     try{
                         //满赠赠优惠券
-                        new CouponRevModule().revGiftCoupon(Long.parseLong(orderNo),compid);
+                        IceRemoteUtil.revGiftCoupon(Long.parseLong(orderNo),compid);
                     }catch (Exception e){
                         e.printStackTrace();
                     }
@@ -1052,6 +1052,10 @@ public class TranOrderOptModule {
         public void setActCode(long actCode) {
             this.actCode = actCode;
         }
+    }
+
+    public static void main(String[] args) {
+
     }
 
 }
