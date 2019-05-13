@@ -571,6 +571,24 @@ public class IceRemoteUtil {
         return 0;
     }
 
+    /**
+     * 满赠优惠券
+     * @param compid
+     * @return
+     */
+    public static int revGiftCoupon(long orderno,int compid){
+        try {
+            String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","revGiftCoupon")
+                    .setArrayParams(orderno,compid)
+                    .execute();
+            Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+            assert ret != null;
+            return ret.code;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 
 
 
