@@ -106,12 +106,12 @@ public class CouponRevModule {
     /**
      * 查询活动优惠券
      */
-    private final String QUERY_ACCOUP_SQL = "select unqid coupno,glbno,brulecode,validday,validflag,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} "+
+    private final static String QUERY_ACCOUP_SQL = "select unqid coupno,glbno,brulecode,validday,validflag,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} "+
             " where cstatus & 128 > 0 and brulecode = ? and cstatus & 1= 0 and actstock > 0 ";
 
 
     //领取活动优惠券
-    private final String INSERT_ACCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
+    private final static String INSERT_ACCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
             + "rulename,goods,ladder,glbno,actcode,ctype,reqflag,cstatus) "
             + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
@@ -120,7 +120,7 @@ public class CouponRevModule {
     private final String QUERY_ORDER_CNT = "select count(1) cnt from {{?"+DSMConst.TD_TRAN_ORDER+"}} where cusno = ?";
 
 
-    private final String QUERY_ORDER_PRODUCT = "select pdno,pnum,convert(pdprice/100,decimal(10,2)) pdprice from {{?"+DSMConst.TD_TRAN_ORDER+"}} orders, "+
+    private final static String QUERY_ORDER_PRODUCT = "select pdno,pnum,convert(pdprice/100,decimal(10,2)) pdprice from {{?"+DSMConst.TD_TRAN_ORDER+"}} orders, "+
             "{{?"+DSMConst.TD_TRAN_GOODS+"}} goods where orders.orderno = goods.orderno and orders.orderno = ? "+
             " and orders.ostatus > 0 and orders.cstatus &1 = 0 and goods.cstatus & 1 = 0 ";
 
@@ -140,7 +140,7 @@ public class CouponRevModule {
             + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 
-    private final String INSERT_GLBCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
+    private final static String INSERT_GLBCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + "(unqid,coupno,compid,brulecode,rulename,glbno,ctype,cstatus,amt,gettime) "
             + "values (?,?,?,?,?,?,?,?,?,now())";
 
@@ -581,7 +581,7 @@ public class CouponRevModule {
      * @param discounts
      * @return
      */
-    public boolean insertGiftCoupon(int compid ,List<IDiscount> discounts){
+    public static boolean insertGiftCoupon(int compid ,List<IDiscount> discounts){
 
         List<Object[]> coupParams = new ArrayList<>();
         List<Object[]> stockParams = new ArrayList<>();
@@ -674,6 +674,31 @@ public class CouponRevModule {
     }
 
 
+    public static boolean revGiftCoupon(long orderno,int compid){
+        if(compid <= 0){
+            return false;
+        }
+
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                QUERY_ORDER_PRODUCT,orderno);
+
+        if(queryResult == null || queryResult.isEmpty()){
+            return false;
+        }
+
+        Product[] productArray = new Product[queryResult.size()];
+        baseDao.convToEntity(queryResult, productArray, Product.class,
+                new String[]{"sku","nums","originalPrice"});
+
+        for(Product product: productArray){
+            product.autoSetCurrentPrice(product.getOriginalPrice(),product.getNums());
+        }
+        List<Product> productList = Arrays.asList(productArray);
+        DiscountResult discountResult = CalculateUtil.calculate(compid, productList, 0);
+        List<IDiscount> activityList = discountResult.getActivityList();
+        return insertGiftCoupon(compid,activityList);
+    }
+
     /**
      * 获取赠品
      * @param orderno
@@ -719,7 +744,7 @@ public class CouponRevModule {
     }
 
 
-    public CouponPubVO setCoupValidDay(CouponPubVO couponVO){
+    public static CouponPubVO setCoupValidDay(CouponPubVO couponVO){
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
         Date curDate = new Date();
         String startDate = dateFormat.format(curDate);
