@@ -489,7 +489,7 @@ public class PayModule {
 
             try{
                 //满赠赠优惠券
-                new CouponRevModule().revGiftCoupon(Long.parseLong(orderno),compid);
+                IceRemoteUtil.revGiftCoupon(Long.parseLong(orderno),compid);
             }catch (Exception e){
                 e.printStackTrace();
             }

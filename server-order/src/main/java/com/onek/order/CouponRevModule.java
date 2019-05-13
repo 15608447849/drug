@@ -537,18 +537,25 @@ public class CouponRevModule {
     }
 
 
-
-    public  boolean revGiftCoupon(long orderno,int compid){
-
+    /**
+     * 满赠赠优惠券
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result revGiftCoupon(AppContext appContext){
+        long orderno = Long.parseLong(appContext.param.arrays[0]);
+        int compid = Integer.parseInt(appContext.param.arrays[1]);
+        Result result = new Result();
         if(compid <= 0){
-            return false;
+            return result.fail("操作失败！");
         }
 
         List<Object[]> queryResult = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
                 QUERY_ORDER_PRODUCT,orderno);
 
         if(queryResult == null || queryResult.isEmpty()){
-            return false;
+            return result.fail("操作失败！");
         }
 
         Product[] productArray = new Product[queryResult.size()];
@@ -561,11 +568,19 @@ public class CouponRevModule {
         List<Product> productList = Arrays.asList(productArray);
         DiscountResult discountResult = CalculateUtil.calculate(compid, productList, 0);
         List<IDiscount> activityList = discountResult.getActivityList();
-        return insertGiftCoupon(compid,activityList);
+
+        boolean b = insertGiftCoupon(compid,activityList);
+
+        return  b ? result.success("操作成功"):result.fail("操作失败！");
     }
 
 
-    
+    /**
+     * 新增满赠券
+     * @param compid
+     * @param discounts
+     * @return
+     */
     public boolean insertGiftCoupon(int compid ,List<IDiscount> discounts){
 
         List<Object[]> coupParams = new ArrayList<>();
