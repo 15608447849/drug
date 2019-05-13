@@ -957,10 +957,12 @@ public class TranOrderOptModule {
         String selectSQL = "select payamt,payway,balamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
         //线下到付确认收款  将订单结算状态改为已结算
         String updateXxdfSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set settstatus=?, settdate=CURRENT_DATE,"
-                + "setttime=CURRENT_TIME where cstatus&1=0 and orderno=? and payway=5 and ostatus=2";
+                + "setttime=CURRENT_TIME where cstatus&1=0 and orderno=? and payway=5 and settstatus=0";
         //线下即付确认收款
-        String updateXxjfSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=1, settstatus=?, settdate=CURRENT_DATE,"
-                + "setttime=CURRENT_TIME where cstatus&1=0 and orderno=? and payway=4 and ostatus=0";
+        String updateXxjfSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=(case ostatus when 0 then 1 "
+                + " else ostatus end), settstatus=?,"
+                + " settdate=CURRENT_DATE,setttime=CURRENT_TIME where cstatus&1=0 and orderno=? and "
+                + " payway=4 and settstatus=0 ";
         //插入支付记录
         String insertPayerSQL = "insert into {{?" + DSMConst.TD_TRAN_PAYREC + "}} "
                 + "(unqid,compid,payno,eventdesc,resultdesc,"
@@ -978,7 +980,7 @@ public class TranOrderOptModule {
         List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), selectSQL, orderNo);
         if(list != null && list.size() > 0) {
             TranOrder[] tranOrders = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, tranOrders, TranOrder.class, new String[]{"payamt", "payway","balamt"});
+            baseDao.convToEntity(list, tranOrders, TranOrder.class, new String[]{"payamt", "payway","balamt"});
             double payamt = tranOrders[0].getPayamt();
             double bal = tranOrders[0].getBalamt();
             int paytype = Integer.parseInt(tranOrders[0].getPayway().trim());
@@ -1010,7 +1012,7 @@ public class TranOrderOptModule {
                     OrderUtil.generateLccOrder(compid, orderNo);
                     try{
                         //满赠赠优惠券
-                        IceRemoteUtil.revGiftCoupon(Long.parseLong(orderNo),compid);
+//                        IceRemoteUtil.revGiftCoupon(Long.parseLong(orderNo),compid);
                     }catch (Exception e){
                         e.printStackTrace();
                     }
