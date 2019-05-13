@@ -16,6 +16,7 @@ import com.onek.propagation.prod.ProdCurrentActPriceObserver;
 import com.onek.propagation.prod.ProdDiscountObserver;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
+import com.onek.util.SmsUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -205,9 +206,15 @@ public class ActivityManageModule {
                     " " + activityVO.getTimeVOS().get(0).getSdate()).getTime();
             if (startTime > new Date().getTime()) {
                 ExecutorService executors = Executors.newSingleThreadExecutor();
-                executors.execute(() -> IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
-                        "", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
-                                " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行"));
+                executors.execute(() -> {
+                            IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
+                                    "", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
+                                            " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
+                            SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.ACTIVITIES_OF_NEW,"", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
+                                    " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
+                        }
+
+                );
             }
         } catch (ParseException e) {
             e.printStackTrace();
