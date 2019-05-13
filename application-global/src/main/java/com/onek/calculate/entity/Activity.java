@@ -38,6 +38,9 @@ public class Activity extends AccurateMath implements IDiscount {
 
     private List<Gift> giftList = new ArrayList<Gift>();
 
+    private Ladoff currLadoff;
+    private Ladoff nextLadoff;
+
     public Activity() {
         this.productList = new ArrayList<>();
     }
@@ -333,6 +336,24 @@ public class Activity extends AccurateMath implements IDiscount {
 
     public void setGiftList(List<Gift> giftList) {
         this.giftList = giftList;
+    }
+
+    public Ladoff getCurrLadoff() {
+        return currLadoff;
+    }
+
+    @Override
+    public void setCurrLadoff(Ladoff currLadoff) {
+        this.currLadoff = currLadoff;
+    }
+
+    public Ladoff getNextLadoff() {
+        return nextLadoff;
+    }
+
+    @Override
+    public void setNextLadoff(Ladoff nextLadoff) {
+        this.nextLadoff = nextLadoff;
     }
 
     @Override

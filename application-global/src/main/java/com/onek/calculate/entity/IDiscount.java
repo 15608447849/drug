@@ -29,4 +29,6 @@ public interface IDiscount {
     void addGift(Gift gift);
     void addGifts(List<Gift> gifts);
 
+    void setCurrLadoff(Ladoff currLadoff);
+    void setNextLadoff(Ladoff nextLadoff);
 }

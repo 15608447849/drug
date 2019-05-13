@@ -9,7 +9,7 @@ import util.ArrayUtil;
 import java.util.List;
 
 public abstract class BaseDiscountCalculateService implements ICalculateService {
-    protected IDiscount currDiscount = null;
+    private IDiscount currDiscount = null;
 
     @Override
     public void calculate(List<? extends IDiscount> discountList) {
@@ -68,9 +68,11 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             }
 
             if (able) {
+                currDiscount.setCurrLadoff(ladoff);
                 return ladoff;
             }
 
+            currDiscount.setNextLadoff(ladoff);
         }
 
         return null;
@@ -78,5 +80,6 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
 
     /* 按照最高满足持续降序排列 */
     protected abstract Ladoff[] getLadoffs(long actCode);
+
 }
 

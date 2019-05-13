@@ -29,6 +29,9 @@ public class Couent extends AccurateMath implements IDiscount {
     private double discounted;
     private List<IProduct> productList = new ArrayList<>();
 
+    private Ladoff currLadoff;
+    private Ladoff nextLadoff;
+
     public long getUnqid() {
         return unqid;
     }
@@ -238,7 +241,24 @@ public class Couent extends AccurateMath implements IDiscount {
 
     @Override
     public void addGifts(List<Gift> gifts) {
+    }
 
+    public Ladoff getCurrLadoff() {
+        return currLadoff;
+    }
+
+    @Override
+    public void setCurrLadoff(Ladoff currLadoff) {
+        this.currLadoff = currLadoff;
+    }
+
+    public Ladoff getNextLadoff() {
+        return nextLadoff;
+    }
+
+    @Override
+    public void setNextLadoff(Ladoff nextLadoff) {
+        this.nextLadoff = nextLadoff;
     }
 
     @Override
