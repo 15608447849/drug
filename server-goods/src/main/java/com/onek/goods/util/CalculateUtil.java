@@ -124,6 +124,6 @@ public class CalculateUtil {
             return .0;
         }
 
-        return (value * price) / amt;
+        return price >= amt ? value : (value * price) / amt;
     }
 }
