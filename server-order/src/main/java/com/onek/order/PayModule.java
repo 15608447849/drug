@@ -655,11 +655,10 @@ public class PayModule {
                 + "odate=CURRENT_DATE,otime=CURRENT_TIME, payway=? where cstatus&1=0 and orderno=? and ostatus=? "
                 + " and payway=-1";
         //线下到付、线下即付订单状态改为待发货，结算状态仍为未结算
+        int balamt = getPaySpreadBal(compid, orderno);//订单使用的余额
         if (paytype == 4){
             result = baseDao.updateNativeSharding(compid, year, updateSQL, 0,paytype, orderno, 0);
             if (result > 0) {
-                //线下即付减数据库库存
-                reduceGoodsDbStock(orderno, compid);
                 CANCEL_DELAYED.removeByKey(orderno);
                 CANCEL_XXJF.add(new DelayedBase(compid, orderno));
             }
@@ -667,14 +666,21 @@ public class PayModule {
             result = baseDao.updateNativeSharding(compid, year, updateSQL,
                     1, paytype, orderno, 0);
             if (result > 0) {
-                //线下到付减数据库库存
-                reduceGoodsDbStock(orderno, compid);
                 //生成订单到一块物流
                 OrderUtil.generateLccOrder(compid, orderno);
                 DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
             }
         }
-        return result > 0 ? new Result().success("订单提交成功") : new Result().fail("订单提交失败");
+        if (result > 0 ) {
+            //余额扣减
+            if (balamt > 0) {
+                IceRemoteUtil.updateCompBal(compid,-balamt);
+            }
+            //线下即付减数据库库存
+            reduceGoodsDbStock(orderno, compid);
+            return new Result().success("订单提交成功");
+        }
+        return new Result().fail("订单提交失败");
     }
 
     public static int getPaySpreadBal(int compid,String orderno){
