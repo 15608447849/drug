@@ -86,7 +86,15 @@ public class ShoppingCartVO {
 
     private int pstatus;
 
+    private String brand;
 
+    public String getBrand() {
+        return brand;
+    }
+
+    public void setBrand(String brand) {
+        this.brand = brand;
+    }
 
     public long getAreano() {
         return areano;

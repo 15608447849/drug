@@ -842,4 +842,40 @@ public class OrderOptModule {
        return baseDao.updateNativeSharding(cusno, year, updSQL) > 0;
 
     }
+
+
+    /* *
+     * @description 售后完成更新状态
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false,allowedUnrelated =true)
+    public Result afterSaleFinish(AppContext appContext) {
+        String json = appContext.param.json;
+        Result result = new Result();
+        JsonParser jsonParser = new JsonParser();
+        UserSession userSession = appContext.getUserSession();
+        if(userSession == null || (userSession.roleCode & (128+1) )== 0){
+            return result.fail("当前用户没有该权限");
+        }
+
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long asno = jsonObject.get("asno").getAsLong();
+        String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+        List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
+        if(queryRet == null || queryRet.isEmpty()){
+            return result.fail("操作失败");
+        }
+
+            int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
+            List<Object[]> params = new ArrayList<>();
+            params.add(new Object[]{-3, queryRet.get(0)[0],-2});
+            params.add(new Object[]{200, queryRet.get(0)[2],3,queryRet.get(0)[0],queryRet.get(0)[1]});
+            boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()),year,
+                    new String[]{UPD_ORDER_CK_SQL,UPD_ORDER_GOODS_CK_SQL},params));
+
+        return b ? result.success("操作成功") : result.fail("操作失败");
+    }
 }

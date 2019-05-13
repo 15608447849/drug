@@ -130,6 +130,9 @@ public class TranOrderOptModule {
                     + " FROM " + FROM_BK_ORDER
                     + " WHERE ord.cstatus&1 = 0 ";
 
+
+    private static final  String QUERY_ORDER_BAL = "SELECT balamt from {{?"+DSMConst.TD_TRAN_ORDER+"}} where balamt > 0 and orderno = ? and ostatus = ? ";
+
     @UserPermission(ignore = false)
     public Result placeOrderOne(AppContext appContext) {
         long coupon = 0;//优惠券码
@@ -325,6 +328,7 @@ public class TranOrderOptModule {
 
             addActBuyNum(tranOrder.getCusno(), tranOrderGoods);
 
+           // IceRemoteUtil.updateCompBal(tranOrder.getCusno(),-new Double(bal).intValue());
             object.addProperty("orderno", orderNo);
             object.addProperty("message", "下单成功");
             return result.success(object);
@@ -616,6 +620,12 @@ public class TranOrderOptModule {
         boolean b = cancelOrder(orderNo, cusno);
         if (b) {
             CANCEL_DELAYED.removeByKey(orderNo);
+//            int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+//            List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, QUERY_ORDER_BAL, orderNo, 0);
+//            if(queryResult != null && !queryResult.isEmpty()){
+//                int bal = Integer.parseInt(queryResult.get(0)[0].toString());
+//                IceRemoteUtil.updateCompBal(cusno,bal);
+//            }
         }
         return b ? result.success("取消成功") : result.fail("取消失败");
     }
