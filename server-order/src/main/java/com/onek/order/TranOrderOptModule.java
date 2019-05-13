@@ -712,7 +712,7 @@ public class TranOrderOptModule {
                 IceRemoteUtil.updateCompBal(cusno,balamt);
             }
         } else {
-            return result.fail("订单提交已超过30分钟，取消失败");
+            return result.fail("订单取消失败");
         }
         return result.success("取消成功");
     }
@@ -966,7 +966,8 @@ public class TranOrderOptModule {
         }
         List<String> sqlList = new ArrayList<>();
         List<Object[]> paramsObj = new ArrayList<>();
-        String selectSQL = "select payamt,payway,balamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
+        String selectSQL = "select payamt,payway,balamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? "
+                + " and settstatus=0 and (payway=4 || payway=5) and ostatus<>-4";
         //线下到付确认收款  将订单结算状态改为已结算
         String updateXxdfSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set settstatus=?, settdate=CURRENT_DATE,"
                 + "setttime=CURRENT_TIME where cstatus&1=0 and orderno=? and payway=5 and settstatus=0";
@@ -974,7 +975,7 @@ public class TranOrderOptModule {
         String updateXxjfSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=(case ostatus when 0 then 1 "
                 + " else ostatus end), settstatus=?,"
                 + " settdate=CURRENT_DATE,setttime=CURRENT_TIME where cstatus&1=0 and orderno=? and "
-                + " payway=4 and settstatus=0 ";
+                + " payway=4 and settstatus=0";
         //插入支付记录
         String insertPayerSQL = "insert into {{?" + DSMConst.TD_TRAN_PAYREC + "}} "
                 + "(unqid,compid,payno,eventdesc,resultdesc,"
