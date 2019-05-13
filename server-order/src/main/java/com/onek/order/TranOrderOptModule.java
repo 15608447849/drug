@@ -670,7 +670,7 @@ public class TranOrderOptModule {
         String orderNo = jsonObject.get("orderno").getAsString();//订单号
         int cusno = jsonObject.get("cusno").getAsInt(); //企业码
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
-        String selectSQL = "select payway from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? "
+        String selectSQL = "select payway,balamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? "
                 + "and ((payway=4 and ostatus=0) or (payway=5 and ostatus=1)) and" +
                 " ( unix_timestamp(CURRENT_TIMESTAMP) - unix_timestamp(CONCAT(odate,' ', otime)) ) < 30 * 60";
         String updateSQL =  "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
@@ -679,6 +679,7 @@ public class TranOrderOptModule {
         if(list != null && list.size() > 0) {
             int code;
             int payway = (int) list.get(0)[0];//支付方式
+            int balamt = (int)list.get(0)[1];//订单使用的余额
             if (payway == 4) {//线下即付（待付款状态）30分钟内可取消
                 updateSQL = updateSQL + " and payway=4 and ostatus=0";
             } else {//线下到付（待发货状态）30分钟内可取消
@@ -697,6 +698,8 @@ public class TranOrderOptModule {
                 recoverGoodsStock(orderNo, cusno, 1);
                 //门店自己取消返还数据库相关库存
                 addGoodsDbStock(orderNo, cusno);
+                //余额返回
+                IceRemoteUtil.updateCompBal(cusno,balamt);
             }
         } else {
             return result.fail("订单提交已超过30分钟，取消失败");
@@ -724,61 +727,77 @@ public class TranOrderOptModule {
         int cusno = jsonObject.get("cusno").getAsInt(); //企业码
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         String selectSQL = "select payway, balamt,payamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
-        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, settstatus=? "
+        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
                 + " where cstatus&1=0 and orderno=? and ostatus=?";
-        List<Object[]> list = baseDao.queryNativeSharding(cusno, TimeUtils.getCurrentYear(), selectSQL, orderNo);
+        List<Object[]> list = baseDao.queryNativeSharding(cusno, year, selectSQL, orderNo);
         if(list != null && list.size() > 0) {
             int payway = (int)list.get(0)[0];//支付方式
-            int balamt = (int)list.get(0)[1];//订单使用的余额
-            int payamt = (int)list.get(0)[2];//订单支付金额
-            int res = baseDao.updateNativeSharding(cusno, year, updSQL, -4, -1, orderNo, 1);
+//            int balamt = (int)list.get(0)[1];//订单使用的余额
+//            int payamt = (int)list.get(0)[2];//订单支付金额
+            int res = baseDao.updateNativeSharding(cusno, year, updSQL, -4, orderNo, 1);
             if (res > 0) {//退款
                 if (payway == 4 || payway == 5) {//线下即付退款???
                     //库存操作(redis库存返还)
                     recoverGoodsStock(orderNo, cusno, 1);
-                    //客服取消返还数据库相关库存
-                    addGoodsDbStock(orderNo, cusno);
                     if (payway == 4) {
                         //取消1小时轮询
                         CANCEL_XXJF.removeByKey(orderNo);
                     }
-                    //取消24小时轮询
-                    DELIVERY_DELAYED.removeByKey(orderNo);
-                    return result.success("订单取消成功，线下支付订单退款请相关人员线下处理");
                 } else {//线上支付退款
-                    boolean b = true;
-                    if (balamt > 0) {//退回余额
-                       b = refundBal(orderNo,cusno,balamt,"客服取消订单") > 0;
-                       if (!b) {
-                           //退款失败订单处理
-                           baseDao.updateNativeSharding(cusno, year, updSQL, 1, 1, orderNo, -4);
-                           return result.fail("订单取消失败(退款失败)");
-                       }
-                    }
-                    if (payamt > 0) {//退回微信或者支付宝
-                        Map<String,String> map = OrderUtil.refund(cusno, orderNo);
-                        if (Integer.parseInt(map.get("result")) == 1) {
-                            //库存操作(redis和锁定库存返还)
-                            recoverGoodsStock(orderNo, cusno, 0);
-                            //客服取消返还数据库相关库存
-                            addGoodsDbStock(orderNo, cusno);
-                            //取消24小时轮询
-                            DELIVERY_DELAYED.removeByKey(orderNo);
-                            return result.success("订单取消成功，且退款成功");
-                        } else {
-                            //退款失败订单处理
-                            baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, 1, orderNo, -4);
-                            //微信支付宝退款失败余额处理
-                            if (balamt > 0) {
-                                IceRemoteUtil.updateCompBal(cusno,-balamt);
-                            }
-                            return result.fail("订单取消失败(退款失败)");
-                        }
-                    }
+                    recoverGoodsStock(orderNo, cusno, 0);
                 }
+                //客服取消返还数据库相关库存
+                addGoodsDbStock(orderNo, cusno);
+                //取消24小时轮询
+                DELIVERY_DELAYED.removeByKey(orderNo);
+                return result.success("订单取消成功，请及时处理退款并确认退款");
             }
         }
-        return result.success("取消成功，且退款成功");
+        return result.fail("订单取消失败");
+    }
+
+
+    /* *
+     * @description 确认退款
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/5/13 10:30
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result confirmRefund(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.get("orderno").getAsString();//订单号
+        int cusno = jsonObject.get("cusno").getAsInt(); //企业码
+        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set settstatus=? "
+                + " where cstatus&1=0 and orderno=? and ostatus=? and settstatus=?";
+        String selectSQL = "select payway, balamt,payamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
+        List<Object[]> list = baseDao.queryNativeSharding(cusno, year, selectSQL, orderNo);
+        if(list != null && list.size() > 0) {
+//            int payway = (int) list.get(0)[0];//支付方式
+            int balamt = (int) list.get(0)[1];//订单使用的余额
+//            int payamt = (int) list.get(0)[2];//订单支付金额
+            int res = baseDao.updateNativeSharding(cusno, year, updSQL, -1, orderNo, -4, 1);
+            if (res > 0) {
+                if (balamt > 0) {//退回余额
+                    boolean b = refundBal(orderNo,cusno,balamt,"客服取消订单确认退款") > 0;
+                    if (!b) {
+                        //退款失败订单处理
+                        baseDao.updateNativeSharding(cusno, year, updSQL, 1, orderNo, -4, -1);
+                        return result.fail("确认退款失败");
+                    }
+                }
+                return result.success("确认退款成功");
+            }
+        }
+        return result.fail("操作失败");
+
     }
 
     static TranOrderGoods[] getGoodsArr(String orderNo, int cusno) {
