@@ -4,6 +4,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.onek.calculate.ActivityCalculateService;
 import com.onek.calculate.ActivityFilterService;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.entity.Product;
 import com.onek.calculate.filter.ActivitiesFilter;
@@ -119,5 +120,22 @@ public class CalculateModule {
         }
 
         return new Result().success(jsonObject);
+    }
+
+    public Result getLadoff(AppContext appContext) {
+        int compid = appContext.getUserSession().compId;
+
+        if (compid <= 0) {
+            return new Result().success(null);
+        }
+
+        long sku = Long.parseLong(appContext.param.arrays[0]);
+
+        List<Product> products = new ArrayList<>();
+        Product p = new Product();
+        products.add(p);
+        p.setSku(sku);
+
+        return new Result().success(CalculateUtil.getLadoff(compid, products));
     }
 }
