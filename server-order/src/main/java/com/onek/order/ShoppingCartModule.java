@@ -69,7 +69,7 @@ public class ShoppingCartModule {
     private static final String QUERY_PROD_BASE =
             " SELECT  spu.prodname ptitle,m.manuname verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
-                    "sku.store inventory, sku.spec, sku.prodstatus,spu.spu,sku.limits "
+                    "sku.store inventory, sku.spec, sku.prodstatus,spu.spu,sku.limits,brandname brand "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
@@ -342,7 +342,7 @@ public class ShoppingCartModule {
         ShoppingCartVO[] returnResults = new ShoppingCartVO[queryResult.size()];
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
                 new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory",
-                        "spec","pstatus","spu","limitnum"});
+                        "spec","pstatus","spu","limitnum","brand"});
 
 
 

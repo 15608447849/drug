@@ -30,6 +30,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.onek.order.TranOrderOptModule.CONFIRM_RECEIPT;
 import static constant.DSMConst.TD_BK_TRAN_GOODS;
 
 /**
@@ -151,9 +152,9 @@ public class OrderOptModule {
         int compid = jsonObject.get("compid").getAsInt();
         JsonArray appriseArr = jsonObject.get("appriseArr").getAsJsonArray();
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
-        //更新订单状态为以评价
-        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=4 "
-                + " where cstatus&1=0 and orderno="+ orderNo + " and ostatus=3";
+        //更新订单状态为已评价
+        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|128 "
+                + " where cstatus&1=0 and orderno="+ orderNo + " and ostatus in(3,4)";
         if (baseDao.updateNativeSharding(compid, year, updSQL) > 0){
             for (int i = 0; i < appriseArr.size(); i++) {
                 AppriseVO appriseVO = gson.fromJson(appriseArr.get(i).toString(), AppriseVO.class);
@@ -807,7 +808,74 @@ public class OrderOptModule {
         return new Result().success(jsonArray);
     }
 
-    public static void main(String[] args) {
 
+    /* *
+     * @description 确认签收
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/5/11 16:18
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result confirmReceipt(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.get("orderno").getAsString();//订单号
+        int cusno = jsonObject.get("cusno").getAsInt(); //企业码
+        if (comReceipt(orderNo, cusno)) {
+            //移出队列
+            CONFIRM_RECEIPT.removeByKey(orderNo);
+            return result.success("操作成功");
+        }
+        return result.fail("操作失败");
+    }
+
+    public boolean comReceipt(String orderNo,int cusno ) {
+        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+        //更新订单状态为交易完成
+        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=4 "
+                + " where cstatus&1=0 and orderno="+ orderNo + " and ostatus=3";
+       return baseDao.updateNativeSharding(cusno, year, updSQL) > 0;
+
+    }
+
+
+    /* *
+     * @description 售后完成更新状态
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false,allowedUnrelated =true)
+    public Result afterSaleFinish(AppContext appContext) {
+        String json = appContext.param.json;
+        Result result = new Result();
+        JsonParser jsonParser = new JsonParser();
+        UserSession userSession = appContext.getUserSession();
+        if(userSession == null || (userSession.roleCode & (128+1) )== 0){
+            return result.fail("当前用户没有该权限");
+        }
+
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long asno = jsonObject.get("asno").getAsLong();
+        String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+        List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
+        if(queryRet == null || queryRet.isEmpty()){
+            return result.fail("操作失败");
+        }
+
+            int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
+            List<Object[]> params = new ArrayList<>();
+            params.add(new Object[]{-3, queryRet.get(0)[0],-2});
+            params.add(new Object[]{200, queryRet.get(0)[2],3,queryRet.get(0)[0],queryRet.get(0)[1]});
+            boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()),year,
+                    new String[]{UPD_ORDER_CK_SQL,UPD_ORDER_GOODS_CK_SQL},params));
+
+        return b ? result.success("操作成功") : result.fail("操作失败");
     }
 }

@@ -144,7 +144,7 @@ public class OrderUtil {
 
             }
         }
-        map.put("result", success == true ? "1": "0");
+        map.put("result", success ? "1": "0");
         map.put("message", message);
         return map;
     }
