@@ -88,6 +88,16 @@ public class ShoppingCartVO {
 
     private String brand;
 
+    private int limitsub;
+
+    public int getLimitsub() {
+        return limitsub;
+    }
+
+    public void setLimitsub(int limitsub) {
+        this.limitsub = limitsub;
+    }
+
     public String getBrand() {
         return brand;
     }
