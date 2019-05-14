@@ -920,22 +920,18 @@ public class ActivityManageModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         Result result = new Result();
-
         long actcode = jsonObject.get("actcode").getAsLong();
         int cstatus = jsonObject.get("cstatus").getAsInt();
+//        if (theActInProgress(actcode)) {
+//            return result.fail("活动正在进行中，无法删除！");
+//        }
         int ret = 0;
         switch (cstatus){
             case 0:
                 ret = baseDao.updateNative(OPEN_ACT,actcode);
                 break;
             case 1:
-                int rCode = selectBRuleCode(actcode);
-                List<Object[]> params = new ArrayList<>();
-                String delLadderSQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
-                        + " where cstatus&1=0 and offercode like '" + rCode + "%'";
-                params.add(new Object[]{});
-                params.add(new Object[]{actcode});
-                boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{delLadderSQL,DELETE_ACT},params));
+                boolean b = delActCode(actcode);
                 ret = b ? 1 : 0;
                 break;
             case 32:
@@ -949,6 +945,34 @@ public class ActivityManageModule {
             activityManageServer.actUpdate(actcode);
         }
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
+    }
+
+
+    private boolean delActCode(long actCode) {
+        List<Object[]> params = new ArrayList<>();
+        StringBuilder stringBuilder = new StringBuilder();
+        StringBuilder offerBuilder = new StringBuilder();
+        String selectSQL = "select ladid,offercode from {{?" + DSMConst.TD_PROM_RELA + "}} a left join {{?"
+                + DSMConst.TD_PROM_LADOFF +"}} b on a.ladid=b.unqid  where a.cstatus&1=0" +
+                " and actcode=" + actCode;
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        if (queryResult == null || queryResult.isEmpty()) return false;
+        for (Object[] aQueryResult : queryResult) {
+            stringBuilder.append((long) aQueryResult[0]).append(",");
+            offerBuilder.append((int) aQueryResult[1]).append(",");
+        }
+        String ladIdStr = stringBuilder.toString().substring(0, stringBuilder.toString().length() - 1);
+        String offerStr = offerBuilder.toString().substring(0, offerBuilder.toString().length() - 1);
+        String sqlOne = DEL_LAD_OFF_SQL + " and unqid in(" + ladIdStr + ")";
+        params.add(new Object[]{});
+        String sqlTwo = "update {{?" + DSMConst.TD_PROM_RELA + "}} set cstatus=cstatus|1 where cstatus&1=0 "
+                + " and actcode=" + actCode;
+        params.add(new Object[]{});
+        String sqlThree = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 where cstatus&1=0 "
+                + " and offercode in(" + offerStr +")";
+        params.add(new Object[]{});
+        params.add(new Object[]{actCode});
+        return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{sqlOne,sqlTwo, sqlThree, DELETE_ACT}, params));
     }
 
     class ActStock {

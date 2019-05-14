@@ -11,6 +11,7 @@ import com.onek.calculate.util.DiscountUtil;
 import util.ArrayUtil;
 import util.MathUtil;
 
+import javax.xml.crypto.dsig.keyinfo.RetrievalMethod;
 import java.math.BigDecimal;
 import java.util.*;
 
@@ -21,6 +22,18 @@ public class CalculateUtil {
             return o2 - o1;
         }
     };
+
+    public static List<Ladoff[]> getLadoff(int compid, List<? extends IProduct> products) {
+        List<Ladoff[]> result = new ArrayList<>();
+
+        List<IDiscount> discounts = getDiscount(compid, products);
+
+        for (IDiscount discount : discounts) {
+            result.add(new ActivityCalculateService().getLadoffs(discount.getDiscountNo()));
+        }
+
+        return result;
+    }
 
     public static List<IDiscount> getDiscount(int compid, List<? extends IProduct> products) {
         if (compid <= 0) {

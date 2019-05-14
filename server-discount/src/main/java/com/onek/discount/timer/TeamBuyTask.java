@@ -82,14 +82,15 @@ public class TeamBuyTask extends TimerTask {
                             String pnum = map.get("pnum").toString();
                             double f2 = new BigDecimal((float)(offer) /10).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             double f1 = new BigDecimal((float)(10 -offer) /10).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                            int money = (int)(Integer.parseInt(payamt) * f1);
+                            int money = (int)(Integer.parseInt(payamt) * f2);
+                            int minusmoney = (int)(Integer.parseInt(payamt) * f1);
+                            msgBodyList.add(new TeamBuyMsgBody(orderno, compid, pnum, money, minusmoney));
                             int result = BaseDAO.getBaseDAO().updateNative(UPDATE_COMP_BAL, money, compid);
                             LogUtil.getDefaultLogger().info("++++++ TeamBuyTask compid:["+ compid+"]; money:["+ money+"] result:["+ result+"] +++++++");
                             if(dataMap.containsKey(Integer.parseInt(compid))){
                                 money += dataMap.get(Integer.parseInt(compid));
                             }
                             dataMap.put(Integer.parseInt(compid), (int)money);
-                            msgBodyList.add(new TeamBuyMsgBody(orderno, compid, pnum, f2, money));
                         }
 
                         for(Integer compid : dataMap.keySet()){
@@ -182,14 +183,14 @@ public class TeamBuyTask extends TimerTask {
                     double endp = MathUtil.exactDiv(body.getEndprice(), 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                     double minusp = MathUtil.exactDiv(body.getMinusprice(), 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                     try{
-                        IceRemoteUtil.sendMessageToClient(Integer.parseInt(body.getCompid()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.GROUP_BUYING_END, body.getOrderno(), body.getPnum() ,String.valueOf(endp), String.valueOf(minusp)));
+                        IceRemoteUtil.sendMessageToClient(Integer.parseInt(body.getCompid()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.GROUP_BUYING_END, body.getOrderno() ,String.valueOf(endp), body.getPnum() , String.valueOf(minusp)));
                     }catch(Exception e){
                         e.printStackTrace();
                     }
 
                     try{
                         String phone = IceRemoteUtil.getSpecifyStorePhone(Integer.parseInt(body.getCompid()));
-                        SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.GROUP_BUYING_END,body.getOrderno(), body.getPnum() ,String.valueOf(endp), String.valueOf(minusp));
+                        SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.GROUP_BUYING_END,body.getOrderno(),String.valueOf(endp), body.getPnum() , String.valueOf(minusp));
                     }catch(Exception e){
                         e.printStackTrace();
                     }
