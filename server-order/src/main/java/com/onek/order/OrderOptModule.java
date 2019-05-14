@@ -60,7 +60,7 @@ public class OrderOptModule {
 
     //更新订单售后状态
     private static final String UPD_ORDER_SQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
-            + " where cstatus&1=0 and orderno=? and ostatus in(1,2,3)";
+            + " where cstatus&1=0 and orderno=? and ostatus in(3,4)";
 
 
     //更新订单相关商品售后状态
@@ -208,8 +208,8 @@ public class OrderOptModule {
             return result.fail("该订单售后申请正在处理中！");
         }
 
+        int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         if (asType == 0 || asType == 1 || asType == 2) {
-            int year = Integer.parseInt("20" + orderNo.substring(0, 2));
             //更新订单售后状态
             sqlList.add(UPD_ORDER_SQL);
             params.add(new Object[]{-1, orderNo});
@@ -224,15 +224,20 @@ public class OrderOptModule {
                         INSERT_ASAPP_SQL, paramsInsert, asAppVOS.size()));
             }
         } else {
-            //向售后表插入申请数据
-            String asOrderId = GenIdUtil.getAsOrderId();
-            Object[] pramsObj = new Object[]{asAppVOS.get(0).getOrderno(), asAppVOS.get(0).getPdno(), asOrderId,
-                    asAppVOS.get(0).getCompid(), asAppVOS.get(0).getAstype(), asAppVOS.get(0).getGstatus(), asAppVOS.get(0).getReason(),
-                    asAppVOS.get(0).getCkstatus(), asAppVOS.get(0).getCkdesc(), asAppVOS.get(0).getInvoice(),1,
-                    asAppVOS.get(0).getApdesc(), asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum()};
-            int res = baseDao.updateNativeSharding(0,localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
+            //改变订单状态为已补开发票
+            String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|256 "
+                    + " where cstatus&1=0 and orderno=? and ostatus in(3,4)";
+            if (baseDao.updateNativeSharding(compid, year, updSQL, orderNo) > 0) {
+                //向售后表插入申请数据
+                String asOrderId = GenIdUtil.getAsOrderId();
+                Object[] pramsObj = new Object[]{asAppVOS.get(0).getOrderno(), asAppVOS.get(0).getPdno(), asOrderId,
+                        asAppVOS.get(0).getCompid(), asAppVOS.get(0).getAstype(), asAppVOS.get(0).getGstatus(), asAppVOS.get(0).getReason(),
+                        asAppVOS.get(0).getCkstatus(), asAppVOS.get(0).getCkdesc(), asAppVOS.get(0).getInvoice(), 1,
+                        asAppVOS.get(0).getApdesc(), asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum()};
+                int res = baseDao.updateNativeSharding(0, localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
 
-            return res > 0 ? result.success(asOrderId) : result.fail("申请失败");
+                return res > 0 ? result.success(asOrderId) : result.fail("申请失败");
+            }
         }
         return b ? result.success("申请成功") : result.fail("申请失败");
     }
@@ -242,7 +247,7 @@ public class OrderOptModule {
         LocalDateTime localDateTime = LocalDateTime.now();
         if (asType == 3 || asType == 4){
             sql = "select count(*) from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1=0 "
-                    + " and orderno=" + orderNo + " and ckstatus=0 and astype in(3,4)";
+                    + " and orderno=" + orderNo + " and astype in(3,4)";
         } else {
             StringBuilder skuBuilder = new StringBuilder();
             for (AsAppVO asAppVO : asAppVOS) {
@@ -250,7 +255,7 @@ public class OrderOptModule {
             }
             String pdnoStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
             sql = "select count(*) from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1=0 "
-                    + " and orderno=" + orderNo + " and ckstatus=0 and astype not in(3,4) and pdno "
+                    + " and orderno=" + orderNo + " and ckstatus in(0,1) and astype not in(3,4) and pdno "
                     + "in(" + pdnoStr + ")";
         }
         List<Object[]> queryResult = baseDao.queryNativeSharding(0, localDateTime.getYear(), sql);

@@ -112,6 +112,7 @@ public class CalculateModule {
             jsonObject.put("currNums", IceRemoteUtil.getGroupCount(actcode));
             // 团购
             jsonObject.put("ladoffs", ladoffs);
+            jsonObject.put("actRealStore", RedisStockUtil.getActStockBySkuAndActno(sku, actcode));
         } else if (currDiscount.getBRule() == 1113) {
             jsonObject.put("currBuy",
                     RedisOrderUtil.getActBuyNum(compid, sku, actcode));
