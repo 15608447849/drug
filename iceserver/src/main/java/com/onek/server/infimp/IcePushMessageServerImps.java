@@ -175,9 +175,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                         PushMessageClientPrx clientPrx = iterator.next();
                         try {
                             clientPrx.receive(convertMessage(message));
-                            communicator.getLogger().print(Thread.currentThread()+" , "+"send ok , '"+message.identityName+"' msg:"+message.content);
                             isSend = true;
-
                         } catch (Exception e) {
                             iterator.remove();//连接失效
                             communicator.getLogger().error(Thread.currentThread()+" , "+"发送失败," +
@@ -288,21 +286,23 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         Iterator<Map.Entry<String,HashMap<String,ArrayList<PushMessageClientPrx>>>> it = onlineClientMaps.entrySet().iterator();
         while (it.hasNext()){
             HashMap<String,ArrayList<PushMessageClientPrx>> map = it.next().getValue();
-            Iterator<Map.Entry<String,ArrayList<PushMessageClientPrx>>> iterator = map.entrySet().iterator();
-            while (iterator.hasNext()){
-                ArrayList<PushMessageClientPrx> list = iterator.next().getValue();
-                Iterator<PushMessageClientPrx> iteratorList = list.iterator();
-                while (iteratorList.hasNext()){
-                    PushMessageClientPrx clientPrx = iteratorList.next();
+            Iterator<Map.Entry<String,ArrayList<PushMessageClientPrx>>> it2 = map.entrySet().iterator();
+            while (it2.hasNext()){
+                ArrayList<PushMessageClientPrx> list = it2.next().getValue();
+                Iterator<PushMessageClientPrx> it3 = list.iterator();
+                while (it3.hasNext()){
+                    PushMessageClientPrx clientPrx = it3.next();
                     try {
                         clientPrx.ice_ping();
                     } catch (Exception e) {
-                        iterator.remove();
+                        it3.remove();
                         communicator.getLogger().print(Thread.currentThread()+" , "+"在线监测客户端移除:" +
-                                " "+ communicator.identityToString(clientPrx.ice_getIdentity())+",当前在线客户端数:"+ list.size());
+                                " "+ communicator.identityToString(clientPrx.ice_getIdentity()));
                     }
                 }
+                if (list.size() == 0) it2.remove();
             }
+            if (map.size() == 0) it.remove();
         }
 
     }
