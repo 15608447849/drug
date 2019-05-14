@@ -727,7 +727,6 @@ public class ShoppingCartModule {
             Activity activity = (Activity)discount;
             Ladoff currLadoff = activity.getCurrLadoff();
             Ladoff nextLadoff = activity.getNextLadoff();
-
             int brule = (int)discount.getBRule();
             if(brule == 1113 || brule == 1133){
                 continue;
@@ -739,6 +738,8 @@ public class ShoppingCartModule {
 
             OfferTipsVO offerTipsVO = new OfferTipsVO();
             offerTipsVO.setOffername(DiscountRuleStore.getRuleByName(brule));
+            offerTipsVO.setGapamt(activity.getNextGapAmt());
+            offerTipsVO.setGapnum(activity.getNextGapNum());
             if(currLadoff != null){
                 offerTipsVO.setLadamt(currLadoff.getLadamt());
                 offerTipsVO.setLadnum(currLadoff.getLadnum());
@@ -758,6 +759,10 @@ public class ShoppingCartModule {
             offerTipsVOS.add(offerTipsVO);
         }
         return result.success(offerTipsVOS);
+    }
+
+    public static void main(String[] args) {
+
     }
 
 }

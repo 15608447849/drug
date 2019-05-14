@@ -54,6 +54,25 @@ public class OfferTipsVO {
      */
     private double noffer;
 
+    private double gapamt;
+
+    private int gapnum;
+
+    public double getGapamt() {
+        return gapamt;
+    }
+
+    public void setGapamt(double gapamt) {
+        this.gapamt = gapamt;
+    }
+
+    public int getGapnum() {
+        return gapnum;
+    }
+
+    public void setGapnum(int gapnum) {
+        this.gapnum = gapnum;
+    }
 
     public String getOffername() {
         return offername;
