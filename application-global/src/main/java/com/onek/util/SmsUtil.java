@@ -39,7 +39,7 @@ public class SmsUtil  extends ApplicationPropertiesBase {
 
     public static String sendMsg(String phone, String content) {
         try {
-            if (StringUtils.isEmpty(content)) return null;
+            if (StringUtils.isEmpty(phone,content)) return null;
             SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMddHHmmss");
             String timestamp = sdf.format(new Date());
             MessageDigest md5 = MessageDigest.getInstance("MD5");

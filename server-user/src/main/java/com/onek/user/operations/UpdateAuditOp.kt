@@ -68,12 +68,13 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
             if (i > 0) {
                 updateCompInfoToCacheById(companyId!!.toInt()) //更新企业信息到缓存
+                val tempLines = BaseDAO.getBaseDAO().queryNative("SELECT uphone FROM {{?$D_SYSTEM_USER}} WHERE cid = ?", companyId)
+                var phone :String ? = null
+                if (lines.size == 1) {
+                    phone =  tempLines[0][0].toString()
+                }
                 if(auditStatus == 256) {
-                    val tempLines = BaseDAO.getBaseDAO().queryNative("SELECT uphone FROM {{?$D_SYSTEM_USER}} WHERE cid = ?", companyId)
-                    if (lines.size == 1) {
-                        val phone =  tempLines[0][0].toString()
-                        SmsUtil.sendSmsBySystemTemp(phone,AUTHENTICATION_SUCCESS)
-                    }
+                    SmsUtil.sendSmsBySystemTemp(phone,AUTHENTICATION_SUCCESS)
                     IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_SUCCESS)
 
                     giftPoints(companyId!!.toInt())
@@ -82,8 +83,12 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
                     }catch (e: Exception){
                         e.printStackTrace()
                     }
+
                 }
-                if(auditStatus == 512) IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_FAILURE,auditCause)
+                if(auditStatus == 512) {
+                    SmsUtil.sendSmsBySystemTemp(phone,AUTHENTICATION_FAILURE,auditCause)
+                    IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_FAILURE,auditCause)
+                }
                 return Result().success("审核保存提交成功")
             }
         }

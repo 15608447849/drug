@@ -1,7 +1,5 @@
 package util;
 
-import IceInternal.Ex;
-
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
@@ -15,17 +13,22 @@ public class TimeUtils {
     /**
      * 一周间隔时间
      */
-    public static final long PERIOD_WEEK = 7 * 24 * 60 * 60 * 1000;
+    public static final long PERIOD_WEEK = 7 * 24 * 60 * 60 * 1000L;
 
     /**
      * 一天得间隔时间
      */
-    public static final long PERIOD_DAY = 24 * 60 * 60 * 1000;
+    public static final long PERIOD_DAY = 24 * 60 * 60 * 1000L;
 
     /**
      * 一小时间隔时间
      */
-    public static final long PERIOD_HOUR = 1 * 60 * 60 * 1000;
+    public static final long PERIOD_HOUR = 60 * 60 * 1000L;
+
+    /**
+     * 一个月
+     */
+    public static final long PERIOD_MONTH = 30 * 24 * 60 * 60 * 1000L;
 
     /**添加x天*/
     public static Date addDay(Date date, int num) {
