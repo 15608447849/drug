@@ -85,7 +85,7 @@ public class ShoppingCartModule {
                     + " WHERE 1=1 ";
 
 
-    private  final String QUERY_ONE_PROD_INV = "SELECT store-freezestore inventory,limits,convert(sku.vatp/100,decimal(10,2)) pdprice from " +
+    private  final String QUERY_ONE_PROD_INV = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice from " +
             " {{?" + DSMConst.TD_PROD_SKU   + "}} where sku =? and cstatus & 1 = 0";
 
 
@@ -740,21 +740,17 @@ public class ShoppingCartModule {
             OfferTipsVO offerTipsVO = new OfferTipsVO();
             offerTipsVO.setOffername(DiscountRuleStore.getRuleByName(brule));
             if(currLadoff != null){
-                offerTipsVO.setLadamt(MathUtil.exactDiv(currLadoff.getLadamt(),100).
-                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                offerTipsVO.setLadamt(currLadoff.getLadamt());
                 offerTipsVO.setLadnum(currLadoff.getLadnum());
-                offerTipsVO.setOffer(MathUtil.exactDiv(currLadoff.getOffer(),100).
-                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                offerTipsVO.setOffer(currLadoff.getOffer());
                 offerTipsVO.setOffercode(currLadoff.getOffercode());
                 offerTipsVO.setUnqid(currLadoff.getUnqid());
             }
 
             if(nextLadoff != null){
-                offerTipsVO.setNladamt(MathUtil.exactDiv(nextLadoff.getLadamt(),100).
-                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                offerTipsVO.setNladamt(nextLadoff.getLadamt());
                 offerTipsVO.setNladnum(nextLadoff.getLadnum());
-                offerTipsVO.setNoffer(MathUtil.exactDiv(nextLadoff.getOffer(),100).
-                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                offerTipsVO.setNoffer(nextLadoff.getOffer());
                 offerTipsVO.setOffercode(nextLadoff.getOffercode());
                 offerTipsVO.setUnqid(nextLadoff.getUnqid());
             }
@@ -764,7 +760,4 @@ public class ShoppingCartModule {
         return result.success(offerTipsVOS);
     }
 
-    public static void main(String[] args) {
-
-    }
 }
