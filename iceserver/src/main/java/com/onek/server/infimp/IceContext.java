@@ -42,7 +42,7 @@ public class IceContext {
     }
 
     //关于长连接 请求前端用户上线
-    protected void isAllowOnline(IcePushMessageServerImps server, Result result){
+    protected void isAllowOnline(Result result){
 
     }
     /**

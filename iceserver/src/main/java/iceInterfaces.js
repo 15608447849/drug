@@ -113,7 +113,7 @@
     {
         "accessService": [, , , , , [7], [[inf.IRequest]], , , , ],
         "online": [, , , , , , [[Ice.Identity]], , , , ],
-        "offline": [, , , , , , [[7]], , , , ],
+        "offline": [, , , , , , [[7], [7]], , , , ],
         "sendMessageToClient": [, , , , , , [[7], [7]], , , , ]
     });
 

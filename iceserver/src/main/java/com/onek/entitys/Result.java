@@ -22,12 +22,12 @@ public class Result {
    public int code = CODE.FAIL;
    public String message = MESSAGE.FAIL;
 
-   //请求上线
-   public boolean flag;
+   //允许长连接
+   private boolean allowLc = false;
 
    public Object data ;
 
-   public HashMap<String,Object> map;
+   private HashMap<String,Object> map;
 
    private Integer pageNo;
 
@@ -100,8 +100,8 @@ public class Result {
       return this;
    }
 
-   public Result setRequestOnline(){
-      flag = true;
+   public Result isAllowLongConnection(boolean flag){
+      this.allowLc = flag;
       return this;
    }
 }

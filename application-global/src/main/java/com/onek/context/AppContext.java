@@ -4,7 +4,6 @@ import Ice.Current;
 import com.onek.entitys.Result;
 import com.onek.server.inf.IRequest;
 import com.onek.server.infimp.IceContext;
-import com.onek.server.infimp.IcePushMessageServerImps;
 import com.onek.util.IceRemoteUtil;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
@@ -123,16 +122,10 @@ public class AppContext extends IceContext {
     }
 
     @Override
-    protected void isAllowOnline(IcePushMessageServerImps server, Result result) {
-            try {
-                if (userSession == null || userSession.compId == 0) return;
-                String key = String.valueOf(userSession.compId);
-                if (server.checkClientOnlineStatus(param.token,key)) {
-                    result.setRequestOnline(); //设置请求客户端上线
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+    protected void isAllowOnline( Result result) {
+        if (userSession!=null && userSession.compId > 0 ){
+            result.isAllowLongConnection(true);
+        }
     }
 
 }

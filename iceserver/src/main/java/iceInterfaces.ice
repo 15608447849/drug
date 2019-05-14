@@ -39,7 +39,7 @@ module inf{
           /** 消息推送-服务端 / 客户端上线  */
           void online(Ice::Identity identity);
           /** 消息推送-服务端 / 客户端下线 */
-          void offline(string identityName);
+          void offline(string clientType,string identityName);
           /** 消息推送-服务端 / 后端服务调用 - 向指定客户端发送消息 */
           void sendMessageToClient(string identityName,string message);
       };
