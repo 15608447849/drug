@@ -5,7 +5,9 @@ import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.rule.RuleParser;
 import com.onek.calculate.util.DiscountUtil;
 import util.ArrayUtil;
+import util.MathUtil;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public abstract class BaseDiscountCalculateService implements ICalculateService {
@@ -50,21 +52,27 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
     }
 
     protected final Ladoff getLadoffable(Ladoff[] ladoffs, double price, int nums) {
-        double ladAmt;
-        int ladNum;
+        double ladAmt, gapAmt;
+        int ladNum, gapNum;
         boolean able;
 
         for (Ladoff ladoff : ladoffs) {
             ladAmt = ladoff.getLadamt();
             ladNum = ladoff.getLadnum();
+            gapAmt = MathUtil.exactSub(price, ladAmt)
+                             .setScale(2, BigDecimal.ROUND_HALF_UP)
+                             .doubleValue();
+
+            gapNum = nums - ladNum;
+
             able = true;
             // 全为0则直接拿value
             if (ladAmt > 0 && ladNum > 0) {
-                able = price >= ladAmt && nums >= ladNum;
+                able = gapAmt >= 0 && gapNum >= 0;
             } else if (ladAmt > 0) {
-                able = price >= ladAmt;
+                able = gapAmt >= 0;
             } else if (ladNum > 0) {
-                able = price >= ladNum;
+                able = gapNum >= 0;
             }
 
             if (able) {
@@ -72,6 +80,8 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
                 return ladoff;
             }
 
+            currDiscount.setNextGapAmt(gapAmt);
+            currDiscount.setNextGapNum(gapNum);
             currDiscount.setNextLadoff(ladoff);
         }
 
