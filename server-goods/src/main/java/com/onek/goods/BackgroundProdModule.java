@@ -31,6 +31,7 @@ import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -174,6 +175,27 @@ public class BackgroundProdModule {
         return new Result().success(null);
     }
 
+    private boolean checkStore(long sku, int store) {
+        boolean result = sku > 0 && store > 0;
+
+        if (result) {
+            String sql = " SELECT IFNULL(SUM(a.actstock), 0), s.freezestore "
+                    + " FROM {{?" + DSMConst.TD_PROD_SKU + "}} s "
+                    + " LEFT JOIN {{?" + DSMConst.TD_PROM_ASSDRUG + "}} a "
+                    + " ON a.cstatus&1 = 0 AND s.cstatus&1 = 0 "
+                    + " AND s.sku = a.gcode "
+                    + " WHERE s.sku = ? ";
+
+            List<Object[]> queryResult = BASE_DAO.queryNative(sql, sku);
+
+            int actTotal = Integer.parseInt(queryResult.get(0)[0].toString());
+            int freeze = Integer.parseInt(queryResult.get(0)[1].toString());
+
+            result = store >= actTotal + freeze;
+        }
+
+        return result;
+    }
 
     public Result updateProd(AppContext appContext) {
         BgProdVO bgProdVO;
@@ -194,6 +216,9 @@ public class BackgroundProdModule {
             return new Result().fail(e.getMessage());
         }
 
+        if (!checkStore(bgProdVO.getSku(), bgProdVO.getStore())) {
+            return new Result().fail("库存不得小于冻结库存和活动总库存之和！");
+        }
 
         bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
         bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue());
@@ -530,6 +555,7 @@ public class BackgroundProdModule {
                 bgProdVO.setForm(Integer.parseInt(spuParser[1]));
             }
 
+            bgProdVO.setStore(RedisStockUtil.getStock(bgProdVO.getSku()));
             try {
                 DictStore.translate(bgProdVO);
             } catch (Exception e) {e.printStackTrace();}
@@ -568,29 +594,52 @@ public class BackgroundProdModule {
             throw new IllegalArgumentException("产品名为空");
         }
 
-        if (!String.valueOf(prodVO.getClassNo()).startsWith("21")
-                && StringUtils.isEmpty(prodVO.getStandarNo())) {
-            throw new IllegalArgumentException("批准文号/注册证编号为空");
-        }
-
-        if (!StringUtils.isDateFormatter(prodVO.getVaildedate())) {
-            throw new IllegalArgumentException("有效结束日期格式不正确");
-        }
-
-        if (!StringUtils.isDateFormatter(prodVO.getVaildsdate())) {
-            throw new IllegalArgumentException("有效开始日期格式不正确");
-        }
-
-        if (!StringUtils.isDateFormatter(prodVO.getProdsdate())) {
-            throw new IllegalArgumentException("生成开始日期格式不正确");
-        }
-
-        if (!StringUtils.isDateFormatter(prodVO.getProdedate())) {
-            throw new IllegalArgumentException("生成结束日期格式不正确");
-        }
-
         if (!StringUtils.isJsonFormatter(prodVO.getDetail())) {
             throw new IllegalArgumentException("详情格式不正确");
+        }
+
+        if (!String.valueOf(prodVO.getClassNo()).startsWith("21")) {
+            if (StringUtils.isEmpty(prodVO.getStandarNo())) {
+                throw new IllegalArgumentException("批准文号/注册证编号为空");
+            }
+
+            if (!StringUtils.isDateFormatter(prodVO.getVaildedate())) {
+                throw new IllegalArgumentException("有效结束日期格式不正确");
+            }
+
+            if (!StringUtils.isDateFormatter(prodVO.getVaildsdate())) {
+                throw new IllegalArgumentException("有效开始日期格式不正确");
+            }
+
+            if (!StringUtils.isDateFormatter(prodVO.getProdsdate())) {
+                throw new IllegalArgumentException("生成开始日期格式不正确");
+            }
+
+            if (!StringUtils.isDateFormatter(prodVO.getProdedate())) {
+                throw new IllegalArgumentException("生成结束日期格式不正确");
+            }
+        } else {
+            String currDate = TimeUtils.getCurrentDate();
+
+            if (StringUtils.isEmpty(prodVO.getStandarNo())) {
+                prodVO.setStandarNo("");
+            }
+
+            if (!StringUtils.isDateFormatter(prodVO.getVaildedate())) {
+                prodVO.setVaildedate(currDate);
+            }
+
+            if (!StringUtils.isDateFormatter(prodVO.getVaildsdate())) {
+                prodVO.setVaildsdate(currDate);
+            }
+
+            if (!StringUtils.isDateFormatter(prodVO.getProdsdate())) {
+                prodVO.setProdsdate(currDate);
+            }
+
+            if (!StringUtils.isDateFormatter(prodVO.getProdedate())) {
+                prodVO.setProdedate(currDate);
+            }
         }
 
         return true;
