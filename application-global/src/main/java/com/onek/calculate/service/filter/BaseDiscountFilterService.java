@@ -82,7 +82,7 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
             throw new IllegalArgumentException("SKU is illegal, " + sku);
         }
 
-        return String.valueOf(sku).substring(0, 12);
+        return String.valueOf(sku).substring(1, 7);
     }
 
     protected abstract List<IDiscount> getCurrentDiscounts(long sku);
