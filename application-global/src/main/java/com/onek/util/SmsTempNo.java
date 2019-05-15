@@ -59,7 +59,7 @@ public class SmsTempNo {
         return (IceRemoteUtil.getMessagePower(tempNo) & SmsTempNo.PUSH_MESSAGE_POWER) != 0;
     }
     //发送短信+栈内到指定
-    public static void sendMessageToSpecify(int compid,String phone,int tempNo,String args){
+    public static void sendMessageToSpecify(int compid,String phone,int tempNo,String... args){
         //发送短信
         SmsUtil.sendSmsBySystemTemp(phone, tempNo,args);
         //发送信息
