@@ -21,6 +21,9 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMessageStore,Runnable {
 
+
+    //超时时间毫秒数
+    private final int PING_TIMEOUT_MAX = 1000;
     private final ReentrantLock lock = new ReentrantLock();
     /**
      *  当前在线的所有客户端
@@ -73,11 +76,10 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     @Override
     public void online(Identity identity, Current __current)  {
         try {
-            //后期根据类型分发客户端 -
-            Ice.ObjectPrx base = __current.con.createProxy(identity);
             final String identityName = identity.name;
             final String clientType =  identity.category;
-            communicator.getLogger().print(Thread.currentThread()+" 上线提示 ---------------- "+"客户端( "+ clientType + "),id = "+ identity.name  );
+            if ( StringUtils.isEmpty(identityName,clientType) ) throw new Exception("客户端信息不完整,不允许接入");
+            Ice.ObjectPrx base = __current.con.createProxy(identity);
             final PushMessageClientPrx client = PushMessageClientPrxHelper.uncheckedCast(base);
             pool.post(()->{
                 //添加到队列
@@ -93,13 +95,6 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                 }
             };
         }
-
-    }
-
-
-    @Override
-    public void offline(String clientType,String identityName, Current __current) {
-        //移除客户端
     }
 
     //添加客户端到队列
@@ -130,7 +125,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                 Map.Entry<String,ArrayList<PushMessageClientPrx>> entry = iterator.next();
                 String key = entry.getKey();
                 if (identityName.equals(key)){
-                    list.add(entry.getValue());
+                    list.add(new ArrayList<>(entry.getValue())); //复制客户端出来
                 }
             }
         }
@@ -177,9 +172,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                             clientPrx.receive(convertMessage(message));
                             isSend = true;
                         } catch (Exception e) {
-                            iterator.remove();//连接失效
-                            communicator.getLogger().error(Thread.currentThread()+" , "+"发送失败," +
-                                    "id =  '"+message.identityName+"' msg:"+message.content+" ( " + communicator.identityToString(clientPrx.ice_getIdentity()) + " )"+" ,错误原因:"+ e);
+                            communicator.getLogger().error(Thread.currentThread()+" , "+"发送失败, 客户端-"+communicator.identityToString(clientPrx.ice_getIdentity())+" ,msg:"+message.content+" ,错误原因:"+ e);
                         }
                     }
                 }
@@ -258,8 +251,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                         continue;
                     }
                     sendMessage(message);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
+                } catch (InterruptedException ignored) {
                 }
             }
         };
@@ -270,11 +262,10 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     @Override
     public void run() {
         //循环检测 -保活
-
         while (!communicator.isShutdown()){
             try {
-                Thread.sleep( 5 * 1000);
-                checkConnect(); //监测Pc端
+                Thread.sleep( 30 * 1000);
+                checkConnect(); //监测
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -283,7 +274,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
 
     private void checkConnect() {
 
-        Iterator<Map.Entry<String,HashMap<String,ArrayList<PushMessageClientPrx>>>> it = onlineClientMaps.entrySet().iterator();
+        Iterator<Map.Entry<String,HashMap<String, ArrayList<PushMessageClientPrx>>>> it = onlineClientMaps.entrySet().iterator();
         while (it.hasNext()){
             HashMap<String,ArrayList<PushMessageClientPrx>> map = it.next().getValue();
             Iterator<Map.Entry<String,ArrayList<PushMessageClientPrx>>> it2 = map.entrySet().iterator();
@@ -293,19 +284,19 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                 while (it3.hasNext()){
                     PushMessageClientPrx clientPrx = it3.next();
                     try {
-                        clientPrx.ice_ping();
+
+                        clientPrx.ice_invocationTimeout(PING_TIMEOUT_MAX).ice_ping();
+
                     } catch (Exception e) {
                         it3.remove();
-                        communicator.getLogger().print(Thread.currentThread()+" , "+"在线监测客户端移除:" +
-                                " "+ communicator.identityToString(clientPrx.ice_getIdentity()));
+                        communicator.getLogger().print(
+                                Thread.currentThread()+" , "+"在线监测客户端移除:" +
+                                " "+ communicator.identityToString(clientPrx.ice_getIdentity())+" 原因:"+  e);
                     }
                 }
                 if (list.size() == 0) it2.remove();
             }
             if (map.size() == 0) it.remove();
         }
-
     }
-
-
 }

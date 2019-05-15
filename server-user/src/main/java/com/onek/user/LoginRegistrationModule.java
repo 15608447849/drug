@@ -153,7 +153,7 @@ public class LoginRegistrationModule {
                 return new Result().success(userSession);//返回用户信息
             };
         }
-        return new Result().fail("没有企业信息,请关联企业");//返回用户信息
+        return new Result().success(null);//返回用户信息
     }
 
     /**

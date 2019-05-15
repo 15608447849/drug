@@ -46,7 +46,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 //存在一个采集企业
                 int compid = (int) lines.get(0)[0];
                 //用户关联企业码
-                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} SET cid = ? WHERE cstatus&1 AND uid=?";
+                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} SET cid = ? WHERE cstatus&1=0 AND uid=?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql,compid,session.userId);
                 if (i <= 0){
                     return new Result().fail("无法关联门店信息");
