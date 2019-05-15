@@ -176,7 +176,6 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                         }
                     }
                 }
-                if (isSend) communicator.getLogger().print("发送成功");
                 if (isSend)  changeMessageStateToDb(message); //数据发送成功
 
         } catch (Exception e) {
