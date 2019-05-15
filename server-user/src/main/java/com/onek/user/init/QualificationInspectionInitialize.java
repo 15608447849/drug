@@ -77,11 +77,17 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
 
     @Override
     public void run() {
+
        while (true){
            try {
                execute();
                Thread.sleep(TimeUtils.PERIOD_DAY);
-           }catch (Exception ignored){ }
+           }catch (Exception ignored){
+               try {
+                   Thread.sleep(5 * 60 * 1000);
+               } catch (InterruptedException ignored2) {
+               }
+           }
        }
     }
 
