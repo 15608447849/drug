@@ -134,6 +134,31 @@ public class RedisProvide{
 //		jedisCluster.del(keys.toArray(new String[keys.size()]));
 	}
 
+	/**
+	 * 获取前缀为keyStartWith的所有键
+	 *
+	 * @param keyStartWith
+	 */
+	public List<String> getRedisKeyStartWith(String keyStartWith){
+		List<String> keyList = new ArrayList<>();
+		Map<String, JedisPool> clusterNodes = jedisCluster.getClusterNodes();
+		for (Map.Entry<String, JedisPool> entry : clusterNodes.entrySet()) {
+			Jedis jedis = entry.getValue().getResource();
+			// 判断非从节点(因为若主从复制，从节点会跟随主节点的变化而变化)
+			if (!jedis.info("replication").contains("role:slave")) {
+				Set<String> keys = jedis.keys(keyStartWith + "*");
+				if (keys.size() > 0) {
+					Map<Integer, List<String>> map = new HashMap<>();
+					for (String key : keys) {
+						keyList.add(key);
+					}
+				}
+			}
+		}
+		return keyList;
+
+	}
+
 //	public JedisCluster getJedisCluster(){
 //		jedisCluster.
 //		return jedisCluster;

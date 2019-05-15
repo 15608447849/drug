@@ -1,8 +1,18 @@
 package com.onek.util.stock;
 
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.RedisGlobalKeys;
+import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
+import util.MathUtil;
 import util.StringUtils;
+
+import java.math.BigDecimal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class RedisStockUtil {
 
@@ -92,6 +102,37 @@ public class RedisStockUtil {
         String currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
         if (StringUtils.isEmpty(currentStock)) {
             return 0;
+        }
+        String initStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode);
+        if(!StringUtils.isEmpty(initStock) && initStock.equals(currentStock)){ // 起始活动库存等于活动库存代表活动未开始
+            LogUtil.getDefaultLogger().info("++++++ check actcode start +++++++");
+            List<String> keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP);
+            Map<String, Integer> stockMap = new HashMap<>();
+            double sumStock = 0;
+            for(String key : keys){
+                String stock = RedisUtil.getStringProvide().get(key);
+                LogUtil.getDefaultLogger().info("++++++ check actcode key:["+ key+"] stock:["+ stock +"] +++++++");
+                sumStock  += Integer.parseInt(stock);
+                stockMap.put(key, Integer.parseInt(stock));
+            }
+            int stock = getStock(sku);
+            if (sumStock >= stock) {
+                for (String key : stockMap.keySet()) {
+                    double rate = MathUtil.exactDiv(stockMap.get(key), sumStock).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                    int nas = MathUtil.exactMul(stock, rate).intValue();
+                    String ac = key.split("[|]")[2];
+                    LogUtil.getDefaultLogger().info("++++++ check actcode key:[" + key + "] ac:[" + ac + "] +++++++");
+                    int r = setActStock(sku, Long.parseLong(ac), nas);
+                    LogUtil.getDefaultLogger().info("++++++ reset actcode key:[" + key + "] result:[" + r + "] +++++++");
+                    ExecutorService executors = Executors.newSingleThreadExecutor();
+                    executors.execute(() -> {
+                                IceRemoteUtil.adjustActivityStock(nas, Long.parseLong(ac), sku);
+                            }
+
+                    );
+                }
+            }
+            currentStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode);
         }
         return Integer.parseInt(currentStock);
 
