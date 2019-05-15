@@ -65,9 +65,16 @@ public class TeamBuyTask extends TimerTask {
                 if(array != null && array.size() > 0){
 
                     int offer = 0;
+                    Set<String> compSet = new HashSet<>();
+                    for(Object o : array){
+                        LinkedTreeMap map = ((LinkedTreeMap) o);
+                        String compid = map.get("compid").toString();
+                        compSet.add(compid);
+                    }
                     for(int i = 0; i < ladOffArray.size() ; i++){
                          JSONObject js = ladOffArray.getJSONObject(i);
-                         if(array.size() >= js.getInteger("ladnum")){
+                          js.getInteger("compid");
+                         if(compSet.size() >= js.getInteger("ladnum")){
                              offer = js.getInteger("offer");
                          }
                     }
