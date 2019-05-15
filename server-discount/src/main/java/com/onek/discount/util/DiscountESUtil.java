@@ -137,7 +137,7 @@ public class DiscountESUtil {
 //        activityVO.setActcycle(1);
 //        activityVO.setActdesc("满减大酬宾");
 //        activityVO.setRulecode(10);
-//        activityVO.setCstatus(0);
+//        activityVO.setActCstatus(0);
 //        int status = addActivity(activityVO);
 //        System.out.println("添加活动状态:"+status);
 //
@@ -147,7 +147,7 @@ public class DiscountESUtil {
 //        timeVO.setActcode(activityVO.getUnqid());
 //        timeVO.setSdate("09:11:432");
 //        timeVO.setEdate("16:00:432");
-//        timeVO.setCstatus(0);
+//        timeVO.setActCstatus(0);
 //        timeVOList.add(timeVO);
 //
 //        status = addTimeList(timeVOList);
@@ -160,7 +160,7 @@ public class DiscountESUtil {
 //        drugVO.setMenucode(0);
 //        drugVO.setActcode(activityVO.getUnqid());
 //        drugVO.setGcode(11010009990102L);
-//        drugVO.setCstatus(0);
+//        drugVO.setActCstatus(0);
 //        drugVOList.add(drugVO);
 //
 //        drugVO = new AssDrugVO();
@@ -169,7 +169,7 @@ public class DiscountESUtil {
 //        drugVO.setMenucode(0);
 //        drugVO.setActcode(activityVO.getUnqid());
 //        drugVO.setGcode(11010009990103L);
-//        drugVO.setCstatus(0);
+//        drugVO.setActCstatus(0);
 //        drugVOList.add(drugVO);
 //
 //        drugVO = new AssDrugVO();
@@ -178,7 +178,7 @@ public class DiscountESUtil {
 //        drugVO.setMenucode(0);
 //        drugVO.setActcode(activityVO.getUnqid());
 //        drugVO.setGcode(11010009990104L);
-//        drugVO.setCstatus(0);
+//        drugVO.setActCstatus(0);
 //        drugVOList.add(drugVO);
 //        status = addAssDrugList(drugVOList);
 //        System.out.println("添加商品列表:"+status);

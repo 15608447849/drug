@@ -110,6 +110,7 @@ public class OrderInfoModule {
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrderDetail.class);
 
         JSONObject compJson;
+        List<TranOrderGoods> goods;
         for (TranOrderDetail tranOrder : result) {
             String compStr = RedisUtil.getStringProvide().get(String.valueOf(tranOrder.getCusno()));
 
@@ -123,7 +124,7 @@ public class OrderInfoModule {
 
             tranOrder.setPayprice(
                     MathUtil.exactDiv(tranOrder.getPayprice(), 100).doubleValue());
-            tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
+            tranOrder.setGoods(goods = getOrderGoods(tranOrder.getOrderno(), compid));
             tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
             tranOrder.setPdamt(MathUtil.exactDiv(tranOrder.getPdamt(), 100).doubleValue());
             tranOrder.setPayprice(MathUtil.exactDiv(tranOrder.getPayprice(), 100).doubleValue());
@@ -131,7 +132,12 @@ public class OrderInfoModule {
             tranOrder.setCoupamt(MathUtil.exactDiv(tranOrder.getCoupamt(), 100).doubleValue());
             tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
             tranOrder.setBalamt(MathUtil.exactDiv(tranOrder.getBalamt(), 100).doubleValue());
-
+            tranOrder.setClassNum(goods.size());
+            int totalNum = 0;
+            for (TranOrderGoods good : goods) {
+                totalNum += good.getPnum();
+            }
+            tranOrder.setTotalNum(totalNum);
         }
 
         return new Result().success(result);
@@ -303,6 +309,8 @@ public class OrderInfoModule {
                 tranOrderGoods.setPname(prod.getProdname());
                 tranOrderGoods.setPspec(prod.getSpec());
                 tranOrderGoods.setManun(prod.getManuName());
+                tranOrderGoods.setStandarNo(prod.getStandarNo());
+                tranOrderGoods.setBrandn(prod.getBrandName());
             }
         }
     }

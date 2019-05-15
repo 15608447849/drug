@@ -67,6 +67,24 @@ public class TranOrderDetail {
     private String pname;
     private String cusname;
     private String areaAllName;
+    private int totalNum;
+    private int classNum;
+
+    public int getTotalNum() {
+        return totalNum;
+    }
+
+    public void setTotalNum(int totalNum) {
+        this.totalNum = totalNum;
+    }
+
+    public int getClassNum() {
+        return classNum;
+    }
+
+    public void setClassNum(int classNum) {
+        this.classNum = classNum;
+    }
 
     public String getAreaAllName() {
         return areaAllName;

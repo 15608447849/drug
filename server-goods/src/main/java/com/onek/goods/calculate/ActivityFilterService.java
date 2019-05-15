@@ -2,6 +2,7 @@ package com.onek.goods.calculate;
 
 import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import constant.DSMConst;
@@ -9,6 +10,7 @@ import dao.BaseDAO;
 import util.MathUtil;
 import util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -23,7 +25,7 @@ public class ActivityFilterService extends BaseDiscountFilterService {
                     + " AND act.cstatus&1 = 0 "
                     + " AND ass.actcode = act.unqid "
                     + " AND act.sdate <= CURRENT_DATE "
-                    + " AND CURRENT_DATE <= act.edate "
+                    + " AND CURRENT_DATE <= act.edate"
                     // 全局通用， 品类，商品
                     + " AND ass.gcode IN (0, ?, ?) ) "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_TIME + "}} time "
@@ -39,7 +41,9 @@ public class ActivityFilterService extends BaseDiscountFilterService {
 
     public ActivityFilterService() { super(); }
 
-    protected List<IDiscount> getCurrentDiscounts(long sku) {
+    protected List<IDiscount> getCurrentDiscounts(IProduct product) {
+        long sku = product.getSKU();
+
         String pclass = getProductCode(sku);
 
         if (StringUtils.isEmpty(pclass)) {
@@ -60,7 +64,12 @@ public class ActivityFilterService extends BaseDiscountFilterService {
         for (IDiscount discount : returnResult) {
             a = (Activity) discount;
             discount.setLimits(sku, a.getLimitnum());
-            a.setActPrice(MathUtil.exactDiv(a.getActPrice(), 100).doubleValue());
+            a.setActPrice(
+                    (a.getAssCstatus() & 512) == 0
+                        ? MathUtil.exactDiv(a.getActPrice(), 100).doubleValue()
+                        : MathUtil.exactDiv(a.getActPrice(), 100)
+                            .multiply(BigDecimal.valueOf(product.getOriginalPrice()))
+                            .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
             discount.setActionPrice(sku, a.getActPrice());
         }
 
