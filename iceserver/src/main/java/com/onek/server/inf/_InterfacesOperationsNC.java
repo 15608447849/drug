@@ -38,7 +38,7 @@ public interface _InterfacesOperationsNC
     /**
      * 消息推送-服务端 / 客户端下线
      **/
-    void offline(String identityName);
+    void offline(String clientType, String identityName);
 
     /**
      * 消息推送-服务端 / 后端服务调用 - 向指定客户端发送消息

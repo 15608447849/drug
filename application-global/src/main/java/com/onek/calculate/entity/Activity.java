@@ -40,6 +40,8 @@ public class Activity extends AccurateMath implements IDiscount {
 
     private Ladoff currLadoff;
     private Ladoff nextLadoff;
+    private double nextGapAmt;
+    private int nextGapNum;
 
     public Activity() {
         this.productList = new ArrayList<>();
@@ -354,6 +356,24 @@ public class Activity extends AccurateMath implements IDiscount {
     @Override
     public void setNextLadoff(Ladoff nextLadoff) {
         this.nextLadoff = nextLadoff;
+    }
+
+    public double getNextGapAmt() {
+        return nextGapAmt;
+    }
+
+    @Override
+    public void setNextGapAmt(double nextGapAmt) {
+        this.nextGapAmt = nextGapAmt;
+    }
+
+    public int getNextGapNum() {
+        return nextGapNum;
+    }
+
+    @Override
+    public void setNextGapNum(int nextGapNum) {
+        this.nextGapNum = nextGapNum;
     }
 
     @Override

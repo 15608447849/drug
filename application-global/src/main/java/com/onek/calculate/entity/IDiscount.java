@@ -31,4 +31,7 @@ public interface IDiscount {
 
     void setCurrLadoff(Ladoff currLadoff);
     void setNextLadoff(Ladoff nextLadoff);
+
+    void setNextGapAmt(double nextGapAmt);
+    void setNextGapNum(int nextGapNum);
 }

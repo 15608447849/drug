@@ -154,7 +154,6 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
                     DelayedObject<D> delayed = DelayedHandler.this.delayQueue.take();
 
                     if (delayed != null) {
-                        // TODO 取消订单接口
                         boolean cancelResult =
                                 DelayedHandler.this.handlerCall.
                                         handlerCall(delayed.getObj());

@@ -17,6 +17,9 @@ public class SmsTempNo {
      * 团购结束
      * 订单支付成功
      * 商品降价通知
+     * 资质过期
+     * 售后审核通过
+     * 售后审核不通过
      */
     public static final int MESSAGE_AUTHENTICATION_CODE = 1;
     public static final int REGISTERED_SUCCESSFULLY = 2;
@@ -29,6 +32,9 @@ public class SmsTempNo {
     public static final int GROUP_BUYING_END = 9;
     public static final int ORDER_PAYMENT_SUCCESSFUL = 10;
     public static final int NOTICE_OF_COMMODITY_REDUCTION = 11;
+    public static final int QUALIFICATION_EXPIRED = 12;
+    public static final int AFTER_SALE_AUDIT_PASSED = 13;
+    public static final int AFTER_SALE_AUDIT_FAILED_TO_PASSED = 14;
 
     //发送推送消息的权限值
     public static final int PUSH_MESSAGE_POWER =  2;
@@ -51,5 +57,17 @@ public class SmsTempNo {
     //判断短信是否可发送
     public static boolean isPmAllow(int tempNo){
         return (IceRemoteUtil.getMessagePower(tempNo) & SmsTempNo.PUSH_MESSAGE_POWER) != 0;
+    }
+    //发送短信+栈内到指定
+    public static void sendMessageToSpecify(int compid,String phone,int tempNo,String... args){
+        //发送短信
+        SmsUtil.sendSmsBySystemTemp(phone, tempNo,args);
+        //发送信息
+        IceRemoteUtil.sendTempMessageToClient(compid,tempNo,args);
+    }
+    //发送短信+栈内到所有
+    public static void sendMessageToAll(int tempNo,String args){
+        SmsUtil.sendMsgToAllBySystemTemp(tempNo,args);
+        IceRemoteUtil.sendMessageToAllClient(tempNo,args);
     }
 }

@@ -2,7 +2,6 @@ package com.onek.calculate.entity;
 
 import com.onek.calculate.service.AccurateMath;
 import com.onek.calculate.util.DiscountUtil;
-import constant.DSMConst;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +30,9 @@ public class Couent extends AccurateMath implements IDiscount {
 
     private Ladoff currLadoff;
     private Ladoff nextLadoff;
+    private double nextGapAmt;
+    private int nextGapNum;
+
 
     public long getUnqid() {
         return unqid;
@@ -259,6 +261,23 @@ public class Couent extends AccurateMath implements IDiscount {
     @Override
     public void setNextLadoff(Ladoff nextLadoff) {
         this.nextLadoff = nextLadoff;
+    }
+
+    public double getNextGapAmt() {
+        return nextGapAmt;
+    }
+
+    @Override
+    public void setNextGapAmt(double nextGapAmt) {
+        this.nextGapAmt = nextGapAmt;
+    }
+
+    public int getNextGapNum() {
+        return nextGapNum;
+    }
+
+    public void setNextGapNum(int nextGapNum) {
+        this.nextGapNum = nextGapNum;
     }
 
     @Override
