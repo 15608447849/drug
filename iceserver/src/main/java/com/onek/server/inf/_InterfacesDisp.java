@@ -82,14 +82,6 @@ public abstract class _InterfacesDisp extends Ice.ObjectImpl implements Interfac
     }
 
     /**
-     * 消息推送-服务端 / 客户端下线
-     **/
-    public final void offline(String clientType, String identityName)
-    {
-        offline(clientType, identityName, null);
-    }
-
-    /**
      * 消息推送-服务端 / 客户端上线
      **/
     public final void online(Ice.Identity identity)
@@ -131,20 +123,6 @@ public abstract class _InterfacesDisp extends Ice.ObjectImpl implements Interfac
         return Ice.DispatchStatus.DispatchOK;
     }
 
-    public static Ice.DispatchStatus ___offline(Interfaces __obj, IceInternal.Incoming __inS, Ice.Current __current)
-    {
-        __checkMode(Ice.OperationMode.Normal, __current.mode);
-        IceInternal.BasicStream __is = __inS.startReadParams();
-        String clientType;
-        String identityName;
-        clientType = __is.readString();
-        identityName = __is.readString();
-        __inS.endReadParams();
-        __obj.offline(clientType, identityName, __current);
-        __inS.__writeEmptyParams();
-        return Ice.DispatchStatus.DispatchOK;
-    }
-
     public static Ice.DispatchStatus ___sendMessageToClient(Interfaces __obj, IceInternal.Incoming __inS, Ice.Current __current)
     {
         __checkMode(Ice.OperationMode.Normal, __current.mode);
@@ -166,7 +144,6 @@ public abstract class _InterfacesDisp extends Ice.ObjectImpl implements Interfac
         "ice_ids",
         "ice_isA",
         "ice_ping",
-        "offline",
         "online",
         "sendMessageToClient"
     };
@@ -203,13 +180,9 @@ public abstract class _InterfacesDisp extends Ice.ObjectImpl implements Interfac
             }
             case 5:
             {
-                return ___offline(this, in, __current);
-            }
-            case 6:
-            {
                 return ___online(this, in, __current);
             }
-            case 7:
+            case 6:
             {
                 return ___sendMessageToClient(this, in, __current);
             }

@@ -38,12 +38,6 @@ public interface _InterfacesOperations
     void online(Ice.Identity identity, Ice.Current __current);
 
     /**
-     * 消息推送-服务端 / 客户端下线
-     * @param __current The Current object for the invocation.
-     **/
-    void offline(String clientType, String identityName, Ice.Current __current);
-
-    /**
      * 消息推送-服务端 / 后端服务调用 - 向指定客户端发送消息
      * @param __current The Current object for the invocation.
      **/
