@@ -6,6 +6,7 @@ import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.CouponListFilterService;
 import com.onek.calculate.entity.*;
+import com.onek.calculate.util.DiscountUtil;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entity.ActivityGiftVO;
@@ -149,8 +150,7 @@ public class CouponRevModule {
     private final String INSERT_COUPON_EXCG_REV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
             + "rulename,goods,ladder,glbno,cstatus,ctype) "
-            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,3)";
-
+            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 
 
@@ -212,7 +212,35 @@ public class CouponRevModule {
         String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
         int ret = baseDao.updateNativeSharding(couponVO.getCompid(), TimeUtils.getCurrentYear(),INSERT_COUPON_EXCG_REV_SQL,new Object[]{unqid,couponVO.getCoupno(),
                 couponVO.getCompid(),startDate,"00:00:00","2099-01-01","00:00:00",couponVO.getBrulecode(),
-                couponVO.getRulename(),couponVO.getGoods(),ladderJson,couponVO.getGlbno(),0});
+                couponVO.getRulename(),couponVO.getGoods(),ladderJson,couponVO.getGlbno(),0,3});
+        if(ret > 0){
+            return result.success("新增成功");
+        }
+        return result.fail("新增失败");
+    }
+
+
+
+    @UserPermission(ignore = true)
+    public Result insertRevOfflineCoupon(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+
+        CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
+        long unqid = GenIdUtil.getUnqId();
+
+//        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+//        Date curDate = new Date();
+//        String startDate = dateFormat.format(curDate);
+        couponVO.setEnddate("2099-01-01");
+        if(couponVO.getValidday() > 0){
+            setCoupValidDay(couponVO);
+        }
+
+        String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
+        int ret = baseDao.updateNativeSharding(couponVO.getCompid(), TimeUtils.getCurrentYear(),INSERT_COUPON_EXCG_REV_SQL,new Object[]{unqid,couponVO.getCoupno(),
+                couponVO.getCompid(),couponVO.getStartdate(),"00:00:00",couponVO.getEnddate(),"00:00:00",couponVO.getBrulecode(),
+                couponVO.getRulename(),couponVO.getGoods(),ladderJson,couponVO.getGlbno(),6});
         if(ret > 0){
             return result.success("新增成功");
         }
@@ -813,10 +841,15 @@ public class CouponRevModule {
 
 
 
-    public static void main(String[] args) {
-       // CouponRevModule couponRevModule = new CouponRevModule();
-       // couponRevModule.revGiftCoupon(1904180003111203L,536862723);
-    }
+//    public static void main(String[] args) {
+//                double[] dprice = new double[2];
+//                dprice[0] = 20;13.33
+//                dprice[1] = 10;6.67
+//
+//                double[] pprice = DiscountUtil.shareDiscount(dprice, 20);
+//                System.out.println(pprice[0]);
+//                System.out.println(pprice[1]);
+//    }
 
 
 }

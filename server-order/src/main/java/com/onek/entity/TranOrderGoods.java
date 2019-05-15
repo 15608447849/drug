@@ -30,6 +30,16 @@ public class TranOrderGoods {
     private String spu; // spu
 //    private String actCodeStr;//商品参与的活动码
 
+    private double balamt; //余额
+
+    public double getBalamt() {
+        return balamt;
+    }
+
+    public void setBalamt(double balamt) {
+        this.balamt = balamt;
+    }
+
     public long getUnqid() {
         return unqid;
     }
