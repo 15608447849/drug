@@ -73,7 +73,6 @@ public class TeamBuyTask extends TimerTask {
                     }
                     for(int i = 0; i < ladOffArray.size() ; i++){
                          JSONObject js = ladOffArray.getJSONObject(i);
-                          js.getInteger("compid");
                          if(compSet.size() >= js.getInteger("ladnum")){
                              offer = js.getInteger("offer");
                          }
