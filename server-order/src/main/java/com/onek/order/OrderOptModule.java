@@ -14,13 +14,11 @@ import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entity.*;
 import com.onek.entitys.Result;
-import com.onek.util.IceRemoteUtil;
-import com.onek.util.LccOrderUtil;
+import com.onek.util.*;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GenIdUtil;
 import org.hyrdpf.ds.AppConfig;
 import redis.util.RedisUtil;
 import util.*;
@@ -83,7 +81,7 @@ public class OrderOptModule {
     private static final String QUERY_ASAPP_INFO_SQL = " select asapp.orderno,asapp.compid,asapp.asno,asapp.pdno,"+
             "asapp.asnum,goods.pdprice/100 spdprice,"+
             "goods.payamt/100 spayamt,distprice/100 sdistprice,goods.pnum,astype,reason,apdesc,refamt/100 refamt,"+
-            "ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus "+
+            "ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,goods.balamt/100 balamt "+
             " from {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp inner join {{?"+
             TD_BK_TRAN_GOODS+"}} goods on asapp.orderno = goods.orderno and "+
             " asapp.pdno = goods.pdno where asapp.asno = ? and asno != 0 ";
@@ -128,6 +126,9 @@ public class OrderOptModule {
     //更新订单相关商品售后状态
     private static final String UPD_ORDER_GOODS_CK_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
             + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=? and compid  = ? ";
+
+
+
 
     /* *
      * @description 评价
@@ -402,6 +403,7 @@ public class OrderOptModule {
             return result.fail("当前用户没有该权限");
         }
 
+
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long asno = jsonObject.get("asno").getAsLong();
         String ckdesc = jsonObject.get("ckdesc").getAsString();
@@ -426,8 +428,28 @@ public class OrderOptModule {
             int ostatus = 3;
             int gstatus = 4;
             if(ckstatus == 1){
+                //1退款退货 2 仅退款
+                if(astype == 1 || astype == 2){
+                    List<Object[]> queryResult = baseDao.queryNativeSharding(0,
+                            TimeUtils.getCurrentYear(), QUERY_ASAPP_INFO_SQL, asno);
+                    int asnum = Integer.parseInt(queryResult.get(0)[4].toString());
+                    double balamt = Double.parseDouble(queryResult.get(0)[21].toString());
+                    if(balamt > 0){
+                        double subbal = MathUtil.exactMul(asnum,balamt).
+                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                        subbal = MathUtil.exactMul(subbal,100). setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                        IceRemoteUtil.updateCompBal(userSession.compId,new Double(subbal).intValue());
+                    }
+
+                }
+
                 ostatus = -2;
                 gstatus = 3;
+                SmsTempNo.sendMessageToSpecify(userSession.compId,userSession.phone,
+                        SmsTempNo.AFTER_SALE_AUDIT_PASSED,queryRet.get(0)[0].toString());
+            }else{
+                SmsTempNo.sendMessageToSpecify(userSession.compId,userSession.phone,
+                        SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,queryRet.get(0)[0].toString(),ckdesc);
             }
             int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
             List<Object[]> params = new ArrayList<>();
@@ -507,7 +529,7 @@ public class OrderOptModule {
                 new String[]{"orderno", "compid", "asno", "pdno", "asnum",
                         "spdprice", "spayamt", "sdistprice", "pnum",
                         "astype", "reason", "apdesc", "refamt", "ckstatus", "ckdesc", "gstatus",
-                        "ckdate", "cktime", "apdata", "aptime", "cstatus"});
+                        "ckdate", "cktime", "apdata", "aptime", "cstatus","balamt"});
 
         AsAppDtVO asAppDtVO = asAppDtVOs[0];
         if (asAppDtVO != null) {

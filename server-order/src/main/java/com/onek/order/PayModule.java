@@ -475,13 +475,13 @@ public class PayModule {
         if (b) {
             //减数据库库存
             reduceGoodsDbStock(orderno, compid);
-            if(paySpreadBal > 0 && paytype != 0){
-                IceRemoteUtil.updateCompBal(compid,-paySpreadBal);
-            }
-
-            if(paytype == 0){
-                IceRemoteUtil.updateCompBal(compid,-(MathUtil.exactMul(price, 100).intValue()));
-            }
+//            if(paySpreadBal > 0 && paytype != 0){
+//                IceRemoteUtil.updateCompBal(compid,-paySpreadBal);
+//            }
+//
+//            if(paytype == 0){
+//                IceRemoteUtil.updateCompBal(compid,-(MathUtil.exactMul(price, 100).intValue()));
+//            }
 
             if (paytype != 4 && paytype != 5) {
                 DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
@@ -575,6 +575,12 @@ public class PayModule {
         int year = Integer.parseInt("20" + orderno.substring(0,2));
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
+
+        int paySpreadBal = getPaySpreadBal(compid,orderno);
+        if(paySpreadBal > 0 && paytype != 0){
+            IceRemoteUtil.updateCompBal(compid,paySpreadBal);
+        }
+
         return !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
     }
 
@@ -673,9 +679,9 @@ public class PayModule {
         }
         if (result > 0 ) {
             //余额扣减
-            if (balamt > 0) {
-                IceRemoteUtil.updateCompBal(compid,-balamt);
-            }
+//            if (balamt > 0) {
+//                IceRemoteUtil.updateCompBal(compid,-balamt);
+//            }
             //线下即付减数据库库存
             reduceGoodsDbStock(orderno, compid);
             return new Result().success("订单提交成功");

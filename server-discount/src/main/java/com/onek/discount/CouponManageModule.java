@@ -13,11 +13,8 @@ import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
-import com.onek.util.GenIdUtil;
-import com.onek.util.IceRemoteUtil;
-import com.onek.util.SmsUtil;
+import com.onek.util.*;
 import com.onek.util.area.AreaFeeUtil;
-import com.onek.util.SmsTempNo;
 import com.onek.util.area.AreaUtil;
 import com.onek.util.member.MemberStore;
 import constant.DSMConst;
@@ -310,6 +307,14 @@ public class CouponManageModule {
 //    private static final String SELECT_COUPON_VER_ = " select ver from {{?" + DSMConst.TD_PROM_COUPON + "}}"
 //            + "  where unqid = ? cstatus & 33 = 0";
 
+    private final String QUERY_COUPON_OFFLINE = "select unqid,validday,expwd,amt,cstatus from " +
+            "{{?"+DSMConst.TD_PROM_OFFLCOUP+"}}  where unqid = ? and cstatus & 1 = 0 ";
+
+    private final String UPDATE_COUPON_OFFLINE = "update " +
+            "{{?"+DSMConst.TD_PROM_OFFLCOUP+"}}  set cstatus = ? where unqid = ? ";
+
+    private final String INSERT_COUPON_OFFLINE = " insert into  " +
+            "{{?"+DSMConst.TD_PROM_OFFLCOUP+"}} (unqid,validday,expwd,amt,cstatus) values (?,?,?,?,?) ";
 
     /**
      * @description 优惠券新增
@@ -1494,6 +1499,76 @@ public class CouponManageModule {
     }
 
 
+    @UserPermission(ignore = true)
+    public Result revOfflineExcgCoupon(AppContext appContext){
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        if(!jsonObject.has("compid")
+                || !jsonObject.has("coupno")){
+            return  result.fail("兑换失败");
+        }
+        int compid = jsonObject.get("compid").getAsInt();
+        long coupno = jsonObject.get("coupno").getAsLong();
+        String pwd = jsonObject.get("pwd").getAsString();
+
+        int oret = 0;
+        if(compid <= 0 || coupno <=0){
+            return result.fail("兑换失败");
+        }
+        List<Object[]> ret = baseDao.queryNative(QUERY_COUPON_OFFLINE, coupno);
+
+        if(ret == null || ret.isEmpty()){
+            return result.fail("兑换失败");
+        }
+
+        if(!pwd.trim().equals(ret.get(0)[2].toString())){
+            return result.fail("兑换失败");
+        }
+
+        CouponPubVO couponPubVO = new CouponPubVO();
+        couponPubVO.setCompid(compid);
+        couponPubVO.setBrulecode(2110);
+        couponPubVO.setCoupno(coupno);
+        couponPubVO.setRulename("线下兑换券");
+        couponPubVO.setValidday(Integer.parseInt(ret.get(0)[1].toString()));
+        List<CouponPubLadderVO> ladList = new ArrayList<>();
+        CouponPubLadderVO couponPubLadderVO = new CouponPubLadderVO();
+        couponPubLadderVO.setUnqid(0);
+        couponPubLadderVO.setOffer(MathUtil.
+                exactDiv(Double.parseDouble(ret.get(0)[3].toString()),
+                100).doubleValue());
+        couponPubLadderVO.setLadnum(0);
+        couponPubLadderVO.setOffercode(2110201);
+        ladList.add(couponPubLadderVO);
+        couponPubVO.setLadderVOS(ladList);
+        int cstatus = Integer.parseInt(ret.get(0)[4].toString());
+        cstatus = cstatus | 1;
+        int reflag = baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, coupno);
+        if(reflag <= 0){
+            return result.fail("兑换失败");
+        }
+        try{
+            oret = IceRemoteUtil.collectOfflineExcgCoupons(compid,
+                        GsonUtils.javaBeanToJson(couponPubVO));
+
+        }catch (Exception e){
+            cstatus = cstatus & ~1;
+            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, coupno);
+            e.printStackTrace();
+            return result.fail("兑换失败");
+        }
+
+        if(oret <= 0){
+            cstatus = cstatus & ~1;
+            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, coupno);
+            return result.fail("兑换失败");
+        }
+        return result.success("兑换成功");
+    }
+
+
 
 
     public Result revCoupon(AppContext appContext){
@@ -1622,41 +1697,24 @@ public class CouponManageModule {
         return  result.success(map);
     }
 
+    @UserPermission(ignore = true)
+    public Result prdOfflineExcgCoupon(AppContext appContext){
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int num = jsonObject.get("num").getAsInt();
+        int validday = jsonObject.get("validday").getAsInt();
+        double amt = jsonObject.get("amt").getAsDouble();
 
+        List<Object[]> params = new ArrayList<>();
+        for (int i = 0; i < num; i++){
+            params.add(new Object[]{GenIdUtil.getUnqId(),
+                    validday, RandomUtil.getRandomNumber(6),amt*100,0});
+        }
+        int[] ret = baseDao.updateBatchNative(UPDATE_COUPON_OFFLINE, params, params.size());
+        boolean b = !ModelUtil.updateTransEmpty(ret);
 
-
-
-
-
-
-
-//    private void insertAssGift(List<AssGiftVO> assGiftVOS, long actCode) {
-//        List<Object[]> assGiftParams = new ArrayList<>();
-//        for (AssGiftVO assGiftVO : assGiftVOS) {
-//            assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, assGiftVO.getAssgiftno()});
-//        }
-//        int[] result = baseDao.updateBatchNative(INSERT_ASS_GIFT_SQL, assGiftParams, assGiftVOS.size());
-//        boolean b = !ModelUtil.updateTransEmpty(result);
-//    }
-
-//    private List<AssGiftVO> getAssGift(long actCode) {
-//        String sql = "select unqid,offerno,assgiftno,cstatus,giftname from {{?" + DSMConst.TD_PROM_ASSGIFT
-//                + "}} a left join {{?" + DSMConst.TD_PROM_GIFT + "}} g on a.assgiftno=g.unqid "
-//                + " where cstatus&1=0 and actcode=" + actCode;
-//        List<Object[]> queryResult = baseDao.queryNative(sql);
-//        AssGiftVO[] assGiftVOS = new AssGiftVO[queryResult.size()];
-//        baseDao.convToEntity(queryResult, assGiftVOS, AssGiftVO.class);
-//        return Arrays.asList(assGiftVOS);
-//    }
-
-//    public static void main(String[] args) {
-//        RedisStringProvide stringProvide = new RedisStringProvide();
-//        stringProvide.get()
-//        //List<CouponPubVO> couponPubVOS,int compid
-//        //filterCoupon()
-//    }
-public static void main(String[] args) {
-
-}
-
+        return b ? result.success("操作成功！"): result.fail("操作失败！");
+    }
 }
