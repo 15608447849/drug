@@ -233,7 +233,7 @@ public class ShoppingCartModule {
         querySql = querySql + " and pdno in (" + skuStr + ")";
 
 
-        String querySkuSql = "SELECT store-freezestore inventory,limits,convert(sku.vatp/100,decimal(10,2)) pdprice,sku pdno from " +
+        String querySkuSql = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice,sku pdno from " +
                 " {{?" + DSMConst.TD_PROD_SKU   + "}} where cstatus & 1 = 0 ";
         querySkuSql = querySkuSql + " and sku in ("+skuStr+")";
 

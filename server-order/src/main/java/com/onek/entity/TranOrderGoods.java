@@ -47,6 +47,16 @@ public class TranOrderGoods {
         this.standarNo = standarNo;
     }
 
+    private double balamt; //余额
+
+    public double getBalamt() {
+        return balamt;
+    }
+
+    public void setBalamt(double balamt) {
+        this.balamt = balamt;
+    }
+
     public long getUnqid() {
         return unqid;
     }

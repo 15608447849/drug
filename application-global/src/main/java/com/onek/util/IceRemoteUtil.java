@@ -224,6 +224,21 @@ public class IceRemoteUtil {
         return ret.code;
     }
 
+    /**
+     * 线下优惠券兑换
+     * @param compid
+     * @param content
+     * @return
+     */
+    public static int collectOfflineExcgCoupons(int compid,String content){
+        String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertRevOfflineCoupon")
+                .settingParam(content)
+                .execute();
+        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
+
 
     /**
      * 发送消息到指定客户端
