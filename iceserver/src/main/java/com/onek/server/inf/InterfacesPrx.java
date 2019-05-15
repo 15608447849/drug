@@ -244,48 +244,33 @@ public interface InterfacesPrx extends Ice.ObjectPrx
     /**
      * 消息推送-服务端 / 客户端下线
      **/
-    public void offline(String identityName);
+    public void offline(String clientType, String identityName);
 
     /**
      * 消息推送-服务端 / 客户端下线
      * @param __ctx The Context map to send with the invocation.
      **/
-    public void offline(String identityName, java.util.Map<String, String> __ctx);
+    public void offline(String clientType, String identityName, java.util.Map<String, String> __ctx);
 
     /**
      * 消息推送-服务端 / 客户端下线
      * @return The asynchronous result object.
      **/
-    public Ice.AsyncResult begin_offline(String identityName);
+    public Ice.AsyncResult begin_offline(String clientType, String identityName);
 
     /**
      * 消息推送-服务端 / 客户端下线
      * @param __ctx The Context map to send with the invocation.
      * @return The asynchronous result object.
      **/
-    public Ice.AsyncResult begin_offline(String identityName, java.util.Map<String, String> __ctx);
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, java.util.Map<String, String> __ctx);
 
     /**
      * 消息推送-服务端 / 客户端下线
      * @param __cb The asynchronous callback object.
      * @return The asynchronous result object.
      **/
-    public Ice.AsyncResult begin_offline(String identityName, Ice.Callback __cb);
-
-    /**
-     * 消息推送-服务端 / 客户端下线
-     * @param __ctx The Context map to send with the invocation.
-     * @param __cb The asynchronous callback object.
-     * @return The asynchronous result object.
-     **/
-    public Ice.AsyncResult begin_offline(String identityName, java.util.Map<String, String> __ctx, Ice.Callback __cb);
-
-    /**
-     * 消息推送-服务端 / 客户端下线
-     * @param __cb The asynchronous callback object.
-     * @return The asynchronous result object.
-     **/
-    public Ice.AsyncResult begin_offline(String identityName, Callback_Interfaces_offline __cb);
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, Ice.Callback __cb);
 
     /**
      * 消息推送-服务端 / 客户端下线
@@ -293,7 +278,22 @@ public interface InterfacesPrx extends Ice.ObjectPrx
      * @param __cb The asynchronous callback object.
      * @return The asynchronous result object.
      **/
-    public Ice.AsyncResult begin_offline(String identityName, java.util.Map<String, String> __ctx, Callback_Interfaces_offline __cb);
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, java.util.Map<String, String> __ctx, Ice.Callback __cb);
+
+    /**
+     * 消息推送-服务端 / 客户端下线
+     * @param __cb The asynchronous callback object.
+     * @return The asynchronous result object.
+     **/
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, Callback_Interfaces_offline __cb);
+
+    /**
+     * 消息推送-服务端 / 客户端下线
+     * @param __ctx The Context map to send with the invocation.
+     * @param __cb The asynchronous callback object.
+     * @return The asynchronous result object.
+     **/
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, java.util.Map<String, String> __ctx, Callback_Interfaces_offline __cb);
 
     /**
      * 消息推送-服务端 / 客户端下线
@@ -301,7 +301,8 @@ public interface InterfacesPrx extends Ice.ObjectPrx
      * @param __exceptionCb The lambda exception callback.
      * @return The asynchronous result object.
      **/
-    public Ice.AsyncResult begin_offline(String identityName, 
+    public Ice.AsyncResult begin_offline(String clientType, 
+                                         String identityName, 
                                          IceInternal.Functional_VoidCallback __responseCb, 
                                          IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb);
 
@@ -312,7 +313,8 @@ public interface InterfacesPrx extends Ice.ObjectPrx
      * @param __sentCb The lambda sent callback.
      * @return The asynchronous result object.
      **/
-    public Ice.AsyncResult begin_offline(String identityName, 
+    public Ice.AsyncResult begin_offline(String clientType, 
+                                         String identityName, 
                                          IceInternal.Functional_VoidCallback __responseCb, 
                                          IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
                                          IceInternal.Functional_BoolCallback __sentCb);
@@ -324,7 +326,8 @@ public interface InterfacesPrx extends Ice.ObjectPrx
      * @param __exceptionCb The lambda exception callback.
      * @return The asynchronous result object.
      **/
-    public Ice.AsyncResult begin_offline(String identityName, 
+    public Ice.AsyncResult begin_offline(String clientType, 
+                                         String identityName, 
                                          java.util.Map<String, String> __ctx, 
                                          IceInternal.Functional_VoidCallback __responseCb, 
                                          IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb);
@@ -337,7 +340,8 @@ public interface InterfacesPrx extends Ice.ObjectPrx
      * @param __sentCb The lambda sent callback.
      * @return The asynchronous result object.
      **/
-    public Ice.AsyncResult begin_offline(String identityName, 
+    public Ice.AsyncResult begin_offline(String clientType, 
+                                         String identityName, 
                                          java.util.Map<String, String> __ctx, 
                                          IceInternal.Functional_VoidCallback __responseCb, 
                                          IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 

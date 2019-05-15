@@ -200,84 +200,89 @@ public final class InterfacesPrxHelper extends Ice.ObjectPrxHelperBase implement
 
     private static final String __offline_name = "offline";
 
-    public void offline(String identityName)
+    public void offline(String clientType, String identityName)
     {
-        offline(identityName, null, false);
+        offline(clientType, identityName, null, false);
     }
 
-    public void offline(String identityName, java.util.Map<String, String> __ctx)
+    public void offline(String clientType, String identityName, java.util.Map<String, String> __ctx)
     {
-        offline(identityName, __ctx, true);
+        offline(clientType, identityName, __ctx, true);
     }
 
-    private void offline(String identityName, java.util.Map<String, String> __ctx, boolean __explicitCtx)
+    private void offline(String clientType, String identityName, java.util.Map<String, String> __ctx, boolean __explicitCtx)
     {
-        end_offline(begin_offline(identityName, __ctx, __explicitCtx, true, null));
+        end_offline(begin_offline(clientType, identityName, __ctx, __explicitCtx, true, null));
     }
 
-    public Ice.AsyncResult begin_offline(String identityName)
+    public Ice.AsyncResult begin_offline(String clientType, String identityName)
     {
-        return begin_offline(identityName, null, false, false, null);
+        return begin_offline(clientType, identityName, null, false, false, null);
     }
 
-    public Ice.AsyncResult begin_offline(String identityName, java.util.Map<String, String> __ctx)
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, java.util.Map<String, String> __ctx)
     {
-        return begin_offline(identityName, __ctx, true, false, null);
+        return begin_offline(clientType, identityName, __ctx, true, false, null);
     }
 
-    public Ice.AsyncResult begin_offline(String identityName, Ice.Callback __cb)
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, Ice.Callback __cb)
     {
-        return begin_offline(identityName, null, false, false, __cb);
+        return begin_offline(clientType, identityName, null, false, false, __cb);
     }
 
-    public Ice.AsyncResult begin_offline(String identityName, java.util.Map<String, String> __ctx, Ice.Callback __cb)
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, java.util.Map<String, String> __ctx, Ice.Callback __cb)
     {
-        return begin_offline(identityName, __ctx, true, false, __cb);
+        return begin_offline(clientType, identityName, __ctx, true, false, __cb);
     }
 
-    public Ice.AsyncResult begin_offline(String identityName, Callback_Interfaces_offline __cb)
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, Callback_Interfaces_offline __cb)
     {
-        return begin_offline(identityName, null, false, false, __cb);
+        return begin_offline(clientType, identityName, null, false, false, __cb);
     }
 
-    public Ice.AsyncResult begin_offline(String identityName, java.util.Map<String, String> __ctx, Callback_Interfaces_offline __cb)
+    public Ice.AsyncResult begin_offline(String clientType, String identityName, java.util.Map<String, String> __ctx, Callback_Interfaces_offline __cb)
     {
-        return begin_offline(identityName, __ctx, true, false, __cb);
+        return begin_offline(clientType, identityName, __ctx, true, false, __cb);
     }
 
-    public Ice.AsyncResult begin_offline(String identityName, 
+    public Ice.AsyncResult begin_offline(String clientType, 
+                                         String identityName, 
                                          IceInternal.Functional_VoidCallback __responseCb, 
                                          IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb)
     {
-        return begin_offline(identityName, null, false, false, __responseCb, __exceptionCb, null);
+        return begin_offline(clientType, identityName, null, false, false, __responseCb, __exceptionCb, null);
     }
 
-    public Ice.AsyncResult begin_offline(String identityName, 
+    public Ice.AsyncResult begin_offline(String clientType, 
+                                         String identityName, 
                                          IceInternal.Functional_VoidCallback __responseCb, 
                                          IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
                                          IceInternal.Functional_BoolCallback __sentCb)
     {
-        return begin_offline(identityName, null, false, false, __responseCb, __exceptionCb, __sentCb);
+        return begin_offline(clientType, identityName, null, false, false, __responseCb, __exceptionCb, __sentCb);
     }
 
-    public Ice.AsyncResult begin_offline(String identityName, 
+    public Ice.AsyncResult begin_offline(String clientType, 
+                                         String identityName, 
                                          java.util.Map<String, String> __ctx, 
                                          IceInternal.Functional_VoidCallback __responseCb, 
                                          IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb)
     {
-        return begin_offline(identityName, __ctx, true, false, __responseCb, __exceptionCb, null);
+        return begin_offline(clientType, identityName, __ctx, true, false, __responseCb, __exceptionCb, null);
     }
 
-    public Ice.AsyncResult begin_offline(String identityName, 
+    public Ice.AsyncResult begin_offline(String clientType, 
+                                         String identityName, 
                                          java.util.Map<String, String> __ctx, 
                                          IceInternal.Functional_VoidCallback __responseCb, 
                                          IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
                                          IceInternal.Functional_BoolCallback __sentCb)
     {
-        return begin_offline(identityName, __ctx, true, false, __responseCb, __exceptionCb, __sentCb);
+        return begin_offline(clientType, identityName, __ctx, true, false, __responseCb, __exceptionCb, __sentCb);
     }
 
-    private Ice.AsyncResult begin_offline(String identityName, 
+    private Ice.AsyncResult begin_offline(String clientType, 
+                                          String identityName, 
                                           java.util.Map<String, String> __ctx, 
                                           boolean __explicitCtx, 
                                           boolean __synchronous, 
@@ -285,14 +290,16 @@ public final class InterfacesPrxHelper extends Ice.ObjectPrxHelperBase implement
                                           IceInternal.Functional_GenericCallback1<Ice.Exception> __exceptionCb, 
                                           IceInternal.Functional_BoolCallback __sentCb)
     {
-        return begin_offline(identityName, 
+        return begin_offline(clientType, 
+                             identityName, 
                              __ctx, 
                              __explicitCtx, 
                              __synchronous, 
                              new IceInternal.Functional_OnewayCallback(__responseCb, __exceptionCb, __sentCb));
     }
 
-    private Ice.AsyncResult begin_offline(String identityName, 
+    private Ice.AsyncResult begin_offline(String clientType, 
+                                          String identityName, 
                                           java.util.Map<String, String> __ctx, 
                                           boolean __explicitCtx, 
                                           boolean __synchronous, 
@@ -303,6 +310,7 @@ public final class InterfacesPrxHelper extends Ice.ObjectPrxHelperBase implement
         {
             __result.prepare(__offline_name, Ice.OperationMode.Normal, __ctx, __explicitCtx, __synchronous);
             IceInternal.BasicStream __os = __result.startWriteParams(Ice.FormatType.DefaultFormat);
+            __os.writeString(clientType);
             __os.writeString(identityName);
             __result.endWriteParams();
             __result.invoke();

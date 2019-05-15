@@ -84,9 +84,9 @@ public abstract class _InterfacesDisp extends Ice.ObjectImpl implements Interfac
     /**
      * 消息推送-服务端 / 客户端下线
      **/
-    public final void offline(String identityName)
+    public final void offline(String clientType, String identityName)
     {
-        offline(identityName, null);
+        offline(clientType, identityName, null);
     }
 
     /**
@@ -135,10 +135,12 @@ public abstract class _InterfacesDisp extends Ice.ObjectImpl implements Interfac
     {
         __checkMode(Ice.OperationMode.Normal, __current.mode);
         IceInternal.BasicStream __is = __inS.startReadParams();
+        String clientType;
         String identityName;
+        clientType = __is.readString();
         identityName = __is.readString();
         __inS.endReadParams();
-        __obj.offline(identityName, __current);
+        __obj.offline(clientType, identityName, __current);
         __inS.__writeEmptyParams();
         return Ice.DispatchStatus.DispatchOK;
     }
