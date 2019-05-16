@@ -104,6 +104,7 @@ public class RedisStockUtil {
             return 0;
         }
         String initStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode);
+        LogUtil.getDefaultLogger().info("++++++ check actcode initStock:["+initStock+"];currentStock:["+currentStock+"] +++++++");
         if(!StringUtils.isEmpty(initStock) && initStock.equals(currentStock)){ // 起始活动库存等于活动库存代表活动未开始
             LogUtil.getDefaultLogger().info("++++++ check actcode start +++++++");
             List<String> keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP);
@@ -221,6 +222,24 @@ public class RedisStockUtil {
         }
         Long num = RedisUtil.getStringProvide().increase(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP + actCode, stock);
         return num;
+    }
+
+    /**
+     * 得到sku所有活动库存之和
+     *
+     * @param sku
+     * @return
+     */
+    public static int getSumActStock(long sku){
+        List<String> keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP);
+        int sumStock = 0;
+        if(keys != null && keys.size() > 0){
+            for(String key : keys){
+                String stock = RedisUtil.getStringProvide().get(key);
+                sumStock  += Integer.parseInt(stock);
+            }
+        }
+        return sumStock;
     }
 
 }
