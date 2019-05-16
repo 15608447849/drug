@@ -76,12 +76,17 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         }
     }
 
-    protected final String getProductCode(long sku) {
+    protected final String[] getProductCode(long sku) {
         if (checkSKU(sku) < 0) {
             throw new IllegalArgumentException("SKU is illegal, " + sku);
         }
 
-        return String.valueOf(sku).substring(1, 7);
+        String classNo = String.valueOf(sku).substring(1, 7);
+
+        return new String[] {
+                classNo.substring(0, 2),
+                classNo.substring(0, 4),
+                classNo.substring(0, 6) };
     }
 
     protected abstract List<IDiscount> getCurrentDiscounts(IProduct product);

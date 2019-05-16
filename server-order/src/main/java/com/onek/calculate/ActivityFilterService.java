@@ -24,7 +24,7 @@ public class ActivityFilterService extends BaseDiscountFilterService {
                     + " AND act.sdate <= CURRENT_DATE "
                     + " AND CURRENT_DATE <= act.edate"
                     // 全局通用， 品类，商品
-                    + " AND ass.gcode IN (0, ?, ?) ) "
+                    + " AND ass.gcode IN (0, ?, ?, ?, ?) ) "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_TIME + "}} time "
                     + " ON time.cstatus&1 = 0 "
                     + " AND time.actcode = act.unqid "
@@ -41,14 +41,15 @@ public class ActivityFilterService extends BaseDiscountFilterService {
     protected List<IDiscount> getCurrentDiscounts(IProduct product) {
         long sku = product.getSKU();
 
-        String pclass = getProductCode(sku);
+        String[] pclasses = getProductCode(sku);
 
-        if (StringUtils.isEmpty(pclass)) {
+        if (StringUtils.isEmpty(pclasses)) {
             return new ArrayList<>();
         }
 
-        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(GET_ACTIVITIES_BY_SKU,
-                sku, pclass);
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(
+                GET_ACTIVITIES_BY_SKU,
+                sku, pclasses[0], pclasses[1], pclasses[2]);
 
         Activity[] activities = new Activity[queryResult.size()];
 

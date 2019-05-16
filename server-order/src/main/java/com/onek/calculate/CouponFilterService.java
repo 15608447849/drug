@@ -33,7 +33,7 @@ public class CouponFilterService extends BaseDiscountFilterService {
             " SELECT COUNT(0) "
             + " FROM {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
             + " WHERE cstatus&1 = 0 "
-            + " AND actcode = ? AND gcode IN (?, ? , 0) ";
+            + " AND actcode = ? AND gcode IN (?, ?, ?, ? , 0) ";
 
     public CouponFilterService(
             long couponUnqid,
@@ -65,9 +65,10 @@ public class CouponFilterService extends BaseDiscountFilterService {
     }
 
     private boolean checkSKU(long sku) {
-        String productCode = getProductCode(sku);
+        String[] productCodes = getProductCode(sku);
         List<Object[]> check = BaseDAO.getBaseDAO().queryNative(CHECK_SKU,
-                this.couent.getCoupno(), sku, productCode);
+                this.couent.getCoupno(), sku,
+                productCodes[0], productCodes[1], productCodes[2]);
 
         return StringUtils.isBiggerZero(check.get(0)[0].toString());
     }
