@@ -71,24 +71,31 @@ public class StoreManageModule {
     }
 
     /*
-    * 获取财务 -> 手机号码/姓名
+    * 根据角色码查询所有
      */
     @UserPermission(ignore = true)
-    public HashMap<String,String> getRoleCode256_Name_Phone(AppContext appContext){
+    public HashMap<String,String> queryUserByRoleCode(AppContext appContext){
         HashMap<String,String> map = new HashMap<>();
         try {
-            String selectSql = "SELECT urealname,uphone FROM {{?"+D_SYSTEM_USER+"}} WHERE roleid&256=256";
-            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
-            for (Object[] row : lines){
-                String name = StringUtils.checkObjectNull(row[0],"");
-                String phone = StringUtils.checkObjectNull(row[1],"");
-                map.put(phone,name);
+            List<Integer> list = GsonUtils.json2List(appContext.param.json,Integer.class);
+            if (list!=null && list.size()>0){
+                final  String selectSql = "SELECT urealname,uphone FROM {{?"+D_SYSTEM_USER+"}} WHERE roleid&?>0";
+                for (Integer code : list){
+                    List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,code);
+                    for (Object[] row : lines){
+                        String name = StringUtils.checkObjectNull(row[0],"");
+                        String phone = StringUtils.checkObjectNull(row[1],"");
+                        map.put(phone,name);
+                    }
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
         return map;
     }
+
+
 
     /**
      * 根据企业码->手机号码
