@@ -541,13 +541,16 @@ public class BackgroundProdModule {
     }
 
     private void convProds(BgProdVO[] bgProdVOs) {
-        String[] spuParser;
+        String[] spuParser = null;
+
         for (BgProdVO bgProdVO : bgProdVOs) {
             bgProdVO.setVatp(MathUtil.exactDiv(bgProdVO.getVatp(), 100).doubleValue());
             bgProdVO.setRrp (MathUtil.exactDiv(bgProdVO.getRrp (), 100).doubleValue());
             bgProdVO.setMp  (MathUtil.exactDiv(bgProdVO.getMp  (), 100).doubleValue());
 
-            spuParser = parseSPU(bgProdVO.getSpu());
+            if (bgProdVO.getSpu() != null) {
+                spuParser = parseSPU(bgProdVO.getSpu());
+            }
 
             if (spuParser != null) {
                 bgProdVO.setClassNo(Long.parseLong(spuParser[0]));
@@ -555,10 +558,15 @@ public class BackgroundProdModule {
                 bgProdVO.setForm(Integer.parseInt(spuParser[1]));
             }
 
-            bgProdVO.setStore(RedisStockUtil.getStock(bgProdVO.getSku()));
-            try {
-                DictStore.translate(bgProdVO);
-            } catch (Exception e) {e.printStackTrace();}
+            if (bgProdVO.getSku() != null) {
+                bgProdVO.setStore(RedisStockUtil.getStock(bgProdVO.getSku()));
+                try {
+                    DictStore.translate(bgProdVO);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+
         }
     }
 

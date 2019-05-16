@@ -2,6 +2,7 @@ package com.onek.goods.calculate;
 
 import com.onek.calculate.entity.Couent;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -46,7 +47,8 @@ public class CouponFilterService extends BaseDiscountFilterService {
     }
 
     @Override
-    public List<IDiscount> getCurrentDiscounts(long sku) {
+    public List<IDiscount> getCurrentDiscounts(IProduct product) {
+        long sku = product.getSKU();
         // 判定优惠券阶段
         Couent checkCoupon = getCouent();
 

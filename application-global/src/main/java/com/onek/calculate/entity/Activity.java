@@ -24,11 +24,12 @@ public class Activity extends AccurateMath implements IDiscount {
     private String sdate;//活动开始日期
     private String edate;//活动结束日期
     private long brulecode;//活动规则码
-    private int cstatus;//综合状态码
+    private int actCstatus;//综合状态码
     private int limitnum; // 限购量
     private String sTime; // 起始时间
     private String eTime; // 结束时间
     private double actPrice;
+    private int assCstatus;
 
     private double discounted;
     private List<IProduct> productList;
@@ -276,12 +277,12 @@ public class Activity extends AccurateMath implements IDiscount {
         this.brulecode = brulecode;
     }
 
-    public int getCstatus() {
-        return cstatus;
+    public int getActCstatus() {
+        return actCstatus;
     }
 
-    public void setCstatus(int cstatus) {
-        this.cstatus = cstatus;
+    public void setActCstatus(int actCstatus) {
+        this.actCstatus = actCstatus;
     }
 
     public void setLimitnum(int limitnum) {
@@ -374,6 +375,14 @@ public class Activity extends AccurateMath implements IDiscount {
     @Override
     public void setNextGapNum(int nextGapNum) {
         this.nextGapNum = nextGapNum;
+    }
+
+    public int getAssCstatus() {
+        return assCstatus;
+    }
+
+    public void setAssCstatus(int assCstatus) {
+        this.assCstatus = assCstatus;
     }
 
     @Override

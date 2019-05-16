@@ -162,10 +162,9 @@ public class CouponListFilterService extends BaseDiscountFilterService {
 
 
     @Override
-    protected List<IDiscount> getCurrentDiscounts(long sku) {
+    protected List<IDiscount> getCurrentDiscounts(IProduct product) {
         return null;
     }
-
 
     private CouponPubLadderVO getLadoffable(List<CouponPubLadderVO> ladoffs, double price) {
         double ladAmt;
