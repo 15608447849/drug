@@ -179,17 +179,14 @@ public class BackgroundProdModule {
         boolean result = sku > 0 && store > 0;
 
         if (result) {
-            String sql = " SELECT IFNULL(SUM(a.actstock), 0), s.freezestore "
+            String sql = " SELECT s.freezestore "
                     + " FROM {{?" + DSMConst.TD_PROD_SKU + "}} s "
-                    + " LEFT JOIN {{?" + DSMConst.TD_PROM_ASSDRUG + "}} a "
-                    + " ON a.cstatus&1 = 0 AND s.cstatus&1 = 0 "
-                    + " AND s.sku = a.gcode "
-                    + " WHERE s.sku = ? ";
+                    + " WHERE s.cstatus&1 = 0 AND s.sku = ? ";
 
             List<Object[]> queryResult = BASE_DAO.queryNative(sql, sku);
 
-            int actTotal = Integer.parseInt(queryResult.get(0)[0].toString());
-            int freeze = Integer.parseInt(queryResult.get(0)[1].toString());
+            int actTotal = RedisStockUtil.getSumActStock(sku);
+            int freeze = Integer.parseInt(queryResult.get(0)[0].toString());
 
             result = store >= actTotal + freeze;
         }
