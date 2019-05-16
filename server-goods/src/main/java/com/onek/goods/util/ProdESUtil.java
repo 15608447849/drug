@@ -245,7 +245,7 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(spuList != null && spuList.size() > 0){
-                Object [] spuArray = new String[spuList.size()];
+                Object [] spuArray = new Long[spuList.size()];
                 spuArray = spuList.toArray(spuArray);
                 TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SPU, spuArray);
                 boolQuery.must(builder);
@@ -685,7 +685,43 @@ public class ProdESUtil {
 //        statusList.add(256);
 //        SearchResponse response = searchProdWithStatusList(statusList,1, 1,100);
 //        System.out.println(response.getHits().totalHits);
-        SearchResponse response = searchProdMall("",1000,null,null,null,0,1, 20);
+//        SearchResponse response = searchProdMall("",1000,null,null,null,0,1, 20);
+//        System.out.println(response.getHits().totalHits);
+        List<Long> spuList = new ArrayList<>();
+        spuList.add(110000000010L);
+        spuList.add(110000000110L);
+        spuList.add(110000000210L);
+        spuList.add(110000000310L);
+        spuList.add(110070100010L);
+        spuList.add(110010100010L);
+        spuList.add(110010400010L);
+        spuList.add(110100100010L);
+        spuList.add(110090100011L);
+        spuList.add(110010200010L);
+        spuList.add(110100100110L);
+        spuList.add(110050400036L);
+        spuList.add(210050400024L);
+        spuList.add(110070300010L);
+        spuList.add(110020100019L);
+        spuList.add(110010400110L);
+        spuList.add(210000000010L);
+        spuList.add(110180300011L);
+        spuList.add(110000000410L);
+        spuList.add(110000000510L);
+        spuList.add(110100100012L);
+        spuList.add(110100100013L);
+        spuList.add(110000000016L);
+        spuList.add(110000000015L);
+        spuList.add(110120100023L);
+        spuList.add(110000000115L);
+        spuList.add(110000000215L);
+        spuList.add(110000000610L);
+        spuList.add(210000000110L);
+        spuList.add(110000000315L);
+        spuList.add(110000000710L);
+        spuList.add(210000000210L);
+        spuList.add(110180400010L);
+        SearchResponse response = searchProd("",null, null, null,1,20);
         System.out.println(response.getHits().totalHits);
     }
 
