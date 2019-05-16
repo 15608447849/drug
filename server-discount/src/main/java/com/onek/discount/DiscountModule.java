@@ -123,7 +123,7 @@ public class DiscountModule {
                             ProdEntity prodEntity = ProdInfoStore.getProdBySku(sku);
                             if(prodEntity != null){
                                 for(String key : userMap.keySet()){
-                                    SmsUtil.sendMsg(key, "尊敬的运营管理员您好,商品:["+prodEntity.getProdname()+"]的活动库存系统已经自动调整,请关注!");
+                                    SmsUtil.sendMsg(key, userMap.get(key)+"您好,商品:["+prodEntity.getProdname()+"]的活动库存系统已经自动调整,请关注!");
                                 }
                             }
                         }
