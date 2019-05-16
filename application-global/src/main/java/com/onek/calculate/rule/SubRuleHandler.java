@@ -18,10 +18,10 @@ public class SubRuleHandler implements IRuleHandler {
 
     @Override
     public void percentHandler(IDiscount discount, double value, int times) {
-        double p = BigDecimal
-                .valueOf(1 - (value / 100))
-                .setScale(2, BigDecimal.ROUND_HALF_UP)
-                .doubleValue();
+        double p = BigDecimal.ONE
+                    .subtract(BigDecimal.valueOf(value).divide(BigDecimal.TEN))
+                    .setScale(2, BigDecimal.ROUND_HALF_UP)
+                    .doubleValue();
 
         discount.setDiscounted(
                 MathUtil.exactMul(p, DiscountUtil.getCurrentPriceTotal(discount.getProductList()))

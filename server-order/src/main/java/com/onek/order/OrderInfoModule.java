@@ -202,6 +202,12 @@ public class OrderInfoModule {
                     case 3:
                         sql.append(" AND ord.asstatus = ? ");
                         break;
+                    case 4:
+                        sql.append(" AND ord.odate <= ? ");
+                        break;
+                    case 5:
+                        sql.append(" AND ? <= ord.odate ");
+                        break;
                 }
             } catch (Exception e) {
                 continue;
