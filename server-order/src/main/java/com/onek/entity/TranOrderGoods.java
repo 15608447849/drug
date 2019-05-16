@@ -28,7 +28,34 @@ public class TranOrderGoods {
     private String pspec; // 商品规格
     private String manun; // 厂商名
     private String spu; // spu
-//    private String actCodeStr;//商品参与的活动码
+    private String standarNo;
+    private String brandn;
+
+    public String getBrandn() {
+        return brandn;
+    }
+
+    public void setBrandn(String brandn) {
+        this.brandn = brandn;
+    }
+
+    public String getStandarNo() {
+        return standarNo;
+    }
+
+    public void setStandarNo(String standarNo) {
+        this.standarNo = standarNo;
+    }
+
+    private double balamt; //余额
+
+    public double getBalamt() {
+        return balamt;
+    }
+
+    public void setBalamt(double balamt) {
+        this.balamt = balamt;
+    }
 
     public long getUnqid() {
         return unqid;

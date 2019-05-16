@@ -137,6 +137,7 @@ public class IceRemoteUtil {
         return null;
     }
 
+    //地区码->地址名
     public static String getArean(long areac) {
         String result = ic.setServerAndRequest("globalServer","CommonModule","getAreaName")
                 .setArrayParams(areac)
@@ -146,7 +147,7 @@ public class IceRemoteUtil {
         Object data = hashMap.get("data");
         return data == null ? "" : data.toString();
     }
-
+    //地区码->地区对象
     public static AreaEntity getAreaByAreac(long areac){
         String result = ic.setServerAndRequest("globalServer","CommonModule","getArea")
                 .setArrayParams(areac)
@@ -158,7 +159,7 @@ public class IceRemoteUtil {
         String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,AreaEntity.class);
     }
-
+    //地区码->地区对象数组
     public static AreaEntity[] getAncestors(long areac){
         String result = ic.setServerAndRequest("globalServer","CommonModule","getAncestors")
                 .setArrayParams(areac)
@@ -172,7 +173,7 @@ public class IceRemoteUtil {
         return GsonUtils.jsonToJavaBean(json,AreaEntity[].class);
     }
 
-
+    //查询所有字典对象
     public static DictEntity[] queryAll() {
         String result = ic.setServerAndRequest("globalServer","DictUtilRemoteModule","queryAll").execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
@@ -183,6 +184,7 @@ public class IceRemoteUtil {
         return GsonUtils.jsonToJavaBean(json,DictEntity[].class);
     }
 
+    //查询字典对象
     public static DictEntity[] queryByParams(String [] params) {
         String result = ic.setServerAndRequest("globalServer","DictUtilRemoteModule","queryByParams").settingParam(params).execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
@@ -217,6 +219,21 @@ public class IceRemoteUtil {
      */
     public static int collectExcgCoupons(int compid,String content){
         String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertRevExcgCoupon")
+                .settingParam(content)
+                .execute();
+        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+        assert ret != null;
+        return ret.code;
+    }
+
+    /**
+     * 线下优惠券兑换
+     * @param compid
+     * @param content
+     * @return
+     */
+    public static int collectOfflineExcgCoupons(int compid,String content){
+        String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertRevOfflineCoupon")
                 .settingParam(content)
                 .execute();
         Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
@@ -464,6 +481,26 @@ public class IceRemoteUtil {
     }
 
     /**
+     * 调整活动库存
+     *
+     * @param actstock
+     * @param actcode
+     * @param sku
+     * @return
+     */
+    public static int adjustActivityStock(int actstock,long actcode, long sku){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("actstock", actstock);
+        jsonObject.put("actcode", actcode);
+        jsonObject.put("sku", sku);
+        String result = ic.setServerAndRequest("discountServer",
+                "DiscountModule","adjustActivityStock")
+                .settingParam(jsonObject.toJSONString())
+                .execute();
+        return Integer.parseInt(result);
+    }
+
+    /**
      * 新增余额
      * @param compid
      * @param amt
@@ -495,7 +532,18 @@ public class IceRemoteUtil {
      * lzp
      */
     public static HashMap<String,String> getUserByFinance(){
-        String result = ic.setServerAndRequest("userServer","StoreManageModule","getRoleCode256_Name_Phone").execute();
+        return getUserByRoles(RoleCodeCons._FINA);
+    }
+    /**
+     * 获取执行角色的手机号码/姓名
+     * lzp
+     */
+    public static HashMap<String,String> getUserByRoles(int... codes){
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0 ; i<codes.length ;i++){
+            list.add(codes[i]);
+        }
+        String result = ic.setServerAndRequest("userServer","StoreManageModule","queryUserByRoleCode").setJsonParams(list).execute();
         return GsonUtils.string2Map(result);
     }
 
@@ -591,7 +639,20 @@ public class IceRemoteUtil {
     }
 
 
-
+    /**
+     * 根据spu查询相对于的商品的sku集合
+     * @param spu 0代表全部商品
+     * @return
+     */
+    public static List<Long> querySkuListByCondition(long spu){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("spu", spu);
+        String json = ic.setServerAndRequest("goodsServer",
+                "ProdExtModule","getSkuListByCondition")
+                .settingParam(jsonObject.toJSONString())
+                .execute();
+        return GsonUtils.json2List(json,Long.class);
+    }
 
 
 

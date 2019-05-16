@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import util.StringUtils;
 import util.TimeUtils;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -20,7 +21,8 @@ import static constant.DSMConst.*;
  * 资质过去检测
  */
 public class QualificationInspectionInitialize extends Thread implements IIceInitialize {
-
+    private static final Timer timer = new Timer();
+    private static ArrayList<String> timerIdList = new ArrayList<>();
 
     private static class CusTimerTask extends TimerTask{
         private static final String sql = "select * FROM {{?"+D_COMP_APTITUDE+"}} WHERE atype = ? AND compid = ? AND validitye < CURRENT_DATE";
@@ -34,6 +36,8 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
             this.phone = phone;
             if (isSend){
                 sendMessage();
+            }else{
+                timerIdList.add(atype+compid+phone);
             }
         }
 
@@ -58,11 +62,13 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
             if (lines.size()>0){
                 //再次执行
                 timer.schedule(new CusTimerTask(atype,compid,phone,true),TimeUtils.PERIOD_MONTH);
+            }else{
+                //移除记录
+                timerIdList.remove(atype+compid+phone);
             }
         }
     }
 
-    private static final Timer timer = new Timer();
 
     @Override
     public void startUp(String serverName) {
@@ -77,11 +83,17 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
 
     @Override
     public void run() {
+
        while (true){
            try {
                execute();
                Thread.sleep(TimeUtils.PERIOD_DAY);
-           }catch (Exception ignored){ }
+           }catch (Exception ignored){
+               try {
+                   Thread.sleep(5 * 60 * 1000);
+               } catch (InterruptedException ignored2) {
+               }
+           }
        }
     }
 
@@ -102,6 +114,8 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
         int type = StringUtils.checkObjectNull(row[0],0);
         int compid = StringUtils.checkObjectNull(row[1],0);
         String uphone = StringUtils.obj2Str(row[2]);
+        //判断当前是否存在记录-存在不设置定时器任务
+        if (timerIdList.contains(type+compid+uphone)) return;
         timer.schedule(new CusTimerTask(type,compid,uphone,false),0);
     }
 

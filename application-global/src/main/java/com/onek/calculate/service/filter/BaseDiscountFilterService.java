@@ -17,13 +17,13 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
 
     public BaseDiscountFilterService() {}
 
-    protected void doFilter(List<IDiscount> activityList) {
-        if (discountFilters == null) {
+    protected void doFilter(List<IDiscount> activityList, IProduct product) {
+        if (discountFilters == null || product == null) {
             return;
         }
 
         for (ActivitiesFilter discountFilter : discountFilters) {
-            discountFilter.doFilter(activityList);
+            discountFilter.doFilter(activityList, product);
         }
     }
 
@@ -33,14 +33,12 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         int index;
         IDiscount i;
         for (IProduct product : products) {
-            temp = getCurrentDiscounts(product.getSKU());
+            temp = getCurrentDiscounts(product);
 
-            // 不参与活动的商品不加入。
-            doFilter(temp);
+            doFilter(temp, product);
 
             for (IDiscount activity : temp) {
                 index = result.indexOf(activity);
-
 
                 if (index == -1) {
                     activity.addProduct(product);
@@ -50,7 +48,8 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
                     i.setLimits(
                             product.getSKU(), activity.getLimits(product.getSKU()));
                     i.setActionPrice(
-                            product.getSKU(), activity.getActionPrice(product.getSKU()));
+                            product.getSKU(),
+                            activity.getActionPrice(product.getSKU()));
                     i.addProduct(product);
                 }
 
@@ -77,13 +76,18 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         }
     }
 
-    protected final String getProductCode(long sku) {
+    protected final String[] getProductCode(long sku) {
         if (checkSKU(sku) < 0) {
             throw new IllegalArgumentException("SKU is illegal, " + sku);
         }
 
-        return String.valueOf(sku).substring(1, 7);
+        String classNo = String.valueOf(sku).substring(1, 7);
+
+        return new String[] {
+                classNo.substring(0, 2),
+                classNo.substring(0, 4),
+                classNo.substring(0, 6) };
     }
 
-    protected abstract List<IDiscount> getCurrentDiscounts(long sku);
+    protected abstract List<IDiscount> getCurrentDiscounts(IProduct product);
 }

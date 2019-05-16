@@ -11,6 +11,7 @@ import com.onek.annotation.UserPermission;
 import com.onek.calculate.entity.DiscountResult;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
+import com.onek.calculate.util.DiscountUtil;
 import com.onek.context.AppContext;
 import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
@@ -25,15 +26,20 @@ import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.math.BigDecimal;
+import java.nio.channels.MulticastChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 import static com.onek.order.PayModule.*;
+import static com.onek.util.SmsTempNo.isSmsAllow;
+import static constant.DSMConst.TD_TRAN_COLLE;
+import static util.TimeUtils.getCurrentYear;
 
 /**
  * @author 11842
@@ -42,6 +48,7 @@ import static com.onek.order.PayModule.*;
  * @time 2019/4/16 16:01
  **/
 public class TranOrderOptModule {
+
     public static final DelayedHandler<TranOrder> CANCEL_DELAYED =
             new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
                     (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
@@ -82,14 +89,14 @@ public class TranOrderOptModule {
     //订单商品表新增
     private static final String INSERT_TRAN_GOODS = "insert into {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + "(unqid,orderno,compid,pdno,pdprice,distprice,payamt,"
-            + "coupamt,promtype,pkgno,pnum,asstatus,createdate,createtime,cstatus,actcode) "
+            + "coupamt,promtype,pkgno,pnum,asstatus,createdate,createtime,cstatus,actcode,balamt) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "?,0,CURRENT_DATE,CURRENT_TIME,0,?)";
+            + "?,0,CURRENT_DATE,CURRENT_TIME,0,?,?)";
 
     private static final String UPD_TRAN_GOODS = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set "
             + "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
-            + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME, actcode=? where cstatus&1=0 and "
+            + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME, actcode=?,balamt=? where cstatus&1=0 and "
             + " pdno=? and compid = ? and orderno=0";
 
     //是否要减商品总库存
@@ -305,6 +312,10 @@ public class TranOrderOptModule {
             sqlList.add(UPD_COUENT_SQL);
             params.add(new Object[]{unqid});
         }
+        //分摊余额
+        if(bal > 0){
+            apportionBal(tranOrderGoods,bal,payamt);
+        }
 
         if (placeType == 1) {
             getInsertSqlList(sqlList, params, tranOrderGoods, orderNo);
@@ -328,7 +339,12 @@ public class TranOrderOptModule {
 
             addActBuyNum(tranOrder.getCusno(), tranOrderGoods);
 
-           // IceRemoteUtil.updateCompBal(tranOrder.getCusno(),-new Double(bal).intValue());
+            try{
+                deductionBal(tranOrder.getCusno(),bal);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+
             object.addProperty("orderno", orderNo);
             object.addProperty("message", "下单成功");
             return result.success(object);
@@ -547,7 +563,7 @@ public class TranOrderOptModule {
 //                    coupamt,promtype,pkgno,asstatus,createdate,createtime,cstatus
             params.add(new Object[]{GenIdUtil.getUnqId(), orderNo, tranOrderGoods.getCompid(), tranOrderGoods.getPdno(),
                     tranOrderGoods.getPdprice(), tranOrderGoods.getDistprice(), tranOrderGoods.getPayamt(), tranOrderGoods.getCoupamt(),
-                    tranOrderGoods.getPromtype(), tranOrderGoods.getPkgno(), tranOrderGoods.getPnum(), tranOrderGoods.getActcode()});
+                    tranOrderGoods.getPromtype(), tranOrderGoods.getPkgno(), tranOrderGoods.getPnum(), tranOrderGoods.getActcode(),tranOrderGoods.getBalamt()});
         }
 
     }
@@ -570,7 +586,7 @@ public class TranOrderOptModule {
 //                    + " pdno=? and orderno=0";
             params.add(new Object[]{orderNo, tranOrderGoods.getPdprice(), tranOrderGoods.getDistprice(), tranOrderGoods.getPayamt(),
                     tranOrderGoods.getCoupamt(), tranOrderGoods.getPromtype(), tranOrderGoods.getPkgno(), tranOrderGoods.getActcode(),
-                    tranOrderGoods.getPdno(),tranOrderGoods.getCompid()});
+                    tranOrderGoods.getBalamt(),tranOrderGoods.getPdno(),tranOrderGoods.getCompid()});
         }
     }
 
@@ -620,12 +636,6 @@ public class TranOrderOptModule {
         boolean b = cancelOrder(orderNo, cusno);
         if (b) {
             CANCEL_DELAYED.removeByKey(orderNo);
-//            int year = Integer.parseInt("20" + orderNo.substring(0, 2));
-//            List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, QUERY_ORDER_BAL, orderNo, 0);
-//            if(queryResult != null && !queryResult.isEmpty()){
-//                int bal = Integer.parseInt(queryResult.get(0)[0].toString());
-//                IceRemoteUtil.updateCompBal(cusno,bal);
-//            }
         }
         return b ? result.success("取消成功") : result.fail("取消失败");
     }
@@ -635,6 +645,12 @@ public class TranOrderOptModule {
         int res = baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, -4, orderNo, 0);
         if (res > 0) {
             recoverGoodsStock(orderNo, cusno,0);
+            List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, QUERY_ORDER_BAL, orderNo, -4);
+            if(queryResult != null && !queryResult.isEmpty()){
+                int bal = Integer.parseInt(queryResult.get(0)[0].toString());
+                LogUtil.getDefaultLogger().debug("订单取消退回余额："+bal);
+                IceRemoteUtil.updateCompBal(cusno,bal);
+            }
         }
         return res > 0;
     }
@@ -1039,6 +1055,37 @@ public class TranOrderOptModule {
         return b ? new Result().success("操作成功") : new Result().fail("操作失败");
     }
 
+    /**
+     * 扣减余额
+     * @param compid
+     * @param bal
+     */
+    public static void deductionBal(int compid,double bal){
+        IOThreadUtils.runTask(()->{
+            IceRemoteUtil.updateCompBal(compid,-new Double(bal).intValue());
+        });
+    }
+
+
+    public static void apportionBal(List<TranOrderGoods> tranOrderGoodsList,double bal,double payment){
+        double[] dprice = new double[tranOrderGoodsList.size()];
+        for (int i = 0; i < tranOrderGoodsList.size(); i++){
+            dprice[i] = tranOrderGoodsList.get(i).getPdprice() * tranOrderGoodsList.get(i).getPnum();
+        }
+        double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
+
+        for (int i = 0; i < tranOrderGoodsList.size(); i++){
+            if(payment == 0){
+                tranOrderGoodsList.get(i).setPayamt(0);
+            }
+            tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i]).
+                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+        }
+    }
+
+
+
+
     class GoodsStock {
         private long sku;
         private int stock;
@@ -1070,7 +1117,5 @@ public class TranOrderOptModule {
     }
 
     public static void main(String[] args) {
-
     }
-
 }

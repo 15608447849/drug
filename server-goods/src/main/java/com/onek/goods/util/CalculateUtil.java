@@ -6,6 +6,7 @@ import com.onek.calculate.entity.Product;
 import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.filter.CycleFilter;
 import com.onek.calculate.filter.PriorityFilter;
+import com.onek.calculate.filter.StoreFilter;
 import com.onek.goods.calculate.ActivityCalculateService;
 import com.onek.goods.calculate.ActivityFilterService;
 import util.ArrayUtil;
@@ -40,7 +41,8 @@ public class CalculateUtil {
                 new ActivityFilterService(
                         new ActivitiesFilter[] {
                                 new CycleFilter(),
-                                new PriorityFilter() }
+                                new PriorityFilter(),
+                                new StoreFilter(), }
                 ).getCurrentActivities(products);
 
         if (!discounts.isEmpty()) {
