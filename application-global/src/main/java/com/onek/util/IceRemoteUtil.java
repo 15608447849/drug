@@ -633,7 +633,7 @@ public class IceRemoteUtil {
      * @param spu 0代表全部商品
      * @return
      */
-    public static List<Long> querySkuListByCondition(int spu){
+    public static List<Long> querySkuListByCondition(long spu){
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("spu", spu);
         String json = ic.setServerAndRequest("goodsServer",
