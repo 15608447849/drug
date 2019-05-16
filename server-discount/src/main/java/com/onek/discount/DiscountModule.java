@@ -1,6 +1,19 @@
 package com.onek.discount;
 
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.onek.annotation.UserPermission;
+import com.onek.context.AppContext;
+import com.onek.entitys.Result;
+import com.onek.util.IceRemoteUtil;
+import com.onek.util.SmsUtil;
+import constant.DSMConst;
+import dao.BaseDAO;
+
 public class DiscountModule {
+
+    private static BaseDAO baseDao = BaseDAO.getBaseDAO();
+
     /*public Result getGoodsActInfo(AppContext appContext) {
         String[] arrays = appContext.param.arrays;
 
@@ -85,4 +98,16 @@ public class DiscountModule {
         return new Result().success(discounts);
     }*/
 
+    @UserPermission(ignore = true)
+    public int adjustActivityStock(AppContext appContext) {
+
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        long actstock = json.get("actstock").getAsInt();
+        long actcode = json.get("actcode").getAsLong();
+        long sku = json.get("sku").getAsLong();
+        String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=? where cstatus&1=0 and actcode=? and gcode=?";
+        int result = baseDao.updateNative(updateSQL, actstock, actcode, sku);
+
+        return result;
+    }
 }
