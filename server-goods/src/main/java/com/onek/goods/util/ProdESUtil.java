@@ -223,11 +223,12 @@ public class ProdESUtil {
      * @param keyword
      * @param specList
      * @param manuNoList
+     * @param spuList
      * @param pagenum
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProd(String keyword,List<String> specList,List<Long> manuNoList,int pagenum,int pagesize){
+    public static SearchResponse searchProd(String keyword,List<String> specList,List<Long> manuNoList, List<Long> spuList,int pagenum,int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -243,10 +244,18 @@ public class ProdESUtil {
                 TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNO, manuNoArray);
                 boolQuery.must(builder);
             }
+            if(spuList != null && spuList.size() > 0){
+                Object [] spuArray = new String[spuList.size()];
+                spuArray = spuList.toArray(spuArray);
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SPU, spuArray);
+                boolQuery.must(builder);
+            }
             if(!StringUtils.isEmpty(keyword)){
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
+            MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
+            boolQuery.must(builder);
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
             int from = pagenum * pagesize - pagesize;
             response = client.prepareSearch(ESConstant.PROD_INDEX)

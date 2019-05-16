@@ -118,6 +118,8 @@ public class ProdModule {
     private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
             "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ?";
 
+    private static final String QUERY_SPU = "select spu from {{?" + DSMConst.TD_PROD_SPU +"}} where spu REGEXP ?";
+
     @UserPermission(ignore = true)
     public Result getMallFloorProd(AppContext appContext) {
 //    public Result getMallFloorProd() {
@@ -847,6 +849,7 @@ public class ProdModule {
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         JsonArray specArray = json.get("specArray").getAsJsonArray();
         JsonArray manuArray = json.get("manuArray").getAsJsonArray();
+        JsonArray spuArray = json.has("spuArray") ? json.get("spuArray").getAsJsonArray() : null;
         List<String> specList = new ArrayList<>();
         if (specArray != null && specArray.size() > 0) {
             Iterator<JsonElement> it = specArray.iterator();
@@ -865,8 +868,41 @@ public class ProdModule {
             }
         }
 
+        List<Long> spuList = new ArrayList<>();
+        if (spuArray != null && specArray.size() > 0) {
+            Iterator<JsonElement> it = spuArray.iterator();
+            while (it.hasNext()) {
+                JsonElement elem = it.next();
+                String val = elem.getAsJsonObject().get("val").getAsString();
+                StringBuilder regexp =
+                        new StringBuilder("^")
+                                .append("[0-9]{1}");
+                if(val.length() == 2){
+                    regexp.append(val)
+                            .append("[0-9]{9}")
+                            .append("$");
+                }else if(val.length() == 4){
+                    regexp.append(val)
+                            .append("[0-9]{7}")
+                            .append("$");
+                }else if(val.length() == 6){
+                    regexp.append(val)
+                            .append("[0-9]{5}")
+                            .append("$");
+                }
+
+
+                List<Object[]> queryList = BASE_DAO.queryNative(QUERY_SPU, regexp);
+                if(queryList != null && queryList.size() > 0){
+                    for(Object[] obj : queryList){
+                        spuList.add(Long.parseLong(obj[0].toString()));
+                    }
+                }
+            }
+        }
+
         Result r = new Result();
-        SearchResponse response = ProdESUtil.searchProd(keyword, specList, manunoList, appContext.param.pageIndex, appContext.param.pageNumber);
+        SearchResponse response = ProdESUtil.searchProd(keyword, specList, manunoList, spuList, appContext.param.pageIndex, appContext.param.pageNumber);
         List<Map<String, Object>> resultList = new ArrayList<>();
         if (response != null) {
             for (SearchHit searchHit : response.getHits()) {
