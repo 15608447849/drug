@@ -20,6 +20,7 @@ import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.ds.AppConfig;
+import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.*;
 
@@ -439,16 +440,19 @@ public class OrderOptModule {
                             TimeUtils.getCurrentYear(), QUERY_ASAPP_INFO_SQL, asno);
                     int asnum = Integer.parseInt(queryResult.get(0)[4].toString());
                     double balamt = Double.parseDouble(queryResult.get(0)[21].toString());
+                    int pnum = Integer.parseInt(queryResult.get(0)[8].toString());
+                    LogUtil.getDefaultLogger().debug("审核通过获取余额："+balamt);
                     if(balamt > 0){
-                        double subbal = MathUtil.exactMul(asnum,balamt).
+                        double apamt = MathUtil.exactDiv(balamt,pnum).
                                 setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                        subbal = MathUtil.exactMul(subbal,100). setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                        IceRemoteUtil.updateCompBal(Integer.parseInt(queryRet.get(0)[1].toString()),new Double(subbal).intValue());
+                        LogUtil.getDefaultLogger().debug("审核通过单个商品分摊余额："+apamt+" 商品数量："+pnum);
+
+                        double subbal = MathUtil.exactMul(asnum,apamt).
+                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                        LogUtil.getDefaultLogger().debug("实际退回余额分摊余额："+subbal+" 退货数量："+asnum);
+                        IceRemoteUtil.updateCompBal(Integer.parseInt(queryRet.get(0)[1].toString()),MathUtil.exactMul(subbal,100).intValue());
                     }
-
                 }
-
-
                 ostatus = -2;
                 gstatus = 3;
                 SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,

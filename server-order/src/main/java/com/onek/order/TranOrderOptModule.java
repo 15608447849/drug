@@ -26,6 +26,7 @@ import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import util.*;
 
@@ -47,6 +48,7 @@ import static util.TimeUtils.getCurrentYear;
  * @time 2019/4/16 16:01
  **/
 public class TranOrderOptModule {
+
     public static final DelayedHandler<TranOrder> CANCEL_DELAYED =
             new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
                     (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
@@ -631,12 +633,6 @@ public class TranOrderOptModule {
         boolean b = cancelOrder(orderNo, cusno);
         if (b) {
             CANCEL_DELAYED.removeByKey(orderNo);
-            int year = Integer.parseInt("20" + orderNo.substring(0, 2));
-            List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, QUERY_ORDER_BAL, orderNo, -4);
-            if(queryResult != null && !queryResult.isEmpty()){
-                int bal = Integer.parseInt(queryResult.get(0)[0].toString());
-                IceRemoteUtil.updateCompBal(cusno,bal);
-            }
         }
         return b ? result.success("取消成功") : result.fail("取消失败");
     }
@@ -646,6 +642,12 @@ public class TranOrderOptModule {
         int res = baseDao.updateNativeSharding(cusno, year, UPD_ORDER_STATUS, -4, orderNo, 0);
         if (res > 0) {
             recoverGoodsStock(orderNo, cusno,0);
+            List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, QUERY_ORDER_BAL, orderNo, -4);
+            if(queryResult != null && !queryResult.isEmpty()){
+                int bal = Integer.parseInt(queryResult.get(0)[0].toString());
+                LogUtil.getDefaultLogger().debug("订单取消退回余额："+bal);
+                IceRemoteUtil.updateCompBal(cusno,bal);
+            }
         }
         return res > 0;
     }
@@ -1112,12 +1114,5 @@ public class TranOrderOptModule {
     }
 
     public static void main(String[] args) {
-        double[] dprice = new double[2];
-        dprice[0] = 15.5;
-        dprice[1] = 18;
-
-        double[] pprice = DiscountUtil.shareDiscount(dprice, 50);
-        System.out.println(pprice[0]);
-        System.out.println(pprice[1]);
     }
 }
