@@ -313,7 +313,10 @@ public class TranOrderOptModule {
             params.add(new Object[]{unqid});
         }
         //分摊余额
-        apportionBal(tranOrderGoods,bal,payamt);
+        if(bal > 0){
+            apportionBal(tranOrderGoods,bal,payamt);
+        }
+
         if (placeType == 1) {
             getInsertSqlList(sqlList, params, tranOrderGoods, orderNo);
         } else {
