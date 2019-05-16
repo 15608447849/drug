@@ -33,14 +33,12 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         int index;
         IDiscount i;
         for (IProduct product : products) {
-            temp = getCurrentDiscounts(product.getSKU());
+            temp = getCurrentDiscounts(product);
 
-            // 不参与活动的商品不加入。
             doFilter(temp);
 
             for (IDiscount activity : temp) {
                 index = result.indexOf(activity);
-
 
                 if (index == -1) {
                     activity.addProduct(product);
@@ -50,7 +48,8 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
                     i.setLimits(
                             product.getSKU(), activity.getLimits(product.getSKU()));
                     i.setActionPrice(
-                            product.getSKU(), activity.getActionPrice(product.getSKU()));
+                            product.getSKU(),
+                            activity.getActionPrice(product.getSKU()));
                     i.addProduct(product);
                 }
 
@@ -85,5 +84,5 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         return String.valueOf(sku).substring(1, 7);
     }
 
-    protected abstract List<IDiscount> getCurrentDiscounts(long sku);
+    protected abstract List<IDiscount> getCurrentDiscounts(IProduct product);
 }

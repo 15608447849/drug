@@ -10,6 +10,7 @@ import com.onek.entitys.Result;
 import com.onek.user.entity.ResourceVO;
 import constant.DSMConst;
 import dao.BaseDAO;
+import util.ArrayUtil;
 import util.StringUtils;
 import util.TreeUtil;
 
@@ -113,7 +114,7 @@ public class BackgroundResourceModule {
         return new Result().success(new Gson().toJson(TreeUtil.list2Tree(list)));
     }
 
-    public Result getRoleResourceTree(AppContext appContext) {
+    public Result roleLiuqi(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
         if (params.length == 0) {
@@ -139,9 +140,39 @@ public class BackgroundResourceModule {
         Map<String, Object> returnMap = new HashMap<>();
         returnMap.put("resourceVOS",
                 new Gson().toJson(
+                        TreeUtil.list2Tree(
+                                Arrays.asList(resourceVOS))));
+        returnMap.put("selectedList", selectedList);
+        return new Result().success(returnMap);
+    }
+
+    public Result getRoleResourceTree(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+
+        if (params.length == 0) {
+            return new Result().fail("参数为空");
+        }
+
+        long roleId;
+        try {
+            roleId = Long.parseLong(params[0]);
+        } catch (NumberFormatException e) {
+            return new Result().fail("参数异常");
+        }
+
+        List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_RESOURCE_BASE
+                + " AND roleid & ? > 0 ", roleId);
+
+        ResourceVO[] resourceVOS = new ResourceVO[queryResult.size()];
+
+        BASE_DAO.convToEntity(queryResult, resourceVOS, ResourceVO.class);
+
+        Map<String, Object> returnMap = new HashMap<>();
+        returnMap.put("resourceVOS",
+                new Gson().toJson(
                     TreeUtil.list2Tree(
                             Arrays.asList(resourceVOS))));
-        returnMap.put("selectedList", selectedList);
+
         return new Result().success(returnMap);
     }
 
