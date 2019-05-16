@@ -137,6 +137,7 @@ public class IceRemoteUtil {
         return null;
     }
 
+    //地区码->地址名
     public static String getArean(long areac) {
         String result = ic.setServerAndRequest("globalServer","CommonModule","getAreaName")
                 .setArrayParams(areac)
@@ -146,7 +147,7 @@ public class IceRemoteUtil {
         Object data = hashMap.get("data");
         return data == null ? "" : data.toString();
     }
-
+    //地区码->地区对象
     public static AreaEntity getAreaByAreac(long areac){
         String result = ic.setServerAndRequest("globalServer","CommonModule","getArea")
                 .setArrayParams(areac)
@@ -158,7 +159,7 @@ public class IceRemoteUtil {
         String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,AreaEntity.class);
     }
-
+    //地区码->地区对象数组
     public static AreaEntity[] getAncestors(long areac){
         String result = ic.setServerAndRequest("globalServer","CommonModule","getAncestors")
                 .setArrayParams(areac)
@@ -172,7 +173,7 @@ public class IceRemoteUtil {
         return GsonUtils.jsonToJavaBean(json,AreaEntity[].class);
     }
 
-
+    //查询所有字典对象
     public static DictEntity[] queryAll() {
         String result = ic.setServerAndRequest("globalServer","DictUtilRemoteModule","queryAll").execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
@@ -183,6 +184,7 @@ public class IceRemoteUtil {
         return GsonUtils.jsonToJavaBean(json,DictEntity[].class);
     }
 
+    //查询字典对象
     public static DictEntity[] queryByParams(String [] params) {
         String result = ic.setServerAndRequest("globalServer","DictUtilRemoteModule","queryByParams").settingParam(params).execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
