@@ -628,7 +628,20 @@ public class IceRemoteUtil {
     }
 
 
-
+    /**
+     * 根据spu查询相对于的商品的sku集合
+     * @param spu 0代表全部商品
+     * @return
+     */
+    public static List<Long> getSkuListByCondition(int spu){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("spu", spu);
+        String json = ic.setServerAndRequest("goodsServer",
+                "ProdExtModule","getSkuListByCondition")
+                .settingParam(jsonObject.toJSONString())
+                .execute();
+        return GsonUtils.json2List(json,Long.class);
+    }
 
 
 

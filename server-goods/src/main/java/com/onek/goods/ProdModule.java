@@ -1143,6 +1143,19 @@ public class ProdModule {
                     prodVO.setMaxprize(prizeEntity.getMaxactprize());
                     prodVO.setActcode(prizeEntity.getActcode());
                     int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
+                    // 代表值存在一个活动
+                    if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
+                        List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
+                        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
+                        String sdate = getEffectiveTimeByActCode.getSdate();
+                        String edate = getEffectiveTimeByActCode.getEdate();
+
+                        if (StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate) || surplusStock <= 0) { // // 表示搜索的商品不在活动时间内
+                            prodVO.setRulestatus(0);
+                            prodVO.setActprod(false);
+                            prodVO.setMutiact(false);
+                        }
+                    }
                 }
             }
         }
