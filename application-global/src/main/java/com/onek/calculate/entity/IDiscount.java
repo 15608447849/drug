@@ -14,7 +14,6 @@ public interface IDiscount {
     List<IProduct> getProductList();
     void setFreeShipping(boolean free);
     boolean getFreeShipping();
-//    void setExCoupon(boolean exCoupon);
     boolean getExCoupon();
 
     void setLimits(long sku, int limits);
@@ -29,9 +28,9 @@ public interface IDiscount {
     void addGift(Gift gift);
     void addGifts(List<Gift> gifts);
 
-    void setCurrLadoff(Ladoff currLadoff);
-    void setNextLadoff(Ladoff nextLadoff);
+    default void setCurrLadoff(Ladoff currLadoff) {}
+    default void setNextLadoff(Ladoff nextLadoff) {}
 
-    void setNextGapAmt(double nextGapAmt);
-    void setNextGapNum(int nextGapNum);
+    default void setNextGapAmt(double nextGapAmt) {}
+    default void setNextGapNum(int nextGapNum) {}
 }

@@ -3,6 +3,7 @@ package com.onek.calculate.filter;
 
 import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.entity.IProduct;
 
 import java.util.Arrays;
 import java.util.Iterator;
@@ -14,7 +15,7 @@ import java.util.List;
 
 public class PriorityFilter extends BaseFilter {
 
-    public void doFilter(List<? extends IDiscount> activities) {
+    public void doFilter(List<? extends IDiscount> activities, IProduct product) {
         int len = activities.size();
 
         if (len == 0) {
@@ -43,7 +44,7 @@ public class PriorityFilter extends BaseFilter {
     }
 
     @Override
-    protected boolean isFilter(IDiscount iDiscount) {
+    protected boolean isFilter(IDiscount iDiscount, IProduct product) {
         return false;
     }
 }

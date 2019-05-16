@@ -3,6 +3,7 @@ package com.onek.calculate.filter;
 
 import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.entity.IProduct;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -22,7 +23,7 @@ public class CycleFilter extends BaseFilter {
 
     private static final SimpleDateFormat YYMMDD = new SimpleDateFormat("yyMMdd");
 
-    protected boolean isFilter(IDiscount activity) {
+    protected boolean isFilter(IDiscount activity, IProduct product) {
         Activity act = (Activity) activity;
 
         boolean result = true;

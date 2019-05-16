@@ -17,13 +17,13 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
 
     public BaseDiscountFilterService() {}
 
-    protected void doFilter(List<IDiscount> activityList) {
-        if (discountFilters == null) {
+    protected void doFilter(List<IDiscount> activityList, IProduct product) {
+        if (discountFilters == null || product == null) {
             return;
         }
 
         for (ActivitiesFilter discountFilter : discountFilters) {
-            discountFilter.doFilter(activityList);
+            discountFilter.doFilter(activityList, product);
         }
     }
 
@@ -35,7 +35,7 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         for (IProduct product : products) {
             temp = getCurrentDiscounts(product);
 
-            doFilter(temp);
+            doFilter(temp, product);
 
             for (IDiscount activity : temp) {
                 index = result.indexOf(activity);
