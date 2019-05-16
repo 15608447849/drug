@@ -1,5 +1,6 @@
 package com.onek.order;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.calculate.ActivityCalculateService;
 import com.onek.calculate.ActivityFilterService;
@@ -7,10 +8,7 @@ import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.entity.Product;
-import com.onek.calculate.filter.ActivitiesFilter;
-import com.onek.calculate.filter.CycleFilter;
-import com.onek.calculate.filter.PriorityFilter;
-import com.onek.calculate.filter.QualFilter;
+import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
@@ -46,6 +44,23 @@ public class CalculateModule {
         List<IDiscount> discounts
                 = CalculateUtil.getDiscount(appContext.getUserSession().compId, products);
 
+        int minStock = Integer.MAX_VALUE;
+        int minLimit = Integer.MAX_VALUE;
+
+        for (IDiscount discount : discounts) {
+            minStock = Math.min(
+                    RedisStockUtil
+                        .getActStockBySkuAndActno(sku, discount.getDiscountNo()),
+                    minStock);
+
+            minLimit = Math.min(discount.getLimits(sku), minLimit);
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("discounts", discounts);
+        jsonObject.put("minStock", minStock);
+        jsonObject.put("minLimit", minLimit);
+
         return new Result().success(discounts);
     }
 
@@ -75,7 +90,8 @@ public class CalculateModule {
                         new ActivitiesFilter[] {
                                 new CycleFilter(),
                                 new QualFilter(compid),
-                                new PriorityFilter(), })
+                                new PriorityFilter(),
+                                new StoreFilter(), })
                 .getCurrentActivities(products);
 
         IDiscount currDiscount = null;

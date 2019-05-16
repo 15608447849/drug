@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.entity.IProduct;
 import com.onek.util.area.AreaUtil;
 import com.onek.util.member.MemberStore;
 import com.onek.util.order.RedisOrderUtil;
@@ -29,7 +30,7 @@ public class QualFilter extends BaseFilter {
         this.compid = compid;
     }
 
-    protected boolean isFilter(IDiscount activity) {
+    protected boolean isFilter(IDiscount activity, IProduct product) {
         if (this.compid <= 0) {
             return true;
         }
