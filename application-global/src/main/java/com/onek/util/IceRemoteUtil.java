@@ -481,6 +481,26 @@ public class IceRemoteUtil {
     }
 
     /**
+     * 调整活动库存
+     *
+     * @param actstock
+     * @param actcode
+     * @param sku
+     * @return
+     */
+    public static int adjustActivityStock(int actstock,long actcode, long sku){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("actstock", actstock);
+        jsonObject.put("actcode", actcode);
+        jsonObject.put("sku", sku);
+        String result = ic.setServerAndRequest("discountServer",
+                "DiscountModule","adjustActivityStock")
+                .settingParam(jsonObject.toJSONString())
+                .execute();
+        return Integer.parseInt(result);
+    }
+
+    /**
      * 新增余额
      * @param compid
      * @param amt
