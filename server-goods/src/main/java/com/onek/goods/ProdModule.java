@@ -1136,6 +1136,15 @@ public class ProdModule {
                     }
                 }
             }
+            else{
+                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
+                if (prizeEntity != null) {
+                    prodVO.setMinprize(prizeEntity.getMinactprize());
+                    prodVO.setMaxprize(prizeEntity.getMaxactprize());
+                    prodVO.setActcode(prizeEntity.getActcode());
+                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
+                }
+            }
         }
         try {
             DictStore.translate(prodVO);

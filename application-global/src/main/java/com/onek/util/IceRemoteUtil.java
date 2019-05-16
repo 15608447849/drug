@@ -492,7 +492,7 @@ public class IceRemoteUtil {
         jsonObject.put("actcode", actcode);
         jsonObject.put("sku", sku);
         String result = ic.setServerAndRequest("discountServer",
-                "DiscountModule","updateCompBal")
+                "DiscountModule","adjustActivityStock")
                 .settingParam(jsonObject.toJSONString())
                 .execute();
         return Integer.parseInt(result);

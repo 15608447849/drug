@@ -116,7 +116,7 @@ public class RedisStockUtil {
                 stockMap.put(key, Integer.parseInt(stock));
             }
             int stock = getStock(sku);
-            if (sumStock >= stock) {
+            if (sumStock > 0 && sumStock >= stock) {
                 for (String key : stockMap.keySet()) {
                     double rate = MathUtil.exactDiv(stockMap.get(key), sumStock).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                     int nas = MathUtil.exactMul(stock, rate).intValue();
