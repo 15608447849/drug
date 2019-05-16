@@ -6,6 +6,7 @@ import com.onek.entitys.Result;
 import com.onek.user.entity.InvoiceVO;
 import constant.DSMConst;
 import dao.BaseDAO;
+import util.MathUtil;
 
 import java.util.List;
 
@@ -61,6 +62,19 @@ public class MyInvoiceModule {
         } catch (Exception e) {
             e.printStackTrace();
             return new Result().fail("参数错误！");
+        }
+
+        if (!MathUtil.isBetween(1, frontVO.getAccount().length(), 19)) {
+            return new Result().fail("银行账号过长！");
+        }
+        if (!MathUtil.isBetween(1, frontVO.getTel().length(), 14)) {
+            return new Result().fail("电话号码过长！");
+        }
+        if (!MathUtil.isBetween(1, frontVO.getBankers().length(), 20)) {
+            return new Result().fail("开户行过长！");
+        }
+        if (!MathUtil.isBetween(1, frontVO.getTaxpayer().length(), 20)) {
+            return new Result().fail("纳税人识别号过长！");
         }
 
         InvoiceVO[] query = (InvoiceVO[]) getInvoice(appContext).data;
