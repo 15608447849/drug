@@ -33,10 +33,7 @@ import org.elasticsearch.search.SearchHits;
 import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
 import redis.util.RedisUtil;
-import util.GsonUtils;
-import util.NumUtil;
-import util.StringUtils;
-import util.TimeUtils;
+import util.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -58,20 +55,24 @@ public class ProdModule {
 
     private static PromTimeService timeService = new PromTimeService();
 
-    private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
+    private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
             "and a.brulecode = ? and d.cstatus&1 = 0 " +
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
             "union all " +
-            "select a.unqid,(select sku from {{?" + DSMConst.TD_PROD_SKU + "}} where cstatus&1 =0 and spu like CONCAT('_', d.gcode,'%')) gcode,d.actstock,d.limitnum,d.price from " +
+            "select a.unqid,(select sku from {{?" + DSMConst.TD_PROD_SKU + "}} where cstatus&1 =0 and spu like CONCAT('_', d.gcode,'%')) gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
             "and a.brulecode = ? and d.cstatus&1 = 0 " +
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
-            "and length(d.gcode) < 14 and d.gcode !=0";
+            "and length(d.gcode) < 14 and d.gcode !=0 " +
+            "union all "+
+            "select a.unqid,(select sku from td_prod_sku where cstatus&1 =0) gcode,d.actstock,d.limitnum,d.price,d.cstatus "+
+             "from td_prom_act a, td_prom_assdrug d where a.unqid = d.actcode and a.brulecode = ? and d.cstatus&1 = 0 "+
+             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 and d.gcode =0";
 
-    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
+    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
             "and d.actcode = ? " +
@@ -81,14 +82,38 @@ public class ProdModule {
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
             "and a.cstatus&1 = 0 " +
-            "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0";
+            "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
+            "union all " +
+            "select a.unqid,(select sku from {{?" + DSMConst.TD_PROD_SKU + "}} where cstatus&1 =0 and spu like CONCAT('_', d.gcode,'%')) gcode,d.actstock,d.limitnum from " +
+            "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
+            "where a.unqid = d.actcode " +
+            "and d.cstatus&1 = 0 and a.qualcode = 1 and a.qualvalue = 0 " +
+            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
+            "and length(d.gcode) < 14 and d.gcode !=0 " +
+            "union all "+
+            "select a.unqid,(select sku from td_prod_sku where cstatus&1 =0) gcode,d.actstock,d.limitnum "+
+            "from td_prom_act a, td_prom_assdrug d where a.unqid = d.actcode and d.cstatus&1 = 0 " +
+            "and a.qualcode = 1 and a.qualvalue = 0 "+
+            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 and d.gcode =0";
 
     private static String EXEMPOST_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
             "and a.cstatus&1 = 0 " +
             "and brulecode like '112%' " +
-            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0";
+            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
+            "union all "+
+            "select a.unqid,(select sku from {{?" + DSMConst.TD_PROD_SKU + "}} where cstatus&1 =0 and spu like CONCAT('_', d.gcode,'%')) gcode,d.actstock,d.limitnum from " +
+            "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
+            "where a.unqid = d.actcode " +
+            "and brulecode like '112%' " +
+            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
+            "and length(d.gcode) < 14 and d.gcode !=0 " +
+            "union all "+
+            "select a.unqid,(select sku from td_prod_sku where cstatus&1 =0) gcode,d.actstock,d.limitnum "+
+            "from td_prom_act a, td_prom_assdrug d where a.unqid = d.actcode and d.cstatus&1 = 0 " +
+            "and brulecode like '112%' "+
+            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 and d.gcode =0";
 
     private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
             "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ?";
@@ -187,7 +212,7 @@ public class ProdModule {
     public Result getNewMemberMallFloor(AppContext appContext) {
 
         String day = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(NEWMEMBER_ACT_PROD_SQL, new Object[]{day});
+        List<Object[]> list = BASE_DAO.queryNative(NEWMEMBER_ACT_PROD_SQL, new Object[]{day,day,day});
         List<ProdVO> prodVOList = new ArrayList<>();
         if (list != null && list.size() > 0) {
             List<Long> skuList = new ArrayList<>();
@@ -229,7 +254,7 @@ public class ProdModule {
     public Result getExemPostMallFloor(AppContext appContext) {
 
         String mmdd = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(EXEMPOST_ACT_PROD_SQL, new Object[]{mmdd});
+        List<Object[]> list = BASE_DAO.queryNative(EXEMPOST_ACT_PROD_SQL, new Object[]{mmdd,mmdd,mmdd});
         List<ProdVO> prodVOList = new ArrayList<>();
         if (list != null && list.size() > 0) {
             List<Long> skuList = new ArrayList<>();
@@ -263,7 +288,7 @@ public class ProdModule {
     public Result getTeamBuyMallFloor(AppContext appContext) {
 
         String mmdd = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1133, mmdd, 1133, mmdd});
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1133, mmdd, 1133, mmdd, 1133, mmdd});
         List<ProdVO> prodVOList = new ArrayList<>();
         JSONObject result = new JSONObject();
         if (list != null && list.size() > 0) {
@@ -316,7 +341,7 @@ public class ProdModule {
     public Result getDiscountMallFloor(AppContext appContext) {
 
         String day = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1113, day, 1113, day});
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1113, day, 1113, day, 1113, day});
         JSONObject result = new JSONObject();
         List<ProdVO> prodVOList = new ArrayList<>();
         if (list != null && list.size() > 0) {
@@ -409,7 +434,7 @@ public class ProdModule {
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
         String day = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(NEWMEMBER_ACT_PROD_SQL, new Object[]{day});
+        List<Object[]> list = BASE_DAO.queryNative(NEWMEMBER_ACT_PROD_SQL, new Object[]{day,day,day});
         List<ProdVO> prodVOList = new ArrayList<>();
         SearchResponse response  = null;
         if (list != null && list.size() > 0) {
@@ -977,6 +1002,7 @@ public class ProdModule {
             int actStock = Integer.parseInt(objects[2].toString());
             int limitNum = Integer.parseInt(objects[3].toString());
             int prize = Integer.parseInt(objects[4].toString());
+            int cstatus = Integer.parseInt(objects[5].toString());
 
             skuList.add(gCode);
             if (!actCodeList.contains(actCode)) {
@@ -985,7 +1011,7 @@ public class ProdModule {
             if (actCodeList.size() > 1) {
                 break;
             }
-            dataMap.put(gCode, new Integer[]{limitNum, actStock, prize});
+            dataMap.put(gCode, new Integer[]{limitNum, actStock, prize, cstatus});
 
         }
     }
@@ -1059,7 +1085,14 @@ public class ProdModule {
         prodVO.setActinitstock(initStock);
         prodVO.setSurplusstock(surplusStock);
 
-        prodVO.setActprize(NumUtil.div(dataMap.get(prodVO.getSku())[2], 100));
+        int cstatus = dataMap.get(prodVO.getSku())[3];
+        if((cstatus & 512) > 0){
+            double rate = MathUtil.exactDiv(dataMap.get(prodVO.getSku())[2], 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            double actprice = MathUtil.exactMul(prodVO.getVatp(), rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
+            prodVO.setActprize(NumUtil.div(actprice, 100));
+        }else{
+            prodVO.setActprize(NumUtil.div(dataMap.get(prodVO.getSku())[2], 100));
+        }
         if (prodVO.getRulestatus() > 0) prodVO.setActprod(true);
     }
 

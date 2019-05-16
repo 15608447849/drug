@@ -532,7 +532,18 @@ public class IceRemoteUtil {
      * lzp
      */
     public static HashMap<String,String> getUserByFinance(){
-        String result = ic.setServerAndRequest("userServer","StoreManageModule","getRoleCode256_Name_Phone").execute();
+        return getUserByRoles(RoleCodeCons._FINA);
+    }
+    /**
+     * 获取执行角色的手机号码/姓名
+     * lzp
+     */
+    public static HashMap<String,String> getUserByRoles(int... codes){
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0 ; i<codes.length ;i++){
+            list.add(codes[i]);
+        }
+        String result = ic.setServerAndRequest("userServer","StoreManageModule","queryUserByRoleCode").setJsonParams(list).execute();
         return GsonUtils.string2Map(result);
     }
 
