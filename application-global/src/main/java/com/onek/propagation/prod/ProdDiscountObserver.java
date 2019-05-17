@@ -139,7 +139,7 @@ public class ProdDiscountObserver implements ProdObserver {
                                     result = RedisStockUtil.clearActStock(sku, actcode);
 
                                 }else{
-                                    result = RedisStockUtil.setActStock(sku, actcode, s);
+                                    result = RedisStockUtil.setActStock(sku, actcode, stock);
                                 }
 
                                 if (limitnum > 0) {
