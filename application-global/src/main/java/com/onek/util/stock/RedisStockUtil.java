@@ -282,7 +282,7 @@ public class RedisStockUtil {
                 List<String> _keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP);
                 int sumStock = 0;
                 if(_keys != null && _keys.size() > 0){
-                    for(String _actKey : keys){
+                    for(String _actKey : _keys){
                         String actstock = RedisUtil.getStringProvide().get(_actKey);
                         if(actcode > 0){
                             if(_actKey.contains(actcode+"")){
@@ -304,7 +304,7 @@ public class RedisStockUtil {
     }
 
 //    public static void main(String[] args) {
-//        checkActStockSetting(10000L,0,10, 0);
+//        checkActStockSetting(11000000011201L,0,20, 0);
 //    }
 }
 
