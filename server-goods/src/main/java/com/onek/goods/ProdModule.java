@@ -69,7 +69,7 @@ public class ProdModule {
             "and length(d.gcode) < 14 and d.gcode !=0 " +
             "union all "+
             "select a.unqid,(select sku from td_prod_sku where cstatus&1 =0) gcode,d.actstock,d.limitnum,d.price,d.cstatus "+
-             "from td_prom_act a, td_prom_assdrug d where a.unqid = d.actcode and a.brulecode = ? and d.cstatus&1 = 0 "+
+             "from {{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d where a.unqid = d.actcode and a.brulecode = ? and d.cstatus&1 = 0 "+
              "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 and d.gcode =0";
 
     private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
@@ -92,7 +92,7 @@ public class ProdModule {
             "and length(d.gcode) < 14 and d.gcode !=0 " +
             "union all "+
             "select a.unqid,(select sku from td_prod_sku where cstatus&1 =0) gcode,d.actstock,d.limitnum "+
-            "from td_prom_act a, td_prom_assdrug d where a.unqid = d.actcode and d.cstatus&1 = 0 " +
+            "from {{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d where a.unqid = d.actcode and d.cstatus&1 = 0 " +
             "and a.qualcode = 1 and a.qualvalue = 0 "+
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 and d.gcode =0";
 
@@ -111,7 +111,7 @@ public class ProdModule {
             "and length(d.gcode) < 14 and d.gcode !=0 " +
             "union all "+
             "select a.unqid,(select sku from td_prod_sku where cstatus&1 =0) gcode,d.actstock,d.limitnum "+
-            "from td_prom_act a, td_prom_assdrug d where a.unqid = d.actcode and d.cstatus&1 = 0 " +
+            "from  {{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d  where a.unqid = d.actcode and d.cstatus&1 = 0 " +
             "and brulecode like '112%' "+
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 and d.gcode =0";
 
