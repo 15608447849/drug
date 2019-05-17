@@ -35,6 +35,7 @@ public class TranOrderDetail {
     private String address;
     private double balamt;
     private int opayway;
+    private String remarks;
 
     /**      trans         **/
     private int payno;
@@ -486,5 +487,13 @@ public class TranOrderDetail {
 
     public void setOpayway(int opayway) {
         this.opayway = opayway;
+    }
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
     }
 }

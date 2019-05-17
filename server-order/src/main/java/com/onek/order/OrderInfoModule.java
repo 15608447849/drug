@@ -28,7 +28,7 @@ public class OrderInfoModule {
           + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
           + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
           + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
-          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway ";
+          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway, ord.remarks ";
 
     private static final String QUERY_TRAN_TRANS_PARAMS =
             " trans.payno, trans.payprice, "
