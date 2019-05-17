@@ -82,29 +82,47 @@ public class ProdDiscountObserver implements ProdObserver {
                     }
                     LogUtil.getDefaultLogger().info("++++++@@@@@@@@@@ actcode:[" + actcode + "]; spu:[" + gcode + "]; stock:[" + stock + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
                     if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 256) > 0) { // 库存比例
-                        if (stock > 0 && stock < 100) {
-                            double rate = MathUtil.exactDiv(stock, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                        if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 1) > 0) { // 删除
                             List<Long> skuList = IceRemoteUtil.querySkuListByCondition(Long.parseLong(gcode));
                             for (Long sku : skuList) {
-                                int s = RedisStockUtil.getStock(sku);
-                                int result = 0;
-                                if (s > 0) {
-                                    int ns = MathUtil.exactMul(s, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
-                                    LogUtil.getDefaultLogger().info("++++++@@@@@@@@@@ actcode:[" + actcode + "]; sku:[" + sku + "]; stock:[" + ns + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
-                                    result = RedisStockUtil.setActStock(sku, actcode, ns);
-                                    if (limitnum > 0) {
-                                        RedisOrderUtil.setActLimit(sku, actcode, limitnum);
-                                    }
-                                    if (result <= 0) {
-                                        JSONObject j = new JSONObject();
-                                        j.put("discount", 1);
-                                        j.put("gcode", sku);
-                                        j.put("cstatus", "0");
-                                        j.put("rulecode", rulecode);
-                                        j.put("actcode", actcode);
-                                        j.put("stock", ns);
-                                        j.put("limitnum", limitnum);
-                                        failList.add(j);
+                                int result = RedisStockUtil.clearActStock(sku, actcode);
+                                if (result <= 0) {
+                                    JSONObject j = new JSONObject();
+                                    j.put("discount", 1);
+                                    j.put("gcode", sku);
+                                    j.put("cstatus", "1");
+                                    j.put("rulecode", rulecode);
+                                    j.put("actcode", actcode);
+                                    j.put("stock", 0);
+                                    j.put("limitnum", limitnum);
+                                    failList.add(j);
+                                }
+                            }
+                        }else{
+                            if (stock > 0 && stock < 100) {
+                                double rate = MathUtil.exactDiv(stock, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                                List<Long> skuList = IceRemoteUtil.querySkuListByCondition(Long.parseLong(gcode));
+                                for (Long sku : skuList) {
+                                    int s = RedisStockUtil.getStock(sku);
+                                    int result = 0;
+                                    if (s > 0) {
+                                        int ns = MathUtil.exactMul(s, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
+                                        LogUtil.getDefaultLogger().info("++++++@@@@@@@@@@ actcode:[" + actcode + "]; sku:[" + sku + "]; stock:[" + ns + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
+                                        result = RedisStockUtil.setActStock(sku, actcode, ns);
+                                        if (limitnum > 0) {
+                                            RedisOrderUtil.setActLimit(sku, actcode, limitnum);
+                                        }
+                                        if (result <= 0) {
+                                            JSONObject j = new JSONObject();
+                                            j.put("discount", 1);
+                                            j.put("gcode", sku);
+                                            j.put("cstatus", "0");
+                                            j.put("rulecode", rulecode);
+                                            j.put("actcode", actcode);
+                                            j.put("stock", ns);
+                                            j.put("limitnum", limitnum);
+                                            failList.add(j);
+                                        }
                                     }
                                 }
                             }
@@ -117,7 +135,13 @@ public class ProdDiscountObserver implements ProdObserver {
                             int result = 0;
                             if (s > 0) {
                                 LogUtil.getDefaultLogger().info("++++++@@@@@@@@@@ actcode:[" + actcode + "]; sku:[" + sku + "]; stock:[" + s + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
-                                result = RedisStockUtil.setActStock(sku, actcode, s);
+                                if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 1) > 0) {
+                                    result = RedisStockUtil.clearActStock(sku, actcode);
+
+                                }else{
+                                    result = RedisStockUtil.setActStock(sku, actcode, s);
+                                }
+
                                 if (limitnum > 0) {
                                     RedisOrderUtil.setActLimit(sku, actcode, limitnum);
                                 }
@@ -125,7 +149,11 @@ public class ProdDiscountObserver implements ProdObserver {
                                     JSONObject j = new JSONObject();
                                     j.put("discount", 1);
                                     j.put("gcode", sku);
-                                    j.put("cstatus", "0");
+                                    if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 1) > 0) {
+                                        j.put("cstatus", "1");
+                                    }else{
+                                        j.put("cstatus", "0");
+                                    }
                                     j.put("rulecode", rulecode);
                                     j.put("actcode", actcode);
                                     j.put("stock", s);

@@ -15,13 +15,17 @@ import java.util.*;
  */
 public class RedisProvide{
 	
-	protected JedisCluster jedisCluster;
-	
-	public RedisProvide() {
+	protected static JedisCluster jedisCluster;
+
+	static{
 		JedisPoolConfig config = JedisPoolConfigFactory.factory.getConfig();
 		String [] hosts = JedisPoolConfigFactory.getHosts();
 		JedisClusterFactory clusterFactory = new JedisClusterFactory(config, hosts);
 		jedisCluster = clusterFactory.getJedisCluster();
+	}
+	
+	public RedisProvide() {
+
 	}
 
 	public RedisProvide(JedisClusterFactory jedisClusterFactory){
