@@ -869,7 +869,7 @@ public class ProdModule {
         }
 
         List<Long> spuList = new ArrayList<>();
-        if (spuArray != null && specArray.size() > 0) {
+        if (spuArray != null && spuArray.size() > 0) {
             Iterator<JsonElement> it = spuArray.iterator();
             while (it.hasNext()) {
                 JsonElement elem = it.next();
@@ -877,6 +877,7 @@ public class ProdModule {
                 StringBuilder regexp =
                         new StringBuilder("^")
                                 .append("[0-9]{1}");
+
                 if(val.length() == 2){
                     regexp.append(val)
                             .append("[0-9]{9}")
@@ -892,11 +893,13 @@ public class ProdModule {
                 }
 
 
-                List<Object[]> queryList = BASE_DAO.queryNative(QUERY_SPU, regexp);
+                List<Object[]> queryList = BASE_DAO.queryNative(QUERY_SPU, regexp.toString());
                 if(queryList != null && queryList.size() > 0){
                     for(Object[] obj : queryList){
                         spuList.add(Long.parseLong(obj[0].toString()));
                     }
+                }else{
+                    spuList.add(Long.parseLong(val));
                 }
             }
         }
