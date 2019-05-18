@@ -100,7 +100,6 @@ public class RedisStockUtil {
             RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key, stock);
             return false;
         }
-        RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, -stock);
         calcAvailStock(sku);
         return true;
     }
@@ -238,8 +237,10 @@ public class RedisStockUtil {
      */
     public static long addStock(long sku, int stock) {
         Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, stock);
-        calcAvailStock(sku);
-        return num;
+        if(num > 0){
+            calcAvailStock(sku);
+        }
+        return 0;
     }
 
     /**
@@ -250,10 +251,12 @@ public class RedisStockUtil {
      * @return
      */
     public static long addActStock(long sku, long actCode, int stock) {
-        RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, stock);
-        Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.ACTSTOCK_PREFIX + actCode, stock);
-        calcAvailStock(sku);
-        return num;
+        if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.ACTSTOCK_PREFIX + actCode)){
+            Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.ACTSTOCK_PREFIX + actCode, stock);
+            calcAvailStock(sku);
+            return num;
+        }
+        return 0;
     }
 
     /**
@@ -297,83 +300,83 @@ public class RedisStockUtil {
     }
 
 
-    /**
-     * 检查活动库存设置
-     *
-     * @param skuList skuList
-     * @param calctype 计算类型 0:代表数量; 1:代表百分比
-     * @param num 基准数量/百分比值
-     * @param stockMap
-     * @return
-     */
-    public static long checkActStockSetting(List<Long> skuList, int calctype,int num, Map<Long, Integer> stockMap){
-        long start = System.currentTimeMillis();
-        Long sku = skuList.get(0);
-        String existKey = "";
-
-        Map<String,String> map = RedisUtil.getHashProvide().getAllHash(RedisGlobalKeys.AVAILSTOCK_PREFIX);
-        double rate =  MathUtil.exactDiv(num, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-        if(sku == 0){ // 全部商品
-
-            if(map != null){
-                for(String key : map.keySet()){
-                    String availStock = map.get(key);
-                    if(StringUtils.isEmpty(availStock) || Integer.parseInt(availStock) <=0){
-                         existKey = key;
-                         break;
-                    }
-                    int ori_stock = stockMap.containsKey(key) ? stockMap.get(key) : 0;
-                    int new_stock = ori_stock + Integer.parseInt(availStock);
-                    int val = calctype == 0 ? num : MathUtil.exactMul(new_stock, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
-                    if(new_stock - val < 0){
-                        existKey = key;
-                        break;
-                    }
-                }
-            }
-        }else if(sku < 100000000000L){ // 指定类别
-            for(String key : map.keySet()){
-                if(key.substring(1,key.length()-1).contains(sku+"")){
-                    String availStock = map.get(key);
-                    if(StringUtils.isEmpty(availStock) || Integer.parseInt(availStock) <=0){
-                        existKey = key;
-                    }
-                    int ori_stock = stockMap.containsKey(key) ? stockMap.get(key) : 0;
-                    int new_stock = ori_stock + Integer.parseInt(availStock);
-                    int val = calctype == 0 ? num : MathUtil.exactMul(new_stock, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
-                    if(new_stock - val < 0){
-                        existKey = key;
-                        break;
-                    }
-                }
-
-            }
-        }else if(sku >= 100000000000L){ // 具体商品
-            for(String key : map.keySet()){
-                for(Long s : skuList){
-                    if(key.equals(s)){
-                        String availStock = map.get(key);
-                        if(StringUtils.isEmpty(availStock) || Integer.parseInt(availStock) <=0){
-                            existKey = key;
-                        }
-                        int ori_stock = stockMap.containsKey(key) ? stockMap.get(key) : 0;
-                        int new_stock = ori_stock + Integer.parseInt(availStock);
-                        int val = calctype == 0 ? num : MathUtil.exactMul(new_stock, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
-                        if(new_stock - val < 0){
-                            existKey = key;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-        long end = System.currentTimeMillis();
-        if(!StringUtils.isEmpty(existKey)){
-            return Long.parseLong(existKey);
-        }
-        System.out.println("cost "+(end - start) + " ms");
-        return 0;
-    }
+//    /**
+//     * 检查活动库存设置
+//     *
+//     * @param skuList skuList
+//     * @param calctype 计算类型 0:代表数量; 1:代表百分比
+//     * @param num 基准数量/百分比值
+//     * @param stockMap
+//     * @return
+//     */
+//    public static long checkActStockSetting(List<Long> skuList, int calctype,int num, Map<Long, Integer> stockMap){
+//        long start = System.currentTimeMillis();
+//        Long sku = skuList.get(0);
+//        String existKey = "";
+//
+//        Map<String,String> map = RedisUtil.getHashProvide().getAllHash(RedisGlobalKeys.AVAILSTOCK_PREFIX);
+//        double rate =  MathUtil.exactDiv(num, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+//        if(sku == 0){ // 全部商品
+//
+//            if(map != null){
+//                for(String key : map.keySet()){
+//                    String availStock = map.get(key);
+//                    if(StringUtils.isEmpty(availStock) || Integer.parseInt(availStock) <=0){
+//                         existKey = key;
+//                         break;
+//                    }
+//                    int ori_stock = stockMap.containsKey(key) ? stockMap.get(key) : 0;
+//                    int new_stock = ori_stock + Integer.parseInt(availStock);
+//                    int val = calctype == 0 ? num : MathUtil.exactMul(new_stock, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
+//                    if(new_stock - val < 0){
+//                        existKey = key;
+//                        break;
+//                    }
+//                }
+//            }
+//        }else if(sku < 100000000000L){ // 指定类别
+//            for(String key : map.keySet()){
+//                if(key.substring(1,key.length()-1).contains(sku+"")){
+//                    String availStock = map.get(key);
+//                    if(StringUtils.isEmpty(availStock) || Integer.parseInt(availStock) <=0){
+//                        existKey = key;
+//                    }
+//                    int ori_stock = stockMap.containsKey(key) ? stockMap.get(key) : 0;
+//                    int new_stock = ori_stock + Integer.parseInt(availStock);
+//                    int val = calctype == 0 ? num : MathUtil.exactMul(new_stock, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
+//                    if(new_stock - val < 0){
+//                        existKey = key;
+//                        break;
+//                    }
+//                }
+//
+//            }
+//        }else if(sku >= 100000000000L){ // 具体商品
+//            for(String key : map.keySet()){
+//                for(Long s : skuList){
+//                    if(key.equals(s)){
+//                        String availStock = map.get(key);
+//                        if(StringUtils.isEmpty(availStock) || Integer.parseInt(availStock) <=0){
+//                            existKey = key;
+//                        }
+//                        int ori_stock = stockMap.containsKey(key) ? stockMap.get(key) : 0;
+//                        int new_stock = ori_stock + Integer.parseInt(availStock);
+//                        int val = calctype == 0 ? num : MathUtil.exactMul(new_stock, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
+//                        if(new_stock - val < 0){
+//                            existKey = key;
+//                            break;
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//        long end = System.currentTimeMillis();
+//        if(!StringUtils.isEmpty(existKey)){
+//            return Long.parseLong(existKey);
+//        }
+//        System.out.println("cost "+(end - start) + " ms");
+//        return 0;
+//    }
 
     public static void main(String[] args) {
 //        List<Long> skuList = new ArrayList<>();
