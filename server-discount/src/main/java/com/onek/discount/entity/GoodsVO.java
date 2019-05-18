@@ -49,6 +49,10 @@ public class GoodsVO {
     //商品单价
     private double price;
 
+    private int stockType;
+
+    private int priceType;
+
     public double getPrice() {
         return price;
     }
@@ -160,5 +164,21 @@ public class GoodsVO {
 
     public void setVcode(int vcode) {
         this.vcode = vcode;
+    }
+
+    public int getStockType() {
+        return stockType;
+    }
+
+    public void setStockType(int stockType) {
+        this.stockType = stockType;
+    }
+
+    public int getPriceType() {
+        return priceType;
+    }
+
+    public void setPriceType(int priceType) {
+        this.priceType = priceType;
     }
 }
