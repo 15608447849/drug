@@ -232,13 +232,12 @@ public class IceRemoteUtil {
      * @param content
      * @return
      */
-    public static int collectOfflineExcgCoupons(int compid,String content){
+    public static long collectOfflineExcgCoupons(int compid,String content){
         String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","insertRevOfflineCoupon")
                 .settingParam(content)
                 .execute();
-        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
-        assert ret != null;
-        return ret.code;
+        return Long.parseLong(result);
+
     }
 
 

@@ -43,6 +43,16 @@ public class CouponUseDTO {
 
     private int flag;
 
+    private int balway;
+
+    public int getBalway() {
+        return balway;
+    }
+
+    public void setBalway(int balway) {
+        this.balway = balway;
+    }
+
     public int getFlag() {
         return flag;
     }

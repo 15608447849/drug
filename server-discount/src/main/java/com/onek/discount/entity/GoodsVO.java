@@ -9,9 +9,9 @@ package com.onek.discount.entity;
  */
 public class GoodsVO {
 
-    private long unqid;//全局唯一
+    private String unqid;//全局唯一
 
-    private long actcode;//活动码
+    private String actcode;//活动码
 
     //商品类别名称
     private String classname;
@@ -134,19 +134,19 @@ public class GoodsVO {
         this.prodname = prodname;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 
-    public long getActcode() {
+    public String getActcode() {
         return actcode;
     }
 
-    public void setActcode(long actcode) {
+    public void setActcode(String actcode) {
         this.actcode = actcode;
     }
 

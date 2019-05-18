@@ -166,7 +166,7 @@ public class CouponListFilterService extends BaseDiscountFilterService {
         return null;
     }
 
-    private CouponPubLadderVO getLadoffable(List<CouponPubLadderVO> ladoffs, double price) {
+    public static CouponPubLadderVO getLadoffable(List<CouponPubLadderVO> ladoffs, double price) {
         double ladAmt;
         boolean able;
 

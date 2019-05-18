@@ -10,7 +10,7 @@ package com.onek.discount.entity;
 public class CouponAssVO {
 
     //优惠券码
-    private long coupno;
+    private String coupno;
 
     //全局兼容码
     private int glbno;
@@ -54,11 +54,11 @@ public class CouponAssVO {
         this.reqflag = reqflag;
     }
 
-    public long getCoupno() {
+    public String getCoupno() {
         return coupno;
     }
 
-    public void setCoupno(long coupno) {
+    public void setCoupno(String coupno) {
         this.coupno = coupno;
     }
 

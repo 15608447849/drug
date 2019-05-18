@@ -24,9 +24,13 @@ public class DelayStockWorker implements Runnable {
                     long actcode = Long.parseLong(jsonObject.get("actcode").toString());
                     int stock = Integer.parseInt(jsonObject.get("stock").toString());
                     int cstatus = Integer.parseInt(jsonObject.get("cstatus").toString());
+                    int limitnum = 0;
+                    if (jsonObject.containsKey("limitnum")) {
+                        limitnum = Integer.parseInt(jsonObject.get("limitnum").toString());
+                    }
                     System.out.println("#### delay stock work : [" +gcode+"] ######");
                     if (cstatus == 0) {
-                        RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, stock);
+                        RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, stock, limitnum);
                     }
 
                     if (cstatus == 1) {

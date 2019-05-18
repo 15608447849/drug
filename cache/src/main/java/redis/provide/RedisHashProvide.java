@@ -1,6 +1,7 @@
 package redis.provide;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -96,4 +97,38 @@ public class RedisHashProvide<T> extends RedisProvide {
 		return jedisCluster.hvals(colname);
 	}
 
+	/**
+	 * 根据集合名字获取所有哈希表 key-val
+	 * @param colname 集合名字
+	 * @return
+	 */
+	public Map<String,String> getAllHash(String colname){
+		return jedisCluster.hgetAll(colname);
+	}
+
+	/**
+	 * 设置一个哈希表到一个集合中
+	 *
+	 * @param colname 集合名字
+	 * @param hash 哈希表
+	 * @return
+	 */
+	public String putHashMap(String colname,Map<String,String> hash){
+		return jedisCluster.hmset(colname, hash);
+	}
+
+	/**
+	 * 根据哈希表 key删除元素
+	 *
+	 * @param colname 集合名字
+	 * @param keys 哈希表 key集合
+	 * @return 0:代表删除失败
+	 */
+	public Long delByKeys(String colname, String ... keys){
+		return jedisCluster.hdel(colname, keys);
+	}
+
+	public long incrByKey(String colname, String key, int increment){
+		return jedisCluster.hincrBy(colname, key, increment);
+	}
 }

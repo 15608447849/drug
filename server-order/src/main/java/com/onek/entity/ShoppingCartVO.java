@@ -90,6 +90,16 @@ public class ShoppingCartVO {
 
     private int limitsub;
 
+    private int medpacknum;
+
+    public int getMedpacknum() {
+        return medpacknum;
+    }
+
+    public void setMedpacknum(int medpacknum) {
+        this.medpacknum = medpacknum;
+    }
+
     public int getLimitsub() {
         return limitsub;
     }
