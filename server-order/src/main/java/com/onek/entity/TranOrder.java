@@ -38,10 +38,19 @@ public class TranOrder implements IDelayedObject {
     private String address;//收货详细地址
     private double balamt;//余额扣除
     private String payway; // 支付方式
+    private String remarks; // 备注
 
     private List<TranOrderGoods> goods;
 
     private String cusname;
+
+    public String getRemarks() {
+        return remarks;
+    }
+
+    public void setRemarks(String remarks) {
+        this.remarks = remarks;
+    }
 
     public String getOrderno() {
         return orderno;

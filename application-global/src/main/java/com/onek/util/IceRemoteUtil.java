@@ -531,7 +531,18 @@ public class IceRemoteUtil {
      * lzp
      */
     public static HashMap<String,String> getUserByFinance(){
-        String result = ic.setServerAndRequest("userServer","StoreManageModule","getRoleCode256_Name_Phone").execute();
+        return getUserByRoles(RoleCodeCons._FINA);
+    }
+    /**
+     * 获取执行角色的手机号码/姓名
+     * lzp
+     */
+    public static HashMap<String,String> getUserByRoles(int... codes){
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0 ; i<codes.length ;i++){
+            list.add(codes[i]);
+        }
+        String result = ic.setServerAndRequest("userServer","StoreManageModule","queryUserByRoleCode").setJsonParams(list).execute();
         return GsonUtils.string2Map(result);
     }
 
@@ -627,7 +638,20 @@ public class IceRemoteUtil {
     }
 
 
-
+    /**
+     * 根据spu查询相对于的商品的sku集合
+     * @param spu 0代表全部商品
+     * @return
+     */
+    public static List<Long> querySkuListByCondition(long spu){
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("spu", spu);
+        String json = ic.setServerAndRequest("goodsServer",
+                "ProdExtModule","getSkuListByCondition")
+                .settingParam(jsonObject.toJSONString())
+                .execute();
+        return GsonUtils.json2List(json,Long.class);
+    }
 
 
 

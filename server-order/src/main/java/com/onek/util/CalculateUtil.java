@@ -45,7 +45,8 @@ public class CalculateUtil {
                 new ActivitiesFilter[] {
                         new CycleFilter(),
                         new QualFilter(compid),
-                        new PriorityFilter(), })
+                        new PriorityFilter(),
+                        new StoreFilter(),})
                 .getCurrentActivities(products);
 
         return discounts;
@@ -64,6 +65,7 @@ public class CalculateUtil {
                                 new CycleFilter(),
                                 new QualFilter(compid),
                                 new PriorityFilter(),
+                                new StoreFilter(),
                         }).getCurrentActivities(products);
 
         if (!activityList.isEmpty()) {

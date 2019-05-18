@@ -33,10 +33,7 @@ import org.elasticsearch.search.SearchHits;
 import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
 import redis.util.RedisUtil;
-import util.GsonUtils;
-import util.NumUtil;
-import util.StringUtils;
-import util.TimeUtils;
+import util.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -58,20 +55,13 @@ public class ProdModule {
 
     private static PromTimeService timeService = new PromTimeService();
 
-    private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
+    private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
             "and a.brulecode = ? and d.cstatus&1 = 0 " +
-            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
-            "union all " +
-            "select a.unqid,(select sku from {{?" + DSMConst.TD_PROD_SKU + "}} where cstatus&1 =0 and spu like CONCAT('_', d.gcode,'%')) gcode,d.actstock,d.limitnum,d.price from " +
-            "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
-            "where a.unqid = d.actcode " +
-            "and a.brulecode = ? and d.cstatus&1 = 0 " +
-            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " +
-            "and length(d.gcode) < 14 and d.gcode !=0";
+            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
-    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
+    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
             "and d.actcode = ? " +
@@ -81,17 +71,21 @@ public class ProdModule {
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
             "and a.cstatus&1 = 0 " +
-            "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0";
+            "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " ;
 
     private static String EXEMPOST_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
             "and a.cstatus&1 = 0 " +
             "and brulecode like '112%' " +
-            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0";
+            "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
     private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
             "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ?";
+
+    private static final String QUERY_SPU = "select spu from {{?" + DSMConst.TD_PROD_SPU +"}} where spu REGEXP ?";
+
+    private static final String QUERY_PROD = "select sku from {{?" + DSMConst.TD_PROD_SKU +"}} where cstatus&1=0 and prodstatus = 1";
 
     @UserPermission(ignore = true)
     public Result getMallFloorProd(AppContext appContext) {
@@ -193,13 +187,18 @@ public class ProdModule {
             List<Long> skuList = new ArrayList<>();
             Map<Long, String[]> dataMap = new HashMap<>();
             for (Object[] objects : list) {
-//                Long actCode = Long.parseLong(objects[0].toString());
                 Long gCode = Long.parseLong(objects[1].toString());
-//                int actStock = Integer.parseInt(objects[2].toString());
-//                int limitNum = Integer.parseInt(objects[3].toString());
-
-                skuList.add(gCode);
-                dataMap.put(gCode, new String[]{objects[3].toString(), objects[0].toString()});
+                if (gCode == 0) {
+                    // 不做处理
+                } else if (objects[1].toString().length() < 14) { // 类别
+                    List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD + " and spu like CONCAT('_', ?,'%')", new Object[]{gCode});
+                    for (Object[] obj : prodList) {
+                        Long sku = Long.parseLong(obj[0].toString());
+                        skuList.add(sku);
+                    }
+                } else {
+                    skuList.add(gCode);
+                }
 
             }
 
@@ -211,7 +210,6 @@ public class ProdModule {
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
                     prodVO.setStartnum(prodVO.getMedpacknum());
-                    prodVO.setActlimit(Integer.parseInt(dataMap.get(prodVO.getSku())[0]));
                     int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
                     int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
                     prodVO.setBuynum(initStock - surplusStock);
@@ -233,13 +231,20 @@ public class ProdModule {
         List<ProdVO> prodVOList = new ArrayList<>();
         if (list != null && list.size() > 0) {
             List<Long> skuList = new ArrayList<>();
-            Map<Long, Integer> dataMap = new HashMap<>();
             for (Object[] objects : list) {
                 Long gCode = Long.parseLong(objects[1].toString());
-                int limitNum = Integer.parseInt(objects[3].toString());
 
-                skuList.add(gCode);
-                dataMap.put(gCode, limitNum);
+                if (gCode == 0) {
+                    // 不做处理
+                } else if (objects[1].toString().length() < 14) { // 类别
+                    List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD + " and spu like CONCAT('_', ?,'%')", new Object[]{gCode});
+                    for (Object[] obj : prodList) {
+                        Long sku = Long.parseLong(obj[0].toString());
+                        skuList.add(sku);
+                    }
+                } else {
+                    skuList.add(gCode);
+                }
 
             }
 
@@ -252,7 +257,6 @@ public class ProdModule {
                 for (ProdVO prodVO : prodVOList) {
                     prodVO.setBuynum(0);
                     prodVO.setStartnum(prodVO.getMedpacknum());
-                    prodVO.setActlimit(dataMap.get(prodVO.getSku()));
                 }
             }
         }
@@ -263,12 +267,14 @@ public class ProdModule {
     public Result getTeamBuyMallFloor(AppContext appContext) {
 
         String mmdd = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1133, mmdd, 1133, mmdd});
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1133, mmdd});
         List<ProdVO> prodVOList = new ArrayList<>();
         JSONObject result = new JSONObject();
         if (list != null && list.size() > 0) {
             List<Long> actCodeList = new ArrayList<>();
             List<Long> skuList = new ArrayList<>();
+
+            assemblySpecActProd(list);
 
             Map<Long, Integer[]> dataMap = new HashMap<>();
             getActData(list, actCodeList, skuList, dataMap);
@@ -316,13 +322,15 @@ public class ProdModule {
     public Result getDiscountMallFloor(AppContext appContext) {
 
         String day = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1113, day, 1113, day});
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1113, day});
         JSONObject result = new JSONObject();
         List<ProdVO> prodVOList = new ArrayList<>();
         if (list != null && list.size() > 0) {
             List<Long> actCodeList = new ArrayList<>();
             List<Long> skuList = new ArrayList<>();
             Map<Long, Integer[]> dataMap = new HashMap<>();
+
+            assemblySpecActProd(list);
 
             getActData(list, actCodeList, skuList, dataMap);
 
@@ -414,15 +422,20 @@ public class ProdModule {
         SearchResponse response  = null;
         if (list != null && list.size() > 0) {
             List<Long> skuList = new ArrayList<>();
-            Map<Long, String[]> dataMap = new HashMap<>();
             for (Object[] objects : list) {
-//                Long actCode = Long.parseLong(objects[0].toString());
                 Long gCode = Long.parseLong(objects[1].toString());
-//                int actStock = Integer.parseInt(objects[2].toString());
-//                int limitNum = Integer.parseInt(objects[3].toString());
 
-                skuList.add(gCode);
-                dataMap.put(gCode, new String[]{objects[3].toString(), objects[0].toString()});
+                if (gCode == 0) {
+                    // 不做处理
+                } else if (objects[1].toString().length() < 14) { // 类别
+                    List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD + " and spu like CONCAT('_', ?,'%')", new Object[]{gCode});
+                    for (Object[] obj : prodList) {
+                        Long sku = Long.parseLong(obj[0].toString());
+                        skuList.add(sku);
+                    }
+                } else {
+                    skuList.add(gCode);
+                }
 
             }
 
@@ -435,13 +448,7 @@ public class ProdModule {
                 for (ProdVO prodVO : prodVOList) {
                     prodVO.setBuynum(0);
                     prodVO.setStartnum(prodVO.getMedpacknum());
-                    prodVO.setActlimit(Integer.parseInt(dataMap.get(prodVO.getSku())[0]));
-                    int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
-                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
-                    prodVO.setBuynum(initStock - surplusStock);
                     prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
-                    prodVO.setActinitstock(initStock);
-                    prodVO.setSurplusstock(surplusStock);
                 }
             }
         }
@@ -537,6 +544,8 @@ public class ProdModule {
 
         List<Object[]> list = BASE_DAO.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{actCode});
 
+        assemblySpecActProd(list);
+
         getActData(list, actCodeList, skuList, dataMap);
 
         List<String[]> times = timeService.getTimesByActcode(actCode);
@@ -594,6 +603,8 @@ public class ProdModule {
         List<Long> actCodeList = new ArrayList<>();
 
         List<Object[]> list = BASE_DAO.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{actCode});
+
+        assemblySpecActProd(list);
 
         Map<Long, Integer[]> dataMap = new HashMap<>();
 
@@ -822,6 +833,7 @@ public class ProdModule {
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         JsonArray specArray = json.get("specArray").getAsJsonArray();
         JsonArray manuArray = json.get("manuArray").getAsJsonArray();
+        JsonArray spuArray = json.has("spuArray") ? json.get("spuArray").getAsJsonArray() : null;
         List<String> specList = new ArrayList<>();
         if (specArray != null && specArray.size() > 0) {
             Iterator<JsonElement> it = specArray.iterator();
@@ -840,8 +852,44 @@ public class ProdModule {
             }
         }
 
+        List<Long> spuList = new ArrayList<>();
+        if (spuArray != null && spuArray.size() > 0) {
+            Iterator<JsonElement> it = spuArray.iterator();
+            while (it.hasNext()) {
+                JsonElement elem = it.next();
+                String val = elem.getAsJsonObject().get("val").getAsString();
+                StringBuilder regexp =
+                        new StringBuilder("^")
+                                .append("[0-9]{1}");
+
+                if(val.length() == 2){
+                    regexp.append(val)
+                            .append("[0-9]{9}")
+                            .append("$");
+                }else if(val.length() == 4){
+                    regexp.append(val)
+                            .append("[0-9]{7}")
+                            .append("$");
+                }else if(val.length() == 6){
+                    regexp.append(val)
+                            .append("[0-9]{5}")
+                            .append("$");
+                }
+
+
+                List<Object[]> queryList = BASE_DAO.queryNative(QUERY_SPU, regexp.toString());
+                if(queryList != null && queryList.size() > 0){
+                    for(Object[] obj : queryList){
+                        spuList.add(Long.parseLong(obj[0].toString()));
+                    }
+                }else{
+                    spuList.add(Long.parseLong(val));
+                }
+            }
+        }
+
         Result r = new Result();
-        SearchResponse response = ProdESUtil.searchProd(keyword, specList, manunoList, appContext.param.pageIndex, appContext.param.pageNumber);
+        SearchResponse response = ProdESUtil.searchProd(keyword, specList, manunoList, spuList, appContext.param.pageIndex, appContext.param.pageNumber);
         List<Map<String, Object>> resultList = new ArrayList<>();
         if (response != null) {
             for (SearchHit searchHit : response.getHits()) {
@@ -977,6 +1025,7 @@ public class ProdModule {
             int actStock = Integer.parseInt(objects[2].toString());
             int limitNum = Integer.parseInt(objects[3].toString());
             int prize = Integer.parseInt(objects[4].toString());
+            int cstatus = Integer.parseInt(objects[5].toString());
 
             skuList.add(gCode);
             if (!actCodeList.contains(actCode)) {
@@ -985,7 +1034,7 @@ public class ProdModule {
             if (actCodeList.size() > 1) {
                 break;
             }
-            dataMap.put(gCode, new Integer[]{limitNum, actStock, prize});
+            dataMap.put(gCode, new Integer[]{limitNum, actStock, prize, cstatus});
 
         }
     }
@@ -1059,7 +1108,14 @@ public class ProdModule {
         prodVO.setActinitstock(initStock);
         prodVO.setSurplusstock(surplusStock);
 
-        prodVO.setActprize(NumUtil.div(dataMap.get(prodVO.getSku())[2], 100));
+        int cstatus = dataMap.get(prodVO.getSku())[3];
+        if((cstatus & 512) > 0){
+            double rate = MathUtil.exactDiv(dataMap.get(prodVO.getSku())[2], 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            double actprice = MathUtil.exactMul(prodVO.getVatp(), rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
+            prodVO.setActprize(NumUtil.div(actprice, 100));
+        }else{
+            prodVO.setActprize(NumUtil.div(dataMap.get(prodVO.getSku())[2], 100));
+        }
         if (prodVO.getRulestatus() > 0) prodVO.setActprod(true);
     }
 
@@ -1107,7 +1163,7 @@ public class ProdModule {
                 if (prizeEntity != null) {
                     prodVO.setMinprize(prizeEntity.getMinactprize());
                     prodVO.setMaxprize(prizeEntity.getMaxactprize());
-                    prodVO.setActcode(prizeEntity.getActcode());
+                    prodVO.setActcode(prizeEntity.getActcode()+"");
                     // 代表值存在一个活动
                     if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
                         List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
@@ -1122,7 +1178,7 @@ public class ProdModule {
                             prodVO.setMinprize(prodVO.getVatp());
                             prodVO.setMaxprize(prodVO.getVatp());
                             prodVO.setActprize(prodVO.getVatp());
-                            prodVO.setActcode(prizeEntity.getActcode());
+                            prodVO.setActcode(prizeEntity.getActcode()+"");
                         } else {
                             prodVO.setSdate(sdate);
                             prodVO.setEdate(edate);
@@ -1141,8 +1197,21 @@ public class ProdModule {
                 if (prizeEntity != null) {
                     prodVO.setMinprize(prizeEntity.getMinactprize());
                     prodVO.setMaxprize(prizeEntity.getMaxactprize());
-                    prodVO.setActcode(prizeEntity.getActcode());
+                    prodVO.setActcode(prizeEntity.getActcode()+"");
                     int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
+                    // 代表值存在一个活动
+                    if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
+                        List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
+                        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
+                        String sdate = getEffectiveTimeByActCode.getSdate();
+                        String edate = getEffectiveTimeByActCode.getEdate();
+
+                        if (StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate) || surplusStock <= 0) { // // 表示搜索的商品不在活动时间内
+                            prodVO.setRulestatus(0);
+                            prodVO.setActprod(false);
+                            prodVO.setMutiact(false);
+                        }
+                    }
                 }
             }
         }
@@ -1151,6 +1220,37 @@ public class ProdModule {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    private boolean assemblySpecActProd(List<Object[]> list) {
+        List<Object[]> newList = new ArrayList<>();
+        Long gCode = Long.parseLong(list.get(0)[1].toString());
+        boolean isAll = false;
+        if(gCode == 0){
+            List<Object[]> prodList =  BASE_DAO.queryNative(QUERY_PROD);
+            for(Object[] objects : prodList) {
+                Long sku = Long.parseLong(objects[0].toString());
+
+                newList.add(new Object[]{objects[0], sku, objects[2], objects[3], objects[4], objects[5]});
+            }
+            isAll = true;
+        }else{
+            for(Object[] aa : list){
+                String gc = aa[1].toString();
+                if(gc.length() < 14){
+                    List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD + " and spu like CONCAT('_', ?,'%')", new Object[]{gc});
+                    for(Object[] obj : prodList) {
+                        Long sku = Long.parseLong(obj[0].toString());
+
+                        newList.add(new Object[]{aa[0], sku, aa[2], aa[3], aa[4], aa[5]});
+                    }
+                }
+            }
+        }
+
+        list.addAll(newList);
+
+        return isAll;
     }
 
 

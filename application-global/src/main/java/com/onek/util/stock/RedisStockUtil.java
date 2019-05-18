@@ -104,6 +104,7 @@ public class RedisStockUtil {
             return 0;
         }
         String initStock = RedisUtil.getStringProvide().get(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode);
+        LogUtil.getDefaultLogger().info("++++++ check actcode initStock:["+initStock+"];currentStock:["+currentStock+"] +++++++");
         if(!StringUtils.isEmpty(initStock) && initStock.equals(currentStock)){ // 起始活动库存等于活动库存代表活动未开始
             LogUtil.getDefaultLogger().info("++++++ check actcode start +++++++");
             List<String> keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP);
@@ -223,6 +224,91 @@ public class RedisStockUtil {
         return num;
     }
 
+    /**
+     * 得到sku所有活动库存之和
+     *
+     * @param sku
+     * @return
+     */
+    public static int getSumActStock(long sku){
+        List<String> keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP);
+        int sumStock = 0;
+        if(keys != null && keys.size() > 0){
+            for(String key : keys){
+                String stock = RedisUtil.getStringProvide().get(key);
+                sumStock  += Integer.parseInt(stock);
+            }
+        }
+        return sumStock;
+    }
+
+
+    /**
+     * 检查活动库存设置
+     *
+     * @param sku sku
+     * @param calctype 计算类型 0:代表数量; 1:代表百分比
+     * @param num 基准数量/百分比值
+     * @param actcode 为0代表不需要排除关联这个活动的所有库存值; 有值代表需要排除关联这个活动的所有库存值
+     * @return
+     */
+    public static long checkActStockSetting(long sku, int calctype,int num, long actcode){
+        if(sku == 0){ // 全部商品
+            long start = System.currentTimeMillis();
+            System.out.println(System.currentTimeMillis());
+            List<String> keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.STOCK_PREFIX);
+            System.out.println(System.currentTimeMillis()-start);
+            Long key = checkStockByRedisKeys(sku, calctype, num, actcode, keys);
+            if (key != null) return key;
+        }else if(sku < 100000000000L){ // 指定类别
+            List<String> keys1 = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.STOCK_PREFIX + 1 +sku);
+            List<String> keys2 = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.STOCK_PREFIX + 2 +sku);
+            keys1.addAll(keys2);
+            Long key = checkStockByRedisKeys(sku, calctype, num, actcode, keys1);
+            if (key != null) return key;
+        }else if(sku >= 100000000000L){ // 具体商品
+            List<String> keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.STOCK_PREFIX +sku);
+            Long key = checkStockByRedisKeys(sku, calctype, num, actcode, keys);
+            if (key != null) return key;
+        }
+        return 0;
+    }
+
+    private static Long checkStockByRedisKeys(long sku, int calctype, int num, long actcode, List<String> keys) {
+        if(keys != null && keys.size() > 0){
+            for(String key : keys){
+                // 获取商品的库存
+                String stock = RedisUtil.getStringProvide().get(key);
+                if(StringUtils.isEmpty(stock)){
+                    return Long.parseLong(key.replace("STOCK", ""));
+                }
+                List<String> _keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.ACTSTOCK_PREFIX + SEP + sku + SEP);
+                int sumStock = 0;
+                if(_keys != null && _keys.size() > 0){
+                    for(String _actKey : _keys){
+                        String actstock = RedisUtil.getStringProvide().get(_actKey);
+                        if(actcode > 0){
+                            if(_actKey.contains(actcode+"")){
+                                continue;
+                            }
+                        }
+                        sumStock  += Integer.parseInt(actstock);
+                    }
+                }
+                double rate =  MathUtil.exactDiv(num, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                int val = calctype == 0 ? num : MathUtil.exactMul(Integer.parseInt(stock), rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
+                if((Integer.parseInt(stock) - sumStock) < val){
+                    return Long.parseLong(key.replace("STOCK", ""));
+                }
+            }
+            return 0L;
+        }
+        return 0L;
+    }
+
+    public static void main(String[] args) {
+        checkActStockSetting(0,0,20, 0);
+    }
 }
 
 

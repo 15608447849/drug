@@ -28,7 +28,7 @@ public class OrderInfoModule {
           + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
           + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
           + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
-          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway ";
+          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway, ord.remarks ";
 
     private static final String QUERY_TRAN_TRANS_PARAMS =
             " trans.payno, trans.payprice, "
@@ -38,7 +38,8 @@ public class OrderInfoModule {
     private static final String QUERY_TRAN_GOODS_PARAMS =
             " goods.unqid, goods.orderno, goods.compid, goods.pdno, goods.pdprice, "
           + " goods.distprice, goods.payamt, goods.coupamt, goods.promtype, goods.pkgno,  "
-          + " goods.asstatus, goods.createdate, goods.createtime, goods.cstatus, goods.pnum ";
+          + " goods.asstatus, goods.createdate, goods.createtime, goods.cstatus, goods.pnum,"
+          + " goods.actcode, goods.balamt ";
 
     private static final String QUERY_TRAN_APPRAISE_PARAMS =
             " app.level, app.descmatch, app.logisticssrv, "
@@ -202,6 +203,12 @@ public class OrderInfoModule {
                     case 3:
                         sql.append(" AND ord.asstatus = ? ");
                         break;
+                    case 4:
+                        sql.append(" AND ord.odate <= ? ");
+                        break;
+                    case 5:
+                        sql.append(" AND ? <= ord.odate ");
+                        break;
                 }
             } catch (Exception e) {
                 continue;
@@ -301,6 +308,7 @@ public class OrderInfoModule {
             tranOrderGoods.setPdprice(MathUtil.exactDiv(tranOrderGoods.getPdprice(), 100).doubleValue());
             tranOrderGoods.setDistprice(MathUtil.exactDiv(tranOrderGoods.getDistprice(), 100).doubleValue());
             tranOrderGoods.setCoupamt(MathUtil.exactDiv(tranOrderGoods.getCoupamt(), 100).doubleValue());
+            tranOrderGoods.setBalamt(MathUtil.exactDiv(tranOrderGoods.getBalamt(), 100).doubleValue());
             tranOrderGoods.setSpu(
                     String.valueOf(tranOrderGoods.getPdno())
                             .substring(0, 12));

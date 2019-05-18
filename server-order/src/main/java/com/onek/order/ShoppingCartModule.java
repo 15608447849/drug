@@ -659,6 +659,7 @@ public class ShoppingCartModule {
                                 new CycleFilter(),
                                 new QualFilter(compid),
                                 new PriorityFilter(),
+                                new StoreFilter(),
                         }).getCurrentActivities(products);
         return activityList;
     }

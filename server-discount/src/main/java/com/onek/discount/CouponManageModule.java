@@ -163,7 +163,8 @@ public class CouponManageModule {
 
     private final String QUERY_PROM_LAD_SQL = "select unqid,convert(ladamt/100,decimal(10,2)) ladamt,ladnum,convert(offer/100,decimal(10,2)),offercode from {{?" + DSMConst.TD_PROM_LADOFF+"}} where cstatus&1=0 ";
 
-    private final String QUERY_PROM_GOODS_SQL = "select pdrug.unqid,pdrug.actcode,`spec`,gcode,limitnum,manuname,standarno,prodname,classname,convert(pdrug.price/100,decimal(10,2)) price,actstock " +
+    private final String QUERY_PROM_GOODS_SQL = "select pdrug.unqid,pdrug.actcode,`spec`,gcode,limitnum,manuname,standarno,prodname,classname," +
+            "convert(pdrug.price/100,decimal(10,2)) price,actstock,pdrug.cstatus " +
             " from {{?" + DSMConst.TD_PROM_ASSDRUG+"}} pdrug" +
             " left join {{?" + DSMConst.TD_PROD_SKU+"}} psku on pdrug.gcode = psku.sku " +
             " left join {{?" + DSMConst.TD_PROD_SPU+"}} pspu on psku.spu = pspu.spu "+
@@ -613,7 +614,7 @@ public class CouponManageModule {
 
         baseDao.convToEntity(result, goodsVOS, GoodsVO.class,
                 new String[]{"spec","gcode","limitnum",
-                        "manuname","standarno","prodname","classname","price"});
+                        "manuname","standarno","prodname","classname","price", "cstatus"});
         return Arrays.asList(goodsVOS);
     }
 
@@ -1263,8 +1264,13 @@ public class CouponManageModule {
 
         baseDao.convToEntity(queryResult, goodsVOS, GoodsVO.class,
                 new String[]{"unqid","actcode","spec","gcode","limitnum",
-                        "manuname","standarno","prodname","classname","price","actstock"});
+                        "manuname","standarno","prodname","classname","price","actstock","cstatus"});
 
+        for (GoodsVO goodsVO : goodsVOS) {
+            if ((goodsVO.getCstatus() & 512) > 0) {
+                goodsVO.setPrice(goodsVO.getPrice() * 100);
+            }
+        }
         return result.setQuery(goodsVOS, pageHolder);
     }
 
