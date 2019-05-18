@@ -12,7 +12,7 @@ import java.util.List;
 public class CouponVO {
 
     //优惠券码
-    private long coupno;
+    private String coupno;
 
     //优惠券名称
     private String coupname;
@@ -120,11 +120,11 @@ public class CouponVO {
         this.ladderVOS = ladderVOS;
     }
 
-    public long getCoupno() {
+    public String getCoupno() {
         return coupno;
     }
 
-    public void setCoupno(long coupno) {
+    public void setCoupno(String coupno) {
         this.coupno = coupno;
     }
 

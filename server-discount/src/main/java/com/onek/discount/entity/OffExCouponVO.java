@@ -9,18 +9,18 @@ package com.onek.discount.entity;
  */
 public class OffExCouponVO {
 
-    private long unqid;
+    private String unqid;
     private String exno;
     private String expwd;
-    private long coupno;
+    private String coupno;
     private int cstatus;
     private String extime;
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 
@@ -40,11 +40,11 @@ public class OffExCouponVO {
         this.expwd = expwd;
     }
 
-    public long getCoupno() {
+    public String getCoupno() {
         return coupno;
     }
 
-    public void setCoupno(long coupno) {
+    public void setCoupno(String coupno) {
         this.coupno = coupno;
     }
 

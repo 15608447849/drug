@@ -7,8 +7,8 @@ package com.onek.discount.entity;
  * @time 2019/4/2 14:44
  **/
 public class AssDrugVO {
-    private long unqid;//编号
-    private long actcode;//活动码
+    private String unqid;//编号
+    private String actcode;//活动码
     private long gcode;//商品码/商品类别码
     private int menucode;//套餐码
     private int actstock;//活动库存
@@ -38,19 +38,19 @@ public class AssDrugVO {
         this.limitnum = limitnum;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 
-    public long getActcode() {
+    public String getActcode() {
         return actcode;
     }
 
-    public void setActcode(long actcode) {
+    public void setActcode(String actcode) {
         this.actcode = actcode;
     }
 

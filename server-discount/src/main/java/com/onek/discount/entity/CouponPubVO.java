@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class CouponPubVO {
 
-    private long unqid;
+    private String unqid;
 
     /**
 
@@ -177,11 +177,11 @@ public class CouponPubVO {
         this.validflag = validflag;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 

@@ -525,7 +525,7 @@ public class CouponManageModule {
                             "rulename","actstock"});
 
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
-        couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0],couponVOS[0].getCoupno()));
+        couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0],Long.parseLong(couponVOS[0].getCoupno())));
         couponVOS[0].setActiveRule(getRules());
 
         return  result.success(couponVOS[0]);
@@ -1050,7 +1050,7 @@ public class CouponManageModule {
         Result result = new Result();
         String json = appContext.param.json;
         CouponVO couponVO = GsonUtils.jsonToJavaBean(json, CouponVO.class);
-        long actCode = couponVO.getCoupno();
+        long actCode = Long.parseLong(couponVO.getCoupno());
         //新增活动
 
         int ret = baseDao.updateNative(UPDATE_COUPON_SQL,new Object[]{couponVO.getCoupname(),
@@ -1112,7 +1112,7 @@ public class CouponManageModule {
         Result result = new Result();
         String json = appContext.param.json;
         CouponAssVO couponVO = GsonUtils.jsonToJavaBean(json, CouponAssVO.class);
-        long actCode = couponVO.getCoupno();
+        long actCode = Long.parseLong(couponVO.getCoupno());
 
         StringBuilder sb = new StringBuilder(UPDATE_ASSCOUPON_SQL);
         int cstatus = couponVO.getCstatus();
@@ -1718,7 +1718,7 @@ public class CouponManageModule {
         couponPubVO.setEnddate(ret.get(0)[4].toString());
         List<CouponPubLadderVO> ladList = new ArrayList<>();
         CouponPubLadderVO couponPubLadderVO = new CouponPubLadderVO();
-        couponPubLadderVO.setUnqid(0);
+        couponPubLadderVO.setUnqid("0");
         couponPubLadderVO.setOffer(MathUtil.
                 exactDiv(Double.parseDouble(ret.get(0)[5].toString()),
                 100).doubleValue());
@@ -2000,10 +2000,10 @@ public class CouponManageModule {
 
 
     public static void main(String[] args) {
-        CouponManageModule couponManageModule = new CouponManageModule();
-        String[] coupNos = couponManageModule.getCoupNos(50);
-        for (int i = 0 ;i < coupNos.length; i++){
-            System.out.println(coupNos[i]);
-        }
+//        CouponManageModule couponManageModule = new CouponManageModule();
+//        String[] coupNos = couponManageModule.getCoupNos(50);
+//        for (int i = 0 ;i < coupNos.length; i++){
+//            System.out.println(coupNos[i]);
+//        }
     }
 }
