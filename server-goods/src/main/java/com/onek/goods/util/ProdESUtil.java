@@ -458,7 +458,7 @@ public class ProdESUtil {
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdHasBrand(String keyword,int pagenum, int pagesize){
+    public static SearchResponse searchProdHasBrand(String keyword,String brandno, int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -467,6 +467,10 @@ public class ProdESUtil {
             boolQuery.must(rangeQuery);
             if(!StringUtils.isEmpty(keyword)){
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+                boolQuery.must(matchQuery);
+            }
+            if(!StringUtils.isEmpty(brandno)){
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_BRANDNO, brandno);
                 boolQuery.must(matchQuery);
             }
             MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
@@ -478,8 +482,8 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort(ESConstant.PROD_COLUMN_BRANDNO, SortOrder.DESC)
                     .addSort(ESConstant.PROD_COLUMN_SALES, SortOrder.DESC)
+                    .addSort(ESConstant.PROD_COLUMN_BRANDNO, SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
@@ -687,41 +691,43 @@ public class ProdESUtil {
 //        System.out.println(response.getHits().totalHits);
 //        SearchResponse response = searchProdMall("",1000,null,null,null,0,1, 20);
 //        System.out.println(response.getHits().totalHits);
-        List<Long> spuList = new ArrayList<>();
-        spuList.add(110000000010L);
-        spuList.add(110000000110L);
-        spuList.add(110000000210L);
-        spuList.add(110000000310L);
-        spuList.add(110070100010L);
-        spuList.add(110010100010L);
-        spuList.add(110010400010L);
-        spuList.add(110100100010L);
-        spuList.add(110090100011L);
-        spuList.add(110010200010L);
-        spuList.add(110100100110L);
-        spuList.add(110050400036L);
-        spuList.add(210050400024L);
-        spuList.add(110070300010L);
-        spuList.add(110020100019L);
-        spuList.add(110010400110L);
-        spuList.add(210000000010L);
-        spuList.add(110180300011L);
-        spuList.add(110000000410L);
-        spuList.add(110000000510L);
-        spuList.add(110100100012L);
-        spuList.add(110100100013L);
-        spuList.add(110000000016L);
-        spuList.add(110000000015L);
-        spuList.add(110120100023L);
-        spuList.add(110000000115L);
-        spuList.add(110000000215L);
-        spuList.add(110000000610L);
-        spuList.add(210000000110L);
-        spuList.add(110000000315L);
-        spuList.add(110000000710L);
-        spuList.add(210000000210L);
-        spuList.add(110180400010L);
-        SearchResponse response = searchProd("",null, null, null,1,20);
+//        List<Long> spuList = new ArrayList<>();
+//        spuList.add(110000000010L);
+//        spuList.add(110000000110L);
+//        spuList.add(110000000210L);
+//        spuList.add(110000000310L);
+//        spuList.add(110070100010L);
+//        spuList.add(110010100010L);
+//        spuList.add(110010400010L);
+//        spuList.add(110100100010L);
+//        spuList.add(110090100011L);
+//        spuList.add(110010200010L);
+//        spuList.add(110100100110L);
+//        spuList.add(110050400036L);
+//        spuList.add(210050400024L);
+//        spuList.add(110070300010L);
+//        spuList.add(110020100019L);
+//        spuList.add(110010400110L);
+//        spuList.add(210000000010L);
+//        spuList.add(110180300011L);
+//        spuList.add(110000000410L);
+//        spuList.add(110000000510L);
+//        spuList.add(110100100012L);
+//        spuList.add(110100100013L);
+//        spuList.add(110000000016L);
+//        spuList.add(110000000015L);
+//        spuList.add(110120100023L);
+//        spuList.add(110000000115L);
+//        spuList.add(110000000215L);
+//        spuList.add(110000000610L);
+//        spuList.add(210000000110L);
+//        spuList.add(110000000315L);
+//        spuList.add(110000000710L);
+//        spuList.add(210000000210L);
+//        spuList.add(110180400010L);
+//        SearchResponse response = searchProd("",null, null, null,1,20);
+//        System.out.println(response.getHits().totalHits);
+        SearchResponse response = searchProdHasBrand("", "3853312138937344", 1,20);
         System.out.println(response.getHits().totalHits);
     }
 

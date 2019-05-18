@@ -3,11 +3,14 @@ package com.onek.discount.timer;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdDiscountObserver;
+import com.onek.util.IceRemoteUtil;
+import com.onek.util.RedisGlobalKeys;
 import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
+import redis.util.RedisUtil;
 import util.TimeUtils;
 
 import java.util.*;
@@ -31,20 +34,35 @@ public class ActStockCheckTask extends TimerTask {
         String y = TimeUtils.date_yMd_2String(date);
         List<Object[]> results = BaseDAO.getBaseDAO().queryNative(SQL, y);
         if(results != null && results.size() > 0){
-            ActivityManageServer server = new ActivityManageServer();
-            server.registerObserver(new ProdDiscountObserver());
-
+//            ActivityManageServer server = new ActivityManageServer();
+//            server.registerObserver(new ProdDiscountObserver());
+            Set<Long> actCodeList = new HashSet<>();
             for(Object[] result : results){
                 Long goodsCode = (Long) result[0];
                 Long actCode = (Long) result[1];
+                int rulecode = (Integer) result[2];
+                actCodeList.add(actCode);
                 if(goodsCode > 0 && String.valueOf(goodsCode).length() >= 14){
                     RedisStockUtil.clearActStock(goodsCode, actCode);
-                    RedisStockUtil.clearActInitStock(goodsCode, actCode);
                 }
-                if(actCode > 0 &&  String.valueOf(result[0]).length() >= 14){
+                if ("0".equals(result[0]) ||  result[0].toString().length() <= 12) {
+                    List<Long> skuList = IceRemoteUtil.querySkuListByCondition(goodsCode);
+                    for (Long sku : skuList) {
+                        RedisStockUtil.clearActStock(sku, actCode);
+                    }
+                }
+
+            }
+            for(Long actCode : actCodeList){
+                if(actCode > 0){
                     try {
-                        LogUtil.getDefaultLogger().info("###### DiscountRuleTask reset act buy num actcode:["+actCode+"] gcode:["+ goodsCode+"]###########");
-                        RedisOrderUtil.resetActBuyNum(goodsCode, actCode);
+                        LogUtil.getDefaultLogger().info("###### DiscountRuleTask reset act buy num actcode:["+actCode+"] ###########");
+                        RedisOrderUtil.resetActBuyNum(actCode);
+                    }catch (Exception e){ e.printStackTrace();}
+
+                    try {
+                        LogUtil.getDefaultLogger().info("###### DiscountRuleTask reset act buy num actcode:["+actCode+"] ###########");
+                        RedisUtil.getHashProvide().delete(RedisGlobalKeys.ACT_PREFIX + actCode);
                     }catch (Exception e){ e.printStackTrace();}
                 }
             }
