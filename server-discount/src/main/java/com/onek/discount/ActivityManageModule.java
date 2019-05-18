@@ -676,7 +676,7 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private long relationAllGoods(JsonObject jsonObject,long actCode, int rulecode) {
-        long result;
+        long result = 0;
         List<Object[]> params = new ArrayList<>();
         List<Long> skus = new ArrayList<>();
         int limitnum = jsonObject.get("limitnum").getAsInt();
@@ -685,20 +685,9 @@ public class ActivityManageModule {
         int cstatus = jsonObject.get("cstatus").getAsInt();
         List<Long> gcodeList = selectGoodsByAct(actCode);
         if (gcodeList.size() == 0) {
-            if ((cstatus&256) > 0 ) {
-                result = RedisStockUtil.checkActStockSetting(0, 1, actstock, 0);
-            } else {
-                result = RedisStockUtil.checkActStockSetting(0, 0, actstock, 0);
-            }
+
         } else {
-            if ((cstatus&256) > 0 ) {
-                result = RedisStockUtil.checkActStockSetting(0, 1, actstock, actCode);
-            } else {
-                result = RedisStockUtil.checkActStockSetting(0, 0, actstock, actCode);
-            }
-        }
-        if (result > 0) {
-            return result;
+
         }
         if ((cstatus & 512) == 0) {
             price = price * 100;
@@ -726,12 +715,12 @@ public class ActivityManageModule {
         goodsVO.setActstock(actstock);
         goodsVO.setLimitnum(limitnum);
         goodsVO.setCstatus(cstatus);
-        goodsVO.setActcode(actCode);
+        goodsVO.setActcode(actCode + "");
         goodsVOS.add(goodsVO);
         List<GoodsVO> delGoods = new ArrayList<>();
         for (long sku :skus) {
             GoodsVO goodsVO1 = new GoodsVO();
-            goodsVO1.setActcode(actCode);
+            goodsVO1.setActcode(actCode + "");
             goodsVO1.setGcode(sku);
             delGoods.add(goodsVO1);
         }
@@ -925,7 +914,7 @@ public class ActivityManageModule {
             List<GoodsVO> delGoods = new ArrayList<>();
             for (long sku :delGoodsGCode) {
                 GoodsVO goodsVO1 = new GoodsVO();
-                goodsVO1.setActcode(actCode);
+                goodsVO1.setActcode(actCode + "");
                 goodsVO1.setGcode(sku);
                 delGoods.add(goodsVO1);
             }
@@ -934,7 +923,7 @@ public class ActivityManageModule {
         return 1;
     }
 
-    
+
 
     /* *
      * @description 判断类别库存是否足够
@@ -948,19 +937,11 @@ public class ActivityManageModule {
     private long classEnoughStock(long sku, int cstatus, int actstock, long actCode, boolean isAdd) {
         long code;
         if (isAdd) {
-            if ((cstatus & 256) > 0) {
-                code = RedisStockUtil.checkActStockSetting(sku, 1, actstock, 0);
-            } else {
-                code = RedisStockUtil.checkActStockSetting(sku, 0, actstock, 0);
-            }
+
         } else {
-            if ((cstatus&256) > 0 ) {
-                code = RedisStockUtil.checkActStockSetting(sku, 1, actstock, actCode);
-            } else {
-                code = RedisStockUtil.checkActStockSetting(sku, 0, actstock, actCode);
-            }
+
         }
-        return code;
+        return 0;
     }
 
 
@@ -1210,7 +1191,7 @@ public class ActivityManageModule {
             List<GoodsVO> delGoods = new ArrayList<>();
             for (long sku :delGoodsGCode) {
                 GoodsVO goodsVO1 = new GoodsVO();
-                goodsVO1.setActcode(actCode);
+                goodsVO1.setActcode(actCode + "");
                 goodsVO1.setGcode(sku);
                 delGoods.add(goodsVO1);
             }
@@ -1333,7 +1314,7 @@ public class ActivityManageModule {
             List<Long> skus = selectGoodsByAct(actCode);
             for (long sku :skus) {
                 GoodsVO goodsVO1 = new GoodsVO();
-                goodsVO1.setActcode(actCode);
+                goodsVO1.setActcode(actCode + "");
                 goodsVO1.setGcode(sku);
                 delGoods.add(goodsVO1);
             }
