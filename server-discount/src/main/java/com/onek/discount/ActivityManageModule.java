@@ -29,6 +29,7 @@ import util.ModelUtil;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -67,8 +68,8 @@ public class ActivityManageModule {
 
     //新增活动商品
     private static final String INSERT_ASS_DRUG_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
-            + "(unqid,actcode,gcode,menucode,actstock,limitnum,price) "
-            + " values(?,?,?,?,?,?,?)";
+            + "(unqid,actcode,gcode,menucode,actstock,limitnum,price,cstatus) "
+            + " values(?,?,?,?,?,?,?,?)";
 
     private static final String DEL_ASS_DRUG_SQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 and actcode=?";
@@ -193,8 +194,8 @@ public class ActivityManageModule {
         if (activityVO == null) return result.fail("参数错误");
         int cpt = getCPCount(activityVO.getIncpriority(), activityVO.getCpriority());
         if (cpt == -1) return result.fail("优先级已超过");
-        if (activityVO.getUnqid() > 0) {//修改
-            if (theActInProgress(activityVO.getUnqid())) {
+        if (Long.parseLong(activityVO.getUnqid()) > 0) {//修改
+            if (theActInProgress(Long.parseLong(activityVO.getUnqid()))) {
                 return result.fail("活动正在进行中，无法修改！");
             }
             result =  updateActivity(activityVO, cpt);
@@ -288,7 +289,7 @@ public class ActivityManageModule {
     private Result updateActivity(ActivityVO activityVO, int cpt) {
         boolean b;
         Result result = new Result();
-        long actCode = activityVO.getUnqid();
+        long actCode = Long.parseLong(activityVO.getUnqid());
         int oldRuleCode = selectBRuleCode(actCode);
         int bRuleCode = activityVO.getBrulecode();//前四位 规则业务码
         int rCode = Integer.parseInt(bRuleCode + "" + activityVO.getRulecomp());//前五位码
@@ -460,7 +461,7 @@ public class ActivityManageModule {
      * @time  2019/4/2 16:23
      * @version 1.1.1
      **/
-    private void relationAssDrug(List<GoodsVO> insertDrugVOS, List<GoodsVO> updDrugVOS, Set<Long> delGoodsGCode,long actCode) {
+    private void relationAssDrug(List<GoodsVO> insertDrugVOS, List<GoodsVO> updDrugVOS, List<Long> delGoodsGCode,long actCode) {
         List<Object[]> insertDrugParams = new ArrayList<>();
         List<Object[]> updateDrugParams = new ArrayList<>();
         StringBuilder gCodeSb = new StringBuilder();
@@ -473,18 +474,18 @@ public class ActivityManageModule {
                     + " where cstatus&1=0 and actcode=" + actCode + " and gcode in(" + gCodeStr +")";
             baseDao.updateNative(delSql);
         }
-        String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, vcode=?, price=? "
-                + " where cstatus&1=0 and gcode=? and vcode=? and actcode=?";
+        String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, vcode=?, price=?, "
+                + "cstatus=? where cstatus&1=0 and gcode=? and vcode=? and actcode=?";
 
         for (GoodsVO insGoodsVO : insertDrugVOS) {
             insertDrugParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, insGoodsVO.getGcode(),
                     insGoodsVO.getMenucode(),insGoodsVO.getActstock(),insGoodsVO.getLimitnum(),
-                    insGoodsVO.getPrice()*100});
+                    insGoodsVO.getPrice(), insGoodsVO.getCstatus()});
         }
         for (GoodsVO updateGoodsVO : updDrugVOS) {
             updateDrugParams.add(new Object[]{updateGoodsVO.getActstock(),updateGoodsVO.getLimitnum(),
-                    updateGoodsVO.getVcode()+1, updateGoodsVO.getPrice()*100,updateGoodsVO.getGcode(),
-                    updateGoodsVO.getVcode(),actCode});
+                    updateGoodsVO.getVcode()+1, updateGoodsVO.getPrice(),updateGoodsVO.getCstatus(),
+                    updateGoodsVO.getGcode(), updateGoodsVO.getVcode(),actCode});
         }
         baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, insertDrugParams, insertDrugVOS.size());
         baseDao.updateBatchNative(updateSql, updateDrugParams, updDrugVOS.size());
@@ -664,6 +665,117 @@ public class ActivityManageModule {
         return Arrays.asList(assGiftVOS);
     }
 
+    
+    /* *
+     * @description 全部商品
+     * @params [jsonObject, actCode, rulecode]
+     * @return int
+     * @exception
+     * @author 11842
+     * @time  2019/5/15 23:51
+     * @version 1.1.1
+     **/
+    private long relationAllGoods(JsonObject jsonObject,long actCode, int rulecode) {
+        long result;
+        List<Object[]> params = new ArrayList<>();
+        List<Long> skus = new ArrayList<>();
+        int limitnum = jsonObject.get("limitnum").getAsInt();
+        int actstock = jsonObject.get("actstock").getAsInt();
+        double price = jsonObject.get("price").getAsDouble();
+        int cstatus = jsonObject.get("cstatus").getAsInt();
+        List<Long> gcodeList = selectGoodsByAct(actCode);
+        if (gcodeList.size() == 0) {
+            if ((cstatus&256) > 0 ) {
+                result = RedisStockUtil.checkActStockSetting(0, 1, actstock, 0);
+            } else {
+                result = RedisStockUtil.checkActStockSetting(0, 0, actstock, 0);
+            }
+        } else {
+            if ((cstatus&256) > 0 ) {
+                result = RedisStockUtil.checkActStockSetting(0, 1, actstock, actCode);
+            } else {
+                result = RedisStockUtil.checkActStockSetting(0, 0, actstock, actCode);
+            }
+        }
+        if (result > 0) {
+            return result;
+        }
+        if ((cstatus & 512) == 0) {
+            price = price * 100;
+        }
+        if (gcodeList.size() == 1 && gcodeList.get(0) == 0 ) {
+            String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?, limitnum=?,"
+                    + "price=?, cstatus=? where cstatus&1=0 and actcode=? ";
+            result = baseDao.updateNative(updateSQL, actstock, limitnum, price,
+                    cstatus,actCode);
+        } else if (gcodeList.size() == 0){
+            result = baseDao.updateNative(INSERT_ASS_DRUG_SQL, GenIdUtil.getUnqId(), actCode, 0, 0,
+                    actstock, limitnum, price,cstatus);
+        } else {
+            skus = gcodeList;
+            String updateAssDrug = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
+                     + " where cstatus&1=0 and  actcode=? ";
+            params.add(new Object[]{actCode});
+            params.add(new Object[]{GenIdUtil.getUnqId(), actCode, 0, 0, actstock, limitnum, price,cstatus});
+            result = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{updateAssDrug,
+                    INSERT_ASS_DRUG_SQL}, params)) ? 1 : 0;
+
+        }
+        List<GoodsVO> goodsVOS = new ArrayList<>();
+        GoodsVO goodsVO = new GoodsVO();
+        goodsVO.setActstock(actstock);
+        goodsVO.setLimitnum(limitnum);
+        goodsVO.setCstatus(cstatus);
+        goodsVO.setActcode(actCode);
+        goodsVOS.add(goodsVO);
+        List<GoodsVO> delGoods = new ArrayList<>();
+        for (long sku :skus) {
+            GoodsVO goodsVO1 = new GoodsVO();
+            goodsVO1.setActcode(actCode);
+            goodsVO1.setGcode(sku);
+            delGoods.add(goodsVO1);
+        }
+        noticeGoodsUpd(1, goodsVOS, delGoods,rulecode, actCode);
+        return result;
+    }
+
+
+    /* *
+     * @description 判断商品是否足够
+     * @params []
+     * @return boolean
+     * @exception
+     * @author 11842
+     * @time  2019/5/15 23:24
+     * @version 1.1.1
+     **/
+    private boolean theGoodsStockIsEnough(int actStock) {
+
+/*        SELECT
+                gcode,
+                store,
+                freezestore
+        FROM
+        td_prom_assdrug a
+        LEFT JOIN td_prod_sku s ON a.gcode = s.sku
+        WHERE
+        a.cstatus & 1 = 0
+        and gcode>0
+        GROUP BY
+        gcode
+        HAVING ((store - freezestore ) - ceil (
+                sum(IF ( a.cstatus & 256 > 0, actstock, 0 ) ) * 0.01*(store - freezestore ) + sum( IF ( a.cstatus & 256 = 0, actstock, 0 ) )
+        )) < 0 LIMIT 0,1*/
+        String selectSQLOne = "select sum(IF(cstatus & 256>0, actstock, 0)) * 0.01 as percent," +
+                " sum(IF(cstatus & 256 = 0, actstock, 0 )) as total from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0";
+        String selectAssSQL = "select cel(sum(if(a.cstatus&256>0),actstock,0))*0.01 + sum(if(a.cstatus&256=0),actstock,0))) from {{?"
+                + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
+                + DSMConst.TD_PROD_SKU +"}} s on a.gcode=s.sku  where a.cstatus&1=0 and gcode>0 group by gcode";
+        String selectSQL = "select sku from {{?" + DSMConst.TD_PROD_SKU+ "}} where (store-freezestore)<" +
+                actStock +" LIMIT 0,1";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        return queryResult == null || queryResult.size() == 0;
+    }
 
     /**
      * @description 关联商品
@@ -676,7 +788,7 @@ public class ActivityManageModule {
      **/
     @UserPermission(ignore = true)
     public Result relationGoods(AppContext appContext) {
-        boolean re = false;
+        int re = 0;
         Result result = new Result();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
@@ -688,36 +800,190 @@ public class ActivityManageModule {
         if (theActInProgress(actCode)) {
             return result.fail("活动正在进行中，无法修改！");
         }
-        String skuStr = getActStockBySkus(jsonObject);
-        if (skuStr != null) {
-            return result.fail(skuStr + "商品库存不够，保存失败！");
-        }
+        long code;
         switch (type) {
             case 1://全部商品
-                re = relationAllGoods(jsonObject, actCode, ruleCode);
-                break;
-            case 2://类别关联
-            default://商品关联
-                int code;
-                Map<Long, Integer> map = selectGoodsByAct(actCode);
-                if (map.size() == 1 && map.get(0) != null && map.get(0) == 0) {
-                    String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1,"
-                            + "vcode=? where cstatus&1=0 and actcode=? and vcode=?";
-                    code = baseDao.updateNative(updateSQL, map.get(0)+1, actCode, map.get(0));
-                    if (code <= 0) {
-                        return result.fail("操作失败");
-                    }
+                //删除该活动下分类设置和商品设置
+                code = relationAllGoods(jsonObject, actCode, ruleCode);
+                if ((code+ "").length() == 14) {
+                    return result.fail("【" + ProdInfoStore.getProdBySku(code).getProdname() + "】库存不够，请重新设置活动库存！");
                 }
-                int a = relationGoods(jsonObject, actCode, ruleCode);
+                if (code > 0) {
+                    return result.success("关联全部商品成功");
+                }
+                return result.fail("关联全部商品失败");
+            case 2://类别关联
+                code = relationClasses(jsonObject, actCode, ruleCode);
+                if ((code+ "").length() == 14) {
+                    return result.fail("【" + ProdInfoStore.getProdBySku(code).getProdname() + "】库存不够，请重新设置活动库存！");
+                }
+                if (code == 0){
+                    return result.success("关联类别成功");
+                }
+                return result.fail("关联类别失败");
+            default://商品关联
+                List<Long> gcodeList = selectGoodsByAct(actCode);
+                boolean isAdd = gcodeList.size() == 0;
+                String skuStr = getActStockBySkus(jsonObject, actCode, isAdd);
+                if (skuStr != null) {
+                    return result.fail("【" + skuStr + "】商品库存不够，保存失败！");
+                }
+                re = updateAssByActcode(3, actCode);
+                if (re < 0) {
+                    return  result.fail("关联商品失败");
+                }
+                int a = relationGoods(jsonObject, actCode, ruleCode, gcodeList);
                 if (a == -1) {
                     return result.fail("活动正在进行中，无法修改！");
                 }
                 return result.success("关联商品成功");
         }
-        return re ? result.success("关联商品成功") : result.fail("操作失败");
     }
 
-    private String getActStockBySkus(JsonObject jsonObject) {
+    private int updateAssByActcode(int type, long actCode) {
+        String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
+                + " where cstatus&1=0 and actcode=? ";
+        switch (type) {
+            case 1:
+                updateSQL = updateSQL + " and gcode<>0";
+                break;
+            case 2:
+                updateSQL = updateSQL + " and (gcode=0 or LENGTH(gcode)=14)";
+                break;
+            default:
+                updateSQL = updateSQL + " and (gcode=0 or LENGTH(gcode)<14)";
+                break;
+        }
+        return baseDao.updateNative(updateSQL, actCode);
+    }
+    
+    /* *
+     * @description 指定类别
+     * @params [jsonObject, actCode, rulecode]
+     * @return int
+     * @exception
+     * @author 11842
+     * @time  2019/5/15 23:52
+     * @version 1.1.1
+     **/
+    private long relationClasses(JsonObject jsonObject,long actCode, int rulecode) {
+        long result;
+        List<Long> gcodeList = selectGoodsByAct(actCode);
+        boolean isAdd = gcodeList.size() == 0;
+        //关联活动商品
+        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        List<GoodsVO> goodsVOS = new ArrayList<>();
+        List<GoodsVO> insertGoodsVOS = new ArrayList<>();
+        List<GoodsVO> updateGoodsVOS = new ArrayList<>();
+        StringBuilder skuBuilder = new StringBuilder();
+        int saveType = jsonObject.get("saveType").getAsInt();//保存方式（0 分组保存  1 保存全部）
+        //查询该活动下所有类别
+        List<Long> delGoodsGCode = new ArrayList<>();
+        if (saveType == 1) {
+            delGoodsGCode = gcodeList;
+        }
+        if (goodsArr != null && !goodsArr.toString().isEmpty()) {
+            for (int i = 0; i < goodsArr.size(); i++) {
+                GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
+                assert goodsVO != null;
+                result = classEnoughStock(goodsVO.getGcode(), goodsVO.getCstatus(),goodsVO.getActstock(), actCode, isAdd);
+                if (result > 0) {
+                    return result;
+                }
+                skuBuilder.append(goodsVO.getGcode()).append(",");
+                if (saveType == 1) {
+                    if (delGoodsGCode.contains(goodsVO.getGcode())) {
+                        delGoodsGCode.remove(goodsVO.getGcode());
+                    }
+                }
+                if ((goodsVO.getCstatus() & 512) == 0) {
+                    goodsVO.setPrice(goodsVO.getPrice() * 100);
+                }
+                goodsVOS.add(goodsVO);
+            }
+
+            int re = updateAssByActcode(2, actCode);
+            if (re < 0) {
+                return -1;
+            }
+            String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
+            Map<Long,ActStock> goodsMap = getAllGoods(skuStr, actCode);
+            for (GoodsVO goodsVO : goodsVOS) {
+                if (goodsMap != null) {
+                    if (goodsMap.containsKey(goodsVO.getGcode())) {//数据库不存在该商品 新增 否则修改
+                        goodsVO.setVcode(goodsMap.get(goodsVO.getGcode()).getVocode());
+                        updateGoodsVOS.add(goodsVO);
+                    } else {
+                        insertGoodsVOS.add(goodsVO);
+                    }
+                } else {
+                    insertGoodsVOS.add(goodsVO);
+                }
+            }
+            relationAssDrug(insertGoodsVOS, updateGoodsVOS, delGoodsGCode, actCode);
+            //通知notice
+            List<GoodsVO> delGoods = new ArrayList<>();
+            for (long sku :delGoodsGCode) {
+                GoodsVO goodsVO1 = new GoodsVO();
+                goodsVO1.setActcode(actCode);
+                goodsVO1.setGcode(sku);
+                delGoods.add(goodsVO1);
+            }
+            noticeGoodsUpd(2, goodsVOS,delGoods, rulecode, actCode);
+        }
+        return 1;
+    }
+
+    
+
+    /* *
+     * @description 判断类别库存是否足够
+     * @params
+     * @return
+     * @exception
+     * @author 11842
+     * @time  2019/5/17 13:53
+     * @version 1.1.1
+     **/
+    private long classEnoughStock(long sku, int cstatus, int actstock, long actCode, boolean isAdd) {
+        long code;
+        if (isAdd) {
+            if ((cstatus & 256) > 0) {
+                code = RedisStockUtil.checkActStockSetting(sku, 1, actstock, 0);
+            } else {
+                code = RedisStockUtil.checkActStockSetting(sku, 0, actstock, 0);
+            }
+        } else {
+            if ((cstatus&256) > 0 ) {
+                code = RedisStockUtil.checkActStockSetting(sku, 1, actstock, actCode);
+            } else {
+                code = RedisStockUtil.checkActStockSetting(sku, 0, actstock, actCode);
+            }
+        }
+        return code;
+    }
+
+
+    private String getActStockBySkus(JsonObject jsonObject, long actCode, boolean isAdd) {
+        String prodNames;
+        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        long result;
+        if (goodsArr != null && !goodsArr.toString().isEmpty()) {
+            for (int i = 0; i < goodsArr.size(); i++) {
+                GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
+                assert goodsVO != null;
+                result = classEnoughStock(goodsVO.getGcode(), goodsVO.getCstatus(),goodsVO.getActstock(), actCode, isAdd);
+                if (result > 0) {
+                    prodNames = ProdInfoStore.getProdBySku(goodsVO.getGcode()).getProdname();
+                    return prodNames;
+                }
+            }
+        }
+        return null;
+    }
+
+
+    private String getActStockBySkus1(JsonObject jsonObject) {
         String prodNames=null;
         Map<Long, Integer> actStockMap = new HashMap<>();//活动库存
         Map<Long, Integer> stockMap = new HashMap<>();//可售库存
@@ -812,35 +1078,53 @@ public class ActivityManageModule {
      * @time  2019/4/15 15:20
      * @version 1.1.1
      **/
-    private void noticeGoodsUpd(int type, List<GoodsVO> goodsVOS, int rulecode) {
-        ActivityManageServer activityManageServer = new ActivityManageServer();
-        activityManageServer.registerObserver(new ProdDiscountObserver());
-        activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
-        List<String> proList = new ArrayList<>();
-        if (type == 1) {//全部商品
-            JSONObject jsonObject = new JSONObject();
-            jsonObject.put("discount", 1);
-            jsonObject.put("gcode", 0);
-            jsonObject.put("cstatus", "0");
-            jsonObject.put("limitnum", 0);
-            jsonObject.put("rulecode", rulecode);
-            proList.add(jsonObject.toJSONString());
-        } else {
-            if (goodsVOS != null && goodsVOS.size() > 0) {
-                for (GoodsVO goodsVO : goodsVOS) {
+    private void noticeGoodsUpd(int type, List<GoodsVO> goodsVOS, List<GoodsVO> delGoods, int rulecode, long actCode) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            ActivityManageServer activityManageServer = new ActivityManageServer();
+            activityManageServer.registerObserver(new ProdDiscountObserver());
+            activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
+            List<String> proList = new ArrayList<>();
+            if (type == 1) {//全部商品
+                JSONObject jsonObject = new JSONObject();
+                jsonObject.put("discount", 1);
+                jsonObject.put("gcode", 0);
+                jsonObject.put("cstatus", goodsVOS.get(0).getCstatus());
+                jsonObject.put("limitnum", goodsVOS.get(0).getLimitnum());
+                jsonObject.put("rulecode", rulecode);
+                jsonObject.put("stock", goodsVOS.get(0).getActstock());
+                jsonObject.put("actcode", actCode);
+                proList.add(jsonObject.toJSONString());
+            } else {
+                if (goodsVOS != null && goodsVOS.size() > 0) {
+                    for (GoodsVO goodsVO : goodsVOS) {
+                        JSONObject jsonObject = new JSONObject();
+                        jsonObject.put("discount", 1);
+                        jsonObject.put("gcode", goodsVO.getGcode());
+                        jsonObject.put("cstatus", goodsVO.getCstatus());
+                        jsonObject.put("rulecode", rulecode);
+                        jsonObject.put("actcode", actCode);
+                        jsonObject.put("stock", goodsVO.getActstock());
+                        jsonObject.put("limitnum", goodsVO.getLimitnum());
+                        proList.add(jsonObject.toJSONString());
+                    }
+                }
+            }
+            if (delGoods!=null && delGoods.size() > 0) {
+                for (GoodsVO goodsVO : delGoods) {
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("discount", 1);
                     jsonObject.put("gcode", goodsVO.getGcode());
-                    jsonObject.put("cstatus", "0");
+                    jsonObject.put("cstatus", 1);
                     jsonObject.put("rulecode", rulecode);
-                    jsonObject.put("actcode", goodsVO.getActcode());
-                    jsonObject.put("stock", goodsVO.getActstock());
-                    jsonObject.put("limitnum", goodsVO.getLimitnum());
+                    jsonObject.put("actcode", actCode);
+                    jsonObject.put("stock", 0);
+                    jsonObject.put("limitnum", 0);
                     proList.add(jsonObject.toJSONString());
                 }
             }
-        }
-        activityManageServer.setProd(proList);
+            activityManageServer.setProd(proList);
+        });
     }
 
     /* *
@@ -858,48 +1142,34 @@ public class ActivityManageModule {
         activityManageServer.actUpdate(actcode);
     }
 
-    private Map<Long, Integer> selectGoodsByAct(long actCode) {
-        Map<Long, Integer> map = new HashMap<>();
-        String sql = "select vcode, gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 and "
+    private List<Long> selectGoodsByAct(long actCode) {
+        List<Long> gcodeList = new ArrayList<>();
+        String sql = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 and "
                 + " actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(sql);
-        if (queryResult==null || queryResult.isEmpty()) return map;
-        for (Object[] aQueryResult : queryResult) {
-            long gcode = (long) aQueryResult[1];
-            map.put(gcode, (int) aQueryResult[0]);
-        }
-        return map;
-    }
-
-    private boolean relationAllGoods(JsonObject jsonObject,long actCode, int rulecode) {
-        int result;
-        int limitnum = jsonObject.get("limitnum").getAsInt();
-        int actstock = jsonObject.get("actstock").getAsInt();
-        double price = jsonObject.get("price").getAsDouble() * 100;
-        Map<Long, Integer> map = selectGoodsByAct(actCode);
-        if (map.size() == 0) {
-            result = baseDao.updateNative(INSERT_ASS_DRUG_SQL, GenIdUtil.getUnqId(), actCode, 0, 0,
-                    actstock, limitnum, price);
-        } else {
-            String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?, limitnum=?,"
-                    + "price=?, vcode=? where cstatus&1=0 and actcode=? and vcode=?";
-            result = baseDao.updateNative(updateSQL, actstock, limitnum, 0, map.get(0)+1,actCode, map.get(0));
-        }
-        noticeGoodsUpd(1, null, rulecode);
-        return result > 0;
+        if (queryResult==null || queryResult.isEmpty()) return gcodeList;
+        for (int i = 0; i < queryResult.size(); i++) {
+            gcodeList.add((long)queryResult.get(i)[0]);
+        } 
+        return gcodeList;
     }
 
 
-    private int relationGoods(JsonObject jsonObject, long actCode, int rulecode) {
+
+
+    private int relationGoods(JsonObject jsonObject, long actCode, int rulecode, List<Long> gcodeList) {
         //关联活动商品
         JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
-//        JsonArray classArr = jsonObject.get("goodsArr").getAsJsonArray();
+        int saveType = jsonObject.get("saveType").getAsInt();//保存方式（0 分组保存  1 保存全部）
         List<GoodsVO> goodsVOS = new ArrayList<>();
         List<GoodsVO> insertGoodsVOS = new ArrayList<>();
         List<GoodsVO> updateGoodsVOS = new ArrayList<>();
         StringBuilder skuBuilder = new StringBuilder();
         //查询该活动下所有商品
-        Set<Long> delGoodsGCode = getAllGoodsByActCode(actCode);
+        List<Long> delGoodsGCode = new ArrayList<>();
+        if (saveType == 1) {
+            delGoodsGCode = gcodeList;
+        }
         if (goodsArr != null && !goodsArr.toString().isEmpty()) {
             for (int i = 0; i < goodsArr.size(); i++) {
                 GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
@@ -910,8 +1180,13 @@ public class ActivityManageModule {
                         return -1;
                     }
                     skuBuilder.append(goodsVO.getGcode()).append(",");
-                    if (delGoodsGCode.contains(goodsVO.getGcode())) {
-                        delGoodsGCode.remove(goodsVO.getGcode());
+                    if (saveType == 1) {
+                        if (delGoodsGCode.contains(goodsVO.getGcode())) {
+                            delGoodsGCode.remove(goodsVO.getGcode());
+                        }
+                    }
+                    if ((goodsVO.getCstatus() & 512) == 0) {
+                        goodsVO.setPrice(goodsVO.getPrice() * 100);
                     }
                 }
                 goodsVOS.add(goodsVO);
@@ -922,15 +1197,6 @@ public class ActivityManageModule {
             for (GoodsVO goodsVO : goodsVOS) {
                 if (goodsMap != null) {
                     if (goodsMap.containsKey(goodsVO.getGcode())) {//数据库不存在该商品 新增 否则修改
-                        int newActStock = goodsVO.getActstock();//新库存
-                        int oldActStock = goodsMap.get(goodsVO.getGcode()).getActstock();//旧库存
-                        if (newActStock >= oldActStock) {
-//                            goodsVOS.get(i).setActstock(newActStock);
-                        } else {
-//                            goodsVOS.get(i).setActstock();
-                        }
-                        goodsVO.setVcode(goodsMap.get(goodsVO.getGcode()).getVocode());
-                        
                         updateGoodsVOS.add(goodsVO);
                     } else {
                         insertGoodsVOS.add(goodsVO);
@@ -941,7 +1207,14 @@ public class ActivityManageModule {
             }
             relationAssDrug(insertGoodsVOS, updateGoodsVOS,delGoodsGCode,actCode);
             //通知notice
-            noticeGoodsUpd(2, goodsVOS, rulecode);
+            List<GoodsVO> delGoods = new ArrayList<>();
+            for (long sku :delGoodsGCode) {
+                GoodsVO goodsVO1 = new GoodsVO();
+                goodsVO1.setActcode(actCode);
+                goodsVO1.setGcode(sku);
+                delGoods.add(goodsVO1);
+            }
+            noticeGoodsUpd(2, goodsVOS, delGoods, rulecode,actCode);
         }
         return 1;
     }
@@ -1053,8 +1326,20 @@ public class ActivityManageModule {
         params.add(new Object[]{});
         params.add(new Object[]{actCode});
         params.add(new Object[]{actCode});
-        return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{sqlOne,sqlTwo, sqlThree,
+        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{sqlOne,sqlTwo, sqlThree,
                 DELETE_ACT, delAssDrugByActCode}, params));
+        if (b) {
+            List<GoodsVO> delGoods = new ArrayList<>();
+            List<Long> skus = selectGoodsByAct(actCode);
+            for (long sku :skus) {
+                GoodsVO goodsVO1 = new GoodsVO();
+                goodsVO1.setActcode(actCode);
+                goodsVO1.setGcode(sku);
+                delGoods.add(goodsVO1);
+            }
+            noticeGoodsUpd(-1, null, delGoods, 0, actCode);
+        }
+        return b;
     }
 
 
