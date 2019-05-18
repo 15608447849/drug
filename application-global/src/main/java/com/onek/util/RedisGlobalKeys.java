@@ -29,11 +29,17 @@ public class RedisGlobalKeys {
     // 库存前缀
     public static final String STOCK_PREFIX = "STOCK";
 
+    // 可用库存前缀(代表库存-∑活动库存)
+    public static final String AVAILSTOCK_PREFIX = "AVAILSTOCK";
+
     // 库存活动前缀
     public static final String ACTSTOCK_PREFIX = "ACTSTOCK";
 
-    // 库存活动前缀
+    // 库存活动(初始化)前缀
     public static final String ACTSTOCK_INIT_PREFIX = "ACTINITSTOCK";
+
+    // 活动前缀
+    public static final String ACT_PREFIX = "ACT";
 //
 //    // 秒杀前缀
 //    public static final String SECKILLPREFIX = "SECKILL";
