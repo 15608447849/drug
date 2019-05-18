@@ -59,8 +59,6 @@ public class CouponVO {
     private int actstock;
 
 
-
-
     public int getRulecomp() {
         return rulecomp;
     }

@@ -54,6 +54,36 @@ public class CouponPubVO {
 
     private long qlfval;
 
+    private String startdate;
+
+    private String enddate;
+
+    private String exno;
+
+    public String getExno() {
+        return exno;
+    }
+
+    public void setExno(String exno) {
+        this.exno = exno;
+    }
+
+    public String getStartdate() {
+        return startdate;
+    }
+
+    public void setStartdate(String startdate) {
+        this.startdate = startdate;
+    }
+
+    public String getEnddate() {
+        return enddate;
+    }
+
+    public void setEnddate(String enddate) {
+        this.enddate = enddate;
+    }
+
     public int getQlfno() {
         return qlfno;
     }

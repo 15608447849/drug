@@ -62,6 +62,16 @@ public class CouponPubVO {
 
     private long qlfval;
 
+    private String exno;
+
+    public String getExno() {
+        return exno;
+    }
+
+    public void setExno(String exno) {
+        this.exno = exno;
+    }
+
     public int getQlfno() {
         return qlfno;
     }
