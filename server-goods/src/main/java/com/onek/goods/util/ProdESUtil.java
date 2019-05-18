@@ -458,7 +458,7 @@ public class ProdESUtil {
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdHasBrand(String keyword,int pagenum, int pagesize){
+    public static SearchResponse searchProdHasBrand(String keyword,String brandno, int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -467,6 +467,10 @@ public class ProdESUtil {
             boolQuery.must(rangeQuery);
             if(!StringUtils.isEmpty(keyword)){
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+                boolQuery.must(matchQuery);
+            }
+            if(!StringUtils.isEmpty(brandno)){
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_BRANDNO, brandno);
                 boolQuery.must(matchQuery);
             }
             MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
@@ -478,8 +482,8 @@ public class ProdESUtil {
                     .setQuery(boolQuery)
                     .setFrom(from)
                     .setSize(pagesize)
-                    .addSort(ESConstant.PROD_COLUMN_BRANDNO, SortOrder.DESC)
                     .addSort(ESConstant.PROD_COLUMN_SALES, SortOrder.DESC)
+                    .addSort(ESConstant.PROD_COLUMN_BRANDNO, SortOrder.DESC)
                     .execute().actionGet();
 
         }catch(Exception e) {
