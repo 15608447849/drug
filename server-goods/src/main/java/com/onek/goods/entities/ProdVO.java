@@ -52,7 +52,7 @@ public class ProdVO {
     private int surplusstock;
     private double minprize;
     private double maxprize;
-    private long actcode;
+    private String actcode;
 
     public long getSpu() {
         return spu;
@@ -350,11 +350,11 @@ public class ProdVO {
         this.maxprize = maxprize;
     }
 
-    public long getActcode() {
+    public String getActcode() {
         return actcode;
     }
 
-    public void setActcode(long actcode) {
+    public void setActcode(String actcode) {
         this.actcode = actcode;
     }
 

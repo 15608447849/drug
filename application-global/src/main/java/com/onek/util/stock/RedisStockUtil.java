@@ -254,7 +254,10 @@ public class RedisStockUtil {
      */
     public static long checkActStockSetting(long sku, int calctype,int num, long actcode){
         if(sku == 0){ // 全部商品
+            long start = System.currentTimeMillis();
+            System.out.println(System.currentTimeMillis());
             List<String> keys = RedisUtil.getStringProvide().getRedisKeyStartWith(RedisGlobalKeys.STOCK_PREFIX);
+            System.out.println(System.currentTimeMillis()-start);
             Long key = checkStockByRedisKeys(sku, calctype, num, actcode, keys);
             if (key != null) return key;
         }else if(sku < 100000000000L){ // 指定类别
@@ -303,9 +306,9 @@ public class RedisStockUtil {
         return 0L;
     }
 
-//    public static void main(String[] args) {
-//        checkActStockSetting(11000000011201L,0,20, 0);
-//    }
+    public static void main(String[] args) {
+        checkActStockSetting(0,0,20, 0);
+    }
 }
 
 
