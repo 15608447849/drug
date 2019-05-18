@@ -8,7 +8,7 @@ package com.onek.discount.entity;
  **/
 public class RulesVO {
 
-    private long rulecode;//规则码
+    private String rulecode;//规则码
     private int brulecode;//规则码
     private String rulename;//规则名称
     private String desc;//规则描述
@@ -22,11 +22,11 @@ public class RulesVO {
         this.brulecode = brulecode;
     }
 
-    public long getRulecode() {
+    public String getRulecode() {
         return rulecode;
     }
 
-    public void setRulecode(long rulecode) {
+    public void setRulecode(String rulecode) {
         this.rulecode = rulecode;
     }
 

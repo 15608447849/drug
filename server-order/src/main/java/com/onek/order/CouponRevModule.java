@@ -497,7 +497,7 @@ public class CouponRevModule {
         }
         int compid = couponUseDTOS.get(0).getCompid();
         DiscountResult calculate = CalculateUtil.calculate(compid,
-                productList, couponUseDTOS.get(0).getCoupon());
+                productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
 
         resultMap.put("tprice",subCalRet.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
         resultMap.put("tdiscount",calculate.getTotalDiscount());
@@ -576,13 +576,13 @@ public class CouponRevModule {
         }
 
         Map<String, String> verifyResult
-                = verifyCoupon(productList, excoupon, couponUseDTOS.get(0).getCoupon(), compid);
+                = verifyCoupon(productList, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
 
         resultMap.put("code",verifyResult.get("code"));
         resultMap.put("msg",verifyResult.get("msg"));
 
         DiscountResult calculate = CalculateUtil.calculate(compid,
-                productList, couponUseDTOS.get(0).getCoupon());
+                productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
 
         resultMap.put("tprice",subCalRet.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
         resultMap.put("tdiscount",calculate.getTotalDiscount());
@@ -747,7 +747,7 @@ public class CouponRevModule {
 
                 CouponPubVO couponResult = setCoupValidDay(couponPubVOS[0]);
                 CouponPubLadderVO couponPubLadderVO = new CouponPubLadderVO();
-                couponPubLadderVO.setUnqid(0);
+                couponPubLadderVO.setUnqid("0");
 
                 couponPubLadderVO.setOffercode(Integer.parseInt(brule+"201"));
                 couponPubLadderVO.setOffer(gift.getGiftValue());

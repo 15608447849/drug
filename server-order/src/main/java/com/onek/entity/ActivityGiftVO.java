@@ -14,15 +14,15 @@ import java.util.List;
  */
 public class ActivityGiftVO {
 
-    private long actcode;
+    private String actcode;
 
     private List<Gift> giftList = new ArrayList<Gift>();
 
-    public long getActcode() {
+    public String getActcode() {
         return actcode;
     }
 
-    public void setActcode(long actcode) {
+    public void setActcode(String actcode) {
         this.actcode = actcode;
     }
 

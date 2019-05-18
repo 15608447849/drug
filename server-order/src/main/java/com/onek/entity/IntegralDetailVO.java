@@ -3,7 +3,7 @@ package com.onek.entity;
 public class IntegralDetailVO {
     private int istatus;
     private int integral;
-    private long busid;
+    private String busid;
     private String createdate;
     private String createtime;
     private int compid;
@@ -24,11 +24,11 @@ public class IntegralDetailVO {
         this.integral = integral;
     }
 
-    public long getBusid() {
+    public String getBusid() {
         return busid;
     }
 
-    public void setBusid(long busid) {
+    public void setBusid(String busid) {
         this.busid = busid;
     }
 

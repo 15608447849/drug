@@ -528,7 +528,7 @@ public class ShoppingCartModule {
                     shoppingCartVO.setNum(shoppingCartDTOS.get(i).getPnum());
                     shoppingCartVO.setChecked(shoppingCartDTOS.get(i).getChecked());
                     shoppingCartVO.setUnqid(shoppingCartDTOS.get(i).getUnqid());
-                    shoppingCartVO.setCounpon(shoppingCartDTOS.get(i).getConpno());
+                    shoppingCartVO.setConpno(shoppingCartDTOS.get(i).getConpno()+"");
                     shoppingCartVO.setAreano(shoppingCartDTOS.get(i).getAreano());
                     break;
                 }
@@ -564,7 +564,7 @@ public class ShoppingCartModule {
 
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
            List<DiscountRule> ruleList = new ArrayList<>();
-           List<Long> actCodeList = new ArrayList<>();
+           List<String> actCodeList = new ArrayList<>();
             int minLimit = 0;
             long actcode = 0;
             for(IDiscount discount : discountList){
@@ -576,7 +576,7 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
-                        actCodeList.add(activity.getUnqid());
+                        actCodeList.add(activity.getUnqid()+"");
                         if(activity.getLimits(product.getSKU()) < minLimit){
                             minLimit = activity.getLimits(product.getSKU());
                             actcode = activity.getUnqid();
@@ -607,7 +607,7 @@ public class ShoppingCartModule {
             shoppingCartVO.setRule(ruleList);
         }
         DiscountResult discountResult
-                = CalculateUtil.calculate(compid,ckProduct,shoppingCartList.get(0).getConpno());
+                = CalculateUtil.calculate(compid,ckProduct,Long.parseLong(shoppingCartList.get(0).getConpno()));
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
             for(Product product: ckProduct){
                 if(shoppingCartVO.getPdno() == product.getSKU()
@@ -746,7 +746,7 @@ public class ShoppingCartModule {
                 offerTipsVO.setLadnum(currLadoff.getLadnum());
                 offerTipsVO.setOffer(currLadoff.getOffer());
                 offerTipsVO.setOffercode(currLadoff.getOffercode());
-                offerTipsVO.setUnqid(currLadoff.getUnqid());
+                offerTipsVO.setUnqid(currLadoff.getUnqid()+"");
             }
 
             if(nextLadoff != null){
@@ -754,7 +754,7 @@ public class ShoppingCartModule {
                 offerTipsVO.setNladnum(nextLadoff.getLadnum());
                 offerTipsVO.setNoffer(nextLadoff.getOffer());
                 offerTipsVO.setOffercode(nextLadoff.getOffercode());
-                offerTipsVO.setUnqid(nextLadoff.getUnqid());
+                offerTipsVO.setUnqid(nextLadoff.getUnqid()+"");
             }
 
             offerTipsVOS.add(offerTipsVO);

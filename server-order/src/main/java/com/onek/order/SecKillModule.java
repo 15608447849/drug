@@ -129,7 +129,7 @@ public class SecKillModule {
         if(shoppingCartVO != null){
             shoppingCartVO.setNum(stock);
             shoppingCartVO.setChecked(1);
-            shoppingCartVO.setUnqid(0);
+            shoppingCartVO.setUnqid("0");
             shoppingCartVO.setCounpon(0);
             shoppingCartVO.setAcamt(stock * shoppingCartVO.getDiscount());
             shoppingCartVO.setAmt(0);

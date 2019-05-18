@@ -272,7 +272,7 @@ public class OrderInfoModule {
 
             if (s == null) {
                 s = new ArrayList<>();
-                returnResult.put(tranOrderGoods.getOrderno(), s);
+                returnResult.put(Long.parseLong(tranOrderGoods.getOrderno()), s);
             }
 
             s.add(tranOrderGoods);
