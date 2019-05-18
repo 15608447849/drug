@@ -12,11 +12,11 @@ import java.util.List;
  */
 public class CouponPubVO {
 
-    private String unqid;
+    private String unqid = "0";
     /**
      * 优惠券码
      */
-    private String coupno;
+    private String coupno = "0";
 
     /**
      * 企业码

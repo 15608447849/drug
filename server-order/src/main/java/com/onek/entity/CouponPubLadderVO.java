@@ -22,7 +22,7 @@ public class CouponPubLadderVO {
     private double offer;
 
     //阶梯码
-    private String unqid;
+    private String unqid = "0";
 
     public String getUnqid() {
         return unqid;

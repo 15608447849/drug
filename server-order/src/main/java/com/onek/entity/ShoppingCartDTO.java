@@ -12,7 +12,7 @@ public class ShoppingCartDTO {
     //商品SKU
     private long pdno;
 
-    private String conpno;
+    private String conpno = "0";
 
     private int pnum;
 
@@ -20,7 +20,7 @@ public class ShoppingCartDTO {
 
     private int checked;
 
-    private String unqid;
+    private String unqid = "0";
 
     private int cstatus;
 
