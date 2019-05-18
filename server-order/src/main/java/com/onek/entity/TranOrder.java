@@ -12,7 +12,7 @@ import java.util.List;
  **/
 public class TranOrder implements IDelayedObject {
     private String orderno;//订单号
-    private long tradeno;//交易号
+    private String tradeno;//交易号
     private int cusno;//客户企业码
     private int busno;//商家企业码
     private int ostatus;//订单状态
@@ -60,11 +60,11 @@ public class TranOrder implements IDelayedObject {
         this.orderno = orderno;
     }
 
-    public long getTradeno() {
+    public String getTradeno() {
         return tradeno;
     }
 
-    public void setTradeno(long tradeno) {
+    public void setTradeno(String tradeno) {
         this.tradeno = tradeno;
     }
 

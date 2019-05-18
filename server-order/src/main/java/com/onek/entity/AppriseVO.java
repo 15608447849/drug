@@ -7,7 +7,7 @@ package com.onek.entity;
  * @time 2019/4/20 14:36
  **/
 public class AppriseVO {
-    private long unqid;//
+    private String unqid;//
     private String orderno;//订单号
     private int level;//评价等级
     private int descmatch;//描述相符
@@ -20,11 +20,11 @@ public class AppriseVO {
     private long sku;//sku
     private String compName;//企业名称
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 
