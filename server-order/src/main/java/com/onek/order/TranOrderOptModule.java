@@ -455,8 +455,10 @@ public class TranOrderOptModule {
      **/
     private List<TranOrderGoods> secKillStockIsEnough(long actCode, List<TranOrderGoods> tranOrderGoodsList) {
         List<TranOrderGoods> goodsList = new ArrayList<>();
+        List<Long> actList = new ArrayList<>();
+        actList.add(actCode);
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
-            if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum(), actCode)) {
+            if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum(), actList)) {
                 return goodsList;
             }
             tranOrderGoods.setActcode("[" + actCode + "]");
@@ -502,21 +504,30 @@ public class TranOrderOptModule {
                     setGoodsStock(tranOrderGoods, 0L, goodsStockList);
                 }
             } else {
-                for (Long aList : list) {
-                    if (aList > 0) {
-                        if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
-                                tranOrderGoods.getPnum(), aList)) {
-                            result = true;
-                        } else {
-                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
-                        }
-                    } else {
-                        if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
-                                tranOrderGoods.getPnum()) != 2) {
-                            result = true;
-                        } else {
-                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
-                        }
+//                for (Long aList : list) {
+//                    if (aList > 0) {
+//                        if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
+//                                tranOrderGoods.getPnum(), aList)) {
+//                            result = true;
+//                        } else {
+//                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
+//                        }
+//                    } else {
+//                        if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
+//                                tranOrderGoods.getPnum()) != 2) {
+//                            result = true;
+//                        } else {
+//                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
+//                        }
+//                    }
+//                }
+
+                if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
+                        tranOrderGoods.getPnum(), list)) {
+                    result = true;
+                } else {
+                    for (Long aList : list) {
+                        setGoodsStock(tranOrderGoods, aList, goodsStockList);
                     }
                 }
             }
@@ -547,9 +558,15 @@ public class TranOrderOptModule {
         for (GoodsStock goodsStock : goodsStockList) {
             if (goodsStock.getActCode() > 0) {
                 RedisStockUtil.addActStock(goodsStock.getSku(), goodsStock.getActCode(), goodsStock.getStock());
-            }else{
+            }
+        }
+
+        List<Long> gcodeList = new ArrayList<>();
+        for (GoodsStock goodsStock : goodsStockList) {
+            if(!gcodeList.contains(goodsStock.getSku())){
                 RedisStockUtil.addStock(goodsStock.getSku(), goodsStock.getStock());
             }
+            gcodeList.add(goodsStock.getSku());
         }
     }
 
@@ -673,10 +690,9 @@ public class TranOrderOptModule {
                 if (actcode > 0) {
                     RedisStockUtil.addActStock(tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
                     RedisOrderUtil.subtractActBuyNum(tranOrderGood.getCompid(), tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
-                } else {
-                    RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
                 }
             }
+            RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
             params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
         }
         if (type == 0) {//线上支付释放锁定库存

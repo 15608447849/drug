@@ -86,22 +86,31 @@ public class RedisStockUtil {
 //        return RedisUtil.getStringProvide().delete(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + SEP + sku + SEP + actCode);
 //    }
 
-    public static boolean deductionActStock(long sku, int stock, long actCode) {
-        String key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
-        String currentStock = RedisUtil.getHashProvide().getValByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key);
-        if (StringUtils.isEmpty(currentStock) && Integer.parseInt(currentStock) <= 0) {
-            return false;
+    public static boolean deductionActStock(long sku, int stock, List<Long> actCodes) {
+        if(actCodes != null && actCodes.size() > 0){
+            for(long actCode : actCodes){
+                String key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
+                String currentStock = RedisUtil.getHashProvide().getValByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key);
+                if (StringUtils.isEmpty(currentStock) && Integer.parseInt(currentStock) <= 0) {
+                    return false;
+                }
+                if ((Integer.parseInt(currentStock) - stock) < 0) {
+                    return false;
+                }
+            }
+            for(long actCode : actCodes){
+                String key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
+                Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key, -stock);
+                if (num < 0) {
+                    RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key, stock);
+                    return false;
+                }
+            }
+            RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, -stock);
+            calcAvailStock(sku);
+            return true;
         }
-        if ((Integer.parseInt(currentStock) - stock) < 0) {
-            return false;
-        }
-        Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key, -stock);
-        if (num < 0) {
-            RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key, stock);
-            return false;
-        }
-        calcAvailStock(sku);
-        return true;
+        return false;
     }
 
     /**
