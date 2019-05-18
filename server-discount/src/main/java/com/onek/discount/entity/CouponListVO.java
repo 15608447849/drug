@@ -69,6 +69,16 @@ public class CouponListVO {
     //生效标记 0 即日生效 、1 次日生效
     private int validflag;
 
+    private String createdate;
+
+    public String getCreatedate() {
+        return createdate;
+    }
+
+    public void setCreatedate(String createdate) {
+        this.createdate = createdate;
+    }
+
     //综合状态
 
     public int getActstock() {
@@ -80,6 +90,16 @@ public class CouponListVO {
     }
 
     private int cstatus;
+
+    private double amt;
+
+    public double getAmt() {
+        return amt;
+    }
+
+    public void setAmt(double amt) {
+        this.amt = amt;
+    }
 
     public long getCoupno() {
         return coupno;
