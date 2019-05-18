@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class ShoppingCartVO {
 
-    private String unqid;
+    private String unqid = "0";
 
     //商品SKU
     private long pdno;
@@ -67,7 +67,7 @@ public class ShoppingCartVO {
     /**
      * 优惠券码
      */
-    private String conpno;
+    private String conpno = "0";
 
     private long areano;
 

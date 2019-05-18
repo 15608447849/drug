@@ -37,7 +37,7 @@ public class OfferTipsVO {
     /**
      * 阶梯码
      */
-    private String unqid;
+    private String unqid = "0";
 
     /**
      * 下一个阶梯数量
