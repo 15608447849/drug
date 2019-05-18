@@ -23,6 +23,7 @@ public class TranOrderGoods {
     private int cstatus;
     private int pnum;//商品数量
     private String actcode;//活动码(前台传数组)
+    private double balamt; // 余额
 
     private String pname;  // 商品名
     private String pspec; // 商品规格
@@ -46,8 +47,6 @@ public class TranOrderGoods {
     public void setStandarNo(String standarNo) {
         this.standarNo = standarNo;
     }
-
-    private double balamt; //余额
 
     public double getBalamt() {
         return balamt;
