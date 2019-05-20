@@ -30,6 +30,7 @@ public class CouponFilterService extends BaseDiscountFilterService {
             + " AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate "
             + " AND unqid = ? ";
 
+    //远程调用
     private static final String CHECK_SKU =
             " SELECT COUNT(0) "
             + " FROM {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
@@ -67,6 +68,7 @@ public class CouponFilterService extends BaseDiscountFilterService {
 
     private boolean checkSKU(long sku) {
         String[] productCodes = getProductCode(sku);
+        //远程调用
         List<Object[]> check = IceRemoteUtil.queryNative(CHECK_SKU,
                 this.couent.getCoupno(), sku,
                 productCodes[0], productCodes[1], productCodes[2]);

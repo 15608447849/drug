@@ -69,20 +69,20 @@ public class PayModule {
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,settstatus=?,"
             + "settdate=?,setttime=?, payway=? where cstatus&1=0 and orderno=? and ostatus=? ";
 
-    //释放商品冻结库存
+    //释放商品冻结库存 远程调用
     private static final String UPD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "store=store-?, freezestore=freezestore-? where cstatus&1=0 and sku=? ";
 
-    //更新活动库存
+    //更新活动库存 远程调用
     private static final String UPD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
             + "actstock=actstock-? where cstatus&1=0 and gcode=? and actcode=?";
 
 
-    //取消时加库存
+    //取消时加库存 远程调用
     private static final String ADD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "store=store+? where cstatus&1=0 and sku=? ";
 
-    //取消时加活动库存
+    //取消时加活动库存 远程调用
     private static final String ADD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
             + "actstock=actstock+? where cstatus&1=0 and gcode=? and actcode=? ";
 
@@ -510,8 +510,9 @@ public class PayModule {
                 paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
             }
         }
-        baseDao.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
-        //更新活动库存
+        //远程调用
+        IceRemoteUtil.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+        //更新活动库存 远程调用
         IceRemoteUtil.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size());
     }
 
@@ -536,8 +537,9 @@ public class PayModule {
                 paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
             }
         }
-        baseDao.updateBatchNative(ADD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
-        //更新活动库存
+        //远程调用
+        IceRemoteUtil.updateBatchNative(ADD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+        //更新活动库存 远程调用
         IceRemoteUtil.updateBatchNative(ADD_ACT_STORE, paramsTwo, paramsTwo.size());
     }
 

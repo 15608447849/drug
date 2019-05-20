@@ -43,7 +43,7 @@ public class CouponListFilterService extends BaseDiscountFilterService {
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where compid = ? and cstatus = 0 AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate ";
 
-
+    //远程调用
     private static final String CHECK_SKU =
             " SELECT COUNT(0) "
             + " FROM {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
@@ -93,8 +93,8 @@ public class CouponListFilterService extends BaseDiscountFilterService {
     }
 
     private boolean checkSKU(List<Product> skus,CouponPubVO couent) {
-        List<Object[]> check = IceRemoteUtil.queryNative(getSkusSql(skus),
-                couent.getCoupno());
+        //远程调用
+        List<Object[]> check = IceRemoteUtil.queryNative(getSkusSql(skus), couent.getCoupno());
         return StringUtils.isBiggerZero(check.get(0)[0].toString());
     }
 

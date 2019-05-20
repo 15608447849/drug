@@ -39,6 +39,7 @@ import java.util.List;
  **/
 public class SecKillModule {
 
+    //远程调用
     private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
@@ -155,7 +156,8 @@ public class SecKillModule {
 
 
     public ShoppingCartVO getCartSku(long actno,String sku){
-        List<Object[]> queryResult = IceRemoteUtil.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{ actno, sku});
+        //远程调用
+        List<Object[]> queryResult = IceRemoteUtil.queryNative(ACT_PROD_BY_ACTCODE_SQL, actno, sku);
 
         if (queryResult.isEmpty()) {
             return null;
