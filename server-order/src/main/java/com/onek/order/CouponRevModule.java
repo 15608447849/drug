@@ -9,7 +9,6 @@ import com.onek.calculate.entity.*;
 import com.onek.calculate.util.DiscountUtil;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
-import com.onek.entity.ActivityGiftVO;
 import com.onek.entity.CouponPubLadderVO;
 import com.onek.entity.CouponPubVO;
 import com.onek.entity.CouponUseDTO;
@@ -19,7 +18,6 @@ import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 import util.*;
 
 import java.math.BigDecimal;
@@ -124,21 +122,6 @@ public class CouponRevModule {
     private final static String QUERY_ORDER_PRODUCT = "select pdno,pnum,convert(pdprice/100,decimal(10,2)) pdprice from {{?"+DSMConst.TD_TRAN_ORDER+"}} orders, "+
             "{{?"+DSMConst.TD_TRAN_GOODS+"}} goods where orders.orderno = goods.orderno and orders.orderno = ? "+
             " and orders.ostatus > 0 and orders.cstatus &1 = 0 and goods.cstatus & 1 = 0 ";
-
-    private final String QUERY_COUPON_ACT = "select unqid,brulecode,validday,validflag,actstock,reqflag from " +
-            "{{?"+DSMConst.TD_PROM_COUPON+"}}  where cstatus & 128 > 0 and brulecode = ? and  cstatus & 1 = 0 ";
-
-
-    private final String QUERY_ACTCOUPON_LADD = "select lad.unqid,lad.ladamt,lad.ladnum,lad.offercode,lad.offer from {{?"+
-            DSMConst.TD_PROM_RELA +"}} rela,{{?"+DSMConst.TD_PROM_LADOFF+"}} lad where rela.ladid = lad.unqid and rela.actcode = ? "+
-            "  and rela.cstatus & 1 = 0 and lad.cstatus & 1 = 0 ";
-
-
-    //新增领取活动优惠券
-    private final String INSERT_ACTCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
-            + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
-            + "rulename,goods,ladder,glbno,ctype,reqflag,actcode,cstatus) "
-            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 
     private final static String INSERT_GLBCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
@@ -338,7 +321,7 @@ public class CouponRevModule {
                 return result.success("已领取过该优惠券！");
             }
         }
-        List<Object[]> crdResult = baseDao.queryNative(QUERY_COURCD_EXT, new Object[]{couponVO.getCompid(), couponVO.getCoupno()});
+        List<Object[]> crdResult = IceRemoteUtil.queryNative(QUERY_COURCD_EXT, new Object[]{couponVO.getCompid(), couponVO.getCoupno()});
         int ret = 0;
         long rcdid = 0L;
         if(crdResult == null || crdResult.isEmpty()){
@@ -347,24 +330,24 @@ public class CouponRevModule {
             if(couponVO.getQlfno() == 1){
                 cstatus = 64;
             }
-            ret = baseDao.updateNative(INSERT_COURCD,
+            ret = IceRemoteUtil.updateNative(INSERT_COURCD,
                     new Object[]{rcdid,couponVO.getCoupno(),
                             couponVO.getCompid(),0,cstatus});
         }else{
             rcdid = Long.parseLong(crdResult.get(0)[0].toString());
-            ret = baseDao.updateNative(UPDATE_COURCD,
+            ret = IceRemoteUtil.updateNative(UPDATE_COURCD,
                     new Object[]{rcdid});
         }
 
         if(ret > 0){
             try{
                 if(insertCoupon(couponVO) > 0){
-                    baseDao.updateNative(UPDATE_COUPON_STOCK,
+                    IceRemoteUtil.updateNative(UPDATE_COUPON_STOCK,
                             new Object[]{couponVO.getCoupno()});
                     return result.success("领取成功");
                 }else{
                     //删除优惠记录
-                    baseDao.updateNative(DEL_COURCD,rcdid);
+                    IceRemoteUtil.updateNative(DEL_COURCD,rcdid);
                 }
             }catch (Exception e){
                 baseDao.updateNative(DEL_COURCD,rcdid);
@@ -782,7 +765,7 @@ public class CouponRevModule {
         String[] nativeSQL = new String[sqlList.size()];
         nativeSQL = sqlList.toArray(nativeSQL);
         if(nativeSQL.length != 0){
-            baseDao.updateTransNative(nativeSQL,stockParams);
+            IceRemoteUtil.updateTransNative(nativeSQL,stockParams);
         }
         return !ModelUtil.updateTransEmpty(result);
     }

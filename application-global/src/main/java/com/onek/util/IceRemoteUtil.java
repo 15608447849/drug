@@ -12,6 +12,8 @@ import com.onek.util.dict.DictEntity;
 import com.onek.util.fs.FileServerUtils;
 import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
+import com.onek.util.sqltransfer.SqlRemoteReq;
+import com.onek.util.sqltransfer.SqlRemoteResp;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
@@ -21,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @Author: leeping
@@ -653,7 +656,45 @@ public class IceRemoteUtil {
         return GsonUtils.json2List(json,Long.class);
     }
 
+    /**
+     * 调用全局服务,传递sql执行
+     */
+    public static int[] updateBatchNative(String sql,List<Object[]> params,int len){
+        String json = ic.setServerAndRequest("global",
+                "InternalCallModule","updateBatchNative")
+                .setJsonParams(new SqlRemoteReq(sql, params, len))
+                .execute();
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).resArr;
+    }
 
+    /**
+     *      List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(
+     *                 GET_ACTIVITIES_BY_SKU,
+     *                 sku, pclasses[0], pclasses[1], pclasses[2]);
+     */
+    public static  List<Object[]> queryNative(String sql,Object... params){
+        String json = ic.setServerAndRequest("global",
+                "InternalCallModule","queryNative")
+                .setJsonParams(new SqlRemoteReq(sql, params))
+                .execute();
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).lines;
+    }
+
+    public static int updateNative(String sql,final Object... params){
+        String json = ic.setServerAndRequest("global",
+                "InternalCallModule","updateNative")
+                .setJsonParams(new SqlRemoteReq(sql, params))
+                .execute();
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).res;
+    }
+
+    public static int[] updateTransNative(String[] sql,List<Object[]> params){
+        String json = ic.setServerAndRequest("global",
+                "InternalCallModule","updateTransNative")
+                .setJsonParams(new SqlRemoteReq(sql, params))
+                .execute();
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).resArr;
+    }
 
 }
 

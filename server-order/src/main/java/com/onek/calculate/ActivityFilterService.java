@@ -5,6 +5,7 @@ import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
+import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.MathUtil;
@@ -47,7 +48,7 @@ public class ActivityFilterService extends BaseDiscountFilterService {
             return new ArrayList<>();
         }
 
-        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(
+        List<Object[]> queryResult = IceRemoteUtil.queryNative(
                 GET_ACTIVITIES_BY_SKU,
                 sku, pclasses[0], pclasses[1], pclasses[2]);
 

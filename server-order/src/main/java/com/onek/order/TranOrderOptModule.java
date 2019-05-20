@@ -26,20 +26,14 @@ import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.math.BigDecimal;
-import java.nio.channels.MulticastChannel;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.onek.order.PayModule.*;
-import static com.onek.util.SmsTempNo.isSmsAllow;
-import static constant.DSMConst.TD_TRAN_COLLE;
-import static util.TimeUtils.getCurrentYear;
 
 /**
  * @author 11842
@@ -370,7 +364,7 @@ public class TranOrderOptModule {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             paramOne.add(new Object[]{tranOrderGoods.getPnum(), tranOrderGoods.getPdno()});
         }
-        return !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(UPD_GOODS, paramOne, tranOrderGoodsList.size()));
+        return !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS, paramOne, tranOrderGoodsList.size()));
     }
 
     /* *
@@ -694,7 +688,7 @@ public class TranOrderOptModule {
             params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
         }
         if (type == 0) {//线上支付释放锁定库存
-            baseDao.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
+            IceRemoteUtil.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
         }
     }
 

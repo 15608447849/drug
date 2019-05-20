@@ -1,6 +1,5 @@
 package com.onek.util;
 
-import IceInternal.Ex;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.consts.ESConstant;
@@ -300,7 +299,7 @@ public class OrderUtil {
                     if((promtype & 4096) > 0 && !StringUtils.isEmpty(actCodeStr)){
                         List<Long> actCodeList = JSON.parseArray(actCodeStr).toJavaList(Long.class);
                         for (Long actCode: actCodeList) {
-                            baseDao.updateNative(INSERT_PROM_GROUP, GenIdUtil.getUnqId(), actCode, compid);
+                            IceRemoteUtil.updateNative(INSERT_PROM_GROUP, GenIdUtil.getUnqId(), actCode, compid);
                         }
 
                     }

@@ -4,6 +4,7 @@ import com.onek.calculate.entity.Couent;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
+import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.StringUtils;
@@ -66,7 +67,7 @@ public class CouponFilterService extends BaseDiscountFilterService {
 
     private boolean checkSKU(long sku) {
         String[] productCodes = getProductCode(sku);
-        List<Object[]> check = BaseDAO.getBaseDAO().queryNative(CHECK_SKU,
+        List<Object[]> check = IceRemoteUtil.queryNative(CHECK_SKU,
                 this.couent.getCoupno(), sku,
                 productCodes[0], productCodes[1], productCodes[2]);
 

@@ -14,6 +14,7 @@ import com.onek.entity.ShoppingCartVO;
 import com.onek.entitys.Result;
 import com.onek.service.AccessLimitService;
 import com.onek.service.impl.AccessLimitServiceImpl;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.order.RedisOrderUtil;
@@ -154,7 +155,7 @@ public class SecKillModule {
 
 
     public ShoppingCartVO getCartSku(long actno,String sku){
-        List<Object[]> queryResult = baseDao.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{ actno, sku});
+        List<Object[]> queryResult = IceRemoteUtil.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{ actno, sku});
 
         if (queryResult.isEmpty()) {
             return null;
