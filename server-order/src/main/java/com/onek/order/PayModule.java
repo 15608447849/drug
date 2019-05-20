@@ -5,9 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
-import com.onek.consts.ESConstant;
-import com.onek.consts.IntegralConstant;
-import com.onek.consts.MessageEvent;
 import com.onek.context.AppContext;
 import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
@@ -16,21 +13,14 @@ import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
-import com.onek.util.*;
-import com.onek.util.area.AreaEntity;
+import com.onek.util.GLOBALConst;
+import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
+import com.onek.util.OrderUtil;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.fs.FileServerUtils;
-import com.onek.util.member.MemberStore;
-import com.onek.util.order.RedisOrderUtil;
-import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import elasticsearch.ElasticSearchProvider;
-import org.apache.http.client.utils.DateUtils;
-import org.elasticsearch.action.get.GetResponse;
-import org.elasticsearch.action.update.UpdateResponse;
-import org.elasticsearch.rest.RestStatus;
-import redis.util.RedisUtil;
 import util.MathUtil;
 import util.ModelUtil;
 import util.StringUtils;
@@ -38,7 +28,10 @@ import util.TimeUtils;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.Map;
 
 import static com.onek.order.TranOrderOptModule.CANCEL_DELAYED;
 import static com.onek.order.TranOrderOptModule.getGoodsArr;
@@ -76,20 +69,20 @@ public class PayModule {
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,settstatus=?,"
             + "settdate=?,setttime=?, payway=? where cstatus&1=0 and orderno=? and ostatus=? ";
 
-    //释放商品冻结库存
+    //释放商品冻结库存 远程调用
     private static final String UPD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "store=store-?, freezestore=freezestore-? where cstatus&1=0 and sku=? ";
 
-    //更新活动库存
+    //更新活动库存 远程调用
     private static final String UPD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
             + "actstock=actstock-? where cstatus&1=0 and gcode=? and actcode=?";
 
 
-    //取消时加库存
+    //取消时加库存 远程调用
     private static final String ADD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "store=store+? where cstatus&1=0 and sku=? ";
 
-    //取消时加活动库存
+    //取消时加活动库存 远程调用
     private static final String ADD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
             + "actstock=actstock+? where cstatus&1=0 and gcode=? and actcode=? ";
 
@@ -517,9 +510,10 @@ public class PayModule {
                 paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
             }
         }
-        baseDao.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
-        //更新活动库存
-        baseDao.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size());
+        //远程调用
+        IceRemoteUtil.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+        //更新活动库存 远程调用
+        IceRemoteUtil.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size());
     }
 
 
@@ -543,9 +537,10 @@ public class PayModule {
                 paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
             }
         }
-        baseDao.updateBatchNative(ADD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
-        //更新活动库存
-        baseDao.updateBatchNative(ADD_ACT_STORE, paramsTwo, paramsTwo.size());
+        //远程调用
+        IceRemoteUtil.updateBatchNative(ADD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+        //更新活动库存 远程调用
+        IceRemoteUtil.updateBatchNative(ADD_ACT_STORE, paramsTwo, paramsTwo.size());
     }
 
     /* *

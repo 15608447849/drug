@@ -2,16 +2,16 @@ package com.onek.entity;
 
 public class TranTransVO {
 
-    private long unqid;
+    private String unqid;
     private int compid;
-    private long orderno;
+    private String orderno;
     private int payno;
     private int payprice;
 
     private int payway;
     private int paysource;
     private int paystatus;
-    private long payorderno;
+    private String payorderno;
     private String tppno;
 
     private String paydate;
@@ -20,11 +20,11 @@ public class TranTransVO {
     private String completetime;
     private int cstatus;
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 
@@ -36,11 +36,11 @@ public class TranTransVO {
         this.compid = compid;
     }
 
-    public long getOrderno() {
+    public String getOrderno() {
         return orderno;
     }
 
-    public void setOrderno(long orderno) {
+    public void setOrderno(String orderno) {
         this.orderno = orderno;
     }
 
@@ -84,11 +84,11 @@ public class TranTransVO {
         this.paystatus = paystatus;
     }
 
-    public long getPayorderno() {
+    public String getPayorderno() {
         return payorderno;
     }
 
-    public void setPayorderno(long payorderno) {
+    public void setPayorderno(String payorderno) {
         this.payorderno = payorderno;
     }
 

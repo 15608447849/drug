@@ -9,9 +9,9 @@ public class ProdVO {
     private String popname;
     private String prodname;
     private String standarNo;
-    private long brandNo;
+    private String brandNo;
     private String brandName;
-    private long manuNo;
+    private String manuNo;
     private String manuName;
 
     /* ----------- 商品SKU表 ------------- */
@@ -86,11 +86,11 @@ public class ProdVO {
         this.standarNo = standarNo;
     }
 
-    public long getBrandNo() {
+    public String getBrandNo() {
         return brandNo;
     }
 
-    public void setBrandNo(long brandNo) {
+    public void setBrandNo(String brandNo) {
         this.brandNo = brandNo;
     }
 
@@ -102,11 +102,11 @@ public class ProdVO {
         this.brandName = brandName;
     }
 
-    public long getManuNo() {
+    public String getManuNo() {
         return manuNo;
     }
 
-    public void setManuNo(long manuNo) {
+    public void setManuNo(String manuNo) {
         this.manuNo = manuNo;
     }
 

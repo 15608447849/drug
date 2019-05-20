@@ -10,7 +10,7 @@ package com.onek.discount.entity;
 public class LadderVO {
 
     //阶梯码
-    private long unqid;
+    private String unqid;
 
     //金额阶梯值
     private double ladamt;
@@ -26,7 +26,7 @@ public class LadderVO {
     //综合状态
     private int cstatus;
 
-    private long assgiftno;//赠换商品码
+    private String assgiftno;//赠换商品码
 
     private String giftname;//商品名称
 
@@ -62,11 +62,11 @@ public class LadderVO {
         this.cstatus = cstatus;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 
@@ -78,11 +78,11 @@ public class LadderVO {
         this.offercode = offercode;
     }
 
-    public long getAssgiftno() {
+    public String getAssgiftno() {
         return assgiftno;
     }
 
-    public void setAssgiftno(long assgiftno) {
+    public void setAssgiftno(String assgiftno) {
         this.assgiftno = assgiftno;
     }
 

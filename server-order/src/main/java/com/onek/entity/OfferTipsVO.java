@@ -37,7 +37,7 @@ public class OfferTipsVO {
     /**
      * 阶梯码
      */
-    private long unqid;
+    private String unqid = "0";
 
     /**
      * 下一个阶梯数量
@@ -114,11 +114,11 @@ public class OfferTipsVO {
         this.offer = offer;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 

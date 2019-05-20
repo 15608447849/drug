@@ -169,8 +169,9 @@ public class ProdModule {
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+        String brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
 
-        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, pageIndex, pageSize);
+        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, brandno, pageIndex, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         assembleData(appContext, response, prodList);
 
@@ -368,8 +369,9 @@ public class ProdModule {
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+        String brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
 
-        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, pageIndex, pageSize);
+        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, brandno, pageIndex, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         assembleData(appContext, response, prodList);
 
@@ -979,9 +981,9 @@ public class ProdModule {
                 prodVO.setPopname(detail.get("popname") != null ? detail.get("popname").toString() : "");
                 prodVO.setProdname(detail.get("prodname") != null ? detail.get("prodname").toString() : "");
                 prodVO.setStandarNo(detail.get("standarNo") != null ? detail.get("standarNo").toString() : "");
-                prodVO.setBrandNo(detail.get("brandNo") != null ? Long.parseLong(detail.get("brandNo").toString()) : 0);
+                prodVO.setBrandNo(detail.get("brandNo") != null ? detail.get("brandNo").toString() : "");
                 prodVO.setBrandName(detail.get("brandName") != null ? detail.get("brandName").toString() : "");
-                prodVO.setManuNo(detail.get("manuNo") != null ? Long.parseLong(detail.get("manuNo").toString()) : 0);
+                prodVO.setManuNo(detail.get("manuNo") != null ? detail.get("manuNo").toString() : "");
                 prodVO.setManuName(detail.get("manuName") != null ? detail.get("manuName").toString() : "");
 
                 prodVO.setSku(detail.get("sku") != null ? Long.parseLong(detail.get("sku").toString()) : 0);

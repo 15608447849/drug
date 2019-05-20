@@ -22,13 +22,13 @@ public class CouponPubLadderVO {
     private double offer;
 
     //阶梯码
-    private long unqid;
+    private String unqid = "0";
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 

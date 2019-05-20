@@ -66,7 +66,7 @@ public class CalculateModule {
         jsonObject.put("minLimit", minLimit);
         jsonObject.put("maxBuyed", maxBuyed);
 
-        return new Result().success(discounts);
+        return new Result().success(jsonObject);
     }
 
     public Result getGoodsActInfo(AppContext appContext) {

@@ -14,7 +14,9 @@ import util.MathUtil;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 public class ProdDiscountObserver implements ProdObserver {
@@ -27,6 +29,7 @@ public class ProdDiscountObserver implements ProdObserver {
         if (list != null && list.size() > 0) {
             List<JSONObject> failList = new ArrayList<>();
 
+            Map<String,String> actStockMap = new HashMap<>();
             for (String obj : list) {
                 JSONObject jsonObject = JSONObject.parseObject(obj);
                 if (jsonObject == null || !jsonObject.containsKey("discount")) {
@@ -37,30 +40,28 @@ public class ProdDiscountObserver implements ProdObserver {
                     long actcode = Long.parseLong(jsonObject.get("actcode").toString());
                     int stock = Integer.parseInt(jsonObject.get("stock").toString());
                     int rulecode = Integer.parseInt(jsonObject.get("rulecode").toString());
+                    int limitnum = 0;
+                    if (jsonObject.containsKey("limitnum")) {
+                        limitnum = Integer.parseInt(jsonObject.get("limitnum").toString());
+                    }
                     int result = 0;
                     if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 256) > 0) {
                         if (stock > 0 && stock < 100) {
                             int s = RedisStockUtil.getStock(Long.parseLong(gcode));
                             double rate = MathUtil.exactDiv(stock, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             int ns = MathUtil.exactMul(s, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
-                            result = RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, ns);
+                            result = RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, ns, limitnum);
+                            actStockMap.put(gcode+"", ns+"");
                         }
                     } else {
-                        if (Integer.parseInt(jsonObject.get("cstatus").toString()) == 0) {
-                            result = RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, stock);
+                        if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 1) > 0) {
+                            result = RedisStockUtil.clearActStock(Long.parseLong(gcode), actcode).intValue();
+                            actStockMap.put(gcode+"", "0");
 
-                        }
-                    }
+                        } else {
+                            result = RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, stock, limitnum);
+                            actStockMap.put(gcode+"", stock+"");
 
-
-                    if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 1) > 0) {
-                        result = RedisStockUtil.clearActStock(Long.parseLong(gcode), actcode);
-
-                    }
-                    if (jsonObject.containsKey("limitnum")) {
-                        int limitnum = Integer.parseInt(jsonObject.get("limitnum").toString());
-                        if (limitnum > 0) {
-                            RedisOrderUtil.setActLimit(Long.parseLong(gcode), actcode, limitnum);
                         }
                     }
 
@@ -85,7 +86,8 @@ public class ProdDiscountObserver implements ProdObserver {
                         if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 1) > 0) { // 删除
                             List<Long> skuList = IceRemoteUtil.querySkuListByCondition(Long.parseLong(gcode));
                             for (Long sku : skuList) {
-                                int result = RedisStockUtil.clearActStock(sku, actcode);
+                                int result = RedisStockUtil.clearActStock(sku, actcode).intValue();
+                                actStockMap.put(sku+"", "0");
                                 if (result <= 0) {
                                     JSONObject j = new JSONObject();
                                     j.put("discount", 1);
@@ -107,11 +109,10 @@ public class ProdDiscountObserver implements ProdObserver {
                                     int result = 0;
                                     if (s > 0) {
                                         int ns = MathUtil.exactMul(s, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
-                                        LogUtil.getDefaultLogger().info("++++++@@@@@@@@@@ actcode:[" + actcode + "]; sku:[" + sku + "]; stock:[" + ns + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
-                                        result = RedisStockUtil.setActStock(sku, actcode, ns);
-                                        if (limitnum > 0) {
-                                            RedisOrderUtil.setActLimit(sku, actcode, limitnum);
-                                        }
+                                        LogUtil.getDefaultLogger().info("++++++@@@@@@@@@@ stockrate actcode:[" + actcode + "]; sku:[" + sku + "]; stock:[" + ns + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
+                                        result = RedisStockUtil.setActStock(sku, actcode, ns, limitnum);
+                                        actStockMap.put(sku+"", ns+"");
+
                                         if (result <= 0) {
                                             JSONObject j = new JSONObject();
                                             j.put("discount", 1);
@@ -134,17 +135,16 @@ public class ProdDiscountObserver implements ProdObserver {
                             int s = RedisStockUtil.getStock(sku);
                             int result = 0;
                             if (s > 0) {
-                                LogUtil.getDefaultLogger().info("++++++@@@@@@@@@@ actcode:[" + actcode + "]; sku:[" + sku + "]; stock:[" + s + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
+                                LogUtil.getDefaultLogger().info("++++++@@@@@@@@@@ stocknum actcode:[" + actcode + "]; sku:[" + sku + "]; stock:[" + s + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
                                 if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 1) > 0) {
-                                    result = RedisStockUtil.clearActStock(sku, actcode);
+                                    result = RedisStockUtil.clearActStock(sku, actcode).intValue();
+                                    actStockMap.put(sku+"", "0");
 
                                 }else{
-                                    result = RedisStockUtil.setActStock(sku, actcode, stock);
+                                    result = RedisStockUtil.setActStock(sku, actcode, stock, limitnum);
+                                    actStockMap.put(sku+"", stock+"");
                                 }
 
-                                if (limitnum > 0) {
-                                    RedisOrderUtil.setActLimit(sku, actcode, limitnum);
-                                }
                                 if (result <= 0) {
                                     JSONObject j = new JSONObject();
                                     j.put("discount", 1);
@@ -164,6 +164,12 @@ public class ProdDiscountObserver implements ProdObserver {
                         }
                     }
                 }
+            }
+
+            if(actStockMap != null && actStockMap.size() > 0){
+                JSONObject jsonObject = JSONObject.parseObject(list.get(0));
+                String act_code = jsonObject.get("actcode").toString();
+                RedisUtil.getHashProvide().putHashMap(RedisGlobalKeys.ACT_PREFIX + act_code, actStockMap);
             }
 
 

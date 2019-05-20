@@ -12,7 +12,7 @@ public class ShoppingCartDTO {
     //商品SKU
     private long pdno;
 
-    private long conpno;
+    private String conpno = "0";
 
     private int pnum;
 
@@ -20,7 +20,7 @@ public class ShoppingCartDTO {
 
     private int checked;
 
-    private long unqid;
+    private String unqid = "0";
 
     private int cstatus;
 
@@ -54,11 +54,11 @@ public class ShoppingCartDTO {
         return pdno;
     }
 
-    public long getConpno() {
+    public String getConpno() {
         return conpno;
     }
 
-    public void setConpno(long conpno) {
+    public void setConpno(String conpno) {
         this.conpno = conpno;
     }
 
@@ -82,11 +82,11 @@ public class ShoppingCartDTO {
         this.compid = compid;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 }

@@ -1,6 +1,5 @@
 package com.onek.util;
 
-import IceInternal.Ex;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.consts.ESConstant;
@@ -41,11 +40,12 @@ public class OrderUtil {
 
     private static final String GET_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,balamt,orderno,IFNULL(address,'') address,pdnum,IFNULL(consignee,'') consignee,IFNULL(contact,'') contact from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ?";
 
+    //远程调用
     private static final String INSERT_PROM_GROUP = "insert into {{?" + DSMConst.TD_PROM_GROUP + "}} (unqid,actcode,compid,joindate,jointime) values(?,?,?,CURRENT_DATE,CURRENT_TIME) ";
 
     private static final String QUERY_ORDER_GOODS = "select g.pdno,g.pnum,g.promtype,g.actcode from {{?" + DSMConst.TD_TRAN_ORDER + "}} o,{{?" + DSMConst.TD_TRAN_GOODS + "}} g" +
             " where g.orderno = o.orderno and o.orderno = ? and o.cusno = ?";
-
+    //远程调用
     private static final String UPDATE_SKU_SALES = "update {{?" + DSMConst.TD_PROD_SKU + "}} set sales = sales + ? where sku = ?";
 
     //订单交易表新增
@@ -286,7 +286,8 @@ public class OrderUtil {
                         }
                     }
                     if(updateSuccess){
-                        BaseDAO.getBaseDAO().updateNative(UPDATE_SKU_SALES, new Object[]{ sales, sku});
+                        //远程调用
+                        IceRemoteUtil.updateNative(UPDATE_SKU_SALES, sales, sku);
                     }
                 }
 
@@ -300,7 +301,7 @@ public class OrderUtil {
                     if((promtype & 4096) > 0 && !StringUtils.isEmpty(actCodeStr)){
                         List<Long> actCodeList = JSON.parseArray(actCodeStr).toJavaList(Long.class);
                         for (Long actCode: actCodeList) {
-                            baseDao.updateNative(INSERT_PROM_GROUP, GenIdUtil.getUnqId(), actCode, compid);
+                            IceRemoteUtil.updateNative(INSERT_PROM_GROUP, GenIdUtil.getUnqId(), actCode, compid);//远程调用
                         }
 
                     }

@@ -12,7 +12,7 @@ import java.util.List;
  */
 public class CouponPubVO {
 
-    private long unqid;
+    private String unqid;
 
     /**
 
@@ -53,6 +53,36 @@ public class CouponPubVO {
     private int qlfno;
 
     private long qlfval;
+
+    private String startdate;
+
+    private String enddate;
+
+    private String exno;
+
+    public String getExno() {
+        return exno;
+    }
+
+    public void setExno(String exno) {
+        this.exno = exno;
+    }
+
+    public String getStartdate() {
+        return startdate;
+    }
+
+    public void setStartdate(String startdate) {
+        this.startdate = startdate;
+    }
+
+    public String getEnddate() {
+        return enddate;
+    }
+
+    public void setEnddate(String enddate) {
+        this.enddate = enddate;
+    }
 
     public int getQlfno() {
         return qlfno;
@@ -147,11 +177,11 @@ public class CouponPubVO {
         this.validflag = validflag;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 

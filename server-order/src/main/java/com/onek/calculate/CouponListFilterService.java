@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.onek.calculate.entity.Couent;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.entity.Product;
@@ -12,13 +11,13 @@ import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import com.onek.calculate.util.DiscountUtil;
 import com.onek.entity.CouponPubLadderVO;
 import com.onek.entity.CouponPubVO;
+import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.StringUtils;
 import util.TimeUtils;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -44,7 +43,7 @@ public class CouponListFilterService extends BaseDiscountFilterService {
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where compid = ? and cstatus = 0 AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate ";
 
-
+    //远程调用
     private static final String CHECK_SKU =
             " SELECT COUNT(0) "
             + " FROM {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
@@ -94,8 +93,8 @@ public class CouponListFilterService extends BaseDiscountFilterService {
     }
 
     private boolean checkSKU(List<Product> skus,CouponPubVO couent) {
-        List<Object[]> check = BaseDAO.getBaseDAO().queryNative(getSkusSql(skus),
-                couent.getCoupno());
+        //远程调用
+        List<Object[]> check = IceRemoteUtil.queryNative(getSkusSql(skus), couent.getCoupno());
         return StringUtils.isBiggerZero(check.get(0)[0].toString());
     }
 
@@ -166,7 +165,7 @@ public class CouponListFilterService extends BaseDiscountFilterService {
         return null;
     }
 
-    private CouponPubLadderVO getLadoffable(List<CouponPubLadderVO> ladoffs, double price) {
+    public static CouponPubLadderVO getLadoffable(List<CouponPubLadderVO> ladoffs, double price) {
         double ladAmt;
         boolean able;
 

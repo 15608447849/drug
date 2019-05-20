@@ -10,7 +10,7 @@ package com.onek.discount.entity;
 public class PromGiftVO {
 
     //赠换商品码
-    private long giftno;
+    private String giftno;
 
     //赠换商品名称
     private String giftname;
@@ -21,11 +21,11 @@ public class PromGiftVO {
     //综合状态码
     private int cstatus;
 
-    public long getGiftno() {
+    public String getGiftno() {
         return giftno;
     }
 
-    public void setGiftno(long giftno) {
+    public void setGiftno(String giftno) {
         this.giftno = giftno;
     }
 

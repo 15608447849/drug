@@ -9,7 +9,7 @@ import java.util.List;
  * @time 2019/4/1 13:46
  **/
 public class ActivityVO {
-    private long unqid;//活动码
+    private String unqid;//活动码
     private String actname;//活动名称
     private int incpriority;//互斥优先级
     private int cpriority;//兼容优先级
@@ -41,11 +41,11 @@ public class ActivityVO {
     //活动关联商品集合
 //    private List<GoodsVO> assDrugVOS;
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 

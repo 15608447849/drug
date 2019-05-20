@@ -21,7 +21,7 @@ public class CouponUseDTO {
 
     private double samt;
 
-    private long coupon;
+    private String coupon;
 
     private double shipfee;
 
@@ -33,15 +33,25 @@ public class CouponUseDTO {
         this.shipfee = shipfee;
     }
 
-    public long getCoupon() {
+    public String getCoupon() {
         return coupon;
     }
 
-    public void setCoupon(long coupon) {
+    public void setCoupon(String coupon) {
         this.coupon = coupon;
     }
 
     private int flag;
+
+    private int balway;
+
+    public int getBalway() {
+        return balway;
+    }
+
+    public void setBalway(int balway) {
+        this.balway = balway;
+    }
 
     public int getFlag() {
         return flag;

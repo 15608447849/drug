@@ -12,11 +12,11 @@ import java.util.List;
  */
 public class CouponPubVO {
 
-    private long unqid;
+    private String unqid = "0";
     /**
      * 优惠券码
      */
-    private long coupno;
+    private String coupno = "0";
 
     /**
      * 企业码
@@ -61,6 +61,16 @@ public class CouponPubVO {
     private int qlfno;
 
     private long qlfval;
+
+    private String exno;
+
+    public String getExno() {
+        return exno;
+    }
+
+    public void setExno(String exno) {
+        this.exno = exno;
+    }
 
     public int getQlfno() {
         return qlfno;
@@ -128,11 +138,11 @@ public class CouponPubVO {
         this.reqflag = reqflag;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 
@@ -166,11 +176,11 @@ public class CouponPubVO {
         this.ladderVOS = ladderVOS;
     }
 
-    public long getCoupno() {
+    public String getCoupno() {
         return coupno;
     }
 
-    public void setCoupno(long coupno) {
+    public void setCoupno(String coupno) {
         this.coupno = coupno;
     }
 

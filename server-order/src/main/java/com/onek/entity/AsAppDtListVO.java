@@ -11,7 +11,7 @@ public class AsAppDtListVO {
 
 
     private String orderno;//订单号
-    private long asno;//唯一码
+    private String asno = "0";//唯一码
     private int compid;//买家企业码
     private int astype;//售后类型(0 换货 1退款退货 2 仅退款 3 开发票)
     private int gstatus;//货物状态（0 已收到货  1 未收到货）
@@ -49,11 +49,11 @@ public class AsAppDtListVO {
         this.orderno = orderno;
     }
 
-    public long getAsno() {
+    public String getAsno() {
         return asno;
     }
 
-    public void setAsno(long asno) {
+    public void setAsno(String asno) {
         this.asno = asno;
     }
 

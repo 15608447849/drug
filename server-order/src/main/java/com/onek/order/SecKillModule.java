@@ -14,6 +14,7 @@ import com.onek.entity.ShoppingCartVO;
 import com.onek.entitys.Result;
 import com.onek.service.AccessLimitService;
 import com.onek.service.impl.AccessLimitServiceImpl;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.order.RedisOrderUtil;
@@ -38,6 +39,7 @@ import java.util.List;
  **/
 public class SecKillModule {
 
+    //远程调用
     private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
@@ -129,7 +131,7 @@ public class SecKillModule {
         if(shoppingCartVO != null){
             shoppingCartVO.setNum(stock);
             shoppingCartVO.setChecked(1);
-            shoppingCartVO.setUnqid(0);
+            shoppingCartVO.setUnqid("0");
             shoppingCartVO.setCounpon(0);
             shoppingCartVO.setAcamt(stock * shoppingCartVO.getDiscount());
             shoppingCartVO.setAmt(0);
@@ -154,7 +156,8 @@ public class SecKillModule {
 
 
     public ShoppingCartVO getCartSku(long actno,String sku){
-        List<Object[]> queryResult = baseDao.queryNative(ACT_PROD_BY_ACTCODE_SQL, new Object[]{ actno, sku});
+        //远程调用
+        List<Object[]> queryResult = IceRemoteUtil.queryNative(ACT_PROD_BY_ACTCODE_SQL, actno, sku);
 
         if (queryResult.isEmpty()) {
             return null;

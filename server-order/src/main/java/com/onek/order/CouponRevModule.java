@@ -9,7 +9,6 @@ import com.onek.calculate.entity.*;
 import com.onek.calculate.util.DiscountUtil;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
-import com.onek.entity.ActivityGiftVO;
 import com.onek.entity.CouponPubLadderVO;
 import com.onek.entity.CouponPubVO;
 import com.onek.entity.CouponUseDTO;
@@ -19,7 +18,6 @@ import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 import util.*;
 
 import java.math.BigDecimal;
@@ -68,16 +66,16 @@ public class CouponRevModule {
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where cstatus&1=0 and unqid = ?";
 
-
+    //远程调用
     private static final String INSERT_COURCD =  "insert into {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " (unqid,coupno,compid,offercode,gettime,cstatus) values (?,?,?,?,now(),?)";
-
+    //远程调用
     private static final String DEL_COURCD =  "update {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " SET cstatus = cstatus | " + CSTATUS.DELETE +" WHERE unqid = ? ";
-
+    //远程调用
     private static final String QUERY_COURCD_EXT =  "select unqid from  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " where compid = ? and coupno = ?  ";
-
+    //远程调用
     private static final String UPDATE_COURCD =  "update  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " set cstatus = 0,gettime = now() where unqid = ? ";
 
@@ -86,11 +84,11 @@ public class CouponRevModule {
 
 
 
-    //扣减优惠券库存
+    //扣减优惠券库存 远程调用
     private static final String UPDATE_COUPON_STOCK = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
             + " set actstock = actstock - 1 " +
             "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
-
+    //远程调用
     private static final String UPDATE_COUPON_STOCK_NUM = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
             + " set actstock = actstock - ? " +
             "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
@@ -106,6 +104,7 @@ public class CouponRevModule {
 
     /**
      * 查询活动优惠券
+     * 远程调用
      */
     private final static String QUERY_ACCOUP_SQL = "select unqid coupno,glbno,brulecode,validday,validflag,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} "+
             " where cstatus & 128 > 0 and brulecode = ? and cstatus & 1= 0 and actstock > 0 ";
@@ -125,21 +124,6 @@ public class CouponRevModule {
             "{{?"+DSMConst.TD_TRAN_GOODS+"}} goods where orders.orderno = goods.orderno and orders.orderno = ? "+
             " and orders.ostatus > 0 and orders.cstatus &1 = 0 and goods.cstatus & 1 = 0 ";
 
-    private final String QUERY_COUPON_ACT = "select unqid,brulecode,validday,validflag,actstock,reqflag from " +
-            "{{?"+DSMConst.TD_PROM_COUPON+"}}  where cstatus & 128 > 0 and brulecode = ? and  cstatus & 1 = 0 ";
-
-
-    private final String QUERY_ACTCOUPON_LADD = "select lad.unqid,lad.ladamt,lad.ladnum,lad.offercode,lad.offer from {{?"+
-            DSMConst.TD_PROM_RELA +"}} rela,{{?"+DSMConst.TD_PROM_LADOFF+"}} lad where rela.ladid = lad.unqid and rela.actcode = ? "+
-            "  and rela.cstatus & 1 = 0 and lad.cstatus & 1 = 0 ";
-
-
-    //新增领取活动优惠券
-    private final String INSERT_ACTCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
-            + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
-            + "rulename,goods,ladder,glbno,ctype,reqflag,actcode,cstatus) "
-            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-
 
     private final static String INSERT_GLBCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + "(unqid,coupno,compid,brulecode,rulename,glbno,ctype,cstatus,amt,gettime) "
@@ -149,8 +133,8 @@ public class CouponRevModule {
     //新增领取优惠券
     private final String INSERT_COUPON_EXCG_REV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
-            + "rulename,goods,ladder,glbno,cstatus,ctype) "
-            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+            + "rulename,goods,ladder,glbno,cstatus,ctype,excoupno) "
+            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
 
 
 
@@ -212,7 +196,7 @@ public class CouponRevModule {
         String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
         int ret = baseDao.updateNativeSharding(couponVO.getCompid(), TimeUtils.getCurrentYear(),INSERT_COUPON_EXCG_REV_SQL,new Object[]{unqid,couponVO.getCoupno(),
                 couponVO.getCompid(),startDate,"00:00:00","2099-01-01","00:00:00",couponVO.getBrulecode(),
-                couponVO.getRulename(),couponVO.getGoods(),ladderJson,couponVO.getGlbno(),0,3});
+                couponVO.getRulename(),couponVO.getGoods(),ladderJson,couponVO.getGlbno(),0,3,"0"});
         if(ret > 0){
             return result.success("新增成功");
         }
@@ -222,29 +206,29 @@ public class CouponRevModule {
 
 
     @UserPermission(ignore = true)
-    public Result insertRevOfflineCoupon(AppContext appContext) {
+    public long insertRevOfflineCoupon(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
-
         CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
         long unqid = GenIdUtil.getUnqId();
 
 //        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
 //        Date curDate = new Date();
 //        String startDate = dateFormat.format(curDate);
-        couponVO.setEnddate("2099-01-01");
-        if(couponVO.getValidday() > 0){
-            setCoupValidDay(couponVO);
-        }
+        //couponVO.setEnddate("2099-01-01");
+//        if(couponVO.getValidday() > 0){
+//            setCoupValidDay(couponVO);
+//        }
 
         String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
         int ret = baseDao.updateNativeSharding(couponVO.getCompid(), TimeUtils.getCurrentYear(),INSERT_COUPON_EXCG_REV_SQL,new Object[]{unqid,couponVO.getCoupno(),
                 couponVO.getCompid(),couponVO.getStartdate(),"00:00:00",couponVO.getEnddate(),"00:00:00",couponVO.getBrulecode(),
-                couponVO.getRulename(),couponVO.getGoods(),ladderJson,couponVO.getGlbno(),6});
+                couponVO.getRulename(),couponVO.getGoods(),ladderJson,0,0,6,couponVO.getExno()});
+
         if(ret > 0){
-            return result.success("新增成功");
+            return unqid;
         }
-        return result.fail("新增失败");
+        return 0;
     }
 
     /**
@@ -326,19 +310,21 @@ public class CouponRevModule {
         String json = appContext.param.json;
         CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
 
+        assert couponVO != null;
         if(couponVO.getCompid() <= 0){
             return result.fail("用户未登陆或未认证！");
         }
         List<Object[]> extCoup = baseDao.queryNativeSharding(couponVO.getCompid(),
                 TimeUtils.getCurrentYear(), QUERY_COUP_EXT_SQL,
-                new Object[]{couponVO.getCompid(),
-                        couponVO.getCoupno()});
+                couponVO.getCompid(),
+                couponVO.getCoupno());
         if(extCoup != null && !extCoup.isEmpty()){
             if(Integer.parseInt(extCoup.get(0)[0].toString()) > 0){
                 return result.success("已领取过该优惠券！");
             }
         }
-        List<Object[]> crdResult = baseDao.queryNative(QUERY_COURCD_EXT, new Object[]{couponVO.getCompid(), couponVO.getCoupno()});
+        //远程调用
+        List<Object[]> crdResult = IceRemoteUtil.queryNative(QUERY_COURCD_EXT, couponVO.getCompid(), couponVO.getCoupno());
         int ret = 0;
         long rcdid = 0L;
         if(crdResult == null || crdResult.isEmpty()){
@@ -347,27 +333,28 @@ public class CouponRevModule {
             if(couponVO.getQlfno() == 1){
                 cstatus = 64;
             }
-            ret = baseDao.updateNative(INSERT_COURCD,
-                    new Object[]{rcdid,couponVO.getCoupno(),
-                            couponVO.getCompid(),0,cstatus});
+            //远程调用
+            ret = IceRemoteUtil.updateNative(INSERT_COURCD,
+                    rcdid,couponVO.getCoupno(),
+                            couponVO.getCompid(),0,cstatus);
         }else{
             rcdid = Long.parseLong(crdResult.get(0)[0].toString());
-            ret = baseDao.updateNative(UPDATE_COURCD,
-                    new Object[]{rcdid});
+            //远程调用
+            ret = IceRemoteUtil.updateNative(UPDATE_COURCD, rcdid);
         }
 
         if(ret > 0){
             try{
                 if(insertCoupon(couponVO) > 0){
-                    baseDao.updateNative(UPDATE_COUPON_STOCK,
-                            new Object[]{couponVO.getCoupno()});
+                    //远程调用
+                    IceRemoteUtil.updateNative(UPDATE_COUPON_STOCK, couponVO.getCoupno());
                     return result.success("领取成功");
                 }else{
-                    //删除优惠记录
-                    baseDao.updateNative(DEL_COURCD,rcdid);
+                    //远程调用,删除优惠记录
+                    IceRemoteUtil.updateNative(DEL_COURCD,rcdid);
                 }
             }catch (Exception e){
-                baseDao.updateNative(DEL_COURCD,rcdid);
+                IceRemoteUtil.updateNative(DEL_COURCD,rcdid);
                 e.printStackTrace();
             }
         }
@@ -497,7 +484,92 @@ public class CouponRevModule {
         }
         int compid = couponUseDTOS.get(0).getCompid();
         DiscountResult calculate = CalculateUtil.calculate(compid,
-                productList, couponUseDTOS.get(0).getCoupon());
+                productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
+
+        resultMap.put("tprice",subCalRet.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+        resultMap.put("tdiscount",calculate.getTotalDiscount());
+        resultMap.put("cpvalue",calculate.getCouponValue());
+        double acvalue = MathUtil.exactSub(calculate.getTotalDiscount(), calculate.getCouponValue()).
+                setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+        resultMap.put("acvalue",acvalue);
+        resultMap.put("freeship",calculate.isFreeShipping());
+
+        double payamt = calculate.getTotalCurrentPrice();
+        double sfee = couponUseDTOS.get(0).getShipfee();
+        if(!calculate.isFreeShipping()){
+            payamt = MathUtil.exactAdd(calculate.getTotalCurrentPrice(), sfee).
+                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+        }
+
+        double bal = IceRemoteUtil.queryCompBal(compid);
+        bal = MathUtil.exactDiv(bal,100L).
+                setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+        resultMap.put("bal",bal);
+        resultMap.put("debal",0);
+        resultMap.put("acpay",payamt);
+        resultMap.put("payamt",payamt);
+        resultMap.put("payflag",0);
+        if(couponUseDTOS.get(0).getBalway() > 0 && bal > 0){
+            resultMap.put("bal",bal);
+            if(bal >= payamt){
+                resultMap.put("debal",payamt);
+                resultMap.put("acpay",0);
+                resultMap.put("payflag",1);
+            }else{
+                resultMap.put("debal",bal);
+                resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            }
+        }
+        return result.success(resultMap);
+    }
+
+
+    /**
+     * 计算线下优惠券价格
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result offlineCouponCalculate(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+        Result result = new Result();
+
+        Map resultMap = new HashMap();
+        List<CouponUseDTO> couponUseDTOS = new ArrayList<>();
+        Gson gson = new Gson();
+        List<Product> productList = new ArrayList<>();
+        BigDecimal subCalRet = BigDecimal.ZERO;
+        for (JsonElement coupn : jsonArray) {
+            CouponUseDTO couponUseDTO = gson.fromJson(coupn, CouponUseDTO.class);
+            if (couponUseDTO != null) {
+                couponUseDTOS.add(couponUseDTO);
+                Product product = new Product();
+                product.setSku(couponUseDTO.getPdno());
+                product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
+                productList.add(product);
+            }
+        }
+
+
+        int compid = couponUseDTOS.get(0).getCompid();
+
+        boolean excoupon = false;
+        if(couponUseDTOS.get(0).getFlag() == 1){
+            excoupon = true;
+        }
+
+        Map<String, String> verifyResult
+                = verifyCoupon(productList, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
+
+        resultMap.put("code",verifyResult.get("code"));
+        resultMap.put("msg",verifyResult.get("msg"));
+
+        DiscountResult calculate = CalculateUtil.calculate(compid,
+                productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
 
         resultMap.put("tprice",subCalRet.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
         resultMap.put("tdiscount",calculate.getTotalDiscount());
@@ -514,14 +586,15 @@ public class CouponRevModule {
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
         }
         double bal = IceRemoteUtil.queryCompBal(compid);
+        bal = MathUtil.exactDiv(bal,100L).
+                setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+
         resultMap.put("bal",0);
         resultMap.put("debal",0);
         resultMap.put("acpay",payamt);
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
-        if(bal > 0){
-            bal = MathUtil.exactDiv(bal,100L).
-                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+        if(couponUseDTOS.get(0).getBalway() > 0  && bal > 0){
             resultMap.put("bal",bal);
             if(bal >= payamt){
                 resultMap.put("debal",payamt);
@@ -647,7 +720,8 @@ public class CouponRevModule {
                         break;
                 }
 
-                List<Object[]> queryResult = baseDao.queryNative(QUERY_ACCOUP_SQL, brule);
+                //远程调用
+                List<Object[]> queryResult = IceRemoteUtil.queryNative(QUERY_ACCOUP_SQL, brule);
 
                 if (queryResult == null || queryResult.isEmpty()) {
                     break;
@@ -661,14 +735,14 @@ public class CouponRevModule {
 
                 CouponPubVO couponResult = setCoupValidDay(couponPubVOS[0]);
                 CouponPubLadderVO couponPubLadderVO = new CouponPubLadderVO();
-                couponPubLadderVO.setUnqid(0);
+                couponPubLadderVO.setUnqid("0");
 
                 couponPubLadderVO.setOffercode(Integer.parseInt(brule+"201"));
                 couponPubLadderVO.setOffer(gift.getGiftValue());
                 couponResult.setLadder(GsonUtils.
                         javaBeanToJson(new CouponPubLadderVO[]{couponPubLadderVO}));
 
-                sqlList.add(UPDATE_COUPON_STOCK_NUM);
+                sqlList.add(UPDATE_COUPON_STOCK_NUM);//远程调用
                 stockParams.add(new Object[]{gift.getNums(),couponResult.getCoupno()});
                 for (int i = 0; i < gift.getNums(); i++){
                     if(brule == 2110){
@@ -696,7 +770,7 @@ public class CouponRevModule {
         String[] nativeSQL = new String[sqlList.size()];
         nativeSQL = sqlList.toArray(nativeSQL);
         if(nativeSQL.length != 0){
-            baseDao.updateTransNative(nativeSQL,stockParams);
+            IceRemoteUtil.updateTransNative(nativeSQL,stockParams);//远程调用
         }
         return !ModelUtil.updateTransEmpty(result);
     }
@@ -834,6 +908,71 @@ public class CouponRevModule {
             return result.success("领取成功");
         }
         return result.fail("领取失败");
+    }
+
+
+    public Map<String,String> verifyCoupon(List<Product> productList,boolean excoupon,
+                                           long coupid,int compid){
+
+        Map<String,String> map = new HashMap<>();
+        map.put("code","0");
+        map.put("msg","");
+
+        if(excoupon){
+            map.put("msg","当前活动排斥优惠券！");
+            return map;
+        }
+
+
+        String query_coup = "select unqid,coupno,compid," +
+                "DATE_FORMAT(startdate,'%Y-%m-%d') startdate," +
+                "DATE_FORMAT(enddate,'%Y-%m-%d') enddate,brulecode,rulename,goods,ladder," +
+                "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
+                " where unqid = ? " +
+                " and cstatus = 0 AND startdate <= CURRENT_DATE AND CURRENT_DATE <= enddate ";
+
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
+                compid, TimeUtils.getCurrentYear(),
+                query_coup,coupid);
+
+        if (queryResult == null || queryResult.isEmpty()) {
+            map.put("msg","当前优惠券没在有效期内！");
+            return map;
+        }
+
+        CouponPubVO[] cArray = new CouponPubVO[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, cArray, CouponPubVO.class,
+                new String[]{"unqid","coupno","compid","startdate","enddate","brulecode",
+                        "rulename","goods","ladder","glbno","ctype","reqflag"});
+
+
+        String ldjson = cArray[0].getLadder();
+
+        JsonParser jsonParser = new JsonParser();
+        List<CouponPubLadderVO> ladderVOS = new ArrayList<>();
+        if (!StringUtils.isEmpty(ldjson)) {
+            JsonArray jsonArrayLadder = jsonParser.parse(ldjson).getAsJsonArray();
+            Gson gson = new Gson();
+            for (JsonElement goodvo : jsonArrayLadder) {
+                CouponPubLadderVO ldvo = gson.fromJson(goodvo, CouponPubLadderVO.class);
+                ladderVOS.add(ldvo);
+            }
+        }
+
+        double priceTotal = DiscountUtil.getCurrentPriceTotal(productList);
+
+        CouponPubLadderVO couponPubLadderVO
+                = CouponListFilterService.getLadoffable(ladderVOS,priceTotal);
+
+        if(couponPubLadderVO == null){
+            map.put("msg","当前购买商品金额没达到 "+ladderVOS.get(0).getLadamt()+"元！");
+            return map;
+        }
+        map.put("code","200");
+        map.put("msg","操作成功！");
+        return map;
     }
 
 

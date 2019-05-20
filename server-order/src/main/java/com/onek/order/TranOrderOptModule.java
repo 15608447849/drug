@@ -26,20 +26,14 @@ import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.math.BigDecimal;
-import java.nio.channels.MulticastChannel;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 import static com.onek.order.PayModule.*;
-import static com.onek.util.SmsTempNo.isSmsAllow;
-import static constant.DSMConst.TD_TRAN_COLLE;
-import static util.TimeUtils.getCurrentYear;
 
 /**
  * @author 11842
@@ -99,7 +93,7 @@ public class TranOrderOptModule {
             + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME, actcode=?,balamt=? where cstatus&1=0 and "
             + " pdno=? and compid = ? and orderno=0";
 
-    //是否要减商品总库存
+    //是否要减商品总库存 远程调用
     private static final String UPD_GOODS = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "freezestore=freezestore+? where cstatus&1=0 and sku=? ";
 
@@ -107,7 +101,7 @@ public class TranOrderOptModule {
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
             + " where cstatus&1=0 and orderno=? and ostatus=?";
 
-    //释放商品冻结库存
+    //释放商品冻结库存 远程调用
     private static final String UPD_GOODS_FSTORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "freezestore=freezestore-? where cstatus&1=0 and sku=? ";
 
@@ -127,6 +121,7 @@ public class TranOrderOptModule {
                     + " SET ostatus = 3 "
                     + " WHERE cstatus&1 = 0 AND ostatus = 2 AND orderno = ? ";
 
+    //远程调用
     private static final String UPDATE_PROM_COURCD = "update {{?" + DSMConst.TD_PROM_COURCD
             + "}} set cstatus=cstatus|1 where cstatus&1=0 and cstatus&64=0 and coupno=? and compid=?";
 
@@ -248,8 +243,7 @@ public class TranOrderOptModule {
         List<GoodsStock> goodsStockList = new ArrayList<>();
         if (orderType == 0) {
             //库存判断
-            boolean b = false;
-            goodsStockList = stockIsEnough(tranOrderGoods, b);
+            boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
             if (b) {
                 //库存不足处理
                 stockRecovery(goodsStockList);
@@ -286,10 +280,17 @@ public class TranOrderOptModule {
         }
         double payamt = tranOrder.getPayamt();
         double bal = 0;
+        int balway = 0;
         //数据库相关操作
         try{
+
+
+            if (jsonObject.containsKey("balway") && !jsonObject.getString("balway").isEmpty()) {
+                balway = jsonObject.getInteger("balway");
+            }
+
             bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
-            if(bal > 0) {
+            if(bal > 0 && balway > 0) {
                 if(bal >= payamt){
                     payamt = 0;
                     bal = tranOrder.getPayamt();
@@ -314,7 +315,7 @@ public class TranOrderOptModule {
             params.add(new Object[]{unqid});
         }
         //分摊余额
-        if(bal > 0){
+        if(bal > 0 && balway > 0){
             apportionBal(tranOrderGoods,bal,payamt);
         }
 
@@ -331,7 +332,8 @@ public class TranOrderOptModule {
         if (b) {
             updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
             if (coupon > 0) {
-                baseDao.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
+                //远程调用
+                IceRemoteUtil.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
             }
 
             CANCEL_DELAYED.add(tranOrder);
@@ -364,7 +366,8 @@ public class TranOrderOptModule {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             paramOne.add(new Object[]{tranOrderGoods.getPnum(), tranOrderGoods.getPdno()});
         }
-        return !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(UPD_GOODS, paramOne, tranOrderGoodsList.size()));
+        //远程调用
+        return !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS, paramOne, tranOrderGoodsList.size()));
     }
 
     /* *
@@ -448,8 +451,10 @@ public class TranOrderOptModule {
      **/
     private List<TranOrderGoods> secKillStockIsEnough(long actCode, List<TranOrderGoods> tranOrderGoodsList) {
         List<TranOrderGoods> goodsList = new ArrayList<>();
+        List<Long> actList = new ArrayList<>();
+        actList.add(actCode);
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
-            if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum(), actCode)) {
+            if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(), tranOrderGoods.getPnum(), actList)) {
                 return goodsList;
             }
             tranOrderGoods.setActcode("[" + actCode + "]");
@@ -482,39 +487,47 @@ public class TranOrderOptModule {
      * @time 2019/4/17 11:49
      * @version 1.1.1
      **/
-    private List<GoodsStock> stockIsEnough(List<TranOrderGoods> tranOrderGoodsList, boolean result) {
-        List<GoodsStock> goodsStockList = new ArrayList<>();
+    private boolean stockIsEnough(List<GoodsStock> goodsStockList, List<TranOrderGoods> tranOrderGoodsList) {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             String actCodeStr = tranOrderGoods.getActcode();
             List<Long> list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
             if (list.size() == 0) {//无活动码
                 if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
                         tranOrderGoods.getPnum()) != 2) {
-                    result = true;
+                    return true;
                 } else {
                     setGoodsStock(tranOrderGoods, 0L, goodsStockList);
                 }
             } else {
-                for (Long aList : list) {
-                    if (aList > 0) {
-                        if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
-                                tranOrderGoods.getPnum(), aList)) {
-                            result = true;
-                        } else {
-                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
-                        }
-                    } else {
-                        if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
-                                tranOrderGoods.getPnum()) != 2) {
-                            result = true;
-                        } else {
-                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
-                        }
+//                for (Long aList : list) {
+//                    if (aList > 0) {
+//                        if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
+//                                tranOrderGoods.getPnum(), aList)) {
+//                            result = true;
+//                        } else {
+//                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
+//                        }
+//                    } else {
+//                        if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
+//                                tranOrderGoods.getPnum()) != 2) {
+//                            result = true;
+//                        } else {
+//                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
+//                        }
+//                    }
+//                }
+
+                if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
+                        tranOrderGoods.getPnum(), list)) {
+                    return true;
+                } else {
+                    for (Long aList : list) {
+                        setGoodsStock(tranOrderGoods, aList, goodsStockList);
                     }
                 }
             }
         }
-        return goodsStockList;
+        return false;
     }
 
     private List<GoodsStock> setGoodsStock(TranOrderGoods tranOrderGoods, Long aList, List<GoodsStock> goodsStockList) {
@@ -540,9 +553,15 @@ public class TranOrderOptModule {
         for (GoodsStock goodsStock : goodsStockList) {
             if (goodsStock.getActCode() > 0) {
                 RedisStockUtil.addActStock(goodsStock.getSku(), goodsStock.getActCode(), goodsStock.getStock());
-            }else{
+            }
+        }
+
+        List<Long> gcodeList = new ArrayList<>();
+        for (GoodsStock goodsStock : goodsStockList) {
+            if(!gcodeList.contains(goodsStock.getSku())){
                 RedisStockUtil.addStock(goodsStock.getSku(), goodsStock.getStock());
             }
+            gcodeList.add(goodsStock.getSku());
         }
     }
 
@@ -666,14 +685,13 @@ public class TranOrderOptModule {
                 if (actcode > 0) {
                     RedisStockUtil.addActStock(tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
                     RedisOrderUtil.subtractActBuyNum(tranOrderGood.getCompid(), tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
-                } else {
-                    RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
                 }
             }
+            RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
             params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
         }
-        if (type == 0) {//线上支付释放锁定库存
-            baseDao.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
+        if (type == 0) {//线上支付释放锁定库存 远程调用
+            IceRemoteUtil.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
         }
     }
 

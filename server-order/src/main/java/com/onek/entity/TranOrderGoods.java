@@ -7,8 +7,8 @@ package com.onek.entity;
  * @time 2019/4/16 15:15
  **/
 public class TranOrderGoods {
-    private long unqid;//全局唯一
-    private long orderno;//订单号
+    private String unqid;//全局唯一
+    private String orderno;//订单号
     private int compid;//企业码
     private long pdno;//商品码（SKU）
     private double pdprice;//商品单价
@@ -56,19 +56,19 @@ public class TranOrderGoods {
         this.balamt = balamt;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 
-    public long getOrderno() {
+    public String getOrderno() {
         return orderno;
     }
 
-    public void setOrderno(long orderno) {
+    public void setOrderno(String orderno) {
         this.orderno = orderno;
     }
 

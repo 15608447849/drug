@@ -37,10 +37,19 @@ public class ProdActPriceUtil {
 
     private static PromRuleService ruleService = new PromRuleService();
 
-    public static double getActPrizeBySku(long actcode,long sku,double vatp){
+    private static long getVersion(){
         RedisStringProvide rs = RedisUtil.getStringProvide();
         long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
+        if(v == 0){
+            rs.set(key, 1);
+            v = 1;
+        }
+        return v;
 
+    }
+
+    public static double getActPrizeBySku(long actcode,long sku,double vatp){
+        long v = getVersion();
         Long subVersion = versionMap.containsKey(sku) ? versionMap.get(sku) : 0L;
         if(v > subVersion || subVersion == 0){
             ProdPriceEntity entity = calcSingleProdActPrize(actcode, vatp, sku );
@@ -56,9 +65,7 @@ public class ProdActPriceUtil {
     }
 
     public static List<ProdPriceEntity> getActPrizeByMutiSku(long actcode, List<ProdPriceEntity> skuPriceList){
-        RedisStringProvide rs = RedisUtil.getStringProvide();
-        long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
-
+        long v = getVersion();
         List<ProdPriceEntity> resultList = new ArrayList<>();
         if(skuPriceList != null){
             boolean needLoad = false;
@@ -97,8 +104,7 @@ public class ProdActPriceUtil {
 
 
     public static ProdPriceEntity getActIntervalPrizeBySku(long sku,double vatp){
-        RedisStringProvide rs = RedisUtil.getStringProvide();
-        long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
+        long v = getVersion();
 
         Long subVersion = versionIntervalMap.containsKey(sku) ? versionIntervalMap.get(sku) : 0L;
         if(v > subVersion || subVersion == 0){
@@ -122,8 +128,7 @@ public class ProdActPriceUtil {
     }
 
     public static int getRuleBySku(long sku){
-        RedisStringProvide rs = RedisUtil.getStringProvide();
-        long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
+        long v = getVersion();
         Long subVersion = versionRuleMap.containsKey(sku) ? versionRuleMap.get(sku) : 0L;
         if(v > subVersion || subVersion == 0){
             Map<Long, Integer> map = ruleService.getProdRule();
@@ -147,8 +152,7 @@ public class ProdActPriceUtil {
     }
 
     public static List<String[]> getTimesByActcode(long actcode){
-        RedisStringProvide rs = RedisUtil.getStringProvide();
-        long v = rs.get(key) != null ? Long.parseLong(rs.get(key)) : 0;
+        long v = getVersion();
         Long subVersion = versionTimeMap.containsKey(actcode) ? versionTimeMap.get(actcode) : 0L;
         if(v > subVersion || subVersion == 0){
             List<String[]> times = timeService.getTimesByActcode(actcode);

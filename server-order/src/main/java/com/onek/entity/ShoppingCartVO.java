@@ -13,7 +13,7 @@ import java.util.List;
  */
 public class ShoppingCartVO {
 
-    private long unqid;
+    private String unqid = "0";
 
     //商品SKU
     private long pdno;
@@ -64,11 +64,14 @@ public class ShoppingCartVO {
 
     private double counpon;
 
-    private long conpno;
+    /**
+     * 优惠券码
+     */
+    private String conpno = "0";
 
     private long areano;
 
-    private List<Long> actcode;
+    private List<String> actcode;
 
     //运费
     private double freight;
@@ -89,6 +92,16 @@ public class ShoppingCartVO {
     private String brand;
 
     private int limitsub;
+
+    private int medpacknum;
+
+    public int getMedpacknum() {
+        return medpacknum;
+    }
+
+    public void setMedpacknum(int medpacknum) {
+        this.medpacknum = medpacknum;
+    }
 
     public int getLimitsub() {
         return limitsub;
@@ -162,11 +175,11 @@ public class ShoppingCartVO {
         this.freight = freight;
     }
 
-    public long getConpno() {
+    public String getConpno() {
         return conpno;
     }
 
-    public void setConpno(long conpno) {
+    public void setConpno(String conpno) {
         this.conpno = conpno;
     }
 
@@ -218,11 +231,11 @@ public class ShoppingCartVO {
         this.ptitle = ptitle;
     }
 
-    public long getUnqid() {
+    public String getUnqid() {
         return unqid;
     }
 
-    public void setUnqid(long unqid) {
+    public void setUnqid(String unqid) {
         this.unqid = unqid;
     }
 
@@ -322,11 +335,11 @@ public class ShoppingCartVO {
         this.seckill = seckill;
     }
 
-    public List<Long> getActcode() {
+    public List<String> getActcode() {
         return actcode;
     }
 
-    public void setActcode(List<Long> actcode) {
+    public void setActcode(List<String> actcode) {
         this.actcode = actcode;
     }
 }
