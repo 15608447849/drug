@@ -1,5 +1,6 @@
 package com.onek.util;
 
+import Ice.Application;
 import org.apache.http.client.fluent.Request;
 import properties.abs.ApplicationPropertiesBase;
 import properties.annotations.PropertiesFilePath;
@@ -88,7 +89,8 @@ public class SmsUtil  extends ApplicationPropertiesBase {
             if (!isSmsAllow(tempNo)) return;
             //获取短信
             String message = IceRemoteUtil.getMessageByNo(tempNo,params);
-            SmsUtil.sendMsg(phone,message);
+            String res = SmsUtil.sendMsg(phone,message);
+            Application.communicator().getLogger().print(phone +" -> "+ message+" ,res = "+ res);
         });
     }
 
