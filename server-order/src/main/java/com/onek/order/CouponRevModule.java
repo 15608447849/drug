@@ -979,7 +979,7 @@ public class CouponRevModule {
                 = CouponListFilterService.getLadoffable(ladderVOS,priceTotal);
 
         if(couponPubLadderVO == null){
-            map.put("msg","当前购买商品金额没达到 "+couponPubLadderVO.getLadamt()+"元！");
+            map.put("msg","当前购买商品金额没达到 "+ladderVOS.get(0).getLadamt()+"元！");
             return map;
         }
         map.put("code","200");

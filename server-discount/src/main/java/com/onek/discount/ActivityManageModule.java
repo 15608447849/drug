@@ -10,6 +10,7 @@ import com.onek.annotation.UserPermission;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.discount.entity.*;
+import com.onek.discount.util.RelationGoodsSQL;
 import com.onek.entitys.Result;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdCurrentActPriceObserver;
@@ -26,6 +27,7 @@ import util.BUSUtil;
 import util.GsonUtils;
 import util.ModelUtil;
 
+import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -684,10 +686,10 @@ public class ActivityManageModule {
         double price = jsonObject.get("price").getAsDouble();
         int cstatus = jsonObject.get("cstatus").getAsInt();
         List<Long> gcodeList = selectGoodsByAct(actCode);
-        if (gcodeList.size() == 0) {
-
-        } else {
-
+        //全部商品判断库存
+        result = theGoodsStockIsEnough(actstock, cstatus, actCode);
+        if (result > 0) {
+            return result;
         }
         if ((cstatus & 512) == 0) {
             price = price * 100;
@@ -738,32 +740,41 @@ public class ActivityManageModule {
      * @time  2019/5/15 23:24
      * @version 1.1.1
      **/
-    private boolean theGoodsStockIsEnough(int actStock) {
-
-/*        SELECT
-                gcode,
-                store,
-                freezestore
-        FROM
-        td_prom_assdrug a
-        LEFT JOIN td_prod_sku s ON a.gcode = s.sku
-        WHERE
-        a.cstatus & 1 = 0
-        and gcode>0
-        GROUP BY
-        gcode
-        HAVING ((store - freezestore ) - ceil (
-                sum(IF ( a.cstatus & 256 > 0, actstock, 0 ) ) * 0.01*(store - freezestore ) + sum( IF ( a.cstatus & 256 = 0, actstock, 0 ) )
-        )) < 0 LIMIT 0,1*/
-        String selectSQLOne = "select sum(IF(cstatus & 256>0, actstock, 0)) * 0.01 as percent," +
-                " sum(IF(cstatus & 256 = 0, actstock, 0 )) as total from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0";
-        String selectAssSQL = "select cel(sum(if(a.cstatus&256>0),actstock,0))*0.01 + sum(if(a.cstatus&256=0),actstock,0))) from {{?"
-                + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
-                + DSMConst.TD_PROD_SKU +"}} s on a.gcode=s.sku  where a.cstatus&1=0 and gcode>0 group by gcode";
-        String selectSQL = "select sku from {{?" + DSMConst.TD_PROD_SKU+ "}} where (store-freezestore)<" +
-                actStock +" LIMIT 0,1";
+    private long theGoodsStockIsEnough(int actStock, int cstatus, long actCode) {
+        String selectSQL = "select sku, store,min(notused) as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
+                "select sku,store, used  from ( " +
+                "SELECT sku,gcode,store,freezestore, " +
+                "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
+                "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
+                "  (SELECT " +
+                "  spu,sku,gcode,store,freezestore,actstock,a.cstatus  " +
+                "FROM  {{?" + DSMConst.TD_PROM_ASSDRUG+"}} a " +
+                "  LEFT JOIN td_prod_sku s ON s.sku LIKE CONCAT( '_', a.gcode, '%' )  " +
+                "WHERE  a.cstatus & 1 = 0 AND length( gcode ) < 14 AND gcode > 0  " +
+                "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) and actcode<>"
+                + actCode+" UNION ALL " +
+                "SELECT  spu,  sku,gcode,  store,  freezestore,actstock,  a.cstatus  " +
+                "FROM td_prom_assdrug a LEFT JOIN td_prod_sku s ON s.sku = gcode  " +
+                "WHERE a.cstatus & 1 = 0  AND length( gcode ) = 14  " +
+                "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) and actcode<>"
+                + actCode+" UNION ALL " +
+                "SELECT  spu,  sku,  gcode,  store,  freezestore,  actstock,  a.cstatus  " +
+                "FROM  td_prom_assdrug a,  td_prod_sku s  " +
+                "WHERE  a.cstatus & 1 = 0   AND gcode = 0  " + " and actcode<>" + actCode +
+                "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) " +
+                "  ) ua " +
+                "WHERE  ua.cstatus & 1 = 0  " +
+                "GROUP BY  sku , ua.cstatus ) ub UNION ALL  " +
+                "select sku,store, 0 from td_prod_sku where cstatus&1=0) uc GROUP BY sku) ud  ";
+        if ((cstatus & 256) > 0) {//库存百分比
+            double percent = actStock * 0.01;
+            selectSQL = selectSQL +  " HAVING minunused < ceil(store*"+percent+")";
+        } else {//库存量
+            selectSQL = selectSQL +  " HAVING minunused < "+ actStock;
+        }
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
-        return queryResult == null || queryResult.size() == 0;
+        if (queryResult == null || queryResult.size() == 0) return 0;
+        return  (long)queryResult.get(0)[0];
     }
 
     /**
@@ -802,18 +813,15 @@ public class ActivityManageModule {
                 }
                 return result.fail("关联全部商品失败");
             case 2://类别关联
-                code = relationClasses(jsonObject, actCode, ruleCode);
-                if ((code+ "").length() == 14) {
-                    return result.fail("【" + ProdInfoStore.getProdBySku(code).getProdname() + "】库存不够，请重新设置活动库存！");
-                }
-                if (code == 0){
+                JsonObject codeStr = relationClasses(jsonObject, actCode, ruleCode);
+                assert codeStr != null;
+                if (codeStr.get("result").getAsInt() > 0) {
                     return result.success("关联类别成功");
                 }
-                return result.fail("关联类别失败");
+                return result.fail(codeStr.get("message").getAsString());
             default://商品关联
                 List<Long> gcodeList = selectGoodsByAct(actCode);
-                boolean isAdd = gcodeList.size() == 0;
-                String skuStr = getActStockBySkus(jsonObject, actCode, isAdd);
+                String skuStr = getActStockBySkus1(jsonObject, actCode);
                 if (skuStr != null) {
                     return result.fail("【" + skuStr + "】商品库存不够，保存失败！");
                 }
@@ -855,15 +863,24 @@ public class ActivityManageModule {
      * @time  2019/5/15 23:52
      * @version 1.1.1
      **/
-    private long relationClasses(JsonObject jsonObject,long actCode, int rulecode) {
-        long result;
+    private JsonObject relationClasses(JsonObject jsonObject,long actCode, int rulecode) {
+        JsonObject resultObj = new JsonObject();
         List<Long> gcodeList = selectGoodsByAct(actCode);
         boolean isAdd = gcodeList.size() == 0;
         //关联活动商品
         JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        if (goodsArr != null && goodsArr.size() > 10) {
+            resultObj.addProperty("result", "-10");
+            resultObj.addProperty("message", "单次最多选择十个类别");
+            return resultObj;
+        }
+
         List<GoodsVO> goodsVOS = new ArrayList<>();
         List<GoodsVO> insertGoodsVOS = new ArrayList<>();
         List<GoodsVO> updateGoodsVOS = new ArrayList<>();
+
+
+
         StringBuilder skuBuilder = new StringBuilder();
         int saveType = jsonObject.get("saveType").getAsInt();//保存方式（0 分组保存  1 保存全部）
         //查询该活动下所有类别
@@ -875,10 +892,6 @@ public class ActivityManageModule {
             for (int i = 0; i < goodsArr.size(); i++) {
                 GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
                 assert goodsVO != null;
-                result = classEnoughStock(goodsVO.getGcode(), goodsVO.getCstatus(),goodsVO.getActstock(), actCode, isAdd);
-                if (result > 0) {
-                    return result;
-                }
                 skuBuilder.append(goodsVO.getGcode()).append(",");
                 if (saveType == 1) {
                     if (delGoodsGCode.contains(goodsVO.getGcode())) {
@@ -891,9 +904,18 @@ public class ActivityManageModule {
                 goodsVOS.add(goodsVO);
             }
 
+            String prodName = classEnoughStock(goodsVOS, actCode);
+            if (prodName != null) {
+                resultObj.addProperty("result", "-3");
+                resultObj.addProperty("message", prodName);
+                return resultObj;
+            }
+
             int re = updateAssByActcode(2, actCode);
             if (re < 0) {
-                return -1;
+                resultObj.addProperty("result", "-1");
+                resultObj.addProperty("message", "关联类别失败！");
+                return resultObj;
             }
             String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
             Map<Long,ActStock> goodsMap = getAllGoods(skuStr, actCode);
@@ -920,8 +942,11 @@ public class ActivityManageModule {
             }
             noticeGoodsUpd(2, goodsVOS,delGoods, rulecode, actCode);
         }
-        return 1;
+        resultObj.addProperty("result", "1");
+        resultObj.addProperty("message", "关联类别成功");
+        return resultObj;
     }
+
 
 
 
@@ -934,79 +959,193 @@ public class ActivityManageModule {
      * @time  2019/5/17 13:53
      * @version 1.1.1
      **/
-    private long classEnoughStock(long sku, int cstatus, int actstock, long actCode, boolean isAdd) {
-        long code;
-        if (isAdd) {
+    private String classEnoughStock( List<GoodsVO> goodsVOS, long actCode) {
 
-        } else {
+        Map<Long, ClassStock> class2Map = new HashMap<>();
+        Map<Long, ClassStock> class4Map = new HashMap<>();
+        Map<Long, ClassStock> class6Map = new HashMap<>();
+        String classStr;
+        StringBuilder class2No = new StringBuilder();
+        StringBuilder class4No = new StringBuilder();
+        StringBuilder class6No = new StringBuilder();
 
-        }
-        return 0;
-    }
+        for (GoodsVO goodsVO : goodsVOS) {
+            long classno = goodsVO.getGcode();
+            ClassStock classStock = new ClassStock(goodsVO.getActstock(), goodsVO.getCstatus());
+            if ((classno + "").length() == 2) {
+                class2Map.put(classno, classStock);
+                class2No.append(classno).append(",");
+            }
+            if ((classno + "").length() == 4) {
+                class4Map.put(classno, classStock);
+                class4No.append(classno).append(",");
+            }
 
-
-    private String getActStockBySkus(JsonObject jsonObject, long actCode, boolean isAdd) {
-        String prodNames;
-        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
-        long result;
-        if (goodsArr != null && !goodsArr.toString().isEmpty()) {
-            for (int i = 0; i < goodsArr.size(); i++) {
-                GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
-                assert goodsVO != null;
-                result = classEnoughStock(goodsVO.getGcode(), goodsVO.getCstatus(),goodsVO.getActstock(), actCode, isAdd);
-                if (result > 0) {
-                    prodNames = ProdInfoStore.getProdBySku(goodsVO.getGcode()).getProdname();
-                    return prodNames;
-                }
+            if ((classno + "").length() == 6) {
+                class6Map.put(classno, classStock);
+                class6No.append(classno).append(",");
             }
         }
+        //判断最大类
+        if (class2Map.size() > 0) {
+            Map<Long, AllAvailableStock> stock2Map = new HashMap<>();//可售库存
+            StringBuilder sql2Builder = new StringBuilder();
+            sql2Builder.append(RelationGoodsSQL.SELECT_ClASS_GOODS);
+            classStr = class2No.toString().substring(0, class2No.toString().length() - 1);
+            sql2Builder.append(" GROUP BY classno2 HAVING classno2 in(").append(classStr).append(")");
+            List<Object[]> query2Result = baseDao.queryNative(sql2Builder.toString(), actCode, actCode, actCode);
+       /*     classno6,classno4,classno2,sku, store, " +
+            " min(notused) as minnotused*/
+            if (query2Result != null && query2Result.size()>0) {
+                query2Result.forEach(obj -> {
+                    int minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[5]))).intValue();
+                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[3],(int)obj[4], minunused);
+                    stock2Map.put(Long.parseLong(String.valueOf(obj[2])), allAvailableStock);
+                });
+
+                for (long classno : class2Map.keySet()) {
+                    int actStock = class2Map.get(classno).getActStock();
+                    if ((class2Map.get(classno).getCstatus() & 256) > 0) {
+                        actStock = (int) Math.ceil(stock2Map.get(classno).getStore() * 0.01 * actStock);
+                    }
+                    int stock = stock2Map.get(classno).getAvailable() - actStock;
+
+                    if (stock < 0) {
+                        return  "【" + ProdInfoStore.getProdBySku(stock2Map.get(classno).getSku()).getProdname()+ "】库存不够，请重新设置活动库存！";
+                    }
+                }
+            } else {
+                return "该类别下无没有商品！";
+            }
+        }
+
+        if (class4Map.size() > 0) {
+            Map<Long, AllAvailableStock> stock4Map = new HashMap<>();//可售库存
+            StringBuilder sql4Builder = new StringBuilder();
+            sql4Builder.append(RelationGoodsSQL.SELECT_ClASS_GOODS);
+            classStr = class4No.toString().substring(0, class4No.toString().length() - 1);
+            sql4Builder.append(" GROUP BY classno4 HAVING classno4 in(").append(classStr).append(")");
+            List<Object[]> query4Result = baseDao.queryNative(sql4Builder.toString(), actCode, actCode, actCode);
+            if (query4Result != null && query4Result.size()>0) {
+                query4Result.forEach(obj -> {
+                    int minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[5]))).intValue();
+                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[3],(int)obj[4], minunused);
+                    stock4Map.put(Long.parseLong(String.valueOf(obj[1])), allAvailableStock);
+                });
+
+                for (long classno : class2Map.keySet()) {
+                    int actStock = class2Map.get(classno).getActStock();
+                    if ((class2Map.get(classno).getCstatus() & 256) > 0) {
+                        actStock = (int) Math.ceil(stock4Map.get(classno).getStore() * 0.01 * actStock);
+                    }
+                    int stock = stock4Map.get(classno).getAvailable() - actStock;
+
+                    if (stock < 0) {
+                        return "【" + ProdInfoStore.getProdBySku(stock4Map.get(classno).getSku()).getProdname()+ "】库存不够，请重新设置活动库存！";
+                    }
+                }
+            } else {
+                return "该类别下无没有商品！";
+            }
+        }
+
+        if (class6Map.size() > 0) {
+            Map<Long, AllAvailableStock> stock6Map = new HashMap<>();//可售库存
+            StringBuilder sql6Builder = new StringBuilder();
+            sql6Builder.append(RelationGoodsSQL.SELECT_ClASS_GOODS);
+            classStr = class6No.toString().substring(0, class6No.toString().length() - 1);
+            sql6Builder.append(" GROUP BY classno6 HAVING classno6 in(").append(classStr).append(")");
+            List<Object[]> query6Result = baseDao.queryNative(sql6Builder.toString(), actCode, actCode, actCode);
+            if (query6Result != null && query6Result.size()>0) {
+                query6Result.forEach(obj -> {
+                    int minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[5]))).intValue();
+                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[3],(int)obj[4], minunused);
+                    stock6Map.put(Long.parseLong(String.valueOf(obj[0])), allAvailableStock);
+                });
+
+                for (long classno : class2Map.keySet()) {
+                    int actStock = class2Map.get(classno).getActStock();
+                    if ((class2Map.get(classno).getCstatus() & 256) > 0) {
+                        actStock = (int) Math.ceil(stock6Map.get(classno).getStore() * 0.01 * actStock);
+                    }
+                    int stock = stock6Map.get(classno).getAvailable() - actStock;
+
+                    if (stock < 0) {
+                        return "【" + ProdInfoStore.getProdBySku(stock6Map.get(classno).getSku()).getProdname()+ "】库存不够，请重新设置活动库存！";
+                    }
+                }
+            } else {
+                return "该类别下无没有商品！";
+            }
+        }
+
         return null;
     }
 
 
-    private String getActStockBySkus1(JsonObject jsonObject) {
-        String prodNames=null;
-        Map<Long, Integer> actStockMap = new HashMap<>();//活动库存
-        Map<Long, Integer> stockMap = new HashMap<>();//可售库存
+    private String getActStockBySkus1(JsonObject jsonObject, long actCode) {
+        List<GoodsVO> goodsVOList = new ArrayList<>();//活动库存(前端传过来的)
+        Map<Long, AllAvailableStock> stockMap = new HashMap<>();//可售库存
         StringBuilder skuBuilder = new StringBuilder();
         JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        if (goodsArr != null && goodsArr.size() > 100) {
+            return "单次最多设置一百个商品！";
+        }
         if (goodsArr != null && !goodsArr.toString().isEmpty()) {
             for (int i = 0; i < goodsArr.size(); i++) {
                 GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
                 assert goodsVO != null;
                 skuBuilder.append(goodsVO.getGcode()).append(",");
-                actStockMap.put(goodsVO.getGcode(), goodsVO.getActstock());
+                goodsVOList.add(goodsVO);
             }
             String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
-            getAllGoodsBySku(skuStr, stockMap);
-            String selectSQL = "select gcode,actstock from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
-                    + " and gcode in(" + skuStr + ")";
+            String selectSQL = "select sku, store,notused as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
+                    "select sku,store, used  from ( " +
+                    "SELECT sku,gcode,store,freezestore, " +
+                    "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
+                    "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
+                    "  (SELECT " +
+                    "  spu,sku,gcode,store,freezestore,actstock,a.cstatus  " +
+                    "FROM  {{?" + DSMConst.TD_PROM_ASSDRUG+"}} a " +
+                    "  LEFT JOIN td_prod_sku s ON s.sku LIKE CONCAT( '_', a.gcode, '%' )  " +
+                    "WHERE  a.cstatus & 1 = 0 AND length( gcode ) < 14 AND gcode > 0  " +
+                    "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) and actcode<>"
+                    + actCode+" UNION ALL " +
+                    "SELECT  spu,  sku,gcode,  store,  freezestore,actstock,  a.cstatus  " +
+                    "FROM td_prom_assdrug a LEFT JOIN td_prod_sku s ON s.sku = gcode  " +
+                    "WHERE a.cstatus & 1 = 0  AND length( gcode ) = 14  " +
+                    "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) and actcode<>"
+                    + actCode+" UNION ALL " +
+                    "SELECT  spu,  sku,  gcode,  store,  freezestore,  actstock,  a.cstatus  " +
+                    "FROM  td_prom_assdrug a,  td_prod_sku s  " +
+                    "WHERE  a.cstatus & 1 = 0   AND gcode = 0  " + " and actcode<>" + actCode +
+                    "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) " +
+                    "  ) ua " +
+                    "WHERE  ua.cstatus & 1 = 0  " +
+                    "GROUP BY  sku , ua.cstatus ) ub UNION ALL  " +
+                    "select sku,store, 0 from td_prod_sku where cstatus&1=0) uc GROUP BY sku) ud where "
+                    + " sku in (" + skuStr + ")";
             List<Object[]> queryResult = baseDao.queryNative(selectSQL);
             if (queryResult != null && queryResult.size()>0) {
                 queryResult.forEach(obj -> {
-                    long sku = (long)obj[0];
-                    int  actStock = (int)obj[1];
-                    if (actStockMap.containsKey(sku)) {
-                        actStock = actStockMap.get(sku) + actStock;
-                        actStockMap.put(sku, actStock);
-                    }
+                    int minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[2]))).intValue();
+                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[0], (int)obj[1], minunused);
+                    stockMap.put((long)obj[0], allAvailableStock);
                 });
             }
-            StringBuilder prodNameSB = new StringBuilder();
-            for (Long gcode : actStockMap.keySet()) {
-                int actStock = actStockMap.get(gcode);
-                if (stockMap.containsKey(gcode)) {
-                    int stock = stockMap.get(gcode) - actStock;
-                    if (stock < 0) {
-                        prodNames = prodNameSB.append("【").append(ProdInfoStore.getProdBySku(gcode).getProdname())
-                                .append("】,").toString();
-                    }
-                } else {
+            for (GoodsVO goodsVO : goodsVOList) {
+                int actStock = goodsVO.getActstock();
+                if ((goodsVO.getCstatus() & 256) > 0) {
+                    actStock = (int) Math.ceil(stockMap.get(goodsVO.getGcode()).getStore() * 0.01 * actStock);
+                }
+                int stock = stockMap.get(goodsVO.getGcode()).getAvailable() - actStock;
 
+                if (stock < 0) {
+                    return ProdInfoStore.getProdBySku(goodsVO.getGcode()).getProdname();
                 }
             }
         }
-        return prodNames;
+        return null;
     }
 
     /* *
@@ -1155,11 +1294,11 @@ public class ActivityManageModule {
             for (int i = 0; i < goodsArr.size(); i++) {
                 GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
                 if (goodsVO != null) {
-                    int stock = RedisStockUtil.getActStockBySkuAndActno(goodsVO.getGcode(), actCode);
-                    int orgStock = RedisStockUtil.getActInitStock(goodsVO.getGcode(), actCode);
-                    if (stock != orgStock) {
-                        return -1;
-                    }
+//                    int stock = RedisStockUtil.getActStockBySkuAndActno(goodsVO.getGcode(), actCode);
+//                    int orgStock = RedisStockUtil.getActInitStock(goodsVO.getGcode(), actCode);
+//                    if (stock != orgStock) {
+//                        return -1;
+//                    }
                     skuBuilder.append(goodsVO.getGcode()).append(",");
                     if (saveType == 1) {
                         if (delGoodsGCode.contains(goodsVO.getGcode())) {
@@ -1345,5 +1484,69 @@ public class ActivityManageModule {
             this.actstock = actstock;
         }
     }
+
+    class AllAvailableStock {
+        private long sku;
+        private int store;
+        private int available;
+
+        public AllAvailableStock(long sku, int store, int available) {
+            this.sku = sku;
+            this.store = store;
+            this.available = available;
+        }
+
+        public int getStore() {
+            return store;
+        }
+
+        public void setStore(int store) {
+            this.store = store;
+        }
+
+        public int getAvailable() {
+            return available;
+        }
+
+        public void setAvailable(int available) {
+            this.available = available;
+        }
+
+        public long getSku() {
+            return sku;
+        }
+
+        public void setSku(long sku) {
+            this.sku = sku;
+        }
+    }
+
+
+    class ClassStock {
+        private int actStock;
+        private int cstatus;
+
+        public ClassStock(int actStock, int cstatus) {
+            this.actStock = actStock;
+            this.cstatus = cstatus;
+        }
+
+        public int getActStock() {
+            return actStock;
+        }
+
+        public void setActStock(int actStock) {
+            this.actStock = actStock;
+        }
+
+        public int getCstatus() {
+            return cstatus;
+        }
+
+        public void setCstatus(int cstatus) {
+            this.cstatus = cstatus;
+        }
+    }
+
 
 }
