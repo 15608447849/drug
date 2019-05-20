@@ -23,6 +23,7 @@ import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
+import org.hyrdpf.util.LogUtil;
 import util.BUSUtil;
 import util.GsonUtils;
 import util.ModelUtil;
@@ -1260,6 +1261,7 @@ public class ActivityManageModule {
                 }
             }
             if (delGoods!=null && delGoods.size() > 0) {
+                //LogUtil.getDefaultLogger().info("####### 1259 line: delGoods-->"+delGoods);
                 for (GoodsVO goodsVO : delGoods) {
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("discount", 1);
@@ -1439,6 +1441,7 @@ public class ActivityManageModule {
 
 
     private boolean delActCode(long actCode) {
+        boolean b;
         List<Long> skus = selectGoodsByAct(actCode);
         List<Object[]> params = new ArrayList<>();
         StringBuilder stringBuilder = new StringBuilder();
@@ -1452,8 +1455,20 @@ public class ActivityManageModule {
         if (queryResult == null || queryResult.isEmpty()) {
             params.add(new Object[]{actCode});
             params.add(new Object[]{actCode});
-            return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{DELETE_ACT,
+            b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{DELETE_ACT,
                     delAssDrugByActCode}, params));
+            if (b) {
+                List<GoodsVO> delGoods = new ArrayList<>();
+               // LogUtil.getDefaultLogger().info("########### 1475 INE:"+delGoods.size());
+                for (long sku :skus) {
+                    GoodsVO goodsVO1 = new GoodsVO();
+                    goodsVO1.setActcode(actCode + "");
+                    goodsVO1.setGcode(sku);
+                    delGoods.add(goodsVO1);
+                }
+                noticeGoodsUpd(-1, null, delGoods, 0, actCode);
+            }
+            return b;
         }
         for (Object[] aQueryResult : queryResult) {
             stringBuilder.append((long) aQueryResult[0]).append(",");
@@ -1471,10 +1486,12 @@ public class ActivityManageModule {
         params.add(new Object[]{});
         params.add(new Object[]{actCode});
         params.add(new Object[]{actCode});
-        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{sqlOne,sqlTwo, sqlThree,
+        b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{sqlOne,sqlTwo, sqlThree,
                 DELETE_ACT, delAssDrugByActCode}, params));
+      //  LogUtil.getDefaultLogger().info("########### 1473 INE:"+b);
         if (b) {
             List<GoodsVO> delGoods = new ArrayList<>();
+           // LogUtil.getDefaultLogger().info("########### 1475 INE:"+delGoods.size());
             for (long sku :skus) {
                 GoodsVO goodsVO1 = new GoodsVO();
                 goodsVO1.setActcode(actCode + "");
