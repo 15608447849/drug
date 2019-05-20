@@ -95,6 +95,16 @@ public class ShoppingCartVO {
 
     private int medpacknum;
 
+    private int actstock;
+
+    public int getActstock() {
+        return actstock;
+    }
+
+    public void setActstock(int actstock) {
+        this.actstock = actstock;
+    }
+
     public int getMedpacknum() {
         return medpacknum;
     }

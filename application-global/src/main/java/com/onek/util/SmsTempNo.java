@@ -35,7 +35,8 @@ public class SmsTempNo {
     public static final int QUALIFICATION_EXPIRED = 12;
     public static final int AFTER_SALE_AUDIT_PASSED = 13;
     public static final int AFTER_SALE_AUDIT_FAILED_TO_PASSED = 14;
-
+    public static final int AFTER_SALE_BILL_AUDIT_PASSED = 15;
+    public static final int AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED = 16;
     //发送推送消息的权限值
     public static final int PUSH_MESSAGE_POWER =  2;
     //发送短信消息的权限值

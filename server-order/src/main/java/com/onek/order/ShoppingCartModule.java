@@ -22,10 +22,7 @@ import com.onek.util.GenIdUtil;
 import util.*;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author Administrator
@@ -161,37 +158,47 @@ public class ShoppingCartModule {
 
     public int getSkuInv(int compid,List<Product> products,int inventory){
         List<IDiscount> discountList = getActivityList(compid,products);
-        int limitNum = 0;
         int pnum = products.get(0).getNums();
-        long actcode = 0;
+        int subStock = Integer.MAX_VALUE;
+        int actStock = Integer.MAX_VALUE;
         if(discountList != null && !discountList.isEmpty()){
             for (IDiscount discount : discountList){
                 Activity activity = (Activity)discount;
-                if(activity.getLimits(products.get(0).getSku()) < limitNum){
-                    limitNum = activity.getLimits(products.get(0).getSku());
-                    actcode = activity.getUnqid();
+
+                actStock = Math.min(
+                    RedisStockUtil
+                            .getActStockBySkuAndActno(products.get(0).getSku(),
+                                    discount.getDiscountNo()),
+                        actStock);
+
+                if(activity.getLimits(products.get(0).getSku()) == 0){
+                    continue;
                 }
+
+                subStock = Math.min
+                        (activity.getLimits(products.get(0).getSku())
+                                - RedisOrderUtil.getActBuyNum(compid, products.get(0).getSku(),
+                                activity.getUnqid()),subStock);
             }
         }
-        int maxNum = 0;
         int stock = inventory;
-        int limitsub = 0;
         try{
-            limitsub = RedisOrderUtil.getActBuyNum(compid,products.get(0).getSku(),actcode);
             stock = RedisStockUtil.getStock(products.get(0).getSku());
         }catch (Exception e){
             e.printStackTrace();
         }
 
+        int minStock = stock;
 
-        if(limitNum > stock || limitNum == 0){
-            maxNum = stock;
-        }else{
-            maxNum = limitNum - limitsub;
+        if(actStock < minStock){
+            minStock = actStock;
         }
 
-        if(pnum >= maxNum){
-           return maxNum;
+        if(subStock < minStock){
+            minStock = subStock;
+        }
+        if(minStock < pnum){
+           return minStock;
         }
         return pnum;
     }
@@ -246,7 +253,7 @@ public class ShoppingCartModule {
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
                 querySql, new Object[]{});
             convtShopCartDTO(compid,querySkuRet,shoppingCartDTOS,queryRet);
-             boolean flag = true;
+            boolean flag = true;
             for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
                 if (queryRet != null && !queryRet.isEmpty()) {
                     for (Object[] objects : queryRet) {
@@ -282,15 +289,23 @@ public class ShoppingCartModule {
                                  List<Object[]> queryRet){
 
         List<Product> productList = new ArrayList<>();
-        HashMap<Long,Integer> invMap = new HashMap();
+        HashMap<Long,List<Integer>> invMap = new HashMap();
         for(ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS){
-
             Product product = new Product();
             product.setNums(shoppingCartDTO.getPnum());
+            List<Integer> stockList = new ArrayList<>();
+            invMap.put(shoppingCartDTO.getPdno(),stockList);
             for (Object[] objects : querySkuRet){
                 if(shoppingCartDTO.getPdno() == Long.parseLong(objects[3].toString())){
-                    invMap.put(Long.parseLong(objects[3].toString()),
-                            Integer.parseInt(objects[0].toString()));
+
+                    int stock = Integer.parseInt(objects[0].toString());
+                    try{
+                        stock = RedisStockUtil.getStock(shoppingCartDTO.getPdno());
+                    }catch (Exception e){
+                        e.printStackTrace();
+                    }
+                    invMap.get(shoppingCartDTO.getPdno()).
+                            add(stock);
                     product.setOriginalPrice(Double.parseDouble(objects[2].toString()));
                 }
             }
@@ -309,46 +324,51 @@ public class ShoppingCartModule {
 
             List<IDiscount> discountList = getActivityList(compid, productList);
 
-            int limitNum = 0;
-            long actcode = 0;
+            int subStock = Integer.MAX_VALUE;
+            int actStock = Integer.MAX_VALUE;
+
             if(discountList != null && !discountList.isEmpty()){
                 for (IDiscount discount : discountList){
                     Activity activity = (Activity)discount;
                     for (IProduct prdt: activity.getProductList()){
                         if(prdt.getSKU() == shoppingCartDTO.getPdno()){
-                            if(activity.getLimits(shoppingCartDTO.getPdno()) < limitNum){
-                                limitNum = activity.getLimits(shoppingCartDTO.getPdno());
-                                actcode = activity.getUnqid();
+
+
+                            actStock = Math.min(
+                                    RedisStockUtil
+                                            .getActStockBySkuAndActno(shoppingCartDTO.getPdno(),
+                                                    discount.getDiscountNo()),
+                                    actStock);
+
+                            if(activity.getLimits(shoppingCartDTO.getPdno()) == 0){
+                                break;
                             }
+
+                            subStock = Math.min
+                                    (activity.getLimits(shoppingCartDTO.getPdno())
+                                            - RedisOrderUtil.getActBuyNum(compid, shoppingCartDTO.getPdno(),
+                                            activity.getUnqid()),subStock);
+
                         }
                     }
                 }
             }
 
-            int limitsub = 0;
-            try{
-                limitsub = RedisOrderUtil.getActBuyNum(compid,shoppingCartDTO.getPdno(),actcode);
-            }
-            catch (Exception e){
-                e.printStackTrace();
-            }
+            invMap.get(shoppingCartDTO.getPdno()).
+                    add(subStock);
 
-            int maxNum = 0;
+            invMap.get(shoppingCartDTO.getPdno()).
+                    add(actStock);
+        }
+
+        for(ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS){
             if(invMap.containsKey(shoppingCartDTO.getPdno())){
-                int stock = invMap.get(shoppingCartDTO.getPdno());
-                try{
-                    stock = RedisStockUtil.getStock(shoppingCartDTO.getPdno());
-                }catch (Exception e){
-                    e.printStackTrace();
-                }
-                if(limitNum > stock || limitNum == 0){
-                    maxNum = stock;
-                }else{
-                    maxNum = limitNum - limitsub;
-                }
-
-                if(shoppingCartDTO.getPnum() >= maxNum){
-                    shoppingCartDTO.setPnum(maxNum);
+                List<Integer> stockList = invMap.get(shoppingCartDTO.getPdno());
+                if(!stockList.isEmpty()){
+                    int minStock = Collections.min(stockList);
+                    if(shoppingCartDTO.getPnum() > minStock){
+                        shoppingCartDTO.setPnum(minStock);
+                    }
                 }
             }
         }
@@ -565,8 +585,9 @@ public class ShoppingCartModule {
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
            List<DiscountRule> ruleList = new ArrayList<>();
            List<String> actCodeList = new ArrayList<>();
-            int minLimit = 0;
-            long actcode = 0;
+            int minLimit = Integer.MAX_VALUE;
+            int subStock = Integer.MAX_VALUE;
+            int actStock = Integer.MAX_VALUE;
             for(IDiscount discount : discountList){
                 Activity activity = (Activity)discount;
                 int brule = (int)discount.getBRule();
@@ -579,30 +600,52 @@ public class ShoppingCartModule {
                         actCodeList.add(activity.getUnqid()+"");
                         if(activity.getLimits(product.getSKU()) < minLimit){
                             minLimit = activity.getLimits(product.getSKU());
-                            actcode = activity.getUnqid();
                         }
                         //判断秒杀
                         if(brule == 1113){
                             shoppingCartVO.setStatus(1);
                         }
                         ruleList.add(discountRule);
+
+
+                        actStock = Math.min(
+                                RedisStockUtil
+                                        .getActStockBySkuAndActno(shoppingCartVO.getPdno(),
+                                                discount.getDiscountNo()),
+                                actStock);
+
+                        if(activity.getLimits(shoppingCartVO.getPdno()) == 0){
+                            break;
+                        }
+
+                        subStock = Math.min
+                                (activity.getLimits(shoppingCartVO.getPdno())
+                                        - RedisOrderUtil.getActBuyNum(compid, shoppingCartVO.getPdno(),
+                                        activity.getUnqid()),subStock);
+
+                        minLimit = Math.min
+                                (activity.getLimits(shoppingCartVO.getPdno())
+                                        ,minLimit);
                     }
                 }
             }
             shoppingCartVO.setLimitnum(minLimit);
+            if(minLimit == Integer.MAX_VALUE){
+                shoppingCartVO.setLimitnum(0);
+            }
+
             int stock = shoppingCartVO.getInventory();
-            int limitsub = 0;
             try{
                 stock = RedisStockUtil.getStock(shoppingCartVO.getPdno());
-                limitsub = RedisOrderUtil.getActBuyNum(compid,shoppingCartVO.getPdno(),actcode);
             }catch (Exception e){
                 e.printStackTrace();
             }
             if(stock == 0){
                 shoppingCartVO.setStatus(3);
             }
-            shoppingCartVO.setLimitsub(limitsub);
+            shoppingCartVO.setLimitsub(subStock);
             shoppingCartVO.setInventory(stock);
+            shoppingCartVO.setActstock(actStock);
             shoppingCartVO.setActcode(actCodeList);
             shoppingCartVO.setRule(ruleList);
         }
