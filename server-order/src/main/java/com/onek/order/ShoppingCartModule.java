@@ -508,7 +508,7 @@ public class ShoppingCartModule {
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
                 new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory",
                         "spec","pstatus","spu","limitnum","brand","medpacknum"});
-        Application.communicator().getLogger().print("returnResults结果:"+ queryResult);
+
         return Arrays.asList(returnResults);
     }
 

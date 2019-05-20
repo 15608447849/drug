@@ -672,7 +672,7 @@ public class IceRemoteUtil {
                 "InternalCallModule","queryNative")
                 .setJsonParams(new SqlRemoteReq(sql, params))
                 .execute();
-        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).lines;
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).getLines();
     }
 
     public static int updateNative(String sql,final Object... params){

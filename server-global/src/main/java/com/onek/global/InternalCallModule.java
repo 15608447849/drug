@@ -7,6 +7,8 @@ import com.onek.util.sqltransfer.SqlRemoteResp;
 import dao.BaseDAO;
 import util.GsonUtils;
 
+import java.util.List;
+
 /**
  * @Author: leeping
  * @Date: 2019/5/20 10:23
@@ -34,7 +36,8 @@ public class InternalCallModule {
             String json = context.param.json;
             SqlRemoteReq req = GsonUtils.jsonToJavaBean(json,SqlRemoteReq.class);
             assert req != null;
-            resp.lines = BaseDAO.getBaseDAO().queryNative(req.sql,req.objects);
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(req.sql,req.objects);
+            resp.setLines(lines);
         } catch (Exception e) {
             e.printStackTrace();
         }
