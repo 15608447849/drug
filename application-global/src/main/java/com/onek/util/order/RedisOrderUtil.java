@@ -6,7 +6,6 @@ import util.StringUtils;
 
 public class RedisOrderUtil {
 
-    private static String SUCCESS = "OK";
     private static String SEP = "|"; // 分隔符
 
     public static void addOrderNumByCompid(int compid){
@@ -32,7 +31,12 @@ public class RedisOrderUtil {
      *
      */
     public static long addActBuyNum(int compid, long sku, long actCode,int num){
-        return RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP +compid , num);
+        if(compid > 0 && sku > 0 && actCode > 0 && num > 0){
+            if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP +compid)) {
+                return RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP + compid, num);
+            }
+        }
+        return 0;
     }
 
     /**
@@ -45,7 +49,12 @@ public class RedisOrderUtil {
      * @return
      */
     public static long subtractActBuyNum(int compid, long sku, long actCode,int num){
-        return RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP +compid , -num);
+        if(compid > 0 && sku > 0 && actCode > 0 && num > 0){
+            if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP +compid)) {
+                return RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP + compid, -num);
+            }
+        }
+        return 0;
     }
 
     /**
@@ -74,19 +83,6 @@ public class RedisOrderUtil {
         }
         return Integer.parseInt(buyNum);
     }
-
-//    /**
-//     * 设活动限购量 1:设置成功 0:设置失败
-//     *
-//     * @param sku
-//     * @param actCode
-//     * @param limitnum
-//     * @return
-//     */
-//    public static int setActLimit(long sku, long actCode, int limitnum) {
-//        String result = RedisUtil.getStringProvide().set(RedisGlobalKeys.ACT_LIMIT_NUM_PREFIX + SEP + sku + SEP + actCode, String.valueOf(limitnum));
-//        return SUCCESS.equals(result) ? 1 : 0;
-//    }
 
     /**
      * 获取活动限购量

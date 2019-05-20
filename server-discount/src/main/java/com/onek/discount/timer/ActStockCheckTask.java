@@ -61,7 +61,7 @@ public class ActStockCheckTask extends TimerTask {
                     }catch (Exception e){ e.printStackTrace();}
 
                     try {
-                        LogUtil.getDefaultLogger().info("###### DiscountRuleTask reset act buy num actcode:["+actCode+"] ###########");
+                        LogUtil.getDefaultLogger().info("###### DiscountRuleTask delete act relation prod actcode:["+actCode+"] ###########");
                         RedisUtil.getHashProvide().delete(RedisGlobalKeys.ACT_PREFIX + actCode);
                     }catch (Exception e){ e.printStackTrace();}
                 }
