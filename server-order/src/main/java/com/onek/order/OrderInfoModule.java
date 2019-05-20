@@ -83,12 +83,19 @@ public class OrderInfoModule {
 
 
     private static final String QUERY_ASAPP_BASE =
-            " SELECT orderno, pdno, asno, compid, astype, "
-                    + " gstatus, reason, ckstatus, ckdate, cktime, "
-                    + " ckdesc, invoice, cstatus, apdata, aptime, "
-                    + " apdesc, refamt, asnum "
-                    + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
-                    + " WHERE cstatus&1 = 0 AND compid = ? ";
+            " SELECT ap.orderno, ap.pdno, ap.asno, ap.compid, ap.astype, "
+                    + " ap.gstatus, ap.reason, ap.ckstatus, ap.ckdate, ap.cktime, "
+                    + " ap.ckdesc, ap.invoice, ap.cstatus, ap.apdata, ap.aptime, "
+                    + " ap.apdesc, ap.refamt, ap.asnum, ap.checkern, ap.compn, "
+                    + " goods.pdprice, goods.distprice, goods.payamt, goods.coupamt, "
+                    + " goods.asstatus, goods.createdate, goods.createtime, goods.pnum, "
+                    + " goods.balamt "
+                    + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} ap "
+                    + " LEFT JOIN {{?" + DSMConst.TD_BK_TRAN_GOODS + "}} goods "
+                    + " ON ap.cstatus&1 = 0 AND goods.cstatus&1 = 0"
+                    + " AND ap.compid = ? "
+                    + " AND goods.orderno = ap.orderno AND ap.pdno = goods.pdno "
+                    + " WHERE 1 = 1";
 
     public Result getOrderDetail(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -343,6 +350,30 @@ public class OrderInfoModule {
         return new Result().success(result);
     }
 
+//    public Result getAsapp(AppContext appContext) {
+//        String[] arrays = appContext.param.arrays;
+//
+//        if (ArrayUtil.isEmpty(arrays)) {
+//            return new Result().fail("参数为空");
+//        }
+//
+//        int compid = Integer.parseInt(arrays[0]);
+//        String asno  = arrays[1];
+//
+//        String sql = " SELECT "
+//                + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} ap "
+//                + " LEFT JOIN {{?" + DSMConst.TD_TRAN_GOODS + "}} goods "
+//                + " ON ap.cstatus&1 = 0 AND goods.cstatus&1 = 0"
+//                + " AND ap.asno = ? AND ap.compid = ? "
+//                + " AND goods.orderno = ap.orderno AND ap.pdno = goods.pdno "
+//                + " WHERE 1 = 1 ";
+//
+//        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(compid, TimeUtils.getYearByOrderno(asno), sql, asno, compid);
+//
+//
+//
+//    }
+
     public Result queryAsapp(AppContext appContext) {
         int compid = appContext.getUserSession().compId;
 
@@ -389,6 +420,7 @@ public class OrderInfoModule {
                         break;
                     case 2:
                         sql.append(" AND asno = ? ");
+                        year = TimeUtils.getYearByOrderno(param);
                         break;
                     case 3:
                         sql.append(" AND compid = ? ");
@@ -444,13 +476,24 @@ public class OrderInfoModule {
         ProdEntity prod;
         for (AsAppVO asAppVO : result) {
             asAppVO.setRefamt(MathUtil.exactDiv(asAppVO.getRefamt(), 100.0).doubleValue());
+            asAppVO.setPdprice(MathUtil.exactDiv(asAppVO.getPdprice(), 100.0).doubleValue());
+            asAppVO.setDistprice(MathUtil.exactDiv(asAppVO.getDistprice(), 100.0).doubleValue());
+            asAppVO.setPayamt(MathUtil.exactDiv(asAppVO.getPayamt(), 100.0).doubleValue());
+            asAppVO.setCoupamt(MathUtil.exactDiv(asAppVO.getCoupamt(), 100.0).doubleValue());
+            asAppVO.setBalamt(MathUtil.exactDiv(asAppVO.getBalamt(), 100.0).doubleValue());
+
             try {
                 asAppVO.setReasonName(DictStore.getDictById(asAppVO.getReason()).getText());
             } catch (Exception e) {}
 
-            try {
-                prod = ProdInfoStore.getProdBySku(asAppVO.getPdno());
-            } catch (Exception e) { prod=null; }
+            if (asAppVO.getPdno() == 0) {
+                prod = null;
+                //TODO 查询发票
+            } else {
+                try {
+                    prod = ProdInfoStore.getProdBySku(asAppVO.getPdno());
+                } catch (Exception e) { prod=null; }
+            }
 
             if (prod != null) {
                 asAppVO.setProdname(prod.getProdname());
