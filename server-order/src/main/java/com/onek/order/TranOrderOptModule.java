@@ -243,8 +243,7 @@ public class TranOrderOptModule {
         List<GoodsStock> goodsStockList = new ArrayList<>();
         if (orderType == 0) {
             //库存判断
-            boolean b = false;
-            goodsStockList = stockIsEnough(tranOrderGoods, b);
+            boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
             if (b) {
                 //库存不足处理
                 stockRecovery(goodsStockList);
@@ -488,15 +487,14 @@ public class TranOrderOptModule {
      * @time 2019/4/17 11:49
      * @version 1.1.1
      **/
-    private List<GoodsStock> stockIsEnough(List<TranOrderGoods> tranOrderGoodsList, boolean result) {
-        List<GoodsStock> goodsStockList = new ArrayList<>();
+    private boolean stockIsEnough(List<GoodsStock> goodsStockList, List<TranOrderGoods> tranOrderGoodsList) {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             String actCodeStr = tranOrderGoods.getActcode();
             List<Long> list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
             if (list.size() == 0) {//无活动码
                 if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
                         tranOrderGoods.getPnum()) != 2) {
-                    result = true;
+                    return true;
                 } else {
                     setGoodsStock(tranOrderGoods, 0L, goodsStockList);
                 }
@@ -521,7 +519,7 @@ public class TranOrderOptModule {
 
                 if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
                         tranOrderGoods.getPnum(), list)) {
-                    result = true;
+                    return true;
                 } else {
                     for (Long aList : list) {
                         setGoodsStock(tranOrderGoods, aList, goodsStockList);
@@ -529,7 +527,7 @@ public class TranOrderOptModule {
                 }
             }
         }
-        return goodsStockList;
+        return false;
     }
 
     private List<GoodsStock> setGoodsStock(TranOrderGoods tranOrderGoods, Long aList, List<GoodsStock> goodsStockList) {
