@@ -123,21 +123,6 @@ public class CouponRevModule {
             "{{?"+DSMConst.TD_TRAN_GOODS+"}} goods where orders.orderno = goods.orderno and orders.orderno = ? "+
             " and orders.ostatus > 0 and orders.cstatus &1 = 0 and goods.cstatus & 1 = 0 ";
 
-    private final String QUERY_COUPON_ACT = "select unqid,brulecode,validday,validflag,actstock,reqflag from " +
-            "{{?"+DSMConst.TD_PROM_COUPON+"}}  where cstatus & 128 > 0 and brulecode = ? and  cstatus & 1 = 0 ";
-
-
-    private final String QUERY_ACTCOUPON_LADD = "select lad.unqid,lad.ladamt,lad.ladnum,lad.offercode,lad.offer from {{?"+
-            DSMConst.TD_PROM_RELA +"}} rela,{{?"+DSMConst.TD_PROM_LADOFF+"}} lad where rela.ladid = lad.unqid and rela.actcode = ? "+
-            "  and rela.cstatus & 1 = 0 and lad.cstatus & 1 = 0 ";
-
-
-    //新增领取活动优惠券
-    private final String INSERT_ACTCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
-            + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
-            + "rulename,goods,ladder,glbno,ctype,reqflag,actcode,cstatus) "
-            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
-
 
     private final static String INSERT_GLBCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
             + "(unqid,coupno,compid,brulecode,rulename,glbno,ctype,cstatus,amt,gettime) "

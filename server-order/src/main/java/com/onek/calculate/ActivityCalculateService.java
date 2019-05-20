@@ -3,6 +3,7 @@ package com.onek.calculate;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.entity.Gift;
 import com.onek.calculate.service.calculate.BaseDiscountCalculateService;
+import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 
@@ -32,7 +33,7 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
 
         if (offerCode > 0) {
             List<Object[]> queryResult =
-                    BaseDAO.getBaseDAO().queryNative(GET_GIFT, offerCode);
+                    IceRemoteUtil.queryNative(GET_GIFT, offerCode);
 
             Gift[] gArray = new Gift[queryResult.size()];
 
@@ -49,7 +50,7 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
     @Override
     public Ladoff[] getLadoffs(long actCode) {
         List<Object[]> ladResult =
-                BaseDAO.getBaseDAO().queryNative(GET_LADOFF, actCode);
+                IceRemoteUtil.queryNative(GET_LADOFF, actCode);
 
         Ladoff[] lapArray = new Ladoff[ladResult.size()];
 
