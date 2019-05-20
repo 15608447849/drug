@@ -476,8 +476,8 @@ public class ActivityManageModule {
                     + " where cstatus&1=0 and actcode=" + actCode + " and gcode in(" + gCodeStr +")";
             baseDao.updateNative(delSql);
         }
-        String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, vcode=?, price=?, "
-                + "cstatus=? where cstatus&1=0 and gcode=? and vcode=? and actcode=?";
+        String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, price=?, "
+                + "cstatus=? where cstatus&1=0 and gcode=? and actcode=?";
 
         for (GoodsVO insGoodsVO : insertDrugVOS) {
             insertDrugParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, insGoodsVO.getGcode(),
@@ -486,8 +486,8 @@ public class ActivityManageModule {
         }
         for (GoodsVO updateGoodsVO : updDrugVOS) {
             updateDrugParams.add(new Object[]{updateGoodsVO.getActstock(),updateGoodsVO.getLimitnum(),
-                    updateGoodsVO.getVcode()+1, updateGoodsVO.getPrice(),updateGoodsVO.getCstatus(),
-                    updateGoodsVO.getGcode(), updateGoodsVO.getVcode(),actCode});
+                    updateGoodsVO.getPrice(),updateGoodsVO.getCstatus(),
+                    updateGoodsVO.getGcode(),actCode});
         }
         baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, insertDrugParams, insertDrugVOS.size());
         baseDao.updateBatchNative(updateSql, updateDrugParams, updDrugVOS.size());
@@ -866,7 +866,6 @@ public class ActivityManageModule {
     private JsonObject relationClasses(JsonObject jsonObject,long actCode, int rulecode) {
         JsonObject resultObj = new JsonObject();
         List<Long> gcodeList = selectGoodsByAct(actCode);
-        boolean isAdd = gcodeList.size() == 0;
         //关联活动商品
         JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
         if (goodsArr != null && goodsArr.size() > 10) {
@@ -878,8 +877,6 @@ public class ActivityManageModule {
         List<GoodsVO> goodsVOS = new ArrayList<>();
         List<GoodsVO> insertGoodsVOS = new ArrayList<>();
         List<GoodsVO> updateGoodsVOS = new ArrayList<>();
-
-
 
         StringBuilder skuBuilder = new StringBuilder();
         int saveType = jsonObject.get("saveType").getAsInt();//保存方式（0 分组保存  1 保存全部）
@@ -1294,11 +1291,6 @@ public class ActivityManageModule {
             for (int i = 0; i < goodsArr.size(); i++) {
                 GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
                 if (goodsVO != null) {
-//                    int stock = RedisStockUtil.getActStockBySkuAndActno(goodsVO.getGcode(), actCode);
-//                    int orgStock = RedisStockUtil.getActInitStock(goodsVO.getGcode(), actCode);
-//                    if (stock != orgStock) {
-//                        return -1;
-//                    }
                     skuBuilder.append(goodsVO.getGcode()).append(",");
                     if (saveType == 1) {
                         if (delGoodsGCode.contains(goodsVO.getGcode())) {
