@@ -118,7 +118,7 @@ public class DiscountModule {
         if(result > 0){
             ExecutorService executors = Executors.newSingleThreadExecutor();
             executors.execute(() -> {
-                        HashMap<String,String> userMap = IceRemoteUtil.getUserByRoles(RoleCodeCons._OPER,RoleCodeCons._FINA);
+                        HashMap<String,String> userMap = IceRemoteUtil.getUserByRoles(RoleCodeCons._OPER);
                         if(userMap != null && userMap.size() > 0){
                             ProdEntity prodEntity = ProdInfoStore.getProdBySku(sku);
                             if(prodEntity != null){
