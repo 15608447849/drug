@@ -87,9 +87,9 @@ public class ProdModule {
 
     private static final String QUERY_PROD = "select sku from {{?" + DSMConst.TD_PROD_SKU +"}} where cstatus&1=0 and prodstatus = 1";
 
+    //获取楼层信息
     @UserPermission(ignore = true)
     public Result getMallFloorProd(AppContext appContext) {
-//    public Result getMallFloorProd() {
         List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
         return new Result().success(mallFloorVOList);
     }
