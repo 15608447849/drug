@@ -1,6 +1,5 @@
 package com.onek.util;
 
-import Ice.Application;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
@@ -673,7 +672,6 @@ public class IceRemoteUtil {
                 "InternalCallModule","queryNative")
                 .setJsonParams(new SqlRemoteReq(sql, params))
                 .execute();
-        Application.communicator().getLogger().print("远程调用结果:"+ json);
         return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).lines;
     }
 

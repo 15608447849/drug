@@ -7,7 +7,7 @@ import java.util.List;
  * @Date: 2019/5/20 10:43
  */
 public class SqlRemoteResp {
-    public int res = -1;
+    public int res = -200;
     public List<Object[]> lines;
     public int[] resArr;
 }

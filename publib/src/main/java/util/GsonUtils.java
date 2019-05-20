@@ -14,9 +14,30 @@ import java.util.List;
  */
 
 public class GsonUtils {
+
     private static Gson newGson(){
-        return new GsonBuilder().setLongSerializationPolicy(LongSerializationPolicy.STRING).create();
+        return new GsonBuilder()
+                .setLongSerializationPolicy(LongSerializationPolicy.STRING)
+                .registerTypeAdapter(Double.class, (JsonSerializer<Double>) (src, typeOfSrc, context) -> {
+//                    System.out.println("-----------double-------GSON: "+ src+" - "+src.longValue()+" ");
+//                    if (src == src.longValue())
+//                        return new JsonPrimitive(src.longValue());
+//                    return new JsonPrimitive(src);
+                    return new JsonPrimitive(src+"");
+                })
+                .registerTypeAdapter(Integer.class,(JsonSerializer<Integer>) (src, typeOfSrc, context) -> {
+//                    System.out.println("-------------int-----GSON: "+ src);
+//            if (src == src.longValue())
+//                return new JsonPrimitive(src.longValue());
+//            return new JsonPrimitive(src);
+                    return new JsonPrimitive(src+"");
+        })
+                .create();
     }
+
+
+
+
     /**
      * json to javabean
      *new TypeToken<List<xxx>>(){}.getType()
