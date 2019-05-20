@@ -23,8 +23,6 @@ import com.onek.util.*;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.discount.DiscountRuleStore;
 import com.onek.util.order.RedisOrderUtil;
-import com.onek.util.sqltransfer.SqlRemoteReq;
-import com.onek.util.sqltransfer.SqlRemoteResp;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -367,8 +365,7 @@ public class TranOrderOptModule {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             paramOne.add(new Object[]{tranOrderGoods.getPnum(), tranOrderGoods.getPdno()});
         }
-        SqlRemoteResp resp = IceRemoteUtil.updateBatchNative(new SqlRemoteReq(UPD_GOODS, paramOne, tranOrderGoodsList.size()));
-        return !ModelUtil.updateTransEmpty(resp.resArr);
+        return !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS, paramOne, tranOrderGoodsList.size()));
     }
 
     /* *
@@ -693,7 +690,7 @@ public class TranOrderOptModule {
             params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
         }
         if (type == 0) {//线上支付释放锁定库存
-            IceRemoteUtil.updateBatchNative(new SqlRemoteReq(UPD_GOODS_FSTORE, params, tranOrderGoods.length));
+            IceRemoteUtil.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
         }
     }
 

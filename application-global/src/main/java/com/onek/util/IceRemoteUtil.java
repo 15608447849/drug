@@ -23,6 +23,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @Author: leeping
@@ -658,14 +659,42 @@ public class IceRemoteUtil {
     /**
      * 调用全局服务,传递sql执行
      */
-    public static SqlRemoteResp updateBatchNative(SqlRemoteReq bean){
+    public static int[] updateBatchNative(String sql,List<Object[]> params,int len){
         String json = ic.setServerAndRequest("global",
                 "InternalCallModule","updateBatchNative")
-                .setJsonParams(bean)
+                .setJsonParams(new SqlRemoteReq(sql, params, len))
                 .execute();
-        return GsonUtils.jsonToJavaBean(json,SqlRemoteResp.class);
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).resArr;
     }
 
+    /**
+     *      List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(
+     *                 GET_ACTIVITIES_BY_SKU,
+     *                 sku, pclasses[0], pclasses[1], pclasses[2]);
+     */
+    public static  List<Object[]> queryNative(String sql,Object... params){
+        String json = ic.setServerAndRequest("global",
+                "InternalCallModule","queryNative")
+                .setJsonParams(new SqlRemoteReq(sql, params))
+                .execute();
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).lines;
+    }
+
+    public static int updateNative(String sql,final Object... params){
+        String json = ic.setServerAndRequest("global",
+                "InternalCallModule","updateNative")
+                .setJsonParams(new SqlRemoteReq(sql, params))
+                .execute();
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).res;
+    }
+
+    public static int[] updateTransNative(String[] sql,List<Object[]> params){
+        String json = ic.setServerAndRequest("global",
+                "InternalCallModule","updateTransNative")
+                .setJsonParams(new SqlRemoteReq(sql, params))
+                .execute();
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).resArr;
+    }
 
 }
 

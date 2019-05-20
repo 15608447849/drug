@@ -8,6 +8,6 @@ import java.util.List;
  */
 public class SqlRemoteResp {
     public int res = -1;
-    public List<Object> lines;
+    public List<Object[]> lines;
     public int[] resArr;
 }
