@@ -12,6 +12,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class ActivityCalculateService extends BaseDiscountCalculateService {
+    //远程调用
     private static final String GET_LADOFF =
             " SELECT lad.* "
             + " FROM {{?" + DSMConst.TD_PROM_LADOFF + "}} lad"
@@ -19,7 +20,7 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
             + " ON lad.cstatus&1 = 0 AND rela.cstatus&1 = 0 "
             + " AND lad.unqid = rela.ladid AND rela.actcode = ? "
             + " WHERE 1 = 1 ";
-
+    //远程调用
     private static final String GET_GIFT =
             " SELECT gift.unqid, gift.giftname, gift.giftdesc "
                     + " FROM {{?" + DSMConst.TD_PROM_GIFT + "}} gift "
@@ -32,8 +33,8 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
         List<Gift> result = new ArrayList<>();
 
         if (offerCode > 0) {
-            List<Object[]> queryResult =
-                    IceRemoteUtil.queryNative(GET_GIFT, offerCode);
+            //远程调用
+            List<Object[]> queryResult = IceRemoteUtil.queryNative(GET_GIFT, offerCode);
 
             Gift[] gArray = new Gift[queryResult.size()];
 
@@ -49,8 +50,8 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
 
     @Override
     public Ladoff[] getLadoffs(long actCode) {
-        List<Object[]> ladResult =
-                IceRemoteUtil.queryNative(GET_LADOFF, actCode);
+        //远程调用
+        List<Object[]> ladResult = IceRemoteUtil.queryNative(GET_LADOFF, actCode);
 
         Ladoff[] lapArray = new Ladoff[ladResult.size()];
 

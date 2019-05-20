@@ -1,5 +1,6 @@
 package com.onek.order;
 
+import Ice.Application;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.ActivityFilterService;
@@ -12,13 +13,14 @@ import com.onek.entity.ShoppingCartDTO;
 import com.onek.entity.ShoppingCartVO;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
+import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.discount.DiscountRuleStore;
 import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GenIdUtil;
 import util.*;
 
 import java.math.BigDecimal;
@@ -70,7 +72,7 @@ public class ShoppingCartModule {
     private final String QUERY_SHOPCART_SQL = "select unqid,pdno,compid,cstatus,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "+
             " where cstatus&1=0 and  orderno = 0 and compid = ? order by createdate,createtime desc";
 
-
+    //远程调用
     private static final String QUERY_PROD_BASE =
             " SELECT  spu.prodname ptitle,m.manuname verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
@@ -81,7 +83,7 @@ public class ShoppingCartModule {
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b   ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
                     + " WHERE 1=1 ";
 
-
+    //远程调用
     private  final String QUERY_ONE_PROD_INV = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice from " +
             " {{?" + DSMConst.TD_PROD_SKU   + "}} where sku =? and cstatus & 1 = 0";
 
@@ -113,7 +115,8 @@ public class ShoppingCartModule {
 
         int compid = shopVO.getCompid();
 
-        List<Object[]> queryInvRet = baseDao.queryNative(QUERY_ONE_PROD_INV, new Object[]{shopVO.getPdno()});
+        //远程调用
+        List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV, shopVO.getPdno());
 
         if(queryInvRet == null || queryInvRet.isEmpty()){
             return result.fail("操作失败");
@@ -121,7 +124,7 @@ public class ShoppingCartModule {
 
         int inventory = Integer.parseInt(queryInvRet.get(0)[0].toString());
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
-                SELECT_SHOPCART_SQL_EXT, new Object[]{compid, shopVO.getPdno()});
+                SELECT_SHOPCART_SQL_EXT, compid, shopVO.getPdno());
 
         int ret = 0;
         List<Product> productList = new ArrayList<>();
@@ -134,8 +137,8 @@ public class ShoppingCartModule {
             product.autoSetCurrentPrice(pdprice,shopVO.getPnum());
             productList.add(product);
             ret = baseDao.updateNativeSharding(compid,TimeUtils.getCurrentYear(),
-                    INSERT_SHOPCART_SQL,new Object[]{GenIdUtil.getUnqId(),0,
-                            shopVO.getPdno(),getSkuInv(compid,productList,inventory),compid,0});
+                    INSERT_SHOPCART_SQL, GenIdUtil.getUnqId(),0,
+                    shopVO.getPdno(),getSkuInv(compid,productList,inventory),compid,0);
         }else{
             long unqid = Long.parseLong(queryRet.get(0)[0].toString());
             int pnum = Integer.parseInt(queryRet.get(0)[1].toString());
@@ -145,8 +148,8 @@ public class ShoppingCartModule {
             productList.add(product);
 
             ret = baseDao.updateNativeSharding(compid,TimeUtils.getCurrentYear(),
-                    UPDATE_SHOPCART_SQL_EXT,new Object[]{getSkuInv(compid,productList,inventory),
-                            unqid});
+                    UPDATE_SHOPCART_SQL_EXT, getSkuInv(compid,productList,inventory),
+                    unqid);
 
         }
         if(ret > 0){
@@ -239,19 +242,19 @@ public class ShoppingCartModule {
                 + " where orderno = 0 and cstatus&1 = 0 and compid = " + compid;
         querySql = querySql + " and pdno in (" + skuStr + ")";
 
-
+        //远程调用
         String querySkuSql = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice,sku pdno from " +
                 " {{?" + DSMConst.TD_PROD_SKU   + "}} where cstatus & 1 = 0 ";
         querySkuSql = querySkuSql + " and sku in ("+skuStr+")";
 
-
-        List<Object[]> querySkuRet = baseDao.queryNative(querySkuSql, new Object[]{});
+        //远程调用
+        List<Object[]> querySkuRet = IceRemoteUtil.queryNative(querySkuSql);
         if(querySkuRet == null || querySkuRet.isEmpty()){
             return result.fail("添加失败");
         }
 
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
-                querySql, new Object[]{});
+                querySql);
             convtShopCartDTO(compid,querySkuRet,shoppingCartDTOS,queryRet);
             boolean flag = true;
             for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
@@ -465,9 +468,7 @@ public class ShoppingCartModule {
         baseDao.convToEntity(queryResult, shoppingCartVOS, ShoppingCartDTO.class,
                 new String[]{"unqid","pdno","compid","cstatus","pnum"});
 
-
         List<ShoppingCartVO> shopCart = getShopCart(Arrays.asList(shoppingCartVOS));
-
 
         //TODO 获取活动匹配
         convResult(shopCart,compid);
@@ -505,27 +506,33 @@ public class ShoppingCartModule {
     }
 
 
-    public List<ShoppingCartVO> getCartSkus(String ids){
-        StringBuilder sql = new StringBuilder(QUERY_PROD_BASE);
+    private List<ShoppingCartVO> getCartSkus(String ids){
         if(StringUtils.isEmpty(ids)){
             return null;
         }
+        //远程调用
+        StringBuilder sql = new StringBuilder(QUERY_PROD_BASE);
         sql.append(" AND sku.sku IN (");
         sql.append(ids);
         sql.append(") ");
-        List<Object[]> queryResult = baseDao.queryNative(sql.toString());
+        //远程调用
+        List<Object[]> queryResult = IceRemoteUtil.queryNative(sql.toString());
 
-        if (queryResult.isEmpty()) {
+        if (queryResult==null || queryResult.isEmpty()) {
            return null;
+        }
+        for (Object[] objs : queryResult){
+            Application.communicator().getLogger().print("Object[]:"+ Arrays.toString(objs));
         }
         ShoppingCartVO[] returnResults = new ShoppingCartVO[queryResult.size()];
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
                 new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory",
                         "spec","pstatus","spu","limitnum","brand","medpacknum"});
+
         return Arrays.asList(returnResults);
     }
 
-    public  List<ShoppingCartVO> getShopCart(List<ShoppingCartDTO> shoppingCartDTOS){
+    private List<ShoppingCartVO> getShopCart(List<ShoppingCartDTO> shoppingCartDTOS){
         StringBuilder ids = new StringBuilder();
         for (int i = 0; i < shoppingCartDTOS.size(); i++){
             ids.append(shoppingCartDTOS.get(i).getPdno());
@@ -543,13 +550,13 @@ public class ShoppingCartModule {
                 shoppingCartVO.setStatus(2);
             }
 
-            for(int i = 0; i < shoppingCartDTOS.size(); i++){
-                if(shoppingCartVO.getPdno() == shoppingCartDTOS.get(i).getPdno()){
-                    shoppingCartVO.setNum(shoppingCartDTOS.get(i).getPnum());
-                    shoppingCartVO.setChecked(shoppingCartDTOS.get(i).getChecked());
-                    shoppingCartVO.setUnqid(shoppingCartDTOS.get(i).getUnqid());
-                    shoppingCartVO.setConpno(shoppingCartDTOS.get(i).getConpno()+"");
-                    shoppingCartVO.setAreano(shoppingCartDTOS.get(i).getAreano());
+            for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
+                if (shoppingCartVO.getPdno() == shoppingCartDTO.getPdno()) {
+                    shoppingCartVO.setNum(shoppingCartDTO.getPnum());
+                    shoppingCartVO.setChecked(shoppingCartDTO.getChecked());
+                    shoppingCartVO.setUnqid(shoppingCartDTO.getUnqid());
+                    shoppingCartVO.setConpno(shoppingCartDTO.getConpno() + "");
+                    shoppingCartVO.setAreano(shoppingCartDTO.getAreano());
                     break;
                 }
             }
@@ -559,7 +566,7 @@ public class ShoppingCartModule {
 
 
 
-    public void convResult(List<ShoppingCartVO> shoppingCartList,int compid){
+    private void convResult(List<ShoppingCartVO> shoppingCartList, int compid){
 
         if(shoppingCartList == null){
             return;
@@ -695,7 +702,7 @@ public class ShoppingCartModule {
     }
 
 
-    public  List<IDiscount> getActivityList(int compid,List<Product> products){
+    private List<IDiscount> getActivityList(int compid, List<Product> products){
         List<IDiscount> activityList =
                 new ActivityFilterService(
                         new ActivitiesFilter[] {

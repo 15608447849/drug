@@ -167,7 +167,7 @@ public class RedisStockUtil {
                 }
             }
             int stock = hashMap.containsKey(RedisGlobalKeys.STOCK_PREFIX) ? Integer.parseInt(hashMap.get(RedisGlobalKeys.STOCK_PREFIX)) : 0 ;
-            if (sumStock > 0 && sumStock >= stock) {
+            if (sumStock > 0 && sumStock > stock) {
                 for (String k : stockMap.keySet()) {
                     double rate = MathUtil.exactDiv(stockMap.get(k), sumStock).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                     int nas = MathUtil.exactMul(stock, rate).intValue();

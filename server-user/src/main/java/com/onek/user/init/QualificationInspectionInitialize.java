@@ -51,7 +51,6 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
             }else if (atype == 12){
                 typeStr = "gsp认证";
             }
-
             if (typeStr == null) return;
             sendMessageToSpecify(compid,phone,SmsTempNo.QUALIFICATION_EXPIRED,typeStr);
         }
@@ -103,7 +102,7 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
     //设置定时器-一个月后执行
     //定时每次执行时,再次检测自己是否过期,过期-发送消息并再次添加定时任务,否则移除
     private void execute() {
-        String sql = "SELECT atype,compid,uphone FROM {{?" + D_COMP_APTITUDE + "}} AS a INNER JOIN {{?" + D_SYSTEM_USER + "}} AS b ON a.compid=b.cid WHERE compid IN ( SELECT cid FROM {{?" + D_COMP + "}} WHERE cstatus&256=256 AND ctype=0 ) AND validitye < CURRENT_DATE";
+        String sql = "SELECT atype,compid,uphone,validitye FROM {{?" + D_COMP_APTITUDE + "}} AS a INNER JOIN {{?" + D_SYSTEM_USER + "}} AS b ON a.compid=b.cid WHERE compid IN ( SELECT cid FROM {{?" + D_COMP + "}} WHERE cstatus&256=256 AND ctype=0 ) AND validitye < CURRENT_DATE";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
         for (Object[] row : lines){
             checkTypeAndSendMsg(row);

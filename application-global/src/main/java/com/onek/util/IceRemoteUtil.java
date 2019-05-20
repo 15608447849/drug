@@ -660,28 +660,23 @@ public class IceRemoteUtil {
      * 调用全局服务,传递sql执行
      */
     public static int[] updateBatchNative(String sql,List<Object[]> params,int len){
-        String json = ic.setServerAndRequest("global",
+        String json = ic.setServerAndRequest("globalServer",
                 "InternalCallModule","updateBatchNative")
                 .setJsonParams(new SqlRemoteReq(sql, params, len))
                 .execute();
         return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).resArr;
     }
 
-    /**
-     *      List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(
-     *                 GET_ACTIVITIES_BY_SKU,
-     *                 sku, pclasses[0], pclasses[1], pclasses[2]);
-     */
     public static  List<Object[]> queryNative(String sql,Object... params){
-        String json = ic.setServerAndRequest("global",
+        String json = ic.setServerAndRequest("globalServer",
                 "InternalCallModule","queryNative")
                 .setJsonParams(new SqlRemoteReq(sql, params))
                 .execute();
-        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).lines;
+        return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).getLines();
     }
 
     public static int updateNative(String sql,final Object... params){
-        String json = ic.setServerAndRequest("global",
+        String json = ic.setServerAndRequest("globalServer",
                 "InternalCallModule","updateNative")
                 .setJsonParams(new SqlRemoteReq(sql, params))
                 .execute();
@@ -689,7 +684,7 @@ public class IceRemoteUtil {
     }
 
     public static int[] updateTransNative(String[] sql,List<Object[]> params){
-        String json = ic.setServerAndRequest("global",
+        String json = ic.setServerAndRequest("globalServer",
                 "InternalCallModule","updateTransNative")
                 .setJsonParams(new SqlRemoteReq(sql, params))
                 .execute();

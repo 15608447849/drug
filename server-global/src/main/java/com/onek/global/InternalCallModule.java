@@ -7,6 +7,8 @@ import com.onek.util.sqltransfer.SqlRemoteResp;
 import dao.BaseDAO;
 import util.GsonUtils;
 
+import java.util.List;
+
 /**
  * @Author: leeping
  * @Date: 2019/5/20 10:23
@@ -19,7 +21,6 @@ public class InternalCallModule {
         try {
             String json = context.param.json;
             SqlRemoteReq req = GsonUtils.jsonToJavaBean(json,SqlRemoteReq.class);
-            context.logger.print("执行:"+ req);
             assert req != null;
             resp.resArr = BaseDAO.getBaseDAO().updateBatchNative(req.sql,req.params,req.length);
         } catch (Exception e) {
@@ -34,9 +35,9 @@ public class InternalCallModule {
         try {
             String json = context.param.json;
             SqlRemoteReq req = GsonUtils.jsonToJavaBean(json,SqlRemoteReq.class);
-            context.logger.print("执行:"+ req);
             assert req != null;
-            resp.lines = BaseDAO.getBaseDAO().queryNative(req.sql,req.objects);
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(req.sql,req.objects);
+            resp.setLines(lines);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -49,7 +50,6 @@ public class InternalCallModule {
         try {
             String json = context.param.json;
             SqlRemoteReq req = GsonUtils.jsonToJavaBean(json,SqlRemoteReq.class);
-            context.logger.print("执行:"+ req);
             assert req != null;
             resp.res = BaseDAO.getBaseDAO().updateNative(req.sql,req.objects);
         } catch (Exception e) {
@@ -64,7 +64,6 @@ public class InternalCallModule {
         try {
             String json = context.param.json;
             SqlRemoteReq req = GsonUtils.jsonToJavaBean(json,SqlRemoteReq.class);
-            context.logger.print("执行:"+ req);
             assert req != null;
             resp.resArr = BaseDAO.getBaseDAO().updateTransNative(req.sqlArr,req.params);
         } catch (Exception e) {

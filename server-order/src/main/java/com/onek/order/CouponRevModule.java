@@ -66,16 +66,16 @@ public class CouponRevModule {
             "glbno,ctype,reqflag from {{?"+ DSMConst.TD_PROM_COUENT +"}} "+
             " where cstatus&1=0 and unqid = ?";
 
-
+    //远程调用
     private static final String INSERT_COURCD =  "insert into {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " (unqid,coupno,compid,offercode,gettime,cstatus) values (?,?,?,?,now(),?)";
-
+    //远程调用
     private static final String DEL_COURCD =  "update {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " SET cstatus = cstatus | " + CSTATUS.DELETE +" WHERE unqid = ? ";
-
+    //远程调用
     private static final String QUERY_COURCD_EXT =  "select unqid from  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " where compid = ? and coupno = ?  ";
-
+    //远程调用
     private static final String UPDATE_COURCD =  "update  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " set cstatus = 0,gettime = now() where unqid = ? ";
 
@@ -84,11 +84,11 @@ public class CouponRevModule {
 
 
 
-    //扣减优惠券库存
+    //扣减优惠券库存 远程调用
     private static final String UPDATE_COUPON_STOCK = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
             + " set actstock = actstock - 1 " +
             "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
-
+    //远程调用
     private static final String UPDATE_COUPON_STOCK_NUM = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
             + " set actstock = actstock - ? " +
             "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
@@ -104,6 +104,7 @@ public class CouponRevModule {
 
     /**
      * 查询活动优惠券
+     * 远程调用
      */
     private final static String QUERY_ACCOUP_SQL = "select unqid coupno,glbno,brulecode,validday,validflag,reqflag from {{?"+ DSMConst.TD_PROM_COUPON +"}} "+
             " where cstatus & 128 > 0 and brulecode = ? and cstatus & 1= 0 and actstock > 0 ";
@@ -309,19 +310,21 @@ public class CouponRevModule {
         String json = appContext.param.json;
         CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
 
+        assert couponVO != null;
         if(couponVO.getCompid() <= 0){
             return result.fail("用户未登陆或未认证！");
         }
         List<Object[]> extCoup = baseDao.queryNativeSharding(couponVO.getCompid(),
                 TimeUtils.getCurrentYear(), QUERY_COUP_EXT_SQL,
-                new Object[]{couponVO.getCompid(),
-                        couponVO.getCoupno()});
+                couponVO.getCompid(),
+                couponVO.getCoupno());
         if(extCoup != null && !extCoup.isEmpty()){
             if(Integer.parseInt(extCoup.get(0)[0].toString()) > 0){
                 return result.success("已领取过该优惠券！");
             }
         }
-        List<Object[]> crdResult = IceRemoteUtil.queryNative(QUERY_COURCD_EXT, new Object[]{couponVO.getCompid(), couponVO.getCoupno()});
+        //远程调用
+        List<Object[]> crdResult = IceRemoteUtil.queryNative(QUERY_COURCD_EXT, couponVO.getCompid(), couponVO.getCoupno());
         int ret = 0;
         long rcdid = 0L;
         if(crdResult == null || crdResult.isEmpty()){
@@ -330,27 +333,28 @@ public class CouponRevModule {
             if(couponVO.getQlfno() == 1){
                 cstatus = 64;
             }
+            //远程调用
             ret = IceRemoteUtil.updateNative(INSERT_COURCD,
-                    new Object[]{rcdid,couponVO.getCoupno(),
-                            couponVO.getCompid(),0,cstatus});
+                    rcdid,couponVO.getCoupno(),
+                            couponVO.getCompid(),0,cstatus);
         }else{
             rcdid = Long.parseLong(crdResult.get(0)[0].toString());
-            ret = IceRemoteUtil.updateNative(UPDATE_COURCD,
-                    new Object[]{rcdid});
+            //远程调用
+            ret = IceRemoteUtil.updateNative(UPDATE_COURCD, rcdid);
         }
 
         if(ret > 0){
             try{
                 if(insertCoupon(couponVO) > 0){
-                    IceRemoteUtil.updateNative(UPDATE_COUPON_STOCK,
-                            new Object[]{couponVO.getCoupno()});
+                    //远程调用
+                    IceRemoteUtil.updateNative(UPDATE_COUPON_STOCK, couponVO.getCoupno());
                     return result.success("领取成功");
                 }else{
-                    //删除优惠记录
+                    //远程调用,删除优惠记录
                     IceRemoteUtil.updateNative(DEL_COURCD,rcdid);
                 }
             }catch (Exception e){
-                baseDao.updateNative(DEL_COURCD,rcdid);
+                IceRemoteUtil.updateNative(DEL_COURCD,rcdid);
                 e.printStackTrace();
             }
         }
@@ -716,7 +720,8 @@ public class CouponRevModule {
                         break;
                 }
 
-                List<Object[]> queryResult = baseDao.queryNative(QUERY_ACCOUP_SQL, brule);
+                //远程调用
+                List<Object[]> queryResult = IceRemoteUtil.queryNative(QUERY_ACCOUP_SQL, brule);
 
                 if (queryResult == null || queryResult.isEmpty()) {
                     break;
@@ -737,7 +742,7 @@ public class CouponRevModule {
                 couponResult.setLadder(GsonUtils.
                         javaBeanToJson(new CouponPubLadderVO[]{couponPubLadderVO}));
 
-                sqlList.add(UPDATE_COUPON_STOCK_NUM);
+                sqlList.add(UPDATE_COUPON_STOCK_NUM);//远程调用
                 stockParams.add(new Object[]{gift.getNums(),couponResult.getCoupno()});
                 for (int i = 0; i < gift.getNums(); i++){
                     if(brule == 2110){
@@ -765,7 +770,7 @@ public class CouponRevModule {
         String[] nativeSQL = new String[sqlList.size()];
         nativeSQL = sqlList.toArray(nativeSQL);
         if(nativeSQL.length != 0){
-            IceRemoteUtil.updateTransNative(nativeSQL,stockParams);
+            IceRemoteUtil.updateTransNative(nativeSQL,stockParams);//远程调用
         }
         return !ModelUtil.updateTransEmpty(result);
     }

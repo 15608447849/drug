@@ -93,7 +93,7 @@ public class TranOrderOptModule {
             + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME, actcode=?,balamt=? where cstatus&1=0 and "
             + " pdno=? and compid = ? and orderno=0";
 
-    //是否要减商品总库存
+    //是否要减商品总库存 远程调用
     private static final String UPD_GOODS = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "freezestore=freezestore+? where cstatus&1=0 and sku=? ";
 
@@ -101,7 +101,7 @@ public class TranOrderOptModule {
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
             + " where cstatus&1=0 and orderno=? and ostatus=?";
 
-    //释放商品冻结库存
+    //释放商品冻结库存 远程调用
     private static final String UPD_GOODS_FSTORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "freezestore=freezestore-? where cstatus&1=0 and sku=? ";
 
@@ -121,6 +121,7 @@ public class TranOrderOptModule {
                     + " SET ostatus = 3 "
                     + " WHERE cstatus&1 = 0 AND ostatus = 2 AND orderno = ? ";
 
+    //远程调用
     private static final String UPDATE_PROM_COURCD = "update {{?" + DSMConst.TD_PROM_COURCD
             + "}} set cstatus=cstatus|1 where cstatus&1=0 and cstatus&64=0 and coupno=? and compid=?";
 
@@ -331,7 +332,8 @@ public class TranOrderOptModule {
         if (b) {
             updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
             if (coupon > 0) {
-                baseDao.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
+                //远程调用
+                IceRemoteUtil.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
             }
 
             CANCEL_DELAYED.add(tranOrder);
@@ -364,6 +366,7 @@ public class TranOrderOptModule {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             paramOne.add(new Object[]{tranOrderGoods.getPnum(), tranOrderGoods.getPdno()});
         }
+        //远程调用
         return !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS, paramOne, tranOrderGoodsList.size()));
     }
 
@@ -687,7 +690,7 @@ public class TranOrderOptModule {
             RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
             params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
         }
-        if (type == 0) {//线上支付释放锁定库存
+        if (type == 0) {//线上支付释放锁定库存 远程调用
             IceRemoteUtil.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
         }
     }

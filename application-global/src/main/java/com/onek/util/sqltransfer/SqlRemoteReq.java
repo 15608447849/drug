@@ -1,6 +1,5 @@
 package com.onek.util.sqltransfer;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -29,15 +28,5 @@ public class SqlRemoteReq {
         this.sql = sql;
         this.params = params;
         this.length = length;
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder sb = new StringBuilder();
-        for (Object[] objs : params){
-            Arrays.toString(objs);
-            sb.append(objs+"\n");
-        }
-        return "执行sql:"+sql+" 参数列表:"+ sb.toString() +" ,length="+length;
     }
 }
