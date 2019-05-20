@@ -68,11 +68,16 @@ public class RedisStockUtil {
         String init_key = RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + actCode;
         String act_key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
         String limit_key = RedisGlobalKeys.ACT_LIMIT_NUM_PREFIX + actCode;
-        Long result = RedisUtil.getHashProvide().delByKeys(RedisGlobalKeys.STOCK_PREFIX + sku, init_key, act_key, limit_key);
-        if(result > 0){
-            calcAvailStock(sku);
+        if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.STOCK_PREFIX + sku, init_key)){
+            Long result = RedisUtil.getHashProvide().delByKeys(RedisGlobalKeys.STOCK_PREFIX + sku, init_key, act_key, limit_key);
+            if(result > 0){
+                calcAvailStock(sku);
+            }
+            return result;
+        }else{
+            return 1L;
         }
-        return result;
+
     }
 
 //    /**

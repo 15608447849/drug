@@ -23,6 +23,7 @@ import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
+import org.hyrdpf.util.LogUtil;
 import util.BUSUtil;
 import util.GsonUtils;
 import util.ModelUtil;
@@ -121,7 +122,6 @@ public class ActivityManageModule {
                     + " SET cstatus = cstatus | " + CSTATUS.DELETE
                     + " WHERE unqid = ? ";
 
-
     /* *
      * @description 活动查询
      * @params [appContext]
@@ -206,24 +206,29 @@ public class ActivityManageModule {
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         try {
-            long startTime = dateFormat.parse(activityVO.getSdate()+
-                    " " + activityVO.getTimeVOS().get(0).getSdate()).getTime();
-            if (startTime > new Date().getTime()) {
-                ExecutorService executors = Executors.newSingleThreadExecutor();
-                executors.execute(() -> {
-                            IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
-                                    "", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
-                                            " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                            SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.ACTIVITIES_OF_NEW,"", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
-                                    " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                        }
+            //活动开始前五分钟
+            long start5Time = dateFormat.parse(activityVO.getSdate()+
+                    " " + activityVO.getTimeVOS().get(0).getSdate()).getTime() - 5*60*100;
 
-                );
+            if (start5Time > new Date().getTime()) {
+                aaa(activityVO);
             }
         } catch (ParseException e) {
             e.printStackTrace();
         }
         return result;
+    }
+
+    private void aaa( ActivityVO activityVO) {
+        ExecutorService executors = Executors.newSingleThreadExecutor();
+        executors.execute(() -> {
+                    IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
+                            "", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
+                                    " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
+                    SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.ACTIVITIES_OF_NEW,"", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
+                            " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
+                }
+        );
     }
 
     /**
@@ -741,7 +746,7 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private long theGoodsStockIsEnough(int actStock, int cstatus, long actCode) {
-        String selectSQL = "select sku, store,min(notused) as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
+        String selectSQL = "select sku, store,notused as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
                 "select sku,store, used  from ( " +
                 "SELECT sku,gcode,store,freezestore, " +
                 "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
@@ -768,9 +773,9 @@ public class ActivityManageModule {
                 "select sku,store, 0 from td_prod_sku where cstatus&1=0) uc GROUP BY sku) ud  ";
         if ((cstatus & 256) > 0) {//库存百分比
             double percent = actStock * 0.01;
-            selectSQL = selectSQL +  " HAVING minunused < ceil(store*"+percent+")";
+            selectSQL = selectSQL +  " HAVING minunused < ceil(store*"+percent+")  LIMIT 0,1";
         } else {//库存量
-            selectSQL = selectSQL +  " HAVING minunused < "+ actStock;
+            selectSQL = selectSQL +  " HAVING minunused < "+ actStock + " LIMIT 0,1";
         }
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         if (queryResult == null || queryResult.size() == 0) return 0;
@@ -840,18 +845,46 @@ public class ActivityManageModule {
     private int updateAssByActcode(int type, long actCode) {
         String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
                 + " where cstatus&1=0 and actcode=? ";
+        List<Long> skus;
         switch (type) {
             case 1:
                 updateSQL = updateSQL + " and gcode<>0";
+                skus = selectGoodsByType(actCode, " and gcode<>0");
                 break;
             case 2:
                 updateSQL = updateSQL + " and (gcode=0 or LENGTH(gcode)=14)";
+                skus = selectGoodsByType(actCode, " and (gcode=0 or LENGTH(gcode)=14)");
                 break;
             default:
                 updateSQL = updateSQL + " and (gcode=0 or LENGTH(gcode)<14)";
+                skus = selectGoodsByType(actCode, " and (gcode=0 or LENGTH(gcode)<14)");
                 break;
         }
-        return baseDao.updateNative(updateSQL, actCode);
+        int result = baseDao.updateNative(updateSQL, actCode);
+        if (result > 0) {
+            List<GoodsVO> delGoods = new ArrayList<>();
+            for (long sku :skus) {
+                GoodsVO goodsVO = new GoodsVO();
+                goodsVO.setActcode(actCode + "");
+                goodsVO.setGcode(sku);
+                delGoods.add(goodsVO);
+            }
+            noticeGoodsUpd(-1, null, delGoods, 0, actCode);
+
+        }
+        return result;
+    }
+
+    private List<Long> selectGoodsByType(long actCode, String conDSql) {
+        List<Long> gcodeList = new ArrayList<>();
+        String sql = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 and "
+                + " actcode=" + actCode + conDSql;
+        List<Object[]> queryResult = baseDao.queryNative(sql);
+        if (queryResult==null || queryResult.isEmpty()) return gcodeList;
+        for (Object[] aQueryResult : queryResult) {
+            gcodeList.add((long) aQueryResult[0]);
+        }
+        return gcodeList;
     }
     
     /* *
@@ -1228,6 +1261,7 @@ public class ActivityManageModule {
                 }
             }
             if (delGoods!=null && delGoods.size() > 0) {
+                //LogUtil.getDefaultLogger().info("####### 1259 line: delGoods-->"+delGoods);
                 for (GoodsVO goodsVO : delGoods) {
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("discount", 1);
@@ -1407,6 +1441,8 @@ public class ActivityManageModule {
 
 
     private boolean delActCode(long actCode) {
+        boolean b;
+        List<Long> skus = selectGoodsByAct(actCode);
         List<Object[]> params = new ArrayList<>();
         StringBuilder stringBuilder = new StringBuilder();
         StringBuilder offerBuilder = new StringBuilder();
@@ -1419,8 +1455,20 @@ public class ActivityManageModule {
         if (queryResult == null || queryResult.isEmpty()) {
             params.add(new Object[]{actCode});
             params.add(new Object[]{actCode});
-            return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{DELETE_ACT,
+            b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{DELETE_ACT,
                     delAssDrugByActCode}, params));
+            if (b) {
+                List<GoodsVO> delGoods = new ArrayList<>();
+               // LogUtil.getDefaultLogger().info("########### 1475 INE:"+delGoods.size());
+                for (long sku :skus) {
+                    GoodsVO goodsVO1 = new GoodsVO();
+                    goodsVO1.setActcode(actCode + "");
+                    goodsVO1.setGcode(sku);
+                    delGoods.add(goodsVO1);
+                }
+                noticeGoodsUpd(-1, null, delGoods, 0, actCode);
+            }
+            return b;
         }
         for (Object[] aQueryResult : queryResult) {
             stringBuilder.append((long) aQueryResult[0]).append(",");
@@ -1438,11 +1486,12 @@ public class ActivityManageModule {
         params.add(new Object[]{});
         params.add(new Object[]{actCode});
         params.add(new Object[]{actCode});
-        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{sqlOne,sqlTwo, sqlThree,
+        b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{sqlOne,sqlTwo, sqlThree,
                 DELETE_ACT, delAssDrugByActCode}, params));
+      //  LogUtil.getDefaultLogger().info("########### 1473 INE:"+b);
         if (b) {
             List<GoodsVO> delGoods = new ArrayList<>();
-            List<Long> skus = selectGoodsByAct(actCode);
+           // LogUtil.getDefaultLogger().info("########### 1475 INE:"+delGoods.size());
             for (long sku :skus) {
                 GoodsVO goodsVO1 = new GoodsVO();
                 goodsVO1.setActcode(actCode + "");
