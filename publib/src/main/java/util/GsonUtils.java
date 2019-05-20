@@ -14,6 +14,9 @@ import java.util.List;
  */
 
 public class GsonUtils {
+    private static Gson newGson(){
+        return new GsonBuilder().setLongSerializationPolicy(LongSerializationPolicy.STRING).create();
+    }
     /**
      * json to javabean
      *new TypeToken<List<xxx>>(){}.getType()
@@ -22,7 +25,7 @@ public class GsonUtils {
     public static <T> T jsonToJavaBean(String json,Type type) {
         try {
             if (json==null || json.length()==0) return null;
-            return new Gson().fromJson(json, type);//对于javabean直接给出class实例
+            return newGson().fromJson(json, type);//对于javabean直接给出class实例
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
         }
@@ -34,7 +37,7 @@ public class GsonUtils {
      * @return
      */
     public static String javaBeanToJson(Object object){
-        return new Gson().toJson(object);
+        return newGson().toJson(object);
     }
     /**
      * json to javabean
@@ -44,7 +47,7 @@ public class GsonUtils {
     public static <T> T jsonToJavaBean(String json,Class<T> cls) {
         try {
             if (json==null || json.length()==0) return null;
-            return new Gson().fromJson(json, cls);//对于javabean直接给出class实例
+            return newGson().fromJson(json, cls);//对于javabean直接给出class实例
         } catch (JsonSyntaxException e) {
             e.printStackTrace();
         }
@@ -64,7 +67,7 @@ public class GsonUtils {
     public static <T> List<T> json2List(String json, Class<T> clazz){
         List<T> list = new ArrayList<>();
         try {
-            Gson gson = new Gson();
+            Gson gson = newGson();
             JsonArray array = new JsonParser().parse(json).getAsJsonArray();
             for (JsonElement element : array) {
                 list.add(gson.fromJson(element, clazz));

@@ -1,5 +1,6 @@
 package com.onek.order;
 
+import Ice.Application;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.ActivityFilterService;
@@ -12,6 +13,7 @@ import com.onek.entity.ShoppingCartDTO;
 import com.onek.entity.ShoppingCartVO;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
+import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.discount.DiscountRuleStore;
@@ -19,7 +21,6 @@ import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GenIdUtil;
 import util.*;
 
 import java.math.BigDecimal;
@@ -497,13 +498,17 @@ public class ShoppingCartModule {
         //远程调用
         List<Object[]> queryResult = IceRemoteUtil.queryNative(sql.toString());
 
-        if (queryResult.isEmpty()) {
+        if (queryResult==null || queryResult.isEmpty()) {
            return null;
+        }
+        for (Object[] objs : queryResult){
+            Application.communicator().getLogger().print("Object[]:"+ Arrays.toString(objs));
         }
         ShoppingCartVO[] returnResults = new ShoppingCartVO[queryResult.size()];
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
                 new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory",
                         "spec","pstatus","spu","limitnum","brand","medpacknum"});
+        Application.communicator().getLogger().print("returnResults结果:"+ queryResult);
         return Arrays.asList(returnResults);
     }
 

@@ -1,5 +1,6 @@
 package com.onek.util;
 
+import Ice.Application;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
@@ -660,7 +661,7 @@ public class IceRemoteUtil {
      * 调用全局服务,传递sql执行
      */
     public static int[] updateBatchNative(String sql,List<Object[]> params,int len){
-        String json = ic.setServerAndRequest("global",
+        String json = ic.setServerAndRequest("globalServer",
                 "InternalCallModule","updateBatchNative")
                 .setJsonParams(new SqlRemoteReq(sql, params, len))
                 .execute();
@@ -668,15 +669,16 @@ public class IceRemoteUtil {
     }
 
     public static  List<Object[]> queryNative(String sql,Object... params){
-        String json = ic.setServerAndRequest("global",
+        String json = ic.setServerAndRequest("globalServer",
                 "InternalCallModule","queryNative")
                 .setJsonParams(new SqlRemoteReq(sql, params))
                 .execute();
+        Application.communicator().getLogger().print("远程调用结果:"+ json);
         return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).lines;
     }
 
     public static int updateNative(String sql,final Object... params){
-        String json = ic.setServerAndRequest("global",
+        String json = ic.setServerAndRequest("globalServer",
                 "InternalCallModule","updateNative")
                 .setJsonParams(new SqlRemoteReq(sql, params))
                 .execute();
@@ -684,7 +686,7 @@ public class IceRemoteUtil {
     }
 
     public static int[] updateTransNative(String[] sql,List<Object[]> params){
-        String json = ic.setServerAndRequest("global",
+        String json = ic.setServerAndRequest("globalServer",
                 "InternalCallModule","updateTransNative")
                 .setJsonParams(new SqlRemoteReq(sql, params))
                 .execute();
