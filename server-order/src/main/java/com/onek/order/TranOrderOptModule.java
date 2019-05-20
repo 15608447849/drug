@@ -283,14 +283,12 @@ public class TranOrderOptModule {
         int balway = 0;
         //数据库相关操作
         try{
-
-
             if (jsonObject.containsKey("balway") && !jsonObject.getString("balway").isEmpty()) {
                 balway = jsonObject.getInteger("balway");
             }
 
-            bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
-            if(bal > 0 && balway > 0) {
+            if(balway > 0){
+                bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
                 if(bal >= payamt){
                     payamt = 0;
                     bal = tranOrder.getPayamt();
