@@ -840,18 +840,46 @@ public class ActivityManageModule {
     private int updateAssByActcode(int type, long actCode) {
         String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
                 + " where cstatus&1=0 and actcode=? ";
+        List<Long> skus;
         switch (type) {
             case 1:
                 updateSQL = updateSQL + " and gcode<>0";
+                skus = selectGoodsByType(actCode, " and gcode<>0");
                 break;
             case 2:
                 updateSQL = updateSQL + " and (gcode=0 or LENGTH(gcode)=14)";
+                skus = selectGoodsByType(actCode, " and (gcode=0 or LENGTH(gcode)=14)");
                 break;
             default:
                 updateSQL = updateSQL + " and (gcode=0 or LENGTH(gcode)<14)";
+                skus = selectGoodsByType(actCode, " and (gcode=0 or LENGTH(gcode)<14)");
                 break;
         }
-        return baseDao.updateNative(updateSQL, actCode);
+        int result = baseDao.updateNative(updateSQL, actCode);
+        if (result > 0) {
+            List<GoodsVO> delGoods = new ArrayList<>();
+            for (long sku :skus) {
+                GoodsVO goodsVO = new GoodsVO();
+                goodsVO.setActcode(actCode + "");
+                goodsVO.setGcode(sku);
+                delGoods.add(goodsVO);
+            }
+            noticeGoodsUpd(-1, null, delGoods, 0, actCode);
+
+        }
+        return result;
+    }
+
+    private List<Long> selectGoodsByType(long actCode, String conDSql) {
+        List<Long> gcodeList = new ArrayList<>();
+        String sql = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 and "
+                + " actcode=" + actCode + conDSql;
+        List<Object[]> queryResult = baseDao.queryNative(sql);
+        if (queryResult==null || queryResult.isEmpty()) return gcodeList;
+        for (Object[] aQueryResult : queryResult) {
+            gcodeList.add((long) aQueryResult[0]);
+        }
+        return gcodeList;
     }
     
     /* *
@@ -1407,6 +1435,7 @@ public class ActivityManageModule {
 
 
     private boolean delActCode(long actCode) {
+        List<Long> skus = selectGoodsByAct(actCode);
         List<Object[]> params = new ArrayList<>();
         StringBuilder stringBuilder = new StringBuilder();
         StringBuilder offerBuilder = new StringBuilder();
@@ -1442,7 +1471,6 @@ public class ActivityManageModule {
                 DELETE_ACT, delAssDrugByActCode}, params));
         if (b) {
             List<GoodsVO> delGoods = new ArrayList<>();
-            List<Long> skus = selectGoodsByAct(actCode);
             for (long sku :skus) {
                 GoodsVO goodsVO1 = new GoodsVO();
                 goodsVO1.setActcode(actCode + "");

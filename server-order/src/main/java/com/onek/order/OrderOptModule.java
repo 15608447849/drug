@@ -452,14 +452,28 @@ public class OrderOptModule {
                         LogUtil.getDefaultLogger().debug("实际退回余额分摊余额："+subbal+" 退货数量："+asnum);
                         IceRemoteUtil.updateCompBal(Integer.parseInt(queryRet.get(0)[1].toString()),MathUtil.exactMul(subbal,100).intValue());
                     }
+                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_AUDIT_PASSED,asno+"");
                 }
                 ostatus = -2;
                 gstatus = 3;
-                SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                        SmsTempNo.AFTER_SALE_AUDIT_PASSED,queryRet.get(0)[0].toString());
+
+                if(astype == 3 || astype == 4){
+                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_BILL_AUDIT_PASSED,asno+"");
+                }
+
+
             }else{
-                SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                        SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,queryRet.get(0)[0].toString(),ckdesc);
+                if(astype == 1 || astype == 2){
+                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc);
+                }
+
+                if(astype == 3 || astype == 4){
+                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc);
+                }
             }
             int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
             List<Object[]> params = new ArrayList<>();
@@ -548,9 +562,20 @@ public class OrderOptModule {
 
             double disprice = MathUtil.exactDiv(asAppDtVO.getDistprice(), asAppDtVO.getPnum()).
                     setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
             asAppDtVO.setDistprice(disprice);
             asAppDtVO.setAcprice(acprice);
-            asAppDtVO.setPayamt(asAppDtVO.getRefamt());
+
+//            MathUtil.exactMul(asAppDtVO.getAsnum(),asAppDtVO.getBalamt()).
+//                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue()
+            asAppDtVO.setPayamt(MathUtil.exactMul(asAppDtVO.getAsnum(),acprice)
+                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            ;
+
+            asAppDtVO.setRefbal(MathUtil.exactMul(asAppDtVO.getAsnum(),asAppDtVO.getBalamt()).
+                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+
+            asAppDtVO.setSumRefAmt(asAppDtVO.getRefamt());
 
             ProdEntity prodBySku = null;
             try {
@@ -559,6 +584,7 @@ public class OrderOptModule {
                 if (prodBySku != null) {
                     asAppDtVO.setSpec(prodBySku.getSpec());
                     asAppDtVO.setPname(prodBySku.getProdname());
+                    asAppDtVO.setManuName(prodBySku.getManuName());
                 }
             } catch (Exception e) {
                 e.printStackTrace();
