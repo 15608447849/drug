@@ -12,6 +12,8 @@ import com.onek.util.dict.DictEntity;
 import com.onek.util.fs.FileServerUtils;
 import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
+import com.onek.util.sqltransfer.SqlRemoteReq;
+import com.onek.util.sqltransfer.SqlRemoteResp;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
@@ -653,6 +655,16 @@ public class IceRemoteUtil {
         return GsonUtils.json2List(json,Long.class);
     }
 
+    /**
+     * 调用全局服务,传递sql执行
+     */
+    public static SqlRemoteResp updateBatchNative(SqlRemoteReq bean){
+        String json = ic.setServerAndRequest("global",
+                "InternalCallModule","updateBatchNative")
+                .setJsonParams(bean)
+                .execute();
+        return GsonUtils.jsonToJavaBean(json,SqlRemoteResp.class);
+    }
 
 
 }
