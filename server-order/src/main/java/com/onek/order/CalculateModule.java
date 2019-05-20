@@ -35,6 +35,7 @@ public class CalculateModule {
         }
 
         long sku = Long.parseLong(arrays[0]);
+        int compid = appContext.getUserSession().compId;
 
         List<Product> products = new ArrayList<>();
         Product p = new Product();
@@ -46,6 +47,7 @@ public class CalculateModule {
 
         int minStock = Integer.MAX_VALUE;
         int minLimit = Integer.MAX_VALUE;
+        int maxBuyed = 0;
 
         for (IDiscount discount : discounts) {
             minStock = Math.min(
@@ -54,12 +56,15 @@ public class CalculateModule {
                     minStock);
 
             minLimit = Math.min(discount.getLimits(sku), minLimit);
+
+            maxBuyed = Math.max(RedisOrderUtil.getActBuyNum(compid, sku, discount.getDiscountNo()), maxBuyed);
         }
 
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("discounts", discounts);
         jsonObject.put("minStock", minStock);
         jsonObject.put("minLimit", minLimit);
+        jsonObject.put("maxBuyed", maxBuyed);
 
         return new Result().success(discounts);
     }
