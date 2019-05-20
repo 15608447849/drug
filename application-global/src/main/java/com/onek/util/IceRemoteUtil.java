@@ -667,11 +667,6 @@ public class IceRemoteUtil {
         return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).resArr;
     }
 
-    /**
-     *      List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(
-     *                 GET_ACTIVITIES_BY_SKU,
-     *                 sku, pclasses[0], pclasses[1], pclasses[2]);
-     */
     public static  List<Object[]> queryNative(String sql,Object... params){
         String json = ic.setServerAndRequest("global",
                 "InternalCallModule","queryNative")
