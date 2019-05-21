@@ -5,6 +5,7 @@ import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
+import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.MathUtil;
@@ -17,6 +18,7 @@ import java.util.HashSet;
 import java.util.List;
 
 public class ActivityFilterService extends BaseDiscountFilterService {
+    //远程调用
     private static final String GET_ACTIVITIES_BY_SKU =
             " SELECT act.*, ass.limitnum, time.sdate, time.edate, ass.price "
                     + " FROM ({{?" + DSMConst.TD_PROM_ASSDRUG + "}} ass "
@@ -49,8 +51,8 @@ public class ActivityFilterService extends BaseDiscountFilterService {
         if (StringUtils.isEmpty(pclasses)) {
             return new ArrayList<>();
         }
-
-        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(
+        //远程调用
+        List<Object[]> queryResult = IceRemoteUtil.queryNative(
                 GET_ACTIVITIES_BY_SKU,
                 sku, pclasses[0], pclasses[1], pclasses[2]);
 
