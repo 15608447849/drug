@@ -31,6 +31,33 @@ public class TranOrderGoods {
     private String spu; // spu
     private String standarNo;
     private String brandn;
+    private double vatp;
+    private double mp;
+    private double rrp;
+
+    public double getVatp() {
+        return vatp;
+    }
+
+    public void setVatp(double vatp) {
+        this.vatp = vatp;
+    }
+
+    public double getMp() {
+        return mp;
+    }
+
+    public void setMp(double mp) {
+        this.mp = mp;
+    }
+
+    public double getRrp() {
+        return rrp;
+    }
+
+    public void setRrp(double rrp) {
+        this.rrp = rrp;
+    }
 
     public String getBrandn() {
         return brandn;

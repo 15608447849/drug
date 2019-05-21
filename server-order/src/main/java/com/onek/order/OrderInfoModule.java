@@ -5,10 +5,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.context.AppContext;
-import com.onek.entity.AsAppVO;
-import com.onek.entity.TranOrder;
-import com.onek.entity.TranOrderDetail;
-import com.onek.entity.TranOrderGoods;
+import com.onek.entity.*;
 import com.onek.entitys.Result;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
@@ -97,6 +94,11 @@ public class OrderInfoModule {
                     + " AND goods.orderno = ap.orderno AND ap.pdno = goods.pdno "
                     + " WHERE 1 = 1";
 
+    private final static String QUERY_INVOICE_BASE =
+            "SELECT * "
+                    + " FROM {{?" + DSMConst.TB_COMP_INVOICE + "}} "
+                    + " WHERE cstatus&1 = 0 AND cid = ? ";
+
     public Result getOrderDetail(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -117,6 +119,12 @@ public class OrderInfoModule {
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrderDetail.class);
 
+        List<Object[]> invoiceResult = IceRemoteUtil.queryNative(QUERY_INVOICE_BASE, compid);
+
+        InvoiceVO[] results = new InvoiceVO[invoiceResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(invoiceResult, results, InvoiceVO.class);
+
         JSONObject compJson;
         List<TranOrderGoods> goods;
         for (TranOrderDetail tranOrder : result) {
@@ -126,8 +134,13 @@ public class OrderInfoModule {
 
             if (compJson != null) {
                 tranOrder.setCusname(compJson.getString("storeName"));
+                tranOrder.setCusaddress(compJson.getString("address"));
                 tranOrder.setAreaAllName(
                         IceRemoteUtil.getCompleteName(compJson.getString("addressCode")));
+            }
+
+            if (result.length > 0) {
+                tranOrder.setInvoice(results[0]);
             }
 
             tranOrder.setPayprice(
@@ -211,10 +224,10 @@ public class OrderInfoModule {
                         sql.append(" AND ord.asstatus = ? ");
                         break;
                     case 4:
-                        sql.append(" AND ord.odate <= ? ");
+                        sql.append(" AND ? <= ord.odate ");
                         break;
                     case 5:
-                        sql.append(" AND ? <= ord.odate ");
+                        sql.append(" AND ord.odate <= ? ");
                         break;
                 }
             } catch (Exception e) {
@@ -321,6 +334,9 @@ public class OrderInfoModule {
                             .substring(0, 12));
 
             if (prod != null) {
+                tranOrderGoods.setVatp(MathUtil.exactDiv(prod.getVatp(), 100).doubleValue());
+                tranOrderGoods.setRrp(MathUtil.exactDiv(prod.getRrp(), 100).doubleValue());
+                tranOrderGoods.setMp(MathUtil.exactDiv(prod.getMp(), 100).doubleValue());
                 tranOrderGoods.setPname(prod.getProdname());
                 tranOrderGoods.setPspec(prod.getSpec());
                 tranOrderGoods.setManun(prod.getManuName());

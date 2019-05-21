@@ -12,6 +12,8 @@ import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
+import com.onek.queue.delay.DelayedHandler;
+import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.*;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.area.AreaUtil;
@@ -1077,20 +1079,15 @@ public class CouponManageModule {
         if((couponVO.getCstatus() & 512 )== 0) {
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             try {
-                long startTime = dateFormat.parse(couponVO.getStartdate() +
-                        " " + couponVO.getTimeVOS().get(0).getSdate()).getTime();
-                if (startTime > new Date().getTime()) {
-                    ExecutorService executors = Executors.newSingleThreadExecutor();
-                    executors.execute(() -> {
-                                IceRemoteUtil.sendMessageToAllClient(SmsTempNo.NEW_COUPONS,
-                                        "", "【" + couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
-                                                " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行");
-
-                                SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.NEW_COUPONS,
-                                        "", "【" + couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
-                                                " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                            }
-                    );
+                long start5Time = dateFormat.parse(couponVO.getStartdate() +
+                        " " + couponVO.getTimeVOS().get(0).getSdate()).getTime() - 5*60*1000;
+                long now = new Date().getTime();
+                if (start5Time >now) {
+                    long times = (start5Time - now)/1000/60;
+                    DelayedHandler<CouponVO> notice_all_comp = new RedisDelayedHandler<>("_NOTICE_ALL_COMP_COUP",
+                            times, CouponManageModule::noticeComp,
+                            DelayedHandler.TIME_TYPE.MINUTES);
+                    notice_all_comp.add(couponVO);
                 }
             } catch (ParseException e) {
                 e.printStackTrace();
@@ -1099,6 +1096,16 @@ public class CouponManageModule {
         return result.success("修改成功");
     }
 
+    private static boolean noticeComp(CouponVO couponVO) {
+        IceRemoteUtil.sendMessageToAllClient(SmsTempNo.NEW_COUPONS,
+                "", "【" + couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
+                        " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行");
+
+        SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.NEW_COUPONS,
+                "", "【" + couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
+                        " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行");
+        return true;
+    }
 
     /**
      * 活动优惠券修改

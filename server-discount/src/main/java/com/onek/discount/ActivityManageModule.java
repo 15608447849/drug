@@ -15,15 +15,15 @@ import com.onek.entitys.Result;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdCurrentActPriceObserver;
 import com.onek.propagation.prod.ProdDiscountObserver;
+import com.onek.queue.delay.DelayedHandler;
+import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
 import com.onek.util.prod.ProdInfoStore;
-import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
-import org.hyrdpf.util.LogUtil;
 import util.BUSUtil;
 import util.GsonUtils;
 import util.ModelUtil;
@@ -32,7 +32,6 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -208,10 +207,14 @@ public class ActivityManageModule {
         try {
             //活动开始前五分钟
             long start5Time = dateFormat.parse(activityVO.getSdate()+
-                    " " + activityVO.getTimeVOS().get(0).getSdate()).getTime() - 5*60*100;
-
-            if (start5Time > new Date().getTime()) {
-                aaa(activityVO);
+                    " " + activityVO.getTimeVOS().get(0).getSdate()).getTime() - 5*60*1000;
+            long now = new Date().getTime();
+            if (start5Time > now) {
+                long times = (start5Time - now)/1000/60;
+                DelayedHandler<ActivityVO> notice_all_comp = new RedisDelayedHandler<>("_NOTICE_ALL_COMP_ACT",
+                        times, ActivityManageModule::noticeAllComp,
+                        DelayedHandler.TIME_TYPE.MINUTES);
+                notice_all_comp.add(activityVO);
             }
         } catch (ParseException e) {
             e.printStackTrace();
@@ -219,16 +222,13 @@ public class ActivityManageModule {
         return result;
     }
 
-    private void aaa( ActivityVO activityVO) {
-        ExecutorService executors = Executors.newSingleThreadExecutor();
-        executors.execute(() -> {
-                    IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
-                            "", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
-                                    " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                    SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.ACTIVITIES_OF_NEW,"", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
-                            " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                }
-        );
+    private static boolean noticeAllComp(ActivityVO activityVO) {
+        IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
+                "", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
+                        " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
+        SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.ACTIVITIES_OF_NEW,"", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
+                " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
+        return true;
     }
 
     /**
@@ -746,9 +746,9 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private long theGoodsStockIsEnough(int actStock, int cstatus, long actCode) {
-        String selectSQL = "select sku, store,notused as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
-                "select sku,store, used  from ( " +
-                "SELECT sku,gcode,store,freezestore, " +
+        String selectSQL = "select sku, systore,notused as minunused from (select sku,systore, sum(used) as uused, " +
+                " (systore-sum(used)) as notused from ( select sku,systore, used  from ( " +
+                "SELECT sku,gcode,(store-freezestore) as systore, " +
                 "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
                 "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
                 "  (SELECT " +
@@ -1129,9 +1129,9 @@ public class ActivityManageModule {
                 goodsVOList.add(goodsVO);
             }
             String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
-            String selectSQL = "select sku, store,notused as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
-                    "select sku,store, used  from ( " +
-                    "SELECT sku,gcode,store,freezestore, " +
+            String selectSQL = "select sku, systore,notused as minunused from (select sku,systore, sum(used) as uused, (systore-sum(used)) as notused from ( " +
+                    "select sku,systore, used  from ( " +
+                    "SELECT sku,gcode,(store-freezestore) as systore, " +
                     "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
                     "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
                     "  (SELECT " +

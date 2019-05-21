@@ -8,12 +8,12 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
     private volatile CancelHandler cancelHndler;
     private volatile DelayQueue<DelayedObject<D>> delayQueue;
     private final Map<String, DelayedObject<D>> objStore = new ConcurrentHashMap<>();
-    private final long deleyTime;
+    private long deleyTime;
     private final IDelayedHandler<D> handlerCall;
 
     public DelayedHandler(long delayTime, IDelayedHandler<D> handlerCall, TIME_TYPE time_type) {
         this.handlerCall = handlerCall;
-        this.deleyTime = convToMillsecond(delayTime, time_type);
+        setDeleyTime(deleyTime, time_type);
         this.delayQueue = new DelayQueue<>();
         this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 
@@ -49,30 +49,6 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
         return result;
     }
 
-//    private static long convToMillsecond(long delayTime, TIME_TYPE time_type) {
-//        long result = delayTime;
-//
-//        switch (time_type) {
-//            case DAY:
-//                result <<= 3;
-//                result = (result << 1) + (result << 0);
-//            case HOUR:
-//                result <<= 2;
-//                result = (result << 3) + (result << 2) + (result << 1) + (result << 0);
-//            case MINUTES:
-//                result <<= 2;
-//                result = (result << 3) + (result << 2) + (result << 1) + (result << 0);
-//            case SECOND:
-//                result <<= 3;
-//                result = (result << 6) + (result << 5) + (result << 4)
-//                       + (result << 3) + (result << 2) + (result << 0);
-//            case MILLSECOND:
-//                break;
-//        }
-//
-//        return result;
-//    }
-
     protected void execute(Runnable runnable) {
         this.executor.execute(runnable);
     }
@@ -93,6 +69,10 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
             }
         });
 
+    }
+
+    public void setDeleyTime(long deleyTime, TIME_TYPE time_type) {
+        this.deleyTime = convToMillsecond(deleyTime, time_type);
     }
 
     protected boolean addToQueue(DelayedObject<D> delayed) {
