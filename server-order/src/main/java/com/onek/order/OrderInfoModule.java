@@ -211,10 +211,10 @@ public class OrderInfoModule {
                         sql.append(" AND ord.asstatus = ? ");
                         break;
                     case 4:
-                        sql.append(" AND ord.odate <= ? ");
+                        sql.append(" AND ? <= ord.odate ");
                         break;
                     case 5:
-                        sql.append(" AND ? <= ord.odate ");
+                        sql.append(" AND ord.odate <= ? ");
                         break;
                 }
             } catch (Exception e) {
@@ -321,6 +321,9 @@ public class OrderInfoModule {
                             .substring(0, 12));
 
             if (prod != null) {
+                tranOrderGoods.setVatp(MathUtil.exactDiv(prod.getVatp(), 100).doubleValue());
+                tranOrderGoods.setRrp(MathUtil.exactDiv(prod.getRrp(), 100).doubleValue());
+                tranOrderGoods.setMp(MathUtil.exactDiv(prod.getMp(), 100).doubleValue());
                 tranOrderGoods.setPname(prod.getProdname());
                 tranOrderGoods.setPspec(prod.getSpec());
                 tranOrderGoods.setManun(prod.getManuName());
