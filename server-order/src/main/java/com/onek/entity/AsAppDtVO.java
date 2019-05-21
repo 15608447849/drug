@@ -30,14 +30,41 @@ public class AsAppDtVO {
     private double spdprice; //订单商品原价
     private double sdistprice; //优惠单价
     private double payamt; //商品合计金额
-    private int paytype = 2; //支付方式
+    private int paytype; //支付方式
     private int pnum;//商品数量
     private String pname;//商品名称
     private String spec; //商品规格
     private double acprice; //实付单价
     private double distprice; //实付优惠单价
     private String areaAllName; //
-    private double balamt;
+    private double balamt;//分摊余额
+    private double refbal;//退款余额合计
+    private String manuName; //厂商名称
+    private double sumRefAmt; //退款总额
+
+    public String getManuName() {
+        return manuName;
+    }
+
+    public void setManuName(String manuName) {
+        this.manuName = manuName;
+    }
+
+    public double getSumRefAmt() {
+        return sumRefAmt;
+    }
+
+    public void setSumRefAmt(double sumRefAmt) {
+        this.sumRefAmt = sumRefAmt;
+    }
+
+    public double getRefbal() {
+        return refbal;
+    }
+
+    public void setRefbal(double refbal) {
+        this.refbal = refbal;
+    }
 
     public double getBalamt() {
         return balamt;

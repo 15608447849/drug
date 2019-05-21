@@ -21,7 +21,7 @@ public class BackOrderOptModule {
             " SELECT orderno, pdno, asno, compid, astype, "
             + " gstatus, reason, ckstatus, ckdate, cktime, "
             + " ckdesc, invoice, cstatus, apdata, aptime, "
-            + " apdesc, checker, refamt, asnum "
+            + " apdesc, checker, refamt, asnum, checkern, compn "
             + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
             + " WHERE cstatus&1 = 0 ";
 
@@ -108,6 +108,7 @@ public class BackOrderOptModule {
         ProdEntity prod;
         for (AsAppVO asAppVO : result) {
             asAppVO.setRefamt(MathUtil.exactDiv(asAppVO.getRefamt(), 100.0).doubleValue());
+
             try {
                 asAppVO.setReasonName(DictStore.getDictById(asAppVO.getReason()).getText());
             } catch (Exception e) {}

@@ -25,13 +25,114 @@ public class AsAppVO {
     private String apdesc;//退款描述
     private double refamt;//退款金额
     private int asnum;//退款数量
+    private String checkern; //审核人
+    private String compn; //公司名
 
+    /* goods */
+    private double pdprice;
+    private double distprice;
+    private double payamt;
+    private double coupamt;
+    private int asstatus;
+    private String createdate;
+    private String createtime;
+    private int pnum;
+    private double balamt;
+    // 艾上你 梅道理 淋别时 说再尖
     private String brandname;
     private String manuname;
     private String prodname;
     private String spec;
     private String spu;
     private String reasonName;
+
+    public double getPdprice() {
+        return pdprice;
+    }
+
+    public void setPdprice(double pdprice) {
+        this.pdprice = pdprice;
+    }
+
+    public double getDistprice() {
+        return distprice;
+    }
+
+    public void setDistprice(double distprice) {
+        this.distprice = distprice;
+    }
+
+    public double getPayamt() {
+        return payamt;
+    }
+
+    public void setPayamt(double payamt) {
+        this.payamt = payamt;
+    }
+
+    public double getCoupamt() {
+        return coupamt;
+    }
+
+    public void setCoupamt(double coupamt) {
+        this.coupamt = coupamt;
+    }
+
+    public int getAsstatus() {
+        return asstatus;
+    }
+
+    public void setAsstatus(int asstatus) {
+        this.asstatus = asstatus;
+    }
+
+    public String getCreatedate() {
+        return createdate;
+    }
+
+    public void setCreatedate(String createdate) {
+        this.createdate = createdate;
+    }
+
+    public String getCreatetime() {
+        return createtime;
+    }
+
+    public void setCreatetime(String createtime) {
+        this.createtime = createtime;
+    }
+
+    public int getPnum() {
+        return pnum;
+    }
+
+    public void setPnum(int pnum) {
+        this.pnum = pnum;
+    }
+
+    public double getBalamt() {
+        return balamt;
+    }
+
+    public void setBalamt(double balamt) {
+        this.balamt = balamt;
+    }
+
+    public String getCheckern() {
+        return checkern;
+    }
+
+    public void setCheckern(String checkern) {
+        this.checkern = checkern;
+    }
+
+    public String getCompn() {
+        return compn;
+    }
+
+    public void setCompn(String compn) {
+        this.compn = compn;
+    }
 
     public String getOrderno() {
         return orderno;

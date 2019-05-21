@@ -141,7 +141,7 @@ public class CouponManageModule {
     private final String QUERY_OFFCOUPON_LIST_SQL = "select cop.unqid,coupname,glbno,qlfno,qlfval,coupdesc," +
             " DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
             " DATE_FORMAT(createdate,'%Y-%m-%d') createdate,cop.brulecode,rulename,cop.cstatus,actstock," +
-            " validflag,ldf.offer amt from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.brulecode = ru.brulecode "+
+            " validflag,ldf.offer/100 amt from {{?"+ DSMConst.TD_PROM_COUPON +"}} cop left join {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.brulecode = ru.brulecode "+
     " left join  {{?"+ DSMConst.TD_PROM_RELA +"}} rela on rela.actcode = cop.unqid  left join {{?"+ DSMConst.TD_PROM_LADOFF +"}} ldf on ldf.unqid = rela.ladid " +
             " where cop.cstatus & 512 > 0 and cop.cstatus & 1 = 0 and ldf.cstatus & 1 = 0 and rela.cstatus & 1 = 0  ";
 
