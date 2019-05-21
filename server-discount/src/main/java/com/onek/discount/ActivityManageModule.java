@@ -227,8 +227,7 @@ public class ActivityManageModule {
                                     " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
                     SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.ACTIVITIES_OF_NEW,"", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
                             " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                }
-        );
+                });
     }
 
     /**
@@ -746,9 +745,9 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private long theGoodsStockIsEnough(int actStock, int cstatus, long actCode) {
-        String selectSQL = "select sku, store,notused as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
-                "select sku,store, used  from ( " +
-                "SELECT sku,gcode,store,freezestore, " +
+        String selectSQL = "select sku, systore,notused as minunused from (select sku,systore, sum(used) as uused, " +
+                " (systore-sum(used)) as notused from ( select sku,systore, used  from ( " +
+                "SELECT sku,gcode,(store-freezestore) as systore, " +
                 "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
                 "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
                 "  (SELECT " +
@@ -1129,9 +1128,9 @@ public class ActivityManageModule {
                 goodsVOList.add(goodsVO);
             }
             String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
-            String selectSQL = "select sku, store,notused as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
-                    "select sku,store, used  from ( " +
-                    "SELECT sku,gcode,store,freezestore, " +
+            String selectSQL = "select sku, systore,notused as minunused from (select sku,systore, sum(used) as uused, (systore-sum(used)) as notused from ( " +
+                    "select sku,systore, used  from ( " +
+                    "SELECT sku,gcode,(store-freezestore) as systore, " +
                     "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
                     "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
                     "  (SELECT " +

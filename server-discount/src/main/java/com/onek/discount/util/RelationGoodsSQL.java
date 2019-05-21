@@ -11,11 +11,11 @@ import dao.BaseDAO;
  **/
 public class RelationGoodsSQL {
     //分类
-    public static final String SELECT_ClASS_GOODS = "select classno6,classno4,classno2,sku, store, " +
+    public static final String SELECT_ClASS_GOODS = "select classno6,classno4,classno2,sku, systore, " +
             " min(notused) as minnotused from ( select SUBSTR(sku,2,6) as classno6, SUBSTR(sku,2,4) as classno4, " +
-            " SUBSTR(sku,2,2) as classno2,sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
-            " select sku,store, used  from ( " +
-            " SELECT sku,gcode,store,freezestore, " +
+            " SUBSTR(sku,2,2) as classno2,sku,systore, sum(used) as uused, (systore-sum(used)) as notused from ( " +
+            " select sku,systore, used  from ( " +
+            " SELECT sku,gcode,(store-freezestore) as systore, " +
             " ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
             " ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM  " +
             " (SELECT " +
