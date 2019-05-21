@@ -67,9 +67,27 @@ public class TranOrderDetail {
     /**         ex           **/
     private String pname;
     private String cusname;
+    private String cusaddress;
     private String areaAllName;
     private int totalNum;
     private int classNum;
+    private InvoiceVO invoice;
+
+    public String getCusaddress() {
+        return cusaddress;
+    }
+
+    public void setCusaddress(String cusaddress) {
+        this.cusaddress = cusaddress;
+    }
+
+    public InvoiceVO getInvoice() {
+        return invoice;
+    }
+
+    public void setInvoice(InvoiceVO invoice) {
+        this.invoice = invoice;
+    }
 
     public int getTotalNum() {
         return totalNum;

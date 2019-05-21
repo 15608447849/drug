@@ -94,7 +94,7 @@ public class CalculateUtil {
                                     discounted += Math.max(amtDiscount, numDiscount);
                                     break;
                                 case 3:
-                                    discounted += price * (1 - value);
+                                    discounted += price * (1 - (value / 10));
                                     break;
                             }
                         }
