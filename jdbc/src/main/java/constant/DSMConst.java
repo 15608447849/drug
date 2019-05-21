@@ -15,24 +15,24 @@ public interface DSMConst extends UDAConst {
     // TODO　相关数据库 表对象 常量，与数据库一一对应。位置一旦固定，不要轻易修改，因为代码里都是用其位置来获得数据的。
     public final static String[][] DB_TABLES = {
             //索引0对应表名，从索引1开始对应这个表的列名，表名与列名必须同数据库一致！
-            {"d_system_user"}, // 用户表  0
-            {"d_global_dict"}, // 字典 1
-            {"d_system_role"}, // 角色表 2
-            {"d_system_resource"}, // 资源表 3
-            {"d_order_base"}, // 4
-            {"d_order_product"},  // 5
-            {"d_sms_template"},//短信模板 6
-            {"d_comp_ship_info"},//收货人 7
-            {"d_comp"},//企业表 8
-            {"d_global_area"}, // 地区 9
-            {"d_comp_invoice"}, // 发票 10
-            {"d_comp_aptitude"}, //企业资质表 11
-            {"d_produce_class"}, //产品类别表 12
+            {"tb_system_user"}, // 用户表  0
+            {"tb_global_dict"}, // 字典 1
+            {"tb_system_role"}, // 角色表 2
+            {"tb_system_resource"}, // 资源表 3
+            {"tb_order_base"}, // 4
+            {"tb_order_product"},  // 5
+            {"tb_sms_template"},//短信模板 6
+            {"tb_comp_ship_info"},//收货人 7
+            {"tb_comp"},//企业表 8
+            {"tb_global_area"}, // 地区 9
+            {"tb_comp_invoice"}, // 发票 10
+            {"tb_comp_aptitude"}, //企业资质表 11
+            {"td_produce_class"}, //产品类别表 12
             {"td_prod_brand"}, //药品品牌表 13
             {"td_prod_manu"}, //生产厂商表 14
             {"td_prod_sku"}, //产品SKU表 15
             {"td_prod_spu"}, //产品SPU表 16
-            {"d_syn_log"}, //17 日志表
+            {"td_syn_log"}, //17 日志表
             {"td_prom_act"}, //18 活动表
             {"td_prom_rule"}, //19 活动规则表
             {"td_prom_ladoff"}, //20 规则阶梯优惠表
@@ -72,24 +72,24 @@ public interface DSMConst extends UDAConst {
 
     //TODO 表名=表在_DB_TABLES常量里固定位置值 ，目的是为了开发人员写代码方便可读性
     //TODO 系统-用户表 0
-    public final static int D_SYSTEM_USER = 0;
-    public final static int D_GLOBAL_DICT = 1;
-    public final static int D_SYSTEM_ROLE = 2;
-    public final static int D_SYSTEM_RESOURCE = 3;
-    public final static int D_ORDER_BASE = 4;
-    public final static int D_ORDER_PRODUCT = 5;
-    public final static int D_SMS_TEMPLATE = 6;
-    public final static int D_COMP_SHIP_INFO = 7;
-    public final static int D_COMP = 8;
-    public final static int D_GLOBAL_AREA = 9;
-    public final static int D_COMP_INVOICE = 10;
-    public final static int D_COMP_APTITUDE = 11;
-    public final static int D_PRODUCE_CLASS = 12;
+    public final static int TB_SYSTEM_USER = 0;
+    public final static int TB_GLOBAL_DICT = 1;
+    public final static int TB_SYSTEM_ROLE = 2;
+    public final static int TB_SYSTEM_RESOURCE = 3;
+    public final static int TB_ORDER_BASE = 4;
+    public final static int TB_ORDER_PRODUCT = 5;
+    public final static int TB_SMS_TEMPLATE = 6;
+    public final static int TB_COMP_SHIP_INFO = 7;
+    public final static int TB_COMP = 8;
+    public final static int TB_GLOBAL_AREA = 9;
+    public final static int TB_COMP_INVOICE = 10;
+    public final static int TB_COMP_APTITUDE = 11;
+    public final static int TD_PRODUCE_CLASS = 12;
     public final static int TD_PROD_BRAND = 13;
     public final static int TD_PROD_MANU = 14;
     public final static int TD_PROD_SKU = 15;
     public final static int TD_PROD_SPU = 16;
-    public final static int D_SYN_LOG = 17;
+    public final static int TD_SYN_LOG = 17;
     public final static int TD_PROM_ACT = 18;
     public final static int TD_PROM_RULE = 19;
     public final static int TD_PROM_LADOFF = 20;

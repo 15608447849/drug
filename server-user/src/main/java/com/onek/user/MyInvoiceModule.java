@@ -17,21 +17,21 @@ import java.util.List;
 public class MyInvoiceModule {
     private final static String QUERY_INVOICE_BASE =
             "SELECT * "
-            + " FROM {{?" + DSMConst.D_COMP_INVOICE + "}} "
+            + " FROM {{?" + DSMConst.TB_COMP_INVOICE + "}} "
             + " WHERE cstatus&1 = 0 AND cid = ? ";
 
     private final static String INSERT_INVOICE =
-            "INSERT INTO {{?" + DSMConst.D_COMP_INVOICE + "}}"
+            "INSERT INTO {{?" + DSMConst.TB_COMP_INVOICE + "}}"
             + " (cid, taxpayer, bankers, account, tel) "
             + " SELECT ?, ?, ?, ?, ? "
             + " FROM DUAL "
             + " WHERE NOT EXISTS ("
                     + " SELECT * "
-                    + " FROM {{?" + DSMConst.D_COMP_INVOICE + "}}"
+                    + " FROM {{?" + DSMConst.TB_COMP_INVOICE + "}}"
                     + " WHERE cid = ? ) ";
 
     private final static String UPDATE_INVOICE =
-            "UPDATE {{?" + DSMConst.D_COMP_INVOICE + "}}"
+            "UPDATE {{?" + DSMConst.TB_COMP_INVOICE + "}}"
             + " SET taxpayer = ?, bankers = ?, account = ?, tel = ? "
             + " WHERE cstatus&1 = 0 AND cid = ? ";
 

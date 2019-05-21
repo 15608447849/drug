@@ -12,8 +12,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static constant.DSMConst.D_COMP;
-import static constant.DSMConst.D_SYSTEM_USER;
+import static constant.DSMConst.TB_COMP;
+import static constant.DSMConst.TB_SYSTEM_USER;
 
 /**
  * @Author: leeping
@@ -39,7 +39,7 @@ public class StoreManageModule {
     public List<String> getAllUserPhone(AppContext appContext){
         List<String> list = new ArrayList<>();
         try {
-            String selectSql = "SELECT uphone FROM {{?"+ D_SYSTEM_USER +"}} as a INNER JOIN {{?"+D_COMP+"}} AS b ON a.cid=b.cid WHERE b.ctype = 0";
+            String selectSql = "SELECT uphone FROM {{?"+ TB_SYSTEM_USER +"}} as a INNER JOIN {{?"+ TB_COMP +"}} AS b ON a.cid=b.cid WHERE b.ctype = 0";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
             for (Object[] row : lines){
                 String val = StringUtils.checkObjectNull(row[0],"");
@@ -58,7 +58,7 @@ public class StoreManageModule {
     public List<String> getAllCompId(AppContext appContext){
         List<String> list = new ArrayList<>();
         try {
-            String selectSql = "SELECT cid FROM {{?"+D_COMP+"}} WHERE ctype = 0";
+            String selectSql = "SELECT cid FROM {{?"+ TB_COMP +"}} WHERE ctype = 0";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
             for (Object[] row : lines){
                 String val = StringUtils.checkObjectNull(row[0],"");
@@ -79,7 +79,7 @@ public class StoreManageModule {
         try {
             List<Integer> list = GsonUtils.json2List(appContext.param.json,Integer.class);
             if (list!=null && list.size()>0){
-                final  String selectSql = "SELECT urealname,uphone FROM {{?"+D_SYSTEM_USER+"}} WHERE roleid&?>0";
+                final  String selectSql = "SELECT urealname,uphone FROM {{?"+ TB_SYSTEM_USER +"}} WHERE roleid&?>0";
                 for (Integer code : list){
                     List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,code);
                     for (Object[] row : lines){
@@ -103,7 +103,7 @@ public class StoreManageModule {
     @UserPermission(ignore = true)
     public String getSpecifyUserPhone(AppContext context){
         String compId = context.param.arrays[0];
-        String selectSql = "SELECT uphone FROM {{?"+D_SYSTEM_USER+"}} WHERE cid = ?";
+        String selectSql = "SELECT uphone FROM {{?"+ TB_SYSTEM_USER +"}} WHERE cid = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,compId);
         if (lines.size() == 1){
             return lines.get(0)[0].toString();

@@ -42,7 +42,7 @@ public class MyDrugStoreInfoModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int compId = jsonObject.get("compid").getAsInt();
         String selectSQL = "select shipid,compid,contactname,contactphone,cstatus from {{?"
-                + DSMConst.D_COMP_SHIP_INFO + "}} where cstatus&1=0 and compid=" + compId;
+                + DSMConst.TB_COMP_SHIP_INFO + "}} where cstatus&1=0 and compid=" + compId;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
 //        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
         ConsigneeVO[] consigneeVOS = new ConsigneeVO[queryResult.size()];
@@ -75,10 +75,10 @@ public class MyDrugStoreInfoModule {
         if (queryCount(compId, shipId, contactPhone,1) > 0) {
             return result.fail("收货人已存在！");
         }
-        String insertSQL = "insert into {{?" + DSMConst.D_COMP_SHIP_INFO + "}} "
+        String insertSQL = "insert into {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} "
                 + "(shipid, compid, contactname, contactphone)"
                 + " values(?,?,?,?)";
-        String updSQL = "update {{?" + DSMConst.D_COMP_SHIP_INFO + "}} set contactname=?, contactphone=? "
+        String updSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set contactname=?, contactphone=? "
                 + " where cstatus&1=0 and shipid=?";
         if (shipId > 0) {
             code = baseDao.updateNative(updSQL, contactName, contactPhone, shipId);
@@ -95,13 +95,13 @@ public class MyDrugStoreInfoModule {
         List<Object[]> queryResult;
         switch (type) {
             case 1:
-                selectSQL = "select count(*) from {{?" + DSMConst.D_COMP_SHIP_INFO
+                selectSQL = "select count(*) from {{?" + DSMConst.TB_COMP_SHIP_INFO
                         + "}} where cstatus&1=0 and compid=" + compid + " and contactphone="
                         + contactPhone + " and shipid<>" + shipId;
                 queryResult = baseDao.queryNative(selectSQL);
                 return Integer.parseInt(String.valueOf(queryResult.get(0)[0]));
             case 2:
-                selectSQL = "select count(*) from {{?" + DSMConst.D_COMP_SHIP_INFO
+                selectSQL = "select count(*) from {{?" + DSMConst.TB_COMP_SHIP_INFO
                         + "}} where cstatus&1=0 and compid=" + compid + " and shipid<>" + shipId;
                 queryResult = baseDao.queryNative(selectSQL);
                 return Integer.parseInt(String.valueOf(queryResult.get(0)[0]));
@@ -127,10 +127,10 @@ public class MyDrugStoreInfoModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int compId = jsonObject.get("compid").getAsInt();
         int shipId = jsonObject.get("shipid").getAsInt();
-        String updateSQL = "update {{?" + DSMConst.D_COMP_SHIP_INFO + "}} set cstatus=cstatus&~2 "
+        String updateSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set cstatus=cstatus&~2 "
                 + " where cstatus&1=0 and compid=? and cstatus&2>0";
         params.add(new Object[]{compId});
-        String updateSQLT = "update {{?" + DSMConst.D_COMP_SHIP_INFO + "}} set cstatus=cstatus|2 "
+        String updateSQLT = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set cstatus=cstatus|2 "
                 + " where cstatus&1=0 and shipid=?";
         params.add(new Object[]{shipId});
         int[] arr = baseDao.updateTransNative(new String[]{updateSQL, updateSQLT}, params);
@@ -154,7 +154,7 @@ public class MyDrugStoreInfoModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int shipId = jsonObject.get("shipid").getAsInt();
-        String delSQL = "update {{?" + DSMConst.D_COMP_SHIP_INFO + "}} set cstatus=cstatus|1 "
+        String delSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set cstatus=cstatus|1 "
                 + " where cstatus&1=0 and shipid=" + shipId;
         myCgProxy.del(null);
         return baseDao.updateNative(delSQL) > 0 ? result.success("操作成功") : result.fail("操作失败");

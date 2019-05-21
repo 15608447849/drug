@@ -14,7 +14,7 @@ import com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS
 import com.onek.util.SmsUtil
 import com.onek.util.member.MemberEntity
 import constant.DSMConst
-import constant.DSMConst.D_SYSTEM_USER
+import constant.DSMConst.TB_SYSTEM_USER
 import dao.BaseDAO
 import redis.IRedisPartCache
 import redis.proxy.CacheProxyInstance
@@ -35,7 +35,7 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
         //修改企业审核信息
         //修改门店状态 1.移除当前状态 2.添加新状态
-        val selectSql = "SELECT cstatus FROM {{?" + DSMConst.D_COMP + "}} WHERE cstatus&1 = 0 AND cid = ?"
+        val selectSql = "SELECT cstatus FROM {{?" + DSMConst.TB_COMP + "}} WHERE cstatus&1 = 0 AND cid = ?"
 
         val lines = BaseDAO.getBaseDAO().queryNative(selectSql,companyId!!)
 
@@ -62,13 +62,13 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
             }
 
             //修改 门店信息
-            val updateSql = "UPDATE {{?" + DSMConst.D_COMP + "}} SET cstatus=cstatus&~$status|$auditStatus,examine=?,auditdate=CURRENT_DATE,audittime=CURRENT_TIME WHERE cstatus&1=0 AND cid=?"
+            val updateSql = "UPDATE {{?" + DSMConst.TB_COMP + "}} SET cstatus=cstatus&~$status|$auditStatus,examine=?,auditdate=CURRENT_DATE,audittime=CURRENT_TIME WHERE cstatus&1=0 AND cid=?"
 
             val i = BaseDAO.getBaseDAO().updateNative(updateSql,auditCause,companyId)
 
             if (i > 0) {
                 updateCompInfoToCacheById(companyId!!.toInt()) //更新企业信息到缓存
-                val tempLines = BaseDAO.getBaseDAO().queryNative("SELECT uphone FROM {{?$D_SYSTEM_USER}} WHERE cid = ?", companyId)
+                val tempLines = BaseDAO.getBaseDAO().queryNative("SELECT uphone FROM {{?$TB_SYSTEM_USER}} WHERE cid = ?", companyId)
                 var phone :String ? = null
                 if (lines.size == 1) {
                     phone =  tempLines[0][0].toString()
@@ -120,12 +120,12 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
     private fun updateIds(companyId: String, id: String, idStartTime: String, idEndTime: String, type:Int) :Boolean{
         try {
-            val selectSql = "SELECT aptid FROM {{?${DSMConst.D_COMP_APTITUDE}}} WHERE compid = $companyId AND atype = $type"
+            val selectSql = "SELECT aptid FROM {{?${DSMConst.TB_COMP_APTITUDE}}} WHERE compid = $companyId AND atype = $type"
             val lines = BaseDAO.getBaseDAO().queryNative(selectSql);
             if (lines.size == 0){
                 //新增
                 val aptid = RedisGlobalKeys.getCompanyAptCode()
-                val insertSql = "INSERT INTO {{?${DSMConst.D_COMP_APTITUDE}}} (aptid,compid,atype,certificateno,validitys,validitye) VALUES (?,?,?,?,?,?)"
+                val insertSql = "INSERT INTO {{?${DSMConst.TB_COMP_APTITUDE}}} (aptid,compid,atype,certificateno,validitys,validitye) VALUES (?,?,?,?,?,?)"
                 val i = BaseDAO.getBaseDAO().updateNative(insertSql,
                         aptid,
                         companyId,
@@ -137,7 +137,7 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
                 if (i > 0) return true
             }else{
                 //修改
-                val updateSql = "UPDATE {{?${DSMConst.D_COMP_APTITUDE}}} SET certificateno='$id',validitys='$idStartTime',validitye='$idEndTime' WHERE aptid ='${lines[0][0]}'"
+                val updateSql = "UPDATE {{?${DSMConst.TB_COMP_APTITUDE}}} SET certificateno='$id',validitys='$idStartTime',validitye='$idEndTime' WHERE aptid ='${lines[0][0]}'"
                 val i = BaseDAO.getBaseDAO().updateNative(updateSql)
                 if (i > 0) return true
             }

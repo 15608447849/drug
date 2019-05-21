@@ -25,7 +25,7 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
     private static ArrayList<String> timerIdList = new ArrayList<>();
 
     private static class CusTimerTask extends TimerTask{
-        private static final String sql = "select * FROM {{?"+D_COMP_APTITUDE+"}} WHERE atype = ? AND compid = ? AND validitye < CURRENT_DATE";
+        private static final String sql = "select * FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND validitye < CURRENT_DATE";
         private final int atype;
         private final int compid;
         private final String phone;
@@ -102,7 +102,7 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
     //设置定时器-一个月后执行
     //定时每次执行时,再次检测自己是否过期,过期-发送消息并再次添加定时任务,否则移除
     private void execute() {
-        String sql = "SELECT atype,compid,uphone,validitye FROM {{?" + D_COMP_APTITUDE + "}} AS a INNER JOIN {{?" + D_SYSTEM_USER + "}} AS b ON a.compid=b.cid WHERE compid IN ( SELECT cid FROM {{?" + D_COMP + "}} WHERE cstatus&256=256 AND ctype=0 ) AND validitye < CURRENT_DATE";
+        String sql = "SELECT atype,compid,uphone,validitye FROM {{?" + TB_COMP_APTITUDE + "}} AS a INNER JOIN {{?" + TB_SYSTEM_USER + "}} AS b ON a.compid=b.cid WHERE compid IN ( SELECT cid FROM {{?" + TB_COMP + "}} WHERE cstatus&256=256 AND ctype=0 ) AND validitye < CURRENT_DATE";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
         for (Object[] row : lines){
             checkTypeAndSendMsg(row);

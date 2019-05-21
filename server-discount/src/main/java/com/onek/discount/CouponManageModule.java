@@ -10,7 +10,6 @@ import com.onek.consts.CSTATUS;
 import com.onek.consts.IntegralConstant;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
-import com.onek.context.UserSession;
 import com.onek.discount.entity.*;
 import com.onek.entitys.Result;
 import com.onek.util.*;
@@ -20,7 +19,6 @@ import com.onek.util.member.MemberStore;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
-import redis.provide.RedisStringProvide;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.MathUtil;
@@ -169,7 +167,7 @@ public class CouponManageModule {
             " left join {{?" + DSMConst.TD_PROD_SKU+"}} psku on pdrug.gcode = psku.sku " +
             " left join {{?" + DSMConst.TD_PROD_SPU+"}} pspu on psku.spu = pspu.spu "+
             " left join {{?" + DSMConst.TD_PROD_MANU+"}} pmun on pmun.manuno = pspu.manuno "+
-            " left join {{?" + DSMConst.D_PRODUCE_CLASS+"}} dpr on pdrug.gcode = dpr.classid "+
+            " left join {{?" + DSMConst.TD_PRODUCE_CLASS +"}} dpr on pdrug.gcode = dpr.classid "+
             " where actcode = ? and pdrug.cstatus&1=0 ";
 
     //启用
@@ -300,11 +298,11 @@ public class CouponManageModule {
             + "(unqid,actcode,ladid) values(?,?,?)";
 
 
-    private static final String UPDATE_COMP_BAL = "update {{?" + DSMConst.D_COMP + "}} "
+    private static final String UPDATE_COMP_BAL = "update {{?" + DSMConst.TB_COMP + "}} "
             + "set balance = balance + ? where cid = ? ";
 
 
-    private static final String QUERY_COMP_BAL = " select balance from {{?" + DSMConst.D_COMP + "}} "
+    private static final String QUERY_COMP_BAL = " select balance from {{?" + DSMConst.TB_COMP + "}} "
             + " where cid = ? ";
 
 

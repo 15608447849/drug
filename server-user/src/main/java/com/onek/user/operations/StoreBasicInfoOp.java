@@ -20,7 +20,7 @@ import static util.StringUtils.checkObjectNull;
 public class StoreBasicInfoOp {
     //更新企业信息到缓存
     public static void updateCompInfoToCache() {
-        final String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,cid FROM {{?"+ DSMConst.D_COMP+"}} WHERE ctype=0";
+        final String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,cid FROM {{?"+ DSMConst.TB_COMP +"}} WHERE ctype=0";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
         if (lines == null) return;
         for (Object[] rows : lines){
@@ -46,7 +46,7 @@ public class StoreBasicInfoOp {
     public static boolean getStoreInfoById(StoreBasicInfo info) {
         //通过企业码获取企业信息
         String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng" +
-                " FROM {{?"+ DSMConst.D_COMP+"}}"+
+                " FROM {{?"+ DSMConst.TB_COMP +"}}"+
                 " WHERE ctype=0 AND cid = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql, info.storeId);
         if (lines.size() == 1){

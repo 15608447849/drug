@@ -77,7 +77,7 @@ public class StoreRegisterOp implements IOperation<AppContext> {
         //获取角色码
         long userId = getUserCode();
             //添加角色
-           String insertSql = "INSERT INTO {{?" + DSMConst.D_SYSTEM_USER + "}} " +
+           String insertSql = "INSERT INTO {{?" + DSMConst.TB_SYSTEM_USER + "}} " +
                     "(uid,uphone,upw,roleid,adddate,addtime) " +
                     "VALUES(? , ? , ? , ? , CURRENT_DATE,CURRENT_TIME)";
 
@@ -97,7 +97,7 @@ public class StoreRegisterOp implements IOperation<AppContext> {
 
     //验证手机是否存在
     private Result checkPhoneIsExist() {
-        String selectSql = "SELECT oid FROM {{?" + DSMConst.D_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND uphone = ?";
+        String selectSql = "SELECT oid FROM {{?" + DSMConst.TB_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
         if (lines.size()>0) return new Result().fail("已注册");
             else return new Result().success("未注册");

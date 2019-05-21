@@ -5,7 +5,7 @@ import dao.BaseDAO;
 import java.util.List;
 import java.util.Locale;
 
-import static constant.DSMConst.D_SMS_TEMPLATE;
+import static constant.DSMConst.TB_SMS_TEMPLATE;
 
 /**
  * lzp
@@ -21,7 +21,7 @@ public class MessageTemplateUtil {
     }
     //数据库获取模板
     private static String getTmpByTno(int tno) {
-        String selectSql = "SELECT tcontext FROM {{?" + D_SMS_TEMPLATE + "}} WHERE cstatus&1=0 and tno= ?";
+        String selectSql = "SELECT tcontext FROM {{?" + TB_SMS_TEMPLATE + "}} WHERE cstatus&1=0 and tno= ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,tno);
         if (lines.size() == 1){
             return lines.get(0)[0].toString();
@@ -30,7 +30,7 @@ public class MessageTemplateUtil {
     }
 
     public static String messageTempStatus(int tno) {
-        String selectSql = "SELECT cstatus FROM {{?" +D_SMS_TEMPLATE+ "}} WHERE tno = ?";
+        String selectSql = "SELECT cstatus FROM {{?" + TB_SMS_TEMPLATE + "}} WHERE tno = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,tno);
         if (lines.size() == 1){
             return lines.get(0)[0].toString();

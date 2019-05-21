@@ -145,7 +145,7 @@ public class CommonModule {
 
     public  static JSONObject getAllDict(){
         JSONObject j = new JSONObject();
-        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0");
+        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.TB_GLOBAL_DICT +"}} where cstatus&1= 0");
         DictEntity[] dicts = new DictEntity[result.size()];
         baseDao.convToEntity(result, dicts, DictEntity.class);
         if(dicts != null && dicts.length > 0){

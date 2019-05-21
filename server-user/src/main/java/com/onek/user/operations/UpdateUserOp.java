@@ -73,7 +73,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
     }
 
     private Boolean changUserByUid(String param ,String ifs) {
-        String sql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER +"}} SET " + param + " WHERE "+ifs;
+        String sql = "UPDATE {{?" + DSMConst.TB_SYSTEM_USER +"}} SET " + param + " WHERE "+ifs;
         return BaseDAO.getBaseDAO().updateNative(sql) > 0;
     }
 }

@@ -10,7 +10,6 @@ import com.onek.entitys.Result;
 import com.onek.user.entity.ResourceVO;
 import constant.DSMConst;
 import dao.BaseDAO;
-import util.ArrayUtil;
 import util.StringUtils;
 import util.TreeUtil;
 
@@ -22,7 +21,7 @@ public class BackgroundResourceModule {
 
     private static final String QUERY_RESOURCE_BASE =
             " SELECT *"
-            + " FROM {{?" + DSMConst.D_SYSTEM_RESOURCE + "}} "
+            + " FROM {{?" + DSMConst.TB_SYSTEM_RESOURCE + "}} "
             + " WHERE cstatus&1 = 0 ";
 
     public Result queryResources(AppContext appContext) {
@@ -98,7 +97,7 @@ public class BackgroundResourceModule {
         }
 
         String authorizeSQL =
-                " UPDATE {{?" + DSMConst.D_SYSTEM_RESOURCE + "}} "
+                " UPDATE {{?" + DSMConst.TB_SYSTEM_RESOURCE + "}} "
                 // 此处不得给超级管理员取消角色。
                 + " SET roleid = 1, roleid = roleid | ?"
                 + " WHERE resourceid = ? ";

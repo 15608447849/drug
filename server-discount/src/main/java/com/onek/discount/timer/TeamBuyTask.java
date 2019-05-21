@@ -3,9 +3,6 @@ package com.onek.discount.timer;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
-import com.onek.propagation.prod.ActivityManageServer;
-import com.onek.propagation.prod.ProdDiscountObserver;
-import com.onek.util.IOThreadUtils;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
@@ -18,8 +15,6 @@ import util.TimeUtils;
 import java.math.BigDecimal;
 import java.util.*;
 
-import static Ice.Application.communicator;
-
 public class TeamBuyTask extends TimerTask {
 
     private static final String SQL = "select a.unqid,a.sdate,a.edate from {{?"+ DSMConst.TD_PROM_ACT+"}} a " +
@@ -28,7 +23,7 @@ public class TeamBuyTask extends TimerTask {
     private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
             "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ?";
 
-    private static final String UPDATE_COMP_BAL = "update {{?" + DSMConst.D_COMP + "}} "
+    private static final String UPDATE_COMP_BAL = "update {{?" + DSMConst.TB_COMP + "}} "
             + "set balance = balance + ? where cid = ? ";
 
     @Override

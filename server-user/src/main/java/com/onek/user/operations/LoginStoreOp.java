@@ -77,7 +77,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
     private boolean checkSqlAndUserExist(AppContext context) {
 
         String selectSql = "SELECT uid,roleid,upw,cid " +
-                "FROM {{?" + DSMConst.D_SYSTEM_USER + "}} " +
+                "FROM {{?" + DSMConst.TB_SYSTEM_USER + "}} " +
                 "WHERE cstatus&1 = 0 AND roleid&2=2  AND uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
 
@@ -90,7 +90,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
                 //判断角色
                 int role = StringUtils.checkObjectNull(objects[1],0);
                 //获取有效角色列表
-                selectSql = "SELECT cstatus,roleid FROM {{?" + DSMConst.D_SYSTEM_ROLE+"}} ";
+                selectSql = "SELECT cstatus,roleid FROM {{?" + DSMConst.TB_SYSTEM_ROLE +"}} ";
                 List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql);
                 boolean isAllow = false;
                 for (Object[] o : lines2){
@@ -116,7 +116,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
 
                 //密码正确 - 记录登陆时间 IP
-                String updateSql = "UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}} " +
+                String updateSql = "UPDATE {{?" + DSMConst.TB_SYSTEM_USER + "}} " +
                         "SET ip = ?,logindate = CURRENT_DATE,logintime = CURRENT_TIME " +
                         "WHERE cstatus&1 = 0 AND uid = ?";
                 int i = BaseDAO.getBaseDAO().updateNative(updateSql, context.remoteIp,objects[0]);

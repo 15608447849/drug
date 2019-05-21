@@ -86,7 +86,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
 
         String sqlPrev = "SELECT " +
                 "a.cid,b.cname,b.createdate,b.createtime,b.submitdate,b.submittime,b.auditdate,b.audittime,b.examine,b.cstatus,a.uphone" +
-                " FROM {{?"+DSMConst.D_SYSTEM_USER+"}} AS a INNER JOIN {{?" +DSMConst.D_COMP+ "}} AS b ON a.cid=b.cid";
+                " FROM {{?"+DSMConst.TB_SYSTEM_USER +"}} AS a INNER JOIN {{?" +DSMConst.TB_COMP + "}} AS b ON a.cid=b.cid";
                 if(!StringUtils.isEmpty(paramSql)){
                     sqlPrev  += " WHERE  "+paramSql;
                 }
@@ -143,7 +143,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
     //查询企业的审核资质信息
     private void queryAptitude(AuditInfo info) {
         AptitudeInfo cardInfo = info.cardInfo;
-        String selectSql = "SELECT atype,certificateno,validitys,validitye FROM {{?" + DSMConst.D_COMP_APTITUDE + "}} WHERE compid=?";
+        String selectSql = "SELECT atype,certificateno,validitys,validitye FROM {{?" + DSMConst.TB_COMP_APTITUDE + "}} WHERE compid=?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,info.companyId);
         for (Object[] row : lines){
             int type = StringUtils.checkObjectNull(row[0],0);

@@ -19,7 +19,7 @@ public class DictUtilRemoteModule {
 
     @UserPermission(ignore = true)
     public DictEntity getId(AppContext appContext) {
-        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0 and dictc = ?", appContext.param.arrays[0]);
+        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.TB_GLOBAL_DICT +"}} where cstatus&1= 0 and dictc = ?", appContext.param.arrays[0]);
         DictEntity[] dicts = new DictEntity[result.size()];
         baseDao.convToEntity(result, dicts, DictEntity.class);
         return dicts[0];
@@ -27,7 +27,7 @@ public class DictUtilRemoteModule {
 
     @UserPermission(ignore = true)
     public Result queryAll(AppContext appContext) {
-        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0");
+        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.TB_GLOBAL_DICT +"}} where cstatus&1= 0");
         DictEntity[] dicts = new DictEntity[result.size()];
         baseDao.convToEntity(result, dicts, DictEntity.class);
         return new Result().success(GsonUtils.javaBeanToJson(dicts));
@@ -36,7 +36,7 @@ public class DictUtilRemoteModule {
     @UserPermission(ignore = true)
     public Result queryByParams(AppContext appContext) {
         String [] params = appContext.param.arrays;
-        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.D_GLOBAL_DICT +"}} where cstatus&1= 0 and customc = ? and type =?", params[0], params[1]);
+        List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.TB_GLOBAL_DICT +"}} where cstatus&1= 0 and customc = ? and type =?", params[0], params[1]);
         DictEntity[] dicts = new DictEntity[result.size()];
         baseDao.convToEntity(result, dicts, DictEntity.class);
         return new Result().success(GsonUtils.javaBeanToJson(dicts));

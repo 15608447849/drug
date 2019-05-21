@@ -38,7 +38,7 @@ public class BackgroundUserModule {
             }
             int code = 0;
             if (userInfoVo.getUid() <= 0) {
-                String insertSQL = "insert into {{?" + DSMConst.D_SYSTEM_USER + "}} "
+                String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime)"
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME)";
 
@@ -47,7 +47,7 @@ public class BackgroundUserModule {
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
                         pwd, userInfoVo.getRoleid());
             } else {
-                String updSQL = "update {{?" + DSMConst.D_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
+                String updSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
                         + "urealname=?, roleid=? where cstatus&1=0 and uid=? ";
                 code = baseDao.updateNative(updSQL, userInfoVo.getUphone(),userInfoVo.getUaccount(),
                         userInfoVo.getUrealname(),userInfoVo.getRoleid(),userInfoVo.getUid());
@@ -61,7 +61,7 @@ public class BackgroundUserModule {
 
     private boolean checkUser(UserInfoVo userInfoVo) {
         StringBuilder sqlBuilder = new StringBuilder();
-        String sql = "select count(*) from {{?" + DSMConst.D_SYSTEM_USER + "}} where uphone=?" +
+        String sql = "select count(*) from {{?" + DSMConst.TB_SYSTEM_USER + "}} where uphone=?" +
                 " and cstatus&1=0 ";
         sqlBuilder.append(sql);
         if (userInfoVo.getUid() > 0) {
@@ -80,10 +80,10 @@ public class BackgroundUserModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int type = jsonObject.get("type").getAsInt();
         int uid = jsonObject.get("uid").getAsInt();
-        String updateSql = "update {{?" + DSMConst.D_SYSTEM_USER + "}} set cstatus=cstatus&~32 "
+        String updateSql = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set cstatus=cstatus&~32 "
                 + " where cstatus&1=0 and cstatus&32>0 and uid=?";//启用
         if (type == 0) {//停用
-            updateSql = "update {{?" + DSMConst.D_SYSTEM_USER + "}} set cstatus=cstatus|32 "
+            updateSql = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set cstatus=cstatus|32 "
                     + " where cstatus&1=0 and cstatus&32=0 and uid=?";
         }
         int code = baseDao.updateNative(updateSql, uid);
@@ -108,7 +108,7 @@ public class BackgroundUserModule {
         StringBuilder sqlBuilder = new StringBuilder();
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
                 + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, GROUP_CONCAT(rname) as rname from {{?"
-                + DSMConst.D_SYSTEM_USER + "}} u left join {{?" + DSMConst.D_SYSTEM_ROLE + "}} r "
+                + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0";
         sqlBuilder.append(selectSQL);
         sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by uid desc");
@@ -156,7 +156,7 @@ public class BackgroundUserModule {
         int uid = jsonObject.get("uid").getAsInt();
         String sql = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
                 + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, rname from {{?"
-                + DSMConst.D_SYSTEM_USER + "}} u left join {{?" + DSMConst.D_SYSTEM_ROLE + "}} r "
+                + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid=r.roleid and u.cstatus&1=0 and uid=?";
         List<Object[]> queryResult = baseDao.queryNative(sql, uid);
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
@@ -182,7 +182,7 @@ public class BackgroundUserModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int uid = jsonObject.get("uid").getAsInt();
-        String updateSQL = "update {{?" + DSMConst.D_SYSTEM_USER + "}} set upw=md5(SUBSTR(uphone,6)) "
+        String updateSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set upw=md5(SUBSTR(uphone,6)) "
                 + " where cstatus&1=0 and uid=" + uid;
         int code = baseDao.updateNative(updateSQL);
         return code > 0 ? result.success("操作成功") : result.fail("操作失败") ;

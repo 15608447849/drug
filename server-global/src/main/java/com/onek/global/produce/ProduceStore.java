@@ -1,15 +1,11 @@
 package com.onek.global.produce;
 
 import com.google.gson.*;
-import com.onek.entitys.Result;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProduceClassEntity;
 import com.onek.util.prod.ProduceClassUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import elasticsearch.ElasticSearchProvider;
-import org.elasticsearch.action.get.GetResponse;
-import util.BeanMapUtils;
 import util.TreeUtil;
 
 import java.util.*;
@@ -20,7 +16,7 @@ public class ProduceStore {
     private static String TREE_STR = null;
     private static final String PRODUCE_SELECT =
             " SELECT * "
-            + " FROM {{?" + DSMConst.D_PRODUCE_CLASS + "}} "
+            + " FROM {{?" + DSMConst.TD_PRODUCE_CLASS + "}} "
             + " WHERE cstatus&1 = 0 ";
 
     private static final String QUERY_PROD_BASE =

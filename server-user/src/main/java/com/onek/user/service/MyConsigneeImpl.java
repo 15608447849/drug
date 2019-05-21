@@ -36,7 +36,7 @@ public class MyConsigneeImpl implements IRedisCache {
 
     @Override
     public ConsigneeVO getId(Object id) {
-        String selectSQL = "select shipid,compid,contactname,contactphone,cstatus from {{?" + DSMConst.D_COMP_SHIP_INFO + "}} where cstatus&1=0 "
+        String selectSQL = "select shipid,compid,contactname,contactphone,cstatus from {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} where cstatus&1=0 "
                 + " and copmid=" + id + " and cstatus&2>0";
         List<Object[]> result = baseDao.queryNative(selectSQL);
         ConsigneeVO[] defaultCgs = new ConsigneeVO[result.size()];
@@ -62,7 +62,7 @@ public class MyConsigneeImpl implements IRedisCache {
     @Override
     public List<?> queryAll() {
         String selectSQL = "select shipid,compid,contactname,contactphone,cstatus from {{?"
-                + DSMConst.D_COMP_SHIP_INFO + "}} where cstatus&1=0 and cstatus&2>0";
+                + DSMConst.TB_COMP_SHIP_INFO + "}} where cstatus&1=0 and cstatus&2>0";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         ConsigneeVO[] consigneeVOS = new ConsigneeVO[queryResult.size()];
         baseDao.convToEntity(queryResult, consigneeVOS, ConsigneeVO.class);

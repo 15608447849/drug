@@ -1,8 +1,6 @@
 package dao;
 
 import constant.DSMConst;
-import dao.BaseDAO;
-import dao.SynDbData;
 import org.hyrdpf.dao.DAOException;
 import org.hyrdpf.dao.FacadeProxy;
 import org.hyrdpf.dao.jdbc.AbstractJdbcSessionMgr;
@@ -12,10 +10,7 @@ import org.hyrdpf.util.LogUtil;
 
 import java.sql.SQLException;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
-import java.util.concurrent.Future;
 
 /**
  * @author Administrator
@@ -29,13 +24,13 @@ public class SynDbLog {
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
 
-    private static final String QUERY_SYNLOG_EXIST = "select oid from {{?"+ DSMConst.D_SYN_LOG +"}} where tbid = ?" +
+    private static final String QUERY_SYNLOG_EXIST = "select oid from {{?"+ DSMConst.TD_SYN_LOG +"}} where tbid = ?" +
             " and sdbid = ? and unqval = ? and sharding = ? and tbsharding = ? ";
 
-    private static final String UPDATE_SYNLOG = "update {{?"+ DSMConst.D_SYN_LOG +"}} set opttime = now()," +
+    private static final String UPDATE_SYNLOG = "update {{?"+ DSMConst.TD_SYN_LOG +"}} set opttime = now()," +
             "syntime = null,cstatus = 0 where oid = ?";
 
-    private static final String INSERT_SYNLOG = "insert into {{?"+ DSMConst.D_SYN_LOG +"}} tbid,sdbid,unqval," +
+    private static final String INSERT_SYNLOG = "insert into {{?"+ DSMConst.TD_SYN_LOG +"}} tbid,sdbid,unqval," +
             "opttime,sharding,tbsharding,cstatus) values (?,?,?,now(),?,?,0) ";
 
 

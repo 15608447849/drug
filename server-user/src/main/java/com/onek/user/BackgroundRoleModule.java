@@ -20,26 +20,26 @@ public class BackgroundRoleModule {
 
     private static final String QUERY_ROLE_BASE =
             " SELECT * "
-            + " FROM {{?" + DSMConst.D_SYSTEM_ROLE + "}} "
+            + " FROM {{?" + DSMConst.TB_SYSTEM_ROLE + "}} "
             + " WHERE cstatus&1 = 0 ";
 
     private static final String OPEN_ROLE_SELF =
-            " UPDATE {{?" + DSMConst.D_SYSTEM_ROLE + "}}"
+            " UPDATE {{?" + DSMConst.TB_SYSTEM_ROLE + "}}"
             + " SET cstatus = cstatus & " + ~CSTATUS.CLOSE
             + " WHERE roleid = ? ";
 
     private static final String CLOSE_ROLE_SELF =
-            " UPDATE {{?" + DSMConst.D_SYSTEM_ROLE + "}}"
+            " UPDATE {{?" + DSMConst.TB_SYSTEM_ROLE + "}}"
             + " SET cstatus = cstatus | " + CSTATUS.CLOSE + ", "
             + " offdate = CURRENT_DATE, offtime = CURRENT_TIME "
             + " WHERE roleid = ? ";
 
     private static final String CLOSE_ROLE_RESOURCE =
-            " UPDATE {{?" + DSMConst.D_SYSTEM_RESOURCE + "}}"
+            " UPDATE {{?" + DSMConst.TB_SYSTEM_RESOURCE + "}}"
             + " SET roleid = roleid & ~? ";
 
     private static final String CLOSE_ROLE_USER =
-            " UPDATE {{?" + DSMConst.D_SYSTEM_USER + "}}"
+            " UPDATE {{?" + DSMConst.TB_SYSTEM_USER + "}}"
             + " SET roleid = roleid & ~? ";
 
     /**
@@ -200,7 +200,7 @@ public class BackgroundRoleModule {
         }
 
         String clearSQL =
-                " UPDATE {{?" + DSMConst.D_SYSTEM_RESOURCE + "}} "
+                " UPDATE {{?" + DSMConst.TB_SYSTEM_RESOURCE + "}} "
                 + " SET roleid = roleid & ~? ";
 
         if (StringUtils.isEmpty(resource)) {
@@ -209,7 +209,7 @@ public class BackgroundRoleModule {
             String[] resources = resource.split(",");
 
             String authorizeSQL =
-                    " UPDATE {{?" + DSMConst.D_SYSTEM_RESOURCE + "}} "
+                    " UPDATE {{?" + DSMConst.TB_SYSTEM_RESOURCE + "}} "
                     + " SET roleid = roleid | ? "
                     + " WHERE resourceid IN (" + String.join(",", resources) + ") ";
 
