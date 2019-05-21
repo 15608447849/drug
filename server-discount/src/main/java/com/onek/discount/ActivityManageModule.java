@@ -122,7 +122,6 @@ public class ActivityManageModule {
                     + " SET cstatus = cstatus | " + CSTATUS.DELETE
                     + " WHERE unqid = ? ";
 
-
     /* *
      * @description 活动查询
      * @params [appContext]
@@ -207,24 +206,29 @@ public class ActivityManageModule {
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         try {
-            long startTime = dateFormat.parse(activityVO.getSdate()+
-                    " " + activityVO.getTimeVOS().get(0).getSdate()).getTime();
-            if (startTime > new Date().getTime()) {
-                ExecutorService executors = Executors.newSingleThreadExecutor();
-                executors.execute(() -> {
-                            IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
-                                    "", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
-                                            " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                            SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.ACTIVITIES_OF_NEW,"", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
-                                    " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                        }
+            //活动开始前五分钟
+            long start5Time = dateFormat.parse(activityVO.getSdate()+
+                    " " + activityVO.getTimeVOS().get(0).getSdate()).getTime() - 5*60*100;
 
-                );
+            if (start5Time > new Date().getTime()) {
+                aaa(activityVO);
             }
         } catch (ParseException e) {
             e.printStackTrace();
         }
         return result;
+    }
+
+    private void aaa( ActivityVO activityVO) {
+        ExecutorService executors = Executors.newSingleThreadExecutor();
+        executors.execute(() -> {
+                    IceRemoteUtil.sendMessageToAllClient(SmsTempNo.ACTIVITIES_OF_NEW,
+                            "", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
+                                    " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
+                    SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.ACTIVITIES_OF_NEW,"", "【" + activityVO.getActname() + "】将于" + activityVO.getSdate() +
+                            " " +activityVO.getTimeVOS().get(0).getSdate() + "开始进行");
+                }
+        );
     }
 
     /**
@@ -742,7 +746,7 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private long theGoodsStockIsEnough(int actStock, int cstatus, long actCode) {
-        String selectSQL = "select sku, store,min(notused) as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
+        String selectSQL = "select sku, store,notused as minunused from (select sku,store, sum(used) as uused, (store-sum(used)) as notused from ( " +
                 "select sku,store, used  from ( " +
                 "SELECT sku,gcode,store,freezestore, " +
                 "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
@@ -769,9 +773,9 @@ public class ActivityManageModule {
                 "select sku,store, 0 from td_prod_sku where cstatus&1=0) uc GROUP BY sku) ud  ";
         if ((cstatus & 256) > 0) {//库存百分比
             double percent = actStock * 0.01;
-            selectSQL = selectSQL +  " HAVING minunused < ceil(store*"+percent+")";
+            selectSQL = selectSQL +  " HAVING minunused < ceil(store*"+percent+")  LIMIT 0,1";
         } else {//库存量
-            selectSQL = selectSQL +  " HAVING minunused < "+ actStock;
+            selectSQL = selectSQL +  " HAVING minunused < "+ actStock + " LIMIT 0,1";
         }
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         if (queryResult == null || queryResult.size() == 0) return 0;

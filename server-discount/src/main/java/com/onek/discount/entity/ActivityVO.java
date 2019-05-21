@@ -1,5 +1,7 @@
 package com.onek.discount.entity;
 
+import com.onek.queue.delay.IDelayedObject;
+
 import java.util.List;
 
 /**
@@ -8,7 +10,7 @@ import java.util.List;
  * @description 活动
  * @time 2019/4/1 13:46
  **/
-public class ActivityVO {
+public class ActivityVO implements IDelayedObject {
     private String unqid;//活动码
     private String actname;//活动名称
     private int incpriority;//互斥优先级
@@ -223,5 +225,10 @@ public class ActivityVO {
 
     public void setActiveRule(List<RulesVO> activeRule) {
         this.activeRule = activeRule;
+    }
+
+    @Override
+    public String getUnqKey() {
+        return unqid;
     }
 }

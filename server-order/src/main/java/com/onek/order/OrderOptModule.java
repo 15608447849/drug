@@ -129,6 +129,14 @@ public class OrderOptModule {
             + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=? and compid  = ? ";
 
 
+    //查询分摊余额
+    private static final String QUERY_ORDER_GOODS_BAL_SQL = "select balamt from {{?" + DSMConst.TD_TRAN_GOODS + "}}   "
+            + " where cstatus&1=0 and orderno = ? and pdno = ? and compid = ? ";
+
+
+    private static final String UPD_ASAPP_CK_FINISH_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set ckstatus = ? "+
+            " where cstatus&1=0 and asno = ?  ";
+
 
 
     /* *
@@ -281,9 +289,38 @@ public class OrderOptModule {
         for (AsAppVO asAppVO : asAppVOS) {
             for (TranOrderGoods tranOrderGoods1:tranOrderGoods) {
                 if (asAppVO.getPdno() == tranOrderGoods1.getPdno()){
-                    double payamt = tranOrderGoods1.getPayamt()/100;
-                    double unitP = MathUtil.exactDiv(payamt, tranOrderGoods1.getPnum()).doubleValue();
-                    asAppVO.setRefamt(MathUtil.exactMul(unitP, asAppVO.getAsnum()).doubleValue());
+                    int year = Integer.parseInt("20" + orderNo.substring(0, 2));
+                    List<Object[]> ret = baseDao.queryNativeSharding(compid, year, 
+                            QUERY_ORDER_GOODS_BAL_SQL, new Object[]{orderNo, asAppVO.getPdno(), compid});
+                    double bal = 0;
+                    if(ret != null && !ret.isEmpty()){
+                        bal = Double.parseDouble(ret.get(0)[0].toString());
+                    }
+
+                    bal = MathUtil.exactDiv(bal,100).setScale(2, BigDecimal.ROUND_HALF_UP).
+                            doubleValue();
+
+                    double payamt = MathUtil.exactDiv(tranOrderGoods1.getPayamt(),100).
+                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                    double acprice = MathUtil.exactDiv(payamt, tranOrderGoods1.getPnum()).
+                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                    double refamt =  MathUtil.exactMul(acprice, asAppVO.getAsnum()).
+                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                    if(bal > 0){
+                        bal = MathUtil.exactDiv(bal,
+                                tranOrderGoods1.getPnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                        double acbalamt = MathUtil.exactMul(bal,
+                                asAppVO.getAsnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+
+                        refamt = MathUtil.exactAdd(refamt,acbalamt).
+                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                    }
+                    asAppVO.setRefamt(refamt);
                 }
                 if (asAppVO.getPdno() == tranOrderGoods1.getPdno() && asAppVO.getAsnum() == tranOrderGoods1.getPnum()){
                     skuList.add(asAppVO.getPdno());
@@ -570,17 +607,20 @@ public class OrderOptModule {
 //                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue()
             asAppDtVO.setPayamt(MathUtil.exactMul(asAppDtVO.getAsnum(),acprice)
                     .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-            ;
 
-            asAppDtVO.setRefbal(MathUtil.exactMul(asAppDtVO.getAsnum(),asAppDtVO.getBalamt()).
+
+           double acbalamt = MathUtil.exactDiv(asAppDtVO.getBalamt(),
+                    asAppDtVO.getPnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+
+            asAppDtVO.setRefbal(MathUtil.exactMul(asAppDtVO.getAsnum(),acbalamt).
                     setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
 
             asAppDtVO.setSumRefAmt(asAppDtVO.getRefamt());
-
+            asAppDtVO.setBalamt(acbalamt);
             ProdEntity prodBySku = null;
             try {
                 prodBySku = ProdInfoStore.getProdBySku(asAppDtVO.getPdno());
-
                 if (prodBySku != null) {
                     asAppDtVO.setSpec(prodBySku.getSpec());
                     asAppDtVO.setPname(prodBySku.getProdname());
@@ -936,6 +976,9 @@ public class OrderOptModule {
             List<Object[]> params = new ArrayList<>();
             params.add(new Object[]{-3, queryRet.get(0)[0],-2});
             params.add(new Object[]{200, queryRet.get(0)[2],3,queryRet.get(0)[0],queryRet.get(0)[1]});
+
+
+            baseDao.updateNativeSharding(0,TimeUtils.getCurrentYear(),UPD_ASAPP_CK_FINISH_SQL,new Object[]{200,asno});
             boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()),year,
                     new String[]{UPD_ORDER_CK_SQL,UPD_ORDER_GOODS_CK_SQL},params));
 
