@@ -21,7 +21,7 @@ public class TeamBuyTask extends TimerTask {
             "where a.edate = ? and a.brulecode = 1133 and a.cstatus &1 = 0";
 
     private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
-            "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ?";
+            "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ? and r.cstatus &1 = 0 and l.cstatus &1 = 0 order by l.ladnum asc";
 
     private static final String UPDATE_COMP_BAL = "update {{?" + DSMConst.TB_COMP + "}} "
             + "set balance = balance + ? where cid = ? ";
@@ -69,6 +69,7 @@ public class TeamBuyTask extends TimerTask {
                     for(int i = 0; i < ladOffArray.size() ; i++){
                          JSONObject js = ladOffArray.getJSONObject(i);
                          if(compSet.size() >= js.getInteger("ladnum")){
+                             LogUtil.getDefaultLogger().info("++++++ comp size:["+ compSet.size()+"]; ladnum:["+js.getInteger("ladnum")+"] offer:["+ js.getInteger("offer")+"] +++++++");
                              offer = js.getInteger("offer");
                          }
                     }
