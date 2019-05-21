@@ -1,5 +1,7 @@
 package com.onek.discount.entity;
 
+import com.onek.queue.delay.IDelayedObject;
+
 import java.util.List;
 
 /**
@@ -9,7 +11,7 @@ import java.util.List;
  * @Description TODO
  * @date 2019-04-02 8:58
  */
-public class CouponVO {
+public class CouponVO implements IDelayedObject {
 
     //优惠券码
     private String coupno;
@@ -240,4 +242,8 @@ public class CouponVO {
         this.rulename = rulename;
     }
 
+    @Override
+    public String getUnqKey() {
+        return coupno;
+    }
 }
