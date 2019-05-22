@@ -4,10 +4,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
 import com.onek.context.AppContext;
@@ -21,6 +18,7 @@ import com.onek.goods.service.MallFloorImpl;
 import com.onek.goods.service.PromTimeService;
 import com.onek.goods.util.ProdActPriceUtil;
 import com.onek.goods.util.ProdESUtil;
+import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.fs.FileServerUtils;
@@ -80,6 +78,14 @@ public class ProdModule {
             "and a.cstatus&1 = 0 " +
             "and brulecode like '112%' " +
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
+
+    //商品评价
+    private static final String INSERT_APPRISE_SQL = "insert into {{?" + DSMConst.TD_TRAN_APPRAISE + "}} "
+            + "(unqid,orderno,level,descmatch,logisticssrv,"
+            + "content,createtdate,createtime,cstatus,compid,sku) "
+            + " values(?,?,?,?,?,"
+            + "?,CURRENT_DATE,CURRENT_TIME,0,?,"
+            + "?)";
 
     private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
             "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ?";
@@ -1352,6 +1358,27 @@ public class ProdModule {
             appriseVO.setCompEval(compEval);
         }
         return result.setQuery(appriseVOS, pageHolder);
+    }
+
+
+    @UserPermission(ignore = true)
+    public int insertApprise(AppContext appContext) {
+        Gson gson = new Gson();
+        JsonParser jsonParser = new JsonParser();
+        String json = appContext.param.arrays[0];
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.get("orderno").getAsString();
+        int compid = jsonObject.get("compid").getAsInt();
+        JsonArray appriseArr = jsonObject.get("appriseArr").getAsJsonArray();
+        LocalDateTime localDateTime = LocalDateTime.now();
+        List<Object[]> params = new ArrayList<>();
+        for (int i = 0; i < appriseArr.size(); i++) {
+            AppriseVO appriseVO = gson.fromJson(appriseArr.get(i).toString(), AppriseVO.class);
+            params.add(new Object[]{GenIdUtil.getUnqId(), orderNo, appriseVO.getLevel(), appriseVO.getDescmatch(),
+                    appriseVO.getLogisticssrv(), appriseVO.getContent(), compid, appriseVO.getSku()});
+        }
+        return !ModelUtil.updateTransEmpty(BASE_DAO.updateBatchNativeSharding(0, localDateTime.getYear(),
+                INSERT_APPRISE_SQL, params, params.size())) ? 1 : 0;
     }
 
 }
