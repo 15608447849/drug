@@ -72,7 +72,7 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
     private fun giftPoints(companyId: Int) {
         try {
             val memProxy = CacheProxyInstance.createPartInstance(MemberImpl()) as IRedisPartCache
-            val point = 888;
+            val point = 1000;
             val memberVO = memProxy.getId(companyId) as MemberEntity
             val accupoints = memberVO.accupoints
             val balpoints = memberVO.balpoints

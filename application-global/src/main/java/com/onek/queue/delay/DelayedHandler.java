@@ -8,12 +8,12 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
     private volatile CancelHandler cancelHndler;
     private volatile DelayQueue<DelayedObject<D>> delayQueue;
     private final Map<String, DelayedObject<D>> objStore = new ConcurrentHashMap<>();
-    private long deleyTime;
+    private final long delayTime;
     private final IDelayedHandler<D> handlerCall;
 
     public DelayedHandler(long delayTime, IDelayedHandler<D> handlerCall, TIME_TYPE time_type) {
         this.handlerCall = handlerCall;
-        setDeleyTime(deleyTime, time_type);
+        this.delayTime = convToMillsecond(delayTime, time_type);
         this.delayQueue = new DelayQueue<>();
         this.executor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 
@@ -60,7 +60,7 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
                 return ;
             }
 
-            DelayedObject<D> obj = new DelayedObject(delayed, this.deleyTime);
+            DelayedObject<D> obj = new DelayedObject(delayed, this.delayTime);
 
             boolean addResult = addToQueue(obj);
 
@@ -69,10 +69,6 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
             }
         });
 
-    }
-
-    public void setDeleyTime(long deleyTime, TIME_TYPE time_type) {
-        this.deleyTime = convToMillsecond(deleyTime, time_type);
     }
 
     protected boolean addToQueue(DelayedObject<D> delayed) {
@@ -143,7 +139,7 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
                         }
                     }
 
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }
