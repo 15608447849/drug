@@ -1,5 +1,6 @@
 package com.onek.user.operations;
 
+import Ice.Application;
 import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
@@ -22,7 +23,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
     String oldPassword;//旧密码 - 明文
     String newPassword; //明文  - 明文
 
-
+    String rmsg = "修改成功";
 
     @Override
     public Result execute(AppContext context) {
@@ -32,29 +33,41 @@ public class UpdateUserOp implements IOperation<AppContext> {
         if (session != null){
 
             int uid = session.userId;
-            //修改手机号码
-            if ( !StringUtils.isEmpty(oldPhone,newPhone, smsCode)){
+
+            if ( !StringUtils.isEmpty(oldPhone,newPhone, smsCode)){//修改手机号码
                 if (newPhone.length()==11) { // 判断手机号码
                     if (!newPhone.equals(oldPhone)){ //判断新号码不等于旧号码
                         String code = RedisUtil.getStringProvide().get("SMS"+oldPhone); //获取短信验证码
                         if (code.equals(smsCode)){ //判断短信验证
                             session.phone = newPhone;
-                            flag = changUserByUid("uphone="+newPhone, "uid = "+ uid);
+                            flag = changUserByUid("uphone='"+newPhone+"'", "uid='"+ uid+"' AND uphone='"+oldPhone+"'");
+                            rmsg = "已修改您的手机号码,请重新登陆";
+                        }else{
+                            Application.communicator().getLogger().print("缓存验证码:" + code+" , 短信验证码:"+smsCode);
+                            rmsg = "验证码不正确,请重新输入";
                         }
+                    }else{
+                        rmsg = "新手机号码与旧手机号码相同";
                     }
+                }else{
+                    rmsg = "手机号码位数不正确";
                 }
-            }
 
-            //修改密码
-            if (!StringUtils.isEmpty(oldPassword,newPassword)){ //判断不为空
-
+            }else if (!StringUtils.isEmpty(oldPassword,newPassword)){ //修改密码 , 判断不为空
                 String curPassword = session.password; //当前密码
                 String inputOldPassword = EncryptUtils.encryption(oldPassword);
                 String inputNewPassword = EncryptUtils.encryption(newPassword);
-                if (inputOldPassword.equalsIgnoreCase(curPassword) && !inputNewPassword.equalsIgnoreCase(curPassword)){
-                    //如果当前密码与输入的旧密码相同 并且 新密码与旧密码不相同
-                    session.password = inputNewPassword;
-                    flag = changUserByUid("upw='"+ inputNewPassword +"'","uid = "+ uid);
+                if (inputOldPassword.equalsIgnoreCase(curPassword)) {
+                    if( !inputNewPassword.equalsIgnoreCase(curPassword)){
+                        //如果当前密码与输入的旧密码相同 并且 新密码与旧密码不相同
+                        session.password = inputNewPassword;
+                        flag = changUserByUid("upw='"+ inputNewPassword +"'","uid='"+ uid+"'");
+                        rmsg = "已修改您的密码,请重新登陆";
+                    }else{
+                        rmsg = "原密码与新密码相同";
+                    }
+                }else{
+                    rmsg = "原密码不正确";
                 }
             }
             if (flag)  context.relationTokenUserSession(); //修改成功 关联用户信息
@@ -64,12 +77,15 @@ public class UpdateUserOp implements IOperation<AppContext> {
         if (!StringUtils.isEmpty(oldPhone,smsCode,newPassword)){
             String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
             if (code.equals(smsCode)){
-                flag = changUserByUid("upw='"+ EncryptUtils.encryption(newPassword)+"'","uphone = '"+ oldPhone+"' AND roleid");
+                flag = changUserByUid("upw='"+ EncryptUtils.encryption(newPassword)+"'","uphone='"+ oldPhone+"'");
+                rmsg = "修改成功,请使用新密码登陆";
+            }else{
+                rmsg = "验证码不正确";
             }
         }
 
-        if (flag) return new Result().success("修改成功");
-        return new Result().fail("修改失败");
+        if (flag) return new Result().success(rmsg);
+        return new Result().fail(rmsg);
     }
 
     private Boolean changUserByUid(String param ,String ifs) {
