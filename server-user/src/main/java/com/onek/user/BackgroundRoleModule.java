@@ -201,7 +201,8 @@ public class BackgroundRoleModule {
 
         String clearSQL =
                 " UPDATE {{?" + DSMConst.TB_SYSTEM_RESOURCE + "}} "
-                + " SET roleid = roleid & ~? ";
+                + " SET roleid = roleid & ~? "
+                + " WHERE cstatus&2 = 0 ";
 
         if (StringUtils.isEmpty(resource)) {
             BASE_DAO.updateNative(clearSQL, roleId);
