@@ -250,8 +250,12 @@ public class IceRemoteUtil {
      * push:1#60030
      */
     public static void sendMessageToClient(int compid,String message){
-        int index = getOrderServerNo(compid);
-        ic.settingProxy("orderServer"+index).sendMessageToClient(compid+"",message);
+        try {
+            int index = getOrderServerNo(compid);
+            ic.settingProxy("orderServer"+index).sendMessageToClient(compid+"",message);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
     }
 
     //发送消息到全部客户端
@@ -579,6 +583,35 @@ public class IceRemoteUtil {
             e.printStackTrace();
         }
         return null;
+    }
+
+    /**
+     * 读取目录/上传商品图片
+     */
+    public static String uploadGoodsImages(File dirs,String url,String logo){
+        //文件名: spu_sku
+        File[] files = dirs.listFiles();
+        HttpRequest httpRequest = new HttpRequest();
+        for (File image : files){
+            try {
+                if (image.isFile()){
+                    String suffix = image.getName().substring(image.getName().lastIndexOf("."));
+                    String[] arr = image.getName().replace(suffix,"").split("_");
+                    long spu = Long.parseLong(arr[0]);
+                    long sku = Long.parseLong(arr[1]);
+                    String rpath = FileServerUtils.goodsFilePath(spu,sku);
+                            httpRequest.addFile(image, rpath, sku+".jpg").addImageSize("200x200,400x400,600x600");
+                }
+            } catch (NumberFormatException e) {
+                e.printStackTrace();
+            }
+        }
+        httpRequest.setLogoText(logo);
+        return  httpRequest.fileUploadUrl(url).getRespondContent();
+    }
+
+    public static void main(String[] args) {
+        System.out.println(uploadGoodsImages(new File("C:\\Users\\user\\Desktop\\GOODS"),"http://114.116.149.145:9999/upload","一块医药直采平台"));
     }
 
 
