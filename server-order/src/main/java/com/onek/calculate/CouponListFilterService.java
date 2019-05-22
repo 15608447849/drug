@@ -18,6 +18,7 @@ import util.StringUtils;
 import util.TimeUtils;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
@@ -105,9 +106,14 @@ public class CouponListFilterService extends BaseDiscountFilterService {
         for(int i = 0; i < skus.size(); i++){
             if(skus.get(i).getSKU() > 0){
                 if(i == (skus.size() -1)){
-                    sbSql.append(getProductCode(skus.get(i).getSku())).append(",").append(skus.get(i).getSku());
+                    Arrays.stream(getProductCode(skus.get(i).getSku()))
+                            .forEach(str -> sbSql.append(str).append(","));
+                    sbSql.append(skus.get(i).getSku());
+//                    sbSql.append(getProductCode(skus.get(i).getSku())).append(",").append(skus.get(i).getSku());
                 }else{
-                    sbSql.append(getProductCode(skus.get(i).getSku())).append(",").append(skus.get(i).getSku()).append(",");
+                    Arrays.stream(getProductCode(skus.get(i).getSku()))
+                            .forEach(str -> sbSql.append(str).append(","));
+                    sbSql.append(skus.get(i).getSku()).append(",");
                 }
             }
         }
