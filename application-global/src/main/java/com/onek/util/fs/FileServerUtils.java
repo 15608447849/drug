@@ -38,6 +38,11 @@ public class FileServerUtils {
         return "http://" + fsp.fileServerAddress ;
     }
 
+    //excel 地址
+    public static String getExcelDre(){
+        return "/" + EncryptUtils.encryption("_excel");
+    }
+
     //默认的主目录
     public static String defaultHome(){
         return "/" + EncryptUtils.encryption(fsp.fileDefaultDir);
