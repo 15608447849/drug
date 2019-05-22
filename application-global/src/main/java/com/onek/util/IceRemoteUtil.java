@@ -20,6 +20,7 @@ import util.StringUtils;
 import util.http.HttpRequest;
 
 import java.io.File;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -579,6 +580,31 @@ public class IceRemoteUtil {
             map.put("img",img);
             map.put("priority",priority);
             return ic.setServerAndRequest("globalServer","NoticeModule","add").setJsonParams(map).execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     *
+     *
+     */
+    public static String getExcelDownPath(String title , InputStream excelStream){
+
+        try {
+            //上传图片
+            String json = new HttpRequest().addStream(
+                    excelStream,
+                    FileServerUtils.getExcelDre(),  //远程路径
+                    EncryptUtils.encryption(title)+".xls")//文件名
+                    .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
+                    .getRespondContent();
+            HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
+            ArrayList<LinkedTreeMap<String,Object>> list = (ArrayList<LinkedTreeMap<String, Object>>) maps.get("data");
+            assert list != null;
+            return list.get(0).get("relativePath").toString();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
