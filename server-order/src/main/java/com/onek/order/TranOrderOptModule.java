@@ -1096,9 +1096,14 @@ public class TranOrderOptModule {
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
             if(payment == 0){
                 tranOrderGoodsList.get(i).setPayamt(0);
+                continue;
             }
             tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i]).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+
+            tranOrderGoodsList.get(i).setPayamt(MathUtil.exactSub(tranOrderGoodsList.get(i).getPayamt(),tranOrderGoodsList.get(i).getBalamt()).
+                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+           //
         }
     }
 

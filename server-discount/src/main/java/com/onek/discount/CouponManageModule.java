@@ -43,6 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.onek.discount.CommonModule.getLaderNo;
+import static com.onek.util.fs.FileServerUtils.getExcelDownPath;
 
 /**
  * @author Administrator
@@ -1106,7 +1107,7 @@ public class CouponManageModule {
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream()){
                 hwb.write(bos);
 
-                String title = IceRemoteUtil.getExcelDownPath(coupno + "", new ByteArrayInputStream(bos.toByteArray()));
+                String title = getExcelDownPath(coupno + "", new ByteArrayInputStream(bos.toByteArray()));
                 return new Result().success(title);
             }
         } catch (Exception e) {
@@ -1809,7 +1810,7 @@ public class CouponManageModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         if(!jsonObject.has("compid")
                 || !jsonObject.has("exno")){
-            return  result.fail("兑换失败",map);
+            return  result.fail("明码为空",map);
         }
         int compid = jsonObject.get("compid").getAsInt();
         String exno = jsonObject.get("exno").getAsString();
@@ -1817,16 +1818,16 @@ public class CouponManageModule {
 
         long oret = 0;
         if(compid <= 0 || StringUtils.isEmpty(exno)){
-            return result.fail("兑换失败",map);
+            return result.fail("明码为空",map);
         }
         List<Object[]> ret = baseDao.queryNative(QUERY_COUPON_OFFLINE, exno);
 
         if(ret == null || ret.isEmpty()){
-            return result.fail("兑换失败",map);
+            return result.fail("查无此券",map);
         }
 
         if(!pwd.trim().equals(ret.get(0)[2].toString())){
-            return result.fail("兑换失败",map);
+            return result.fail("明码与密码不匹配",map);
         }
 
 
@@ -1861,7 +1862,7 @@ public class CouponManageModule {
         filterCoupon(list, compid);
 
         if(list.isEmpty()){
-            return result.fail("兑换失败",map);
+            return result.fail("无领取资格",map);
         }
 
         int cstatus = Integer.parseInt(ret.get(0)[10].toString());
@@ -1876,14 +1877,14 @@ public class CouponManageModule {
 
         }catch (Exception e){
             cstatus = cstatus & ~1;
-            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, ret.get(0)[0]);
+            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, compid, ret.get(0)[0]);
             e.printStackTrace();
             return result.fail("兑换失败",map);
         }
 
         if(oret <= 0){
             cstatus = cstatus & ~1;
-            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, ret.get(0)[0]);
+            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, compid, ret.get(0)[0]);
             return result.fail("兑换失败",map);
         }
         map.put("unqid",oret+"");
