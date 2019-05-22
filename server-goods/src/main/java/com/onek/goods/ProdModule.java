@@ -9,6 +9,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
+import com.onek.calculate.auth.QualJudge;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
@@ -55,13 +56,13 @@ public class ProdModule {
 
     private static PromTimeService timeService = new PromTimeService();
 
-    private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
+    private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
             "and a.brulecode = ? and d.cstatus&1 = 0 " +
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
-    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
+    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
             "and d.actcode = ? " +
@@ -73,7 +74,7 @@ public class ProdModule {
             "and a.cstatus&1 = 0 " +
             "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " ;
 
-    private static String EXEMPOST_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
+    private static String EXEMPOST_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
             "and a.cstatus&1 = 0 " +
@@ -235,6 +236,13 @@ public class ProdModule {
             for (Object[] objects : list) {
                 Long gCode = Long.parseLong(objects[1].toString());
 
+                int compid = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
+                int qualcode = Integer.parseInt(list.get(0)[4].toString());
+                Long qualvalue = Long.parseLong(list.get(0)[5].toString());
+                if(!QualJudge.hasPermission(compid, qualcode, qualvalue)){
+                    return new Result().success(null);
+                }
+
                 if (gCode == 0) {
                     // 不做处理
                 } else if (objects[1].toString().length() < 14) { // 类别
@@ -274,6 +282,13 @@ public class ProdModule {
         if (list != null && list.size() > 0) {
             List<Long> actCodeList = new ArrayList<>();
             List<Long> skuList = new ArrayList<>();
+
+            int compid = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
+            int qualcode = Integer.parseInt(list.get(0)[6].toString());
+            Long qualvalue = Long.parseLong(list.get(0)[7].toString());
+            if(!QualJudge.hasPermission(compid, qualcode, qualvalue)){
+                return new Result().success(null);
+            }
 
             assemblySpecActProd(list);
 
@@ -330,6 +345,13 @@ public class ProdModule {
             List<Long> actCodeList = new ArrayList<>();
             List<Long> skuList = new ArrayList<>();
             Map<Long, Integer[]> dataMap = new HashMap<>();
+
+            int compid = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
+            int qualcode = Integer.parseInt(list.get(0)[6].toString());
+            Long qualvalue = Long.parseLong(list.get(0)[7].toString());
+            if(!QualJudge.hasPermission(compid, qualcode, qualvalue)){
+                return new Result().success(null);
+            }
 
             assemblySpecActProd(list);
 
@@ -1233,7 +1255,7 @@ public class ProdModule {
             for(Object[] objects : prodList) {
                 Long sku = Long.parseLong(objects[0].toString());
 
-                newList.add(new Object[]{objects[0], sku, objects[2], objects[3], objects[4], objects[5]});
+                newList.add(new Object[]{list.get(0)[0], sku, list.get(0)[2], list.get(0)[3], list.get(0)[4], list.get(0)[5]});
             }
             isAll = true;
         }else{
