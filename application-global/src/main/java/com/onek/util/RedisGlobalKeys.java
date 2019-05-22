@@ -68,6 +68,9 @@ public class RedisGlobalKeys {
     // 活动限购量前缀
     public static final String ACT_LIMIT_NUM_PREFIX = "ACT_LIMIT_NUM";
 
+    // 收货人id
+    public static final String SHIP_ID = "SHIP_ID";
+
     /**
      * 获取用户ID
      */
@@ -92,5 +95,12 @@ public class RedisGlobalKeys {
      */
     public static int getOfferCode(){
         return Math.toIntExact(RedisUtil.getStringProvide().increase(OFFER_CODE));
+    }
+
+    /**
+     * 获取优惠码ID
+     */
+    public static int getShipId(){
+        return Math.toIntExact(RedisUtil.getStringProvide().increase(SHIP_ID));
     }
 }
