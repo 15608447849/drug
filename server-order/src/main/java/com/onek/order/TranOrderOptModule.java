@@ -1056,13 +1056,15 @@ public class TranOrderOptModule {
                     CANCEL_XXJF.removeByKey(orderNo);
                     //生成订单到一块物流
                     OrderUtil.generateLccOrder(compid, orderNo);
-                    try{
-                        //满赠赠优惠券
-                        CouponRevModule.revGiftCoupon(Long.parseLong(orderNo),compid);
-                    }catch (Exception e){
-                        e.printStackTrace();
-                    }
                 }
+
+                try{
+                    //满赠赠优惠券
+                    CouponRevModule.revGiftCoupon(Long.parseLong(orderNo),compid);
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+
                 //更新销量
                 OrderUtil.updateSales(compid, orderNo);
 

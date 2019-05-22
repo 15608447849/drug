@@ -25,9 +25,11 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
 import redis.util.RedisUtil;
+import util.MathUtil;
 import util.NumUtil;
 import util.StringUtils;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -40,10 +42,10 @@ import java.util.List;
 public class SecKillModule {
 
     //远程调用
-    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price from " +
+    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
-            "and d.actcode = ? and d.gcode= ?" +
+            "and d.actcode = ? and d.gcode IN (0, ?, ?, ?, ?) " +
             "and a.sdate <= CURRENT_DATE and CURRENT_DATE<= a.edate ";
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
@@ -156,8 +158,10 @@ public class SecKillModule {
 
 
     public ShoppingCartVO getCartSku(long actno,String sku){
+        String[] pclasses = getProductCode(Long.parseLong(sku));
+
         //远程调用
-        List<Object[]> queryResult = IceRemoteUtil.queryNative(ACT_PROD_BY_ACTCODE_SQL, actno, sku);
+        List<Object[]> queryResult = IceRemoteUtil.queryNative(ACT_PROD_BY_ACTCODE_SQL, actno, sku, pclasses[0], pclasses[1], pclasses[2]);
 
         if (queryResult.isEmpty()) {
             return null;
@@ -165,18 +169,23 @@ public class SecKillModule {
         ShoppingCartVO shoppingCartVO = new ShoppingCartVO();
         if(queryResult != null && queryResult.size() > 0){
             Object[] objects = queryResult.get(0);
-            Long gcode = Long.parseLong(objects[1].toString());
+//            Long gcode = Long.parseLong(objects[1].toString());
             int actstock = Integer.parseInt(objects[2].toString());
             int limitnum = Integer.parseInt(objects[3].toString());
             int prize = Integer.parseInt(objects[4].toString());
+            int cstatus = Integer.parseInt(objects[5].toString());
 
+            ProdEntity entity =  ProdInfoStore.getProdBySku(Long.parseLong(sku));
+            if((cstatus & 512) > 0 && entity.getVatp() > 0){ // 价格百分比
+                double rate = MathUtil.exactDiv(prize, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                prize = MathUtil.exactMul(entity.getVatp(), rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
+            }
 
-            shoppingCartVO.setPdno(gcode);
+            shoppingCartVO.setPdno(Long.parseLong(sku));
             shoppingCartVO.setDiscount(NumUtil.div(prize, 100));
             shoppingCartVO.setInventory(actstock);
             shoppingCartVO.setLimitnum(limitnum);
 
-            ProdEntity entity =  ProdInfoStore.getProdBySku(Long.parseLong(sku));
             if(entity != null){
                 shoppingCartVO.setPdprice(NumUtil.div(prize, 100));
                 shoppingCartVO.setPtitle(entity.getProdname());
@@ -191,5 +200,29 @@ public class SecKillModule {
         }
 
         return shoppingCartVO;
+    }
+
+    private final int checkSKU(long sku) {
+        int length = String.valueOf(sku).length();
+
+        switch (length) {
+            case 14 :
+                return 0;
+            default :
+                return -1;
+        }
+    }
+
+    protected final String[] getProductCode(long sku) {
+        if (checkSKU(sku) < 0) {
+            throw new IllegalArgumentException("SKU is illegal, " + sku);
+        }
+
+        String classNo = String.valueOf(sku).substring(1, 7);
+
+        return new String[] {
+                classNo.substring(0, 2),
+                classNo.substring(0, 4),
+                classNo.substring(0, 6) };
     }
 }

@@ -233,7 +233,7 @@ public class CouponManageModule {
             "select distinct tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock,glbno,1 goods,qlfno,qlfval  from {{?"+
             DSMConst.TD_PROM_COUPON +"}} tpcp inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode " +
             " inner join {{?" +DSMConst.TD_PROM_ASSDRUG+"}} assd on assd.actcode = tpcp.unqid "+
-            " where assd.gcode in (?,?) "+
+            " where assd.gcode in (?, ?, ?, ?) "+
             " and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 ) a "+
             " where a.actstock > 0 and 1 = fun_prom_cycle(coupno,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) and a.glbno = 0 "+
             " and not exists (select 1 from td_prom_courcd where coupno = a.coupno and compid = ? and cstatus & 1 = 0)) a ";
@@ -1480,17 +1480,19 @@ public class CouponManageModule {
 //        sbSql.append("LIMIT ").append(curpageCount).append(",").append(page.pageSize);
      //   int count = 0;
 
-        String gtype = "-1";
+        String[] pclasses = {"-1","-1","-1"};
         if(gcode > 0){
-            gtype = String.valueOf(gcode).substring(1, 7);
+            pclasses =  getProductCode(gcode);
         }
+
 
 //        List<Object[]> listCount = baseDao.queryNative(QUERY_COUP_CNT_PUB,new Object[]{gtype,gcode,compid});
 //        if(!listCount.isEmpty()){
 //            count = Integer.parseInt(listCount.get(0)[0].toString());
 //        }
         //page.totalItems = count;
-        List<Object[]> queryResult = baseDao.queryNative(sbSql.toString(),gtype,gcode,compid);
+        List<Object[]> queryResult = baseDao.queryNative(sbSql.toString(),
+                gcode,pclasses[0], pclasses[1], pclasses[2],compid);
         CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
         if(queryResult == null || queryResult.isEmpty()){
             return result.success(couponPubVOS);
@@ -2046,6 +2048,30 @@ public class CouponManageModule {
         return coupnos;
     }
 
+
+    protected final String[] getProductCode(long sku) {
+        if (checkSKU(sku) < 0) {
+            throw new IllegalArgumentException("SKU is illegal, " + sku);
+        }
+
+        String classNo = String.valueOf(sku).substring(1, 7);
+
+        return new String[] {
+                classNo.substring(0, 2),
+                classNo.substring(0, 4),
+                classNo.substring(0, 6) };
+    }
+
+    private final int checkSKU(long sku) {
+        int length = String.valueOf(sku).length();
+
+        switch (length) {
+            case 14 :
+                return 0;
+            default :
+                return -1;
+        }
+    }
 
 
     public static void main(String[] args) {

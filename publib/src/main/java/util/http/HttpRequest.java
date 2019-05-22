@@ -39,7 +39,7 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
 
     private List<String> pathList = new ArrayList<>();
     private List<String> nameList = new ArrayList<>();
-
+    private List<String> imageSizeList = new ArrayList<>();
     private List<HttpUtil.FormItem> formItems = new ArrayList<>();
 
     /**
@@ -51,6 +51,20 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
         pathList.add(remotePath);
         nameList.add(remoteFileName);
         formItems.add(new HttpUtil.FormItem("file", file.getName(), file));
+        return this;
+    }
+
+    /**
+     * 上传的文件设置大小
+     */
+    public HttpRequest addImageSize(String... sizes){
+        imageSizeList.add(String.join(",",sizes));
+        return this;
+    }
+
+    private String logo = " ";
+    public HttpRequest setLogoText(String logo){
+        this.logo = logo;
         return this;
     }
 
@@ -82,6 +96,8 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
         HashMap<String,String> headParams = new HashMap<>();
         headParams.put("specify-path",join(pathList,";"));
         headParams.put("specify-filename",join(nameList,";"));
+        headParams.put("tailor-list",join(nameList,";"));
+        try { headParams.put("image-logo",URLEncoder.encode(URLEncoder.encode(logo,"UTF-8"),"UTF-8")); } catch (UnsupportedEncodingException ignored) { }
         new HttpUtil.Request(url, HttpUtil.Request.POST, this)
                 .setFormSubmit()
                 .setParams(headParams)
