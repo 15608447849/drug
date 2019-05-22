@@ -2,6 +2,7 @@ package com.onek.util;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonArray;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
@@ -750,6 +751,23 @@ public class IceRemoteUtil {
         return Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, SqlRemoteResp.class)).resArr;
     }
 
+    /**
+     * 满赠优惠券
+     * @param
+     * @return
+     */
+    public static int insertApprise(String json){
+        try {
+            String result = ic.setServerAndRequest("goodsServer",
+                    "ProdModule","insertApprise")
+                    .setArrayParams(json)
+                    .execute();
+            return Integer.parseInt(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 }
 
 

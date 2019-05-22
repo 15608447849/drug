@@ -41,13 +41,6 @@ import static constant.DSMConst.TD_BK_TRAN_GOODS;
 public class OrderOptModule {
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
-    //商品评价
-    private static final String INSERT_APPRISE_SQL = "insert into {{?" + DSMConst.TD_TRAN_APPRAISE + "}} "
-            + "(unqid,orderno,level,descmatch,logisticssrv,"
-            + "content,createtdate,createtime,cstatus,compid,sku) "
-            + " values(?,?,?,?,?,"
-            + "?,CURRENT_DATE,CURRENT_TIME,0,?,"
-            + "?)";
 
     //售后申请
     private static final String INSERT_ASAPP_SQL = "insert into {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
@@ -152,27 +145,17 @@ public class OrderOptModule {
     public Result insertApprise(AppContext appContext) {
         boolean b = false;
         Result result = new Result();
-        Gson gson = new Gson();
-        LocalDateTime localDateTime = LocalDateTime.now();
-        List<Object[]> params = new ArrayList<>();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         String orderNo = jsonObject.get("orderno").getAsString();
         int compid = jsonObject.get("compid").getAsInt();
-        JsonArray appriseArr = jsonObject.get("appriseArr").getAsJsonArray();
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         //更新订单状态为已评价
         String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|128 "
                 + " where cstatus&1=0 and orderno="+ orderNo + " and ostatus in(3,4)";
         if (baseDao.updateNativeSharding(compid, year, updSQL) > 0){
-            for (int i = 0; i < appriseArr.size(); i++) {
-                AppriseVO appriseVO = gson.fromJson(appriseArr.get(i).toString(), AppriseVO.class);
-                params.add(new Object[]{GenIdUtil.getUnqId(), orderNo, appriseVO.getLevel(), appriseVO.getDescmatch(),
-                        appriseVO.getLogisticssrv(), appriseVO.getContent(), compid, appriseVO.getSku()});
-            }
-            b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNativeSharding(0, localDateTime.getYear(),
-                    INSERT_APPRISE_SQL, params, params.size()));
+            b = IceRemoteUtil.insertApprise(json) > 0;
         }
 
         return b ? result.success("评价成功!") : result.fail("评价失败!");
