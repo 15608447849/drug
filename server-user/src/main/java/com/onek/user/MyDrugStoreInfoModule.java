@@ -6,6 +6,7 @@ import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.entity.ConsigneeVO;
 import com.onek.user.service.MyConsigneeImpl;
+import com.onek.util.RedisGlobalKeys;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.IRedisCache;
@@ -83,7 +84,7 @@ public class MyDrugStoreInfoModule {
         if (shipId > 0) {
             code = baseDao.updateNative(updSQL, contactName, contactPhone, shipId);
         } else {
-            shipId = Math.toIntExact(RedisUtil.getStringProvide().increase("SHIP_ID"));
+            shipId = RedisGlobalKeys.getShipId();
             code = baseDao.updateNative(insertSQL, shipId, compId, contactName, contactPhone);
         }
         myCgProxy.update(null);

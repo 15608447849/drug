@@ -1503,29 +1503,6 @@ public class ActivityManageModule {
         return b;
     }
 
-
-
-    class ActStock {
-        private int vocode;
-        private int actstock;
-
-        public int getVocode() {
-            return vocode;
-        }
-
-        public void setVocode(int vocode) {
-            this.vocode = vocode;
-        }
-
-        public int getActstock() {
-            return actstock;
-        }
-
-        public void setActstock(int actstock) {
-            this.actstock = actstock;
-        }
-    }
-
     class AllAvailableStock {
         private long sku;
         private int store;

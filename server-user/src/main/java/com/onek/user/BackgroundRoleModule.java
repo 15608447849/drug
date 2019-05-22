@@ -201,7 +201,8 @@ public class BackgroundRoleModule {
 
         String clearSQL =
                 " UPDATE {{?" + DSMConst.TB_SYSTEM_RESOURCE + "}} "
-                + " SET roleid = roleid & ~? ";
+                + " SET roleid = roleid & ~? "
+                + " WHERE cstatus&2 = 0 ";
 
         if (StringUtils.isEmpty(resource)) {
             BASE_DAO.updateNative(clearSQL, roleId);
@@ -211,7 +212,8 @@ public class BackgroundRoleModule {
             String authorizeSQL =
                     " UPDATE {{?" + DSMConst.TB_SYSTEM_RESOURCE + "}} "
                     + " SET roleid = roleid | ? "
-                    + " WHERE resourceid IN (" + String.join(",", resources) + ") ";
+                    + " WHERE cstatus&2 = 0 "
+                    + " AND resourceid IN (" + String.join(",", resources) + ") ";
 
             List<Object[]> params = new ArrayList<>();
             params.add(new Object[] { roleId });
