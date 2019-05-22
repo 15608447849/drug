@@ -36,8 +36,8 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
 
         StringBuilder sb = new StringBuilder();
         sb.append("SELECT " +
-                //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8
-                "a.cid,a.uphone,b.cname,b.cstatus,b.examine,b.inviter,b.auditer,b.caddrcode,b.caddr " +
+                //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12
+                "a.cid,a.uphone,b.cname,b.cstatus,b.examine,b.inviter,b.auditer,b.caddrcode,b.caddr,b.submitdate,b.submittime,b.auditdate,b.audittime " +
                 " FROM {{?"+TB_SYSTEM_USER +"}} AS a INNER JOIN {{?" +TB_COMP + "}} AS b ON a.cid=b.cid WHERE a.cstatus&1=0 AND b.cstatus&1=0");
 
             if (!StringUtils.isEmpty(phone)){
@@ -86,7 +86,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         AuditInfo info;
         for (Object[] arr : lines){
             try {
-                //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8
+                //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12
                 info = new AuditInfo();
                 info.companyId = StringUtils.obj2Str(arr[0]);
                 info.phone = StringUtils.obj2Str(arr[1]);
@@ -97,6 +97,8 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 info.auditerId = StringUtils.obj2Str(arr[6]);
                 info.addressCode = StringUtils.obj2Str(arr[7]);
                 info.address = StringUtils.obj2Str(arr[8]);
+                info.submitDate = StringUtils.obj2Str(arr[9])+" "+StringUtils.obj2Str(arr[10]);
+                info.auditDate = StringUtils.obj2Str(arr[11])+" "+StringUtils.obj2Str(arr[12]);
                 queryAptitude(info);
                 list.add(info);
             } catch (Exception e) {
