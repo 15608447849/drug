@@ -24,7 +24,7 @@ public class BackgroundAuditModule {
     }
 
     /**
-     * 管理后台审核
+     * 管理后台审核操作
      */
     public Result updateAudit(AppContext appContext){
         String json = appContext.param.json;

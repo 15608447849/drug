@@ -5,19 +5,21 @@ package com.onek.user.interactive;
  * @Date: 2019/3/26 14:59
  */
 public class AuditInfo {
-    //查询条件:
+    //可能存在的查询条件:
     public String phone; //手机
     public String company; //公司名
-    public String submitDate; //提交日期
-    public String submitTime; //提交时间
-    public String auditDate; //审核日期
-    public String auditTime; //审核时间
     public String status; //状态
     //需要返回:
     public String companyId; //公司码
     public String createDate; //创建日期
     public String createTime; //创建时间
     public String examine;//审核失败原因
+    public String auditerId;//审核人
+    public String address;//营业执照地址
+    //共有
+    public String cursorId;//客服专员ID
+    public String addressCode;//地区码
+
 
     public AptitudeInfo cardInfo = new AptitudeInfo();
 }

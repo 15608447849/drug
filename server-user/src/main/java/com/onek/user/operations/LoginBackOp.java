@@ -49,7 +49,7 @@ public class LoginBackOp implements IOperation<AppContext> {
 
         String selectSql = "SELECT uid,roleid,upw,uaccount,uphone,urealname,cstatus " +
                 "FROM {{?" + DSMConst.TB_SYSTEM_USER + "}} " +
-                "WHERE cstatus&1 = 0 " +
+                "WHERE cstatus&1=0 " +
                 "AND ( uaccount = ? OR uphone = ? )";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,account,account);
 
@@ -57,7 +57,7 @@ public class LoginBackOp implements IOperation<AppContext> {
             Object[] objects = lines.get(0);
 
             if (objects[2].toString().equalsIgnoreCase(password)) { //忽略MD5大小写
-                communicator().getLogger().print("管理员登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1]+" ,姓名:"+objects[5]);
+                communicator().getLogger().print("管理/运营人员登录后台: 用户码:" + objects[0]+" ,角色码:"+ objects[1]+" ,姓名:"+objects[5]);
 
                  //判断角色
                 int role = StringUtils.checkObjectNull(objects[1],0);

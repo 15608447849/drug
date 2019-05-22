@@ -33,47 +33,37 @@ public class CommonModule {
     // 获取子类
     public Result getChildren(AppContext appContext) {
         String[] array = appContext.param.arrays;
-
         if (array == null || array.length == 0) {
             return new Result().fail("参数为空");
         }
-
         if (!StringUtils.isInteger(array[0])) {
             return new Result().fail("参数错误");
         }
-
         return new Result().success(AreaStore.getChildren(Long.parseLong(array[0])));
     }
 
     @UserPermission(ignore = true)
     public Result getArea(AppContext appContext) {
         String[] array = appContext.param.arrays;
-
         if (array == null || array.length == 0) {
             return new Result().fail("参数为空");
         }
-
         if (!StringUtils.isBiggerZero(array[0])) {
             return new Result().fail("参数错误");
         }
-
         return new Result().success(AreaStore.getAreaByAreac(Long.parseLong(array[0])));
     }
 
     @UserPermission(ignore = true)
     public Result getAreaName(AppContext appContext) {
         Result r = getArea(appContext);
-
         if (r.code != 200) {
             return r;
         }
-
         if (r.data == null) {
             return new Result().success("");
         }
-
         AreaEntity ae = (AreaEntity) r.data;
-
         return new Result().success(ae.getArean());
     }
 

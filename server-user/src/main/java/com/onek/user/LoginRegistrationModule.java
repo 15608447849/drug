@@ -17,16 +17,13 @@ import static com.onek.user.operations.StoreBasicInfoOp.infoToCache;
  */
 public class LoginRegistrationModule {
 
-
-
-    //cc
     /**
      * 校验手机号码是否存在
      */
     @UserPermission (ignore = true)
     public Result checkPhoneExist(AppContext appContext){
         String json = appContext.param.json;
-        StoreRegisterOp op = GsonUtils.jsonToJavaBean(json, StoreRegisterOp.class);
+        RegisterStoreUserOp op = GsonUtils.jsonToJavaBean(json, RegisterStoreUserOp.class);
         assert op!=null;
         op.type = 1;
         return op.execute(appContext);
@@ -38,10 +35,19 @@ public class LoginRegistrationModule {
     @UserPermission (ignore = true)
     public Result register(AppContext appContext){
         String json = appContext.param.json;
-        StoreRegisterOp op = GsonUtils.jsonToJavaBean(json, StoreRegisterOp.class);
+        //提交用户信息
+        RegisterStoreUserOp op = GsonUtils.jsonToJavaBean(json, RegisterStoreUserOp.class);
         assert op!=null;
+        Result result = op.execute(appContext);
+        if (!result.isSuccess()){
+            return result;
+        }
+        //提交企业信息
+        UpdateStoreOp op2 = GsonUtils.jsonToJavaBean(json, UpdateStoreOp.class);
+        assert op2!=null;
         return op.execute(appContext);
     }
+
 
     /**
      * 获取验证码
@@ -144,7 +150,7 @@ public class LoginRegistrationModule {
     /**
      * 获取门店用户信息
      */
-    @UserPermission(allowRoleList = {2},allowedUnrelated = true)
+    @UserPermission(allowRoleList = {2})
     public Result getStoreSession(AppContext appContext){
         if (appContext.getUserSession().compId > 0){
             StoreBasicInfo info = new StoreBasicInfo(appContext.getUserSession().compId);

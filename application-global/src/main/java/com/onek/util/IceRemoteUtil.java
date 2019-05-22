@@ -150,6 +150,7 @@ public class IceRemoteUtil {
         Object data = hashMap.get("data");
         return data == null ? "" : data.toString();
     }
+
     //地区码->地区对象
     public static AreaEntity getAreaByAreac(long areac){
         String result = ic.setServerAndRequest("globalServer","CommonModule","getArea")
@@ -162,12 +163,25 @@ public class IceRemoteUtil {
         String json = data.toString();
         return GsonUtils.jsonToJavaBean(json,AreaEntity.class);
     }
-    //地区码->地区对象数组
+
+    //地区码->地区对象数组(祖先)
     public static AreaEntity[] getAncestors(long areac){
         String result = ic.setServerAndRequest("globalServer","CommonModule","getAncestors")
                 .setArrayParams(areac)
                 .execute();
 
+        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
+        assert hashMap != null;
+        Object data = hashMap.get("data");
+        if (data == null) return null;
+        String json = data.toString();
+        return GsonUtils.jsonToJavaBean(json,AreaEntity[].class);
+    }
+    //地区码->地区对象数组(子集)
+    public static AreaEntity[] getChildren(long areac){
+        String result = ic.setServerAndRequest("globalServer","CommonModule","getChildren")
+                .setArrayParams(areac)
+                .execute();
         HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
         assert hashMap != null;
         Object data = hashMap.get("data");
@@ -311,18 +325,13 @@ public class IceRemoteUtil {
         String json = ic.setServerAndRequest(
                 "userServer","GroupBuyModule","getGroupCount")
                 .setArrayParams(actCode).execute();
-
         Result result = JSON.parseObject(json, Result.class);
-
         if (result == null
                 || result.data == null) {
             return 0;
         }
-
         return (int) result.data;
     }
-
-
 
     //查询所有足迹
     public static List<String> queryFootprint(int compid){
@@ -725,86 +734,6 @@ public class IceRemoteUtil {
     }
 
 }
-
-
-//
-//    public static HashMap<Object, Object> getEffectiveRule() {
-//        String result = ic.setServerAndRequest("discountServer","DiscountCalcModule","getEffectiveRule")
-//                .execute();
-//        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-//        assert hashMap != null;
-//        Object data = hashMap.get("data");
-//        if (data == null) return null;
-//        String json = data.toString();
-//        return GsonUtils.string2Map(json);
-//    }
-//    public static int reducePoint(int compid, int point){
-//        JSONObject jsonObject = new JSONObject();
-//        jsonObject.put("compid", compid);
-//        jsonObject.put("point", point);
-//        String result = ic.settingProxy("userServer")
-//                .settingReq("","MemberModule","reducePoint")
-//                .settingParam(jsonObject.toJSONString())
-//                .execute();
-//        Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
-//        assert ret != null;
-//        return ret.code;
-//    }
-
-//    public static ProdPriceEntity calcSingleProdActPrize(long actcode,long sku,double vatp) {
-//        JSONObject jsonObject = new JSONObject();
-//        jsonObject.put("actcode", actcode);
-//        jsonObject.put("sku", sku);
-//        jsonObject.put("vatp", vatp);
-//        String result = ic.settingProxy("discountServer")
-//                .settingReq("","DiscountCalcModule","calcSingleProdActPrize")
-//                .settingParam(jsonObject.toJSONString())
-//                .execute();
-//        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-//        Object data = hashMap.get("data");
-//        if (data == null) return null;
-//        String json = data.toString();
-//        return GsonUtils.jsonToJavaBean(json,ProdPriceEntity.class);
-//    }
-
-//    public static ProdPriceEntity[] calcMultiProdActPrize(long actcode, List<ProdPriceEntity> list) {
-//        JSONObject jsonObject = new JSONObject();
-//        jsonObject.put("actcode", actcode);
-//        JSONArray jsonArray = new JSONArray();
-//        if(list != null && list.size() > 0){
-//            for(ProdPriceEntity entity : list){
-//                JSONObject jsObj = new JSONObject();
-//                jsObj.put("sku", entity.getSku());
-//                jsObj.put("vatp", entity.getVatp());
-//                jsonArray.add(jsObj);
-//            }
-//        }
-//        jsonObject.put("skulist", jsonArray);
-//        String result = ic.settingProxy("discountServer")
-//                .settingReq("","DiscountCalcModule","calcMultiProdActPrize")
-//                .settingParam(jsonObject.toJSONString())
-//                .execute();
-//        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-//        Object data = hashMap.get("data");
-//        if (data == null) return null;
-//        String json = data.toString();
-//        return GsonUtils.jsonToJavaBean(json,ProdPriceEntity[].class);
-//    }
-//
-//    public static ProdPriceEntity calcSingleProdActIntervalPrize(long sku,double vatp) {
-//        JSONObject jsonObject = new JSONObject();
-//        jsonObject.put("sku", sku);
-//        jsonObject.put("vatp", vatp);
-//        String result = ic.settingProxy("discountServer")
-//                .settingReq("","DiscountCalcModule","calcSingleProdActIntervalPrize")
-//                .settingParam(jsonObject.toJSONString())
-//                .execute();
-//        HashMap<String,Object> hashMap = GsonUtils.jsonToJavaBean(result,new TypeToken<HashMap<String,Object>>(){}.getType());
-//        Object data = hashMap.get("data");
-//        if (data == null) return null;
-//        String json = data.toString();
-//        return GsonUtils.jsonToJavaBean(json,ProdPriceEntity.class);
-//    }
 
 
 

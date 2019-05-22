@@ -53,11 +53,6 @@ public class UserInterceptor implements IServerInterceptor {
                 }
 
                 if (up != null){
-                    //判断是否需要关联企业
-                    if (!up.allowedUnrelated()){
-                        //必须关联企业
-                        if (userSession.compId == 0) return new Result().intercept(-3,"用户未关联企业信息");
-                    }
                     //判断是否需要认证企业
                     if(up.needAuthenticated()){
                         if(userSession.comp == null ||  (userSession.comp.authenticationStatus & 256) <= 0){

@@ -20,10 +20,15 @@ public class UserSession implements Serializable{
 
     private UserSession(){}
 
-
-    private static UserSession createUser(int userId,long roleCode,String phone,String lastId,String password){
+    public static UserSession createStoreUser(int userId){
         UserSession userSession = new UserSession();
         userSession.userId = userId;
+
+        return userSession;
+    }
+
+    public static UserSession createUser(int userId,long roleCode,String phone,String lastId,String password){
+        UserSession userSession = createStoreUser(userId);
         userSession.roleCode = roleCode;
         userSession.phone = phone;
         userSession.password = password;
