@@ -643,22 +643,45 @@ public class CouponManageModule {
                 break;
             case 2://类别关联
             default://商品关联
-                relationGoods(jsonObject, actCode);
-                return result.success("关联商品成功");
+                if (updateAssByActcode(type, actCode) >= 0) {
+                    relationGoods(jsonObject, actCode);
+                    return result.success("关联商品成功");
+                }
         }
         return re ? result.success("关联商品成功") : result.fail("操作失败");
     }
 
-    private List<Long> getAllGoods(String skuStr, long actcode) {
-        List<Long> gcList = new ArrayList<>();
-        String selectSQL = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
+    private int updateAssByActcode(int type, long actCode) {
+        String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
+                + " where cstatus&1=0 and actcode=? ";
+        List<Long> skus;
+        switch (type) {
+            case 1:
+                updateSQL = updateSQL + " and gcode<>0";
+                break;
+            case 2:
+                updateSQL = updateSQL + " and (gcode=0 or LENGTH(gcode)=14)";
+                break;
+            default:
+                updateSQL = updateSQL + " and (gcode=0 or LENGTH(gcode)<14)";
+                break;
+        }
+        return baseDao.updateNative(updateSQL, actCode);
+    }
+
+    private Map<Long,ActStock> getAllGoods(String skuStr,long actcode) {
+        Map<Long,ActStock> vcodeMap = new HashMap<>();
+        String selectSQL = "select gcode,vcode,actstock from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
                 + " and gcode in(" + skuStr + ") and actcode=?";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL, actcode);
-        if (queryResult == null || queryResult.isEmpty()) return gcList;
+        if (queryResult == null || queryResult.isEmpty()) return null;
         queryResult.forEach(obj -> {
-            gcList.add((long)obj[0]);
+            ActStock actStock = new ActStock();
+            actStock.setVocode((int)obj[1]);
+            actStock.setActstock((int)obj[2]);
+            vcodeMap.put((long)obj[0], actStock);
         });
-        return gcList;
+        return vcodeMap;
     }
 
 
@@ -669,33 +692,48 @@ public class CouponManageModule {
         List<GoodsVO> goodsVOS = new ArrayList<>();
         List<GoodsVO> insertGoodsVOS = new ArrayList<>();
         List<GoodsVO> updateGoodsVOS = new ArrayList<>();
+        //查询该活动下所有商品
+        List<Long> delGoodsGCode = selectGoodsByAct(actCode);
         StringBuilder skuBuilder = new StringBuilder();
         if (goodsArr != null && !goodsArr.toString().isEmpty()) {
             for (int i = 0; i < goodsArr.size(); i++) {
                 GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
                 if (goodsVO != null) {
                     skuBuilder.append(goodsVO.getGcode()).append(",");
+                    if (delGoodsGCode.contains(goodsVO.getGcode())) {
+                        delGoodsGCode.remove(goodsVO.getGcode());
+                    }
                 }
                 goodsVOS.add(goodsVO);
             }
 
             String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
-            List<Long> gcList = getAllGoods(skuStr, actCode);
-            for (int i = 0; i < goodsVOS.size(); i++) {
-                for(int j = 0; j < gcList.size(); j++){
-                    if(goodsVOS.get(i).getGcode() == gcList.get(j)){
-                        updateGoodsVOS.add(goodsVOS.get(i));
-                    }else{
-                        insertGoodsVOS.add(goodsVOS.get(i));
+            Map<Long,ActStock> goodsMap = getAllGoods(skuStr, actCode);
+            for (GoodsVO goodsVO : goodsVOS) {
+                if (goodsMap != null) {
+                    if (goodsMap.containsKey(goodsVO.getGcode())) {//数据库不存在该商品 新增 否则修改
+                        updateGoodsVOS.add(goodsVO);
+                    } else {
+                        insertGoodsVOS.add(goodsVO);
                     }
-                }
-
-                if(gcList.isEmpty()){
-                    insertGoodsVOS.add(goodsVOS.get(i));
+                } else {
+                    insertGoodsVOS.add(goodsVO);
                 }
             }
-            relationAssDrug(insertGoodsVOS, updateGoodsVOS,actCode);
+            relationAssDrug(insertGoodsVOS, updateGoodsVOS, delGoodsGCode, actCode);
         }
+    }
+
+    private List<Long> selectGoodsByAct(long actCode) {
+        List<Long> gcodeList = new ArrayList<>();
+        String sql = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 and "
+                + " actcode=" + actCode;
+        List<Object[]> queryResult = baseDao.queryNative(sql);
+        if (queryResult==null || queryResult.isEmpty()) return gcodeList;
+        for (int i = 0; i < queryResult.size(); i++) {
+            gcodeList.add((long)queryResult.get(i)[0]);
+        }
+        return gcodeList;
     }
 
     private boolean relationAllGoods(JsonObject jsonObject,long actCode) {
@@ -732,29 +770,35 @@ public class CouponManageModule {
      * @time  2019/4/2 16:23
      * @version 1.1.1
      **/
-    private void relationAssDrug(List<GoodsVO> insertDrugVOS, List<GoodsVO> updDrugVOS, long actCode) {
+    private void relationAssDrug(List<GoodsVO> insertDrugVOS, List<GoodsVO> updDrugVOS, List<Long> delGoodsGCode,long actCode) {
         List<Object[]> insertDrugParams = new ArrayList<>();
         List<Object[]> updateDrugParams = new ArrayList<>();
-        String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, vcode=?, price=? "
-                + " where cstatus&1=0 and gcode=? and vcode=? and actcode=?";
-
-        String delSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
-                + " where cstatus&1=0 and gcode= 0 and actcode=?";
+        StringBuilder gCodeSb = new StringBuilder();
+        if (delGoodsGCode.size() > 0) {
+            for (long gCode : delGoodsGCode) {
+                gCodeSb.append(gCode).append(",");
+            }
+            String gCodeStr = gCodeSb.toString().substring(0, gCodeSb.toString().length() - 1);
+            String delSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
+                    + " where cstatus&1=0 and actcode=" + actCode + " and gcode in(" + gCodeStr +")";
+            baseDao.updateNative(delSql);
+        }
+        String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, price=? "
+                + " where cstatus&1=0 and gcode=? and actcode=?";
 
         for (GoodsVO insGoodsVO : insertDrugVOS) {
             insertDrugParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, insGoodsVO.getGcode(),
                     insGoodsVO.getMenucode(),insGoodsVO.getActstock(),insGoodsVO.getLimitnum(),
-                    insGoodsVO.getPrice()*100});
+                    insGoodsVO.getPrice()});
         }
         for (GoodsVO updateGoodsVO : updDrugVOS) {
             updateDrugParams.add(new Object[]{updateGoodsVO.getActstock(),updateGoodsVO.getLimitnum(),
-                    updateGoodsVO.getVcode()+1, updateGoodsVO.getPrice()*100,updateGoodsVO.getGcode(),
-                    updateGoodsVO.getVcode(),actCode});
+                    updateGoodsVO.getPrice(), updateGoodsVO.getGcode(),actCode});
         }
-        baseDao.updateNative(delSql,actCode);
         baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, insertDrugParams, insertDrugVOS.size());
         baseDao.updateBatchNative(updateSql, updateDrugParams, updDrugVOS.size());
     }
+
 
 
     /**
