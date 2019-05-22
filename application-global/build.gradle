@@ -4,5 +4,6 @@ dependencies {
     compile project(':iceserver')
     compile project(':jdbc')
     compile project(':cache')
+    compile 'org.apache.poi:poi:3.14'
 }
 

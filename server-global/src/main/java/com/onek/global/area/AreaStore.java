@@ -126,7 +126,7 @@ public class AreaStore {
         return tArray[0];
     }
 
-    private static String getChildrenRegexp(long areac) {
+    public static String getChildrenRegexp(long areac) {
         String head, anys, anye, zero;
 
         int layer = areac == 0 ? 0 : AreaUtil.getLayer(areac) + 1;
