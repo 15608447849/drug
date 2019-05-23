@@ -1837,7 +1837,7 @@ public class CouponManageModule {
         CouponPubVO couponPubVO = new CouponPubVO();
         couponPubVO.setCompid(compid);
         couponPubVO.setQlfno(Integer.parseInt(ret.get(0)[7].toString()));
-        couponPubVO.setQlfval(Integer.parseInt(ret.get(0)[8].toString()));
+        couponPubVO.setQlfval(Long.parseLong(ret.get(0)[8].toString()));
         couponPubVO.setBrulecode(2110);
         couponPubVO.setCoupno(Long.parseLong(ret.get(0)[9].toString()));
         couponPubVO.setRulename("现金券");

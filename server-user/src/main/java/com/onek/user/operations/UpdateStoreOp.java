@@ -6,6 +6,8 @@ import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.util.GenIdUtil;
+import com.onek.util.SmsTempNo;
+import com.onek.util.SmsUtil;
 import dao.BaseDAO;
 import util.GaoDeMapUtil;
 import util.StringUtils;
@@ -33,15 +35,28 @@ public class UpdateStoreOp implements IOperation<AppContext> {
         UserSession session = context.getUserSession();
         if (session == null || session.userId < 0) return new Result().fail("用户信息异常");
        if (StringUtils.isEmpty(storeName,address))  return new Result().fail("门店或地址未填写");
+
         //根据企业营业执照地址查询是否存在相同已认证的企业
-        String selectSql = "SELECT cid FROM {{?" + TB_COMP +"}} WHERE cstatus&256>0 AND caddr=?  OR cname=?";
+        String selectSql = "SELECT cid,caddr,cname FROM {{?" + TB_COMP +"}} WHERE cstatus&256>0 AND caddr=?  OR cname=?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,address,storeName);
-        if (lines.size()>0) return new Result().fail("存在已认证的相同营业执照地址或药店名称");
+        if (lines.size()>0){
+            boolean isAccess = true;
+            if (session.compId > 0){
+                for (Object[] rows : lines){
+                    int cid = StringUtils.checkObjectNull(rows[0],0);
+                    if (cid>0 && cid != session.compId) isAccess = false;
+                }
+            }else isAccess = false;
+            if (!isAccess) return new Result().fail("存在已认证的相同营业执照地址或药店名称");
+        }
+
         //转换经纬度
         convertLatLon();
         /*创建企业并关联信息*/
         if (session.compId == 0){
-            long compid = getCompanyCode();
+            //查询企业ID是否存在
+            long compid = _getCompanyCode(BaseDAO.getBaseDAO().queryNative("SELECT cid FROM {{?"+ TB_COMP +"}}")); //生成企业码
+
             String insertSql = "INSERT INTO {{?"+ TB_COMP +"}} " +
                     "(cid,cname,cnamehash,caddr,caddrcode,lat,lng,cstatus,createdate, createtime,submitdate,submittime) " +
                     "VALUES(?,?,crc32(?),?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,CURRENT_DATE,CURRENT_TIME)";
@@ -62,7 +77,11 @@ public class UpdateStoreOp implements IOperation<AppContext> {
             if (i>0) {
                 //企业关联会员
                 compLinkMember(compid);
-                return new Result().success("新增门店信息,关联成功").setHashMap("compid",compid); //带入公司码到前台
+                if (session.phone!=null){
+                    //发送短信提醒
+                    SmsUtil.sendSmsBySystemTemp(session.phone, SmsTempNo.REGISTERED_SUCCESSFULLY);
+                }
+                return new Result().success("新增门店信息,关联成功").setHashMap("compid",compid); //带入公司码到前台- 前端跳转到下一步 资质上传
             }else{
                 //删除用户信息
                 String deleteSql = "DELETE FROM {{?" +TB_SYSTEM_USER+"}} WHERE uid=?";
@@ -90,6 +109,17 @@ public class UpdateStoreOp implements IOperation<AppContext> {
         }else{
             return new Result().success("无法修改信息");
         }
+    }
+
+    private long _getCompanyCode(List<Object[]> lines) {
+        long id = getCompanyCode();
+        for (Object[] rows: lines){
+            int cid =StringUtils.checkObjectNull(rows[0],0);
+            if (cid == id){
+                return _getCompanyCode(lines);
+            }
+        }
+        return id;
     }
 
     //转换经纬度

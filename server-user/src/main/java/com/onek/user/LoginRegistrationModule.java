@@ -36,16 +36,16 @@ public class LoginRegistrationModule {
     public Result register(AppContext appContext){
         String json = appContext.param.json;
         //提交用户信息
-        RegisterStoreUserOp op = GsonUtils.jsonToJavaBean(json, RegisterStoreUserOp.class);
-        assert op!=null;
-        Result result = op.execute(appContext);
+        RegisterStoreUserOp userOp = GsonUtils.jsonToJavaBean(json, RegisterStoreUserOp.class);
+        assert userOp!=null;
+        Result result = userOp.execute(appContext);
         if (!result.isSuccess()){
             return result;
         }
         //提交企业信息
-        UpdateStoreOp op2 = GsonUtils.jsonToJavaBean(json, UpdateStoreOp.class);
-        assert op2!=null;
-        return op.execute(appContext);
+        UpdateStoreOp storeOp = GsonUtils.jsonToJavaBean(json, UpdateStoreOp.class);
+        assert storeOp!=null;
+        return storeOp.execute(appContext);
     }
 
 

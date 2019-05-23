@@ -314,7 +314,7 @@ public class TranOrderOptModule {
         }
         //分摊余额
         if(bal > 0 && balway > 0){
-            apportionBal(tranOrderGoods,bal,payamt);
+            apportionBal(tranOrderGoods,bal,payamt,tranOrder.getFreight());
         }
 
         if (placeType == 1) {
@@ -1086,10 +1086,15 @@ public class TranOrderOptModule {
     }
 
 
-    public static void apportionBal(List<TranOrderGoods> tranOrderGoodsList,double bal,double payment){
+    public static void apportionBal(List<TranOrderGoods> tranOrderGoodsList,double bal,double payment,double freight){
         double[] dprice = new double[tranOrderGoodsList.size()];
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
             dprice[i] = tranOrderGoodsList.get(i).getPdprice() * tranOrderGoodsList.get(i).getPnum();
+        }
+
+        if(payment == 0){
+            bal = MathUtil.exactSub(bal, freight).
+                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
         double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
 
@@ -1101,7 +1106,8 @@ public class TranOrderOptModule {
             tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i]).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
 
-            tranOrderGoodsList.get(i).setPayamt(MathUtil.exactSub(tranOrderGoodsList.get(i).getPayamt(),tranOrderGoodsList.get(i).getBalamt()).
+            tranOrderGoodsList.get(i).setPayamt(MathUtil.exactSub(tranOrderGoodsList.get(i).getPayamt(),
+                    tranOrderGoodsList.get(i).getBalamt()).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
            //
         }

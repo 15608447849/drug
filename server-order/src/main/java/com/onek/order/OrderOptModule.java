@@ -451,6 +451,7 @@ public class OrderOptModule {
             //退货失败
             int ostatus = 3;
             int gstatus = 4;
+            int asstatus = 0;
 
             int compid = Integer.parseInt(queryRet.get(0)[1].toString());
             String specifyStorePhone = IceRemoteUtil.getSpecifyStorePhone(compid);
@@ -497,13 +498,19 @@ public class OrderOptModule {
                     SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
                             SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc);
                 }
+
+                asstatus = 200;
             }
+
+            String updateOrderNew = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, asstatus = ? "
+                    + " where cstatus&1=0 and orderno=? and ostatus = ? ";
+
             int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
             List<Object[]> params = new ArrayList<>();
-            params.add(new Object[]{ostatus, queryRet.get(0)[0],-1});
+            params.add(new Object[]{ostatus, asstatus, queryRet.get(0)[0],-1});
             params.add(new Object[]{gstatus, queryRet.get(0)[2],1,queryRet.get(0)[0],queryRet.get(0)[1]});
             baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()),year,
-            new String[]{UPD_ORDER_CK_SQL,UPD_ORDER_GOODS_CK_SQL},params);
+            new String[]{updateOrderNew,UPD_ORDER_GOODS_CK_SQL},params);
         }
 
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
@@ -531,7 +538,7 @@ public class OrderOptModule {
         int compId = userSession.compId;
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         String updateOrderSql = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|1 where "
-                + " cstatus&1=0 and ostatus in(-4,3) and orderno=" + orderNo;
+                + " cstatus&1=0 and ostatus in(-4,4) and orderno=" + orderNo;
         int re = baseDao.updateNativeSharding(compId, year, updateOrderSql);
 //        sqlList.add(updateOrderSql);
 //        params.add(new Object[]{});

@@ -144,6 +144,20 @@ public class TimeUtils {
     }
 
     /**
+     * 例: 1111 标识xx月xx日
+     */
+    public static int getCurrentDate_Md(){
+        SimpleDateFormat simpleDateFormat = new SimpleDateFormat("MMdd");
+        try {
+            return Integer.parseInt(simpleDateFormat.format(new Date()));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+
+    /**
      * 例: 2017-11-11 9:50:00
      */
     public static String date_Hms_2String(Date date){
