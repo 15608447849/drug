@@ -131,7 +131,7 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
             data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
             data.put(ESConstant.PROD_COLUMN_PRODSTATUS, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_PRODSTATUS));
-            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_SKUCSTATUS));
+            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS,  paramVo.getSkuCstatus());
             data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
             data.put(ESConstant.PROD_COLUMN_SALES, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_SALES));
             data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
