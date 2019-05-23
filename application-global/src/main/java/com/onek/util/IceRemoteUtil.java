@@ -597,31 +597,6 @@ public class IceRemoteUtil {
     }
 
     /**
-     *
-     *
-     */
-    public static String getExcelDownPath(String title , InputStream excelStream){
-
-        try {
-            //上传图片
-            String json = new HttpRequest().addStream(
-                    excelStream,
-                    FileServerUtils.getExcelDre(),  //远程路径
-                    EncryptUtils.encryption(title)+".xls")//文件名
-                    .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
-                    .getRespondContent();
-            HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
-            ArrayList<LinkedTreeMap<String,Object>> list = (ArrayList<LinkedTreeMap<String, Object>>) maps.get("data");
-            assert list != null;
-            return list.get(0).get("relativePath").toString();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
-
-    /**
      * 读取目录/上传商品图片
      */
     public static String uploadGoodsImages(File dirs,String url,String logo){

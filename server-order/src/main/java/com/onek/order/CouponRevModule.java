@@ -206,7 +206,7 @@ public class CouponRevModule {
 
 
     @UserPermission(ignore = true)
-    public long insertRevOfflineCoupon(AppContext appContext) {
+    public String insertRevOfflineCoupon(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
         CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
@@ -226,9 +226,9 @@ public class CouponRevModule {
                 couponVO.getRulename(),couponVO.getGoods(),ladderJson,0,0,6,couponVO.getExno()});
 
         if(ret > 0){
-            return unqid;
+            return unqid+"";
         }
-        return 0;
+        return 0+"";
     }
 
     /**

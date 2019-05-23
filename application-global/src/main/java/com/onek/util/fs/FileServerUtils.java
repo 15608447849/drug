@@ -1,5 +1,7 @@
 package com.onek.util.fs;
 
+import com.google.gson.internal.LinkedTreeMap;
+import com.google.gson.reflect.TypeToken;
 import com.onek.prop.AppProperties;
 import util.EncryptUtils;
 import util.GsonUtils;
@@ -7,6 +9,7 @@ import util.StringUtils;
 import util.http.HttpRequest;
 import util.http.HttpUtil;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -158,5 +161,27 @@ public class FileServerUtils {
         return GsonUtils.string2Map(json);
     }
 
+    /**
+     *
+     *
+     */
+    public static String getExcelDownPath(String title , InputStream excelStream){
 
+        try {
+            //上传图片
+            String json = new HttpRequest().addStream(
+                    excelStream,
+                    FileServerUtils.getExcelDre(),  //远程路径
+                    EncryptUtils.encryption(title)+".xls")//文件名
+                    .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
+                    .getRespondContent();
+            HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
+            ArrayList<LinkedTreeMap<String,Object>> list = (ArrayList<LinkedTreeMap<String, Object>>) maps.get("data");
+            assert list != null;
+            return list.get(0).get("httpUrl").toString();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
 }

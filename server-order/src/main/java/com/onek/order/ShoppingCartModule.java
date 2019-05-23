@@ -323,6 +323,7 @@ public class ShoppingCartModule {
                 }
             }
             product.autoSetCurrentPrice(product.getOriginalPrice(),product.getNums());
+            product.setSku(shoppingCartDTO.getPdno());
             productList.add(product);
 
             List<IDiscount> discountList = getActivityList(compid, productList);
@@ -762,11 +763,14 @@ public class ShoppingCartModule {
         
         List<ShoppingCartVO> shopCartList = getShopCart(shoppingCartDTOS);
         List<Product> productList = new ArrayList<>();
-        for (ShoppingCartVO shoppingCartVO : shopCartList){
-            Product product = new Product();
-            product.setSku(shoppingCartVO.getPdno());
-            product.autoSetCurrentPrice(shoppingCartVO.getPdprice(),shoppingCartVO.getNum());
-            productList.add(product);
+
+        if (shopCartList != null) {
+            for (ShoppingCartVO shoppingCartVO : shopCartList){
+                Product product = new Product();
+                product.setSku(shoppingCartVO.getPdno());
+                product.autoSetCurrentPrice(shoppingCartVO.getPdprice(),shoppingCartVO.getNum());
+                productList.add(product);
+            }
         }
 
         DiscountResult discountResult

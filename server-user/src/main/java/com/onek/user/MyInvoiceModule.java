@@ -64,7 +64,7 @@ public class MyInvoiceModule {
             return new Result().fail("参数错误！");
         }
 
-        if (!MathUtil.isBetween(0, frontVO.getAccount().length(), 19)) {
+        if (!MathUtil.isBetween(0, frontVO.getAccount().length(), 24)) {
             return new Result().fail("银行账号过长！");
         }
         if (!MathUtil.isBetween(0, frontVO.getTel().length(), 14)) {
