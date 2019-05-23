@@ -31,10 +31,10 @@ public class ProdExtModule {
         List<Object[]> queryList = null;
         if(spu > 0){
             StringBuilder regexp =
-                    new StringBuilder("^")
+                    new StringBuilder("^[0-9]{1}")
                             .append(spu);
             sql  += " and spu REGEXP ? ";
-            queryList = BASE_DAO.queryNative(sql, spu);
+            queryList = BASE_DAO.queryNative(sql, regexp);
         }else{
             queryList = BASE_DAO.queryNative(sql, new Object[]{});
         }
