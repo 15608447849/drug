@@ -29,8 +29,10 @@ import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
 import util.*;
 
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import static com.onek.order.PayModule.*;
@@ -82,11 +84,14 @@ public class TranOrderOptModule {
 
     //订单商品表新增
     private static final String INSERT_TRAN_GOODS = "insert into {{?" + DSMConst.TD_TRAN_GOODS + "}} "
-            + "(unqid,orderno,compid,pdno,pdprice,distprice,payamt,"
-            + "coupamt,promtype,pkgno,pnum,asstatus,createdate,createtime,cstatus,actcode,balamt) "
+            + "(unqid,orderno,compid,pdno,pdprice,"
+            + "distprice,payamt,coupamt,promtype,pkgno,"
+            + "pnum,asstatus,createdate,createtime,cstatus,"
+            + "actcode,balamt) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "?,0,CURRENT_DATE,CURRENT_TIME,0,?,?)";
+            + "?,0,CURRENT_DATE,CURRENT_TIME,0,"
+            + "?,?)";
 
     private static final String UPD_TRAN_GOODS = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set "
             + "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
@@ -1092,17 +1097,16 @@ public class TranOrderOptModule {
             dprice[i] = tranOrderGoodsList.get(i).getPdprice() * tranOrderGoodsList.get(i).getPnum();
         }
 
-        if(payment == 0){
-            bal = MathUtil.exactSub(bal, freight).
-                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
-        }
+        bal = Math.min(bal, Arrays.stream(dprice).sum());
+
         double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
-            if(payment == 0){
-                tranOrderGoodsList.get(i).setPayamt(0);
-                continue;
-            }
+//            if(payment == 0){
+//                tranOrderGoodsList.get(i).setPayamt(0);
+//            }
+
+
             tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i]).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
 
