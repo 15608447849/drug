@@ -497,6 +497,9 @@ public class OrderOptModule {
                     SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
                             SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc);
                 }
+
+                ostatus = -5;
+                gstatus = 200;
             }
             int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
             List<Object[]> params = new ArrayList<>();

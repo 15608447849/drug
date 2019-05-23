@@ -30,8 +30,8 @@ public class StoreBasicInfoOp {
     }
     //更具企业码更新企业信息到缓存
     public static void updateCompInfoToCacheById(int cid){
-        StoreBasicInfo info = new StoreBasicInfo(cid);
-        getStoreInfoById(info);
+       StoreBasicInfo info = new StoreBasicInfo(cid);
+       getStoreInfoById(info);
        infoToCache(info);
     }
 

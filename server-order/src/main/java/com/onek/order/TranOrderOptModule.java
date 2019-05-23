@@ -1094,7 +1094,7 @@ public class TranOrderOptModule {
 
         if(payment == 0){
             bal = MathUtil.exactSub(bal, freight).
-                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
         double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
 

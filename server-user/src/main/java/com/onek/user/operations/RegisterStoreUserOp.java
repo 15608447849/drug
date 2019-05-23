@@ -5,8 +5,6 @@ import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.util.RoleCodeCons;
-import com.onek.util.SmsTempNo;
-import com.onek.util.SmsUtil;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
@@ -76,7 +74,7 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
     // 提交
     private Result submit(AppContext context) {
         //获取用户码
-        long userId = getUserCode();
+        int userId = getUserCode();
         //添加角色
         String insertSql = "INSERT INTO {{?" + TB_SYSTEM_USER + "}} " +
                 "(uid,uphone,upw,roleid,adddate,addtime) " +
@@ -89,9 +87,7 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
         );
         if (i > 0) {
             //设置content - User信息
-            context.setUserSession(UserSession.createStoreUser((int) userId));
-            //发送短信提醒
-            SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.REGISTERED_SUCCESSFULLY);
+            context.setUserSession(UserSession.createStoreUser(userId ,phone));
             return new Result().success("注册成功");
         }
         return new Result().fail("注册失败");

@@ -8,7 +8,6 @@ import com.onek.user.interactive.AptitudeInfo
 import com.onek.user.operations.StoreBasicInfoOp.updateCompInfoToCacheById
 import com.onek.user.service.MemberImpl
 import com.onek.util.IceRemoteUtil
-import com.onek.util.RedisGlobalKeys
 import com.onek.util.SmsTempNo.AUTHENTICATION_FAILURE
 import com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS
 import com.onek.util.SmsUtil
@@ -90,14 +89,14 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
         } catch (e: Exception) {
         }
     }
-
+    //更新企业资质
     private fun updateIds(companyId: String, id: String, idStartTime: String, idEndTime: String, type:Int) :Boolean{
         try {
             val selectSql = "SELECT aptid FROM {{?${DSMConst.TB_COMP_APTITUDE}}} WHERE compid = $companyId AND atype = $type"
             val lines = BaseDAO.getBaseDAO().queryNative(selectSql);
             if (lines.size == 0){
                 //新增
-                val aptid = RedisGlobalKeys.getCompanyAptCode()
+                val aptid = genCompanyAptCode(companyId.toInt(),type)
                 val insertSql = "INSERT INTO {{?${DSMConst.TB_COMP_APTITUDE}}} (aptid,compid,atype,certificateno,validitys,validitye) VALUES (?,?,?,?,?,?)"
                 val i = BaseDAO.getBaseDAO().updateNative(insertSql,
                         aptid,
@@ -116,5 +115,11 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
             }
         } catch (e: Exception) { }
         return false
+    }
+    /**
+     * 生成企业资质ID
+     */
+    private fun genCompanyAptCode(compid: Int, type: Int): Any? {
+        return (compid + type).toLong()
     }
 }
