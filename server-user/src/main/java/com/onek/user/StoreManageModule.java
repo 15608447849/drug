@@ -25,7 +25,7 @@ import static constant.DSMConst.TB_SYSTEM_USER;
 public class StoreManageModule {
 
     //查询是否存在客服专员
-    @UserPermission
+    @UserPermission(ignore = true)
     public Result existStoreCustomer(AppContext appContext){
         String json = appContext.param.json;
         StoreCustomerOp op = GsonUtils.jsonToJavaBean(json, StoreCustomerOp.class);
@@ -37,6 +37,7 @@ public class StoreManageModule {
     /**
      * 门店关联客服专员
      */
+    @UserPermission(ignore = true)
     public Result updateStoreCustomer(AppContext appContext){
         String json = appContext.param.json;
         StoreCustomerOp op = GsonUtils.jsonToJavaBean(json, StoreCustomerOp.class);
