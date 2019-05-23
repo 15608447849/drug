@@ -538,7 +538,7 @@ public class OrderOptModule {
         int compId = userSession.compId;
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         String updateOrderSql = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|1 where "
-                + " cstatus&1=0 and ostatus in(-4,3) and orderno=" + orderNo;
+                + " cstatus&1=0 and ostatus in(-4,4) and orderno=" + orderNo;
         int re = baseDao.updateNativeSharding(compId, year, updateOrderSql);
 //        sqlList.add(updateOrderSql);
 //        params.add(new Object[]{});
