@@ -139,7 +139,7 @@ public class DelayedHandler<D extends IDelayedObject> implements IDelayedService
                         }
                     }
 
-                } catch (InterruptedException e) {
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             }

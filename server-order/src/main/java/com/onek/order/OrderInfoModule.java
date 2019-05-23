@@ -14,6 +14,7 @@ import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.ds.AppConfig;
 import redis.util.RedisUtil;
 import util.*;
 
@@ -270,6 +271,17 @@ public class OrderInfoModule {
         return result;
     }
 
+    static {
+        /**初始化LOG4J2日志环境*/
+        AppConfig.initLogger("log4j2.xml");
+        /**初始化应用程序环境，如数据源等*/
+        AppConfig.initialize();
+    }
+
+    public static void main(String[] args) {
+        new OrderInfoModule().getOrderGoods(536862725, 2019);
+    }
+
     private Map<Long, List<TranOrderGoods>> getOrderGoods(int compid, int year) {
         String sql = " SELECT " + QUERY_TRAN_GOODS_PARAMS
                 + " FROM " + FROM_GOODS
@@ -288,7 +300,7 @@ public class OrderInfoModule {
         Map<Long, List<TranOrderGoods>> returnResult = new HashMap<>();
         List<TranOrderGoods> s;
         for (TranOrderGoods tranOrderGoods : result) {
-            s = returnResult.get(tranOrderGoods.getOrderno());
+            s = returnResult.get(Long.parseLong(tranOrderGoods.getOrderno()));
 
             if (s == null) {
                 s = new ArrayList<>();

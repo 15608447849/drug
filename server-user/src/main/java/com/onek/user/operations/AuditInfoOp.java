@@ -7,6 +7,8 @@ import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.user.interactive.AptitudeInfo;
 import com.onek.user.interactive.AuditInfo;
+import com.onek.util.IceRemoteUtil;
+import com.onek.util.area.AreaEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.StringUtils;
@@ -14,62 +16,49 @@ import util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import static constant.DSMConst.TB_COMP;
+import static constant.DSMConst.TB_SYSTEM_USER;
+
 /**
  * @Author: leeping
  * @Date: 2019/3/26 14:36
+ * 企业资质审核查询
+ * 条件 :  门店手机号码 门店名 状态 客服专员id 地区码
+ *
  */
 public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
     private Page page = new Page();
     private PageHolder pageHolder = new PageHolder(page);
     @Override
     public Result execute(AppContext appContext) {
-
         page.pageIndex = appContext.param.pageIndex;
         page.pageSize  = appContext.param.pageNumber;
 
-            //根据所选条件查询
-            StringBuilder sb = new StringBuilder();
-            int i = 0;
+        StringBuilder sb = new StringBuilder();
+        sb.append("SELECT " +
+                //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12
+                "a.cid,a.uphone,b.cname,b.cstatus,b.examine,b.inviter,b.auditer,b.caddrcode,b.caddr,b.submitdate,b.submittime,b.auditdate,b.audittime " +
+                " FROM {{?"+TB_SYSTEM_USER +"}} AS a INNER JOIN {{?" +TB_COMP + "}} AS b ON a.cid=b.cid WHERE a.cstatus&1=0 AND b.cstatus&1=0");
+
             if (!StringUtils.isEmpty(phone)){
-                sb.append("a.uphone LIKE '%"+phone+"%'");
-                i++;
+                sb.append(" AND ").append("a.uphone LIKE '%"+phone+"%'"); //模糊查询手机
             }
             if (!StringUtils.isEmpty(company)){
-                if (i>0) sb.append(" AND ");
-                sb.append("b.cname LIKE '%"+company+"%'");
-                i++;
-            }
-            if (!StringUtils.isEmpty(submitDate)){
-                if (i>0) sb.append(" AND ");
-                sb.append("b.submitdate='"+submitDate+"'");
-                i++;
-            }
-            if (!StringUtils.isEmpty(submitTime)){
-                if (i>0) sb.append(" AND ");
-                sb.append("b.submittime='"+submitTime+"'");
-                i++;
-            }
-            if (!StringUtils.isEmpty(auditDate)){
-                if (i>0) sb.append(" AND ");
-                sb.append("b.auditdate='"+auditDate+"'");
-                i++;
-            }
-            if (!StringUtils.isEmpty(auditTime)){
-                sb.append("b.audittime='"+auditTime+"'");
-                i++;
+                sb.append(" AND ").append(" b.cname LIKE '%"+company+"%'");//模糊查询公司名
             }
             if (!StringUtils.isEmpty(status)){
+                sb.append(" AND ").append("b.cstatus&"+status+">0");//状态查询
+            }
+            if (!StringUtils.isEmpty(cursorId)){
+                sb.append(" AND ").append("b.inviter&"+status+">0");//根据客服专员查询
+            }
+            if (!StringUtils.isEmpty(addressCode)){
                 try {
-                    if (i>0) sb.append(" AND ");
-                    int istatus = Integer.parseInt(status);
-                    sb.append("b.cstatus&"+istatus+"="+istatus);
-                } catch (NumberFormatException e) {
-                    e.printStackTrace();
+                    sb.append(" AND ").append("b.caddrcode IN ("+getAdderRandge(Long.parseLong(addressCode))+")");//根据客服专员查询
+                } catch (NumberFormatException ignored) {
                 }
             }
-
-            String selectSql = generationAuditSelectSql(sb.toString());
-
+            String selectSql = sb.toString();
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(pageHolder, page, selectSql);
             if (lines.size() > 0) {
                 List<AuditInfo> list = filterObject2Result(lines);
@@ -77,62 +66,40 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                     return new Result().setQuery(list,pageHolder);
                 }
             }
-
         return new Result().setQuery(new ArrayList<>(),pageHolder);
     }
 
-    //连表查询
-    private String generationAuditSelectSql(String paramSql) {
-
-        String sqlPrev = "SELECT " +
-                "a.cid,b.cname,b.createdate,b.createtime,b.submitdate,b.submittime,b.auditdate,b.audittime,b.examine,b.cstatus,a.uphone" +
-                " FROM {{?"+DSMConst.TB_SYSTEM_USER +"}} AS a INNER JOIN {{?" +DSMConst.TB_COMP + "}} AS b ON a.cid=b.cid";
-                if(!StringUtils.isEmpty(paramSql)){
-                    sqlPrev  += " WHERE  "+paramSql;
-                }
-        return sqlPrev;
+    //根据地区码获取所有的地区
+    private String getAdderRandge(long addressCode) {
+        AreaEntity[]  arr = IceRemoteUtil.getChildren(addressCode);
+        String[] areaArr = new String[arr.length+1];
+        for (int i = 0 ; i < arr.length ; i++ ){
+            areaArr[i] = arr[i].getAreac()+"";
+        }
+        areaArr[areaArr.length-1] =  addressCode+"";
+        return String.join(",",areaArr);
     }
-
+    //赋值
     private List<AuditInfo> filterObject2Result(List<Object[]> lines) {
         if (lines==null || lines.size() == 0) return  null;
         List<AuditInfo> list = new ArrayList<>();
         AuditInfo info;
         for (Object[] arr : lines){
             try {
-
-                info = new AuditInfoOp();
-
+                //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12
+                info = new AuditInfo();
                 info.companyId = StringUtils.obj2Str(arr[0]);
-                info.company = StringUtils.obj2Str(arr[1]);
-
-                info.createDate = StringUtils.obj2Str(arr[2]);
-                info.createTime = StringUtils.obj2Str(arr[3]);
-
-                info.submitDate = StringUtils.obj2Str(arr[4]);
-                info.submitTime = StringUtils.obj2Str(arr[5]);
-
-                info.auditDate = StringUtils.obj2Str(arr[6]);
-                info.auditTime = StringUtils.obj2Str(arr[7]);
-
-                info.examine = StringUtils.obj2Str(arr[8]);
-
-                int status = (int)arr[9];
-                if ((status&64) == 64){
-                    status = 64; //待认证
-                }else if ( (status&128) == 128 ){
-                    status = 128; //审核中
-                }else if ((status&256) == 256){
-                    status = 256; //已认证
-                }else if ((status&512) == 512){
-                    status = 512; //认证失败
-                }else if ((status&1024) == 1024){
-                    status = 1024; //停用
-                }
-                info.status = StringUtils.obj2Str(status);
-                info.phone = StringUtils.obj2Str(arr[10]);
-
+                info.phone = StringUtils.obj2Str(arr[1]);
+                info.company = StringUtils.obj2Str(arr[2]);
+                info.status = StringUtils.obj2Str(arr[3]);
+                info.examine = StringUtils.obj2Str(arr[4]);
+                info.cursorId = StringUtils.obj2Str(arr[5]);
+                info.auditerId = StringUtils.obj2Str(arr[6]);
+                info.addressCode = StringUtils.obj2Str(arr[7]);
+                info.address = StringUtils.obj2Str(arr[8]);
+                info.submitDate = StringUtils.obj2Str(arr[9])+" "+StringUtils.obj2Str(arr[10]);
+                info.auditDate = StringUtils.obj2Str(arr[11])+" "+StringUtils.obj2Str(arr[12]);
                 queryAptitude(info);
-
                 list.add(info);
             } catch (Exception e) {
                 e.printStackTrace();

@@ -14,6 +14,7 @@ import com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS
 import com.onek.util.SmsUtil
 import com.onek.util.member.MemberEntity
 import constant.DSMConst
+import constant.DSMConst.TB_COMP
 import constant.DSMConst.TB_SYSTEM_USER
 import dao.BaseDAO
 import redis.IRedisPartCache
@@ -28,72 +29,44 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
 
     var companyId:String? = null; //公司码
     var auditCause:String? = null //审核失败原因
-    var auditStatus:Int = 0; //审核状态
-
+    var auditStatus:Int = 0; //审核状态 256成功/512失败
 
     override fun execute(context: AppContext?): Result {
-
-        //修改企业审核信息
-        //修改门店状态 1.移除当前状态 2.添加新状态
-        val selectSql = "SELECT cstatus FROM {{?" + DSMConst.TB_COMP + "}} WHERE cstatus&1 = 0 AND cid = ?"
-
-        val lines = BaseDAO.getBaseDAO().queryNative(selectSql,companyId!!)
-
-        if (lines.size > 0) {
-
-            var status = lines.get(0)[0] as Int //状态
-            if (status and 64 == 64) {
-                status = 64 //待认证
-            } else if (status and 128 == 128) {
-                status = 128 //审核中
-            } else if (status and 256 == 256) {
-                status = 256 //已认证
-            } else if (status and 512 == 512) {
-                status = 512 //认证失败
-            } else if (status and 1024 == 1024) {
-                status = 1024 //停用
-            }
-
-            if(auditStatus == 256){ //审核通过
-                var isOK = updateIds(companyId!!,businessId!!,businessIdStart!!,businessIdEnd!!,10)
-                if (isOK) isOK = updateIds(companyId!!,permitId!!,permitIdStart!!,permitIdEnd!!,11)
-                if (isOK) isOK = updateIds(companyId!!,gspId!!,gspIdStart!!,gspIdEnd!!,12)
-                if (!isOK) return Result().fail("资质信息保存失败")
-            }
-
-            //修改 门店信息
-            val updateSql = "UPDATE {{?" + DSMConst.TB_COMP + "}} SET cstatus=cstatus&~$status|$auditStatus,examine=?,auditdate=CURRENT_DATE,audittime=CURRENT_TIME WHERE cstatus&1=0 AND cid=?"
-
-            val i = BaseDAO.getBaseDAO().updateNative(updateSql,auditCause,companyId)
-
-            if (i > 0) {
-                updateCompInfoToCacheById(companyId!!.toInt()) //更新企业信息到缓存
-                val tempLines = BaseDAO.getBaseDAO().queryNative("SELECT uphone FROM {{?$TB_SYSTEM_USER}} WHERE cid = ?", companyId)
-                var phone :String ? = null
-                if (lines.size == 1) {
-                    phone =  tempLines[0][0].toString()
-                }
-                if(auditStatus == 256) {
-                    SmsUtil.sendSmsBySystemTemp(phone,AUTHENTICATION_SUCCESS)
-                    IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_SUCCESS)
-
-                    giftPoints(companyId!!.toInt())
-                    try {
-                        IceRemoteUtil.revNewComerCoupon(companyId!!.toInt(), context!!.userSession.phone.toLong())
-                    }catch (e: Exception){
-                        e.printStackTrace()
-                    }
-
-                }
-                if(auditStatus == 512) {
-                    SmsUtil.sendSmsBySystemTemp(phone,AUTHENTICATION_FAILURE,auditCause)
-                    IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_FAILURE,auditCause)
-                }
-                return Result().success("审核保存提交成功")
-            }
+        //当前审核人id
+        val auditer = context?.userSession?.userId
+        //添加资质信息
+        if(auditStatus == 256){ //审核通过
+            var isOK = updateIds(companyId!!,businessId!!,businessIdStart!!,businessIdEnd!!,10)
+            if (isOK) isOK = updateIds(companyId!!,permitId!!,permitIdStart!!,permitIdEnd!!,11)
+            if (isOK) isOK = updateIds(companyId!!,gspId!!,gspIdStart!!,gspIdEnd!!,12)
+            if (!isOK) return Result().fail("资质信息保存失败")
         }
-        return Result().fail("审核修改失败")
-    }
+
+        //修改门店审核状态
+        val updateSql = "UPDATE {{?$TB_COMP}} SET cstatus=?,examine=?,auditer=?,auditdate=CURRENT_DATE,audittime=CURRENT_TIME WHERE cstatus&1=0 AND cid=?"
+        val i = BaseDAO.getBaseDAO().updateNative(updateSql,auditStatus,auditCause,auditer,companyId)
+
+        if(i > 0){
+            val tempLines = BaseDAO.getBaseDAO().queryNative("SELECT uphone FROM {{?$TB_SYSTEM_USER}} WHERE cid = ?", companyId)
+            var phone :String ? = null
+            if (tempLines.size == 1) phone =  tempLines[0][0].toString()
+            if(auditStatus == 256) {
+                SmsUtil.sendSmsBySystemTemp(phone,AUTHENTICATION_SUCCESS)
+                IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_SUCCESS)
+                try {
+                    giftPoints(companyId!!.toInt())
+                    IceRemoteUtil.revNewComerCoupon(companyId!!.toInt(), context!!.userSession.phone.toLong())
+                }catch (e: Exception){
+                    e.printStackTrace()
+                }
+            }else if(auditStatus == 512) {
+                SmsUtil.sendSmsBySystemTemp(phone,AUTHENTICATION_FAILURE,auditCause)
+                IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_FAILURE,auditCause)
+            }
+            updateCompInfoToCacheById(companyId!!.toInt()) //更新企业信息到缓存
+            return Result().success("审核操作成功")
+        }
+        return Result().fail("审核操作失败")   }
 
     //赠送积分
     private fun giftPoints(companyId: Int) {

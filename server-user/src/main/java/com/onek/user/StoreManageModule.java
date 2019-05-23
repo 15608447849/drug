@@ -3,7 +3,9 @@ package com.onek.user;
 import com.onek.context.AppContext;
 import com.onek.annotation.UserPermission;
 import com.onek.entitys.Result;
+import com.onek.user.operations.StoreCustomerOp;
 import com.onek.user.operations.UpdateStoreOp;
+import com.onek.util.RoleCodeCons;
 import dao.BaseDAO;
 import util.GsonUtils;
 import util.StringUtils;
@@ -21,10 +23,32 @@ import static constant.DSMConst.TB_SYSTEM_USER;
  * 门店管理
  */
 public class StoreManageModule {
+
+    //查询是否存在客服专员
+    @UserPermission
+    public Result existStoreCustomer(AppContext appContext){
+        String json = appContext.param.json;
+        StoreCustomerOp op = GsonUtils.jsonToJavaBean(json, StoreCustomerOp.class);
+        assert op!=null;
+        op.type = 0;
+        return op.execute(appContext);
+    }
+
     /**
-     * 新增门店企业信息
+     * 门店关联客服专员
      */
-    @UserPermission(allowRoleList = {2},allowedUnrelated = true)
+    public Result updateStoreCustomer(AppContext appContext){
+        String json = appContext.param.json;
+        StoreCustomerOp op = GsonUtils.jsonToJavaBean(json, StoreCustomerOp.class);
+        assert op!=null;
+        op.type = 1;
+        return op.execute(appContext);
+    }
+
+    /**
+     * 修改门店信息
+     */
+    @UserPermission(allowRoleList = {RoleCodeCons._STORE})
     public Result updateStoreInfo(AppContext appContext){
         String json = appContext.param.json;
         UpdateStoreOp op = GsonUtils.jsonToJavaBean(json, UpdateStoreOp.class);

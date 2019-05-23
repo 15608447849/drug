@@ -35,6 +35,10 @@ public class Result {
 
    private Integer total;
 
+   public boolean isSuccess(){
+      return code == CODE.SUCCESS;
+   }
+
    public Result message(String message){
       this.message = message;
       return this;
@@ -67,12 +71,19 @@ public class Result {
       return this;
    }
 
+   public Result success() {
+      this.code = CODE.SUCCESS;
+      this.message = MESSAGE.SUCCESS;
+      return this;
+   }
+
    public Result success(Object data) {
       this.code = CODE.SUCCESS;
       this.message = MESSAGE.SUCCESS;
       this.data = data;
       return this;
    }
+
    public Result intercept(int code,String cause){
       this.code = code;
       this.message = cause;

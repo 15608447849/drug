@@ -20,6 +20,10 @@ import com.onek.util.area.AreaUtil;
 import com.onek.util.member.MemberStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFRow;
+import org.apache.poi.hssf.usermodel.HSSFSheet;
+import org.apache.poi.hssf.usermodel.HSSFWorkbook;
 import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.GsonUtils;
@@ -27,6 +31,8 @@ import util.MathUtil;
 import util.ModelUtil;
 import util.StringUtils;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -37,6 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.onek.discount.CommonModule.getLaderNo;
+import static com.onek.util.fs.FileServerUtils.getExcelDownPath;
 
 /**
  * @author Administrator
@@ -1039,6 +1046,77 @@ public class CouponManageModule {
         return result.setQuery(couponListVOS, pageHolder);
     }
 
+    @UserPermission(ignore = true)
+    public Result exportOffExCoupon(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long coupno = jsonObject.get("coupno").getAsLong();
+
+        List<Object[]> queryResult = baseDao.queryNative(QUERY_COUPON_OFFLINE_LIST,coupno);
+        OffExCouponVO[] offExCouponVOs = new OffExCouponVO[queryResult.size()];
+
+        baseDao.convToEntity(queryResult, offExCouponVOs, OffExCouponVO.class,
+                new String[]{"unqid","exno","expwd","coupno","cstatus"});
+
+        queryResult = baseDao.queryNative(QUERY_OFFCOUPON_LIST_SQL + " AND cop.unqid = ? " , coupno);
+
+        CouponListVO[] couponListVOS = new CouponListVO[queryResult.size()];
+
+        baseDao.convToEntity(queryResult, couponListVOS, CouponListVO.class,
+                new String[]{"coupno","coupname","glbno","qlfno","qlfval","desc",
+                        "startdate","enddate","createdate","ruleno","rulename",
+                        "cstatus","actstock","validflag","amt"});
+
+        try (HSSFWorkbook hwb = new HSSFWorkbook()){
+            HSSFSheet sheet = hwb.createSheet();
+            HSSFRow row;
+            HSSFCell cell;
+            String enddate = couponListVOS[0].getEnddate();
+            double amt = couponListVOS[0].getAmt();
+
+            row = sheet.createRow(0);
+            row.createCell(0).setCellValue("序号");
+            row.createCell(1).setCellValue("明码");
+            row.createCell(2).setCellValue("密码");
+            row.createCell(3).setCellValue("到期时间");
+            row.createCell(4).setCellValue("面额(元)");
+
+            int i = 1;
+            for (OffExCouponVO offExCouponVO : offExCouponVOs) {
+                 row = sheet.createRow(i);
+                 // 1.序号
+                 cell = row.createCell(0);
+                 cell.setCellValue(i);
+                 // 2.明码
+                 cell = row.createCell(1);
+                 cell.setCellValue(offExCouponVO.getExno());
+                 // 3.暗码
+                 cell = row.createCell(2);
+                 cell.setCellValue(offExCouponVO.getExpwd());
+                 // 4.有效期
+                 cell = row.createCell(3);
+                 cell.setCellValue(enddate);
+                 // 5.面额
+                 cell = row.createCell(4);
+                 cell.setCellValue(amt);
+
+                 i++;
+            }
+
+            try (ByteArrayOutputStream bos = new ByteArrayOutputStream()){
+                hwb.write(bos);
+
+                String title = getExcelDownPath(coupno + "", new ByteArrayInputStream(bos.toByteArray()));
+                return new Result().success(title);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
+        return new Result().fail("导出失败");
+    }
 
 
     /**
@@ -1732,7 +1810,7 @@ public class CouponManageModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         if(!jsonObject.has("compid")
                 || !jsonObject.has("exno")){
-            return  result.fail("兑换失败",map);
+            return  result.fail("明码为空",map);
         }
         int compid = jsonObject.get("compid").getAsInt();
         String exno = jsonObject.get("exno").getAsString();
@@ -1740,16 +1818,16 @@ public class CouponManageModule {
 
         long oret = 0;
         if(compid <= 0 || StringUtils.isEmpty(exno)){
-            return result.fail("兑换失败",map);
+            return result.fail("明码为空",map);
         }
         List<Object[]> ret = baseDao.queryNative(QUERY_COUPON_OFFLINE, exno);
 
         if(ret == null || ret.isEmpty()){
-            return result.fail("兑换失败",map);
+            return result.fail("查无此券",map);
         }
 
         if(!pwd.trim().equals(ret.get(0)[2].toString())){
-            return result.fail("兑换失败",map);
+            return result.fail("明码与密码不匹配",map);
         }
 
 
@@ -1784,7 +1862,7 @@ public class CouponManageModule {
         filterCoupon(list, compid);
 
         if(list.isEmpty()){
-            return result.fail("兑换失败",map);
+            return result.fail("无领取资格",map);
         }
 
         int cstatus = Integer.parseInt(ret.get(0)[10].toString());
@@ -1799,14 +1877,14 @@ public class CouponManageModule {
 
         }catch (Exception e){
             cstatus = cstatus & ~1;
-            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, ret.get(0)[0]);
+            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, compid, ret.get(0)[0]);
             e.printStackTrace();
             return result.fail("兑换失败",map);
         }
 
         if(oret <= 0){
             cstatus = cstatus & ~1;
-            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, ret.get(0)[0]);
+            baseDao.updateNative(UPDATE_COUPON_OFFLINE, cstatus, compid, ret.get(0)[0]);
             return result.fail("兑换失败",map);
         }
         map.put("unqid",oret+"");

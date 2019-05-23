@@ -1,11 +1,12 @@
 package com.onek.user.operations;
 
 import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
+import com.onek.util.RoleCodeCons;
 import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
-import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
@@ -14,7 +15,8 @@ import util.StringUtils;
 import java.util.List;
 import java.util.regex.Pattern;
 
-import static com.onek.util.RedisGlobalKeys.*;
+import static com.onek.util.RedisGlobalKeys.getUserCode;
+import static constant.DSMConst.TB_SYSTEM_USER;
 
 /**
  * @Author: leeping
@@ -22,7 +24,7 @@ import static com.onek.util.RedisGlobalKeys.*;
  * 用户注册
  *
  */
-public class StoreRegisterOp implements IOperation<AppContext> {
+public class RegisterStoreUserOp implements IOperation<AppContext> {
 
     // 1 效验手机号是否存在
     // 2 获取短信验证码
@@ -35,7 +37,6 @@ public class StoreRegisterOp implements IOperation<AppContext> {
 
     @Override
     public Result execute(AppContext context) {
-
         if (StringUtils.isEmpty(phone) || phone.length() != 11) return new Result().fail("无效的手机号码");
         if (type == 1) return checkPhoneIsExist();
         if (type == 2) {
@@ -46,7 +47,7 @@ public class StoreRegisterOp implements IOperation<AppContext> {
             if (!validPassword()) return new Result().fail("不符合密码安全性要求:\n" +
                     "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符");
             if (StringUtils.isEmpty(password2) || !password.equals(password2)) return new Result().fail("两次密码输入不一致");
-            return submit();
+            return submit(context);
         }
         return new Result().fail("未知的操作类型");
     }
@@ -73,31 +74,32 @@ public class StoreRegisterOp implements IOperation<AppContext> {
     }
 
     // 提交
-    private Result submit() {
-        //获取角色码
+    private Result submit(AppContext context) {
+        //获取用户码
         long userId = getUserCode();
-            //添加角色
-           String insertSql = "INSERT INTO {{?" + DSMConst.TB_SYSTEM_USER + "}} " +
-                    "(uid,uphone,upw,roleid,adddate,addtime) " +
-                    "VALUES(? , ? , ? , ? , CURRENT_DATE,CURRENT_TIME)";
-
-            int i = BaseDAO.getBaseDAO().updateNative(insertSql,
-                    userId,
-                    phone ,
-                    EncryptUtils.encryption(password), //MD5加密
-                    2
-            );
-            if (i > 0) {
-                //发送短信提醒
-                SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.REGISTERED_SUCCESSFULLY);
-                return new Result().success("注册成功");
-            }
+        //添加角色
+        String insertSql = "INSERT INTO {{?" + TB_SYSTEM_USER + "}} " +
+                "(uid,uphone,upw,roleid,adddate,addtime) " +
+                "VALUES(?,?,?,?,CURRENT_DATE,CURRENT_TIME)";
+        int i = BaseDAO.getBaseDAO().updateNative(insertSql,
+                userId,
+                phone ,
+                EncryptUtils.encryption(password), //MD5加密
+                RoleCodeCons._STORE
+        );
+        if (i > 0) {
+            //设置content - User信息
+            context.setUserSession(UserSession.createStoreUser((int) userId));
+            //发送短信提醒
+            SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.REGISTERED_SUCCESSFULLY);
+            return new Result().success("注册成功");
+        }
         return new Result().fail("注册失败");
     }
 
     //验证手机是否存在
     private Result checkPhoneIsExist() {
-        String selectSql = "SELECT oid FROM {{?" + DSMConst.TB_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND uphone = ?";
+        String selectSql = "SELECT oid FROM {{?" + TB_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
         if (lines.size()>0) return new Result().fail("已注册");
             else return new Result().success("未注册");

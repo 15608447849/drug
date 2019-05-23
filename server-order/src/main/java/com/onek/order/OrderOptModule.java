@@ -5,21 +5,25 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.context.UserSession;
-import com.onek.entity.*;
+import com.onek.entity.AsAppDtListVO;
+import com.onek.entity.AsAppDtVO;
+import com.onek.entity.AsAppVO;
+import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
-import com.onek.util.*;
+import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
+import com.onek.util.LccOrderUtil;
+import com.onek.util.SmsTempNo;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.*;
@@ -414,7 +418,6 @@ public class OrderOptModule {
      * @exception
      * @version 1.1.1
      **/
-    @UserPermission(ignore = false,allowedUnrelated =true)
     public Result afterSaleReview(AppContext appContext) {
         String json = appContext.param.json;
         Result result = new Result();
@@ -937,7 +940,6 @@ public class OrderOptModule {
      * @exception
      * @version 1.1.1
      **/
-    @UserPermission(ignore = false,allowedUnrelated =true)
     public Result afterSaleFinish(AppContext appContext) {
         String json = appContext.param.json;
         Result result = new Result();
