@@ -32,6 +32,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.onek.order.TranOrderOptModule.CONFIRM_RECEIPT;
 import static constant.DSMConst.TD_BK_TRAN_GOODS;
@@ -457,6 +459,7 @@ public class OrderOptModule {
             String specifyStorePhone = IceRemoteUtil.getSpecifyStorePhone(compid);
 
 
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
             if(ckstatus == 1){
                 //1退款退货 2 仅退款
                 if(astype == 1 || astype == 2){
@@ -476,8 +479,8 @@ public class OrderOptModule {
                         LogUtil.getDefaultLogger().debug("实际退回余额分摊余额："+subbal+" 退货数量："+asnum);
                         IceRemoteUtil.updateCompBal(Integer.parseInt(queryRet.get(0)[1].toString()),MathUtil.exactMul(subbal,100).intValue());
                     }
-                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                            SmsTempNo.AFTER_SALE_AUDIT_PASSED,asno+"");
+                    executorService.execute(() ->SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                                    SmsTempNo.AFTER_SALE_AUDIT_PASSED,asno+""));
                 }
                 ostatus = -2;
                 gstatus = 3;
@@ -489,17 +492,18 @@ public class OrderOptModule {
 
 
             }else{
+                ostatus = 4;
+                asstatus = 200;
                 if(astype == 1 || astype == 2){
-                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                            SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc);
+                    executorService.execute(() -> SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc));
                 }
 
                 if(astype == 3 || astype == 4){
-                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                            SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc);
+                    executorService.execute(() ->   SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc));
                 }
 
-                asstatus = 200;
             }
 
             String updateOrderNew = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, asstatus = ? "
