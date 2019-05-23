@@ -77,8 +77,17 @@ public class CouponManageModule {
     //修改优惠券
     private static final String UPDATE_COUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set coupname=?,"
             + "glbno=?,qlfno=?,qlfval=?,coupdesc=?,periodtype=?,"
-            + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=?,actstock=? where cstatus&1=0 "
-            + " and unqid=? ";
+            + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=?,actstock=?,"
+            + " cstatus=(case cstatus & 256 when 256 then cstatus&~256 when 0 "
+            + "then cstatus|256 else cstatus end) where cstatus&1=0 "
+            + " and unqid=?";
+
+    //修改优惠券
+    private static final String UPDATE_OFFCOUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set coupname=?,"
+            + "glbno=?,qlfno=?,qlfval=?,coupdesc=?,periodtype=?,"
+            + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=?,actstock=? "
+            + " where cstatus&1=0 "
+            + " and unqid=?";
 
 
     //修改活动优惠券
@@ -124,7 +133,7 @@ public class CouponManageModule {
      */
     private final String QUERY_COUPON_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
-            "cop.brulecode,validday,validflag,rulename,actstock from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
+            "cop.brulecode,validday,validflag,rulename,actstock, cop.cstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
             "  {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.brulecode = ru.brulecode  where cop.cstatus&1=0 and unqid = ? ";
 
 
@@ -380,6 +389,10 @@ public class CouponManageModule {
         CouponVO couponVO = GsonUtils.jsonToJavaBean(json, CouponVO.class);
         long unqid = GenIdUtil.getUnqId();
         List<Object[]> parmList = new ArrayList<>();
+        assert couponVO != null;
+        if ((couponVO.getCstatus()&512) == 0) {
+            couponVO.setCstatus(couponVO.getCstatus()|64);
+        }
         parmList.add(new Object[]{
                 unqid,couponVO.getCoupname(),couponVO.getGlbno(),couponVO.getQlfno(),
                 couponVO.getQlfval(),couponVO.getDesc(),couponVO.getPeriodtype(),
@@ -529,7 +542,7 @@ public class CouponManageModule {
                     new String[]{"coupno", "coupname", "glbno",
                             "qlfno", "qlfval", "desc", "periodtype", "periodday",
                             "startdate", "enddate", "ruleno","validday","validflag",
-                            "rulename","actstock"});
+                            "rulename","actstock", "cstatus"});
 
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
         couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0],Long.parseLong(couponVOS[0].getCoupno())));
@@ -1173,13 +1186,22 @@ public class CouponManageModule {
         String json = appContext.param.json;
         CouponVO couponVO = GsonUtils.jsonToJavaBean(json, CouponVO.class);
         long actCode = Long.parseLong(couponVO.getCoupno());
+        int ret = 0;
         //新增活动
 
-        int ret = baseDao.updateNative(UPDATE_COUPON_SQL,new Object[]{couponVO.getCoupname(),
-        couponVO.getGlbno(),couponVO.getQlfno(),couponVO.getQlfval(),
-        couponVO.getDesc(),couponVO.getPeriodtype(),couponVO.getPeriodday(),
-        couponVO.getStartdate(),couponVO.getEnddate(),couponVO.getRuleno(),couponVO.getValidday(),
-                couponVO.getValidflag(),couponVO.getActstock(),actCode});
+        if((couponVO.getCstatus() & 512 )== 0) {
+            ret = baseDao.updateNative(UPDATE_COUPON_SQL, couponVO.getCoupname(),
+                    couponVO.getGlbno(), couponVO.getQlfno(), couponVO.getQlfval(),
+                    couponVO.getDesc(), couponVO.getPeriodtype(), couponVO.getPeriodday(),
+                    couponVO.getStartdate(), couponVO.getEnddate(), couponVO.getRuleno(), couponVO.getValidday(),
+                    couponVO.getValidflag(), couponVO.getActstock(), actCode);
+        } else {
+            ret = baseDao.updateNative(UPDATE_OFFCOUPON_SQL, couponVO.getCoupname(),
+                    couponVO.getGlbno(), couponVO.getQlfno(), couponVO.getQlfval(),
+                    couponVO.getDesc(), couponVO.getPeriodtype(), couponVO.getPeriodday(),
+                    couponVO.getStartdate(), couponVO.getEnddate(), couponVO.getRuleno(), couponVO.getValidday(),
+                    couponVO.getValidflag(), couponVO.getActstock(), actCode);
+        }
 
         if (ret > 0) {
             //新增活动场次
