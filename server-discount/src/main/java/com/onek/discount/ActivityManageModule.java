@@ -24,13 +24,16 @@ import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
 import com.onek.util.GenIdUtil;
+import org.hyrdpf.util.LogUtil;
 import util.BUSUtil;
 import util.GsonUtils;
 import util.ModelUtil;
+import util.TimeUtils;
 
 import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -118,8 +121,7 @@ public class ActivityManageModule {
     //删除
     private static final String DELETE_ACT =
             " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}"
-                    + " SET cstatus = cstatus | " + CSTATUS.DELETE
-                    + " WHERE unqid = ? ";
+                    + " SET cstatus = cstatus | 1  WHERE unqid = ? ";
 
     /* *
      * @description 活动查询
@@ -1210,12 +1212,52 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private boolean theActInProgress(long actCode) {
+        String selectTypeSQL = "select acttype,actcycle from {{?" + DSMConst.TD_PROM_ACT + "}} "
+                + " where cstatus&1=0 and unqid=" + actCode;
+        List<Object[]> qTResult = baseDao.queryNative(selectTypeSQL);
+        int acttype = (int)qTResult.get(0)[0];
+        long actcycle = (long)qTResult.get(0)[1];
         String selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
                 + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
                 + "where a.cstatus&1=0 and a.unqid=" + actCode + " and a.sdate<=CURRENT_DATE"
                 + " and a.edate>=CURRENT_DATE and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+        LocalDateTime localDateTime = LocalDateTime.now();
+        if (acttype == 1) {//每周
+           int dayOfWeek = localDateTime.getDayOfWeek().getValue();
+           int valW = BigDecimal.valueOf(Math.pow(2,dayOfWeek-1)).intValue();
+           if (((int)actcycle & valW) == 0) {
+               return false;
+           }
+//            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+//                    + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
+//                    + "where a.cstatus&1=0 and a.unqid=" + actCode
+//                    + " and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+        } else if (acttype == 2) {//每月
+            int dayOfMouth = localDateTime.getDayOfMonth();
+            int valM = BigDecimal.valueOf(Math.pow(2,dayOfMouth-1)).intValue();
+            if (((int)actcycle & valM) == 0) {
+                return false;
+            }
+//            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+//                    + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
+//                    + "where a.cstatus&1=0 and a.unqid=" + actCode
+//                    + " and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+        } else if (acttype == 3) {//每年
+            String actcycleStr = String.valueOf(actcycle);
+            String actDate =TimeUtils.getCurrentYear() + "-" + actcycleStr.substring(2,4)
+                    + "-" +  actcycleStr.substring(4,6);
+            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                    + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
+                    + "where a.cstatus&1=0 and a.unqid=" + actCode + " and CURRENT_DATE='" + actDate
+                    + "' and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+        }
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         return (long)queryResult.get(0)[0] > 0;
+    }
+
+    public static void main(String[] args) {
+        LocalDateTime localDateTime = LocalDateTime.now();
+        System.out.println(localDateTime.getDayOfMonth());
     }
 
 
@@ -1459,7 +1501,6 @@ public class ActivityManageModule {
                     delAssDrugByActCode}, params));
             if (b) {
                 List<GoodsVO> delGoods = new ArrayList<>();
-               // LogUtil.getDefaultLogger().info("########### 1475 INE:"+delGoods.size());
                 for (long sku :skus) {
                     GoodsVO goodsVO1 = new GoodsVO();
                     goodsVO1.setActcode(actCode + "");
@@ -1488,10 +1529,8 @@ public class ActivityManageModule {
         params.add(new Object[]{actCode});
         b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{sqlOne,sqlTwo, sqlThree,
                 DELETE_ACT, delAssDrugByActCode}, params));
-      //  LogUtil.getDefaultLogger().info("########### 1473 INE:"+b);
         if (b) {
             List<GoodsVO> delGoods = new ArrayList<>();
-           // LogUtil.getDefaultLogger().info("########### 1475 INE:"+delGoods.size());
             for (long sku :skus) {
                 GoodsVO goodsVO1 = new GoodsVO();
                 goodsVO1.setActcode(actCode + "");
