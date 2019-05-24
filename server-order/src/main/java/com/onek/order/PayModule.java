@@ -21,6 +21,7 @@ import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.fs.FileServerUtils;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.MathUtil;
 import util.ModelUtil;
 import util.StringUtils;
@@ -537,10 +538,13 @@ public class PayModule {
                 paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
             }
         }
+
         //远程调用
-        IceRemoteUtil.updateBatchNative(ADD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+        boolean b1 = ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(ADD_GOODS_STORE, paramsOne, tranOrderGoods.length));//更新商品库存(若 失败  异常处理)
+        LogUtil.getDefaultLogger().info("订单号：【" + orderno + "】-->>>print by cyq ---------- 更新商品库存结果b1>>>>>>>>>>>> " + b1 );
         //更新活动库存 远程调用
-        IceRemoteUtil.updateBatchNative(ADD_ACT_STORE, paramsTwo, paramsTwo.size());
+        boolean b2 = ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(ADD_ACT_STORE, paramsTwo, paramsTwo.size()));
+        LogUtil.getDefaultLogger().info("订单号：【" + orderno + "】-->>>print by cyq ---------- 更新活动库存结果b2>>>>>>>>>>>> " + b2);
     }
 
     /* *
@@ -678,7 +682,10 @@ public class PayModule {
 //                IceRemoteUtil.updateCompBal(compid,-balamt);
 //            }
             //线下即付减数据库库存
+
+            LogUtil.getDefaultLogger().info("print by cyq offlinePay -----------线下支付订单减库存库存操作开始");
             reduceGoodsDbStock(orderno, compid);
+            LogUtil.getDefaultLogger().info("print by cyq offlinePay -----------线下支付订单减库存库存操作结束");
             return new Result().success("订单提交成功");
         }
         return new Result().fail("订单提交失败");
