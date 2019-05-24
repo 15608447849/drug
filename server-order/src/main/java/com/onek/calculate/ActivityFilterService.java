@@ -6,6 +6,8 @@ import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.prod.ProdEntity;
+import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.MathUtil;
@@ -17,7 +19,7 @@ import java.util.*;
 public class ActivityFilterService extends BaseDiscountFilterService {
     //远程调用
     private static final String GET_ACTIVITIES_BY_SKU =
-            " SELECT act.*, ass.limitnum, time.sdate, time.edate, ass.price "
+            " SELECT act.*, ass.limitnum, time.sdate, time.edate, ass.price, ass.cstatus "
                     + " FROM ({{?" + DSMConst.TD_PROM_ASSDRUG + "}} ass "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_ACT + "}} act"
                     + " ON ass.cstatus&1 = 0 "

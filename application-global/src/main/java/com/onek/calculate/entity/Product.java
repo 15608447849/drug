@@ -28,6 +28,7 @@ public class Product extends AccurateMath implements IProduct {
 
     public void setOriginalPrice(double originalPrice) {
         this.originalPrice = originalPrice;
+        this.setCurrentPrice(this.originalPrice * nums);
     }
 
     public double getDiscounted() {
