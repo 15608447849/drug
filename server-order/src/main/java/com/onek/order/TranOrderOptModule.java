@@ -1108,11 +1108,17 @@ public class TranOrderOptModule {
 
     public static void apportionBal(List<TranOrderGoods> tranOrderGoodsList,double bal,double payment,double freight){
         double[] dprice = new double[tranOrderGoodsList.size()];
+        double afterDiscountPrice = .0;
+
+
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
             dprice[i] = tranOrderGoodsList.get(i).getPdprice() * tranOrderGoodsList.get(i).getPnum();
+            afterDiscountPrice =
+                    MathUtil.exactAdd(afterDiscountPrice, tranOrderGoodsList.get(i).getPayamt())
+                            .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
 
-        bal = Math.min(bal, Arrays.stream(dprice).sum());
+        bal = Math.min(bal, afterDiscountPrice);
 
         double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
 
