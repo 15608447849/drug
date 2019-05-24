@@ -1141,8 +1141,8 @@ public class ProdModule {
         int cstatus = dataMap.get(prodVO.getSku())[3];
         if((cstatus & 512) > 0){
             double rate = MathUtil.exactDiv(dataMap.get(prodVO.getSku())[2], 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-            double actprice = MathUtil.exactMul(prodVO.getVatp(), rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
-            prodVO.setActprize(NumUtil.div(actprice, 100));
+            double actprice = MathUtil.exactMul(prodVO.getVatp(), rate).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+            prodVO.setActprize(actprice);
         }else{
             prodVO.setActprize(NumUtil.div(dataMap.get(prodVO.getSku())[2], 100));
         }
