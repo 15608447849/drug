@@ -42,7 +42,7 @@ import java.util.List;
 public class SecKillModule {
 
     //远程调用
-    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus from " +
+    private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus,a.excdiscount from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
             "and d.actcode = ? and d.gcode IN (0, ?, ?, ?, ?) " +
@@ -174,6 +174,7 @@ public class SecKillModule {
             int limitnum = Integer.parseInt(objects[3].toString());
             int prize = Integer.parseInt(objects[4].toString());
             int cstatus = Integer.parseInt(objects[5].toString());
+            int excdiscount = Integer.parseInt(objects[6].toString());
 
             ProdEntity entity =  ProdInfoStore.getProdBySku(Long.parseLong(sku));
             if((cstatus & 512) > 0 && entity.getVatp() > 0){ // 价格百分比
@@ -181,6 +182,9 @@ public class SecKillModule {
                 prize = MathUtil.exactMul(entity.getVatp(), rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
             }
 
+            if(excdiscount == 1){ // 排除优惠券
+                shoppingCartVO.setOflag(true);
+            }
             shoppingCartVO.setPdno(Long.parseLong(sku));
             shoppingCartVO.setDiscount(NumUtil.div(prize, 100));
             shoppingCartVO.setInventory(actstock);
