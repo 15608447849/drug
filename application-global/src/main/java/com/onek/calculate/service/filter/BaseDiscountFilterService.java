@@ -4,6 +4,9 @@ import com.onek.calculate.entity.Product;
 import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.IProduct;
+import com.onek.util.prod.ProdEntity;
+import com.onek.util.prod.ProdInfoStore;
+import util.MathUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,6 +36,12 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         int index;
         IDiscount i;
         for (IProduct product : products) {
+            ProdEntity prod = ProdInfoStore.getProdBySku(product.getSKU());
+
+            if (prod != null) {
+                product.setOriginalPrice(MathUtil.exactDiv(prod.getVatp(), 100).doubleValue());
+            }
+
             temp = getCurrentDiscounts(product);
 
             doFilter(temp, product);

@@ -86,6 +86,7 @@ public class CalculateModule {
         List<Product> products = new ArrayList<>();
         Product p = new Product();
         p.setSku(sku);
+        p.autoSetCurrentPrice(0, 1);
         products.add(p);
 
         List<IDiscount> discounts
