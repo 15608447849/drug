@@ -468,6 +468,7 @@ public class PayModule {
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
         if (b) {
             //减数据库库存
+            LogUtil.getDefaultLogger().info("print by cyq onlinePay -----------线上支付订单减库存库存操作开始");
             reduceGoodsDbStock(orderno, compid);
 //            if(paySpreadBal > 0 && paytype != 0){
 //                IceRemoteUtil.updateCompBal(compid,-paySpreadBal);
@@ -512,9 +513,11 @@ public class PayModule {
             }
         }
         //远程调用
-        IceRemoteUtil.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length);//更新商品库存(若 失败  异常处理)
+        boolean reduceb1 = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS_STORE, paramsOne, tranOrderGoods.length));//更新商品库存(若 失败  异常处理)
+        LogUtil.getDefaultLogger().info("订单号：【" + orderno + "】-->>>print by cyq ---------- 减商品库存结果b1>>>>>>>>>>>> " + reduceb1 );
         //更新活动库存 远程调用
-        IceRemoteUtil.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size());
+        boolean reduceb2 = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_ACT_STORE, paramsTwo, paramsTwo.size()));
+        LogUtil.getDefaultLogger().info("订单号：【" + orderno + "】-->>>print by cyq ---------- 减活动库存结果b2>>>>>>>>>>>> " + reduceb2);
     }
 
 
@@ -540,11 +543,11 @@ public class PayModule {
         }
 
         //远程调用
-        boolean b1 = ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(ADD_GOODS_STORE, paramsOne, tranOrderGoods.length));//更新商品库存(若 失败  异常处理)
-        LogUtil.getDefaultLogger().info("订单号：【" + orderno + "】-->>>print by cyq ---------- 更新商品库存结果b1>>>>>>>>>>>> " + b1 );
+        boolean b1 = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(ADD_GOODS_STORE, paramsOne, tranOrderGoods.length));//更新商品库存(若 失败  异常处理)
+        LogUtil.getDefaultLogger().info("订单号：【" + orderno + "】-->>>print by cyq ---------- 返还商品库存结果b1>>>>>>>>>>>> " + b1 );
         //更新活动库存 远程调用
-        boolean b2 = ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(ADD_ACT_STORE, paramsTwo, paramsTwo.size()));
-        LogUtil.getDefaultLogger().info("订单号：【" + orderno + "】-->>>print by cyq ---------- 更新活动库存结果b2>>>>>>>>>>>> " + b2);
+        boolean b2 = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(ADD_ACT_STORE, paramsTwo, paramsTwo.size()));
+        LogUtil.getDefaultLogger().info("订单号：【" + orderno + "】-->>>print by cyq ---------- 返还活动库存结果b2>>>>>>>>>>>> " + b2);
     }
 
     /* *
@@ -685,7 +688,7 @@ public class PayModule {
 
             LogUtil.getDefaultLogger().info("print by cyq offlinePay -----------线下支付订单减库存库存操作开始");
             reduceGoodsDbStock(orderno, compid);
-            LogUtil.getDefaultLogger().info("print by cyq offlinePay -----------线下支付订单减库存库存操作结束");
+//            LogUtil.getDefaultLogger().info("print by cyq offlinePay -----------线下支付订单减库存库存操作结束");
             return new Result().success("订单提交成功");
         }
         return new Result().fail("订单提交失败");
