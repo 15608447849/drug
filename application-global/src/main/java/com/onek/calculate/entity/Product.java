@@ -28,6 +28,7 @@ public class Product extends AccurateMath implements IProduct {
 
     public void setOriginalPrice(double originalPrice) {
         this.originalPrice = originalPrice;
+        this.setCurrentPrice(this.originalPrice * nums);
     }
 
     public double getDiscounted() {
@@ -58,7 +59,7 @@ public class Product extends AccurateMath implements IProduct {
     }
 
     public void addDiscounted(double discounted) {
-        this.discounted = Math.min(add(this.discounted, discounted), getCurrentPrice());
+        this.discounted = Math.min(add(this.discounted, discounted), mul(this.originalPrice, this.nums));
     }
 
     public void updateCurrentPrice() {
@@ -79,5 +80,16 @@ public class Product extends AccurateMath implements IProduct {
     @Override
     public int hashCode() {
         return (int) (sku ^ (sku >>> 32));
+    }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "sku=" + sku +
+                ", nums=" + nums +
+                ", originalPrice=" + originalPrice +
+                ", currentPrice=" + currentPrice +
+                ", discounted=" + discounted +
+                '}';
     }
 }

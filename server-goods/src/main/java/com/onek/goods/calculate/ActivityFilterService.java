@@ -6,6 +6,8 @@ import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.prod.ProdEntity;
+import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.MathUtil;
@@ -20,7 +22,7 @@ import java.util.List;
 public class ActivityFilterService extends BaseDiscountFilterService {
     //远程调用
     private static final String GET_ACTIVITIES_BY_SKU =
-            " SELECT act.*, ass.limitnum, time.sdate, time.edate, ass.price "
+            " SELECT act.*, ass.limitnum, time.sdate, time.edate, ass.price, ass.cstatus "
                     + " FROM ({{?" + DSMConst.TD_PROM_ASSDRUG + "}} ass "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_ACT + "}} act"
                     + " ON ass.cstatus&1 = 0 "
@@ -63,16 +65,28 @@ public class ActivityFilterService extends BaseDiscountFilterService {
         List<IDiscount> returnResult = new ArrayList<>(
                 new HashSet<>(Arrays.asList(activities)));
 
+        ProdEntity prod = ProdInfoStore.getProdBySku(sku);
+
+        if (prod != null) {
+            product.setOriginalPrice(MathUtil.exactDiv(prod.getVatp(), 100).doubleValue());
+        }
+
         Activity a;
         for (IDiscount discount : returnResult) {
             a = (Activity) discount;
             discount.setLimits(sku, a.getLimitnum());
+
+            if (a.getActPrice() <= 0) {
+                continue;
+            }
+
             a.setActPrice(
                     (a.getAssCstatus() & 512) == 0
                         ? MathUtil.exactDiv(a.getActPrice(), 100).doubleValue()
                         : MathUtil.exactDiv(a.getActPrice(), 100)
                             .multiply(BigDecimal.valueOf(product.getOriginalPrice()))
                             .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+
             discount.setActionPrice(sku, a.getActPrice());
         }
 

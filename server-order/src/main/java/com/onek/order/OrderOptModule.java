@@ -32,6 +32,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.onek.order.TranOrderOptModule.CONFIRM_RECEIPT;
 import static constant.DSMConst.TD_BK_TRAN_GOODS;
@@ -284,29 +286,37 @@ public class OrderOptModule {
                         bal = Double.parseDouble(ret.get(0)[0].toString());
                     }
 
+
                     bal = MathUtil.exactDiv(bal,100).setScale(2, BigDecimal.ROUND_HALF_UP).
                             doubleValue();
 
                     double payamt = MathUtil.exactDiv(tranOrderGoods1.getPayamt(),100).
                             setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
 
-                    double acprice = MathUtil.exactDiv(payamt, tranOrderGoods1.getPnum()).
-                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-                    double refamt =  MathUtil.exactMul(acprice, asAppVO.getAsnum()).
-                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-                    if(bal > 0){
-                        bal = MathUtil.exactDiv(bal,
-                                tranOrderGoods1.getPnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-                        double acbalamt = MathUtil.exactMul(bal,
-                                asAppVO.getAsnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-
-                        refamt = MathUtil.exactAdd(refamt,acbalamt).
+                    double refamt = 0;
+                    if(asAppVO.getAsnum() ==  tranOrderGoods1.getPnum()){
+                        refamt = MathUtil.exactAdd(bal,payamt).
                                 setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                    }else{
+                        double acprice = MathUtil.exactDiv(payamt, tranOrderGoods1.getPnum()).
+                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                        refamt =  MathUtil.exactMul(acprice, asAppVO.getAsnum()).
+                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                        if(bal > 0){
+                            bal = MathUtil.exactDiv(bal,
+                                    tranOrderGoods1.getPnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                            double acbalamt = MathUtil.exactMul(bal,
+                                    asAppVO.getAsnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                            refamt = MathUtil.exactAdd(refamt,acbalamt).
+                                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                        }
                     }
+
+
                     asAppVO.setRefamt(refamt);
                 }
                 if (asAppVO.getPdno() == tranOrderGoods1.getPdno() && asAppVO.getAsnum() == tranOrderGoods1.getPnum()){
@@ -457,6 +467,7 @@ public class OrderOptModule {
             String specifyStorePhone = IceRemoteUtil.getSpecifyStorePhone(compid);
 
 
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
             if(ckstatus == 1){
                 //1退款退货 2 仅退款
                 if(astype == 1 || astype == 2){
@@ -467,17 +478,23 @@ public class OrderOptModule {
                     int pnum = Integer.parseInt(queryResult.get(0)[8].toString());
                     LogUtil.getDefaultLogger().debug("审核通过获取余额："+balamt);
                     if(balamt > 0){
-                        double apamt = MathUtil.exactDiv(balamt,pnum).
-                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                        LogUtil.getDefaultLogger().debug("审核通过单个商品分摊余额："+apamt+" 商品数量："+pnum);
+                        double subbal = 0;
+                        if(pnum == asnum){
+                            subbal = balamt;
+                        }else{
+                            double apamt = MathUtil.exactDiv(balamt,pnum).
+                                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                            LogUtil.getDefaultLogger().debug("审核通过单个商品分摊余额："+apamt+" 商品数量："+pnum);
 
-                        double subbal = MathUtil.exactMul(asnum,apamt).
-                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                        LogUtil.getDefaultLogger().debug("实际退回余额分摊余额："+subbal+" 退货数量："+asnum);
-                        IceRemoteUtil.updateCompBal(Integer.parseInt(queryRet.get(0)[1].toString()),MathUtil.exactMul(subbal,100).intValue());
+                            subbal = MathUtil.exactMul(asnum,apamt).
+                                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                            LogUtil.getDefaultLogger().debug("实际退回余额分摊余额："+subbal+" 退货数量："+asnum);
+                        }
+                        IceRemoteUtil.updateCompBal(Integer.parseInt(queryRet.get(0)[1].toString()),
+                                MathUtil.exactMul(subbal,100).intValue());
                     }
-                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                            SmsTempNo.AFTER_SALE_AUDIT_PASSED,asno+"");
+                    executorService.execute(() ->SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                                    SmsTempNo.AFTER_SALE_AUDIT_PASSED,asno+""));
                 }
                 ostatus = -2;
                 gstatus = 3;
@@ -489,17 +506,18 @@ public class OrderOptModule {
 
 
             }else{
+                ostatus = 4;
+                asstatus = 200;
                 if(astype == 1 || astype == 2){
-                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                            SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc);
+                    executorService.execute(() -> SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc));
                 }
 
                 if(astype == 3 || astype == 4){
-                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                            SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc);
+                    executorService.execute(() ->   SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc));
                 }
 
-                asstatus = 200;
             }
 
             String updateOrderNew = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, asstatus = ? "
@@ -598,6 +616,7 @@ public class OrderOptModule {
 
 //            MathUtil.exactMul(asAppDtVO.getAsnum(),asAppDtVO.getBalamt()).
 //                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue()
+
             asAppDtVO.setPayamt(MathUtil.exactMul(asAppDtVO.getAsnum(),acprice)
                     .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
 
@@ -608,7 +627,6 @@ public class OrderOptModule {
 
             asAppDtVO.setRefbal(MathUtil.exactMul(asAppDtVO.getAsnum(),acbalamt).
                     setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-
             asAppDtVO.setSumRefAmt(asAppDtVO.getRefamt());
             asAppDtVO.setBalamt(acbalamt);
             ProdEntity prodBySku = null;

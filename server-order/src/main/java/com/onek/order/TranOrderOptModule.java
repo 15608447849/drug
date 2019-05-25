@@ -33,6 +33,7 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.onek.order.PayModule.*;
@@ -242,6 +243,7 @@ public class TranOrderOptModule {
             pdnum += goodsVO.getPnum();
             goodsVO.setCompid(tranOrder.getCusno());
             goodsVO.setActcode(String.valueOf(goodsVO.getActcode()));
+            goodsVO.setPayamt(goodsVO.getPnum()*goodsVO.getPdprice());
             tranOrderGoods.add(goodsVO);
         }
         tranOrder.setPdnum(pdnum);
@@ -256,11 +258,13 @@ public class TranOrderOptModule {
             }
             //订单费用计算（费用分摊以及总费用计算）
             try {
+                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格开始");
                 calculatePrice(tranOrderGoods, tranOrder, unqid);
+                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格结束");
             } catch (Exception e) {
                 e.printStackTrace();
                 stockRecovery(goodsStockList);
-                LogUtil.getDefaultLogger().info("计算活动价格异常！");
+                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格失败");
                 return result.fail("下单失败");
             }
         } else if (orderType == 1) { // 秒杀
@@ -336,7 +340,9 @@ public class TranOrderOptModule {
             updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
             if (coupon > 0) {
                 //远程调用
-                IceRemoteUtil.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
+                LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作开始");
+                int code = IceRemoteUtil.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
+                LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作结果code>>>> " + (code>0));
             }
 
             CANCEL_DELAYED.add(tranOrder);
@@ -370,7 +376,10 @@ public class TranOrderOptModule {
             paramOne.add(new Object[]{tranOrderGoods.getPnum(), tranOrderGoods.getPdno()});
         }
         //远程调用
-        return !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS, paramOne, tranOrderGoodsList.size()));
+        LogUtil.getDefaultLogger().info("订单号：【" + tranOrderGoodsList.get(0).getOrderno() + "】-->>>print by cyq ---- 下单锁定库存操作开始");
+        boolean b = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS, paramOne, tranOrderGoodsList.size()));
+        LogUtil.getDefaultLogger().info("订单号：【" + tranOrderGoodsList.get(0).getOrderno() + "】-->>>print by cyq -------下单锁定库存结果b>>>>>>>>>>>> " + b );
+        return b;
     }
 
     /* *
@@ -417,13 +426,10 @@ public class TranOrderOptModule {
                 for (TranOrderGoods finalTranOrderGood : finalTranOrderGoods) {
                     if (finalTranOrderGood.getPdno() == iDiscount.getProductList().get(i).getSKU()) {
                         int ruleCode = DiscountRuleStore.getRuleByBRule((int) iDiscount.getBRule());
-//                        System.out.println("ruleCode11111111111--- " + iDiscount.getBRule());
-//                        System.out.println("ruleCode22222222222--- " + finalTranOrderGood.getPromtype());
                         tranOrderGoods.setPromtype(ruleCode | finalTranOrderGood.getPromtype());
                         break;
                     }
                 }
-//                if (finalTranOrderGoods.)
             }
         }
         for (TranOrderGoods goodsPrice : tranOrderGoodsList) {//传进来的
@@ -432,14 +438,15 @@ public class TranOrderOptModule {
                     goodsPrice.setCompid(tranOrder.getCusno());
                     goodsPrice.setPdprice(finalGoods.getPdprice());
                     goodsPrice.setDistprice(finalGoods.getDistprice() * 100);
-                    goodsPrice.setPayamt(finalGoods.getPayamt() * 100);
+                    goodsPrice.setPayamt(finalGoods.getPayamt());
                     goodsPrice.setPromtype(finalGoods.getPromtype());
                 }
             }
             goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
-            if (goodsPrice.getPayamt() == 0) {
-                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
-            }
+            goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
+//            if (goodsPrice.getPayamt() == 0) {
+//                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
+//            }
         }
     }
 
@@ -671,8 +678,9 @@ public class TranOrderOptModule {
             List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, QUERY_ORDER_BAL, orderNo, -4);
             if(queryResult != null && !queryResult.isEmpty()){
                 int bal = Integer.parseInt(queryResult.get(0)[0].toString());
-                LogUtil.getDefaultLogger().debug("订单取消退回余额："+bal);
-                IceRemoteUtil.updateCompBal(cusno,bal);
+                LogUtil.getDefaultLogger().debug("订单取消退回余额开始："+bal);
+                int rrrr = IceRemoteUtil.updateCompBal(cusno,bal);
+                LogUtil.getDefaultLogger().debug("订单号【" + orderNo +"】---->>>订单取消退回余额结果：" + (rrrr>0));
             }
         }
         return res > 0;
@@ -694,7 +702,9 @@ public class TranOrderOptModule {
             params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
         }
         if (type == 0) {//线上支付释放锁定库存 远程调用
-            IceRemoteUtil.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length);
+            LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ------- 线上支付释放锁定库存操作开始");
+            boolean res = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length));
+            LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ------- 线上支付释放锁定库存res(false表示失败)>>>>>>>>>>>> " + res);
         }
     }
 
@@ -745,7 +755,9 @@ public class TranOrderOptModule {
                 //库存操作(redis库存返还)
                 recoverGoodsStock(orderNo, cusno, 1);
                 //门店自己取消返还数据库相关库存
+                LogUtil.getDefaultLogger().info("print by cyq cancelOffLineOrder offline-----------线下支付门店取消订单返还库存操作开始");
                 addGoodsDbStock(orderNo, cusno);
+//                LogUtil.getDefaultLogger().info("print by cyq cancelOffLineOrder offline-----------线下支付门店取消订单返还库存操作结束");
                 //余额返回
                 IceRemoteUtil.updateCompBal(cusno,balamt);
             }
@@ -787,7 +799,9 @@ public class TranOrderOptModule {
             if (res > 0) {//退款
                 if (payway == 4 || payway == 5) {//线下即付退款???
                     //客服取消返还数据库相关库存
+                    LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder offline-----------线下支付客服取消订单返还库存操作开始");
                     addGoodsDbStock(orderNo, cusno);
+//                    LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder offline-----------线下支付客服取消订单返还库存操作结束");
                     //取消24小时轮询
                     DELIVERY_DELAYED.removeByKey(orderNo);
                     //库存操作(redis库存返还)
@@ -803,9 +817,10 @@ public class TranOrderOptModule {
                     }
                     return result.success("订单取消成功，请及时处理退款并确认退款");
                 } else {//线上支付退款
-
                     //客服取消返还数据库相关库存
+                    LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder online-----------线上支付客服取消订单返还库存操作开始");
                     addGoodsDbStock(orderNo, cusno);
+//                    LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder online-----------线上支付客服取消订单返还库存操作结束");
                     //取消24小时轮询
                     DELIVERY_DELAYED.removeByKey(orderNo);
                     recoverGoodsStock(orderNo, cusno, 0);
@@ -1093,11 +1108,21 @@ public class TranOrderOptModule {
 
     public static void apportionBal(List<TranOrderGoods> tranOrderGoodsList,double bal,double payment,double freight){
         double[] dprice = new double[tranOrderGoodsList.size()];
+        double afterDiscountPrice = .0;
+
+
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
             dprice[i] = tranOrderGoodsList.get(i).getPdprice() * tranOrderGoodsList.get(i).getPnum();
+
+            afterDiscountPrice =
+                    MathUtil.exactAdd(afterDiscountPrice, tranOrderGoodsList.get(i).getPayamt())
+                            .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
 
-        bal = Math.min(bal, Arrays.stream(dprice).sum());
+        System.out.println("~~~~~~~~~~~~~~~~~~~~ bal " + bal);
+        System.out.println("~~~~~~~~~~~~~~~~~~~~ afterDiscountPrice " + afterDiscountPrice);
+
+        bal = Math.min(bal, afterDiscountPrice);
 
         double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
 

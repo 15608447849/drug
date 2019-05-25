@@ -123,12 +123,12 @@ public class OrderUtil {
                 String type = payWay == 1 ? PAY_TYPE_WX : PAY_TYPE_ALI;
                 HashMap<String,Object> resultMap = FileServerUtils.refund(type, refundno + "", tppno, prize);
                 Double code = (Double) resultMap.get("code");
-                String tradeStatus = "0";
-                if(code == 10000){
-                    tradeStatus = "-3";
-                }else{
-                    tradeStatus = "-2";
-                }
+                String tradeStatus = (code.intValue())+"";
+//                if(code == 10000){
+//                    tradeStatus = "-3";
+//                }else{
+//                    tradeStatus = "-2";
+//                }
                 message = resultMap.get("message").toString();
                 List<String> sqlList = new ArrayList<>();
                 List<Object[]> params = new ArrayList<>();
