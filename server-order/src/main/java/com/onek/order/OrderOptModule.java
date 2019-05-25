@@ -293,29 +293,30 @@ public class OrderOptModule {
                     double payamt = MathUtil.exactDiv(tranOrderGoods1.getPayamt(),100).
                             setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
 
+                    double refamt = 0;
                     if(asAppVO.getAsnum() ==  tranOrderGoods1.getPnum()){
-                        asAppVO.setRefamt(MathUtil.exactAdd(bal,payamt).
-                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-                        continue;
-                    }
-
-                    double acprice = MathUtil.exactDiv(payamt, tranOrderGoods1.getPnum()).
-                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-                    double refamt =  MathUtil.exactMul(acprice, asAppVO.getAsnum()).
-                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-                    if(bal > 0){
-                        bal = MathUtil.exactDiv(bal,
-                                tranOrderGoods1.getPnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-                        double acbalamt = MathUtil.exactMul(bal,
-                                asAppVO.getAsnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-
-                        refamt = MathUtil.exactAdd(refamt,acbalamt).
+                        refamt = MathUtil.exactAdd(bal,payamt).
                                 setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                    }else{
+                        double acprice = MathUtil.exactDiv(payamt, tranOrderGoods1.getPnum()).
+                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                        refamt =  MathUtil.exactMul(acprice, asAppVO.getAsnum()).
+                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                        if(bal > 0){
+                            bal = MathUtil.exactDiv(bal,
+                                    tranOrderGoods1.getPnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                            double acbalamt = MathUtil.exactMul(bal,
+                                    asAppVO.getAsnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+
+                            refamt = MathUtil.exactAdd(refamt,acbalamt).
+                                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                        }
                     }
+
+
                     asAppVO.setRefamt(refamt);
                 }
                 if (asAppVO.getPdno() == tranOrderGoods1.getPdno() && asAppVO.getAsnum() == tranOrderGoods1.getPnum()){
