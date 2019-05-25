@@ -42,7 +42,7 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
         }
         if (type == 3) {
             if (!validSmsCode()) return new Result().fail("短信验证码不正确");
-            if (!validPassword()) return new Result().fail("不符合密码安全性要求:\n" +
+            if (!validPassword(password)) return new Result().fail("不符合密码安全性要求:\n" +
                     "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符");
             if (StringUtils.isEmpty(password2) || !password.equals(password2)) return new Result().fail("两次密码输入不一致");
             return submit(context);
@@ -58,8 +58,8 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
     }
 
     //正则匹配密码规则
-    private boolean validPassword(){
-        if (StringUtils.isEmpty(password)) return false;
+    public static boolean validPassword(String psd){
+        if (StringUtils.isEmpty(psd)) return false;
         String pattern  = "^" +
                 "(?![A-Za-z0-9]+$)" +
                 "(?![a-z0-9\\W]+$)" +
@@ -68,7 +68,7 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
                 "[A-Za-z0-9\\W]" +
                 "{6,}" +
                 "$";
-        return Pattern.matches(pattern, password);
+        return Pattern.matches(pattern, psd);
     }
 
     // 提交
