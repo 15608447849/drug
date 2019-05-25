@@ -81,4 +81,15 @@ public class Product extends AccurateMath implements IProduct {
     public int hashCode() {
         return (int) (sku ^ (sku >>> 32));
     }
+
+    @Override
+    public String toString() {
+        return "Product{" +
+                "sku=" + sku +
+                ", nums=" + nums +
+                ", originalPrice=" + originalPrice +
+                ", currentPrice=" + currentPrice +
+                ", discounted=" + discounted +
+                '}';
+    }
 }

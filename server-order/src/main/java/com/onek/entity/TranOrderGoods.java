@@ -250,4 +250,36 @@ public class TranOrderGoods {
     public void setSpu(String spu) {
         this.spu = spu;
     }
+
+    @Override
+    public String toString() {
+        return "TranOrderGoods{" +
+                "unqid='" + unqid + '\'' +
+                ", orderno='" + orderno + '\'' +
+                ", compid=" + compid +
+                ", pdno=" + pdno +
+                ", pdprice=" + pdprice +
+                ", distprice=" + distprice +
+                ", payamt=" + payamt +
+                ", coupamt=" + coupamt +
+                ", promtype=" + promtype +
+                ", pkgno=" + pkgno +
+                ", asstatus=" + asstatus +
+                ", createdate='" + createdate + '\'' +
+                ", createtime='" + createtime + '\'' +
+                ", cstatus=" + cstatus +
+                ", pnum=" + pnum +
+                ", actcode='" + actcode + '\'' +
+                ", balamt=" + balamt +
+                ", pname='" + pname + '\'' +
+                ", pspec='" + pspec + '\'' +
+                ", manun='" + manun + '\'' +
+                ", spu='" + spu + '\'' +
+                ", standarNo='" + standarNo + '\'' +
+                ", brandn='" + brandn + '\'' +
+                ", vatp=" + vatp +
+                ", mp=" + mp +
+                ", rrp=" + rrp +
+                '}';
+    }
 }

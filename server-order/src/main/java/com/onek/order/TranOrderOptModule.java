@@ -33,6 +33,7 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.onek.order.PayModule.*;
@@ -444,9 +445,9 @@ public class TranOrderOptModule {
                 }
             }
             goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
-            if (goodsPrice.getPayamt() == 0) {
-                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
-            }
+//            if (goodsPrice.getPayamt() == 0) {
+//                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
+//            }
         }
     }
 
