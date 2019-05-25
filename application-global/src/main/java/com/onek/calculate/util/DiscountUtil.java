@@ -9,8 +9,12 @@ import java.util.*;
 
 public class DiscountUtil {
     public static double[] shareDiscount(double[] prices, double discount) {
-        if (discount <= 0) {
+        if (discount < 0) {
             throw new IllegalArgumentException("折扣价小于0");
+        }
+
+        if (discount == 0) {
+            return prices;
         }
 
         double[] result = new double[prices.length];

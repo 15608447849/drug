@@ -59,7 +59,7 @@ public class Product extends AccurateMath implements IProduct {
     }
 
     public void addDiscounted(double discounted) {
-        this.discounted = Math.min(add(this.discounted, discounted), getCurrentPrice());
+        this.discounted = Math.min(add(this.discounted, discounted), mul(this.originalPrice, this.nums));
     }
 
     public void updateCurrentPrice() {
