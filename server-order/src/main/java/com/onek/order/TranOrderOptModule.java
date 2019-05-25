@@ -33,6 +33,7 @@ import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 import static com.onek.order.PayModule.*;
@@ -242,6 +243,7 @@ public class TranOrderOptModule {
             pdnum += goodsVO.getPnum();
             goodsVO.setCompid(tranOrder.getCusno());
             goodsVO.setActcode(String.valueOf(goodsVO.getActcode()));
+            goodsVO.setPayamt(goodsVO.getPnum()*goodsVO.getPdprice());
             tranOrderGoods.add(goodsVO);
         }
         tranOrder.setPdnum(pdnum);
@@ -424,13 +426,10 @@ public class TranOrderOptModule {
                 for (TranOrderGoods finalTranOrderGood : finalTranOrderGoods) {
                     if (finalTranOrderGood.getPdno() == iDiscount.getProductList().get(i).getSKU()) {
                         int ruleCode = DiscountRuleStore.getRuleByBRule((int) iDiscount.getBRule());
-//                        System.out.println("ruleCode11111111111--- " + iDiscount.getBRule());
-//                        System.out.println("ruleCode22222222222--- " + finalTranOrderGood.getPromtype());
                         tranOrderGoods.setPromtype(ruleCode | finalTranOrderGood.getPromtype());
                         break;
                     }
                 }
-//                if (finalTranOrderGoods.)
             }
         }
         for (TranOrderGoods goodsPrice : tranOrderGoodsList) {//传进来的
@@ -439,14 +438,15 @@ public class TranOrderOptModule {
                     goodsPrice.setCompid(tranOrder.getCusno());
                     goodsPrice.setPdprice(finalGoods.getPdprice());
                     goodsPrice.setDistprice(finalGoods.getDistprice() * 100);
-                    goodsPrice.setPayamt(finalGoods.getPayamt() * 100);
+                    goodsPrice.setPayamt(finalGoods.getPayamt());
                     goodsPrice.setPromtype(finalGoods.getPromtype());
                 }
             }
             goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
-            if (goodsPrice.getPayamt() == 0) {
-                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
-            }
+            goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
+//            if (goodsPrice.getPayamt() == 0) {
+//                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
+//            }
         }
     }
 
@@ -1113,10 +1113,14 @@ public class TranOrderOptModule {
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
             dprice[i] = tranOrderGoodsList.get(i).getPdprice() * tranOrderGoodsList.get(i).getPnum();
+
             afterDiscountPrice =
                     MathUtil.exactAdd(afterDiscountPrice, tranOrderGoodsList.get(i).getPayamt())
                             .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
+
+        System.out.println("~~~~~~~~~~~~~~~~~~~~ bal " + bal);
+        System.out.println("~~~~~~~~~~~~~~~~~~~~ afterDiscountPrice " + afterDiscountPrice);
 
         bal = Math.min(bal, afterDiscountPrice);
 

@@ -36,12 +36,6 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
         int index;
         IDiscount i;
         for (IProduct product : products) {
-            ProdEntity prod = ProdInfoStore.getProdBySku(product.getSKU());
-
-            if (prod != null) {
-                product.setOriginalPrice(MathUtil.exactDiv(prod.getVatp(), 100).doubleValue());
-            }
-
             temp = getCurrentDiscounts(product);
 
             doFilter(temp, product);

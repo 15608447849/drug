@@ -62,16 +62,28 @@ public class ActivityFilterService extends BaseDiscountFilterService {
         List<IDiscount> returnResult = new ArrayList<>(
                 new HashSet<>(Arrays.asList(activities)));
 
+        ProdEntity prod = ProdInfoStore.getProdBySku(sku);
+
+        if (prod != null) {
+            product.setOriginalPrice(MathUtil.exactDiv(prod.getVatp(), 100).doubleValue());
+        }
+
         Activity a;
         for (IDiscount discount : returnResult) {
             a = (Activity) discount;
             discount.setLimits(sku, a.getLimitnum());
+
+            if (a.getActPrice() <= 0) {
+                continue;
+            }
+
             a.setActPrice(
                     (a.getAssCstatus() & 512) == 0
                         ? MathUtil.exactDiv(a.getActPrice(), 100).doubleValue()
                         : MathUtil.exactDiv(a.getActPrice(), 100)
                             .multiply(BigDecimal.valueOf(product.getOriginalPrice()))
                             .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+
             discount.setActionPrice(sku, a.getActPrice());
         }
 
