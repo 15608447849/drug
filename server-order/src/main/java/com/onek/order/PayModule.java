@@ -443,11 +443,6 @@ public class PayModule {
         List<Object[]> params = new ArrayList<>();
 
         int paySpreadBal = getPaySpreadBal(compid,orderno);
-        if(paySpreadBal > 0 && paytype != 0){
-            sqlList.add(INSERT_TRAN_TRANS);
-            params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, paySpreadBal, 0, paysource, tradeStatus, GenIdUtil.getUnqId(),
-                    thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
-        }
 
         sqlList.add(UPD_ORDER_STATUS);//更新订单状态
         params.add(new Object[]{1,1,
@@ -462,6 +457,13 @@ public class PayModule {
 //                + "completedate,completetime,cstatus)"
         sqlList.add(INSERT_TRAN_PAYREC);//新增支付记录
         params.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, "{}", "{}", tradeDate, tradeTime});
+
+        if(paySpreadBal > 0 && paytype != 0){
+            sqlList.add(INSERT_TRAN_TRANS);
+            params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, paySpreadBal, 0, paysource, tradeStatus, GenIdUtil.getUnqId(),
+                    thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
+        }
+
         int year = Integer.parseInt("20" + orderno.substring(0,2));
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
