@@ -361,6 +361,10 @@ public class TranOrderOptModule {
             addActBuyNum(tranOrder.getCusno(), tranOrderGoods);
 
             try{
+                RedisOrderUtil.addOrderNumByCompid(tranOrder.getCusno());
+            }catch (Exception e){}
+
+            try{
                 deductionBal(tranOrder.getCusno(),bal);
             }catch (Exception e){
                 e.printStackTrace();
@@ -710,6 +714,9 @@ public class TranOrderOptModule {
             RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
             params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
         }
+        try{
+            RedisOrderUtil.reduceOrderNumByCompid(cusno);
+        }catch (Exception e){}
         if (type == 0) {//线上支付释放锁定库存 远程调用
             LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ------- 线上支付释放锁定库存操作开始");
             boolean res = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length));

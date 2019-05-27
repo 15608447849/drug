@@ -225,7 +225,7 @@ public class OrderUtil {
                 }
 
                 if(StringUtils.isEmpty(arriarc) && tranOrder.getRvaddno() > 0){
-                    arriarc = "10" + String.valueOf(tranOrder.getRvaddno()).substring(0,7);
+                    arriarc = "10" + String.valueOf(tranOrder.getRvaddno()).substring(0,6);
                 }
 
                 if(StringUtils.isEmpty(arriarc)){
@@ -290,10 +290,6 @@ public class OrderUtil {
                         IceRemoteUtil.updateNative(UPDATE_SKU_SALES, sales, sku);
                     }
                 }
-
-                try{
-                    RedisOrderUtil.addOrderNumByCompid(compid);
-                }catch (Exception e){}
 
                 for(Object[] obj : list) {
                     int promtype = Integer.parseInt(obj[2].toString());

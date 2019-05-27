@@ -1241,7 +1241,12 @@ public class ProdModule {
                             prodVO.setActprod(false);
                             prodVO.setMutiact(false);
                         }
+                    }else if(prizeEntity.getActcode() == 0){ // 没有活动
+                        prodVO.setRulestatus(0);
+                        prodVO.setActprod(false);
+                        prodVO.setMutiact(false);
                     }
+
                 }
             }
         }
