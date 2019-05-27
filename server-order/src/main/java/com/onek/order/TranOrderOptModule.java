@@ -1121,7 +1121,7 @@ public class TranOrderOptModule {
 
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
-            dprice[i] = tranOrderGoodsList.get(i).getPdprice() * tranOrderGoodsList.get(i).getPnum();
+            dprice[i] = tranOrderGoodsList.get(i).getPayamt();
 
             afterDiscountPrice =
                     MathUtil.exactAdd(afterDiscountPrice, tranOrderGoodsList.get(i).getPayamt())
