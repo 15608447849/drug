@@ -278,6 +278,7 @@ public class SynDbData implements Callable<Object> {
     public int updateNativeBk(){
         int result = 0;
         String[] resultSQL = baseDao.getNativeReplaceSQL(nativeSQL[0],tbSharding);
+        LogUtil.getDefaultLogger().debug("【Debug】SYN Native SQL：" + resultSQL[1]);
         JdbcBaseDao jdbcBaseDao = null;
         try {
             jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);

@@ -198,7 +198,7 @@ public class PayModule {
                 return new Result().fail("支付金额不能小于0!");
             }
             try{
-                String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, orderno,
+                String r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, orderno,
                         "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
 
                 return new Result().success(r);
