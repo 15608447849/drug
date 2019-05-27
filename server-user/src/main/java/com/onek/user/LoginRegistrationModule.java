@@ -49,10 +49,11 @@ public class LoginRegistrationModule {
         assert storeOp!=null;
         result = storeOp.execute(appContext);
         if (!result.isSuccess()){
-            //删除用户信息
-            int i = BaseDAO.getBaseDAO().updateNative( "DELETE FROM {{?" +TB_SYSTEM_USER+"}} WHERE uid=?",appContext.getUserSession().userId);
-            if (i<=0){
-                result.setHashMap("error","注册失败且无法删除此用户信息");
+            UserSession session = appContext.getUserSession();
+            if (session!=null && session.compId == 0){
+                //删除用户信息
+                int i = BaseDAO.getBaseDAO().updateNative( "DELETE FROM {{?" +TB_SYSTEM_USER+"}} WHERE uid=?",session.userId);
+                if (i<=0) result.setHashMap("error","注册失败且无法删除此用户信息");
             }
         }
         return result;
