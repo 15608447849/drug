@@ -69,7 +69,7 @@ public interface DSMConst extends UDAConst {
             {"tb_proxy_notice"}, //51 区域广播表
             {"tb_proxy_noticearec"}, //52 区域广播地区表
             {"tb_proxy_noticedt"}, //53 区域广播接收表
-            {"tb_proxy_uarea"} //54 渠道区域表
+            {"tb_proxy_uarea"}, //54 渠道区域表
 			{"td_tran_rebate"}, //55 返利记录表
     };
 
