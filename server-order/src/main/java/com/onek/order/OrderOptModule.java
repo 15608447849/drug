@@ -223,10 +223,7 @@ public class OrderOptModule {
                         INSERT_ASAPP_SQL, paramsInsert, asAppVOS.size()));
             }
         } else {
-            //改变订单状态为已补开发票
-            String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|256 "
-                    + " where cstatus&1=0 and orderno=? and ostatus in(3,4)";
-            if (baseDao.updateNativeSharding(compid, year, updSQL, orderNo) > 0) {
+//            if (baseDao.updateNativeSharding(compid, year, updSQL, orderNo) > 0) {
                 //向售后表插入申请数据
                 String asOrderId = GenIdUtil.getAsOrderId();
                 Object[] pramsObj = new Object[]{asAppVOS.get(0).getOrderno(), asAppVOS.get(0).getPdno(), asOrderId,
@@ -236,7 +233,7 @@ public class OrderOptModule {
                 int res = baseDao.updateNativeSharding(0, localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
 
                 return res > 0 ? result.success(asOrderId) : result.fail("申请失败");
-            }
+//            }
         }
         return b ? result.success("申请成功") : result.fail("申请失败");
     }

@@ -602,6 +602,14 @@ public class PayModule {
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
+        int year = Integer.parseInt("20" + afsano.substring(0, 2));
+        String selectSql = "select orderno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1>0 and "
+                + " asno=" + afsano;
+        List<Object[]> qResult = baseDao.queryNativeSharding(0, year, selectSql);
+        String orderNo = String.valueOf(qResult.get(0)[0]);
+        //改变订单状态为已补开发票
+        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set cstatus=cstatus|256 "
+                + " where cstatus&1=0 and orderno=? and ostatus in(3,4)";
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
         params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0,  MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
@@ -610,6 +618,8 @@ public class PayModule {
 //                + "completedate,completetime,cstatus)"
         sqlList.add(INSERT_TRAN_PAYREC);//新增支付记录
         params.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, "{}", "{}", tradeDate, tradeTime});
+        sqlList.add(updSQL);
+        params.add(new Object[]{orderNo});
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid, TimeUtils.getCurrentYear(), sqlNative, params));
