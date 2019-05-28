@@ -26,8 +26,10 @@ public class StoreCustomerOp implements IOperation<AppContext> {
     int belong; //DB用户归属
     @Override
     public Result execute(AppContext context) {
+
+        if (type == -1) return new Result().success(queryAllDB(name));
+
         if (!StringUtils.isEmpty(uphone)) {
-            if (type == -1) return new Result().success(queryAllDB(name));
             if (type >= 0){
                 //根据手机号码 , 查询是否存在
                 String selectSql = "SELECT uid FROM {{?" + TB_SYSTEM_USER +"}} WHERE cstatus&1=0 AND (roleid&?>0 OR roleid&?>0) AND uphone=?";
@@ -52,16 +54,15 @@ public class StoreCustomerOp implements IOperation<AppContext> {
     private static List<StoreCustomerOp> queryAllDB(String name) {
         List<StoreCustomerOp> list = new ArrayList<>();
         try {
-            String selectSql = "SELECT uid,urealname,uphone,belong FROM {{?" + TB_SYSTEM_USER +"}} WHERE cstatus&1=0 AND (roleid&?>0 OR roleid&?>0) AND LIKE '%?%'";
-
-            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,  RoleCodeCons._DBM, RoleCodeCons._DB,name);
-
+            if (name == null) name = "";
+            String selectSql = "SELECT uid,urealname,uphone,belong FROM {{?" + TB_SYSTEM_USER +"}} WHERE cstatus&1=0 AND (roleid&?>0 OR roleid&?>0) AND urealname LIKE '%"+name+"%'";
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,  RoleCodeCons._DBM, RoleCodeCons._DB);
             for (Object[] rows : lines){
                 StoreCustomerOp data = new StoreCustomerOp();
                 data.uid = StringUtils.checkObjectNull(rows[0],0);
                 data.name = StringUtils.checkObjectNull(rows[1],"");
                 data.uphone = StringUtils.checkObjectNull(rows[2],"");
-                data.belong = StringUtils.checkObjectNull(rows[4],0);
+                data.belong = StringUtils.checkObjectNull(rows[3],0);
                 list.add(data);
             }
 

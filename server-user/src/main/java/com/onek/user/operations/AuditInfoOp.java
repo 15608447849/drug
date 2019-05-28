@@ -8,6 +8,7 @@ import com.onek.entitys.Result;
 import com.onek.user.interactive.AptitudeInfo;
 import com.onek.user.interactive.AuditInfo;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.RoleCodeCons;
 import com.onek.util.area.AreaEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -31,14 +32,15 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
     private PageHolder pageHolder = new PageHolder(page);
     @Override
     public Result execute(AppContext appContext) {
-        page.pageIndex = appContext.param.pageIndex;
-        page.pageSize  = appContext.param.pageNumber;
+        try {
+            page.pageIndex = appContext.param.pageIndex;
+            page.pageSize  = appContext.param.pageNumber;
 
-        StringBuilder sb = new StringBuilder();
-        sb.append("SELECT " +
-                //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12
-                "a.cid,a.uphone,b.cname,b.cstatus,b.examine,b.inviter,b.auditer,b.caddrcode,b.caddr,b.submitdate,b.submittime,b.auditdate,b.audittime " +
-                " FROM {{?"+TB_SYSTEM_USER +"}} AS a INNER JOIN {{?" +TB_COMP + "}} AS b ON a.cid=b.cid WHERE a.cstatus&1=0 AND b.cstatus&1=0 AND b.ctype=0");
+            StringBuilder sb = new StringBuilder();
+            sb.append("SELECT " +
+                    //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12
+                    "a.cid,a.uphone,b.cname,b.cstatus,b.examine,b.inviter,b.auditer,b.caddrcode,b.caddr,b.submitdate,b.submittime,b.auditdate,b.audittime " +
+                    " FROM {{?"+TB_SYSTEM_USER +"}} AS a INNER JOIN {{?" +TB_COMP + "}} AS b ON a.cid=b.cid WHERE a.cstatus&1=0 AND b.cstatus&1=0 AND b.ctype=0");
 
             if (!StringUtils.isEmpty(phone)){
                 sb.append(" AND ").append("a.uphone LIKE '%"+phone+"%'"); //模糊查询手机
@@ -67,6 +69,10 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                     return new Result().setQuery(list,pageHolder);
                 }
             }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return new Result().setQuery(new ArrayList<>(),pageHolder);
     }
 
@@ -101,6 +107,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 info.submitDate = StringUtils.obj2Str(arr[9])+" "+StringUtils.obj2Str(arr[10]);
                 info.auditDate = StringUtils.obj2Str(arr[11])+" "+StringUtils.obj2Str(arr[12]);
                 queryAptitude(info);
+                queryCursor(info);
                 list.add(info);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -108,6 +115,18 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         }
         return list;
     }
+    //查询客服专员信息
+    private void queryCursor(AuditInfo info) {
+        if (StringUtils.isEmpty(info.cursorId)) return;
+        String selectSql = "SELECT urealname,uphone FROM {{?" + TB_SYSTEM_USER +"}} WHERE cstatus&1=0 AND uid=?";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,info.cursorId);
+        if (lines.size()==1){
+            Object[] o = lines.get(0);
+            info.cursorName = StringUtils.obj2Str(o[0]);
+            info.cursorPhone = StringUtils.obj2Str(o[1]);
+        }
+    }
+
     //查询企业的审核资质信息
     private void queryAptitude(AuditInfo info) {
         AptitudeInfo cardInfo = info.cardInfo;

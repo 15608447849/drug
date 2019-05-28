@@ -9,6 +9,7 @@ public class AuditInfo {
     public String phone; //手机
     public String company; //公司名
     public String status; //状态
+
     //需要返回:
     public String companyId; //公司码
     public String examine;//审核失败原因
@@ -19,7 +20,8 @@ public class AuditInfo {
     public String addressCode;//地区码
     //共有
     public String cursorId;//客服专员ID
-
+    public String cursorName;//客户专员姓名
+    public String cursorPhone;//客户手机号码
 
     //资质信息
     public AptitudeInfo cardInfo = new AptitudeInfo();
