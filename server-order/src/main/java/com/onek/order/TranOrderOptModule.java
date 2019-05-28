@@ -249,13 +249,6 @@ public class TranOrderOptModule {
         tranOrder.setPdnum(pdnum);
         List<GoodsStock> goodsStockList = new ArrayList<>();
         if (orderType == 0) {
-            //库存判断
-            boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
-            if (b) {
-                //库存不足处理
-                stockRecovery(goodsStockList);
-                return result.fail("商品库存发生改变！");
-            }
             //订单费用计算（费用分摊以及总费用计算）
             try {
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格开始");
@@ -263,15 +256,33 @@ public class TranOrderOptModule {
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格结束");
             } catch (Exception e) {
                 e.printStackTrace();
-                stockRecovery(goodsStockList);
+//                stockRecovery(goodsStockList);
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格失败");
                 return result.fail("下单失败");
+            }
+            //库存判断
+            boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
+            if (b) {
+                //库存不足处理
+                stockRecovery(goodsStockList);
+                return result.fail("商品库存发生改变！");
             }
         } else if (orderType == 1) { // 秒杀
             //库存判断
             long actcode = 0;
             if (jsonObject.containsKey("actcode") && !jsonObject.getString("actcode").isEmpty()) {
                 actcode = jsonObject.getLong("actcode");
+            }
+            //订单费用计算（费用分摊以及总费用计算）
+            try {
+                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格开始");
+                calculatePrice(tranOrderGoods, tranOrder, unqid);
+                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格结束");
+            } catch (Exception e) {
+                e.printStackTrace();
+//                stockRecovery(goodsStockList);
+                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格失败");
+                return result.fail("下单失败");
             }
             List<TranOrderGoods> goodsList = secKillStockIsEnough(actcode, tranOrderGoods);
             if (goodsList.size() != tranOrderGoods.size()) {
@@ -284,8 +295,6 @@ public class TranOrderOptModule {
             if(num > 0 && limitNum > 0 && (limitNum - (num + tranOrderGoods.get(0).getPnum())) < 0){
                 return new Result().fail("秒杀商品下单数量过多或秒杀次数过于频繁!");
             }
-            //订单费用计算（费用分摊以及总费用计算）
-            calculatePrice(tranOrderGoods, tranOrder, unqid);
         }
         double payamt = tranOrder.getPayamt();
         double bal = 0;
@@ -350,6 +359,10 @@ public class TranOrderOptModule {
             JsonObject object = new JsonObject();
 
             addActBuyNum(tranOrder.getCusno(), tranOrderGoods);
+
+            try{
+                RedisOrderUtil.addOrderNumByCompid(tranOrder.getCusno());
+            }catch (Exception e){}
 
             try{
                 deductionBal(tranOrder.getCusno(),bal);
@@ -701,6 +714,9 @@ public class TranOrderOptModule {
             RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
             params.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno()});
         }
+        try{
+            RedisOrderUtil.reduceOrderNumByCompid(cusno);
+        }catch (Exception e){}
         if (type == 0) {//线上支付释放锁定库存 远程调用
             LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ------- 线上支付释放锁定库存操作开始");
             boolean res = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length));
@@ -1112,7 +1128,7 @@ public class TranOrderOptModule {
 
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
-            dprice[i] = tranOrderGoodsList.get(i).getPdprice() * tranOrderGoodsList.get(i).getPnum();
+            dprice[i] = tranOrderGoodsList.get(i).getPayamt();
 
             afterDiscountPrice =
                     MathUtil.exactAdd(afterDiscountPrice, tranOrderGoodsList.get(i).getPayamt())
