@@ -65,7 +65,8 @@ public interface DSMConst extends UDAConst {
             {"td_bk_tran_goods"}, //47 后台订单商品表
             {"td_tran_asapp"}, //48 后台售后表
             {"td_notice"}, //49 公告信息表
-            {"td_prom_offlcoup"} //50 线下优惠券表
+            {"td_prom_offlcoup"}, //50 线下优惠券表
+            {"td_tran_rebate"}, //51 返利记录表
 
     };
 
@@ -124,6 +125,7 @@ public interface DSMConst extends UDAConst {
     public final static int TD_TRAN_ASAPP = 48;
     public final static int TD_NOTICE = 49;
     public final static int TD_PROM_OFFLCOUP = 50;
+    public final static int TD_TRAN_REBATE = 51;
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
     // 索引必须同_DB_TABLES里的索引对应
@@ -138,7 +140,7 @@ public interface DSMConst extends UDAConst {
             0, 0, 0, 0, 1,//35-39
             1, 1, 1, 1, 1,//40-44
             1, 4, 4, 4, 2,//45-49
-            0, 0, 0, 0, 0,
+            0, 1, 0, 0, 0,//
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,

@@ -8,17 +8,17 @@ import java.util.List;
 public class GiftRuleHandler implements IRuleHandler {
     @Override
     public void subHandler(IDiscount discount, double value, int times) {
-        discount.addGift(Gift.getSubCoupon(value, times));
+        discount.addGift(Gift.getSubCoupon(value, times, discount.getDiscountNo()));
     }
 
     @Override
     public void percentHandler(IDiscount discount, double value, int times) {
-        discount.addGift(Gift.getPercentCoupon(value, times));
+        discount.addGift(Gift.getPercentCoupon(value, times, discount.getDiscountNo()));
     }
 
     @Override
     public void shippingHandler(IDiscount discount, double value, int times) {
-        discount.addGift(Gift.getFreeShipping(times));
+        discount.addGift(Gift.getFreeShipping(times, discount.getDiscountNo()));
     }
 
     @Override

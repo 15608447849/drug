@@ -4,6 +4,7 @@ import util.MathUtil;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.List;
 
 public class DiscountResult {
@@ -13,6 +14,7 @@ public class DiscountResult {
     private boolean exCoupon; //是否排斥优惠券
     private int totalNums;
     private double couponValue;
+    private List<Gift> giftList; // 总赠品
     private List<IDiscount> activityList; // 活动列表
 
     public DiscountResult(List<IDiscount> activityList,
@@ -23,6 +25,7 @@ public class DiscountResult {
 
         this.totalNums = prodsNum(products);
         this.totalCurrentPrice = prodsCurrentTotal(products);
+        this.giftList = new ArrayList<>();
 
         for (IDiscount discount : activityList) {
             this.freeShipping = this.freeShipping || discount.getFreeShipping() ;
@@ -30,6 +33,9 @@ public class DiscountResult {
             this.totalDiscount =
                     MathUtil.exactAdd(discount.getDiscounted(), this.totalDiscount)
                             .doubleValue();
+            if (discount.getGiftList() != null) {
+                giftList.addAll(discount.getGiftList());
+            }
         }
 
         this.totalDiscount = MathUtil.decimal(2, this.totalDiscount);
@@ -84,4 +90,9 @@ public class DiscountResult {
     public double getCouponValue() {
         return couponValue;
     }
+
+    public List<Gift> getGiftList() {
+        return giftList;
+    }
+
 }

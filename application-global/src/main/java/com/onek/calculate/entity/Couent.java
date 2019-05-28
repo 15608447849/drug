@@ -4,6 +4,7 @@ import com.onek.calculate.service.AccurateMath;
 import com.onek.calculate.util.DiscountUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Couent extends AccurateMath implements IDiscount {
@@ -243,6 +244,11 @@ public class Couent extends AccurateMath implements IDiscount {
 
     @Override
     public void addGifts(List<Gift> gifts) {
+    }
+
+    @Override
+    public List<Gift> getGiftList() {
+        return Collections.EMPTY_LIST;
     }
 
     public Ladoff getCurrLadoff() {

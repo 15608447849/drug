@@ -139,6 +139,11 @@ public class TranOrderOptModule {
                     + " WHERE ord.cstatus&1 = 0 ";
 
 
+    private static final String INSERT_GIFT =
+            " INSERT INTO {{?" + DSMConst.TD_TRAN_REBATE + "}} "
+            + " (unqid, orderno, compid, rebate, createdate, createtime) "
+            + " VALUES (?, ?, ?, ?, CURRENT_DATE, CURRENT_TIME) ";
+
     private static final  String QUERY_ORDER_BAL = "SELECT balamt from {{?"+DSMConst.TD_TRAN_ORDER+"}} where balamt > 0 and orderno = ? and ostatus = ? ";
 
     @UserPermission(ignore = false)
@@ -252,7 +257,7 @@ public class TranOrderOptModule {
             //订单费用计算（费用分摊以及总费用计算）
             try {
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格开始");
-                calculatePrice(tranOrderGoods, tranOrder, unqid);
+                calculatePrice(tranOrderGoods, tranOrder, unqid, sqlList, params);
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格结束");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -276,7 +281,7 @@ public class TranOrderOptModule {
             //订单费用计算（费用分摊以及总费用计算）
             try {
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格开始");
-                calculatePrice(tranOrderGoods, tranOrder, unqid);
+                calculatePrice(tranOrderGoods, tranOrder, unqid, sqlList, params);
                 LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格结束");
             } catch (Exception e) {
                 e.printStackTrace();
@@ -405,7 +410,7 @@ public class TranOrderOptModule {
      * @version 1.1.1
      **/
     private void calculatePrice(List<TranOrderGoods> tranOrderGoodsList, TranOrder tranOrder,
-                                long coupon) {
+                                long coupon, List<String> sqlList, List<Object[]> params) {
         List<TranOrderGoods> finalTranOrderGoods = new ArrayList<>();//最终的商品详情
         List<Product> tempProds = new ArrayList<>();
         tranOrderGoodsList.forEach(tranOrderGoods -> {
@@ -415,6 +420,21 @@ public class TranOrderOptModule {
             tempProds.add(product);
         });
         DiscountResult discountResult = CalculateUtil.calculate(tranOrder.getCusno(), tempProds, coupon);
+
+        System.out.println("___________________________ ");
+        System.out.println(JSON.toJSONString(discountResult.getGiftList()));
+
+        // 保存返利信息
+        if (!discountResult.getGiftList().isEmpty()) {
+            sqlList.add(INSERT_GIFT);
+            // unqid, orderno, compid, rebate
+            params.add(new Object[] {
+                    GenIdUtil.getUnqId(),
+                    tranOrder.getOrderno(),
+                    tranOrder.getCusno(),
+                    JSON.toJSONString(discountResult.getGiftList())});
+        }
+
 //        if (discountResult == null) return finalTranOrderGoods;
         tranOrder.setPdamt((discountResult.getTotalCurrentPrice() + discountResult.getTotalDiscount()) * 100);
         tranOrder.setCoupamt((discountResult.getCouponValue() * 100));//订单使用优惠券(李康亮记得填)
