@@ -36,9 +36,9 @@ public class RedisOrderUtil {
      */
     public static long addActBuyNum(int compid, long sku, long actCode,int num){
         if(compid > 0 && sku > 0 && actCode > 0 && num > 0){
-            if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP +compid)) {
+//            if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP +compid)) {
                 return RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP + compid, num);
-            }
+//            }
         }
         return 0;
     }
