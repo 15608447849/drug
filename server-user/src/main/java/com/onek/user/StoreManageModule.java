@@ -24,7 +24,7 @@ import static constant.DSMConst.TB_SYSTEM_USER;
  */
 public class StoreManageModule {
 
-    //查询是否存在客服专员
+    //查询是否存在客服专员BD
     @UserPermission(ignore = true)
     public Result existStoreCustomer(AppContext appContext){
         String json = appContext.param.json;

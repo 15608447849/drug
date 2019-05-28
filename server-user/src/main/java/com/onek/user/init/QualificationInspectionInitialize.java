@@ -58,7 +58,7 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
         public void run() {
             if (flag){
                 //判断是否还在过期中
-                final String sql = "SELECT * FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND validitye < CURRENT_DATE";
+                final String sql = "SELECT * FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND validitye<CURRENT_DATE";
                 List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql,atype,compid);
                 if (lines.size()>0){
                     sendMessage();//发送消息
@@ -109,7 +109,6 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
 
     @Override
     public void run() {
-
        while (true){
            try {
                execute();

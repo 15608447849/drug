@@ -27,7 +27,6 @@ public class ObjectPool {
                 return;
             }
             objects.addElement(obj);
-
         }catch (Exception e){
             e.printStackTrace();
         }finally {
@@ -50,7 +49,6 @@ public class ObjectPool {
                 obj = enumerate.nextElement();
                 objects.removeElement(obj);
             }
-
             return obj;
         }catch (Exception e){
             e.printStackTrace();
@@ -66,7 +64,7 @@ public class ObjectPool {
      * ideaTime 超时时间
      * true 移除自己
      */
-    public boolean checkSelf(long ideaTime){
+    boolean checkSelf(long ideaTime){
         if (System.currentTimeMillis() - time > ideaTime) {
             try{
                 lock.lock();
