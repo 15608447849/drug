@@ -41,6 +41,7 @@ public class StoreBasicInfoOp {
             RedisUtil.getStringProvide().set(""+info.storeId, GsonUtils.javaBeanToJson(info) );
         }
     }
+
     //获取企业信息
     public static boolean getStoreInfoById(StoreBasicInfo info) {
         //通过企业码获取企业信息

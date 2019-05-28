@@ -33,10 +33,6 @@ import static util.ImageVerificationUtils.getRandomCodeByNum;
  */
 public class VerificationOp implements IOperation<AppContext> {
 
-
-
-
-
     public int type = 0;
     public String phone; //手机号
 
@@ -107,7 +103,7 @@ public class VerificationOp implements IOperation<AppContext> {
         return new Result().fail("无法生成验证图片");
     }
 
-    //发送短信验证码-等待接入短信接口
+    //发送短信验证码
     private Result sendSmsCode(int tempNo) {
         String code = genSmsCodeStoreCache(phone);
         if (!StringUtils.isEmpty(code)){
@@ -116,8 +112,9 @@ public class VerificationOp implements IOperation<AppContext> {
         }
         return new Result().fail("获取短信验证码失败");
     }
-
+    //生成短信验证码缓存
     private static String genSmsCodeStoreCache(String phone){
+        if(StringUtils.isEmpty(phone)) return null; //手机号码不能为空
         String code = getRandomCodeByNum(6);
         //存入缓存
         String res = RedisUtil.getStringProvide().set("SMS"+phone,code);

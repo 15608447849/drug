@@ -37,9 +37,7 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
     public Result execute(AppContext context) {
         if (StringUtils.isEmpty(phone) || phone.length() != 11) return new Result().fail("无效的手机号码");
         if (type == 1) return checkPhoneIsExist();
-        if (type == 2) {
-            return new VerificationOp().setType(type).setPhone(phone).execute(context);
-        }
+        if (type == 2) return new VerificationOp().setType(type).setPhone(phone).execute(context);
         if (type == 3) {
             if (!validSmsCode()) return new Result().fail("短信验证码不正确");
             if (!validPassword(password)) return new Result().fail("不符合密码安全性要求:\n" +

@@ -39,7 +39,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
        if (StringUtils.isEmpty(storeName,address))  return new Result().fail("门店或地址未填写");
 
         //根据企业营业执照地址查询是否存在相同已认证的企业
-        String selectSql = "SELECT cid,caddr,cname FROM {{?" + TB_COMP +"}} WHERE cstatus&256>0 AND caddr=?  OR cname=?";
+        String selectSql = "SELECT cid,caddr,cname FROM {{?" + TB_COMP +"}} WHERE ctype=0 AND cstatus&256>0 AND caddr=?  OR cname=?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,address,storeName);
         if (lines.size()>0){
             boolean isAccess = true;
@@ -59,9 +59,10 @@ public class UpdateStoreOp implements IOperation<AppContext> {
             //查询企业ID是否存在
             long compid = _getCompanyCode(BaseDAO.getBaseDAO().queryNative("SELECT cid FROM {{?"+ TB_COMP +"}}")); //生成企业码
 
+            //ctype 数据库默认 0
             String insertSql = "INSERT INTO {{?"+ TB_COMP +"}} " +
-                    "(cid,cname,cnamehash,caddr,caddrcode,lat,lng,cstatus,createdate, createtime,submitdate,submittime) " +
-                    "VALUES(?,?,crc32(?),?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,CURRENT_DATE,CURRENT_TIME)";
+                    "(ctype,cid,cname,cnamehash,caddr,caddrcode,lat,lng,cstatus,createdate, createtime,submitdate,submittime) " +
+                    "VALUES(0,?,?,crc32(?),?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,CURRENT_DATE,CURRENT_TIME)";
             int i = BaseDAO.getBaseDAO().updateNative(insertSql,
                     compid,
                     storeName,
@@ -92,7 +93,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
         //修改门店信息
         String updateSql = "UPDATE {{?" + TB_COMP + "}} " +
                 "SET cname=?,cnamehash=crc32(?),caddr=?,caddrcode=?,lat=?,lng=?,cstatus=?,submitdate=CURRENT_DATE,submittime=CURRENT_TIME" +
-                " WHERE cstatus&1=0 AND cid=?";
+                " WHERE ctype=0 AND cstatus&1=0 AND cid=?";
         int i = BaseDAO.getBaseDAO().updateNative(updateSql,
                 storeName,
                 storeName,
