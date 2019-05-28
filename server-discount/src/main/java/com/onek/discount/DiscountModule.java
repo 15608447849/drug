@@ -115,22 +115,21 @@ public class DiscountModule {
         String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=? where cstatus&1=0 and actcode=? and gcode=?";
         int result = baseDao.updateNative(updateSQL, actstock, actcode, sku);
 
-        if(result > 0){
-            ExecutorService executors = Executors.newSingleThreadExecutor();
-            executors.execute(() -> {
-                        HashMap<String,String> userMap = IceRemoteUtil.getUserByRoles(RoleCodeCons._OPER);
-                        if(userMap != null && userMap.size() > 0){
-                            ProdEntity prodEntity = ProdInfoStore.getProdBySku(sku);
-                            if(prodEntity != null){
-                                for(String key : userMap.keySet()){
-                                    SmsUtil.sendMsg(key, userMap.get(key)+"您好,商品:["+prodEntity.getProdname()+"]的活动库存系统已经自动调整,请关注!");
-                                }
+        ExecutorService executors = Executors.newSingleThreadExecutor();
+        executors.execute(() -> {
+                    HashMap<String,String> userMap = IceRemoteUtil.getUserByRoles(RoleCodeCons._OPER);
+                    if(userMap != null && userMap.size() > 0){
+                        ProdEntity prodEntity = ProdInfoStore.getProdBySku(sku);
+                        if(prodEntity != null){
+                            for(String key : userMap.keySet()){
+                                SmsUtil.sendMsg(key, "【一块医药】尊敬的用户"+userMap.get(key)+":商品:["+prodEntity.getProdname()+"]的活动库存系统已经自动调整,请关注!");
                             }
                         }
                     }
+                }
 
-            );
-        }
+        );
+
 
         return result;
     }
