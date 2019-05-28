@@ -159,6 +159,7 @@ public class ServerImp extends IcePushMessageServerImps {
         }
         logger.print("↓↓↓↓ 返 ↓↓ 回 ↓↓ 值↓↓↓↓\n\t"
                 +resultString );
+        result = null;
         //+"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-"
         return resultString;
     }
