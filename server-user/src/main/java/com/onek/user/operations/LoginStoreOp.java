@@ -5,6 +5,7 @@ import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.user.service.USProperties;
+import com.onek.util.RoleCodeCons;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
@@ -78,14 +79,15 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
         String selectSql = "SELECT uid,roleid,upw,cid " +
                 "FROM {{?" + DSMConst.TB_SYSTEM_USER + "}} " +
-                "WHERE cstatus&1 = 0 AND roleid&2=2  AND uphone = ?";
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
+                "WHERE cstatus&1 = 0 AND roleid&?>0 AND uphone=?";
+
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql, RoleCodeCons._STORE,phone);
 
         if (lines.size()>0){
             Object[] objects = lines.get(0);
             //忽略MD5大小写
             if (objects[2].toString().equalsIgnoreCase(password)) {
-                communicator().getLogger().print("门店登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1] +" 企业码:" + objects[3]);
+                communicator().getLogger().print("门店客户登录: 用户码:" + objects[0]+" 企业码:" + objects[3]+" 手机号码:"+phone);
 
                 //判断角色
                 int role = StringUtils.checkObjectNull(objects[1],0);

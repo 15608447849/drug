@@ -45,8 +45,6 @@ public class ServerImp extends IcePushMessageServerImps {
         initContextClass();
     }
 
-
-
     //初始化拦截器
     private void initInterceptorList() {
         interceptorList = new ArrayList<>();
@@ -122,9 +120,8 @@ public class ServerImp extends IcePushMessageServerImps {
 
     //调用方法
     private Object callObjectMethod(String packagePath, String classPath, String method, IceContext iApplicationContext) throws Exception{
-        Object obj = ObjectPoolManager.get().getObject(classPath);
-        //创建
-        if (obj == null)  obj = ObjectRefUtil.createObject(packagePath+"."+classPath);
+        Object obj = ObjectPoolManager.get().getObject(classPath); //对象池中获取对象
+        if (obj == null)  obj = ObjectRefUtil.createObject(packagePath+"."+classPath);//创建
         Object methodResultValue =  ObjectRefUtil.callMethod(obj,method,new Class[]{contextCls},iApplicationContext);
         ObjectPoolManager.get().putObject(classPath,obj);//使用完毕之后再放入池中,缓存对象
         return methodResultValue;
@@ -149,6 +146,7 @@ public class ServerImp extends IcePushMessageServerImps {
         }
         return result;
     }
+
     //打印结果
     private String printResult(Object result) {
         String resultString;
@@ -159,6 +157,7 @@ public class ServerImp extends IcePushMessageServerImps {
         }
         logger.print("↓↓↓↓ 返 ↓↓ 回 ↓↓ 值↓↓↓↓\n\t"
                 +resultString );
+        result = null;
         //+"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-"
         return resultString;
     }

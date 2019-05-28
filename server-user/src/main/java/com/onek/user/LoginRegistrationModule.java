@@ -6,10 +6,12 @@ import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.user.operations.*;
+import dao.BaseDAO;
 import util.GsonUtils;
 
 import static com.onek.user.operations.StoreBasicInfoOp.getStoreInfoById;
 import static com.onek.user.operations.StoreBasicInfoOp.infoToCache;
+import static constant.DSMConst.TB_SYSTEM_USER;
 
 /**
  * 登陆 / 注册 模块
@@ -45,7 +47,17 @@ public class LoginRegistrationModule {
         //提交企业信息
         UpdateStoreOp storeOp = GsonUtils.jsonToJavaBean(json, UpdateStoreOp.class);
         assert storeOp!=null;
-        return storeOp.execute(appContext);
+        result = storeOp.execute(appContext);
+        if (!result.isSuccess()){
+            UserSession session = appContext.getUserSession();
+            if (session!=null && session.compId == 0){
+                //删除用户信息
+                int i = BaseDAO.getBaseDAO().updateNative( "DELETE FROM {{?" +TB_SYSTEM_USER+"}} WHERE uid=?",session.userId);
+                if (i<=0) result.setHashMap("error","注册失败且无法删除此用户信息");
+            }
+        }
+        return result;
+
     }
 
 

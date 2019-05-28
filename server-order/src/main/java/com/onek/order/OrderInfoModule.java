@@ -90,10 +90,9 @@ public class OrderInfoModule {
                     + " goods.balamt "
                     + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} ap "
                     + " LEFT JOIN {{?" + DSMConst.TD_BK_TRAN_GOODS + "}} goods "
-                    + " ON ap.cstatus&1 = 0 AND goods.cstatus&1 = 0"
-                    + " AND ap.compid = ? "
+                    + " ON goods.cstatus&1 = 0 "
                     + " AND goods.orderno = ap.orderno AND ap.pdno = goods.pdno "
-                    + " WHERE 1 = 1";
+                    + " WHERE ap.cstatus&1 = 0 AND ap.compid = ? ";
 
     private final static String QUERY_INVOICE_BASE =
             "SELECT * "

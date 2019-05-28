@@ -73,25 +73,25 @@ public class UpdateUserOp implements IOperation<AppContext> {
                 }
             }
             if (flag)  context.relationTokenUserSession(); //修改成功 关联用户信息
-        }
-
-        //忘记密码
-        if (!StringUtils.isEmpty(oldPhone,smsCode,newPassword)){
-            String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
-            if (code.equals(smsCode)){
-                //检查密码正确性
-                if (validPassword(newPassword)){
-                    flag = changUserByUid("upw='"+ EncryptUtils.encryption(newPassword)+"'","uphone='"+ oldPhone+"'");
-                    rmsg = "修改成功,请使用新密码登陆";
+        }else{
+            //忘记密码
+            if (!StringUtils.isEmpty(oldPhone,smsCode,newPassword)){
+                String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
+                if (code.equals(smsCode)){
+                    //检查密码正确性
+                    if (validPassword(newPassword)){
+                        flag = changUserByUid("upw='"+ EncryptUtils.encryption(newPassword)+"'","uphone='"+ oldPhone+"'");
+                        rmsg = "修改成功,请使用新密码登陆";
+                    }else{
+                        rmsg = "不符合密码安全性要求:\n" +
+                                "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符";
+                    }
                 }else{
-                    rmsg = "不符合密码安全性要求:\n" +
-                            "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符";
+                    rmsg = "验证码不正确";
                 }
             }else{
-                rmsg = "验证码不正确";
+                rmsg = "手机号码不正确或密码不符合要求";
             }
-        }else{
-            rmsg = "手机号码不正确或密码不符合要求";
         }
 
         if (flag) return new Result().success(rmsg);

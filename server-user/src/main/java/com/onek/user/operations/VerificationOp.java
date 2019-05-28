@@ -16,6 +16,7 @@ import util.ImageVerificationUtils;
 import util.StringUtils;
 import util.http.HttpRequest;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,10 +32,6 @@ import static util.ImageVerificationUtils.getRandomCodeByNum;
  * 验证码操作
  */
 public class VerificationOp implements IOperation<AppContext> {
-
-
-
-
 
     public int type = 0;
     public String phone; //手机号
@@ -60,9 +57,10 @@ public class VerificationOp implements IOperation<AppContext> {
 
     //生成图形验证码
     private Result generateImageCode() {
+        InputStream is = null;
         try {
             String code = getRandomCode(4);
-            InputStream inputStream = ImageVerificationUtils.generateImage(77,33,code);
+            is = ImageVerificationUtils.generateImage(77,33,code);
 
             String key = EncryptUtils.encryption(code);
 
@@ -70,7 +68,7 @@ public class VerificationOp implements IOperation<AppContext> {
             RedisUtil.getStringProvide().expire(key, USProperties.INSTANCE.vciSurviveTime); // 3分钟内有效
 
             String json = new HttpRequest().addStream(
-                    inputStream,
+                    is,
                     FileServerUtils.defaultVerificationDir(),  //远程路径
                     key+".png"  //k作为文件名
                     )
@@ -96,11 +94,16 @@ public class VerificationOp implements IOperation<AppContext> {
            return new Result().success(GsonUtils.javaBeanToJson(map));
         } catch (Exception e) {
             e.printStackTrace();
+        }finally {
+            try {
+                if (is!=null) is.close();
+            } catch (IOException ignored) {
+            }
         }
         return new Result().fail("无法生成验证图片");
     }
 
-    //发送短信验证码-等待接入短信接口
+    //发送短信验证码
     private Result sendSmsCode(int tempNo) {
         String code = genSmsCodeStoreCache(phone);
         if (!StringUtils.isEmpty(code)){
@@ -109,8 +112,9 @@ public class VerificationOp implements IOperation<AppContext> {
         }
         return new Result().fail("获取短信验证码失败");
     }
-
+    //生成短信验证码缓存
     private static String genSmsCodeStoreCache(String phone){
+        if(StringUtils.isEmpty(phone)) return null; //手机号码不能为空
         String code = getRandomCodeByNum(6);
         //存入缓存
         String res = RedisUtil.getStringProvide().set("SMS"+phone,code);

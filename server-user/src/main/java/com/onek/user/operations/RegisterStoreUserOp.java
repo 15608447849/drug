@@ -37,9 +37,7 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
     public Result execute(AppContext context) {
         if (StringUtils.isEmpty(phone) || phone.length() != 11) return new Result().fail("无效的手机号码");
         if (type == 1) return checkPhoneIsExist();
-        if (type == 2) {
-            return new VerificationOp().setType(type).setPhone(phone).execute(context);
-        }
+        if (type == 2) return new VerificationOp().setType(type).setPhone(phone).execute(context);
         if (type == 3) {
             if (!validSmsCode()) return new Result().fail("短信验证码不正确");
             if (!validPassword(password)) return new Result().fail("不符合密码安全性要求:\n" +
@@ -88,9 +86,9 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
         if (i > 0) {
             //设置content - User信息
             context.setUserSession(UserSession.createStoreUser(userId ,phone));
-            return new Result().success("注册成功");
+            return new Result().success("注册成功,已添加用户信息");
         }
-        return new Result().fail("注册失败");
+        return new Result().fail("注册失败,无法添加用户信息");
     }
 
     //验证手机是否存在

@@ -34,9 +34,9 @@ public class ProdExtModule {
                     new StringBuilder("^[0-9]{1}")
                             .append(spu);
             sql  += " and spu REGEXP ? ";
-            queryList = BASE_DAO.queryNative(sql, regexp);
+            queryList = BASE_DAO.queryNative(sql, regexp.toString());
         }else{
-            queryList = BASE_DAO.queryNative(sql, new Object[]{});
+            queryList = BASE_DAO.queryNative(sql);
         }
 
         if(queryList != null && queryList.size() > 0){

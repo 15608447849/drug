@@ -12,6 +12,10 @@ public class RedisOrderUtil {
         RedisUtil.getStringProvide().increase(RedisGlobalKeys.ORDER_NUM_PREFIX + SEP + compid);
     }
 
+    public static void reduceOrderNumByCompid(int compid){
+        RedisUtil.getStringProvide().decrease(RedisGlobalKeys.ORDER_NUM_PREFIX + SEP + compid);
+    }
+
     /**
      * 根据企业码获取订单数
      *
@@ -32,9 +36,9 @@ public class RedisOrderUtil {
      */
     public static long addActBuyNum(int compid, long sku, long actCode,int num){
         if(compid > 0 && sku > 0 && actCode > 0 && num > 0){
-            if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP +compid)) {
+//            if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP +compid)) {
                 return RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.ACT_BUY_NUM_PREFIX + actCode, sku + SEP + compid, num);
-            }
+//            }
         }
         return 0;
     }
