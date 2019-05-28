@@ -16,6 +16,7 @@ import util.ImageVerificationUtils;
 import util.StringUtils;
 import util.http.HttpRequest;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -60,9 +61,10 @@ public class VerificationOp implements IOperation<AppContext> {
 
     //生成图形验证码
     private Result generateImageCode() {
+        InputStream is = null;
         try {
             String code = getRandomCode(4);
-            InputStream inputStream = ImageVerificationUtils.generateImage(77,33,code);
+            is = ImageVerificationUtils.generateImage(77,33,code);
 
             String key = EncryptUtils.encryption(code);
 
@@ -70,7 +72,7 @@ public class VerificationOp implements IOperation<AppContext> {
             RedisUtil.getStringProvide().expire(key, USProperties.INSTANCE.vciSurviveTime); // 3分钟内有效
 
             String json = new HttpRequest().addStream(
-                    inputStream,
+                    is,
                     FileServerUtils.defaultVerificationDir(),  //远程路径
                     key+".png"  //k作为文件名
                     )
@@ -96,6 +98,11 @@ public class VerificationOp implements IOperation<AppContext> {
            return new Result().success(GsonUtils.javaBeanToJson(map));
         } catch (Exception e) {
             e.printStackTrace();
+        }finally {
+            try {
+                if (is!=null) is.close();
+            } catch (IOException ignored) {
+            }
         }
         return new Result().fail("无法生成验证图片");
     }

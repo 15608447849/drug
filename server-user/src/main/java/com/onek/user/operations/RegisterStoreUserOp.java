@@ -88,9 +88,9 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
         if (i > 0) {
             //设置content - User信息
             context.setUserSession(UserSession.createStoreUser(userId ,phone));
-            return new Result().success("注册成功");
+            return new Result().success("注册成功,已添加用户信息");
         }
-        return new Result().fail("注册失败");
+        return new Result().fail("注册失败,无法添加用户信息");
     }
 
     //验证手机是否存在
