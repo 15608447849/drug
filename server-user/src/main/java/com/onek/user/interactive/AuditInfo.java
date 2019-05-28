@@ -16,9 +16,10 @@ public class AuditInfo {
     public String address;//营业执照地址
     public String submitDate;//提交时间
     public String auditDate;//审核时间
+    public String addressCode;//地区码
     //共有
     public String cursorId;//客服专员ID
-    public String addressCode;//地区码
+
 
     //资质信息
     public AptitudeInfo cardInfo = new AptitudeInfo();

@@ -47,27 +47,27 @@ public class LoginBackOp implements IOperation<AppContext> {
     //检查用户是否正确
     private boolean checkSqlAndUserExist(AppContext context) {
 
-        String selectSql = "SELECT uid,roleid,upw,uaccount,uphone,urealname,cstatus " +
+        String selectSql = "SELECT uid,roleid,upw,uphone,urealname,cstatus " +
                 "FROM {{?" + DSMConst.TB_SYSTEM_USER + "}} " +
                 "WHERE cstatus&1=0 " +
-                "AND ( uaccount = ? OR uphone = ? )";
+                "AND uphone=?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,account,account);
 
         if (lines.size()>0){
             Object[] objects = lines.get(0);
 
             if (objects[2].toString().equalsIgnoreCase(password)) { //忽略MD5大小写
-                communicator().getLogger().print("管理/运营人员登录后台: 用户码:" + objects[0]+" ,角色码:"+ objects[1]+" ,姓名:"+objects[5]);
+                communicator().getLogger().print("管理/运营人员登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1]+" ,姓名:"+objects[5]+" ,手机号:"+objects[3]);
 
                  //判断角色
                 int role = StringUtils.checkObjectNull(objects[1],0);
-                //获取有效角色列表
+                //获取有表效角色列
                 selectSql = "SELECT cstatus,roleid FROM {{?" + DSMConst.TB_SYSTEM_ROLE +"}} ";
                 List<Object[]> lines2 = BaseDAO.getBaseDAO().queryNative(selectSql);
                 boolean isAllow = false;
                 for (Object[] o : lines2){
                     int cstatus = StringUtils.checkObjectNull(o[0],0);
-                    if ((cstatus& 256) == 256){
+                    if ((cstatus&256)==256){
                         int roleid = StringUtils.checkObjectNull(o[1],0);
                         if ((role & roleid) == roleid) {
                             isAllow = true;
