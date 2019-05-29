@@ -62,9 +62,15 @@ public class UpdateUserOp implements IOperation<AppContext> {
                 if (inputOldPassword.equalsIgnoreCase(curPassword)) {
                     if( !inputNewPassword.equalsIgnoreCase(curPassword)){
                         //如果当前密码与输入的旧密码相同 并且 新密码与旧密码不相同
-                        session.password = inputNewPassword;
-                        flag = changUserByUid("upw='"+ inputNewPassword +"'","uid='"+ uid+"'");
-                        rmsg = "已修改您的密码,请重新登陆";
+                        //检查密码正确性
+                        if (validPassword(inputNewPassword)){
+                            session.password = inputNewPassword;
+                            flag = changUserByUid("upw='"+ inputNewPassword +"'","uid='"+ uid+"'");
+                            rmsg = "修改成功,请使用新密码登陆";
+                        }else{
+                            rmsg = "不符合密码安全性要求:\n" +
+                                    "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符";
+                        }
                     }else{
                         rmsg = "原密码与新密码相同";
                     }
