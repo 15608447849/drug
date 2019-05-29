@@ -49,21 +49,22 @@ public class ProxyNoticeModule {
         List<Long> areaList = JSON.parseArray(jsonObject.get("areaArr").getAsString()).toJavaList(Long.class);
         ProxyNoticeVO proxyNoticeVO = GsonUtils.jsonToJavaBean(proxyNotice, ProxyNoticeVO.class);
         assert proxyNoticeVO != null;
-        String insertSQL = "insert into {{?" + DSMConst.TD_PROXY_NOTICE +"}} (msgid,sender,msgtxt,pubtime,invdtime,readtimes,revobj,createtime,cstatus) "
-                + " values(?,?,?,?,?,"
-                + "?,?,?,CURRENT_TIMESTAMP,0)";
-        String updateSQL = "update {{?" +DSMConst.TD_PROXY_NOTICE  + "}} set sender=?,msgtxt=?,pubtime=?,invdtime=?,readtimes=?, "
-                + "revobj=? where cstatus&1=0 and msgid=?";
+        String insertSQL = "insert into {{?" + DSMConst.TB_PROXY_NOTICE +"}} (msgid,sender,msgtxt,createdate,createtime,invdtime," +
+                "readtimes,effcttime,revobj,cstatus) "
+                + " values(?,?,?,CURRENT_DATE,CURRENT_TIME,"
+                + "?,?,?,?,0)";
+        String updateSQL = "update {{?" +DSMConst.TB_PROXY_NOTICE  + "}} set sender=?,msgtxt=?,invdtime=?,readtimes=?, "
+                + "effcttime=?,revobj=? where cstatus&1=0 and msgid=?";
         if (proxyNoticeVO.getMsgid() > 0) {
             msgid = proxyNoticeVO.getMsgid();
             code = baseDao.updateNative(updateSQL,proxyNoticeVO.getSender(),proxyNoticeVO.getMsgtxt(),
-                    proxyNoticeVO.getPubtime(), proxyNoticeVO.getInvdtime(),proxyNoticeVO.getReadtimes(),
+                    proxyNoticeVO.getInvdtime(),proxyNoticeVO.getReadtimes(),proxyNoticeVO.getEffcttime(),
                     proxyNoticeVO.getRevobj(),proxyNoticeVO.getMsgid());
         } else {
             optType = 1;
             msgid = GenIdUtil.getUnqId();
             code = baseDao.updateNative(insertSQL, msgid, proxyNoticeVO.getSender(),proxyNoticeVO.getMsgtxt(),
-                    proxyNoticeVO.getPubtime(), proxyNoticeVO.getInvdtime(),proxyNoticeVO.getReadtimes(),
+                    proxyNoticeVO.getInvdtime(),proxyNoticeVO.getReadtimes(),proxyNoticeVO.getEffcttime(),
                     proxyNoticeVO.getRevobj());
         }
         optProxyArea(areaList, optType, msgid);
@@ -71,7 +72,7 @@ public class ProxyNoticeModule {
     }
 
     private void optProxyArea(List<Long> areaList, int optType, long msgid) {
-        String insertAreaSQL = "insert into {{?" +  DSMConst.TD_PROXY_NOTICEAREC + "}} (unqid,msgid,areac,cstatus) "
+        String insertAreaSQL = "insert into {{?" +  DSMConst.TB_PROXY_NOTICEAREC + "}} (unqid,msgid,areac,cstatus) "
                 + " values(?,?,?,?)";
         List<Object[]> insertAreaParams = new ArrayList<>();
         List<Object[]> updateAreaParams = new ArrayList<>();
@@ -81,7 +82,7 @@ public class ProxyNoticeModule {
                 insertAreaParams.add(new Object[]{GenIdUtil.getUnqId(), msgid, areaCode,0});
             }
         } else {//修改
-            String updateSQL = "update {{?" + DSMConst.TD_PROXY_NOTICEAREC + "}} set catstus=cstatus|1 "
+            String updateSQL = "update {{?" + DSMConst.TB_PROXY_NOTICEAREC + "}} set catstus=cstatus|1 "
                      + " where cstatus&1=0 and msgid=? and areac=?";
             List<Long> delArea = queryAreaByMsgId(msgid);
             for (int i = 0; i < areaList.size(); i++) {
@@ -101,7 +102,7 @@ public class ProxyNoticeModule {
 
     private List<Long> queryAreaByMsgId(long msgid) {
         List<Long> areaCodeList = new ArrayList<>();
-        String selectSQL = "select areac from {{?" + DSMConst.TD_PROXY_NOTICEAREC + "}} where cstatus&1=0 and "
+        String selectSQL = "select areac from {{?" + DSMConst.TB_PROXY_NOTICEAREC + "}} where cstatus&1=0 and "
                 + " msgid=?";
         List<Object[]> qResult = baseDao.queryNative(selectSQL, msgid);
         if (qResult == null || qResult.isEmpty()) return areaCodeList;
@@ -133,7 +134,7 @@ public class ProxyNoticeModule {
         PageHolder pageHolder = new PageHolder(page);
         String title = jsonObject.get("title").getAsString();
         String selectSQL = "select msgid,sender,msgtxt,pubtime,invdtime,readtimes,revobj,createtime,cstatus from {{?"
-                + DSMConst.TD_PROXY_NOTICE + "}} where cstatus&1=0 ";
+                + DSMConst.TB_PROXY_NOTICE + "}} where cstatus&1=0 ";
         if (title != null && !title.isEmpty()) {
             selectSQL = selectSQL + " and  json_extract(msgtxt,'$.title') like '%" + title + "%'";
         }
@@ -167,7 +168,7 @@ public class ProxyNoticeModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long msgid = jsonObject.get("msgid").getAsLong();
         String selectSQL = "select msgid,sender,msgtxt,pubtime,invdtime,readtimes,revobj,createtime,cstatus "
-                + " from {{?" + DSMConst.TD_PROXY_NOTICE + "}} where cstatus&1=0 and msgid=?";
+                + " from {{?" + DSMConst.TB_PROXY_NOTICE + "}} where cstatus&1=0 and msgid=?";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL, msgid);
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
         ProxyNoticeVO[] proxyNoticeVOS = new ProxyNoticeVO[queryResult.size()];
@@ -182,5 +183,72 @@ public class ProxyNoticeModule {
         return result.success(proxyNoticeVOS[0]);
     }
 
+
+    /* *
+     * @description 消息接收操作
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/5/29 11:55
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result noticeReceive(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long msgid = jsonObject.get("msgid").getAsLong();
+        long receiver = jsonObject.get("receiver").getAsLong();
+        String selectSQL = "select count(*) from {{?" + DSMConst.TB_PROXY_NOTICEDT + "}} where cstatus&1=0 "
+                + " and msgid=? and receiver=?";
+        String insertSQL = "insert into {{?" + DSMConst.TB_PROXY_NOTICEDT + "}} (unqid, msgid,receiver,readtimes,cstatus) "
+                + " values(?,?,?,?,?)";
+        String updSQL = "update {{?" +  DSMConst.TB_PROXY_NOTICEDT + "}} set readtimes+=readtimes where cstatus&1=0 "
+                + " and msgid=? and receiver=?";
+        List<Object[]> qResult = baseDao.queryNative(selectSQL, msgid, receiver);
+        int code = 0;
+        long count =Long.valueOf(String.valueOf(qResult.get(0)[0]));
+        if (count > 0) {
+            code = baseDao.updateNative(updSQL,  msgid, receiver);
+        } else {
+            code = baseDao.updateNative(insertSQL, GenIdUtil.getUnqId(), msgid, receiver, 1, 0);
+        }
+        return code > 0 ? result.success("操作成功！") : result.fail("操作失败！");
+    }
+
+
+    /* *
+     * @description 获取公告
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/5/29 14:22
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result pushNotice(AppContext appContext) {
+        Result result = new Result();
+        List<String> msgList = new ArrayList<>();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long roleId =  jsonObject.get("roleid").getAsLong();//角色码
+        long areac =  jsonObject.get("areac").getAsLong();//地区码
+        int receiver = jsonObject.get("receiver").getAsInt();
+        String selectSQL = "select msgtxt from {{?" + DSMConst.TB_PROXY_NOTICE + "}} a left join {{?"
+                + DSMConst.TB_PROXY_NOTICEAREC + "}} b on a.msgid=b.msgid left join {{?"
+                + DSMConst.TB_PROXY_NOTICEDT + "}} c on a.msgid=c.msgid where a.cstatus&1=0 and b.cstatus&1=0 "
+                + " and c.cstatus&1=0 and revobj&?>0 and areac=? and receiver=? "
+                + " and invdtime>CURRENT_TIMESTAMP and effcttime<=CURRENT_TIMESTAMP and a.readtimes>c.readtimes";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, roleId, areac, receiver);
+        if (queryResult == null || queryResult.isEmpty()) return result.success(msgList);
+        queryResult.forEach(qr -> {
+            msgList.add(String.valueOf(qr[0]));
+        });
+        return result.success(msgList);
+    }
 
 }

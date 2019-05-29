@@ -12,11 +12,12 @@ public class ProxyNoticeVO {
     private long msgid;
     private int sender;
     private String msgtxt;
-    private String pubtime;
+    private String createdate;
+    private String createtime;
     private String invdtime;
     private int readtimes;
+    private String effcttime;
     private int revobj;
-    private String createtime;
     private int cstatus;
     private String title;
     private String content;
@@ -46,12 +47,12 @@ public class ProxyNoticeVO {
         this.msgtxt = msgtxt;
     }
 
-    public String getPubtime() {
-        return pubtime;
+    public String getCreatedate() {
+        return createdate;
     }
 
-    public void setPubtime(String pubtime) {
-        this.pubtime = pubtime;
+    public void setCreatedate(String createdate) {
+        this.createdate = createdate;
     }
 
     public String getInvdtime() {
@@ -116,5 +117,13 @@ public class ProxyNoticeVO {
 
     public void setContent(String content) {
         this.content = content;
+    }
+
+    public String getEffcttime() {
+        return effcttime;
+    }
+
+    public void setEffcttime(String effcttime) {
+        this.effcttime = effcttime;
     }
 }
