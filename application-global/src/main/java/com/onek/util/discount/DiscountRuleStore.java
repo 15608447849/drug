@@ -62,12 +62,7 @@ public class DiscountRuleStore {
             int four = Character.digit(codeStr.charAt(4), 10);
             int one = Character.digit(codeStr.charAt(1), 10);
             int two = Character.digit(codeStr.charAt(2), 10);
-            String offer;
-            if (two == 3) {
-                offer = String.valueOf(ladoff.getOffer() / 10);
-            } else {
-                offer = String.valueOf(ladoff.getOffer());
-            }
+            String offer = String.valueOf(ladoff.getOffer());
 
             StringBuilder giftName = new StringBuilder();
 
@@ -99,12 +94,7 @@ public class DiscountRuleStore {
             StringBuilder value = new StringBuilder();
             int one = Character.digit(codeStr.charAt(1), 10);
             int two = Character.digit(codeStr.charAt(2), 10);
-            String offer;
-            if (two == 3) {
-                offer = String.valueOf(nextLadoff.getOffer() / 10);
-            } else {
-                offer = String.valueOf(nextLadoff.getOffer());
-            }
+            String offer = String.valueOf(nextLadoff.getOffer());
 
             StringBuilder giftName = new StringBuilder();
 

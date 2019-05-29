@@ -80,8 +80,8 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
                 return ladoff;
             }
 
-            currDiscount.setNextGapAmt(gapAmt);
-            currDiscount.setNextGapNum(gapNum);
+            currDiscount.setNextGapAmt(-gapAmt);
+            currDiscount.setNextGapNum(-gapNum);
             currDiscount.setNextLadoff(ladoff);
         }
 
