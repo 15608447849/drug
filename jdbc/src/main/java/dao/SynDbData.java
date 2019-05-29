@@ -170,6 +170,7 @@ public class SynDbData implements Callable<Object> {
             result = jdbcBaseDao.update(resultSQL[1], param);
         } catch (DAOException e) {
             e.printStackTrace();
+            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
             if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
                 return 0;
             }
@@ -195,6 +196,8 @@ public class SynDbData implements Callable<Object> {
             keys = jdbcBaseDao.updateAndGenerateKeys(resultSQL[1], param);
         }catch (DAOException e) {
             LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
+            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
+
             e.printStackTrace();
             if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
                 return null;
@@ -229,6 +232,7 @@ public class SynDbData implements Callable<Object> {
             });
         } catch (DAOException e) {
             LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
+            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
             e.printStackTrace();
             if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
                 return null;
@@ -266,6 +270,7 @@ public class SynDbData implements Callable<Object> {
             });
         } catch (DAOException e) {
             LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
+            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
             e.printStackTrace();
             int dbs = master;
             SynDbLog.updateTransNative(getNativeSQL(),getParams(),
@@ -285,6 +290,7 @@ public class SynDbData implements Callable<Object> {
             jdbcBaseDao.setManager(baseDao.getSessionMgr(0,DSMConst.TD_BK_TRAN_ORDER));
             result = jdbcBaseDao.update(resultSQL[1], param);
         } catch (DAOException e) {
+            LogUtil.getDefaultLogger().error("异步线程同步运营平台异常",e);
             e.printStackTrace();
             int dbs = master;
             List<Object[]> paramList = new ArrayList<>();
@@ -305,6 +311,7 @@ public class SynDbData implements Callable<Object> {
             jdbcBaseDao.setManager(baseDao.getSessionMgr(0,DSMConst.TD_BK_TRAN_ORDER));
             result = jdbcBaseDao.updateBatch(resultSQL[1], params,batchSize);
         } catch (DAOException e) {
+            LogUtil.getDefaultLogger().error("异步线程同步运营平台异常",e);
             e.printStackTrace();
             int dbs = master;
             List<Object[]> paramList = new ArrayList<>();
@@ -350,6 +357,7 @@ public class SynDbData implements Callable<Object> {
             });
         } catch (DAOException e) {
             LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
+            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
             e.printStackTrace();
             if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
                 return null;
@@ -371,6 +379,7 @@ public class SynDbData implements Callable<Object> {
             result = jdbcBaseDao.updateBatch(resultSQL[1], params,batchSize);
         } catch (DAOException e) {
             LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
+            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
             e.printStackTrace();
             if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
                 return null;

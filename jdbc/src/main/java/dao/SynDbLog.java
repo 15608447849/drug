@@ -38,7 +38,8 @@ public class SynDbLog {
     public static boolean isBaseSqlError(Throwable e){
         if(e instanceof SQLException){
             SQLException sqlException = (SQLException) e;
-            System.out.println("SQL异常编号："+sqlException.getSQLState());
+            LogUtil.getDefaultLogger().debug("SQL异常编号："+sqlException.getSQLState());
+            LogUtil.getDefaultLogger().error("SQL异常信息：",e);
             if(sqlException.getSQLState() != null
                     && ((sqlException.getSQLState()).startsWith("S0")
                     || (sqlException.getSQLState()).startsWith("S1")

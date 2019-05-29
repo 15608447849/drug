@@ -127,10 +127,10 @@ public interface DSMConst extends UDAConst {
     public final static int TD_TRAN_ASAPP = 48;
     public final static int TD_NOTICE = 49;
     public final static int TD_PROM_OFFLCOUP = 50;
-    public final static int TD_PROXY_NOTICE = 51;
-    public final static int TD_PROXY_NOTICEAREC = 52;
-    public final static int TD_PROXY_NOTICEDT = 53;
-    public final static int TD_PROXY_UAREA = 54;
+    public final static int TB_PROXY_NOTICE = 51;
+    public final static int TB_PROXY_NOTICEAREC = 52;
+    public final static int TB_PROXY_NOTICEDT = 53;
+    public final static int TB_PROXY_UAREA = 54;
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
     // 索引必须同_DB_TABLES里的索引对应
