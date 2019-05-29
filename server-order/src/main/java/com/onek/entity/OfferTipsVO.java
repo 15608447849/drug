@@ -58,6 +58,26 @@ public class OfferTipsVO {
 
     private int gapnum;
 
+    private String currladDesc;
+
+    private String nextladDesc;
+
+    public String getNextladDesc() {
+        return nextladDesc;
+    }
+
+    public void setNextladDesc(String nextladDesc) {
+        this.nextladDesc = nextladDesc;
+    }
+
+    public String getCurrladDesc() {
+        return currladDesc;
+    }
+
+    public void setCurrladDesc(String currladDesc) {
+        this.currladDesc = currladDesc;
+    }
+
     public double getGapamt() {
         return gapamt;
     }

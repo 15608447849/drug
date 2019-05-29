@@ -1,5 +1,10 @@
 package com.onek.util.discount;
 
+import com.onek.calculate.entity.Gift;
+import com.onek.calculate.entity.Ladoff;
+import util.MathUtil;
+
+import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -36,6 +41,12 @@ public class DiscountRuleStore {
 
     }};
 
+    private static String[] FOUR = {"", "每满", "满"};
+    private static String[][] ONE_TWO = {
+            {"", "$元", "包邮", "$折", "#" },
+            {"", "减&", "&", "打&" },
+            {"", "赠&券", "赠&券", "赠&券", "赠&"}};
+
     public static int getRuleByBRule(int brule){
         return map.get(brule);
     }
@@ -43,4 +54,80 @@ public class DiscountRuleStore {
     public static String getRuleByName(int brule){
         return ruleNameMap.get(brule);
     }
+
+    public static String getActivityDesc(int offerCode, Ladoff ladoff) {
+        try {
+            String codeStr = String.valueOf(offerCode);
+            StringBuilder value = new StringBuilder();
+            int four = Character.digit(codeStr.charAt(4), 10);
+            int one = Character.digit(codeStr.charAt(1), 10);
+            int two = Character.digit(codeStr.charAt(2), 10);
+            String offer;
+            if (two == 3) {
+                offer = String.valueOf(ladoff.getOffer() / 10);
+            } else {
+                offer = String.valueOf(ladoff.getOffer());
+            }
+
+            StringBuilder giftName = new StringBuilder();
+
+            if (one == 2 && two == 4) {
+                if (ladoff.getGiftList() != null && !ladoff.getGiftList().isEmpty()) {
+                    for (Gift gift : ladoff.getGiftList()) {
+                        giftName.append(" " + gift.getGiftName());
+                    }
+                }
+            }
+
+            value.append(FOUR[four]);
+            value.append(ladoff.getLadamt() + "元");
+            value.append(
+                    ONE_TWO[one][two]
+                            .replace("&",
+                                ONE_TWO[0][two]
+                                        .replace("$", offer).replace("#", giftName.toString())));
+
+            return value.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
+    public static String getGapActivityDesc(int offerCode, double gap, Ladoff nextLadoff) {
+        try {
+            String codeStr = String.valueOf(offerCode);
+            StringBuilder value = new StringBuilder();
+            int one = Character.digit(codeStr.charAt(1), 10);
+            int two = Character.digit(codeStr.charAt(2), 10);
+            String offer;
+            if (two == 3) {
+                offer = String.valueOf(nextLadoff.getOffer() / 10);
+            } else {
+                offer = String.valueOf(nextLadoff.getOffer());
+            }
+
+            StringBuilder giftName = new StringBuilder();
+
+            if (one == 2 && two == 4) {
+                if (nextLadoff.getGiftList() != null && !nextLadoff.getGiftList().isEmpty()) {
+                    for (Gift gift : nextLadoff.getGiftList()) {
+                        giftName.append(" " + gift.getGiftName());
+                    }
+                }
+            }
+
+            value.append("差");
+            value.append(gap + "元");
+            value.append(
+                    ONE_TWO[one][two]
+                            .replace("&",
+                                ONE_TWO[0][two]
+                                        .replace("$", offer).replace("#", giftName.toString())));
+
+            return value.toString();
+        } catch (Exception e) {
+            return "";
+        }
+    }
+
 }

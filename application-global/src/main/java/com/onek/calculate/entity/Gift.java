@@ -14,9 +14,11 @@ public class Gift {
     private double giftValue;
     private int nums = 1;
     private int type = TYPE.GIFT;
+    private long activityCode;
 
-    public static Gift getSubCoupon(double giftValue, int nums) {
+    public static Gift getSubCoupon(double giftValue, int nums, long activityCode) {
         Gift gift = new Gift();
+        gift.activityCode = activityCode;
         gift.giftValue = giftValue;
         gift.nums = nums;
         gift.giftName = "现金券";
@@ -25,8 +27,9 @@ public class Gift {
         return gift;
     }
 
-    public static Gift getFreeShipping(int nums) {
+    public static Gift getFreeShipping(int nums, long activityCode) {
         Gift gift = new Gift();
+        gift.activityCode = activityCode;
         gift.giftName = "包邮券";
         gift.nums = nums;
         gift.type = TYPE.FREESHIPPING;
@@ -34,8 +37,9 @@ public class Gift {
         return gift;
     }
 
-    public static Gift getPercentCoupon(double giftValue, int nums) {
+    public static Gift getPercentCoupon(double giftValue, int nums, long activityCode) {
         Gift gift = new Gift();
+        gift.activityCode = activityCode;
         gift.giftName = "折扣券";
         gift.giftValue = giftValue;
         gift.nums = nums;
@@ -90,5 +94,13 @@ public class Gift {
 
     public void setGiftDesc(String giftDesc) {
         this.giftDesc = giftDesc;
+    }
+
+    public long getActivityCode() {
+        return activityCode;
+    }
+
+    public void setActivityCode(long activityCode) {
+        this.activityCode = activityCode;
     }
 }

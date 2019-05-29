@@ -1,7 +1,7 @@
 package com.onek.calculate;
 
-import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.entity.Gift;
+import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.service.calculate.BaseDiscountCalculateService;
 import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
@@ -29,7 +29,7 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
                     + " AND ass.cstatus&1 = 0 AND gift.cstatus&1 = 0 "
                     + " WHERE 1=1 ";
 
-    private List<Gift> getGifts(long offerCode) {
+    private List<Gift> getGifts(long offerCode, long actCode) {
         List<Gift> result = new ArrayList<>();
 
         if (offerCode > 0) {
@@ -42,6 +42,10 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
                     new String[] { "id", "giftName", "giftDesc" });
 
             result.addAll(Arrays.asList(gArray));
+        }
+
+        for (Gift gift : result) {
+            gift.setActivityCode(actCode);
         }
 
         return result;
@@ -60,7 +64,7 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
         for (Ladoff ladoff : lapArray) {
             ladoff.setLadamt(ladoff.getLadamt() / 100);
             ladoff.setOffer(ladoff.getOffer() / 100);
-            ladoff.setGiftList(getGifts(ladoff.getOffercode()));
+            ladoff.setGiftList(getGifts(ladoff.getOffercode(), actCode));
         }
 
         return lapArray;

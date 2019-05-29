@@ -2,6 +2,7 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.CouponListFilterService;
@@ -123,6 +124,11 @@ public class CouponRevModule {
     private final static String QUERY_ORDER_PRODUCT = "select pdno,pnum,convert(pdprice/100,decimal(10,2)) pdprice from {{?"+DSMConst.TD_TRAN_ORDER+"}} orders, "+
             "{{?"+DSMConst.TD_TRAN_GOODS+"}} goods where orders.orderno = goods.orderno and orders.orderno = ? "+
             " and orders.ostatus > 0 and orders.cstatus &1 = 0 and goods.cstatus & 1 = 0 ";
+
+    private final static String QUERY_ORDER_GIFT =
+            " SELECT rebate "
+            + " FROM {{?" + DSMConst.TD_TRAN_REBATE + "}} "
+            + " WHERE cstatus&1 = 0 AND compid = ? AND orderno = ? ";
 
 
     private final static String INSERT_GLBCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
@@ -642,7 +648,7 @@ public class CouponRevModule {
      * 满赠赠优惠券
      * @param appContext
      * @return
-     */
+     *//*
     @UserPermission(ignore = true)
     public Result revGiftCoupon(AppContext appContext){
         long orderno = Long.parseLong(appContext.param.arrays[0]);
@@ -673,91 +679,88 @@ public class CouponRevModule {
         boolean b = insertGiftCoupon(compid,activityList);
 
         return  b ? result.success("操作成功"):result.fail("操作失败！");
-    }
+    }*/
 
 
     /**
      * 新增满赠券
      * @param compid
-     * @param discounts
+     * @param giftList
      * @return
      */
-    public static boolean insertGiftCoupon(int compid ,List<IDiscount> discounts){
+    public static boolean insertGiftCoupon(int compid , List<Gift> giftList){
+        System.out.println("~~~~~~~~~~~~~~~~~~~ ");
+        System.out.println(JSON.toJSONString(giftList));
 
         List<Object[]> coupParams = new ArrayList<>();
         List<Object[]> stockParams = new ArrayList<>();
         List<String> sqlList = new ArrayList<>();
         List<String> coupSqlList = new ArrayList<>();
-        if(discounts == null || discounts.isEmpty()){
+        if(giftList == null || giftList.isEmpty()){
             return false;
         }
+
         int bal = 0;
-        for (IDiscount discount: discounts){
-            Activity activity = (Activity) discount;
-            List<Gift> giftList = activity.getGiftList();
-            int brule = 0;
-            if(giftList == null || giftList.isEmpty()){
+        int brule = 0;
+
+        for (Gift gift: giftList){
+            switch (gift.getType()){
+                case 0:
+                    brule = 2120;
+                    break;
+                case 1:
+                    brule = 2110;
+                    break;
+                case 2:
+                    brule = 2130;
+                    break;
+                default:
+                    brule = 0;
+                    break;
+            }
+
+            //远程调用
+            List<Object[]> queryResult = IceRemoteUtil.queryNative(QUERY_ACCOUP_SQL, brule);
+
+            if (queryResult == null || queryResult.isEmpty()) {
                 continue;
             }
 
-            for (Gift gift: giftList){
+            CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
 
-                if(brule > 0){
-                    break;
-                }
+            baseDao.convToEntity(queryResult, couponPubVOS, CouponPubVO.class,
+                    new String[]{"coupno","glbno","brulecode","validday","validflag",
+                            "reqflag"});
 
-                switch (gift.getType()){
-                    case 0:
-                        brule = 2120;
-                        break;
-                    case 1:
-                        brule = 2110;
-                        break;
-                    case 2:
-                        brule = 2130;
-                        break;
-                    default:
-                        break;
-                }
+            CouponPubVO couponResult = setCoupValidDay(couponPubVOS[0]);
+            CouponPubLadderVO couponPubLadderVO = new CouponPubLadderVO();
+            couponPubLadderVO.setUnqid("0");
 
-                //远程调用
-                List<Object[]> queryResult = IceRemoteUtil.queryNative(QUERY_ACCOUP_SQL, brule);
+            couponPubLadderVO.setOffercode(Integer.parseInt(brule+"201"));
+            couponPubLadderVO.setOffer(gift.getGiftValue());
+            couponResult.setLadder(GsonUtils.
+                    javaBeanToJson(new CouponPubLadderVO[]{couponPubLadderVO}));
 
-                if (queryResult == null || queryResult.isEmpty()) {
-                    break;
-                }
+            sqlList.add(UPDATE_COUPON_STOCK_NUM);//远程调用
+            stockParams.add(new Object[]{gift.getNums(),couponResult.getCoupno()});
 
-                CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
-
-                baseDao.convToEntity(queryResult, couponPubVOS, CouponPubVO.class,
-                        new String[]{"coupno","glbno","brulecode","validday","validflag",
-                                "reqflag"});
-
-                CouponPubVO couponResult = setCoupValidDay(couponPubVOS[0]);
-                CouponPubLadderVO couponPubLadderVO = new CouponPubLadderVO();
-                couponPubLadderVO.setUnqid("0");
-
-                couponPubLadderVO.setOffercode(Integer.parseInt(brule+"201"));
-                couponPubLadderVO.setOffer(gift.getGiftValue());
-                couponResult.setLadder(GsonUtils.
-                        javaBeanToJson(new CouponPubLadderVO[]{couponPubLadderVO}));
-
-                sqlList.add(UPDATE_COUPON_STOCK_NUM);//远程调用
-                stockParams.add(new Object[]{gift.getNums(),couponResult.getCoupno()});
-                for (int i = 0; i < gift.getNums(); i++){
-                    if(brule == 2110){
-                        bal = bal + new Double(gift.getGiftValue() * 100).intValue();
-                        coupSqlList.add(INSERT_GLBCOUPONREV_SQL);
-                        coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,2110,"全局现金券",1,5,0,new Double(gift.getGiftValue() * 100).intValue()});
-                    }else{
-                        coupSqlList.add(INSERT_ACCOUPONREV_SQL);
-                        coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,
-                                couponResult.getStartdate(), "00:00:00",couponResult.getEnddate(),"00:00:00",
-                                couponResult.getBrulecode(), gift.getGiftName(),0,couponResult.getLadder(),
-                                couponResult.getGlbno(),activity.getUnqid(),1,couponResult.getReqflag(),0});
-                    }
+            for (int i = 0; i < gift.getNums(); i++){
+                if(brule == 2110){
+                    bal = bal + new Double(gift.getGiftValue() * 100).intValue();
+                    coupSqlList.add(INSERT_GLBCOUPONREV_SQL);
+                    coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,2110,"全局现金券",1,5,0,new Double(gift.getGiftValue() * 100).intValue()});
+                }else{
+                    coupSqlList.add(INSERT_ACCOUPONREV_SQL);
+                    coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,
+                            couponResult.getStartdate(), "00:00:00",couponResult.getEnddate(),"00:00:00",
+                            couponResult.getBrulecode(), gift.getGiftName(),0,couponResult.getLadder(),
+                            couponResult.getGlbno(), gift.getActivityCode(),1,couponResult.getReqflag(),0});
                 }
             }
+        }
+
+        if (coupSqlList.isEmpty()) {
+            return false;
         }
 
         String[] sqlArry = new String[coupSqlList.size()];
@@ -777,28 +780,21 @@ public class CouponRevModule {
 
 
     public static boolean revGiftCoupon(long orderno,int compid){
-        if(compid <= 0){
+        if(compid <= 0 || orderno <= 0){
             return false;
         }
 
-        List<Object[]> queryResult = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
-                QUERY_ORDER_PRODUCT,orderno);
+        List<Object[]> queryResult = baseDao.queryNativeSharding(
+                compid, TimeUtils.getYearByOrderno(String.valueOf(orderno)),
+                QUERY_ORDER_GIFT, compid, orderno);
 
         if(queryResult == null || queryResult.isEmpty()){
             return false;
         }
 
-        Product[] productArray = new Product[queryResult.size()];
-        baseDao.convToEntity(queryResult, productArray, Product.class,
-                new String[]{"sku","nums","originalPrice"});
+        List<Gift> jsonObj = JSON.parseArray(queryResult.get(0)[0].toString(), Gift.class);
 
-        for(Product product: productArray){
-            product.autoSetCurrentPrice(product.getOriginalPrice(),product.getNums());
-        }
-        List<Product> productList = Arrays.asList(productArray);
-        DiscountResult discountResult = CalculateUtil.calculate(compid, productList, 0);
-        List<IDiscount> activityList = discountResult.getActivityList();
-        return insertGiftCoupon(compid,activityList);
+        return insertGiftCoupon(compid,jsonObj);
     }
 
     /**

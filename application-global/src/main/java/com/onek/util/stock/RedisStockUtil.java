@@ -393,14 +393,49 @@ public class RedisStockUtil {
 //    }
 
     public static void main(String[] args) {
+        int n = 6;
+        int[] a = { Integer.MAX_VALUE,
+                20, 8, 7,
+                6, 4, 3 };
+
+        int[] f = { Integer.MAX_VALUE,
+                Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE,
+                Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE };
+
+        f[1]=a[1];
+        int len=1;//通过记录f数组的有效位数，求得个数
+    /*因为上文中所提到我们有可能要不断向前寻找，
+    所以可以采用二分查找的策略，这便是将时间复杂
+    度降成nlogn级别的关键因素。*/
+        for(int i=2;i<=n;i++)
+        {
+            int l=0,r=len,mid;
+            if(a[i]>f[len])f[++len]=a[i];
+                //如果刚好大于末尾，暂时向后顺次填充
+            else
+            {
+                while(l<r)
+                {
+                    mid=(l+r)/2;
+                    if(f[mid]>a[i])r=mid;
+                        //如果仍然小于之前所记录的最小末尾，那么不断
+                        //向前寻找(因为是最长上升子序列，所以f数组必
+                        //然满足单调)
+                    else l=mid+1;
+                }
+
+                f[l]=Math.min(a[i],f[l]);//更新最小末尾
+            }
+        }
+
+        System.out.println(len);
+
 //        List<Long> skuList = new ArrayList<>();
 //        skuList.add(0L);
 //        Long key = checkActStockSetting(skuList,0,20, new HashMap<>());
 //        System.out.println(key);
 //        int a = RedisStockUtil.setStock(11000000011001L, 50);
 //        System.out.println(a);
-        int a = RedisStockUtil.setActStock(11000000011001L, 18071576649925632L, 50, 10);
-        System.out.println(a);
 //        Long a= RedisStockUtil.clearActStock(11000000011001L, 18071576649925632L);
 //        System.out.println(a);
 //        boolean aa = RedisStockUtil.deductionActStock(11000000011001L, 5, 18071576649925632L);
