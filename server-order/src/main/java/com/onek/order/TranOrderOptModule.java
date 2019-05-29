@@ -31,10 +31,7 @@ import util.*;
 
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.onek.order.PayModule.*;
 
@@ -220,8 +217,8 @@ public class TranOrderOptModule {
         long unqid = 0, coupon = 0;//优惠券码
         Result result = new Result();
         Gson gson = new Gson();
-        List<String> sqlList = new ArrayList<>();
-        List<Object[]> params = new ArrayList<>();
+        LinkedList<String> sqlList = new LinkedList<>();
+        LinkedList<Object[]> params = new LinkedList<>();
         List<TranOrderGoods> tranOrderGoods = new ArrayList<>();
         String json = appContext.param.json;
         JSONObject jsonObject = JSON.parseObject(json);
@@ -324,8 +321,8 @@ public class TranOrderOptModule {
             e.printStackTrace();
         }
 
-        sqlList.add(INSERT_TRAN_ORDER);
-        params.add(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
+        sqlList.addFirst(INSERT_TRAN_ORDER);
+        params.addFirst(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
                 tranOrder.getPdamt(), tranOrder.getFreight(), payamt, tranOrder.getCoupamt(), tranOrder.getDistamt(),
                 tranOrder.getRvaddno(), 0, 0, tranOrder.getConsignee(), tranOrder.getContact(), tranOrder.getAddress(),
                 bal, tranOrder.getRemarks()});
