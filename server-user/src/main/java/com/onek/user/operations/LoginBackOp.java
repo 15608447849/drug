@@ -51,7 +51,7 @@ public class LoginBackOp implements IOperation<AppContext> {
                 "FROM {{?" + DSMConst.TB_SYSTEM_USER + "}} " +
                 "WHERE cstatus&1=0 " +
                 "AND uphone=?";
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,account,account);
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,account);
 
         if (lines.size()>0){
             Object[] objects = lines.get(0);
