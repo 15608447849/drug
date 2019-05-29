@@ -69,7 +69,8 @@ public interface DSMConst extends UDAConst {
             {"tb_proxy_notice"}, //51 区域广播表
             {"tb_proxy_noticearec"}, //52 区域广播地区表
             {"tb_proxy_noticedt"}, //53 区域广播接收表
-            {"tb_proxy_uarea"} //54 渠道区域表
+            {"tb_proxy_uarea"}, //54 渠道区域表
+			{"td_tran_rebate"}, //55 返利记录表
     };
 
 
@@ -131,6 +132,7 @@ public interface DSMConst extends UDAConst {
     public final static int TB_PROXY_NOTICEAREC = 52;
     public final static int TB_PROXY_NOTICEDT = 53;
     public final static int TB_PROXY_UAREA = 54;
+	public final static int TD_TRAN_REBATE = 55;
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
     // 索引必须同_DB_TABLES里的索引对应
@@ -145,8 +147,8 @@ public interface DSMConst extends UDAConst {
             0, 0, 0, 0, 1,//35-39
             1, 1, 1, 1, 1,//40-44
             1, 4, 4, 4, 2,//45-49
-            0, 0, 0, 0, 0,
-            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0,//50-54
+            1, 0, 0, 0, 0,//55-59
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,

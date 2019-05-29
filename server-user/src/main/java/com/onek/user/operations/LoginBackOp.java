@@ -51,13 +51,13 @@ public class LoginBackOp implements IOperation<AppContext> {
                 "FROM {{?" + DSMConst.TB_SYSTEM_USER + "}} " +
                 "WHERE cstatus&1=0 " +
                 "AND uphone=?";
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,account,account);
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,account);
 
         if (lines.size()>0){
             Object[] objects = lines.get(0);
 
             if (objects[2].toString().equalsIgnoreCase(password)) { //忽略MD5大小写
-                communicator().getLogger().print("管理/运营人员登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1]+" ,姓名:"+objects[5]+" ,手机号:"+objects[3]);
+                communicator().getLogger().print("管理/运营人员登录: 用户码:" + objects[0]+" ,角色码:"+ objects[1]+" ,姓名:"+objects[4]+" ,手机号:"+objects[3]);
 
                  //判断角色
                 int role = StringUtils.checkObjectNull(objects[1],0);
@@ -76,13 +76,13 @@ public class LoginBackOp implements IOperation<AppContext> {
                     }
                 }
                 if (!isAllow){
-                    error = "用户("+objects[5]+")角色权限拒绝登陆";
+                    error = "用户("+objects[4]+")角色权限拒绝登陆";
                     return false;
                 }
 
-                int cstatus = StringUtils.checkObjectNull(objects[6],0);
+                int cstatus = StringUtils.checkObjectNull(objects[5],0);
                 if ((cstatus&32)==32){
-                    error = "用户("+objects[5]+")已被停止使用";
+                    error = "用户("+objects[4]+")已被停止使用";
                     return false;
                 }
 
@@ -95,10 +95,9 @@ public class LoginBackOp implements IOperation<AppContext> {
                     userSession = UserSession.createBackManagerUser(
                             StringUtils.checkObjectNull(objects[0],0),
                             StringUtils.checkObjectNull(objects[1],0L),
-                            StringUtils.checkObjectNull(objects[4],""),
+                            StringUtils.checkObjectNull(objects[3],""),
                             context.remoteIp,
                             password,
-                            StringUtils.checkObjectNull(objects[3],""),
                             StringUtils.checkObjectNull(objects[5],"")
                     );
                     return true;

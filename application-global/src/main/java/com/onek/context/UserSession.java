@@ -11,7 +11,6 @@ public class UserSession implements Serializable{
     public int userId; //用户ID
     public int compId;//企业ID
     public long roleCode; //用户角色码
-    public String account; //用户账号
     public String phone; //用户手机号码
     public String password;//用户密码
     public String lastIp;//最后登录IP
@@ -41,9 +40,9 @@ public class UserSession implements Serializable{
         return userSession;
     }
 
-    public static UserSession createBackManagerUser(int userId,long roleCode,String phone,String lastId,String password,String account,String userName){
+    public static UserSession createBackManagerUser(int userId,long roleCode,String phone,String lastId,String password,String userName){
         UserSession userSession = createUser(userId,roleCode,phone,lastId,password);
-        userSession.account =  account;
+
         userSession.userName = userName;
         return userSession;
     }
@@ -64,23 +63,10 @@ public class UserSession implements Serializable{
         userSession.userId = userId;
         userSession.roleCode = roleCode;
         userSession.userName = userName;
-        userSession.account = account;
         userSession.phone = phone;
         return userSession;
     }
 
-    @Override
-    public String toString() {
-        return "UserSession{" +
-                "userId=" + userId +
-                ", compId=" + compId +
-                ", roleCode=" + roleCode +
-                ", account='" + account + '\'' +
-                ", phone='" + phone + '\'' +
-                ", password='" + password + '\'' +
-                ", lastIp='" + lastIp + '\'' +
-                ", userName='" + userName + '\'' +
-                '}';
-    }
+
 
 }

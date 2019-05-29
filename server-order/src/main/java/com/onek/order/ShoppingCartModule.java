@@ -6,6 +6,7 @@ import com.onek.annotation.UserPermission;
 import com.onek.calculate.ActivityFilterService;
 import com.onek.calculate.entity.*;
 import com.onek.calculate.filter.*;
+import com.onek.calculate.util.DiscountUtil;
 import com.onek.context.AppContext;
 import com.onek.entity.DiscountRule;
 import com.onek.entity.OfferTipsVO;
@@ -801,6 +802,7 @@ public class ShoppingCartModule {
                 offerTipsVO.setOffer(currLadoff.getOffer());
                 offerTipsVO.setOffercode(currLadoff.getOffercode());
                 offerTipsVO.setUnqid(currLadoff.getUnqid()+"");
+                offerTipsVO.setCurrladDesc(DiscountRuleStore.getActivityDesc(currLadoff.getOffercode(), currLadoff));
             }
 
             if(nextLadoff != null){
@@ -809,6 +811,7 @@ public class ShoppingCartModule {
                 offerTipsVO.setNoffer(nextLadoff.getOffer());
                 offerTipsVO.setOffercode(nextLadoff.getOffercode());
                 offerTipsVO.setUnqid(nextLadoff.getUnqid()+"");
+                offerTipsVO.setNextladDesc(DiscountRuleStore.getGapActivityDesc(nextLadoff.getOffercode(), activity.getNextGapAmt(), nextLadoff));
             }
 
             offerTipsVOS.add(offerTipsVO);
