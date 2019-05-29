@@ -116,6 +116,7 @@ public class LoginRegistrationModule {
         String json = appContext.param.json;
         UpdateUserOp op = GsonUtils.jsonToJavaBean(json, UpdateUserOp.class);
         assert op!=null;
+        op.type = 0;
         return op.execute(appContext);
     }
 
@@ -127,6 +128,7 @@ public class LoginRegistrationModule {
         String json = appContext.param.json;
         UpdateUserOp op = GsonUtils.jsonToJavaBean(json, UpdateUserOp.class);
         assert op!=null;
+        op.type = 1;
         return op.execute(appContext);
     }
 
