@@ -25,7 +25,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
     String oldPassword;//旧密码 - 明文
     String newPassword; //明文  - 明文
 
-    String rmsg = "修改成功";
+    String rmsg = "";
 
     @Override
     public Result execute(AppContext context) {
@@ -43,7 +43,8 @@ public class UpdateUserOp implements IOperation<AppContext> {
                         if (code.equals(smsCode)){ //判断短信验证
                             session.phone = newPhone;
                             flag = changUserByUid("uphone='"+newPhone+"'", "uid='"+ uid+"' AND uphone='"+oldPhone+"'");
-                            rmsg = "已修改您的手机号码,请重新登陆";
+                            if(flag) rmsg = "已修改您的手机号码,请重新登陆";
+                            else rmsg = "无法修改手机号码";
                         }else{
                             Application.communicator().getLogger().print("缓存验证码:" + code+" , 短信验证码:"+smsCode);
                             rmsg = "验证码不正确,请重新输入";
@@ -66,7 +67,8 @@ public class UpdateUserOp implements IOperation<AppContext> {
                         if (validPassword(inputNewPassword)){
                             session.password = inputNewPassword;
                             flag = changUserByUid("upw='"+ inputNewPassword +"'","uid='"+ uid+"'");
-                            rmsg = "修改成功,请使用新密码登陆";
+                            if(flag) rmsg = "修改成功,请使用新密码登陆";
+                            else rmsg = "无法修改密码";
                         }else{
                             rmsg = "不符合密码安全性要求:\n" +
                                     "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符";
@@ -87,7 +89,8 @@ public class UpdateUserOp implements IOperation<AppContext> {
                     //检查密码正确性
                     if (validPassword(newPassword)){
                         flag = changUserByUid("upw='"+ EncryptUtils.encryption(newPassword)+"'","uphone='"+ oldPhone+"'");
-                        rmsg = "修改成功,请使用新密码登陆";
+                        if (flag) rmsg = "修改成功,请使用新密码登陆";
+                        else rmsg = "无法修改密码";
                     }else{
                         rmsg = "不符合密码安全性要求:\n" +
                                 "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符";
@@ -100,8 +103,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
             }
         }
 
-        if (flag) return new Result().success(rmsg);
-        return new Result().fail(rmsg);
+        return flag? new Result().success(rmsg) : new Result().fail(rmsg) ;
     }
 
     private Boolean changUserByUid(String param ,String ifs) {
