@@ -18,6 +18,7 @@ import static com.onek.util.fs.FileServerUtils.*;
 public class FileInfoModule {
 
     private static class QueryParam{
+        int uid;
         int compid;
         long orderid;
         long spu;
@@ -40,6 +41,7 @@ public class FileInfoModule {
             map.put("home",defaultHome());//资源主目录-轮播图等存放
             map.put("notice",defaultNotice());//公告目录
 
+
         if (!StringUtils.isEmpty(json)){
             QueryParam queryParam = GsonUtils.jsonToJavaBean(json,QueryParam.class);
             assert queryParam != null;
@@ -48,6 +50,9 @@ public class FileInfoModule {
                 if (queryParam.orderid > 0) {
                     map.put("orderFilePath", orderFilePath(queryParam.compid,queryParam.orderid));
                 }
+            }
+            if (queryParam.uid>0){
+                map.put("userFilePath",userFilePath(queryParam.uid));
             }
             if (queryParam.spu > 0 && queryParam.sku > 0){
                 map.put("goodsFilePath",goodsFilePath(queryParam.spu,queryParam.sku));
@@ -62,6 +67,7 @@ public class FileInfoModule {
                 }
                 map.put("goodsFilePathList",list);
             }
+
         }
         return new Result().success(map);
     }
