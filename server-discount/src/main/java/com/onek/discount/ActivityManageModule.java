@@ -1212,15 +1212,23 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private boolean theActInProgress(long actCode) {
-        String selectTypeSQL = "select acttype,actcycle from {{?" + DSMConst.TD_PROM_ACT + "}} "
+        String selectTypeSQL = "select acttype,actcycle,brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} "
                 + " where cstatus&1=0 and unqid=" + actCode;
         List<Object[]> qTResult = baseDao.queryNative(selectTypeSQL);
         int acttype = (int)qTResult.get(0)[0];
         long actcycle = (long)qTResult.get(0)[1];
-        String selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
-                + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
-                + "where a.cstatus&1=0 and a.unqid=" + actCode + " and a.sdate<=CURRENT_DATE"
-                + " and a.edate>=CURRENT_DATE and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+        int brulecode = (int) qTResult.get(0)[2];
+        String selectSQL = "";
+        if(brulecode == 1133){
+            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                    + "where a.cstatus&1=0 and a.unqid=" + actCode + " and a.sdate<=CURRENT_DATE"
+                    + " and a.edate>=CURRENT_DATE";
+        }else{
+            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                    + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
+                    + "where a.cstatus&1=0 and a.unqid=" + actCode + " and a.sdate<=CURRENT_DATE"
+                    + " and a.edate>=CURRENT_DATE and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+        }
         LocalDateTime localDateTime = LocalDateTime.now();
         if (acttype == 1) {//每周
            int dayOfWeek = localDateTime.getDayOfWeek().getValue();
@@ -1246,10 +1254,15 @@ public class ActivityManageModule {
             String actcycleStr = String.valueOf(actcycle);
             String actDate =TimeUtils.getCurrentYear() + "-" + actcycleStr.substring(2,4)
                     + "-" +  actcycleStr.substring(4,6);
-            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
-                    + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
-                    + "where a.cstatus&1=0 and a.unqid=" + actCode + " and CURRENT_DATE='" + actDate
-                    + "' and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+            if(brulecode == 1133){
+                selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                        + "where a.cstatus&1=0 and a.unqid=" + actCode +  " and CURRENT_DATE='" + actDate + "'";
+            }else{
+                selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                        + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
+                        + "where a.cstatus&1=0 and a.unqid=" + actCode + " and CURRENT_DATE='" + actDate
+                        + "' and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+            }
         }
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         return (long)queryResult.get(0)[0] > 0;

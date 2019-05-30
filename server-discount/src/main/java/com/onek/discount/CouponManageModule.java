@@ -18,6 +18,7 @@ import com.onek.util.*;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.area.AreaUtil;
 import com.onek.util.member.MemberStore;
+import com.onek.util.order.RedisOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.apache.poi.hssf.usermodel.HSSFCell;
@@ -1751,7 +1752,7 @@ public class CouponManageModule {
     private boolean getOrderCnt(int compid) {
         try{
             if(compid > 0){
-                return IceRemoteUtil.getOrderCntByCompid(compid) == 0;
+                return RedisOrderUtil.getOrderNumByCompid(compid) == 0;
             }
         }catch (Exception e){
             e.printStackTrace();

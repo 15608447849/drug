@@ -115,7 +115,7 @@ public class OrderOptModule {
 
 
     //查询团购订单记录
-    private static final String QUERY_TEAM_BUY_ORDER_SQL = "select orderno,payamt,compid,pnum from "+
+    private static final String QUERY_TEAM_BUY_ORDER_SQL = "select orderno,pdprice as payamt,compid,pnum from "+
             " {{?"+ TD_BK_TRAN_GOODS+"}} g " +
             " where g.createdate >= ? and g.createdate <= ? and g.promtype& 4096 > 0 and actcode like concat('%',?,'%')";
 

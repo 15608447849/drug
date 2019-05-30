@@ -604,14 +604,9 @@ public class HttpUtil {
     }
 
     public static String formText(String url, String type, Map<String,String> params){
-
-
-
         String text = null;
         HttpURLConnection con = null;
-
         try{
-
             StringBuilder sb = new StringBuilder();
             for (Map.Entry<String, String> e : params.entrySet()) {
                 sb.append(e.getKey());
@@ -638,8 +633,6 @@ public class HttpUtil {
                 osw.write(content);
                 osw.flush();
                 osw.close();
-//                con.getOutputStream().write(content.getBytes("ISO-8859-1"));
-//                con.getOutputStream().flush();
             }
             BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
             sb.delete(0,sb.length());
@@ -652,10 +645,42 @@ public class HttpUtil {
         }catch (Exception e){
             e.printStackTrace();
         }finally {
-            if (con!=null) {
-                con.disconnect();
-                con = null;
+            if (con!=null)  con.disconnect();
+        }
+        return text;
+    }
+
+    public static String contentToHttpBody(String url, String type, String json){
+        String text = null;
+        HttpURLConnection con = null;
+        System.out.println(url+ " "+  type);
+        try{
+            con = (HttpURLConnection) new URL(url).openConnection();
+            con.setRequestMethod(type);
+            con.setDoOutput(true);
+            con.setDoInput(true);
+            con.setUseCaches(false);
+            con.setRequestProperty("Charset", "UTF-8");
+            con.setRequestProperty("Content-Type", "application/json");
+
+            if (json!=null){
+                OutputStreamWriter osw = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
+                osw.write(json);
+                osw.flush();
+                osw.close();
             }
+            BufferedReader br = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8));
+            String line;
+            StringBuilder sb = new StringBuilder();
+            while ((line = br.readLine()) != null) {
+                sb.append(line);
+            }
+            br.close();
+            text = sb.toString();
+        }catch (Exception e){
+            e.printStackTrace();
+        }finally {
+            if (con!=null)  con.disconnect();
         }
         return text;
     }

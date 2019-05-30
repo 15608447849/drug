@@ -28,7 +28,17 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
         return accessUrl(sb.toString());
     }
 
+
+    public static String mapToHttpBody(String url,String type,Map map){
+        return HttpUtil.contentToHttpBody(url,type,GsonUtils.javaBeanToJson(map));
+    }
+
+//    public static String getMapToHttpBody(String url,Map map){
+//        return HttpUtil.contentToHttpBody(url,"PATCH",GsonUtils.javaBeanToJson(map));
+//    }
+
     public HttpRequest accessUrl(String url){
+        System.out.println(url);
         new HttpUtil.Request(url,this)
                 .setReadTimeout(1000)
                 .setConnectTimeout(1000)

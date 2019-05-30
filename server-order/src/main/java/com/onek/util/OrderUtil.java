@@ -242,10 +242,10 @@ public class OrderUtil {
                     }
                 }
 
-                long unqid = GenIdUtil.getUnqId();
-                int payamt = MathUtil.exactDiv(tranOrder.getPayamt(), 100).intValue();
-                int code = MemberStore.addPoint(compid, payamt);
-                if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_ORDER_GIVE, payamt, orderno,0 });
+//                long unqid = GenIdUtil.getUnqId();
+//                int payamt = MathUtil.exactDiv(tranOrder.getPayamt(), 100).intValue();
+//                int code = MemberStore.addPoint(compid, payamt);
+//                if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_ORDER_GIVE, payamt, orderno,0 });
 
             }
 
@@ -302,6 +302,21 @@ public class OrderUtil {
 
                     }
                 }
+            }
+
+
+            List<Object[]> plist = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
+            if(plist != null && plist.size() > 0) {
+                TranOrder[] result = new TranOrder[plist.size()];
+                BaseDAO.getBaseDAO().convToEntity(plist, result, TranOrder.class, new String[]{"payamt", "odate", "otime", "pdamt", "freight", "coupamt", "distamt", "rvaddno", "balamt", "orderno", "address", "pdnum", "consignee", "contact"});
+
+                TranOrder tranOrder = result[0];
+
+                long unqid = GenIdUtil.getUnqId();
+                int payamt = MathUtil.exactDiv(tranOrder.getPayamt(), 100).intValue();
+                int code = MemberStore.addPoint(compid, payamt);
+                if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_ORDER_GIVE, payamt, orderno,0 });
+
             }
 
         }
