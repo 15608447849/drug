@@ -242,7 +242,8 @@ public class ProxyNoticeModule {
                 + DSMConst.TB_PROXY_NOTICEAREC + "}} b on a.msgid=b.msgid left join {{?"
                 + DSMConst.TB_PROXY_NOTICEDT + "}} c on a.msgid=c.msgid where a.cstatus&1=0 and b.cstatus&1=0 "
                 + " and c.cstatus&1=0 and revobj&?>0 and areac=? and receiver=? "
-                + " and invdtime>CURRENT_TIMESTAMP and effcttime<=CURRENT_TIMESTAMP and a.readtimes>c.readtimes";
+                + " and invdtime>CURRENT_TIMESTAMP and effcttime<=CURRENT_TIMESTAMP and (a.readtimes>c.readtimes "
+                + " or a.readtimes=0) limit 0,3 order by effcttime desc and a.readtimes>0";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL, roleId, areac, receiver);
         if (queryResult == null || queryResult.isEmpty()) return result.success(msgList);
         queryResult.forEach(qr -> {
