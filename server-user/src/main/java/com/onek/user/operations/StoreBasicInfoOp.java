@@ -28,7 +28,7 @@ public class StoreBasicInfoOp {
             infoToCache(info);
         }
     }
-    //更具企业码更新企业信息到缓存
+    //企业码更新企业信息到缓存
     public static void updateCompInfoToCacheById(int cid){
        StoreBasicInfo info = new StoreBasicInfo(cid);
        getStoreInfoById(info);
@@ -47,7 +47,7 @@ public class StoreBasicInfoOp {
         //通过企业码获取企业信息
         String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng" +
                 " FROM {{?"+ TB_COMP +"}}"+
-                " WHERE ctype=0 AND cid = ?";
+                " WHERE ctype=0 AND cid=?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql, info.storeId);
         if (lines.size() == 1){
             //获取企业信息
