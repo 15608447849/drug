@@ -24,14 +24,12 @@ public class FileInfoModule {
         long sku;
         ArrayList<QueryParam> list;
     }
-
     /**
      * 获取文件服务器
      * 上传列表/下载列表
      */
     @UserPermission (ignore = true)
     public Result fileServerInfo(AppContext appContext){
-
         HashMap<String,Object> map = new HashMap<>();
         publicConfig(map);
         String json = appContext.param.json;
@@ -42,7 +40,6 @@ public class FileInfoModule {
         }
         return new Result().success(map);
     }
-
 
     //公共
     private void publicConfig(HashMap<String, Object> map) {
