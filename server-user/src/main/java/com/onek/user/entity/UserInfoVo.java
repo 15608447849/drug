@@ -23,6 +23,9 @@ public class UserInfoVo {
     private String logintime;
     private int cstatus;
     private String rname;
+    private String arearng;
+    private int cid;
+    private int belong;
 
 //    public int getOid() {
 //        return oid;
@@ -150,5 +153,29 @@ public class UserInfoVo {
 
     public void setRname(String rname) {
         this.rname = rname;
+    }
+
+    public int getCid() {
+        return cid;
+    }
+
+    public void setCid(int cid) {
+        this.cid = cid;
+    }
+
+    public int getBelong() {
+        return belong;
+    }
+
+    public void setBelong(int belong) {
+        this.belong = belong;
+    }
+
+    public String getArearng() {
+        return arearng;
+    }
+
+    public void setArearng(String arearng) {
+        this.arearng = arearng;
     }
 }

@@ -111,7 +111,7 @@ public class BackgroundUserModule {
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0";
         sqlBuilder.append(selectSQL);
-        sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by uid desc");
+        sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" order by uid desc");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
