@@ -35,12 +35,12 @@ public class FileInfoModule {
         String json = appContext.param.json;
 
         HashMap<String,Object> map = new HashMap<>();
-            map.put("upUrl", fileUploadAddress());//上传url
+            //判断前端是否存在上传文件的权限
+            if (appContext.getUserSession()!=null) map.put("upUrl", fileUploadAddress());//上传url
             map.put("ergodicUrl",fileErgodicAddress());//遍历url
             map.put("downPrev",fileDownloadPrev());//下载地址url
             map.put("home",defaultHome());//资源主目录-轮播图等存放
             map.put("notice",defaultNotice());//公告目录
-
 
         if (!StringUtils.isEmpty(json)){
             QueryParam queryParam = GsonUtils.jsonToJavaBean(json,QueryParam.class);
