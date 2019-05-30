@@ -754,6 +754,11 @@ public class ShoppingCartModule {
         Result result = new Result();
         JsonParser jsonParser = new JsonParser();
         JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+
+        if (jsonArray.size() == 0) {
+            return new Result().success(null);
+        }
+
         List<ShoppingCartDTO> shoppingCartDTOS = new ArrayList<>();
         Gson gson = new Gson();
         List<OfferTipsVO> offerTipsVOS = new ArrayList<>();
