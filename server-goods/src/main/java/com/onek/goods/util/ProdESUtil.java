@@ -73,10 +73,10 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_MANUNAME, manuname);
             data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
             data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
-            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus() == null ? 0 : prodVO.getProdstatus());
-            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus() == null ? 256 : prodVO.getSkuCstatus());
+            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus());
+            data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus());
             data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
-            data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales() == null ? 0 :prodVO.getSales());
+            data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
             data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
