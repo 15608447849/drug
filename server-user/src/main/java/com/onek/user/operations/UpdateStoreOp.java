@@ -126,13 +126,11 @@ public class UpdateStoreOp implements IOperation<AppContext> {
     //转换经纬度
     private void convertLatLon() {
         try {
-                String pointStr = GaoDeMapUtil.addressConvertLatLon(address);
-                if (!StringUtils.isEmpty(pointStr)){
-                    Application.communicator().getLogger().print(address +" =============================> " + pointStr);
-                    longitude = Double.parseDouble(pointStr.split(",")[0]) ;
-                    latitude = Double.parseDouble(pointStr.split(",")[1]) ;
-                }
-        } catch (NumberFormatException ignored) {
+            GaoDeMapUtil.Point p = GaoDeMapUtil.addressConvertLatLon(address);
+            Application.communicator().getLogger().print(address +" ===============地址转换经纬度==============> " + p);
+            longitude = p.lon;
+            latitude = p.lat;
+        } catch (Exception ignored) {
         }
     }
 

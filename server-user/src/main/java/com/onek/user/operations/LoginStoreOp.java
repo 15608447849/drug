@@ -70,7 +70,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
     private boolean relationTokenUserSession(AppContext context) {
         context.setUserSession(userSession);
-        context.storeUserMappingToken();//门店登陆-防止多点你登录设置
+        context.storeUserMappingToken();//门店登陆-防止多点登录设置
         return context.relationTokenUserSession();//门店登陆-关联用户信息
     }
 

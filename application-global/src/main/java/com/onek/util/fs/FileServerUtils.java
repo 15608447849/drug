@@ -41,14 +41,14 @@ public class FileServerUtils {
         return "http://" + fsp.fileServerAddress ;
     }
 
-    //excel 地址
+    //excel
     public static String getExcelDre(){
         return "/" + EncryptUtils.encryption("_excel");
     }
 
-    //默认的主目录
+    //首页信息主目录
     public static String defaultHome(){
-        return "/" + EncryptUtils.encryption(fsp.fileDefaultDir);
+        return "/" + EncryptUtils.encryption("_home");
     }
 
     //公告目录
@@ -56,7 +56,7 @@ public class FileServerUtils {
         return  "/" + EncryptUtils.encryption("_notice");
     }
 
-
+    //图片验证码路径
     public static String defaultVerificationDir() {
         return   "/" + EncryptUtils.encryption("image_verification_code");
     }
@@ -69,8 +69,15 @@ public class FileServerUtils {
         return "/" +index + "/" + compid + "/"+ EncryptUtils.encryption("_company") ;
     }
 
-    //spu - 确定商品分类目录
-    //spk - 确定具体商品目录
+    //用户码->用户相关文件路径
+    public static String userFilePath(int uid) {
+        int index = uid % MOD; //取模
+        return "/" +index + "/" + uid + "/"+ EncryptUtils.encryption("_user") ;
+    }
+
+
+
+    //spu - 确定商品分类目录 ,spk - 确定具体商品目录
     public static String goodsFilePath(long spu,long sku){
         long index = spu % MOD;
         String path = "/" + index + "/" + spu;
@@ -79,7 +86,7 @@ public class FileServerUtils {
         return path + "/" + EncryptUtils.encryption("_goods");
     }
 
-    //订单号->订单相关文件路径
+    //订单相关文件路径
     public static String orderFilePath(int compid,long orderid){
         int index = compid % MOD; //取模
         String path = "/" +index + "/" + compid + "/" +EncryptUtils.encryption("_order_all");
@@ -93,9 +100,9 @@ public class FileServerUtils {
         return path;
     }
 
-    //检查文件是否存在
-    public static boolean isFileExist(String imgPath) {
-        String json = new HttpRequest().getTargetDirFileList(fileErgodicAddress(),imgPath,false).getRespondContent();
+    //检查一个具体文件是否存在
+    public static boolean isFileExist(String filePath) {
+        String json = new HttpRequest().getTargetDirFileList(fileErgodicAddress(),filePath,false).getRespondContent();
         if (StringUtils.isEmpty(json)) return false;
         HashMap<String,Object> map = GsonUtils.string2Map(json);
         if (map!=null){
@@ -104,6 +111,20 @@ public class FileServerUtils {
         }
         return false;
     }
+
+    //检查目录存在哪些文件
+    public static List<String> showDirFilesPath(String dirPath,boolean isSubDir) {
+        String json = new HttpRequest().getTargetDirFileList(fileErgodicAddress(),dirPath,isSubDir).getRespondContent();
+        if (StringUtils.isEmpty(json)) return null;
+        HashMap<String,Object> map = GsonUtils.string2Map(json);
+        if (map!=null){
+            Object data = map.get("data");
+            if (data instanceof List) return (List<String>) data;
+        }
+        return null;
+    }
+
+
     /**
      * @return 付款二维码图片链接
      */
@@ -162,17 +183,15 @@ public class FileServerUtils {
     }
 
     /**
-     *
-     *
+     *获取excel下载路径
      */
-    public static String getExcelDownPath(String title , InputStream excelStream){
-
+    public static String getExcelDownPath(String fileName, InputStream excelStream){
         try {
-            //上传图片
+            //上传文件
             String json = new HttpRequest().addStream(
                     excelStream,
                     FileServerUtils.getExcelDre(),  //远程路径
-                    EncryptUtils.encryption(title)+".xls")//文件名
+                    EncryptUtils.encryption(fileName)+".xls")//文件名
                     .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
                     .getRespondContent();
             HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());

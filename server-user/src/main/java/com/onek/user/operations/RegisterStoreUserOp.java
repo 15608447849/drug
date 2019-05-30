@@ -40,8 +40,7 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
         if (type == 2) return new VerificationOp().setType(type).setPhone(phone).execute(context);
         if (type == 3) {
             if (!validSmsCode()) return new Result().fail("短信验证码不正确");
-            if (!validPassword(password)) return new Result().fail("不符合密码安全性要求:\n" +
-                    "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符");
+            if (!validPassword(password)) return new Result().fail(PASSWORD_VALID_MESSAGE);
             if (StringUtils.isEmpty(password2) || !password.equals(password2)) return new Result().fail("两次密码输入不一致");
             return submit(context);
         }
@@ -55,17 +54,24 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
         return smsCode.equals(_smsCode);
     }
 
+    public static String PASSWORD_VALID_MESSAGE = "不符合密码安全性要求:\n" +
+            "至少6位字符,包含1个大写字母,1个小写字母";
+
     //正则匹配密码规则
     public static boolean validPassword(String psd){
         if (StringUtils.isEmpty(psd)) return false;
+//        String pattern  = "^" +
+//                "(?![A-Za-z0-9]+$)" +
+//                "(?![a-z0-9\\W]+$)" +
+//                "(?![A-Za-z\\W]+$)" +
+//                "(?![A-Z0-9\\W]+$)" +
+//                "[A-Za-z0-9\\W]{6,}$";
         String pattern  = "^" +
-                "(?![A-Za-z0-9]+$)" +
+//                "(?![A-Za-z0-9]+$)" +
                 "(?![a-z0-9\\W]+$)" +
                 "(?![A-Za-z\\W]+$)" +
                 "(?![A-Z0-9\\W]+$)" +
-                "[A-Za-z0-9\\W]" +
-                "{6,}" +
-                "$";
+                "[A-Za-z0-9\\W]{6,}";
         return Pattern.matches(pattern, psd);
     }
 

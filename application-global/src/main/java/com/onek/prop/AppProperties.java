@@ -15,13 +15,12 @@ public class AppProperties extends ApplicationPropertiesBase {
     @PropertiesName("file.server.address")
     public String fileServerAddress;
 
-    @PropertiesName("file.default.directory")
-    public String fileDefaultDir;
-
     @PropertiesName("ice.master.host")
     public String masterHost;
+
     @PropertiesName("ice.master.port")
     public int masterPort;
+
     @PropertiesName("ice.grid.name")
     public String masterName;
 

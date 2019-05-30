@@ -5,8 +5,12 @@ import util.http.HttpRequest;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.net.URLEncoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Objects;
+
+import static java.lang.Double.parseDouble;
 
 /**
  * @Author: leeping
@@ -16,59 +20,113 @@ public class GaoDeMapUtil {
 
     public static String apiKey = "c59217680590515b7c8369ff5e8fe124";
 
-    private static class Geocode{
+    public static class Point{
+        public double lon;
+        public double lat;
+
+        public Point(double lon, double lat){
+            this.lon = lon;
+            this.lat = lat;
+        }
+
+        public Point(Double[] doubles){
+            this(doubles[0],doubles[1]);
+        }
+
+        /**
+         * 经度(longitude)在前，纬度(latitude)在后
+         * @param pointStr "112.984200,28.205628"
+         */
+        public Point(String pointStr){
+            this( parseDouble(pointStr.split(",")[0]), parseDouble(pointStr.split(",")[1]));
+        }
+
+        @Override
+        public String toString() {
+            return "{" + "lon=" + lon + ", lat=" + lat + '}';
+        }
+    }
+
+    private static class DataBean {
         String location;
+        String adcode;
+        String polyline;
     }
 
     private static class JsonBean{
         int status;
-        List<Geocode> geocodes;
+        List<DataBean> geocodes;
         String province;
         String city;
+        List<DataBean> districts;
     }
 
-
-
     /**
-     * 获取地址经纬度 index,当前执行次数
-     * 经度(longitude)在前，纬度(latitude)在后
+     * 获取地址信息 index,当前执行次数
      */
-    private static String addressConvertLatLon(String address,int index){
+    private static DataBean addressConvertLatLon(String address,int index){
         try {
             StringBuffer sb = new StringBuffer( "https://restapi.amap.com/v3/geocode/geo?");
             HashMap<String,String> map = new HashMap<>();
             map.put("key",apiKey);
-            map.put("address", URLEncoder.encode(address,"UTF-8"));
+            map.put("address", URLEncoder.encode(address.trim(),"UTF-8"));
             map.put("city","");
             map.put("batch","false");
             map.put("sig","");
             map.put("output","JSON");
             map.put("callback","");
             String result = new HttpRequest().bindParam(sb,map).getRespondContent();
-            //System.out.println(sb.toString()+"\naddress "+address+","+result);
             if(StringUtils.isEmpty(result)) throw  new NullPointerException();
             JsonBean jsonBean = GsonUtils.jsonToJavaBean(result,JsonBean.class);
             if (jsonBean == null || jsonBean.status != 1 || jsonBean.geocodes.size() == 0) throw  new NullPointerException();
-            return jsonBean.geocodes.get(0).location;
+            return jsonBean.geocodes.get(0);
         } catch (Exception e) {
             index++;
             if (index<3) return addressConvertLatLon(address,index);
         }
         return null;
     }
+    //获取地区边界信息
+    private static DataBean areaPolyline(String address,int index){
+        try{
+            DataBean d = addressConvertLatLon(address, 0);
+            StringBuffer sb = new StringBuffer( "https://restapi.amap.com/v3/config/district?");
+            HashMap<String,String> map = new HashMap<>();
+            map.put("key",apiKey);
+            map.put("keywords",d.adcode);
+            map.put("subdistrict","0");
+            map.put("filter",d.adcode);
+            map.put("extensions","all");
+            String result = new HttpRequest().bindParam(sb,map).getRespondContent();
+            if(StringUtils.isEmpty(result)) throw  new NullPointerException();
+            JsonBean jsonBean = GsonUtils.jsonToJavaBean(result,JsonBean.class);
+            if (jsonBean == null || jsonBean.status != 1 || jsonBean.districts.size() == 0) throw  new NullPointerException();
+            return jsonBean.districts.get(0);
+        } catch (Exception e) {
+            index++;
+            if (index<3) return areaPolyline(address,index);
+        }
+        return null;
+    }
+
     /**
      * 获取地址经纬度
      */
-    public static String addressConvertLatLon(String address){
-        return addressConvertLatLon(address.trim(),0);
+    public static Point addressConvertLatLon(String address){
+        return new Point(Objects.requireNonNull(addressConvertLatLon(address, 0)).location);
+    }
+
+    /**
+     * 获取地址边界点Point
+     */
+    public static List<Point> areaPolyline(String address){
+        return listArrayJsonToPointJson(pointArray2ListDouble("["+Objects.requireNonNull(areaPolyline(address, 0)).polyline+"]"));
     }
 
     /**
      * ip转地址信息
      */
     private static String ipConvertAddress(String ip,int index){
-        //https://restapi.amap.com/v3/ip?ip=113.247.55.143&key=c59217680590515b7c8369ff5e8fe124
-        //{"status":"1","info":"OK","infocode":"10000","province":"湖南省","city":"长沙市","adcode":"430100","rectangle":"112.6534116,27.96920845;113.3946776,28.42655248"}
         try {
             StringBuffer sb = new StringBuffer( "https://restapi.amap.com/v3/ip?");
             HashMap<String,String> map = new HashMap<>();
@@ -85,6 +143,7 @@ public class GaoDeMapUtil {
         }
         return null;
     }
+
     /**
      * ip转换地址信息
      */
@@ -92,20 +151,16 @@ public class GaoDeMapUtil {
         return ipConvertAddress(ip.trim(),0);
     }
 
-
+    //判断点在线上
     private static boolean checkPointOnLine(Point2D.Double point, Point2D.Double pointS, Point2D.Double pointD) {
         Line2D line = new Line2D.Double(pointS,pointD);
         return line.contains(point);
     }
 
-    /**
-     * 一个点是否在多边形内或线上
-     *
-     * @param point
-     *            要判断的点
-     * @param polygon
-     *            组成的顶点坐标集合
-     * @return
+    /**一个点是否在多边形内或线上
+     * @param point  要判断的点
+     * @param polygon 组成的顶点坐标集合
+     * @return true 包含
      */
     private static boolean checkPointOnRange(Point2D.Double point, List<Point2D.Double> polygon) {
 //        if (polygon.contains(point)) return true;
@@ -136,59 +191,69 @@ public class GaoDeMapUtil {
         return peneralPath.contains(point);
     }
 
+
+
+    private static String pointJsonToPoint2DJson(Object pointOrPointList){
+        return GsonUtils.javaBeanToJson(pointOrPointList).replace("lon","x").replace("lat","y");
+    }
+
     /**
-     * @param singe 单个点的json
-     * @param points 多边形的json
+     * @param singe 单个点
+     * @param points 多边形的点线性集合
      * @return true - 包含在多边形内
      */
-    public static boolean checkPointOnRange(String singe,String points) {
-        Point2D.Double point = GsonUtils.jsonToJavaBean(singe,Point2D.Double.class);
-        List<Point2D.Double> polygon = GsonUtils.json2List(points,Point2D.Double.class);
+    public static boolean checkPointOnRange(Point singe,List<Point> points) {
+        Point2D.Double point = GsonUtils.jsonToJavaBean(pointJsonToPoint2DJson(singe),Point2D.Double.class);
+        List<Point2D.Double> polygon = GsonUtils.json2List(pointJsonToPoint2DJson(points),Point2D.Double.class);
         return checkPointOnRange(point,polygon);
     }
 
-    /**
-     * @param multiple 多个点的json
-     * @param points 多边形的json
-     * @return true - 包含在多边形内
-     */
-    public static boolean[] checkMorePointOnRange(String multiple,String points) {
-
-        List<Point2D.Double> pointList = GsonUtils.json2List(multiple,Point2D.Double.class);
-        List<Point2D.Double> polygon = GsonUtils.json2List(points,Point2D.Double.class);
-
-        boolean[] res = new boolean[pointList.size()];
-        for (int i = 0;i<res.length;i++){
-            res[i] = checkPointOnRange(pointList.get(i),polygon);
+    // [lon1,lat1,lon2,lat2] -> List:[lon,lat]
+    private static List<Double[]> pointArray2ListDouble(Double[] doubles){
+        List<Double[]> list = new ArrayList<>();
+        for (int i = 0 ; i<doubles.length ;i+=2){
+            list.add(new Double[]{doubles[i],doubles[i+1]});
         }
-        return res;
+        return list;
+    }
+    //point  -> json - list<double[]>
+    private static String pointArray2ListDouble(String json){
+       return GsonUtils.javaBeanToJson(pointArray2ListDouble(Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, Double[].class))));
     }
 
-    public static void main(String[] args) {
-
-
-
-
-//https://lbs.amap.com/api/javascript-api/example/relationship-judgment/point-surface-relation  console.log(JSON.stringify(point))
-
-//        Point2D.Double point2d = new Point2D.Double(112.988035,28.22271);//商务标志楼 true
-//        Point2D.Double point2d = new Point2D.Double(112.993995,28.187931);//湘雅二医院 -false
-       /* Point2D.Double point2d = new Point2D.Double(112.919378,28.219301);//测试点
-        System.out.println(GsonUtils.javaBeanToJson(point2d));
-        point2d = GsonUtils.jsonToJavaBean(GsonUtils.javaBeanToJson(point2d),Point2D.Double.class);
-
-        List<Point2D.Double> polygon = new ArrayList<>();
-        polygon.add(new Point2D.Double(112.938888,28.228272) ); //市政府
-        polygon.add(new Point2D.Double(113.012932,28.233654) );//德雅路口
-        polygon.add(new Point2D.Double(112.988412,28.223999) );//华创
-        polygon.add(new Point2D.Double(112.987862,28.220076) );//新时代广场
-        polygon.add(new Point2D.Double(112.975598,28.220521) );//雅泰花园
-        polygon.add(new Point2D.Double(112.919358,28.219294) );//商学院
-        System.out.println(GsonUtils.javaBeanToJson(polygon));
-        System.out.println(checkPointOnRange(point2d,polygon));*/
-
-       String singe = "{\"x\":112.919378,\"y\":28.219301}";
-       String points = "[{\"x\":112.938888,\"y\":28.228272},{\"x\":113.012932,\"y\":28.233654},{\"x\":112.988412,\"y\":28.223999},{\"x\":112.987862,\"y\":28.220076},{\"x\":112.975598,\"y\":28.220521},{\"x\":112.919358,\"y\":28.219294}]";
-        System.out.println(checkPointOnRange(singe,points));
+    // list<double[]> -> List<Point>
+    private static List<Point> listArrayJsonToPointJson(String json){
+        //[[112.938888,28.228272],[112.988412,28.223999],[112.975598,28.220521]]
+        try {
+            List<Double[]> list = GsonUtils.json2List(json,Double[].class);
+            List<Point> points = new ArrayList<>();
+            if (list!=null && list.size()>0) {
+                for(Double[] doubles : list){
+                    points.add(new Point(doubles));
+                }
+            }
+            return points;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
     }
+
+    //[{"lon":112.919358,"lat":28.219294}] -> [[112.975598,28.220521]]
+    public static String pointJsonToListArrayJson(String json){
+        try {
+            List<Point> points = GsonUtils.json2List(json,Point.class);
+            if (points!=null && points.size() > 0){
+                List<Double[]> list = new ArrayList<>();
+                for (int i = 0 ; i<points.size() ;i+=2){
+                    list.add(new Double[]{points.get(i).lon,points.get(i).lat});
+                }
+                return GsonUtils.javaBeanToJson(list);
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 }
