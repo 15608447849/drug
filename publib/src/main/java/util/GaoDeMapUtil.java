@@ -98,6 +98,7 @@ public class GaoDeMapUtil {
             map.put("filter",d.adcode);
             map.put("extensions","all");
             String result = new HttpRequest().bindParam(sb,map).getRespondContent();
+            System.out.println(result);
             if(StringUtils.isEmpty(result)) throw  new NullPointerException();
             JsonBean jsonBean = GsonUtils.jsonToJavaBean(result,JsonBean.class);
             if (jsonBean == null || jsonBean.status != 1 || jsonBean.districts.size() == 0) throw  new NullPointerException();
@@ -256,4 +257,34 @@ public class GaoDeMapUtil {
         return null;
     }
 
+    public static void main(String[] args) {
+
+//        List<Point> points = areaPolyline("湖南省长沙市");
+//        System.out.println(points);
+
+//https://lbs.amap.com/api/javascript-api/example/relationship-judgment/point-surface-relation  console.log(JSON.stringify(point))
+
+//        Point2D.Double point2d = new Point2D.Double(112.988035,28.22271);//商务标志楼 true
+//        Point2D.Double point2d = new Point2D.Double(112.993995,28.187931);//湘雅二医院 -false
+       /* Point2D.Double point2d = new Point2D.Double(112.919378,28.219301);//测试点
+        System.out.println(GsonUtils.javaBeanToJson(point2d));
+        point2d = GsonUtils.jsonToJavaBean(GsonUtils.javaBeanToJson(point2d),Point2D.Double.class);
+
+        List<Point2D.Double> polygon = new ArrayList<>();
+        polygon.add(new Point2D.Double(112.938888,28.228272) ); //市政府
+        polygon.add(new Point2D.Double(113.012932,28.233654) );//德雅路口
+        polygon.add(new Point2D.Double(112.988412,28.223999) );//华创
+        polygon.add(new Point2D.Double(112.987862,28.220076) );//新时代广场
+        polygon.add(new Point2D.Double(112.975598,28.220521) );//雅泰花园
+        polygon.add(new Point2D.Double(112.919358,28.219294) );//商学院
+        System.out.println(GsonUtils.javaBeanToJson(polygon));
+        System.out.println(checkPointOnRange(point2d,polygon));*/
+
+//       String singe = "{\"lon\":112.919378,\"lat\":28.219301}";
+//       String points = "[{\"lon\":112.938888,\"lat\":28.228272},{\"lon\":113.012932,\"lat\":28.233654},{\"lon\":112.988412,\"lat\":28.223999},{\"lon\":112.987862,\"lat\":28.220076},{\"lon\":112.975598,\"lat\":28.220521},{\"lon\":112.919358,\"lat\":28.219294}]";
+//       Point p = GsonUtils.jsonToJavaBean(singe,Point.class);
+//       List<Point> list = GsonUtils.json2List(points,Point.class);
+//
+//       System.out.println(checkPointOnRange(p,list));
+    }
 }
