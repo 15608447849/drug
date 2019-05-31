@@ -63,7 +63,7 @@ public abstract class LoginAbsOp {
 
     boolean recodeLoginInfo(String ipAddress,int userid){
         //密码正确 - 记录登陆时间 IP
-        String updateSql = "UPDATE {{?" + TB_SYSTEM_USER + "}} SET ip=?, logindate=CURRENT_DATE, logintime=CURRENT_TIME AND uid=?";
+        String updateSql = "UPDATE {{?" + TB_SYSTEM_USER + "}} SET ip=?, logindate=CURRENT_DATE, logintime=CURRENT_TIME WHERE uid=?";
         int i = BaseDAO.getBaseDAO().updateNative(updateSql, ipAddress,userid);
         if (i<=0){
             error = "系统异常,拒绝登陆";
@@ -105,7 +105,7 @@ public abstract class LoginAbsOp {
                 if (checkUserRoleStatus(urole, ucstatus) && recodeLoginInfo(ipAddress,uid)){
                     loginSuccess();
                     //赋值用户信息
-                    userSession = UserSession.genUserSession(uid,urole,uphone,ipAddress,uname,compid,belong);
+                    userSession = UserSession.genUserSession(uid,urole,uphone,password,ipAddress,uname,compid,belong);
                     return true;
                 }
             }else passwordError();

@@ -11,6 +11,7 @@ public class UserSession implements Serializable{
     public int userId; //用户ID
     public long roleCode; //角色复合码
     public String phone; //手机号码
+    public String password;//密码MD5
     public String lastIp;//最后登录IP
     public String userName;//姓名
     public int compId;//企业ID
@@ -26,8 +27,9 @@ public class UserSession implements Serializable{
        this.phone = phone;
    }
 
-    public static UserSession genUserSession(int userId, long roleCode, String phone, String lastId, String userName, int compId, int belong){
+    public static UserSession genUserSession(int userId, long roleCode, String phone,String password, String lastId, String userName, int compId, int belong){
         UserSession userSession = new UserSession(userId,roleCode,phone);
+        userSession.password = password;
         userSession.lastIp = lastId;
         userSession.userName = userName;
         userSession.compId = compId;

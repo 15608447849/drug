@@ -37,7 +37,7 @@ public class LoginStoreOp extends LoginAbsOp implements IOperation<AppContext> {
             //检查用户是否锁定
             if (checkLock()) return new Result().fail(error);
             //检测用户名/密码是否正确 创建会话
-            if (!checkSqlAndUserExist(context.remoteIp,phone,password)) return new Result().fail(error);
+            if (!checkSqlAndUserExist(context.remoteIp,phone,password)) return new Result().fail(error).setHashMap("index",failIndex);;
             //关联token-用户信息
             if (relationTokenUserSession(context,true)) return new Result().success("登陆成功");
         } catch (Exception e) {
@@ -57,13 +57,6 @@ public class LoginStoreOp extends LoginAbsOp implements IOperation<AppContext> {
         loginFailHandle();
     }
 
-    //锁定次数初始化-移除锁定
-    private void removeLockCache() {
-        if (StringUtils.isEmpty(phone)) return;
-        RedisUtil.getStringProvide().delete("USER-"+phone);
-        RedisUtil.getStringProvide().delete("USER-LOCK-"+phone);
-    }
-
     //用户-登陆失败处理
     private void loginFailHandle() {
         error = "用户名或密码不正确";
@@ -76,16 +69,24 @@ public class LoginStoreOp extends LoginAbsOp implements IOperation<AppContext> {
         if (failIndex > USProperties.INSTANCE.sLoginNumMax) {
             //锁定用户
             RedisUtil.getStringProvide().set("USER-LOCK-"+phone,"LOCK");
-            //设置时效性 ? 小时queryAuditInfo
+            //设置时效性
             RedisUtil.getStringProvide().expire("USER-LOCK-"+phone,  USProperties.INSTANCE.sLoginLockTime);
-            communicator().getLogger().print("用户("+phone+")已锁定");
             error+=",账户已锁定";
         }else{
             //记录次数
             RedisUtil.getStringProvide().set("USER-"+phone,String.valueOf(failIndex));
-            communicator().getLogger().print("用户("+phone+")登陆失败记录:"+failIndex);
+            //设置时效性
+            RedisUtil.getStringProvide().expire("USER-"+phone,  USProperties.INSTANCE.sLoginLockTime);
             error+=",当前登陆失败"+failIndex+"次,超过"+USProperties.INSTANCE.sLoginNumMax+"次将锁定账号";
         }
+    }
+
+
+    //锁定次数初始化-移除锁定
+    public void removeLockCache() {
+        if (StringUtils.isEmpty(phone)) return;
+        RedisUtil.getStringProvide().delete("USER-"+phone);
+        RedisUtil.getStringProvide().delete("USER-LOCK-"+phone);
     }
 
     //检测图形验证码
@@ -116,5 +117,7 @@ public class LoginStoreOp extends LoginAbsOp implements IOperation<AppContext> {
 
         return false;
     }
+
+
 
 }
