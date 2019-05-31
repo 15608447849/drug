@@ -9,7 +9,7 @@ import java.util.List;
  * @time 2019/5/28 16:32
  **/
 public class ProxyNoticeVO {
-    private long msgid;
+    private String msgid;
     private int sender;
     private String msgtxt;
     private String createdate;
@@ -23,11 +23,11 @@ public class ProxyNoticeVO {
     private String content;
     private List<Long> areaList;
 
-    public long getMsgid() {
+    public String getMsgid() {
         return msgid;
     }
 
-    public void setMsgid(long msgid) {
+    public void setMsgid(String msgid) {
         this.msgid = msgid;
     }
 
