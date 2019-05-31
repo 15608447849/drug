@@ -23,8 +23,35 @@ public class UserInfoVo {
     private String logintime;
     private int cstatus;
     private String rname;
+    private String arean;
+    private int belong;
+    private int mroleid;
 
-//    public int getOid() {
+    public int getMroleid() {
+        return mroleid;
+    }
+
+    public void setMroleid(int mroleid) {
+        this.mroleid = mroleid;
+    }
+
+    public int getBelong() {
+        return belong;
+    }
+
+    public void setBelong(int belong) {
+        this.belong = belong;
+    }
+
+    public String getArean() {
+        return arean;
+    }
+
+    public void setArean(String arean) {
+        this.arean = arean;
+    }
+
+    //    public int getOid() {
 //        return oid;
 //    }
 //
