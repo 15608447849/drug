@@ -330,7 +330,10 @@ public class BackgroundUserModule {
 
         List<Object[]> queryResult = baseDao.queryNative(
                 sqlSb.toString());
+
         RoleVO[] result = new RoleVO[queryResult.size()];
+
+        baseDao.convToEntity(queryResult, result, RoleVO.class);
 
         if(sroleid > 0){
             for (RoleVO roleVO : result){

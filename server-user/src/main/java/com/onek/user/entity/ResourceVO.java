@@ -66,7 +66,7 @@ public final class ResourceVO implements ITreeNode<ResourceVO> {
 
     @Override
     public boolean isRoot() {
-        return this.resourceId.length() == 2;
+        return this.resourceId.length() == 4;
     }
 
     @Override

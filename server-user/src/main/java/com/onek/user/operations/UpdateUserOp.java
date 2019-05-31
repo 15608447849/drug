@@ -11,6 +11,7 @@ import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.StringUtils;
 
+import static com.onek.user.operations.RegisterStoreUserOp.PASSWORD_VALID_MESSAGE;
 import static com.onek.user.operations.RegisterStoreUserOp.validPassword;
 
 /**
@@ -73,8 +74,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
                                 if(flag) rmsg = "修改成功,请使用新密码登陆";
                                 else rmsg = "无法修改密码";
                             }else{
-                                rmsg = "不符合密码安全性要求:\n" +
-                                        "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符";
+                                rmsg = PASSWORD_VALID_MESSAGE;
                             }
                         }else{
                             rmsg = "原密码与新密码相同";
@@ -98,8 +98,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
                         if (flag) rmsg = "修改成功,请使用新密码登陆";
                         else rmsg = "无法修改密码";
                     }else{
-                        rmsg = "不符合密码安全性要求:\n" +
-                                "至少6位字符,包含1个大写字母,1个小写字母,1个特殊字符";
+                        rmsg = PASSWORD_VALID_MESSAGE;
                     }
                 }else{
                     rmsg = "验证码不正确";
@@ -117,4 +116,6 @@ public class UpdateUserOp implements IOperation<AppContext> {
         String sql = "UPDATE {{?" + DSMConst.TB_SYSTEM_USER +"}} SET " + param + " WHERE "+ifs;
         return BaseDAO.getBaseDAO().updateNative(sql) > 0;
     }
+
+
 }

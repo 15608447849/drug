@@ -26,6 +26,9 @@ public class UserInfoVo {
     private String arean;
     private int belong;
     private int mroleid;
+    private String arearng;
+    private int cid;
+
 
     public int getMroleid() {
         return mroleid;
@@ -177,5 +180,22 @@ public class UserInfoVo {
 
     public void setRname(String rname) {
         this.rname = rname;
+    }
+
+    public int getCid() {
+        return cid;
+    }
+
+    public void setCid(int cid) {
+        this.cid = cid;
+    }
+
+
+    public String getArearng() {
+        return arearng;
+    }
+
+    public void setArearng(String arearng) {
+        this.arearng = arearng;
     }
 }

@@ -17,8 +17,14 @@ public class RedisGlobalKeys {
     //企业码初始值 分库分表相关
     public static final int  COMP_INIT_VAR =  536862720;
 
+    //渠道企业码初始值
+    public static final int  COMP_INIT_PROXY_VAR =100000000;
+
     //企业表 企业码compid  自增键
     public static final String COMP_TAB_COMPID = "COMP_TAB_COMPID";
+
+    //渠道企业表 企业码compid  自增键
+    public static final String COMP_TAB_PROXY_COMPID = "COMP_TAB_PROXY_COMPID";
 
     //优惠码
     public static final String OFFER_CODE = "OFFER_CODE";
@@ -82,6 +88,13 @@ public class RedisGlobalKeys {
      */
     public static long getCompanyCode(){
         return  RedisUtil.getStringProvide().increase(COMP_TAB_COMPID,1) + COMP_INIT_VAR;
+    }
+
+    /**
+     * 获取渠道企业ID
+     */
+    public static long getProxyCompanyCode(){
+        return  RedisUtil.getStringProvide().increase(COMP_TAB_PROXY_COMPID,1) + COMP_INIT_PROXY_VAR;
     }
 
 

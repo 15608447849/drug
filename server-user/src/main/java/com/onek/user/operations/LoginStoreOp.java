@@ -70,7 +70,7 @@ public class LoginStoreOp implements IOperation<AppContext> {
 
     private boolean relationTokenUserSession(AppContext context) {
         context.setUserSession(userSession);
-        context.storeUserMappingToken();//门店登陆-防止多点你登录设置
+        context.storeUserMappingToken();//门店登陆-防止多点登录设置
         return context.relationTokenUserSession();//门店登陆-关联用户信息
     }
 
@@ -108,14 +108,6 @@ public class LoginStoreOp implements IOperation<AppContext> {
                 if (!isAllow){
                     return false;
                 }
-
-                //门店用户被停用功能 暂时不开放
-//                int cstatus = StringUtils.checkObjectNull(objects[6],0);
-//                if ((cstatus&32)==32){
-//                    error = "用户("+objects[5]+")已被停止使用";
-//                    return false;
-//                }
-
 
                 //密码正确 - 记录登陆时间 IP
                 String updateSql = "UPDATE {{?" + DSMConst.TB_SYSTEM_USER + "}} " +

@@ -35,6 +35,7 @@ import util.TimeUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -46,39 +47,39 @@ public class BackgroundProdModule {
 
     private static final String GET_MAX_SPU =
             " SELECT SUBSTR(MAX(spu), 8, 3), COUNT(0)"
-            + " FROM {{?" + DSMConst.TD_PROD_SPU + "}} "
-            + " WHERE spu REGEXP ? ";
+                    + " FROM {{?" + DSMConst.TD_PROD_SPU + "}} "
+                    + " WHERE spu REGEXP ? ";
 
     private static final String CHECK_SAME_SPU =
             " SELECT spu "
-            + " FROM {{?" + DSMConst.TD_PROD_SPU + "}} "
-            + " WHERE popnameh = CRC32(?) AND popname = ? "
-            + " AND prodnameh = CRC32(?) AND prodname = ? "
-            + " AND standarnoh = CRC32(?) AND standarno = ? "
-            + " AND manuno = ? AND spu REGEXP ? ";
+                    + " FROM {{?" + DSMConst.TD_PROD_SPU + "}} "
+                    + " WHERE popnameh = CRC32(?) AND popname = ? "
+                    + " AND prodnameh = CRC32(?) AND prodname = ? "
+                    + " AND standarnoh = CRC32(?) AND standarno = ? "
+                    + " AND manuno = ? AND spu REGEXP ? ";
 
     private static final String INSERT_PROD_SPU =
             " INSERT INTO {{?" + DSMConst.TD_PROD_SPU + "}} "
-            + " (spu, popname, popnameh, prodname, prodnameh, "
-            + " standarno, standarnoh, brandno, manuno, rx, "
-            + " insurance, gspgms, gspsc, detail) "
-                + " SELECT ?, ?, CRC32(?), ?, CRC32(?), "
-                        + " ?, CRC32(?), ?, ?, ?, "
-                        + " ?, ?, ?, ? "
-                + " FROM DUAL "
-                + " WHERE NOT EXISTS ( "
+                    + " (spu, popname, popnameh, prodname, prodnameh, "
+                    + " standarno, standarnoh, brandno, manuno, rx, "
+                    + " insurance, gspgms, gspsc, detail) "
+                    + " SELECT ?, ?, CRC32(?), ?, CRC32(?), "
+                    + " ?, CRC32(?), ?, ?, ?, "
+                    + " ?, ?, ?, ? "
+                    + " FROM DUAL "
+                    + " WHERE NOT EXISTS ( "
                     + " SELECT *"
                     + " FROM {{?" + DSMConst.TD_PROD_SPU + "}} "
                     + " WHERE spu = ? ) ";
 
     private static final String INSERT_PROD_SKU =
             " INSERT INTO {{?" + DSMConst.TD_PROD_SKU + "}} "
-            + " (spu, sku, vatp, mp, rrp, "
-            + " vaildsdate, vaildedate, "
-            + " prodsdate, prodedate, store, "
-            + " limits, wholenum, medpacknum, unit,"
-            + " ondate, ontime, spec, cstatus) "
-            + " VALUES (?, ?, ?, ?, ?, "
+                    + " (spu, sku, vatp, mp, rrp, "
+                    + " vaildsdate, vaildedate, "
+                    + " prodsdate, prodedate, store, "
+                    + " limits, wholenum, medpacknum, unit,"
+                    + " ondate, ontime, spec, cstatus) "
+                    + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, "
@@ -86,35 +87,44 @@ public class BackgroundProdModule {
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
-            + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
-            + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus "
-            + " FROM {{?" + DSMConst.TD_PROD_SPU + "}} spu "
-            + " LEFT JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
-            + " LEFT JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
-            + " WHERE spu.spu = ? ";
+                    + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
+                    + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus "
+                    + " FROM {{?" + DSMConst.TD_PROD_SPU + "}} spu "
+                    + " LEFT JOIN {{?" + DSMConst.TD_PROD_MANU + "}} m ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
+                    + " LEFT JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
+                    + " WHERE spu.spu = ? ";
 
     private static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
-            + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
-            + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus,"
-            + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.vaildsdate, sku.vaildedate,"
-            + " sku.prodsdate, sku.prodedate, sku.store, "
-            + " sku.limits, sku.sales, sku.wholenum, sku.medpacknum, sku.unit, "
-            + " sku.ondate, sku.ontime, sku.offdate, sku.offtime, sku.spec, sku.prodstatus, "
-            + " sku.imagestatus, sku.cstatus "
-            + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
-            + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
-            + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
-            + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b   ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
-            + " WHERE 1=1 ";
+                    + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
+                    + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus,"
+                    + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.vaildsdate, sku.vaildedate,"
+                    + " sku.prodsdate, sku.prodedate, sku.store, "
+                    + " sku.limits, sku.sales, sku.wholenum, sku.medpacknum, sku.unit, "
+                    + " sku.ondate, sku.ontime, sku.offdate, sku.offtime, sku.spec, sku.prodstatus, "
+                    + " sku.imagestatus, sku.cstatus "
+                    + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
+                    + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU + "}} sku ON spu.spu = sku.spu ) "
+                    + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU
+                    + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
+                    + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND
+                    + "}} b   ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
+                    + " WHERE 1=1 ";
 
     private static final String UPDATE_PROD_BASE =
-            " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
-            + " SET vatp = ?, mp = ?, rrp = ?, unit = ?, spec = ?, "
-            + " vaildsdate = STR_TO_DATE(?, '%Y-%m-%d'), vaildedate = STR_TO_DATE(?, '%Y-%m-%d'), "
-            + " prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
-            + " store = ?, limits = ?, wholenum = ?, medpacknum = ?, cstatus = ? "
-            + " WHERE sku = ? ";
+            " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} sku, "
+                    + " {{?" + DSMConst.TD_PROD_SPU + "}} spu "
+                    + " SET sku.vatp = ?, sku.mp = ?, sku.rrp = ?, "
+                    + " sku.unit = ?, sku.spec = ?, "
+                    + " sku.vaildsdate = STR_TO_DATE(?, '%Y-%m-%d'), "
+                    + " sku.vaildedate = STR_TO_DATE(?, '%Y-%m-%d'), "
+                    + " sku.prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), "
+                    + " sku.prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
+                    + " sku.store = ?, sku.limits = ?, sku.wholenum = ?, "
+                    + " sku.medpacknum = ?, sku.cstatus = ?,"
+                    + " spu.rx = ?, spu.insurance = ?, spu.gspgms = ?, "
+                    + " spu.brandno = ?, spu.detail = ?, spu.gspsc = ? "
+                    + " WHERE sku.spu = spu.spu AND sku.sku = ? ";
 
     public Result onProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -122,6 +132,7 @@ public class BackgroundProdModule {
         if (params == null || params.length == 0) {
             return new Result().fail("参数为空");
         }
+
         String sql = "UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} " +
                 " SET prodstatus = 1, ondate = CURRENT_DATE, ontime = CURRENT_TIME " +
                 "  WHERE sku = ? AND prodstatus = 0 ";
@@ -130,16 +141,26 @@ public class BackgroundProdModule {
         List<Long> skuList = new ArrayList<>();
 
         try {
+            BgProdVO prodVO;
             for (String ps : params) {
+                prodVO = getProd(ps);
+
+                if (prodVO == null) {
+                    continue;
+                }
+
+                checkOnProd(prodVO);
+
                 p.add(new Object[] { Long.parseLong(ps) });
                 skuList.add(Long.parseLong(ps));
             }
         } catch (Exception e) {
-            return new Result().fail("参数存在非法值");
+            e.printStackTrace();
+            return new Result().fail("上架失败，请保存商品后再上架");
         }
 
         int status = ProdESUtil.updateProdStatusDocList(skuList, 1);
-        if(status > 0){
+        if (status > 0) {
             BASE_DAO.updateBatchNative(sql, p, params.length);
         }
 
@@ -169,7 +190,7 @@ public class BackgroundProdModule {
         }
 
         int status = ProdESUtil.updateProdStatusDocList(skuList, 0);
-        if(status > 0){
+        if (status > 0) {
             BASE_DAO.updateBatchNative(sql, p, params.length);
         }
         return new Result().success(null);
@@ -197,7 +218,7 @@ public class BackgroundProdModule {
     public Result updateProd(AppContext appContext) {
         BgProdVO bgProdVO;
         try {
-            bgProdVO = new Gson().fromJson(appContext.param.json, BgProdVO.class);
+            bgProdVO = JSON.parseObject(appContext.param.json, BgProdVO.class);
 
             if (bgProdVO == null) {
                 throw new IllegalArgumentException("VO is NULL");
@@ -207,7 +228,17 @@ public class BackgroundProdModule {
                 throw new IllegalArgumentException("缺少SKU");
             }
 
-            checkProd(bgProdVO);
+            checkProdBase(bgProdVO);
+
+            BgProdVO sqlProdVO = getProd(bgProdVO.getSku() + "");
+
+            if (sqlProdVO == null) {
+                return new Result().fail("此商品不存在");
+            }
+
+            if (sqlProdVO.getProdstatus() == 1) {
+                checkOnProd(bgProdVO);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return new Result().fail(e.getMessage());
@@ -218,8 +249,8 @@ public class BackgroundProdModule {
         }
 
         bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
-        bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp  (), 100).intValue());
-        bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp (), 100).intValue());
+        bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp(), 100).intValue());
+        bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp(), 100).intValue());
         int esResult = ProdESUtil.updateProdDocument(bgProdVO);
 
         if (esResult != 0) {
@@ -234,6 +265,8 @@ public class BackgroundProdModule {
                 bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                 bgProdVO.getStore(), bgProdVO.getLimits(),
                 bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getSkuCstatus(),
+                bgProdVO.getRx(), bgProdVO.getInsurance(), bgProdVO.getGspGMS(),
+                bgProdVO.getBrandNo(), bgProdVO.getDetail(), bgProdVO.getGspSC(),
                 bgProdVO.getSku());
 
         new ProdReducePriceThread(bgProdVO.getSku(), bgProdVO.getProdname(), bgProdVO.getVatp()).start();
@@ -303,12 +336,34 @@ public class BackgroundProdModule {
             return new Result().fail("参数错误");
         }
 
+
+        BgProdVO result = getProd(params[0]);
+
+        if (appContext.isAnonymous()) {
+            result.setRrp(-1);
+            result.setMp(-1);
+            result.setVatp(-1);
+        }
+
+        JSONObject jo = JSON.parseObject(JSON.toJSONString(result));
+
+        jo.put("minPrice", CalculateUtil.getProdMinPrice(
+                result.getSku(), result.getVatp()));
+
+        return new Result().success(jo);
+    }
+
+    private BgProdVO getProd(String sku) {
+        if (!StringUtils.isBiggerZero(sku)) {
+            return null;
+        }
+
         String sql = QUERY_PROD_BASE + " AND sku.sku = ? ";
 
-        List<Object[]> queryResult = BASE_DAO.queryNative(sql, params[0]);
+        List<Object[]> queryResult = BASE_DAO.queryNative(sql, sku);
 
         if (queryResult.isEmpty()) {
-            return new Result().success(null);
+            return null;
         }
 
         BgProdVO[] returnResults = new BgProdVO[queryResult.size()];
@@ -317,21 +372,9 @@ public class BackgroundProdModule {
 
         convProds(returnResults);
 
-        if (appContext.isAnonymous()) {
-            for (BgProdVO returnResult : returnResults) {
-                returnResult.setRrp(-1);
-                returnResult.setMp(-1);
-                returnResult.setVatp(-1);
-            }
-        }
-
-        JSONObject jo = JSON.parseObject(JSON.toJSONString(returnResults[0]));
-
-        jo.put("minPrice", CalculateUtil.getProdMinPrice(
-                returnResults[0].getSku(), returnResults[0].getVatp()));
-
-        return new Result().success(jo);
+        return returnResults[0];
     }
+
 
     public Result getSPUInfo(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -362,14 +405,14 @@ public class BackgroundProdModule {
     public Result queryProds(AppContext appContext) {
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
-        page.pageSize  = appContext.param.pageNumber;
+        page.pageSize = appContext.param.pageNumber;
 
         PageHolder pageHolder = new PageHolder(page);
 
         StringBuilder sql = new StringBuilder(QUERY_PROD_BASE);
 
         List<Object> paramList = new ArrayList<>();
-        String[] params =  appContext.param.arrays;
+        String[] params = appContext.param.arrays;
         String param = null;
 
         for (int i = 0; i < params.length; i++) {
@@ -402,6 +445,15 @@ public class BackgroundProdModule {
                     case 5:
                         sql.append(" AND sku.prodstatus = ? ");
                         break;
+                    case 6:
+                        sql.append(" AND spu.spu LIKE ? ");
+                        param = "_" + param + "%";
+                        break;
+                    case 7:
+                        sql.append(" AND spu.popname LIKE ? ");
+                        param = "%" + param + "%";
+                        break;
+
                 }
             } catch (Exception e) {
                 continue;
@@ -426,13 +478,13 @@ public class BackgroundProdModule {
         BgProdVO bgProdVO;
         try {
             bgProdVO =
-                    new Gson().fromJson(appContext.param.json, BgProdVO.class);
+                    JSON.parseObject(appContext.param.json, BgProdVO.class);
 
             if (bgProdVO == null) {
                 throw new IllegalArgumentException("VO is NULL");
             }
 
-            checkProd(bgProdVO);
+            checkProdBase(bgProdVO);
 
             bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
             bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp(), 100).intValue());
@@ -500,8 +552,8 @@ public class BackgroundProdModule {
             params.add(new Object[] {
                     bgProdVO.getSpu(), bgProdVO.getSku(),
                     bgProdVO.getVatp(),
-                    bgProdVO.getMp  (),
-                    bgProdVO.getRrp (),
+                    bgProdVO.getMp(),
+                    bgProdVO.getRrp(),
                     bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
                     bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                     bgProdVO.getStore(), bgProdVO.getLimits(),
@@ -519,7 +571,7 @@ public class BackgroundProdModule {
 
             try {
                 BASE_DAO.updateTransNative(
-                        new String[] {INSERT_PROD_SPU, INSERT_PROD_SKU},
+                        new String[] { INSERT_PROD_SPU, INSERT_PROD_SKU },
                         params);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -542,12 +594,10 @@ public class BackgroundProdModule {
 
         for (BgProdVO bgProdVO : bgProdVOs) {
             bgProdVO.setVatp(MathUtil.exactDiv(bgProdVO.getVatp(), 100).doubleValue());
-            bgProdVO.setRrp (MathUtil.exactDiv(bgProdVO.getRrp (), 100).doubleValue());
-            bgProdVO.setMp  (MathUtil.exactDiv(bgProdVO.getMp  (), 100).doubleValue());
+            bgProdVO.setRrp(MathUtil.exactDiv(bgProdVO.getRrp(), 100).doubleValue());
+            bgProdVO.setMp(MathUtil.exactDiv(bgProdVO.getMp(), 100).doubleValue());
 
-            if (bgProdVO.getSpu() != null) {
-                spuParser = parseSPU(bgProdVO.getSpu());
-            }
+            spuParser = parseSPU(bgProdVO.getSpu());
 
             if (spuParser != null) {
                 bgProdVO.setClassNo(Long.parseLong(spuParser[0]));
@@ -555,13 +605,11 @@ public class BackgroundProdModule {
                 bgProdVO.setForm(Integer.parseInt(spuParser[1]));
             }
 
-            if (bgProdVO.getSku() != null) {
-                bgProdVO.setStore(RedisStockUtil.getStock(bgProdVO.getSku()));
-                try {
-                    DictStore.translate(bgProdVO);
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
+            bgProdVO.setStore(RedisStockUtil.getStock(bgProdVO.getSku()));
+            try {
+                DictStore.translate(bgProdVO);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
 
         }
@@ -569,6 +617,7 @@ public class BackgroundProdModule {
 
     /**
      * 解析SPU码
+     *
      * @param spu
      * @return [类型码, 剂型码]
      */
@@ -581,83 +630,98 @@ public class BackgroundProdModule {
         }
 
         String classNo = spuStr.substring(1, 7);
-        String formNo  = spuStr.substring(10, 12);
+        String formNo = spuStr.substring(10, 12);
 
-        return new String[] {classNo, formNo};
+        return new String[] { classNo, formNo };
     }
 
-    private boolean checkProd(BgProdVO prodVO) {
+    private void checkOnProd(BgProdVO prodVO) {
+        if (prodVO.getVatp() <= .0) {
+            throw new IllegalArgumentException("含税价为0");
+        }
+
+        if (prodVO.getStore() <= 0) {
+            throw new IllegalArgumentException("库存为0");
+        }
+
+        if (prodVO.getRx() <= 0) {
+            throw new IllegalArgumentException("未选择是否为处方药");
+        }
+
+        if (prodVO.getWholenum() <= 0) {
+            prodVO.setWholenum(1);
+        }
+
+        if (prodVO.getMedpacknum() <= 0) {
+            prodVO.setMedpacknum(1);
+        }
+
+    }
+
+    private void checkProdBase(BgProdVO prodVO) {
+        // 厂家
         if (prodVO.getManuNo() <= 0) {
             throw new IllegalArgumentException("厂商为空");
         }
 
+        // 通用名
         if (StringUtils.isEmpty(prodVO.getPopname())) {
             throw new IllegalArgumentException("通用名为空");
         }
 
+        // 产品名
         if (StringUtils.isEmpty(prodVO.getProdname())) {
             throw new IllegalArgumentException("产品名为空");
         }
 
+        // 详情格式
         if (!StringUtils.isJsonFormatter(prodVO.getDetail())) {
             throw new IllegalArgumentException("详情格式不正确");
         }
 
-        if (!String.valueOf(prodVO.getClassNo()).startsWith("21")) {
-            if (StringUtils.isEmpty(prodVO.getStandarNo())) {
-                throw new IllegalArgumentException("批准文号/注册证编号为空");
-            }
+        // 类别码
+        if (prodVO.getClassNo() <= 0) {
+            throw new IllegalArgumentException("类别码为空");
+        }
 
-            if (!StringUtils.isDateFormatter(prodVO.getVaildedate())) {
-                throw new IllegalArgumentException("有效结束日期格式不正确");
-            }
+        // 剂型码
+        if (prodVO.getForm() <= 0) {
+            throw new IllegalArgumentException("剂型码为空");
+        }
 
-            if (!StringUtils.isDateFormatter(prodVO.getVaildsdate())) {
-                throw new IllegalArgumentException("有效开始日期格式不正确");
-            }
-
-            if (!StringUtils.isDateFormatter(prodVO.getProdsdate())) {
-                throw new IllegalArgumentException("生成开始日期格式不正确");
-            }
-
-            if (!StringUtils.isDateFormatter(prodVO.getProdedate())) {
-                throw new IllegalArgumentException("生成结束日期格式不正确");
-            }
-        } else {
-            String currDate = TimeUtils.getCurrentDate();
-
-            if (StringUtils.isEmpty(prodVO.getStandarNo())) {
-                prodVO.setStandarNo("");
-            }
-
-            if (!StringUtils.isDateFormatter(prodVO.getVaildedate())) {
-                prodVO.setVaildedate(currDate);
-            }
-
-            if (!StringUtils.isDateFormatter(prodVO.getVaildsdate())) {
-                prodVO.setVaildsdate(currDate);
-            }
-
-            if (!StringUtils.isDateFormatter(prodVO.getProdsdate())) {
-                prodVO.setProdsdate(currDate);
-            }
-
-            if (!StringUtils.isDateFormatter(prodVO.getProdedate())) {
-                prodVO.setProdedate(currDate);
+        // 准号
+        if (StringUtils.isEmpty(prodVO.getStandarNo())) {
+            // 除中药饮片外不可为空
+            if (!String.valueOf(prodVO.getClassNo()).startsWith("21")) {
+                throw new IllegalArgumentException("批准文号为空");
             }
         }
 
-        return true;
+        if (!StringUtils.isDateFormatter(prodVO.getVaildedate())) {
+            prodVO.setVaildedate(null);
+        }
+
+        if (!StringUtils.isDateFormatter(prodVO.getVaildsdate())) {
+            prodVO.setVaildsdate(null);
+        }
+
+        if (!StringUtils.isDateFormatter(prodVO.getProdsdate())) {
+            prodVO.setProdsdate(null);
+        }
+
+        if (!StringUtils.isDateFormatter(prodVO.getProdedate())) {
+            prodVO.setProdedate(null);
+        }
     }
 
     private String containsSPU(BgProdVO prodVO) {
         StringBuilder regexp =
                 new StringBuilder("^")
-                    .append("[0-9]{1}")
-                    .append(prodVO.getClassNo())
-                    .append("[0-9]{3}")
-                    .append(String.format("%02d", prodVO.getForm()))
-                    .append("$");
+                        .append("[0-9]{1}")
+                        .append(prodVO.getClassNo())
+                        .append("[0-9]{3}")
+                        .append(String.format("%02d", prodVO.getForm()))
+                        .append("$");
 
         List<Object[]> queryResult = BASE_DAO.queryNative(CHECK_SAME_SPU,
                 prodVO.getPopname(), prodVO.getPopname(),
@@ -681,11 +745,7 @@ public class BackgroundProdModule {
             throw new Exception("类别请选择到第三级");
         }
 
-        int mc = isMadeInChina(standarNo);
-
-        if (mc == 0) {
-            throw new IllegalArgumentException("批准文号/注册证编号不正确");
-        }
+        int mc = StringUtils.isEmpty(standarNo) ? 1 : isMadeInChina(standarNo);
 
         String formatForm = String.format("%02d", form);
 
@@ -700,7 +760,7 @@ public class BackgroundProdModule {
 
         List<Object[]> queryResult;
 
-        synchronized(BackgroundProdModule.class) {
+        synchronized (BackgroundProdModule.class) {
             queryResult = BASE_DAO.queryNative(GET_MAX_SPU, regexp.toString());
         }
 
@@ -721,11 +781,11 @@ public class BackgroundProdModule {
 
     /**
      * 判定是批准文号还是注册证编号
+     *
      * @param standarNo
-     * @return
-     *  0 非法参数
-     *  1 批准文号
-     *  2 注册证编号
+     * @return 0 非法参数
+     * 1 批准文号
+     * 2 注册证编号
      */
     private int getProdType(String standarNo) {
         if (Pattern.matches(PZWH, standarNo)) {
@@ -741,19 +801,19 @@ public class BackgroundProdModule {
 
     /**
      * 根据批准文号判定是否为中国产的药品
+     *
      * @param standarNo
-     * @return
-     *  0 非法参数
-     *  1 非进口
-     *  2 进口
+     * @return 0 非法参数
+     * 1 非进口
+     * 2 进口
      */
     private int isMadeInChina(String standarNo) {
         int type = getProdType(standarNo);
 
         switch (type) {
-            case 1  :
-                return standarNo.contains("J")  ? 2 : 1;
-            default :
+            case 1:
+                return standarNo.contains("J") ? 2 : 1;
+            default:
                 return standarNo.contains("准") ? 1 : 2;
         }
     }
@@ -761,13 +821,13 @@ public class BackgroundProdModule {
     /**
      * 药品减价通知
      */
-    class ProdReducePriceThread extends Thread{
+    class ProdReducePriceThread extends Thread {
 
         long sku;
         String prodname;
         double vatp;
 
-        public ProdReducePriceThread(long sku,String prodname,double vatp){
+        public ProdReducePriceThread(long sku, String prodname, double vatp) {
             this.sku = sku;
             this.prodname = prodname;
             this.vatp = vatp;
@@ -779,36 +839,37 @@ public class BackgroundProdModule {
             SearchResponse response = null;
             try {
                 BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.COLLECT_COLUMN_SKU, sku+"");
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.COLLECT_COLUMN_SKU, sku + "");
                 boolQuery.must(builder);
 
                 TransportClient client = ElasticSearchClientFactory.getClientInstance();
                 response = client.prepareSearch(ESConstant.COLLECT_INDEX)
                         .setQuery(boolQuery).setSize(10000)
                         .execute().actionGet();
-                List<Map<String,Object>> dataList = new ArrayList<>();
-                if(response != null && response.getHits() != null){
-                    for(SearchHit hit : response.getHits()){
+                List<Map<String, Object>> dataList = new ArrayList<>();
+                if (response != null && response.getHits() != null) {
+                    for (SearchHit hit : response.getHits()) {
                         dataList.add(hit.getSourceAsMap());
                     }
                 }
 
-                LogUtil.getDefaultLogger().info("++++++ prod reduce price sendMsg dataList size: "+ dataList.size()+" +++++++");
-                if(dataList != null && dataList.size() > 0){
-                    for(Map<String,Object> data : dataList){
+                LogUtil.getDefaultLogger().info(
+                        "++++++ prod reduce price sendMsg dataList size: " + dataList.size() + " +++++++");
+                if (dataList != null && dataList.size() > 0) {
+                    for (Map<String, Object> data : dataList) {
                         double prize = Integer.parseInt(data.get("prize").toString());
-                        if(prize > vatp){
+                        if (prize > vatp) {
                             double p = MathUtil.exactDiv(prize, 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             double v = MathUtil.exactDiv(vatp, 100).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                            try{
-                                IceRemoteUtil.sendMessageToClient(Integer.parseInt(data.get("compid").toString()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname,String.valueOf(p), String.valueOf(v)));
-                            }catch (Exception e){
+                            try {
+                                IceRemoteUtil.sendMessageToClient(Integer.parseInt(data.get("compid").toString()), SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname, String.valueOf(p), String.valueOf(v)));
+                            } catch (Exception e) {
                                 e.printStackTrace();
                             }
-                            try{
+                            try {
                                 String phone = IceRemoteUtil.getSpecifyStorePhone(Integer.parseInt(data.get("compid").toString()));
-                                SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname,String.valueOf(p), String.valueOf(v));
-                            }catch(Exception e){
+                                SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.NOTICE_OF_COMMODITY_REDUCTION, prodname, String.valueOf(p), String.valueOf(v));
+                            } catch (Exception e) {
                                 e.printStackTrace();
                             }
                         }
@@ -816,7 +877,7 @@ public class BackgroundProdModule {
                 }
 
 
-            }catch(Exception e) {
+            } catch (Exception e) {
                 e.printStackTrace();
             }
 
