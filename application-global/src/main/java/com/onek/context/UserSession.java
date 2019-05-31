@@ -59,6 +59,15 @@ public class UserSession implements Serializable{
         return userSession;
     }
 
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append( "用户码:"+userId+",角色码:"+roleCode+" ,手机号码:"+phone );
+        if (compId>0) sb.append(" ,门店编码:"+compId);
+        if (belong>0) sb.append(" ,归属编码:"+belong);
+        return sb.toString();
+
+    }
 
 
 }
