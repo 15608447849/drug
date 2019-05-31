@@ -26,7 +26,8 @@ import java.util.List;
 public class ProxyNoticeModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
-    
+
+
     /* *
      * @description 新增修改公告
      * @params [appContext]
@@ -39,15 +40,15 @@ public class ProxyNoticeModule {
     @UserPermission(ignore = false)
     public Result optProxyNotice(AppContext appContext) {
         int code = 0;
-        int optType = 0;
-        long msgid = 0;
+        int optType;
+        long msgid;
         Result result = new Result();
         String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        String proxyNotice = jsonObject.get("proxyNotice").getAsString();
-        List<Long> areaList = JSON.parseArray(jsonObject.get("areaArr").getAsString()).toJavaList(Long.class);
-        ProxyNoticeVO proxyNoticeVO = GsonUtils.jsonToJavaBean(proxyNotice, ProxyNoticeVO.class);
+//        JsonParser jsonParser = new JsonParser();
+//        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+//        String proxyNotice = jsonObject.get("proxyNotice").getAsString();
+//        List<Long> areaList = JSON.parseArray(jsonObject.get("areaList").getAsString()).toJavaList(Long.class);
+        ProxyNoticeVO proxyNoticeVO = GsonUtils.jsonToJavaBean(json, ProxyNoticeVO.class);
         assert proxyNoticeVO != null;
         String insertSQL = "insert into {{?" + DSMConst.TB_PROXY_NOTICE +"}} (msgid,sender,msgtxt,createdate,createtime,invdtime," +
                 "readtimes,effcttime,revobj,cstatus) "
@@ -55,8 +56,9 @@ public class ProxyNoticeModule {
                 + "?,?,?,?,0)";
         String updateSQL = "update {{?" +DSMConst.TB_PROXY_NOTICE  + "}} set sender=?,msgtxt=?,invdtime=?,readtimes=?, "
                 + "effcttime=?,revobj=? where cstatus&1=0 and msgid=?";
-        if (proxyNoticeVO.getMsgid() > 0) {
-            msgid = proxyNoticeVO.getMsgid();
+        if (Long.parseLong(proxyNoticeVO.getMsgid()) > 0) {
+            optType = 0;
+            msgid = Long.parseLong(proxyNoticeVO.getMsgid());
             code = baseDao.updateNative(updateSQL,proxyNoticeVO.getSender(),proxyNoticeVO.getMsgtxt(),
                     proxyNoticeVO.getInvdtime(),proxyNoticeVO.getReadtimes(),proxyNoticeVO.getEffcttime(),
                     proxyNoticeVO.getRevobj(),proxyNoticeVO.getMsgid());
@@ -67,7 +69,7 @@ public class ProxyNoticeModule {
                     proxyNoticeVO.getInvdtime(),proxyNoticeVO.getReadtimes(),proxyNoticeVO.getEffcttime(),
                     proxyNoticeVO.getRevobj());
         }
-        optProxyArea(areaList, optType, msgid);
+        optProxyArea(proxyNoticeVO.getAreaList(), optType, msgid);
         return code > 0 ? result.success("操作成功！") : result.fail("操作失败！");
     }
 
@@ -82,17 +84,18 @@ public class ProxyNoticeModule {
                 insertAreaParams.add(new Object[]{GenIdUtil.getUnqId(), msgid, areaCode,0});
             }
         } else {//修改
-            String updateSQL = "update {{?" + DSMConst.TB_PROXY_NOTICEAREC + "}} set catstus=cstatus|1 "
+            String updateSQL = "update {{?" + DSMConst.TB_PROXY_NOTICEAREC + "}} set cstatus=cstatus|1 "
                      + " where cstatus&1=0 and msgid=? and areac=?";
             List<Long> delArea = queryAreaByMsgId(msgid);
-            for (int i = 0; i < areaList.size(); i++) {
-                if (delArea.contains(areaList.get(i))) {
-                    delArea.remove(i);
+            for (int i = 0; i < delArea.size(); i++) {
+                if (areaList.contains(delArea.get(i))) {
+                    areaList.remove(delArea.get(i));
+                } else {
+                    updateAreaParams.add(new Object[]{msgid,delArea.get(i)});
                 }
-                insertAreaParams.add(new Object[]{GenIdUtil.getUnqId(), msgid, areaList.get(i), 0});
             }
-            for (long del : delArea) {
-                updateAreaParams.add(new Object[]{msgid, del});
+            for (long areac : areaList) {
+                insertAreaParams.add(new Object[]{GenIdUtil.getUnqId(), msgid, areac, 0});
             }
             baseDao.updateBatchNative(updateSQL, updateAreaParams, updateAreaParams.size());
         }
@@ -133,13 +136,13 @@ public class ProxyNoticeModule {
         page.pageIndex = appContext.param.pageIndex;
         PageHolder pageHolder = new PageHolder(page);
         String title = jsonObject.get("title").getAsString();
-        String selectSQL = "select msgid,sender,msgtxt,pubtime,invdtime,readtimes,revobj,createtime,cstatus from {{?"
+        String selectSQL = "select msgid,sender,msgtxt,createdate,createtime,invdtime,readtimes,effcttime,revobj,cstatus from {{?"
                 + DSMConst.TB_PROXY_NOTICE + "}} where cstatus&1=0 ";
         if (title != null && !title.isEmpty()) {
             selectSQL = selectSQL + " and  json_extract(msgtxt,'$.title') like '%" + title + "%'";
         }
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, selectSQL);
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+        if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         ProxyNoticeVO[] proxyNoticeVOS = new ProxyNoticeVO[queryResult.size()];
         baseDao.convToEntity(queryResult, proxyNoticeVOS, ProxyNoticeVO.class);
         for (ProxyNoticeVO proxyNoticeVO : proxyNoticeVOS) {
@@ -167,7 +170,7 @@ public class ProxyNoticeModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long msgid = jsonObject.get("msgid").getAsLong();
-        String selectSQL = "select msgid,sender,msgtxt,pubtime,invdtime,readtimes,revobj,createtime,cstatus "
+        String selectSQL = "select msgid,sender,msgtxt,createdate,createtime,invdtime,readtimes,effcttime,revobj,cstatus "
                 + " from {{?" + DSMConst.TB_PROXY_NOTICE + "}} where cstatus&1=0 and msgid=?";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL, msgid);
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
@@ -250,6 +253,17 @@ public class ProxyNoticeModule {
             msgList.add(String.valueOf(qr[0]));
         });
         return result.success(msgList);
+    }
+
+
+    @UserPermission(ignore = false)
+    public Result getRoleListByUser(AppContext appContext){
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long roleId =  jsonObject.get("roleid").getAsLong();//角色码
+        return result;
     }
 
 }
