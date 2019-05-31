@@ -218,12 +218,12 @@ public class ProdModule {
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
                     prodVO.setStartnum(prodVO.getMedpacknum());
-                    int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
-                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
-                    prodVO.setBuynum(initStock - surplusStock);
+//                    int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
+//                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), Long.parseLong(dataMap.get(prodVO.getSku())[1]));
+//                    prodVO.setBuynum(initStock - surplusStock);
                     prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
-                    prodVO.setActinitstock(initStock);
-                    prodVO.setSurplusstock(surplusStock);
+//                    prodVO.setActinitstock(initStock);
+//                    prodVO.setSurplusstock(surplusStock);
 
                 }
             }
