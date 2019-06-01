@@ -12,6 +12,7 @@ import com.onek.user.entity.UserInfoVo;
 import com.onek.util.GenIdUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
@@ -51,8 +52,9 @@ public class BDManageModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int cid = jsonObject.get("cid").getAsInt();
         int belong = jsonObject.get("belong").getAsInt();
+        int uid = jsonObject.get("uid").getAsInt();
         String selectSQL = "select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 "
-                + " and cid=? and roleid&4096>0 and belong=?";
+                + " and cid=? and roleid&4096>0 and belong=? and uid<>" + uid;
         List<Object[]> objects = baseDao.queryNative(selectSQL, cid, belong);
         if (objects == null || objects.isEmpty()) return result.success(resArr);
         for (Object[] obj : objects) {
@@ -92,7 +94,7 @@ public class BDManageModule {
             if (userInfoVo.getUid() <= 0) {
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime,cid,belong)"
-                        + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME)";
+                        + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?,?)";
 
                 String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
                 code = baseDao.updateNative(insertSQL, getUserCode(),
@@ -100,9 +102,10 @@ public class BDManageModule {
                         pwd, userInfoVo.getRoleid(), userInfoVo.getCid(), userInfoVo.getBelong());
             } else {
                 String updSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
-                        + "urealname=?, roleid=?, belong=? where cstatus&1=0 and uid=? ";
+                        + "urealname=?, roleid=?,cid=?, belong=? where cstatus&1=0 and uid=? ";
                 code = baseDao.updateNative(updSQL, userInfoVo.getUphone(), userInfoVo.getUaccount(),
-                        userInfoVo.getUrealname(), userInfoVo.getRoleid(), userInfoVo.getBelong(), userInfoVo.getUid());
+                        userInfoVo.getUrealname(), userInfoVo.getRoleid(), userInfoVo.getCid(),
+                        userInfoVo.getBelong(), userInfoVo.getUid());
             }
             if ((userInfoVo.getRoleid() & 4096) > 0) {
                 //合伙人为BDM设置辖区
@@ -150,23 +153,18 @@ public class BDManageModule {
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
-                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, GROUP_CONCAT(rname) as rname from {{?"
+                + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
-                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and belong in ("
-                + " select belong from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and belong=?) ";
-//        String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
-//                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, GROUP_CONCAT(rname) as rname,"
-//                + " CONCAT('[',GROUP_CONCAT(arearng,','),']') as arearng from {{?"
-//                + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
-//                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 left join {{?"
-//                + DSMConst.TB_PROXY_UAREA + "}} ua on ua.uid=u.uid where u.cstatus&1=0 and ua.cstatus&1=0 "
-//                + " group by ua.uid";
+                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and (belong=2554 or belong in ("
+                + " select uid from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and belong=?)) ";
         sqlBuilder.append(selectSQL);
-        sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 1).append(" order by uid desc");
-        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString(), belong);
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+        sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 1).append(" group by uid order by oid desc");
+        List<Object[]> queryResult = baseDao.queryNativeC(pageHolder, page, sqlBuilder.toString(), belong);
+        if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
-        baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class);
+        baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class, new String[]{
+                "uid","uphone","uaccount","urealname","upw","roleid","adddate","addtime",
+                "offdate","offtime","cstatus","logindate","logintime","rname"});
         return result.setQuery(userInfoVos,  pageHolder);
     }
 
@@ -193,7 +191,7 @@ public class BDManageModule {
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
-                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, GROUP_CONCAT(rname) as rname from {{?"
+                + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and belong=? ";
 //        String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
@@ -206,9 +204,11 @@ public class BDManageModule {
         sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 0).append(" group by uid desc");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString(), belong);
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+        if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
-        baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class);
+        baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class, new String[]{
+                "uid","uphone","uaccount","urealname","upw","roleid","adddate","addtime",
+                "offdate","offtime","cstatus","logindate","logintime","rname"});
         return result.setQuery(userInfoVos, pageHolder);
     }
 
@@ -262,13 +262,15 @@ public class BDManageModule {
 //                + DSMConst.TB_PROXY_UAREA + "}} ua on ua.uid=u.uid where u.cstatus&1=0 and ua.cstatus&1=0 "
 //                + "  and uid=?";
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
-                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, GROUP_CONCAT(rname) as rname from {{?"
+                + ",u.offdate,u.offtime,u.cstatus, GROUP_CONCAT(rname) as rname, belong from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
-                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and and uid=?";
+                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and uid=?";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL, uid);
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
-        baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class);
+        baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class, new String[]{
+                "uid","uphone","uaccount","urealname","upw","roleid","adddate","addtime",
+                "offdate","offtime","cstatus","rname","belong"});
         return result.success(userInfoVos[0]);
     }
 

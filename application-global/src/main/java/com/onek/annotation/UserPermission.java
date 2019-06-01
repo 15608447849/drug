@@ -10,9 +10,6 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface UserPermission {
-    boolean ignore() default false; //默认不忽略
-    long[] allowRoleList() default {}; // 允许访问的角色码 , 默认全部
-    boolean needAuthenticated() default false; //默认false 不需要认证, true:企业需要认证
-
-
+    boolean ignore() default false; //检查匿名访问 , 默认不允许-false
+    boolean needAuthenticated() default false; //检查门店企业认证 默认不需要认证-false
 }

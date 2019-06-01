@@ -1,11 +1,10 @@
 package com.onek.user;
 
-import com.onek.context.AppContext;
 import com.onek.annotation.UserPermission;
+import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.operations.StoreCustomerOp;
 import com.onek.user.operations.UpdateStoreOp;
-import com.onek.util.RoleCodeCons;
 import dao.BaseDAO;
 import util.GsonUtils;
 import util.StringUtils;
@@ -58,7 +57,6 @@ public class StoreManageModule {
     /**
      * 修改门店信息
      */
-    @UserPermission(allowRoleList = {RoleCodeCons._STORE})
     public Result updateStoreInfo(AppContext appContext){
         String json = appContext.param.json;
         UpdateStoreOp op = GsonUtils.jsonToJavaBean(json, UpdateStoreOp.class);
