@@ -80,7 +80,7 @@ public class BackGroundProxyMoudule {
                     areaList.add(subProxyAreaVO);
                 }
             }
-            List<? extends ITreeNode> iTreeNodes = TreeUtil.list2Tree(areaList);
+            List<ProxyAreaTreeVO> iTreeNodes = TreeUtil.list2Tree(areaList);
             return result.success(iTreeNodes);
         }
 
@@ -99,7 +99,7 @@ public class BackGroundProxyMoudule {
                 proxyAreaVO.setArean(areaEntity.getArean());
                 areaList.add(proxyAreaVO);
             }
-            List<? extends ITreeNode> iTreeNodes = TreeUtil.list2Tree(areaList);
+            List<ProxyAreaTreeVO> iTreeNodes = TreeUtil.list2Tree(areaList);
             return result.success(iTreeNodes);
         }
 
@@ -127,7 +127,7 @@ public class BackGroundProxyMoudule {
                     areaList.add(cproxyAreaVO);
                 }
             }
-            List<? extends ITreeNode> iTreeNodes = TreeUtil.list2Tree(areaList);
+            List<ProxyAreaTreeVO> iTreeNodes = TreeUtil.list2Tree(areaList);
             return result.success(iTreeNodes);
         }
         return result.success(null);
@@ -161,7 +161,7 @@ public class BackGroundProxyMoudule {
         return result.success(null);
     }
 
-    public List<? extends ITreeNode> getMyProxyAreac(int roleid,int suid,int uid){
+    public List<ProxyAreaTreeVO> getMyProxyAreac(int roleid,int suid,int uid){
 
         if(suid <= 0){
             return null;
@@ -212,7 +212,7 @@ public class BackGroundProxyMoudule {
     }
 
 
-    public List<? extends ITreeNode> getAddProxyAreac(int roleid,int uid){
+    public List<ProxyAreaTreeVO> getAddProxyAreac(int roleid,int uid){
 
         if(uid <= 0){
             return null;
