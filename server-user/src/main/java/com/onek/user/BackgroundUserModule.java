@@ -44,6 +44,9 @@ public class BackgroundUserModule {
             }
             List<String> sqlList = new ArrayList<>();
             List<Object[]> parmList = new ArrayList<>();
+
+            String queryAreaExtSql = "select 1 from {{?"+DSMConst.TB_PROXY_UAREA+"}} where  uid = ? and areac = ? and cstatus & 1 = 0 ";
+
             if (userInfoVo.getUid() <= 0) {
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime,belong)"
@@ -57,17 +60,19 @@ public class BackgroundUserModule {
                         pwd, userInfoVo.getRoleid(),userInfoVo.getBelong()});
 
                 if(userInfoVo.getArean() != null
-                        && StringUtils.isEmpty(userInfoVo.getArean())){
+                        && !StringUtils.isEmpty(userInfoVo.getArean())){
                     String [] areaArry = userInfoVo.getArean().split(",");
-
                     String insertAreaSql = "insert into {{?"+DSMConst.TB_PROXY_UAREA+"}}" +
                             " (unqid,uid,areac,cstatus) values (?,?,?,?) ";
 
                     for(int i = 0; i < areaArry.length; i++){
                         if(areaArry[i] != null && !StringUtils.isEmpty(areaArry[i])){
+                            List<Object[]> isExt = baseDao.queryNative(queryAreaExtSql, userInfoVo.getUid(), areaArry[i]);
+                            if(isExt == null && isExt.isEmpty()){
                                 sqlList.add(insertAreaSql);
                                 parmList.add(new Object[]{GenIdUtil.getUnqId(),userInfoVo.getUid(),areaArry[i],
                                         0});
+                            }
                         }
                     }
                 }
@@ -79,13 +84,13 @@ public class BackgroundUserModule {
                         userInfoVo.getUrealname(),userInfoVo.getRoleid(),userInfoVo.getUid()});
 
                 if(userInfoVo.getArean() != null
-                        && StringUtils.isEmpty(userInfoVo.getArean())){
+                        && !StringUtils.isEmpty(userInfoVo.getArean())){
                     String [] areaArry = userInfoVo.getArean().split(",");
 
                     String insertAreaSql = "insert into {{?"+DSMConst.TB_PROXY_UAREA+"}}" +
                             " (unqid,uid,areac,cstatus) values (?,?,?,?) ";
 
-                    String delAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA+"}} set cstatus = cstatus & 1 " +
+                    String delAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA+"}} set cstatus = cstatus | 1 " +
                             " where uid = ? and areac = ?";
 
                     for(int i = 0; i < areaArry.length; i++){
@@ -94,9 +99,14 @@ public class BackgroundUserModule {
                                 sqlList.add(delAreaSql);
                                 parmList.add(new Object[]{userInfoVo.getUid(),areaArry[i].substring(1)});
                             }else{
-                                sqlList.add(insertAreaSql);
-                                parmList.add(new Object[]{GenIdUtil.getUnqId(),userInfoVo.getUid(),areaArry[i],
-                                        0});
+                                if(areaArry[i] != null && !StringUtils.isEmpty(areaArry[i])){
+                                    List<Object[]> isExt = baseDao.queryNative(queryAreaExtSql, userInfoVo.getUid(), areaArry[i]);
+                                    if(isExt == null && isExt.isEmpty()){
+                                        sqlList.add(insertAreaSql);
+                                        parmList.add(new Object[]{GenIdUtil.getUnqId(),userInfoVo.getUid(),areaArry[i],
+                                                0});
+                                    }
+                                }
                             }
                         }
                     }
@@ -262,7 +272,7 @@ public class BackgroundUserModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int uid = jsonObject.get("uid").getAsInt();
-        String sql = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
+        String sql = "select u.uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
                 + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus,GROUP_CONCAT(rname) rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid=r.roleid and u.cstatus&1=0 and uid=?";
@@ -335,19 +345,16 @@ public class BackgroundUserModule {
 
         baseDao.convToEntity(queryResult, result, RoleVO.class);
 
-        if(sroleid > 0){
-            for (RoleVO roleVO : result){
-                if((roleVO.getRoleId() & sroleid) > 0){
-                    roleVO.setCstatus(1);
+        if (result.length > 0) {
+            baseDao.convToEntity(queryResult, result, RoleVO.class);
+            if(sroleid > 0){
+                for (RoleVO roleVO : result){
+                    if((roleVO.getRoleId() & sroleid) > 0){
+                        roleVO.setCstatus(1);
+                    }
                 }
             }
         }
-
-
-        if (result.length > 0) {
-            baseDao.convToEntity(queryResult, result, RoleVO.class);
-        }
-
         return new Result().success(result);
     }
 
