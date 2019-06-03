@@ -12,7 +12,6 @@ import com.onek.user.entity.UserInfoVo;
 import com.onek.util.GenIdUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.util.LogUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
@@ -155,7 +154,8 @@ public class BDManageModule {
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
                 + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
-                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and (belong=2554 or belong in ("
+                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and (u.roleid&8192>0 or u.roleid&4096>0) "
+                + " and (belong=2554 or belong in ("
                 + " select uid from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and belong=?)) ";
         sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 1).append(" group by uid order by oid desc");
@@ -193,7 +193,8 @@ public class BDManageModule {
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
                 + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
-                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and belong=? ";
+                + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and u.roleid&8192>0 "
+                + " and belong=? ";
 //        String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
 //                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, GROUP_CONCAT(rname) as rname,"
 //                + " CONCAT('[',GROUP_CONCAT(arearng,','),']') as arearng from {{?"
