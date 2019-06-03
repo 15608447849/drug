@@ -21,11 +21,11 @@ public class GaoDeMapUtil {
     public static String apiKey = "c59217680590515b7c8369ff5e8fe124";
 
     public static class Point{
-        public double lon;
+        public double lng;
         public double lat;
 
-        public Point(double lon, double lat){
-            this.lon = lon;
+        public Point(double lng, double lat){
+            this.lng = lng;
             this.lat = lat;
         }
 
@@ -43,7 +43,7 @@ public class GaoDeMapUtil {
 
         @Override
         public String toString() {
-            return "{" + "lon=" + lon + ", lat=" + lat + '}';
+            return "{" + "lng=" + lng + ", lat=" + lat + '}';
         }
     }
 
@@ -195,7 +195,7 @@ public class GaoDeMapUtil {
 
 
     private static String pointJsonToPoint2DJson(Object pointOrPointList){
-        return GsonUtils.javaBeanToJson(pointOrPointList).replace("lon","x").replace("lat","y");
+        return GsonUtils.javaBeanToJson(pointOrPointList).replace("lng","x").replace("lat","y");
     }
 
     /**
@@ -209,7 +209,7 @@ public class GaoDeMapUtil {
         return checkPointOnRange(point,polygon);
     }
 
-    // [lon1,lat1,lon2,lat2] -> List:[lon,lat]
+    // [lon1,lat1,lon2,lat2] -> List:[lng,lat]
     private static List<Double[]> pointArray2ListDouble(Double[] doubles){
         List<Double[]> list = new ArrayList<>();
         for (int i = 0 ; i<doubles.length ;i+=2){
@@ -240,14 +240,14 @@ public class GaoDeMapUtil {
         return null;
     }
 
-    //[{"lon":112.919358,"lat":28.219294}] -> [[112.975598,28.220521]]
+    //[{"lng":112.919358,"lat":28.219294}] -> [[112.975598,28.220521]]
     public static String pointJsonToListArrayJson(String json){
         try {
             List<Point> points = GsonUtils.json2List(json,Point.class);
             if (points!=null && points.size() > 0){
                 List<Double[]> list = new ArrayList<>();
-                for (int i = 0 ; i<points.size() ;i+=2){
-                    list.add(new Double[]{points.get(i).lon,points.get(i).lat});
+                for (int i = 0 ; i<points.size() ;i++){
+                    list.add(new Double[]{points.get(i).lng,points.get(i).lat});
                 }
                 return GsonUtils.javaBeanToJson(list);
             }
@@ -259,7 +259,13 @@ public class GaoDeMapUtil {
 
     public static void main(String[] args) {
 
-//        List<Point> points = areaPolyline("湖南省长沙市");
+
+
+        String json = "[{\"P\":28.59241124249085,\"Q\":112.75455302149055,\"lng\":112.754553,\"lat\":28.592411},{\"P\":28.51279746479939,\"Q\":112.9880124941468,\"lng\":112.988012,\"lat\":28.512797},{\"P\":28.489867193303038,\"Q\":112.73120707422493,\"lng\":112.731207,\"lat\":28.489867}]";
+
+        System.out.println(pointJsonToListArrayJson(json));
+
+//                List<Point> points = areaPolyline("湖南省长沙市");
 //        System.out.println(points);
 
 //https://lbs.amap.com/api/javascript-api/example/relationship-judgment/point-surface-relation  console.log(JSON.stringify(point))
@@ -280,8 +286,8 @@ public class GaoDeMapUtil {
         System.out.println(GsonUtils.javaBeanToJson(polygon));
         System.out.println(checkPointOnRange(point2d,polygon));*/
 
-//       String singe = "{\"lon\":112.919378,\"lat\":28.219301}";
-//       String points = "[{\"lon\":112.938888,\"lat\":28.228272},{\"lon\":113.012932,\"lat\":28.233654},{\"lon\":112.988412,\"lat\":28.223999},{\"lon\":112.987862,\"lat\":28.220076},{\"lon\":112.975598,\"lat\":28.220521},{\"lon\":112.919358,\"lat\":28.219294}]";
+//       String singe = "{\"lng\":112.919378,\"lat\":28.219301}";
+//       String points = "[{\"lng\":112.938888,\"lat\":28.228272},{\"lng\":113.012932,\"lat\":28.233654},{\"lng\":112.988412,\"lat\":28.223999},{\"lng\":112.987862,\"lat\":28.220076},{\"lng\":112.975598,\"lat\":28.220521},{\"lng\":112.919358,\"lat\":28.219294}]";
 //       Point p = GsonUtils.jsonToJavaBean(singe,Point.class);
 //       List<Point> list = GsonUtils.json2List(points,Point.class);
 //

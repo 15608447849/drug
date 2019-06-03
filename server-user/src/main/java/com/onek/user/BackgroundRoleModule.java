@@ -2,6 +2,7 @@ package com.onek.user;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.context.AppContext;
@@ -10,6 +11,7 @@ import com.onek.entitys.Result;
 import com.onek.user.entity.RoleVO;
 import constant.DSMConst;
 import dao.BaseDAO;
+import util.ArrayUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
@@ -22,6 +24,20 @@ public class BackgroundRoleModule {
             " SELECT * "
             + " FROM {{?" + DSMConst.TB_SYSTEM_ROLE + "}} "
             + " WHERE cstatus&1 = 0 ";
+
+    private static final String INSERT_ROLE =
+            " INSERT INTO {{?" + DSMConst.TB_SYSTEM_ROLE + "}} "
+            + " VALUES (?, ?, CURRENT_DATE, CURRENT_TIME, NULL, NULL, ?) ";
+
+    private static final String UPDATE_ROLE =
+            " UPDATE {{?" + DSMConst.TB_SYSTEM_ROLE + "}} "
+            + " SET rname = ?, cstatus = ? "
+            + " WHERE cstatus&(1|2) = 0 AND roleid = ? ";
+
+    private static final String DELETE_ROLE =
+            " UPDATE {{?" + DSMConst.TB_SYSTEM_ROLE + "}} "
+            + " SET cstatus = cstatus | 1 "
+            + " WHERE cstatus&2 = 0 AND roleid = ? ";
 
     private static final String OPEN_ROLE_SELF =
             " UPDATE {{?" + DSMConst.TB_SYSTEM_ROLE + "}}"
@@ -136,13 +152,13 @@ public class BackgroundRoleModule {
         // RESOURCE
         paramList.add(new Object[] { roleId });
         // USER
-        paramList.add(new Object[] { roleId });
+//        paramList.add(new Object[] { roleId });
 
         BASE_DAO.updateTransNative(
                 new String[] {
                         CLOSE_ROLE_SELF,
-                        CLOSE_ROLE_RESOURCE,
-                        CLOSE_ROLE_USER
+//                        CLOSE_ROLE_RESOURCE,
+//                        CLOSE_ROLE_USER
                 }, paramList);
 
         return new Result().success(null);
@@ -225,6 +241,94 @@ public class BackgroundRoleModule {
         }
 
         return new Result().success("操作成功");
+    }
+
+    public Result addRole(AppContext appContext) {
+        if (StringUtils.isEmpty(appContext.param.json)) {
+            return new Result().fail("参数为空");
+        }
+
+        RoleVO paramRole =
+                JSON.parseObject(appContext.param.json, RoleVO.class);
+
+        List<Object[]> queryResult = BASE_DAO.queryNative(
+                QUERY_ROLE_BASE + " ORDER BY roleid ");
+
+        if (queryResult.size() >= 63) {
+            return new Result().fail("角色已达上限！");
+        }
+
+        RoleVO[] roleVOS = new RoleVO[queryResult.size()];
+
+        BASE_DAO.convToEntity(queryResult, roleVOS, RoleVO.class);
+
+        int pow;
+        long newRole = 1L;
+
+        for (pow = 0; pow < roleVOS.length; pow++, newRole <<= 1) {
+            if (newRole != roleVOS[pow].getRoleId()) {
+                break;
+            }
+        }
+
+        BASE_DAO.updateNative(INSERT_ROLE,
+                newRole, paramRole.getRoleName(), paramRole.getCstatus());
+
+        return new Result().success("新增成功");
+    }
+
+
+    public Result deleteRole(AppContext appContext) {
+        if (ArrayUtil.isEmpty(appContext.param.arrays)
+            || !StringUtils.isBiggerZero(appContext.param.arrays[0])) {
+            return new Result().fail("参数错误");
+        }
+
+        long roleId = Long.parseLong(appContext.param.arrays[0]);
+
+        int checkResult = roleHandlerCheck(roleId);
+        if (checkResult < 0) {
+            if (checkResult == -2) {
+                return new Result().fail("该角色不可操作");
+            }
+
+            return new Result().fail("操作失败");
+        }
+
+        List<Object[]> paramList = new ArrayList<>();
+        // SELF
+        paramList.add(new Object[] { roleId });
+        // RESOURCE
+        paramList.add(new Object[] { roleId });
+        // USER
+        paramList.add(new Object[] { roleId });
+
+        BASE_DAO.updateTransNative(
+                new String[] {
+                        DELETE_ROLE,
+                        CLOSE_ROLE_RESOURCE,
+                        CLOSE_ROLE_USER
+                }, paramList);
+
+        return new Result().success(null);
+    }
+
+
+    public Result updateRole(AppContext appContext) {
+        if (StringUtils.isEmpty(appContext.param.json)) {
+            return new Result().fail("参数为空");
+        }
+
+        RoleVO paramRole =
+                JSON.parseObject(appContext.param.json, RoleVO.class);
+
+        int updateResult =
+                BASE_DAO.updateNative(UPDATE_ROLE,
+                    paramRole.getRoleName(), paramRole.getCstatus());
+
+        return updateResult == 0
+                ? new Result().fail("更新失败")
+                : new Result().success("更新成功");
     }
 
     /**

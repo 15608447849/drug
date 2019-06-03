@@ -113,6 +113,17 @@ public class BackgroundResourceModule {
         return new Result().success(new Gson().toJson(TreeUtil.list2Tree(list)));
     }
 
+    private long getTotalRole() {
+        String sql =
+                " SELECT IFNULL(SUM(roleid), 0) "
+                + " FROM {{?" + DSMConst.TB_SYSTEM_ROLE + "}} "
+                + " WHERE cstatus&(1|32) = 0 ";
+
+        List<Object[]> queryResult = BASE_DAO.queryNative(sql);
+
+        return Long.parseLong(queryResult.get(0)[0].toString());
+    }
+
     public Result roleLiuqi(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -122,7 +133,7 @@ public class BackgroundResourceModule {
 
         long roleId;
         try {
-            roleId = Long.parseLong(params[0]);
+            roleId = getTotalRole() & Long.parseLong(params[0]);
         } catch (NumberFormatException e) {
             return new Result().fail("参数异常");
         }
@@ -154,7 +165,7 @@ public class BackgroundResourceModule {
 
         long roleId;
         try {
-            roleId = Long.parseLong(params[0]);
+            roleId = getTotalRole() & Long.parseLong(params[0]);
         } catch (NumberFormatException e) {
             return new Result().fail("参数异常");
         }
