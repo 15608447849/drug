@@ -464,8 +464,10 @@ public class IceRemoteUtil {
      */
     public static String getCompanyJson(int compid) {
         try {
+//            System.out.println("---->>>>>>>>>>. " + compid);
             return ic.setServerAndRequest("userServer","LoginRegistrationModule","getStoreInfo").setArrayParams(compid).execute();
         } catch (Exception ignored) {
+            ignored.printStackTrace();
         }
         return null;
     }

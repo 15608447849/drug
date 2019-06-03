@@ -47,7 +47,7 @@ public class IceClient {
     public IceClient settingProxy(String serverName){
         InterfacesPrx prx = prxMaps.get(serverName);
         if (prx == null){
-            Ice.ObjectPrx base = ic.stringToProxy(serverName);
+            Ice.ObjectPrx base = ic.stringToProxy(serverName).ice_invocationTimeout(1000);
             prx =  InterfacesPrxHelper.checkedCast(base);
             if (prx!=null) prxMaps.put(serverName,prx);
         }
