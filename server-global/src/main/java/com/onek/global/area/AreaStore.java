@@ -4,7 +4,6 @@ import com.onek.util.area.AreaEntity;
 import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 
 import java.util.List;
 
@@ -104,7 +103,7 @@ public class AreaStore {
             return new AreaEntity[0];
         }
 
-        String[] params = getChildrenRegexp(areac);
+        String[] params = getChildrenRegexps(areac);
 
         List<Object[]> queryResult =
                 BaseDAO.getBaseDAO().queryNative(SQLCS[childrenLayer],
@@ -137,7 +136,7 @@ public class AreaStore {
         return tArray[0];
     }
 
-    private static String[] getChildrenRegexp(long areac) {
+    private static String[] getChildrenRegexps(long areac) {
         String head, anys, zero;
 
         int layer = areac == 0 ? 0 : AreaUtil.getLayer(areac) + 1;
