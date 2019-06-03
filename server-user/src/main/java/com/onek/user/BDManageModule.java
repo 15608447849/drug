@@ -17,7 +17,9 @@ import util.GsonUtils;
 import util.StringUtils;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import static com.onek.util.RedisGlobalKeys.getUserCode;
 import static util.GaoDeMapUtil.pointJsonToListArrayJson;
@@ -155,11 +157,11 @@ public class BDManageModule {
                 + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and (u.roleid&8192>0 or u.roleid&4096>0) "
-                + " and (belong=2554 or belong in ("
+                + " and (belong=? or belong in ("
                 + " select uid from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and belong=?)) ";
         sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 1).append(" group by uid order by oid desc");
-        List<Object[]> queryResult = baseDao.queryNativeC(pageHolder, page, sqlBuilder.toString(), belong);
+        List<Object[]> queryResult = baseDao.queryNativeC(pageHolder, page, sqlBuilder.toString(), belong, belong);
         if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class, new String[]{
@@ -291,16 +293,31 @@ public class BDManageModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        List<String> oList = new ArrayList<>();
-        int uid = jsonObject.get("uid").getAsInt();
+        Map<String, List<String>> oMap = new HashMap<>();
+        List<String> setAreaList = new ArrayList<>();
+        List<String> superiorList = new ArrayList<>();
+        int uid = jsonObject.get("uid").getAsInt();//设置的用户码
+        int puid = jsonObject.get("puid").getAsInt();//上级用户码
+        //上级
+        String selectPSQL = "select arearng from {{?" + DSMConst.TB_PROXY_UAREA + "}} where cstatus&1=0 "
+                + " and uid=" + puid;
+        List<Object[]> qPResult = baseDao.queryNative(selectPSQL);
+        if (qPResult == null || qPResult.isEmpty()) return result.success(superiorList);
+        for (Object[] o : qPResult) {
+            superiorList.add(pointJsonToListArrayJson(String.valueOf(o[0])));
+        }
+        //设置的
         String selectSQL = "select arearng from {{?" + DSMConst.TB_PROXY_UAREA + "}} where cstatus&1=0 "
                 + " and uid=" + uid;
         List<Object[]> qResult = baseDao.queryNative(selectSQL);
-        if (qResult == null || qResult.isEmpty()) return result.success(oList);
-        for (Object[] o : qResult) {
-            oList.add(pointJsonToListArrayJson(String.valueOf(o[0])));
+        if (qResult != null && !qResult.isEmpty()) {
+            for (Object[] o : qResult) {
+                setAreaList.add(pointJsonToListArrayJson(String.valueOf(o[0])));
+            }
         }
-        return result.success(oList);
+        oMap.put("pArea", superiorList);
+        oMap.put("srea", setAreaList);
+        return result.success(oMap);
     }
 
 
