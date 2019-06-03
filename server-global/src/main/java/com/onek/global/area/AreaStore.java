@@ -57,7 +57,7 @@ public class AreaStore {
     private static final String[] SQLCS =
             { PCA_C, PCA_C, PCA_C, VILLAGES_C, STREET_C };
 
-    private static final String REG = "^${{HEAD}}[0-9]{${{ANYS}}}[1-9]{${{ANYE}}}[0]{${{ZERO}}}$";
+    private static final String REG = "^${{HEAD}}([0-9]{${{ANYS}}}[1-9]{${{ANYE}}}|[1-9]{1}[0]{1})[0]{${{ZERO}}}$";
 
     private static final String REG_HEAD = "${{HEAD}}";
     private static final String REG_ANYS = "${{ANYS}}";
