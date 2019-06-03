@@ -16,7 +16,6 @@ import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -293,30 +292,40 @@ public class BDManageModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        Map<String, List<String>> oMap = new HashMap<>();
-        List<String> setAreaList = new ArrayList<>();
-        List<String> superiorList = new ArrayList<>();
+        Map<String, JsonArray> oMap = new HashMap<>();
+        JsonArray setAreaArr = new JsonArray();
+        JsonArray superiorArr = new JsonArray();
         int uid = jsonObject.get("uid").getAsInt();//设置的用户码
         int puid = jsonObject.get("puid").getAsInt();//上级用户码
         //上级
-        String selectPSQL = "select arearng from {{?" + DSMConst.TB_PROXY_UAREA + "}} where cstatus&1=0 "
+        String selectPSQL = "select a.areac, arean, arearng from {{?" + DSMConst.TB_PROXY_UAREA + "}} a, {{?"
+                +DSMConst.TB_AREA_PCA+"}} b where a.cstatus&1=0 and a.areac=b.areac"
                 + " and uid=" + puid;
         List<Object[]> qPResult = baseDao.queryNative(selectPSQL);
-        if (qPResult == null || qPResult.isEmpty()) return result.success(superiorList);
+        if (qPResult == null || qPResult.isEmpty()) return result.success(superiorArr);
         for (Object[] o : qPResult) {
-            superiorList.add(pointJsonToListArrayJson(String.valueOf(o[0])));
+            JsonObject areaObj = new JsonObject();
+            areaObj.addProperty("areac", String.valueOf(o[0]));
+            areaObj.addProperty("areaName", String.valueOf(o[1]));
+            areaObj.addProperty("arearng",pointJsonToListArrayJson(String.valueOf(o[2])));
+            superiorArr.add(areaObj);
         }
         //设置的
-        String selectSQL = "select arearng from {{?" + DSMConst.TB_PROXY_UAREA + "}} where cstatus&1=0 "
+        String selectSQL = "select a.areac, arean,arearng from {{?" + DSMConst.TB_PROXY_UAREA + "}} a, {{?"
+                + DSMConst.TB_AREA_PCA + "}} b where a.cstatus&1=0 and a.areac=b.areac"
                 + " and uid=" + uid;
         List<Object[]> qResult = baseDao.queryNative(selectSQL);
         if (qResult != null && !qResult.isEmpty()) {
             for (Object[] o : qResult) {
-                setAreaList.add(pointJsonToListArrayJson(String.valueOf(o[0])));
+                JsonObject areaObj = new JsonObject();
+                areaObj.addProperty("areac", String.valueOf(o[0]));
+                areaObj.addProperty("areaName", String.valueOf(o[1]));
+                areaObj.addProperty("arearng",pointJsonToListArrayJson(String.valueOf(o[2])));
+                setAreaArr.add(areaObj);
             }
         }
-        oMap.put("pArea", superiorList);
-        oMap.put("srea", setAreaList);
+        oMap.put("pArea", superiorArr);
+        oMap.put("srea", setAreaArr);
         return result.success(oMap);
     }
 
@@ -345,5 +354,8 @@ public class BDManageModule {
         return code > 0 ? result.success("设置成功") : result.fail("设置失败");
     }
 
-
+//
+//    public static void main(String[] args) {
+//        System.out.println(7168&1);
+//    }
 }
