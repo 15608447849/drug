@@ -316,6 +316,8 @@ public class TranOrderOptModule {
                     payamt = MathUtil.exactSub(payamt,bal).
                             setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
                 }
+
+                bal = Math.max(bal, 0);
             }
         }catch (Exception e){
             e.printStackTrace();

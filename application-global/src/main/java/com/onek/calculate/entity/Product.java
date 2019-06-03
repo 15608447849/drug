@@ -1,6 +1,7 @@
 package com.onek.calculate.entity;
 
 import com.onek.calculate.service.AccurateMath;
+import util.MathUtil;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -27,7 +28,7 @@ public class Product extends AccurateMath implements IProduct {
     }
 
     public void setOriginalPrice(double originalPrice) {
-        this.originalPrice = originalPrice;
+        this.originalPrice = Math.max(originalPrice, 0);
         this.setCurrentPrice(this.originalPrice * nums);
     }
 
@@ -42,20 +43,20 @@ public class Product extends AccurateMath implements IProduct {
     }
 
     public int getNums() {
-        return this.nums;
+        return Math.max(this.nums, 0);
     }
 
     public double getOriginalPrice() {
-        return this.originalPrice;
+        return Math.max(this.originalPrice, 0);
     }
 
     public double getCurrentPrice() {
-        return this.currentPrice;
+        return Math.max(this.currentPrice, 0);
     }
 
     @Override
     public void setCurrentPrice(double currentPrice) {
-        this.currentPrice = currentPrice;
+        this.currentPrice = Math.max(currentPrice, 0);
     }
 
     public void addDiscounted(double discounted) {
