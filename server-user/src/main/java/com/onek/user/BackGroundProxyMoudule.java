@@ -2,8 +2,7 @@ package com.onek.user;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
@@ -198,14 +197,13 @@ public class BackGroundProxyMoudule {
                 proxyAreaVO.setAreac((objects[0].toString()));
                 proxyAreaVO.setLayer(1);
                 areaList.add(proxyAreaVO);
-
-                for (Object[] objs : queryRet) {
-                    ProxyAreaTreeVO pproxyAreaVO = new ProxyAreaTreeVO();
-                    pproxyAreaVO.setArean(objs[1].toString());
-                    pproxyAreaVO.setAreac((objs[0].toString()));
-                    proxyAreaVO.setLayer(1);
-                    areaList.add(pproxyAreaVO);
-                }
+            }
+            for (Object[] objs : queryRet) {
+                ProxyAreaTreeVO pproxyAreaVO = new ProxyAreaTreeVO();
+                pproxyAreaVO.setArean(objs[1].toString());
+                pproxyAreaVO.setAreac((objs[0].toString()));
+                pproxyAreaVO.setLayer(1);
+                areaList.add(pproxyAreaVO);
             }
             return TreeUtil.list2Tree(areaList);
         }
@@ -345,13 +343,13 @@ public class BackGroundProxyMoudule {
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
 
-        String selectSQL = "select cp.cid,stu.uid,cname,cp.cstatus ckstatus,tu.cstatus opstatus,tu.urealname "
+        String selectSQL = "select cp.cid,tu.uid,cname,cp.cstatus ckstatus,tu.cstatus opstatus,tu.urealname "
                 + ",createdate,createtime,arean,ctype,tu.roleid,examine,tu.uphone,stu.urealname purealname from {{?"
                 + DSMConst.TB_COMP + "}} cp  join {{?" + DSMConst.TB_SYSTEM_USER + "}} tu  on cp.cid = tu.cid "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} stu on stu.uid = tu.belong "
                 + " left join (select uid,GROUP_CONCAT(pca.arean) as arean "
                 + " from {{?"+DSMConst.TB_PROXY_UAREA+"}} uarea,{{?"+DSMConst.TB_AREA_PCA +"}} pca "
-                + "  where pca.areac = uarea.areac group by uid) a on a.uid = tu.uid "
+                + "  where pca.areac = uarea.areac and uarea.cstatus&1 = 0 group by uid) a on a.uid = tu.uid "
                 + " where tu.cstatus&1=0 and ctype in (2,3) ";
 
         sqlBuilder.append(selectSQL);
@@ -443,7 +441,7 @@ public class BackGroundProxyMoudule {
             StringBuilder uidSb = new StringBuilder();
             if(queryResult != null && !queryResult.isEmpty()){
                 for (Object[] objs : queryResult){
-                    uidSb.append(objs.toString()).append(",");
+                    uidSb.append(objs[0].toString()).append(",");
                 }
             }
             String uidStr = uidSb.toString();
@@ -546,7 +544,7 @@ public class BackGroundProxyMoudule {
 
 
                 if(proxyPartnerVO.getArean() != null
-                        && StringUtils.isEmpty(proxyPartnerVO.getArean())){
+                        && !StringUtils.isEmpty(proxyPartnerVO.getArean())){
                     String [] areaArry = proxyPartnerVO.getArean().split(",");
 
                     String queryAreaExtSql = "select 1 from {{?"+DSMConst.TB_PROXY_UAREA+"}} where  uid = ? and areac = ? and cstatus & 1 = 0 ";
@@ -560,7 +558,7 @@ public class BackGroundProxyMoudule {
                         if(areaArry[i] != null && !StringUtils.isEmpty(areaArry[i])){
                             List<Object[]> isExt = baseDao.queryNative(queryAreaExtSql, proxyPartnerVO.getUid(), areaArry[i]);
 
-                            if((isExt == null && isExt.isEmpty())){
+                            if((isExt == null || isExt.isEmpty())){
 
                             IceRemoteUtil.getCompleteName(areaArry[i]);
 //                            String[] allArea =  AreaStore.getCompleteName(Long.parseLong(areaArry[i]));
@@ -610,11 +608,11 @@ public class BackGroundProxyMoudule {
             List<Object[]> parmList = new ArrayList<>();
             if (proxyPartnerVO.getUid() > 0) {
                 String updateUserSql = "update {{?" +DSMConst.TB_SYSTEM_USER +"}} "
-                        + " set urealname = ?,uphone = ? where uid = ?";
+                        + " set urealname = ? where uid = ?";
                 sqlList.add(updateUserSql);
 
-                parmList.add(new Object[]{proxyPartnerVO.getUrealname(),
-                        proxyPartnerVO.getUphone(),proxyPartnerVO.getUid()});
+                parmList.add(new Object[]{proxyPartnerVO.getUrealname()
+                        ,proxyPartnerVO.getUid()});
 
                 String updateCompSql = "update {{?"+DSMConst.TB_COMP +"}} set cname = ?," +
                         " cnamehash = crc32(?) where cid = ?";
@@ -624,7 +622,7 @@ public class BackGroundProxyMoudule {
 
 
                 if(proxyPartnerVO.getArean() != null
-                        && StringUtils.isEmpty(proxyPartnerVO.getArean())){
+                        && !StringUtils.isEmpty(proxyPartnerVO.getArean())){
                     String [] areaArry = proxyPartnerVO.getArean().split(",");
 
                     String insertAreaSql = "insert into {{?"+DSMConst.TB_PROXY_UAREA+"}}" +
@@ -632,7 +630,7 @@ public class BackGroundProxyMoudule {
 
 
 
-                    String delAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA+"}} set cstatus = cstatus & 1 " +
+                    String delAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA+"}} set cstatus = cstatus | 1 " +
                             " where uid = ? and areac = ?";
 
                     String queryAreaExtSql = "select 1 from {{?"+DSMConst.TB_PROXY_UAREA+"}} where  uid = ? and areac = ? and cstatus & 1 = 0 ";
@@ -644,7 +642,7 @@ public class BackGroundProxyMoudule {
                                 parmList.add(new Object[]{proxyPartnerVO.getUid(),areaArry[i].substring(1)});
                             }else{
                                 List<Object[]> isExt = baseDao.queryNative(queryAreaExtSql, proxyPartnerVO.getUid(), areaArry[i]);
-                                if(isExt == null && isExt.isEmpty()){
+                                if(isExt == null || isExt.isEmpty()){
 
                                     String completeName = IceRemoteUtil.getCompleteName(areaArry[i]);
 //                                StringBuilder asb = new StringBuilder();
@@ -754,25 +752,27 @@ public class BackGroundProxyMoudule {
         PageHolder pageHolder = new PageHolder(page);
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
-        String selectSQL = "select u.uid,uphone,urealname,u.roleid,u.adddate,u.addtime"
-                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus,arean as arean from {{?"
+        String selectSQL = "select u.uid,u.uphone,u.urealname,u.roleid,u.adddate,u.addtime"
+                + ",u.offdate,u.offtime,u.ip,u.logindate,u.logintime,u.cstatus,arean as arean," +
+                "stu.uid buid,stu.urealname buname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u "
                 + " left join (select uid,GROUP_CONCAT(pca.arean) as arean "
                 + " from {{?"+DSMConst.TB_PROXY_UAREA+"}} uarea,{{?"+DSMConst.TB_AREA_PCA +"}} pca "
-                + "  where pca.areac = uarea.areac and uarea.cstatus & 1 = 0 group by uid) a on a.uid = u.uid "
-                + " where u.cstatus&1=0 and belong = ? and u.cid = ? ";
+                + " where pca.areac = uarea.areac and uarea.cstatus & 1 = 0 group by uid) a on a.uid = u.uid "
+                + " left join {{?" + DSMConst.TB_SYSTEM_USER + "}} stu on stu.uid = u.belong "
+                + " where u.cstatus&1=0 and u.cid = ? ";
 
         sqlBuilder.append(selectSQL);
         sqlBuilder = getgetParamsUDYSQL(sqlBuilder, jsonObject).append(" group by u.uid desc ");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page,
-                sqlBuilder.toString(),new Object[]{belong,cid});
+                sqlBuilder.toString(),new Object[]{cid});
 
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
 
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class,
                 new String[]{"uid","uphone","urealname","roleid","adddate","addtime","offdate",
-                        "offtime","ip","logindate","logintime","cstatus","arean"});
+                        "offtime","ip","logindate","logintime","cstatus","arean","buid","buname"});
 
         return result.setQuery(userInfoVos,pageHolder);
     }
@@ -786,14 +786,14 @@ public class BackGroundProxyMoudule {
         String areaStr = jsonObject.get("areac").getAsString();
 
         if (urealname != null && !urealname.isEmpty()) {
-            sqlBuilder.append(" and urealname like '%").append(urealname).append("%'");
+            sqlBuilder.append(" and u.urealname like '%").append(urealname).append("%'");
         }
         if (roleid > 0) {
             sqlBuilder.append(" and u.roleid&").append(roleid).append(">0");
         }
 
         if (!StringUtils.isEmpty(uphone) && Long.parseLong(uphone) > 0) {
-            sqlBuilder.append(" and uphone=").append(uphone);
+            sqlBuilder.append(" and u.uphone=").append(uphone);
         }
         if (state == 0) {
             sqlBuilder.append(" and u.cstatus&32=0");
@@ -807,7 +807,7 @@ public class BackGroundProxyMoudule {
             String [] areaArry = areaStr.split(",");
             for(String areac : areaArry){
                 if(areac != null && !StringUtils.isEmpty(areac)){
-                    areaSb.append(Integer.parseInt(areac)).append(",");
+                    areaSb.append(Long.parseLong(areac)).append(",");
                 }
             }
             String areacStr = areaSb.toString();
@@ -820,14 +820,20 @@ public class BackGroundProxyMoudule {
             StringBuilder uidSb = new StringBuilder();
             if(queryResult != null && !queryResult.isEmpty()){
                 for (Object[] objs : queryResult){
-                    uidSb.append(objs.toString()).append(",");
+                    uidSb.append(objs[0].toString()).append(",");
                 }
             }
             String uidStr = uidSb.toString();
             if(uidStr.endsWith(",")){
                 uidStr = uidStr.substring(0,uidStr.length() - 1);
             }
-            sqlBuilder.append(" and u.uid in (").append(uidStr).append(")");
+
+            if(!StringUtils.isEmpty(uidStr)){
+                sqlBuilder.append(" and u.uid in (").append(uidStr).append(")");
+            }else{
+                sqlBuilder.append(" and 1=2 ");
+            }
+
         }
 
         return sqlBuilder;
@@ -847,12 +853,19 @@ public class BackGroundProxyMoudule {
         sqlBuilder.append(selectSQL);
         List<Object[]> queryResult = baseDao.queryNative(selectSQL,roleid,uid);
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
-        HashMap<String,String> map = new HashMap<>();
 
+        List<BindBdVO> bdList = new ArrayList<>();
         for (Object[] objects : queryResult){
-            map.put(objects[0].toString(),objects[1].toString());
+
+            if(objects[0] != null || objects[1] != null){
+                BindBdVO bindBdVO = new BindBdVO();
+                bindBdVO.setBuid(objects[0].toString());
+                bindBdVO.setBname(objects[1].toString());
+                bdList.add(bindBdVO);
+            }
+
         }
-        return  result.success(map);
+        return  result.success(bdList);
     }
 
 
@@ -878,9 +891,11 @@ public class BackGroundProxyMoudule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        Result result = new Result();
-        int uid = jsonObject.get("bd").getAsInt();
+        int bdid = jsonObject.get("bd").getAsInt();
+        int bdmid = jsonObject.get("bdm").getAsInt();
         int cid = jsonObject.get("cid").getAsInt();
+        int uid = jsonObject.get("uid").getAsInt();
+
         StringBuilder sqlBuilder = new StringBuilder();
 
         String selectCompSQL = " select lng,lat from {{?" + DSMConst.TB_COMP + "}} where cid = ? and cstatus&1 = 0";
@@ -892,7 +907,15 @@ public class BackGroundProxyMoudule {
 
         String selectAreaSQL = " select arearng from {{?" + DSMConst.TB_PROXY_UAREA + "}} where uid = ? and cstatus&1 = 0";
 
-        List<Object[]> arpoint = baseDao.queryNative(selectAreaSQL,uid);
+        List<Object[]> arpoint = null;
+        if(bdmid > 0){
+            arpoint = baseDao.queryNative(selectAreaSQL,bdmid);
+        }
+
+        if(bdid > 0){
+            arpoint = baseDao.queryNative(selectAreaSQL,bdid);
+        }
+
 
         if(arpoint == null || arpoint.isEmpty()){
             return new Result().fail("绑定失败！");
@@ -901,17 +924,36 @@ public class BackGroundProxyMoudule {
         GaoDeMapUtil.Point compPoint
                 = new GaoDeMapUtil.Point(Double.parseDouble(cppoint.get(0)[0].toString()),
                 Double.parseDouble(cppoint.get(0)[1].toString()));
-
         for(Object[] objs : arpoint){
-            if(objs == null || StringUtils.isEmpty(objs.toString())){
+            if(objs == null || StringUtils.isEmpty(objs[0].toString())){
                 continue;
             }
             try{
                 List<GaoDeMapUtil.Point>
-                        points = GsonUtils.json2List(objs.toString(), GaoDeMapUtil.Point.class);
+                        points = GsonUtils.json2List(objs[0].toString(), GaoDeMapUtil.Point.class);
+
+//                List<GaoDeMapUtil.Point> listPoints = new ArrayList<>();
+//                if(!StringUtils.isEmpty(objs[0].toString())){
+//                    JsonArray jsonArray = jsonParser.parse(objs[0].toString()).getAsJsonArray();
+//                    Gson gson = new Gson();
+//                    for (JsonElement pointVO : jsonArray){
+//                        GaoDeMapUtil.Point pvo = gson.fromJson(pointVO, GaoDeMapUtil.Point.class);
+//                        listPoints.add(pvo);
+//                    }
+//                }
+
+
                 if(GaoDeMapUtil.checkPointOnRange(compPoint,points)){
-                    String bingSql = "update {{?" + DSMConst.TB_COMP + "}} set inviter = ? where cid = ?";
-                    if(baseDao.updateNative(bingSql,uid,cid) > 0){
+                    String bingSql ="";
+                    int resultFlag = 0;
+                    if(bdmid > 0){
+                        bingSql = "update {{?" + DSMConst.TB_SYSTEM_USER +"}} set belong = ? where uid = ?";
+                        resultFlag = baseDao.updateNative(bingSql,bdmid,uid);
+                    }else{
+                        bingSql = "update {{?" + DSMConst.TB_COMP + "}} set inviter = ? where cid = ?";
+                        resultFlag = baseDao.updateNative(bingSql,bdid,cid);
+                    }
+                    if(resultFlag > 0){
                         return new Result().success("绑定成功!");
                     }
                 }
@@ -921,7 +963,6 @@ public class BackGroundProxyMoudule {
             }
         }
         return  new Result().fail("绑定失败！");
-        //IceRemoteUtil.
     }
 
 
@@ -940,48 +981,61 @@ public class BackGroundProxyMoudule {
         StringBuilder sqlBuilder = new StringBuilder();
 
         int puid = jsonObject.get("puid").getAsInt();
+        int mroleid = jsonObject.get("mroleid").getAsInt();
 
 
-        String queryArea =  " select areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where uid = ? and cstatus & 1 = 0";
-
-        List<Object[]> areaRet = baseDao.queryNative(queryArea, puid);
-
-        if(areaRet == null || areaRet.isEmpty()){
-            return result.success(null);
-        }
-
-        StringBuilder areaSb = new StringBuilder();
-        for (Object[] objs : areaRet){
-            areaSb.append(objs[0].toString()).append(",");
-        }
-        String areaStr = areaSb.toString();
-        if(areaStr.endsWith(",")){
-            areaStr = areaStr.substring(0,areaStr.length() - 1);
-        }
-
-
-//        public String phone; //手机
-//        public int uid; //用户码
-//        public String company; //公司名
-//        public String addressCode;//地区码
-//        public String address;//地址
-//        private String createdate;
-//        private String createtime;
-//        public int status; //状态
-//        public int companyId; //公司码
-//        public int cursorId;//客服专员ID
-//        public String cursorName;//客户专员姓名
-//        public String cursorPhone;//客户手机号码
-
-
-        String selectSQL = "select cp.cid companyId,tu.uphone phone,tu.uid,cname company,caddrcode addressCode, "
+        String selectSQL = "select distinct cp.cid companyId,tu.uphone phone,tu.uid,cname company,caddrcode addressCode, "
                 + "caddr address,createdate,createtime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName," +
-                " stu.uphone cursorPhone from {{?"
+                " stu.uphone cursorPhone,sstu.uid bdmid,sstu.urealname bdmn from {{?"
                 + DSMConst.TB_COMP + "}} cp  join {{?" + DSMConst.TB_SYSTEM_USER + "}} tu  on cp.cid = tu.cid "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} stu on stu.uid = cp.inviter "
-                + " where tu.cstatus&1=0 and ctype = 0  and caddrcode in ("+areaStr+")";
+                + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} sstu on sstu.uid = tu.belong "
+                + " where tu.cstatus&1=0 and ctype = 0  ";
 
         sqlBuilder.append(selectSQL);
+
+
+        if((mroleid & (RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM+RoleCodeCons._DB)) > 0){
+            sqlBuilder.append(" and (");
+
+            if((mroleid & RoleCodeCons._PROXY_PARTNER)> 0){
+
+
+                String queryArea =  " select areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where uid = ? and cstatus & 1 = 0";
+
+                List<Object[]> areaRet = baseDao.queryNative(queryArea, puid);
+
+                if(areaRet == null || areaRet.isEmpty()){
+                    return result.success(null);
+                }
+
+                StringBuilder areaSb = new StringBuilder();
+                for (Object[] objs : areaRet){
+                    areaSb.append(objs[0].toString()).append(",");
+                }
+                String areaStr = areaSb.toString();
+                if(areaStr.endsWith(",")){
+                    areaStr = areaStr.substring(0,areaStr.length() - 1);
+                }
+                sqlBuilder.append("caddrcode in ("+areaStr+")");
+            }
+
+            if((mroleid & RoleCodeCons._DBM) > 0){
+                if((mroleid & RoleCodeCons._PROXY_PARTNER) > 0){
+                    sqlBuilder.append(" or ");
+                }
+                sqlBuilder.append(" tu.belong = ").append(puid);
+            }
+
+            if((mroleid & RoleCodeCons._DB) > 0){
+                if((mroleid & (RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM)) > 0){
+                    sqlBuilder.append(" or ");
+                }
+                sqlBuilder.append(" tu.uid = ").append(puid);
+            }
+            sqlBuilder.append(")");
+        }
+
         sqlBuilder = getgetParamsSTDYSQL(sqlBuilder, jsonObject).append(" group by tu.uid desc ");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
 
@@ -992,7 +1046,7 @@ public class BackGroundProxyMoudule {
 
         baseDao.convToEntity(queryResult, proxyStoreVOS, ProxyStoreVO.class,
                 new String[]{"companyId","phone","uid","company","addressCode","address","createdate",
-                        "createtime","status","cursorId","cursorName"});
+                        "createtime","status","cursorId","cursorName","bdmid","bdmn"});
 
         for (ProxyStoreVO proxyStoreVO : proxyStoreVOS){
             AreaEntity[] ancestors = IceRemoteUtil.getAncestors(Long.parseLong(proxyStoreVO.getAddressCode()));
@@ -1003,9 +1057,6 @@ public class BackGroundProxyMoudule {
                 proxyStoreVO.setRegion(ancestors[2].getArean());
             }
         }
-
-
-
         return result.setQuery(proxyStoreVOS,pageHolder);
     }
 
@@ -1017,8 +1068,8 @@ public class BackGroundProxyMoudule {
         String uphone = jsonObject.get("uphone").getAsString();
        // int opstatus = jsonObject.get("cstatus").getAsInt();
         String areaStr = jsonObject.get("address").getAsString();
-        int mroleid = jsonObject.get("mroleid").getAsInt();
         int bd = jsonObject.get("bd").getAsInt();
+
 
 
         if (cname != null && !cname.isEmpty()) {
@@ -1040,7 +1091,7 @@ public class BackGroundProxyMoudule {
         }
 
         if (bd > 0) {
-            sqlBuilder.append(" and tu.uid=").append(bd);
+            sqlBuilder.append(" and cp.inviter=").append(bd);
         }
 
 

@@ -24,6 +24,24 @@ public class ProxyStoreVO {
     private String province; //省
     private String city; //市
     private String region; //区域
+    private int bdmid; //bdm id
+    private String bdmn; //bdm 名称
+
+    public int getBdmid() {
+        return bdmid;
+    }
+
+    public void setBdmid(int bdmid) {
+        this.bdmid = bdmid;
+    }
+
+    public String getBdmn() {
+        return bdmn;
+    }
+
+    public void setBdmn(String bdmn) {
+        this.bdmn = bdmn;
+    }
 
     public String getProvince() {
         return province;
