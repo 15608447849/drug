@@ -128,7 +128,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
         try {
             GaoDeMapUtil.Point p = GaoDeMapUtil.addressConvertLatLon(address);
             Application.communicator().getLogger().print(address +" ===============地址转换经纬度==============> " + p);
-            longitude = p.lon;
+            longitude = p.lng;
             latitude = p.lat;
         } catch (Exception ignored) {
         }
