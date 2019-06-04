@@ -13,6 +13,7 @@ import com.onek.user.entity.UserInfoVo;
 import com.onek.util.GenIdUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.ModelUtil;
@@ -109,13 +110,16 @@ public class BDManageModule {
 
             userInfoVo.setCid(Integer.parseInt(queryCidRet.get(0)[0].toString()));
 
+
             if (userInfoVo.getUid() <= 0) {
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime,cid,belong)"
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?,?)";
 
                 String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
-                code = baseDao.updateNative(insertSQL, getUserCode(),
+                int userCode = getUserCode();
+                userInfoVo.setUid(userCode);
+                code = baseDao.updateNative(insertSQL, userCode,
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
                         pwd, userInfoVo.getRoleid(), cid, userInfoVo.getBelong());
             } else {
@@ -130,7 +134,7 @@ public class BDManageModule {
 
             }
             if (code > 0) {
-                return new Result().success("操作成功");
+                return new Result().success(userInfoVo);
             }
         }
         return new Result().fail("用户操作失败！");
@@ -392,7 +396,9 @@ public class BDManageModule {
         //删除之前的
         String updSQL = "update {{?" + DSMConst.TB_PROXY_UAREA + "}} set cstatus=cstatus|1 where cstatus&1=0 "
                 + " and uid=" + uid;
-        if(baseDao.updateNative(updSQL) > 0) {
+        int code = baseDao.updateNative(updSQL);
+        LogUtil.getDefaultLogger().info("code---- " + code);
+        if(code >= 0) {
             List<Object[]> params  = new ArrayList<>();
             JsonArray areaArr = jsonObject.get("areaArr").getAsJsonArray();
             for (int i = 0; i < areaArr.size(); i++) {
@@ -403,14 +409,10 @@ public class BDManageModule {
             }
             String optSQL = "insert into {{?" + DSMConst.TB_PROXY_UAREA + "}} (unqid,uid,areac,cstatus,arearng) "
                     + " values(?,?,?,?,?)";
-            boolean code = ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
-            return code ? result.success("设置成功") : result.fail("设置失败");
+            boolean b = ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
+            return b ? result.success("设置成功") : result.fail("设置失败");
         }
         return result.fail("设置失败");
     }
 
-//
-//    public static void main(String[] args) {
-//        System.out.println(7168&1);
-//    }
 }

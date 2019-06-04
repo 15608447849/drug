@@ -152,7 +152,7 @@ public class ReportModule {
                 REGULAR_ONE.append(_areac).append("[0-9]{2}0{6}$");
                 REGULAR_TWO.append(_areac).append("[0]{8}$");
             }else{
-                _areac = areac;
+                _areac = areac.replaceAll("000000", "");
             }
         }
 
@@ -245,6 +245,10 @@ public class ReportModule {
              for(JSONObject js : jsonList){
                  String a = js.getString(col_areac);
                  JSONArray array = js.getJSONArray(col_detail);
+
+                 Map<String,String> cumulativeCompMap = new HashMap<>();
+                 List<String> compList = new ArrayList<>();
+
                  for(int i = 0; i < array.size() ;i++){
                      JSONObject subJs = array.getJSONObject(i);
                      int first = subJs.getInteger(col_first);
@@ -337,13 +341,20 @@ public class ReportModule {
                          AUTH_SUM = AUTH_SUM + authnum;
 
                          filterCompMap.put(compid, storetype);
+                         cumulativeCompMap.put(compid, storetype);
                      }
 
                      Map<String, Integer> orderMap = new HashMap<>();
                      for(String [] orderArr : orderList){
                          String compid = orderArr[0];
-                         if(!filterCompMap.keySet().contains(compid)){
-                             continue;
+                         if(type == 0 || type == 2 || type == 4){
+                             if(!filterCompMap.keySet().contains(compid)){
+                                 continue;
+                             }
+                         }else{
+                             if(!cumulativeCompMap.keySet().contains(compid)){
+                                 continue;
+                             }
                          }
                          String _date = orderArr[1];
                          int _year = Integer.parseInt(orderArr[2].toString());
@@ -351,6 +362,7 @@ public class ReportModule {
                          int _num = Integer.parseInt(orderArr[4].toString());
                          if (type == 0 || type == 1) { // 天报
                              String d = subJs.getString(col_date);
+                             System.out.println("###### 355 line  ##### :"+d + ";"+_date);
                              if (!d.equals(_date)) {
                                  continue;
                              }
@@ -374,6 +386,7 @@ public class ReportModule {
                              //
                          }
 
+                         System.out.println("####### 377 line ["+compid+"]##########");
                          if(orderMap.containsKey(compid)){
                              int orderNum = orderMap.get(compid);
                              orderMap.put(compid, orderNum + _num);
@@ -384,7 +397,15 @@ public class ReportModule {
 
                      for(String compid : orderMap.keySet()){
                          int orderNum = orderMap.get(compid);
-                         String storeType = filterCompMap.get(compid);
+                         String storeType = "";
+                         if(type == 0 || type == 2 || type == 4){
+                             storeType = filterCompMap.get(compid);
+                         }else{
+                             storeType = cumulativeCompMap.get(compid);
+                             if(compList.contains(compid)){
+                                 continue;
+                             }
+                         }
                          System.out.println("####### 498 line ["+compid+"]["+orderNum+"] ###########");
 
                          if(orderNum >= baseVal){
@@ -399,9 +420,9 @@ public class ReportModule {
                              if(storeType.equals("-1")) REPURCHASE_THREE = REPURCHASE_THREE + 1;
                              REPURCHASE_SUM = REPURCHASE_SUM + 1;
                          }
+                         compList.add(compid);
 
                      }
-
 
                      subJs.put(col_reg_etm, REG_ONE);
                      subJs.put(col_reg_chain, REG_TWO);
