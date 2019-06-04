@@ -1,0 +1,9 @@
+dependencies {
+    implementation project(':application-global')
+}
+
+shadowJar {
+    baseName = 'report'
+    classifier = null
+    version = null
+}
