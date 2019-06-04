@@ -11,7 +11,7 @@ public class AreaStore {
     private static final String AREA_SELECT_BASE = " SELECT areac, arean, cstatus, fee, lcareac ";
     private static final String AREA_WHERE_BASE = " WHERE cstatus&1 = 0 AND areac = ? ";
     private static final String AREA_WHERE_CHILDREN =
-            " WHERE cstatus&1 = 0 AND areac REGEXP ? ";
+            " WHERE cstatus&1 = 0 AND areac REGEXP ? AND areac NOT REGEXP ? ";
 
 
     private static final String[] FROMS =
@@ -57,20 +57,27 @@ public class AreaStore {
     private static final String[] SQLCS =
             { PCA_C, PCA_C, PCA_C, VILLAGES_C, STREET_C };
 
-    private static final String REG = "^${{HEAD}}[0-9]{${{ANYS}}}[1-9]{${{ANYE}}}[0]{${{ZERO}}}$";
-
     private static final String REG_HEAD = "${{HEAD}}";
     private static final String REG_ANYS = "${{ANYS}}";
-    private static final String REG_ANYE = "${{ANYE}}";
     private static final String REG_ZERO = "${{ZERO}}";
+
+    private static final String REGBASE =
+            "^" + REG_HEAD
+            + "[0-9]{" + REG_ANYS + "}"
+            + "[0]{" + REG_ZERO + "}$";
+
+    private static final String NOTREGBASE =
+            "^" + REG_HEAD
+            + "[0]{" + REG_ANYS + "}"
+            + "[0]{" + REG_ZERO + "}$";
 
     private static int[][] REG_TIMES =
             {
-                    {0, 2, 0, 10},
-                    {2, 1, 1, 8},
-                    {4, 1, 1, 6},
-                    {6, 2, 1, 3},
-                    {9, 2, 1, 0},
+                    {0, 2, 10},
+                    {2, 2, 8},
+                    {4, 2, 6},
+                    {6, 3, 3},
+                    {9, 3, 0},
             };
 
 
@@ -96,8 +103,11 @@ public class AreaStore {
             return new AreaEntity[0];
         }
 
+        String[] params = getChildrenRegexps(areac);
+
         List<Object[]> queryResult =
-                BaseDAO.getBaseDAO().queryNative(SQLCS[childrenLayer], getChildrenRegexp(areac));
+                BaseDAO.getBaseDAO().queryNative(SQLCS[childrenLayer],
+                        params[0], params[1]);
 
         AreaEntity[] returnResult = new AreaEntity[queryResult.size()];
 
@@ -126,8 +136,8 @@ public class AreaStore {
         return tArray[0];
     }
 
-    public static String getChildrenRegexp(long areac) {
-        String head, anys, anye, zero;
+    private static String[] getChildrenRegexps(long areac) {
+        String head, anys, zero;
 
         int layer = areac == 0 ? 0 : AreaUtil.getLayer(areac) + 1;
 
@@ -139,13 +149,15 @@ public class AreaStore {
 
         head = String.valueOf(areac).substring(0, params[0]);
         anys = String.valueOf(params[1]);
-        anye = String.valueOf(params[2]);
-        zero = String.valueOf(params[3]);
+        zero = String.valueOf(params[2]);
 
-        return REG.replace(REG_HEAD, head)
-                .replace(REG_ANYS, anys)
-                .replace(REG_ANYE, anye)
-                .replace(REG_ZERO, zero);
+        return new String[] {
+                REGBASE.replace(REG_HEAD, head)
+                    .replace(REG_ANYS, anys)
+                    .replace(REG_ZERO, zero),
+                NOTREGBASE.replace(REG_HEAD, head)
+                        .replace(REG_ANYS, anys)
+                        .replace(REG_ZERO, zero)};
     }
 
 }

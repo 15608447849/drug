@@ -42,7 +42,7 @@ public class ProduceStore {
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(PRODUCE_SELECT);
         ProduceClassEntity[] produceEntities = new ProduceClassEntity[queryResult.size()];
         BaseDAO.getBaseDAO().convToEntity(queryResult, produceEntities, ProduceClassEntity.class);
-        List treeList = TreeUtil.list2Tree(Arrays.asList(produceEntities));
+        List<ProduceClassEntity> treeList = TreeUtil.list2Tree(Arrays.asList(produceEntities));
         PRODUCE_TREE = Collections.unmodifiableList(treeList);
 
         JsonArray temp = new JsonParser()

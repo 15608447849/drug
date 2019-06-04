@@ -9,10 +9,10 @@ import java.util.List;
 
 public class TreeUtil {
 
-    public static List<? extends ITreeNode> list2Tree(List<? extends ITreeNode> list) {
-        List<ITreeNode> tree = new ArrayList<>();
+    public static <T extends ITreeNode> List<T> list2Tree(List<T> list) {
+        List<T> tree = new ArrayList<>();
 
-        for (ITreeNode node : list) {
+        for (T node : list) {
             // 找到根节点
             if (node.isRoot()) { tree.add(node); }
 

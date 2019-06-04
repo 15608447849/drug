@@ -28,7 +28,24 @@ public class UserInfoVo {
     private int mroleid;
     private String arearng;
     private int cid;
+    private int buid;
+    private String buname;
 
+    public int getBuid() {
+        return buid;
+    }
+
+    public void setBuid(int buid) {
+        this.buid = buid;
+    }
+
+    public String getBuname() {
+        return buname;
+    }
+
+    public void setBuname(String buname) {
+        this.buname = buname;
+    }
 
     public int getMroleid() {
         return mroleid;

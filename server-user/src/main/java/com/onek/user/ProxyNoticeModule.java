@@ -208,7 +208,7 @@ public class ProxyNoticeModule {
                 + " and msgid=? and receiver=?";
         String insertSQL = "insert into {{?" + DSMConst.TB_PROXY_NOTICEDT + "}} (unqid, msgid,receiver,readtimes,cstatus) "
                 + " values(?,?,?,?,?)";
-        String updSQL = "update {{?" +  DSMConst.TB_PROXY_NOTICEDT + "}} set readtimes+=readtimes where cstatus&1=0 "
+        String updSQL = "update {{?" +  DSMConst.TB_PROXY_NOTICEDT + "}} set readtimes=readtimes+1 where cstatus&1=0 "
                 + " and msgid=? and receiver=?";
         List<Object[]> qResult = baseDao.queryNative(selectSQL, msgid, receiver);
         int code = 0;
@@ -239,18 +239,23 @@ public class ProxyNoticeModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long roleId =  jsonObject.get("roleid").getAsLong();//角色码
-        long areac =  jsonObject.get("areac").getAsLong();//地区码
+//        long areac =  jsonObject.get("areac").getAsLong();//地区码
         int receiver = jsonObject.get("receiver").getAsInt();
-        String selectSQL = "select msgtxt from {{?" + DSMConst.TB_PROXY_NOTICE + "}} a left join {{?"
+        String selectSQL = "select a.msgid,msgtxt from {{?" + DSMConst.TB_PROXY_NOTICE + "}} a left join {{?"
                 + DSMConst.TB_PROXY_NOTICEAREC + "}} b on a.msgid=b.msgid left join {{?"
                 + DSMConst.TB_PROXY_NOTICEDT + "}} c on a.msgid=c.msgid where a.cstatus&1=0 and b.cstatus&1=0 "
-                + " and c.cstatus&1=0 and revobj&?>0 and areac=? and receiver=? "
-                + " and invdtime>CURRENT_TIMESTAMP and effcttime<=CURRENT_TIMESTAMP and (a.readtimes>c.readtimes "
-                + " or a.readtimes=0) limit 0,3 order by effcttime desc and a.readtimes>0";
-        List<Object[]> queryResult = baseDao.queryNative(selectSQL, roleId, areac, receiver);
+                + " and revobj&(revobj&?)>0 and areac in(select areac from {{?" + DSMConst.TB_PROXY_UAREA
+                + "}} where cstatus&1=0 and uid=?) and invdtime>CURRENT_TIMESTAMP "
+                + " and effcttime<=CURRENT_TIMESTAMP and (receiver=? or receiver is NULL) "
+                + " and (a.readtimes>c.readtimes or c.readtimes is NULL)  and a.readtimes>0"
+                + " order by effcttime desc limit 0,3 ";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, roleId,receiver, receiver);
         if (queryResult == null || queryResult.isEmpty()) return result.success(msgList);
         queryResult.forEach(qr -> {
-            msgList.add(String.valueOf(qr[0]));
+            JsonObject msgObj = new JsonObject();
+            msgObj.addProperty("msgid", String.valueOf(qr[0]));
+            msgObj.addProperty("msgtxt", String.valueOf(qr[1]));
+            msgList.add(msgObj.toString());
         });
         return result.success(msgList);
     }
