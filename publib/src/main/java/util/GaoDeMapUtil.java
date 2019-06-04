@@ -5,10 +5,7 @@ import util.http.HttpRequest;
 import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.net.URLEncoder;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 import static java.lang.Double.parseDouble;
 
@@ -120,8 +117,8 @@ public class GaoDeMapUtil {
     /**
      * 获取地址边界点Point
      */
-    public static List<Point> areaPolyline(String address){
-        return listArrayJsonToPointJson(pointArray2ListDouble("["+Objects.requireNonNull(areaPolyline(address, 0)).polyline+"]"));
+    public static List<List<Point>> areaPolyline(String address){
+            return handleSourcePolyline(Objects.requireNonNull(areaPolyline(address, 0)).polyline);
     }
 
     /**
@@ -217,7 +214,7 @@ public class GaoDeMapUtil {
         }
         return list;
     }
-    //point  -> json - list<double[]>
+    //[x,y;x,y]  -> list<double[]>
     private static String pointArray2ListDouble(String json){
        return GsonUtils.javaBeanToJson(pointArray2ListDouble(Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, Double[].class))));
     }
@@ -256,14 +253,32 @@ public class GaoDeMapUtil {
         }
         return null;
     }
+    //处理 | , -> {[x,y] [x,y]} -> LIST<POINT>[]
+    private static List<List<Point>> handleSourcePolyline(String line){
+        String[] arr = line.split("\\|");
+        List<List<Point>> listArr = new ArrayList<>();
+        for (String temp : arr){
+            List<Point> list = listArrayJsonToPointJson(pointArray2ListDouble("[" + temp + "]"));
+            listArr.add(list);
+        }
+        return listArr;
+    }
+
+
+//    //[x,y;x,y]  -> list<double[]>
+//    private static String pointArray2ListDouble(String json){
+//        return GsonUtils.javaBeanToJson(pointArray2ListDouble(Objects.requireNonNull(GsonUtils.jsonToJavaBean(json, Double[].class))));
+//    }
+
+
 
     public static void main(String[] args) {
 
 
 
-        String json = "[{\"P\":28.59241124249085,\"Q\":112.75455302149055,\"lng\":112.754553,\"lat\":28.592411},{\"P\":28.51279746479939,\"Q\":112.9880124941468,\"lng\":112.988012,\"lat\":28.512797},{\"P\":28.489867193303038,\"Q\":112.73120707422493,\"lng\":112.731207,\"lat\":28.489867}]";
+//        String json = "[{\"P\":28.59241124249085,\"Q\":112.75455302149055,\"lng\":112.754553,\"lat\":28.592411},{\"P\":28.51279746479939,\"Q\":112.9880124941468,\"lng\":112.988012,\"lat\":28.512797},{\"P\":28.489867193303038,\"Q\":112.73120707422493,\"lng\":112.731207,\"lat\":28.489867}]";
 
-        System.out.println(pointJsonToListArrayJson(json));
+//        System.out.println(pointJsonToListArrayJson(json));
 
 //                List<Point> points = areaPolyline("湖南省长沙市");
 //        System.out.println(points);

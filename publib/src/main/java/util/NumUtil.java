@@ -73,6 +73,9 @@ public class NumUtil {
      * @return
      */
     public static double div(int numerator, int denominator){
+        if(denominator <= 0){
+            return 0;
+        }
         return BigDecimal.valueOf(numerator *100 / denominator).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue()/100;
     }
 
@@ -83,6 +86,9 @@ public class NumUtil {
      * @return
      */
     public static double div(double numerator, int denominator){
+        if(denominator <= 0){
+            return 0;
+        }
         return BigDecimal.valueOf(numerator *100 / denominator).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue()/100;
     }
 }
