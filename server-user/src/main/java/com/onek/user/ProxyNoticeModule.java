@@ -241,15 +241,15 @@ public class ProxyNoticeModule {
         long roleId =  jsonObject.get("roleid").getAsLong();//角色码
 //        long areac =  jsonObject.get("areac").getAsLong();//地区码
         int receiver = jsonObject.get("receiver").getAsInt();
-        String selectSQL = "select a.msgid,msgtxt from {{?" + DSMConst.TB_PROXY_NOTICE + "}} a left join {{?"
+        String selectSQL = "select DISTINCT a.msgid,msgtxt from {{?" + DSMConst.TB_PROXY_NOTICE + "}} a left join {{?"
                 + DSMConst.TB_PROXY_NOTICEAREC + "}} b on a.msgid=b.msgid left join {{?"
-                + DSMConst.TB_PROXY_NOTICEDT + "}} c on a.msgid=c.msgid where a.cstatus&1=0 and b.cstatus&1=0 "
+                + DSMConst.TB_PROXY_NOTICEDT + "}} c on a.msgid=c.msgid  and receiver=? where a.cstatus&1=0 and b.cstatus&1=0 "
                 + " and revobj&(revobj&?)>0 and areac in(select areac from {{?" + DSMConst.TB_PROXY_UAREA
                 + "}} where cstatus&1=0 and uid=?) and invdtime>CURRENT_TIMESTAMP "
                 + " and effcttime<=CURRENT_TIMESTAMP and (receiver=? or receiver is NULL) "
                 + " and (a.readtimes>c.readtimes or c.readtimes is NULL)  and a.readtimes>0"
                 + " order by effcttime desc limit 0,3 ";
-        List<Object[]> queryResult = baseDao.queryNative(selectSQL, roleId,receiver, receiver);
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, receiver, roleId, receiver, receiver);
         if (queryResult == null || queryResult.isEmpty()) return result.success(msgList);
         queryResult.forEach(qr -> {
             JsonObject msgObj = new JsonObject();

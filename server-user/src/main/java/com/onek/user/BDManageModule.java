@@ -3,6 +3,7 @@ package com.onek.user;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -14,8 +15,10 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import util.EncryptUtils;
 import util.GsonUtils;
+import util.ModelUtil;
 import util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -364,6 +367,42 @@ public class BDManageModule {
         int code = baseDao.updateNative(optSQL, GenIdUtil.getUnqId(), uid, areac,
                 0, arearng);
         return code > 0 ? result.success("设置成功") : result.fail("设置失败");
+    }
+
+    /* *
+     * @description 批量设置管辖区域
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/6/4 11:25
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result setAreaArr(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int uid = jsonObject.get("uid").getAsInt();
+        //删除之前的
+        String updSQL = "update {{?" + DSMConst.TB_PROXY_UAREA + "}} set cstatus=cstatus|1 where cstatus&1=0 "
+                + " and uid=" + uid;
+        if(baseDao.updateNative(updSQL) > 0) {
+            List<Object[]> params  = new ArrayList<>();
+            JsonArray areaArr = jsonObject.get("areaArr").getAsJsonArray();
+            for (int i = 0; i < areaArr.size(); i++) {
+                JsonElement areaObj = areaArr.get(i);
+                long areac =areaObj.getAsJsonObject().get("areac").getAsLong();
+                String arearng = areaObj.getAsJsonObject().get("arearng").getAsString();
+                params.add(new Object[]{GenIdUtil.getUnqId(), uid, areac, 0, arearng});
+            }
+            String optSQL = "insert into {{?" + DSMConst.TB_PROXY_UAREA + "}} (unqid,uid,areac,cstatus,arearng) "
+                    + " values(?,?,?,?,?)";
+            boolean code = ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
+            return code ? result.success("设置成功") : result.fail("设置失败");
+        }
+        return result.fail("设置失败");
     }
 
 //
