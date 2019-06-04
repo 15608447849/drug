@@ -2,9 +2,11 @@ package com.onek.consts;
 
 public interface CSTATUS {
     /* 全局标记 */
-    int DELETE = 1 << 0;  // 删除 1
-    int CLOSE  = 1 << 5; // 停用 32
+    long DELETE = 1;  // 删除 1
+    long CLOSE  = 32; // 停用 32
     /* 全局标记 END */
 
-    int ROLE_NOT_HANDLEABLE = 1 << 1; // 不可停用 2
+    long ROLE_NOT_HANDLEABLE = 2; // 不可停用 2
+
+    long ORDER_BACK_CANCEL = 1024; // 后台取消订单标记
 }

@@ -97,7 +97,7 @@ public class BackgroundRoleModule {
                             sql.append(" AND cstatus & ? > 0 ");
                         }
 
-                        param = Integer.toString(CSTATUS.CLOSE);
+                        param = String.valueOf(CSTATUS.CLOSE);
                 }
             } catch (Exception e) {
                 continue;
