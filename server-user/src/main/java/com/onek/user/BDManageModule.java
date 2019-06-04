@@ -53,9 +53,11 @@ public class BDManageModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int cid = jsonObject.get("cid").getAsInt();
+//        int cid = jsonObject.get("cid").getAsInt();
         int belong = jsonObject.get("belong").getAsInt();
-        int uid = jsonObject.get("uid").getAsInt();
+//        int uid = jsonObject.get("uid").getAsInt();
+        int cid = appContext.getUserSession().compId;
+        int uid = appContext.getUserSession().userId;
         String selectSQL = "select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 "
                 + " and cid=? and roleid&4096>0 and belong=? and uid<>" + uid;
         List<Object[]> objects = baseDao.queryNative(selectSQL, cid, belong);
@@ -81,6 +83,8 @@ public class BDManageModule {
     @UserPermission(ignore = false)
     public Result optBDMByPartner(AppContext appContext) {
         String json = appContext.param.json;
+        int cid = appContext.getUserSession().compId;
+        int uid = appContext.getUserSession().userId;
         UserInfoVo userInfoVo = GsonUtils.jsonToJavaBean(json, UserInfoVo.class);
         if (userInfoVo != null) {
             if (userInfoVo.getUphone() <= 0 || userInfoVo.getUpw() == null || userInfoVo.getUpw().isEmpty()) {
@@ -113,12 +117,12 @@ public class BDManageModule {
                 String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
                 code = baseDao.updateNative(insertSQL, getUserCode(),
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
-                        pwd, userInfoVo.getRoleid(), userInfoVo.getCid(), userInfoVo.getBelong());
+                        pwd, userInfoVo.getRoleid(), cid, userInfoVo.getBelong());
             } else {
                 String updSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
                         + "urealname=?, roleid=?,cid=?, belong=? where cstatus&1=0 and uid=? ";
                 code = baseDao.updateNative(updSQL, userInfoVo.getUphone(), userInfoVo.getUaccount(),
-                        userInfoVo.getUrealname(), userInfoVo.getRoleid(), userInfoVo.getCid(),
+                        userInfoVo.getUrealname(), userInfoVo.getRoleid(), cid,
                         userInfoVo.getBelong(), userInfoVo.getUid());
             }
             if ((userInfoVo.getRoleid() & 4096) > 0) {
