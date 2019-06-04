@@ -49,6 +49,24 @@ public class ArrayUtil {
 
     }
 
+    public static double[] concat(double[] front, double[] tail) {
+        if (front == null || front.length == 0) {
+            return tail;
+        }
+
+        if (tail == null || tail.length == 0) {
+            return front;
+        }
+
+        double[] result = Arrays.copyOf(front, front.length + tail.length);
+
+        for (int i = 0; i < tail.length; i++) {
+            result[i + front.length] = tail[i];
+        }
+
+        return result;
+    }
+
     /**
      * 移除队尾。
      * @param arr

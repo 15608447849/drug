@@ -12,6 +12,7 @@ import com.onek.calculate.entity.DiscountResult;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
 import com.onek.calculate.util.DiscountUtil;
+import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
@@ -822,15 +823,15 @@ public class TranOrderOptModule {
         int cusno = jsonObject.get("cusno").getAsInt(); //企业码
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         String selectSQL = "select payway, balamt,payamt,settstatus from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
-        String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
-                + " where cstatus&1=0 and orderno=? and ostatus=?";
         List<Object[]> list = baseDao.queryNativeSharding(cusno, year, selectSQL, orderNo);
         if(list != null && list.size() > 0) {
             int payway = (int)list.get(0)[0];//支付方式
             int balamt = (int)list.get(0)[1];//订单使用的余额
 //            int payamt = (int)list.get(0)[2];//订单支付金额
             int settstatus = (int)list.get(0)[3];//订单支付金额
-            int res = baseDao.updateNativeSharding(cusno, year, updSQL, -4, orderNo, 1);
+            String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, cstatus=cstatus|? "
+                    + " where cstatus&1=0 and orderno=? and ostatus=?";
+            int res = baseDao.updateNativeSharding(cusno, year, updSQL, -4, CSTATUS.ORDER_BACK_CANCEL, orderNo, 1);
             if (res > 0) {//退款
                 if (payway == 4 || payway == 5) {//线下即付退款???
                     //客服取消返还数据库相关库存
