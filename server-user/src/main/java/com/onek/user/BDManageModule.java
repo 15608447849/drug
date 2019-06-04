@@ -345,11 +345,12 @@ public class BDManageModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long areac = jsonObject.get("areac").getAsLong();
         int uid = jsonObject.get("uid").getAsInt();
         String arearng = jsonObject.get("arearng").getAsString();
         String optSQL = "insert into {{?" + DSMConst.TB_PROXY_UAREA + "}} (unqid,uid,areac,cstatus,arearng) "
                 + " values(?,?,?,?,?)";
-        int code = baseDao.updateNative(optSQL, GenIdUtil.getUnqId(), uid, 0,
+        int code = baseDao.updateNative(optSQL, GenIdUtil.getUnqId(), uid, areac,
                 0, arearng);
         return code > 0 ? result.success("设置成功") : result.fail("设置失败");
     }
