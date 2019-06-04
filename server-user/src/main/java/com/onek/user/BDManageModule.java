@@ -109,13 +109,16 @@ public class BDManageModule {
 
             userInfoVo.setCid(Integer.parseInt(queryCidRet.get(0)[0].toString()));
 
+
             if (userInfoVo.getUid() <= 0) {
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime,cid,belong)"
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?,?)";
 
                 String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
-                code = baseDao.updateNative(insertSQL, getUserCode(),
+                int userCode = getUserCode();
+                userInfoVo.setUid(userCode);
+                code = baseDao.updateNative(insertSQL, userCode,
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
                         pwd, userInfoVo.getRoleid(), cid, userInfoVo.getBelong());
             } else {
@@ -130,7 +133,7 @@ public class BDManageModule {
 
             }
             if (code > 0) {
-                return new Result().success("操作成功");
+                return new Result().success(userInfoVo);
             }
         }
         return new Result().fail("用户操作失败！");
