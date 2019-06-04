@@ -38,7 +38,6 @@ public class BackgroundUserModule {
         String json = appContext.param.json;
         UserInfoVo userInfoVo = GsonUtils.jsonToJavaBean(json, UserInfoVo.class);
         if (userInfoVo != null) {
-            if (checkUser(userInfoVo)) return new Result().fail("该用户已存在！");
             if (userInfoVo.getUphone() <= 0 || userInfoVo.getUpw() == null || userInfoVo.getUpw().isEmpty()) {
                 return new Result().fail("参数错误！");
             }
@@ -48,6 +47,7 @@ public class BackgroundUserModule {
             String queryAreaExtSql = "select 1 from {{?"+DSMConst.TB_PROXY_UAREA+"}} where  uid = ? and areac = ? and cstatus & 1 = 0 ";
 
             if (userInfoVo.getUid() <= 0) {
+                if (checkUser(userInfoVo)) return new Result().fail("该用户已存在！");
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime,belong)"
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";

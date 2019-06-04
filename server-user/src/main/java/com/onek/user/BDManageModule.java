@@ -91,6 +91,17 @@ public class BDManageModule {
                 }
             }
             int code = 0;
+
+            String queryCid = "select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0";
+
+            List<Object[]> queryCidRet = baseDao.queryNative(queryCid, userInfoVo.getBelong());
+
+            if(queryCidRet == null || queryCidRet.isEmpty()){
+                return new Result().fail("用户操作失败！");
+            }
+
+            userInfoVo.setCid(Integer.parseInt(queryCidRet.get(0)[0].toString()));
+
             if (userInfoVo.getUid() <= 0) {
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime,cid,belong)"
@@ -345,11 +356,12 @@ public class BDManageModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        long areac = jsonObject.get("areac").getAsLong();
         int uid = jsonObject.get("uid").getAsInt();
         String arearng = jsonObject.get("arearng").getAsString();
         String optSQL = "insert into {{?" + DSMConst.TB_PROXY_UAREA + "}} (unqid,uid,areac,cstatus,arearng) "
                 + " values(?,?,?,?,?)";
-        int code = baseDao.updateNative(optSQL, GenIdUtil.getUnqId(), uid, 0,
+        int code = baseDao.updateNative(optSQL, GenIdUtil.getUnqId(), uid, areac,
                 0, arearng);
         return code > 0 ? result.success("设置成功") : result.fail("设置失败");
     }

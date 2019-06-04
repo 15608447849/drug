@@ -14,6 +14,7 @@ import com.onek.util.RoleCodeCons;
 import com.onek.util.area.AreaEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import util.*;
 
@@ -222,13 +223,14 @@ public class BackGroundProxyMoudule {
                     RoleCodeCons._PROXY_MGR);
             AreaEntity[] children = IceRemoteUtil.getChildren(430000000000L);
            // AreaEntity[] children = AreaStore.getChildren(430000000000L);
-            List<AreaEntity> chList = Arrays.asList(children);
+            List<AreaEntity> chList = new ArrayList<>(Arrays.asList(children));
+
             Iterator<AreaEntity> chListIterator = chList.iterator();
 
             while(chListIterator.hasNext()){
                 AreaEntity areaEntity = chListIterator.next();
                 for (Object[] objs : queryRet){
-                    if(objs[0].toString().equals(areaEntity.getAreac())){
+                    if(objs[0].toString().equals(areaEntity.getAreac()+"")){
                         chListIterator.remove();
                     }
                 }
@@ -281,7 +283,7 @@ public class BackGroundProxyMoudule {
             while(proxyAreaVOIterator.hasNext()){
                 ProxyAreaTreeVO proxyAreaVO = proxyAreaVOIterator.next();
                 for (Object[] objs : queryRet){
-                    if(objs[0].toString().equals(proxyAreaVO.getAreac())){
+                    if(objs[0].toString().equals(proxyAreaVO.getAreac()+"")){
                         proxyAreaVOIterator.remove();
                     }
                 }
@@ -498,12 +500,16 @@ public class BackGroundProxyMoudule {
         sqlBuilder.append(selectSQL);
         List<Object[]> queryResult = baseDao.queryNative(selectSQL,uid);
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
-        HashMap<String,String> map = new HashMap<>();
-
+        List<ChMgrVO> chMgrVOList = new ArrayList<>();
         for (Object[] objects : queryResult){
-            map.put(objects[0].toString(),objects[1].toString());
+            if(objects[0] != null && objects[1] != null){
+                ChMgrVO chMgrVO = new ChMgrVO();
+                chMgrVO.setMuid(objects[0].toString());
+                chMgrVO.setMname(objects[1].toString());
+                chMgrVOList.add(chMgrVO);
+            }
         }
-        return  result.success(map);
+        return  result.success(chMgrVOList);
     }
 
 
@@ -685,7 +691,7 @@ public class BackGroundProxyMoudule {
         int cid = jsonObject.get("cid").getAsInt();
         int ctype = jsonObject.get("ctype").getAsInt();
         int ckstatus = jsonObject.get("ckstatus").getAsInt();
-        int ckreson = jsonObject.get("ckreson").getAsInt();
+        String ckreson = jsonObject.get("ckreson").getAsString();
         int suid = jsonObject.get("suid").getAsInt();
 
         if((roleid & RoleCodeCons._PROXY_DIRECTOR) == 0){
@@ -698,7 +704,7 @@ public class BackGroundProxyMoudule {
         if(ctype == 1){
             int cstatus = ckstatus == 1 ? 256 : 512;
             String ckSql = " update {{?"+DSMConst.TB_COMP+"}}" +
-                    " set cstatus = cstatus|?,auditdate = CURRENT_DATE,audittime = CURRENT_TIME,"
+                    " set cstatus = ?,auditdate = CURRENT_DATE,audittime = CURRENT_TIME,"
                     + "examine = ?,auditer = ?  where cid = ? ";
             if(baseDao.updateNative(ckSql,cstatus,ckreson,uid,cid) > 0){
                 return new Result().success("操作成功！");
@@ -713,7 +719,7 @@ public class BackGroundProxyMoudule {
                 return new Result().fail("当前合伙人审核没通过！");
             }
             String ckSql = " update {{?"+DSMConst.TB_SYSTEM_USER+"}}" +
-                    " set cstatus = cstatus~32 where uid = ? ";
+                    " set cstatus = cstatus & ~32 where uid = ? ";
             if(baseDao.updateNative(ckSql,suid) > 0){
                 return new Result().success("操作成功！");
             }
@@ -1097,16 +1103,4 @@ public class BackGroundProxyMoudule {
 
         return sqlBuilder;
     }
-
-
-
-
-
-
-
-
-    public static void main(String[] args) {
-
-    }
-
 }
