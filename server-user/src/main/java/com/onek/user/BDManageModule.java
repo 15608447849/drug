@@ -40,8 +40,8 @@ public class BDManageModule {
 
     /* *
      * @description 查询合伙人下所有BDM
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @params json {belong 所属合伙人}
+     * @return json数组 [{uid 用户码 urealname 用户真实姓名}]
      * @exception
      * @author 11842
      * @time  2019/5/30 11:01
@@ -73,9 +73,10 @@ public class BDManageModule {
     }
 
     /* *
-     * @description 操作BDM和BD
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 操作BDM和BD（新增修改）
+     * @params json { uid用户码（新增传0）,uphone（手机号）,uaccount（账户）,urealname（真实姓名）,
+     * upw（密码默认手机号后六位）,roleid（角色码）,adddate,addtime,belong（上级（地推））}
+     * @return -1失败 200成功
      * @exception
      * @author 11842
      * @time  2019/5/30 10:59
@@ -155,7 +156,7 @@ public class BDManageModule {
 
     /* *
      * @description 查询合伙人下的BDM和BD
-     * @params
+     * @params json {belong: 用户码 }
      * @return
      * @exception
      * @author 11842
@@ -207,8 +208,9 @@ public class BDManageModule {
 
     /* *
      * @description 查询BDM下的BD
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @params json {urealname：真实姓名 roleid：角色码 uphone：电话号码 cstatus：用户状态 }
+     *   分页参数 pageSize：每页数量 pageNo： 第几页
+     * @return UserInfoVo对象数组（见UserInfoVo.class）
      * @exception
      * @author 11842
      * @time  2019/5/30 17:30
@@ -288,9 +290,9 @@ public class BDManageModule {
     }
 
     /* *
-     * @description 详情
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 查询BD或者BDM详情
+     * @params json {uid 用户码}
+     * @return 见 UserInfoVo.class
      * @exception
      * @author 11842
      * @time  2019/5/30 14:30
@@ -325,9 +327,9 @@ public class BDManageModule {
 
 
     /* *
-     * @description 查看辖区
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 查看BD或者BDM辖区
+     * @params json {uid: 用户码 puid：上级用户码}
+     * @return json数组 [{areac 地区码 areaName 地区名 arearng 区域经纬度}]
      * @exception
      * @author 11842
      * @time  2019/5/30 14:17
@@ -378,9 +380,9 @@ public class BDManageModule {
 
 
     /* *
-     * @description 设置辖区
-     * @params []
-     * @return com.onek.entitys.Result
+     * @description 设置BD或者BDM辖区
+     * @params json {areac 地区码 uid 用户码}
+     * @return -1失败 200成功
      * @exception
      * @author 11842
      * @time  2019/5/30 14:31
@@ -404,8 +406,8 @@ public class BDManageModule {
 
     /* *
      * @description 批量设置管辖区域
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @params json {uid 用户码 areaArr[{areac 地区码 arearng 经纬度数组字符串}]}
+     * @return -1失败 200成功
      * @exception
      * @author 11842
      * @time  2019/6/4 11:25

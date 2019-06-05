@@ -29,7 +29,7 @@ public class MarketStoreData {
         if(list != null && list.size() > 0){
             for(Object[] arr : list){
                 String code = arr[0].toString();
-                String num = arr[1].toString();
+                int num = Integer.parseInt(arr[1].toString());
                 String cstatus = arr[2].toString();
 
                 boolean isArea = Pattern.matches(PATTERN_AREA, code);
@@ -43,7 +43,7 @@ public class MarketStoreData {
                             }
                             String parentCode = code.substring(0, 4) + "00000000";
                             if(ETM_CITY_MAP.keySet().contains(parentCode)){
-                                int _n = ETM_CITY_MAP.get(code);
+                                int _n = ETM_CITY_MAP.get(parentCode);
                                 ETM_CITY_MAP.put(parentCode, new Integer(_n + num));
                             }else{
                                 ETM_CITY_MAP.put(parentCode, new Integer(num));

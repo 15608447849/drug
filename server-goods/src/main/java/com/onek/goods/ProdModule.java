@@ -94,13 +94,30 @@ public class ProdModule {
 
     private static final String QUERY_PROD = "select sku from {{?" + DSMConst.TD_PROD_SKU +"}} where cstatus&1=0 and prodstatus = 1";
 
-    //获取楼层信息
+    /**
+     *
+     * 功能: 获取楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getMallFloorProd(AppContext appContext) {
         List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
         return new Result().success(mallFloorVOList);
     }
 
+    /**
+     *
+     * 功能: 获取新品楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getNewMallFloor(AppContext appContext) {
 
@@ -109,6 +126,15 @@ public class ProdModule {
         return new Result().success(prodList);
     }
 
+    /**
+     *
+     * 功能: 获取为你精选楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getChooseForYouMallFloor(AppContext appContext) {
 
@@ -117,6 +143,15 @@ public class ProdModule {
         return new Result().success(prodList);
     }
 
+    /**
+     *
+     * 功能: 获取中华名方楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getFamousPrescriptionFloor(AppContext appContext) {
 
@@ -125,6 +160,15 @@ public class ProdModule {
         return new Result().success(prodList);
     }
 
+    /**
+     *
+     * 功能: 根据不同状态来查询不同楼层数据
+     * 参数类型: int
+     * 参数集: state 1:新品 2:为你精选 3:中华名方
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     public List<ProdVO> getFloorByState(int state, AppContext appContext){
 
         Set<Integer> result = new HashSet<>();
@@ -157,6 +201,15 @@ public class ProdModule {
         return prodList;
     }
 
+    /**
+     *
+     * 功能: 获取热销楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getHotMallFloor(AppContext appContext) {
 
@@ -169,6 +222,15 @@ public class ProdModule {
         return new Result().success(hotProdList);
     }
 
+    /**
+     *
+     * 功能: 获取品牌楼层信息
+     * 参数类型: json
+     * 参数集: keyword:关键字 brandno:品牌码
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getBrandMallFloor(AppContext appContext) {
 
@@ -185,6 +247,15 @@ public class ProdModule {
         return new Result().success(prodList);
     }
 
+    /**
+     *
+     * 功能: 获取新人专享楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getNewMemberMallFloor(AppContext appContext) {
 
@@ -231,6 +302,15 @@ public class ProdModule {
         return new Result().success(prodVOList);
     }
 
+    /**
+     *
+     * 功能: 获取包邮楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getExemPostMallFloor(AppContext appContext) {
 
@@ -278,6 +358,15 @@ public class ProdModule {
         return new Result().success(prodVOList);
     }
 
+    /**
+     *
+     * 功能: 获取团购楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getTeamBuyMallFloor(AppContext appContext) {
 
@@ -333,6 +422,15 @@ public class ProdModule {
         return new Result().success(result);
     }
 
+    /**
+     *
+     * 功能: 获取秒杀楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getSeckillMallFloor(AppContext appContext) {
         Result r = getDiscountMallFloor(appContext);
@@ -340,6 +438,15 @@ public class ProdModule {
 
     }
 
+    /**
+     *
+     * 功能: 获取限时折扣楼层信息
+     * 参数类型: json
+     * 参数集: 无
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getDiscountMallFloor(AppContext appContext) {
 
@@ -390,6 +497,15 @@ public class ProdModule {
 
     }
 
+    /**
+     *
+     * 功能: 品牌专区搜索
+     * 参数类型: json
+     * 参数集: keyword:关键字 brandno:品牌码
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result brandMallSearch(AppContext appContext) {
 
@@ -414,6 +530,15 @@ public class ProdModule {
 
     }
 
+    /**
+     *
+     * 功能: 热销专区搜索
+     * 参数类型: json
+     * 参数集: keyword:关键字
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result hotProdSearch(AppContext appContext) {
 
@@ -437,6 +562,15 @@ public class ProdModule {
         return r.setQuery(prodList, pageHolder);
     }
 
+    /**
+     *
+     * 功能: 新人专享专区搜索
+     * 参数类型: json
+     * 参数集: keyword:关键字
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result newMemberSearch(AppContext appContext) {
 
@@ -492,6 +626,15 @@ public class ProdModule {
         return r.setQuery(prodVOList, pageHolder);
     }
 
+    /**
+     *
+     * 功能: 新品专区搜索
+     * 参数类型: json
+     * 参数集: keyword:关键字
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result newProdSearch(AppContext appContext) {
 
@@ -499,6 +642,15 @@ public class ProdModule {
 
     }
 
+    /**
+     *
+     * 功能: 为你精选专区搜索
+     * 参数类型: json
+     * 参数集: keyword:关键字
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result chooseForYouSearch(AppContext appContext) {
 
@@ -506,6 +658,15 @@ public class ProdModule {
 
     }
 
+    /**
+     *
+     * 功能: 中华名方专区搜索
+     * 参数类型: json
+     * 参数集: keyword:关键字
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result famousPrescriptionSearch(AppContext appContext) {
 
@@ -555,6 +716,15 @@ public class ProdModule {
 
     }
 
+    /**
+     *
+     * 功能: 限时折扣专区搜索
+     * 参数类型: json
+     * 参数集: actcode:活动码 keyword:关键字
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getAllDiscount(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
@@ -617,6 +787,15 @@ public class ProdModule {
         return new Result().success(result);
     }
 
+    /**
+     *
+     * 功能: 团购专区搜索
+     * 参数类型: json
+     * 参数集: actcode:活动码 keyword:关键字
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getAllTeamBuy(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
@@ -683,6 +862,15 @@ public class ProdModule {
         return new Result().success(result);
     }
 
+    /**
+     *
+     * 功能: 产品详情页推荐
+     * 参数类型: json
+     * 参数集: spu:spu码
+     * 返回值: code=200 data=结果信息
+     * 详情说明: 匹配同类别spu码的药品数据,找不到的话抓取药品前10条
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getProdDetailHotArea(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
@@ -704,6 +892,15 @@ public class ProdModule {
         return new Result().success(prodVOList);
     }
 
+    /**
+     *
+     * 功能: 猜你喜欢推荐
+     * 参数类型: json
+     * 参数集: spu:spu码
+     * 返回值: code=200 data=结果信息
+     * 详情说明: 根据足迹推荐商品信息
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = false)
     public Result guessYouLikeArea(AppContext appContext) {
 
@@ -742,6 +939,15 @@ public class ProdModule {
         return new Result().success(prodList);
     }
 
+    /**
+     *
+     * 功能: 商城全文搜索商品的搜索条件区域
+     * 参数类型: json
+     * 参数集: keyword=关键字 spu=药品分类码
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getConditionByFullTextSearch(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
@@ -760,6 +966,16 @@ public class ProdModule {
         return new Result().success(map);
     }
 
+    /**
+     *
+     * 功能: 商城全文搜索商品
+     * 参数类型: json
+     * 参数集: keyword=关键字 spu=药品分类码 specArray[]=规格数组 manuArray[]=厂商数组  brandArray[]=品牌数组
+     *         sort=排序
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result fullTextsearchProdMall(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
@@ -816,6 +1032,15 @@ public class ProdModule {
         return r.setQuery(prodList, pageHolder);
     }
 
+    /**
+     *
+     * 功能: 商城智能推荐
+     * 参数类型: json
+     * 参数集: keyword=关键字
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result intelligentFullTextsearch(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
@@ -834,6 +1059,15 @@ public class ProdModule {
         return new Result().success(contentList);
     }
 
+    /**
+     *
+     * 功能: 商城智能推荐关键字
+     * 参数类型: json
+     * 参数集: keyword=关键字
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result usualKeyword(AppContext appContext) {
 
@@ -857,6 +1091,15 @@ public class ProdModule {
         return new Result().success(filterKeywords);
     }
 
+    /**
+     *
+     * 功能: 运营后台全文搜索商品提供方法
+     * 参数类型: json
+     * 参数集: keyword=关键字 spu=药品分类码 specArray[]=规格数组 manuArray[]=厂商数组  spuArray[]=商品分类码数组
+     * 返回值: code=200 data=结果信息
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result fullTextsearchProd(AppContext appContext) {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();

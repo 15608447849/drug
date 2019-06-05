@@ -212,6 +212,15 @@ public class DiscountCalcModule {
         return new Result().success(result);
     }*/
 
+    /**
+     *
+     * 功能: 获取设置规则
+     * 参数类型: json
+     * 参数集: actstock=活动库存 actno=活动码 sku=商品SKU码
+     * 返回值: code=200 data=结果集 构造的购物车数据
+     * 详情说明:商城全文搜索列表时获取活动标记调用
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getEffectiveRule(AppContext appContext) {
         List<Object[]> allBruleList = BASE_DAO.queryNative(QUERY_ALL_PROD_BRULE, new Object[]{});
