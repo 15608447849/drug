@@ -31,7 +31,7 @@ import static com.onek.util.fs.FileServerUtils.getExcelDownPath;
  *
  * @author JiangWenGuang
  * @version 1.0
- * @since
+ * @since 20190605
  */
 public class ReportModule {
 
@@ -116,11 +116,11 @@ public class ReportModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         int year = json.has("year") ? json.get("year").getAsInt() : 0;
         int month = json.has("month") ? json.get("month").getAsInt() : 0;
-        String areac = json.has("areac") ? json.get("areac").getAsString() : "";
-        String arean = json.has("arean") ? json.get("arean").getAsString() : "";
+        String areaC = json.has("areac") ? json.get("areac").getAsString() : "";
+        String areaN = json.has("arean") ? json.get("arean").getAsString() : "";
         int type = json.has("type") ? json.get("type").getAsInt() : 0;
 
-        String _areac = "";
+        String _areac;
         boolean isProvince = false;
         boolean isCity = false;
         int baseVal = 0 , baseVal1 = 0;
@@ -135,19 +135,19 @@ public class ReportModule {
         baseVal = getBaseVal.getBaseVal();
         baseVal1 = getBaseVal.getBaseVal1();
 
-        isProvince = Pattern.matches(PATTERN_PROVINCE, areac);
+        isProvince = Pattern.matches(PATTERN_PROVINCE, areaC);
         if(isProvince){
-            _areac = areac.replaceAll("0000000000", "");
+            _areac = areaC.replaceAll("0000000000", "");
             REGULAR_ONE.append(_areac).append("[0-9]{2}0{8}$");
             REGULAR_TWO.append(_areac).append("[0]{10}$");
         }else{
-            isCity = Pattern.matches(PATTERN_CITY, areac);
+            isCity = Pattern.matches(PATTERN_CITY, areaC);
             if(isCity){
-                _areac = areac.replaceAll("00000000", "");
+                _areac = areaC.replaceAll("00000000", "");
                 REGULAR_ONE.append(_areac).append("[0-9]{2}0{6}$");
                 REGULAR_TWO.append(_areac).append("[0]{8}$");
             }else{
-                _areac = areac.replaceAll("000000", "");
+                _areac = areaC.replaceAll("000000", "");
             }
         }
 
@@ -165,8 +165,8 @@ public class ReportModule {
             }
 
         }else{
-            codeList.add(areac);
-            areaMap.put(areac, arean);
+            codeList.add(areaC);
+            areaMap.put(areaC, areaN);
         }
 
         // 初始化表格数据
@@ -255,14 +255,14 @@ public class ReportModule {
                      Map<String,String> filterCompMap = new HashMap<>();
 
                      for(String[] arr : list){
-                         String compid = arr[0].toString();
-                         String storetype = arr[1].toString();
+                         String compId = arr[0].toString();
+                         String storeType = arr[1].toString();
                          String storeAreac = arr[2].toString();
                          String _date = arr[3].toString();
                          int _year = Integer.parseInt(arr[4].toString());
                          int _month = Integer.parseInt(arr[5].toString());
-                         int regnum = Integer.parseInt(arr[6].toString());
-                         int authnum = Integer.parseInt(arr[7].toString());
+                         int regNum = Integer.parseInt(arr[6].toString());
+                         int authNum = Integer.parseInt(arr[7].toString());
                          if(isProvince){
                              if(!a.substring(0,4).equals(storeAreac.substring(0,4))){ // 匹配地区
                                  continue;
@@ -325,29 +325,29 @@ public class ReportModule {
                              //
                          }
 
-                         if(storetype.equals("0")) REG_ONE = REG_ONE + regnum;
-                         if(storetype.equals("1")) REG_TWO = REG_TWO + regnum;
-                         if(storetype.equals("-1")) REG_THREE = REG_THREE + regnum;
-                         REG_SUM = REG_SUM + regnum;
+                         if(storeType.equals("0")) REG_ONE = REG_ONE + regNum;
+                         if(storeType.equals("1")) REG_TWO = REG_TWO + regNum;
+                         if(storeType.equals("-1")) REG_THREE = REG_THREE + regNum;
+                         REG_SUM = REG_SUM + regNum;
 
-                         if(storetype.equals("0")) AUTH_ONE = AUTH_ONE + authnum;
-                         if(storetype.equals("1")) AUTH_TWO = AUTH_TWO + authnum;
-                         if(storetype.equals("-1")) AUTH_THREE = AUTH_THREE + authnum;
-                         AUTH_SUM = AUTH_SUM + authnum;
+                         if(storeType.equals("0")) AUTH_ONE = AUTH_ONE + authNum;
+                         if(storeType.equals("1")) AUTH_TWO = AUTH_TWO + authNum;
+                         if(storeType.equals("-1")) AUTH_THREE = AUTH_THREE + authNum;
+                         AUTH_SUM = AUTH_SUM + authNum;
 
-                         filterCompMap.put(compid, storetype);
-                         cumulativeCompMap.put(compid, storetype);
+                         filterCompMap.put(compId, storeType);
+                         cumulativeCompMap.put(compId, storeType);
                      }
 
                      Map<String, Integer> orderMap = new HashMap<>();
                      for(String [] orderArr : orderList){
-                         String compid = orderArr[0];
-                         if(type == 0 || type == 2 || type == 4){
-                             if(!filterCompMap.keySet().contains(compid)){
+                         String compId = orderArr[0];
+                         if(type == 0 || type == 2 || type == 4){ // 不是累计报表
+                             if(!filterCompMap.keySet().contains(compId)){
                                  continue;
                              }
                          }else{
-                             if(!cumulativeCompMap.keySet().contains(compid)){
+                             if(!cumulativeCompMap.keySet().contains(compId)){
                                  continue;
                              }
                          }
@@ -357,15 +357,14 @@ public class ReportModule {
                          int _num = Integer.parseInt(orderArr[4].toString());
                          if (type == 0 || type == 1) { // 天报
                              String d = subJs.getString(col_date);
-                             System.out.println("###### 355 line  ##### :"+d + ";"+_date);
                              if (!d.equals(_date)) {
                                  continue;
                              }
                          } else if (type == 2 || type == 3) { // 周报
-                             String begindate = subJs.getString(col_begindate);
-                             String enddate = subJs.getString(col_enddate);
+                             String beginDate = subJs.getString(col_begindate);
+                             String endDate = subJs.getString(col_enddate);
                              try {
-                                 if (!dateBetweenRange(_date, begindate, enddate)) {
+                                 if (!dateBetweenRange(_date, beginDate, endDate)) {
                                      continue;
                                  }
                              } catch (Exception e) {
@@ -381,27 +380,26 @@ public class ReportModule {
                              //
                          }
 
-                         System.out.println("####### 377 line ["+compid+"]##########");
-                         if(orderMap.containsKey(compid)){
-                             int orderNum = orderMap.get(compid);
-                             orderMap.put(compid, orderNum + _num);
+                         if(orderMap.containsKey(compId)){
+                             int orderNum = orderMap.get(compId);
+                             orderMap.put(compId, orderNum + _num);
                          }else{
-                             orderMap.put(compid, _num);
+                             orderMap.put(compId, _num);
                          }
                      }
 
-                     for(String compid : orderMap.keySet()){
-                         int orderNum = orderMap.get(compid);
+                     for(String compId : orderMap.keySet()){
+                         int orderNum = orderMap.get(compId);
                          String storeType = "";
                          if(type == 0 || type == 2 || type == 4){
-                             storeType = filterCompMap.get(compid);
+                             storeType = filterCompMap.get(compId);
                          }else{
-                             storeType = cumulativeCompMap.get(compid);
-                             if(compList.contains(compid)){
+                             storeType = cumulativeCompMap.get(compId);
+                             if(compList.contains(compId)){
                                  continue;
                              }
                          }
-                         System.out.println("####### 498 line ["+compid+"]["+orderNum+"] ###########");
+                         System.out.println("####### 498 line ["+compId+"]["+orderNum+"] ###########");
 
                          if(orderNum >= baseVal){
                              if(storeType.equals("0")) ACTIVE_ONE = ACTIVE_ONE + 1;
@@ -415,7 +413,7 @@ public class ReportModule {
                              if(storeType.equals("-1")) REPURCHASE_THREE = REPURCHASE_THREE + 1;
                              REPURCHASE_SUM = REPURCHASE_SUM + 1;
                          }
-                         compList.add(compid);
+                         compList.add(compId);
 
                      }
 
@@ -437,14 +435,14 @@ public class ReportModule {
                      subJs.put(col_rep_other, REPURCHASE_THREE);
                      subJs.put(col_rep_sum, REPURCHASE_SUM);
 
-                     subJs.put(col_act_etm_rate, NumUtil.div(ACTIVE_ONE, AUTH_ONE));
-                     subJs.put(col_act_chain_rate, NumUtil.div(ACTIVE_TWO, AUTH_TWO));
-                     subJs.put(col_act_other_rate, NumUtil.div(ACTIVE_THREE, AUTH_THREE));
-                     subJs.put(col_act_sum_rate, NumUtil.div(ACTIVE_SUM, AUTH_SUM));
-                     subJs.put(col_rep_etm_rate, NumUtil.div(REPURCHASE_ONE, AUTH_ONE));
-                     subJs.put(col_rep_chain_rate, NumUtil.div(REPURCHASE_TWO, AUTH_TWO));
-                     subJs.put(col_rep_other_rate, NumUtil.div(REPURCHASE_THREE, AUTH_THREE));
-                     subJs.put(col_rep_sum_rate, NumUtil.div(REPURCHASE_SUM, AUTH_SUM));
+                     subJs.put(col_act_etm_rate, calcPercentage(ACTIVE_ONE, AUTH_ONE));
+                     subJs.put(col_act_chain_rate, calcPercentage(ACTIVE_TWO, AUTH_TWO));
+                     subJs.put(col_act_other_rate, calcPercentage(ACTIVE_THREE, AUTH_THREE));
+                     subJs.put(col_act_sum_rate, calcPercentage(ACTIVE_SUM, AUTH_SUM));
+                     subJs.put(col_rep_etm_rate, calcPercentage(REPURCHASE_ONE, AUTH_ONE));
+                     subJs.put(col_rep_chain_rate, calcPercentage(REPURCHASE_TWO, AUTH_TWO));
+                     subJs.put(col_rep_other_rate, calcPercentage(REPURCHASE_THREE, AUTH_THREE));
+                     subJs.put(col_rep_sum_rate, calcPercentage(REPURCHASE_SUM, AUTH_SUM));
 
                  }
              }
@@ -632,19 +630,19 @@ public class ReportModule {
                      jsonObject.put(col_rep_chain, REPURCHASE_TWO);
                      jsonObject.put(col_rep_other, REPURCHASE_THREE);
                      jsonObject.put(col_rep_sum, REPURCHASE_SUM);
-                     jsonObject.put(col_act_etm_rate, NumUtil.div(ACTIVE_ONE, AUTH_ONE));
-                     jsonObject.put(col_act_chain_rate, NumUtil.div(ACTIVE_TWO, AUTH_TWO));
-                     jsonObject.put(col_act_other_rate, NumUtil.div(ACTIVE_THREE, AUTH_THREE));
-                     jsonObject.put(col_act_sum_rate, NumUtil.div(ACTIVE_SUM, AUTH_SUM));
-                     jsonObject.put(col_rep_etm_rate, NumUtil.div(REPURCHASE_ONE, AUTH_ONE));
-                     jsonObject.put(col_rep_chain_rate, NumUtil.div(REPURCHASE_TWO, AUTH_TWO));
-                     jsonObject.put(col_rep_other_rate, NumUtil.div(REPURCHASE_THREE, AUTH_THREE));
-                     jsonObject.put(col_rep_sum_rate, NumUtil.div(REPURCHASE_SUM, AUTH_SUM));
+                     jsonObject.put(col_act_etm_rate, calcPercentage(ACTIVE_ONE, AUTH_ONE));
+                     jsonObject.put(col_act_chain_rate, calcPercentage(ACTIVE_TWO, AUTH_TWO));
+                     jsonObject.put(col_act_other_rate, calcPercentage(ACTIVE_THREE, AUTH_THREE));
+                     jsonObject.put(col_act_sum_rate, calcPercentage(ACTIVE_SUM, AUTH_SUM));
+                     jsonObject.put(col_rep_etm_rate, calcPercentage(REPURCHASE_ONE, AUTH_ONE));
+                     jsonObject.put(col_rep_chain_rate, calcPercentage(REPURCHASE_TWO, AUTH_TWO));
+                     jsonObject.put(col_rep_other_rate, calcPercentage(REPURCHASE_THREE, AUTH_THREE));
+                     jsonObject.put(col_rep_sum_rate, calcPercentage(REPURCHASE_SUM, AUTH_SUM));
 
-                     jsonObject.put(col_occ_etm_rate,  NumUtil.div(REG_ONE, MARK_ONE));
-                     jsonObject.put(col_occ_chain_rate,  NumUtil.div(REG_TWO, MARK_TWO));
-                     jsonObject.put(col_occ_other_rate,  NumUtil.div(REG_THREE, MARK_THREE));
-                     jsonObject.put(col_occ_sum_rate,  NumUtil.div(REG_SUM, MARK_SUM));
+                     jsonObject.put(col_occ_etm_rate,  calcPercentage(REG_ONE, MARK_ONE));
+                     jsonObject.put(col_occ_chain_rate,  calcPercentage(REG_TWO, MARK_TWO));
+                     jsonObject.put(col_occ_other_rate,  calcPercentage(REG_THREE, MARK_THREE));
+                     jsonObject.put(col_occ_sum_rate,  calcPercentage(REG_SUM, MARK_SUM));
                      obj.put(col_total, jsonObject);
 
                  }
@@ -678,19 +676,19 @@ public class ReportModule {
                  jsonObject.put(col_rep_chain, REPURCHASE_TWO_TOTAL);
                  jsonObject.put(col_rep_other, REPURCHASE_THREE_TOTAL);
                  jsonObject.put(col_rep_sum, REPURCHASE_SUM_TOTAL);
-                 jsonObject.put(col_act_etm_rate, NumUtil.div(ACTIVE_ONE_TOTAL, AUTH_ONE_TOTAL));
-                 jsonObject.put(col_act_chain_rate, NumUtil.div(ACTIVE_TWO_TOTAL, AUTH_TWO_TOTAL));
-                 jsonObject.put(col_act_other_rate, NumUtil.div(ACTIVE_THREE_TOTAL, AUTH_THREE_TOTAL));
-                 jsonObject.put(col_act_sum_rate, NumUtil.div(ACTIVE_SUM_TOTAL, AUTH_SUM_TOTAL));
-                 jsonObject.put(col_rep_etm_rate, NumUtil.div(REPURCHASE_ONE_TOTAL, AUTH_ONE_TOTAL));
-                 jsonObject.put(col_rep_chain_rate, NumUtil.div(REPURCHASE_TWO_TOTAL, AUTH_TWO_TOTAL));
-                 jsonObject.put(col_rep_other_rate, NumUtil.div(REPURCHASE_THREE_TOTAL, AUTH_THREE_TOTAL));
-                 jsonObject.put(col_rep_sum_rate, NumUtil.div(REPURCHASE_SUM_TOTAL, AUTH_SUM_TOTAL));
+                 jsonObject.put(col_act_etm_rate, calcPercentage(ACTIVE_ONE_TOTAL, AUTH_ONE_TOTAL));
+                 jsonObject.put(col_act_chain_rate, calcPercentage(ACTIVE_TWO_TOTAL, AUTH_TWO_TOTAL));
+                 jsonObject.put(col_act_other_rate, calcPercentage(ACTIVE_THREE_TOTAL, AUTH_THREE_TOTAL));
+                 jsonObject.put(col_act_sum_rate, calcPercentage(ACTIVE_SUM_TOTAL, AUTH_SUM_TOTAL));
+                 jsonObject.put(col_rep_etm_rate, calcPercentage(REPURCHASE_ONE_TOTAL, AUTH_ONE_TOTAL));
+                 jsonObject.put(col_rep_chain_rate, calcPercentage(REPURCHASE_TWO_TOTAL, AUTH_TWO_TOTAL));
+                 jsonObject.put(col_rep_other_rate, calcPercentage(REPURCHASE_THREE_TOTAL, AUTH_THREE_TOTAL));
+                 jsonObject.put(col_rep_sum_rate, calcPercentage(REPURCHASE_SUM_TOTAL, AUTH_SUM_TOTAL));
 
-                 jsonObject.put(col_occ_etm_rate,  NumUtil.div(REG_ONE_TOTAL, MARK_ONE_TOTAL));
-                 jsonObject.put(col_occ_chain_rate,  NumUtil.div(REG_TWO_TOTAL, MARK_TWO_TOTAL));
-                 jsonObject.put(col_occ_other_rate,  NumUtil.div(REG_THREE_TOTAL, MARK_THREE_TOTAL));
-                 jsonObject.put(col_occ_sum_rate,  NumUtil.div(REG_SUM_TOTAL, MARK_SUM_TOTAL));
+                 jsonObject.put(col_occ_etm_rate,  calcPercentage(REG_ONE_TOTAL, MARK_ONE_TOTAL));
+                 jsonObject.put(col_occ_chain_rate,  calcPercentage(REG_TWO_TOTAL, MARK_TWO_TOTAL));
+                 jsonObject.put(col_occ_other_rate,  calcPercentage(REG_THREE_TOTAL, MARK_THREE_TOTAL));
+                 jsonObject.put(col_occ_sum_rate,  calcPercentage(REG_SUM_TOTAL, MARK_SUM_TOTAL));
                  resultJson.put(col_sum_total, jsonObject);
              }
 
@@ -956,19 +954,19 @@ public class ReportModule {
                     subJs.put(col_rep_other, REPURCHASE_THREE); subJs.put(col_rep_sum, REPURCHASE_SUM);
 
 
-                    subJs.put(col_act_etm_rate, NumUtil.div(ACTIVE_ONE, AUTH_ONE));
-                    subJs.put(col_act_chain_rate, NumUtil.div(ACTIVE_TWO, AUTH_TWO));
-                    subJs.put(col_act_other_rate, NumUtil.div(ACTIVE_THREE, AUTH_THREE));
-                    subJs.put(col_act_sum_rate, NumUtil.div(ACTIVE_SUM, AUTH_SUM));
-                    subJs.put(col_rep_etm_rate, NumUtil.div(REPURCHASE_ONE, AUTH_ONE));
-                    subJs.put(col_rep_chain_rate, NumUtil.div(REPURCHASE_TWO, AUTH_TWO));
-                    subJs.put(col_rep_other_rate, NumUtil.div(REPURCHASE_THREE, AUTH_THREE));
-                    subJs.put(col_rep_sum_rate, NumUtil.div(REPURCHASE_SUM, AUTH_SUM));
+                    subJs.put(col_act_etm_rate, calcPercentage(ACTIVE_ONE, AUTH_ONE));
+                    subJs.put(col_act_chain_rate, calcPercentage(ACTIVE_TWO, AUTH_TWO));
+                    subJs.put(col_act_other_rate, calcPercentage(ACTIVE_THREE, AUTH_THREE));
+                    subJs.put(col_act_sum_rate, calcPercentage(ACTIVE_SUM, AUTH_SUM));
+                    subJs.put(col_rep_etm_rate, calcPercentage(REPURCHASE_ONE, AUTH_ONE));
+                    subJs.put(col_rep_chain_rate, calcPercentage(REPURCHASE_TWO, AUTH_TWO));
+                    subJs.put(col_rep_other_rate, calcPercentage(REPURCHASE_THREE, AUTH_THREE));
+                    subJs.put(col_rep_sum_rate, calcPercentage(REPURCHASE_SUM, AUTH_SUM));
 
-                    subJs.put(col_occ_etm_rate,  NumUtil.div(REG_ONE, mark_etm));
-                    subJs.put(col_occ_chain_rate,  NumUtil.div(REG_TWO, mark_chain));
-                    subJs.put(col_occ_other_rate,  NumUtil.div(REG_THREE, mark_other));
-                    subJs.put(col_occ_sum_rate,  NumUtil.div(REG_SUM, mark_sum));
+                    subJs.put(col_occ_etm_rate,  calcPercentage(REG_ONE, mark_etm));
+                    subJs.put(col_occ_chain_rate,  calcPercentage(REG_TWO, mark_chain));
+                    subJs.put(col_occ_other_rate,  calcPercentage(REG_THREE, mark_other));
+                    subJs.put(col_occ_sum_rate,  calcPercentage(REG_SUM, mark_sum));
                 }
 
                 REG_ONE_TOTAL += reg_etm;  REG_TWO_TOTAL += reg_chain; REG_THREE_TOTAL += reg_other;  REG_SUM_TOTAL += reg_sum;
@@ -1006,18 +1004,18 @@ public class ReportModule {
         subJS.put(col_rep_chain, REPURCHASE_TWO_TOTAL);
         subJS.put(col_rep_other, REPURCHASE_THREE_TOTAL);
         subJS.put(col_rep_sum, REPURCHASE_SUM_TOTAL);
-        subJS.put(col_occ_etm_rate,  NumUtil.div(REG_ONE_TOTAL, MARK_ONE_TOTAL));
-        subJS.put(col_occ_chain_rate,  NumUtil.div(REG_TWO_TOTAL, MARK_TWO_TOTAL));
-        subJS.put(col_occ_other_rate,  NumUtil.div(REG_THREE_TOTAL, MARK_THREE_TOTAL));
-        subJS.put(col_occ_sum_rate,  NumUtil.div(REG_SUM_TOTAL, MARK_SUM_TOTAL));
-        subJS.put(col_act_etm_rate, NumUtil.div(ACTIVE_ONE_TOTAL, AUTH_ONE_TOTAL));
-        subJS.put(col_act_chain_rate, NumUtil.div(ACTIVE_TWO_TOTAL, AUTH_TWO_TOTAL));
-        subJS.put(col_act_other_rate, NumUtil.div(ACTIVE_THREE_TOTAL, AUTH_THREE_TOTAL));
-        subJS.put(col_act_sum_rate, NumUtil.div(ACTIVE_SUM_TOTAL, AUTH_SUM_TOTAL));
-        subJS.put(col_rep_etm_rate, NumUtil.div(REPURCHASE_ONE_TOTAL, AUTH_ONE_TOTAL));
-        subJS.put(col_rep_chain_rate, NumUtil.div(REPURCHASE_ONE_TOTAL, AUTH_ONE_TOTAL));
-        subJS.put(col_rep_other_rate, NumUtil.div(REPURCHASE_ONE_TOTAL, AUTH_ONE_TOTAL));
-        subJS.put(col_rep_sum_rate, NumUtil.div(REPURCHASE_ONE_TOTAL, AUTH_ONE_TOTAL));
+        subJS.put(col_occ_etm_rate,  calcPercentage(REG_ONE_TOTAL, MARK_ONE_TOTAL));
+        subJS.put(col_occ_chain_rate,  calcPercentage(REG_TWO_TOTAL, MARK_TWO_TOTAL));
+        subJS.put(col_occ_other_rate,  calcPercentage(REG_THREE_TOTAL, MARK_THREE_TOTAL));
+        subJS.put(col_occ_sum_rate,  calcPercentage(REG_SUM_TOTAL, MARK_SUM_TOTAL));
+        subJS.put(col_act_etm_rate, calcPercentage(ACTIVE_ONE_TOTAL, AUTH_ONE_TOTAL));
+        subJS.put(col_act_chain_rate, calcPercentage(ACTIVE_TWO_TOTAL, AUTH_TWO_TOTAL));
+        subJS.put(col_act_other_rate, calcPercentage(ACTIVE_THREE_TOTAL, AUTH_THREE_TOTAL));
+        subJS.put(col_act_sum_rate, calcPercentage(ACTIVE_SUM_TOTAL, AUTH_SUM_TOTAL));
+        subJS.put(col_rep_etm_rate, calcPercentage(REPURCHASE_ONE_TOTAL, AUTH_ONE_TOTAL));
+        subJS.put(col_rep_chain_rate, calcPercentage(REPURCHASE_TWO_TOTAL, AUTH_TWO_TOTAL));
+        subJS.put(col_rep_other_rate, calcPercentage(REPURCHASE_THREE_TOTAL, AUTH_THREE_TOTAL));
+        subJS.put(col_rep_sum_rate, calcPercentage(REPURCHASE_SUM_TOTAL, AUTH_SUM_TOTAL));
         subList.add(subJS);
         js.put(col_detail, subList);
         jsonList.add(js);
@@ -1315,6 +1313,17 @@ public class ReportModule {
         cell = row.createCell(i);
         cell.setCellStyle(style);
         cell.setCellValue(value);
+    }
+
+    /**
+     * 计算百分比
+     *
+     * @param numerator 分子
+     * @param denominator 分母
+     * @return 百分比 举例50%
+     */
+    private static String calcPercentage(int numerator, int denominator){
+        return NumUtil.div(numerator * 100, denominator) + "%";
     }
 
     /**
