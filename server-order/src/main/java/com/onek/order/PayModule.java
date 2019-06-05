@@ -105,6 +105,15 @@ public class PayModule {
     private static final String UPD_ASAPP_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set cstatus=cstatus&~1 "
             + " where cstatus&1>0 and asno=? ";
 
+    /**
+     *
+     * 功能: 显示付款信息
+     * 参数类型: json
+     * 参数集: orderno=订单号 compid=企业码
+     * 返回值: code=200 data=结果信息 data.payamt=付款金额 data.odate=订单日期
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result showPayInfo(AppContext appContext){
         String json = appContext.param.json;
@@ -146,6 +155,15 @@ public class PayModule {
 
     }
 
+    /**
+     *
+     * 功能: 显示运费付款信息
+     * 参数类型: json
+     * 参数集: orderno=订单号 compid=企业码
+     * 返回值: code=200 data=结果信息 data.payamt=运费金额
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result showFeePayInfo(AppContext appContext){
         String json = appContext.param.json;
@@ -177,6 +195,15 @@ public class PayModule {
 
     }
 
+    /**
+     *
+     * 功能: 订单预支付[用来展示付款二维码]
+     * 参数类型: json
+     * 参数集: orderno=订单号 compid=企业码 paytype=付款方式
+     * 返回值: code=200 data=付款二维码地址
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result prePay(AppContext appContext){
 
@@ -212,6 +239,15 @@ public class PayModule {
 
     }
 
+    /**
+     *
+     * 功能: 运费预支付[用来展示付款二维码]
+     * 参数类型: json
+     * 参数集: orderno=订单号 afsano=售后单号 compid=企业码 paytype=付款方式
+     * 返回值: code=200 data=付款二维码地址
+     * 详情说明:
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result preFeePay(AppContext appContext){
 
@@ -253,6 +289,16 @@ public class PayModule {
 
     }
 
+    /**
+     *
+     * 功能: 订单支付回调
+     * 参数类型: array
+     * 参数集: array[0]=订单号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
+     *         array[5]=付款金额 array[6]=企业码
+     * 返回值: code=200
+     * 详情说明: 支付宝、微信支付完后回调此接口
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result payCallBack(AppContext appContext){
 
@@ -303,6 +349,16 @@ public class PayModule {
 
     }
 
+    /**
+     *
+     * 功能: 运费支付回调
+     * 参数类型: array
+     * 参数集: array[0]=订单号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
+     *         array[5]=付款金额 array[6]=企业码
+     * 返回值: code=200
+     * 详情说明: 支付宝、微信支付完后回调此接口
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result payFeeCallBack(AppContext appContext){
 
@@ -344,6 +400,19 @@ public class PayModule {
 
     }
 
+    /**
+     *
+     * 功能: 获取支付结果
+     * 参数类型: json
+     * 参数集: orderno=订单号 compid=企业码
+     * 返回值: code=200 data=结果信息 data.payamt=运费金额 data.odate=订单日期
+     *         data.otime=订单时间 data.pdamt=优惠金额 data.freight=运费
+     *         data.coupamt=优惠券金额 data.distamt= data.balamt=余额抵扣
+     *         data.consignee=收货人 data.contact=收货联系方式 data.paystatus=支付状态
+     *         data.address=收款具体地址
+     * 详情说明: 支付宝、微信支付完后回调此接口
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getPayResult(AppContext appContext){
         String json = appContext.param.json;
@@ -403,6 +472,15 @@ public class PayModule {
         return new Result().success(jsonResult);
     }
 
+    /**
+     *
+     * 功能: 获取运费支付结果
+     * 参数类型: json
+     * 参数集: orderno=订单号 compid=企业码
+     * 返回值: code=200 data=结果信息 data.paystatus=支付状态
+     * 详情说明: 支付宝、微信支付完后回调此接口
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public Result getFeePayResult(AppContext appContext) {
         String json = appContext.param.json;
