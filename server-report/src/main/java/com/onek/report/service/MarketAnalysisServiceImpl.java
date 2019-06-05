@@ -185,67 +185,9 @@ public class MarketAnalysisServiceImpl {
                         int _month = Integer.parseInt(arr[5].toString());
                         int regNum = Integer.parseInt(arr[6].toString());
                         int authNum = Integer.parseInt(arr[7].toString());
-                        if(isProvince){
-                            if(!a.substring(0,4).equals(storeAreac.substring(0,4))){ // 匹配地区
-                                continue;
-                            }
-                        }else if(isCity){
-                            if(!a.substring(0,6).equals(storeAreac.substring(0,6))){ // 匹配地区
-                                continue;
-                            }
-                        }
-                        if (type == 0) { // 天报(单天)
-                            String d = subJs.getString(COL_DATE);
-                            if (!d.equals(_date)) {
-                                continue;
-                            }
-                        } else if (type == 1) { // 天报(累计)
-                            String d = subJs.getString(COL_DATE);
-                            int val = compareDate(_date, d);
-                            if (val == -1 && first == 1) {
-                            } else if (val == 0) {
-                            } else {
-                                continue;
-                            }
-                        } else if (type == 2) { // 周报(单周)
-                            String begindate = subJs.getString(COL_BEGINDATE);
-                            String enddate = subJs.getString(COL_ENDDATE);
-                            try {
-                                if (!dateBetweenRange(_date, begindate, enddate)) {
-                                    continue;
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        } else if (type == 3) { // 周报(累计)
-                            String begindate = subJs.getString(COL_BEGINDATE);
-                            String enddate = subJs.getString(COL_ENDDATE);
-                            try {
-                                if (compareDate(_date, begindate) == -1 && first == 1) {
-                                } else if (dateBetweenRange(_date, begindate, enddate)) {
-                                } else {
-                                    continue;
-                                }
-                            } catch (Exception e) {
-                                e.printStackTrace();
-                            }
-                        } else if (type == 4) { // 月报(单月)
-                            int m = subJs.getInteger(COL_MONTH);
-                            int y = subJs.getInteger(COL_YEAR);
-                            if (y != _year || m != _month) {
-                                continue;
-                            }
-                        } else if (type == 5) { // 月报(累计)
-                            int m = subJs.getInteger(COL_MONTH);
-                            int y = subJs.getInteger(COL_YEAR);
-                            if (_year < y && first == 1) {
-                            } else if (_year == y && _month == m) {
-                            } else {
-                                continue;
-                            }
-                        } else if (type == 6) {
-                            //
-                        }
+
+                        if (isMatch(type, isProvince, isCity, a, subJs, first, storeAreac, _date, _year, _month))
+                            continue;
 
                         if(storeType.equals("0")) REG_ONE = REG_ONE + regNum;
                         if(storeType.equals("1")) REG_TWO = REG_TWO + regNum;
@@ -375,6 +317,75 @@ public class MarketAnalysisServiceImpl {
 
         return jsonList;
 
+    }
+
+    /**
+     * 是否匹配数据
+     *
+     */
+    private boolean isMatch(int type, boolean isProvince, boolean isCity, String a, JSONObject subJs, int first, String storeAreac, String _date, int _year, int _month) {
+        if(isProvince){
+            if(!a.substring(0,4).equals(storeAreac.substring(0,4))){ // 匹配地区
+                return true;
+            }
+        }else if(isCity){
+            if(!a.substring(0,6).equals(storeAreac.substring(0,6))){ // 匹配地区
+                return true;
+            }
+        }
+        if (type == 0) { // 天报(单天)
+            String d = subJs.getString(COL_DATE);
+            if (!d.equals(_date)) {
+                return true;
+            }
+        } else if (type == 1) { // 天报(累计)
+            String d = subJs.getString(COL_DATE);
+            int val = compareDate(_date, d);
+            if (val == -1 && first == 1) {
+            } else if (val == 0) {
+            } else {
+                return true;
+            }
+        } else if (type == 2) { // 周报(单周)
+            String begindate = subJs.getString(COL_BEGINDATE);
+            String enddate = subJs.getString(COL_ENDDATE);
+            try {
+                if (!dateBetweenRange(_date, begindate, enddate)) {
+                    return true;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (type == 3) { // 周报(累计)
+            String begindate = subJs.getString(COL_BEGINDATE);
+            String enddate = subJs.getString(COL_ENDDATE);
+            try {
+                if (compareDate(_date, begindate) == -1 && first == 1) {
+                } else if (dateBetweenRange(_date, begindate, enddate)) {
+                } else {
+                    return true;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        } else if (type == 4) { // 月报(单月)
+            int m = subJs.getInteger(COL_MONTH);
+            int y = subJs.getInteger(COL_YEAR);
+            if (y != _year || m != _month) {
+                return true;
+            }
+        } else if (type == 5) { // 月报(累计)
+            int m = subJs.getInteger(COL_MONTH);
+            int y = subJs.getInteger(COL_YEAR);
+            if (_year < y && first == 1) {
+            } else if (_year == y && _month == m) {
+            } else {
+                return true;
+            }
+        } else if (type == 6) {
+            //
+        }
+        return false;
     }
 
     public JSONObject marketAnalysisByTime(int year,int month,String areaC,String areaN,int type) {
