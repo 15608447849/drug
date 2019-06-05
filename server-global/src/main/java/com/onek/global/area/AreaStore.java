@@ -57,30 +57,6 @@ public class AreaStore {
     private static final String[] SQLCS =
             { PCA_C, PCA_C, PCA_C, VILLAGES_C, STREET_C };
 
-    private static final String REG_HEAD = "${{HEAD}}";
-    private static final String REG_ANYS = "${{ANYS}}";
-    private static final String REG_ZERO = "${{ZERO}}";
-
-    private static final String REGBASE =
-            "^" + REG_HEAD
-            + "[0-9]{" + REG_ANYS + "}"
-            + "[0]{" + REG_ZERO + "}$";
-
-    private static final String NOTREGBASE =
-            "^" + REG_HEAD
-            + "[0]{" + REG_ANYS + "}"
-            + "[0]{" + REG_ZERO + "}$";
-
-    private static int[][] REG_TIMES =
-            {
-                    {0, 2, 10},
-                    {2, 2, 8},
-                    {4, 2, 6},
-                    {6, 3, 3},
-                    {9, 3, 0},
-            };
-
-
     public static String[] getCompleteName(long areac) {
         String[] result = new String[AreaUtil.getLayer(areac) + 1];
 
@@ -103,7 +79,7 @@ public class AreaStore {
             return new AreaEntity[0];
         }
 
-        String[] params = getChildrenRegexps(areac);
+        String[] params = AreaUtil.getChildrenRegexps(areac);
 
         List<Object[]> queryResult =
                 BaseDAO.getBaseDAO().queryNative(SQLCS[childrenLayer],
@@ -134,30 +110,6 @@ public class AreaStore {
         BaseDAO.getBaseDAO().convToEntity(queryResult, tArray, AreaEntity.class);
 
         return tArray[0];
-    }
-
-    private static String[] getChildrenRegexps(long areac) {
-        String head, anys, zero;
-
-        int layer = areac == 0 ? 0 : AreaUtil.getLayer(areac) + 1;
-
-        if (layer >= REG_TIMES.length) {
-            throw new IllegalArgumentException("areac is error " + areac);
-        }
-
-        int[] params = REG_TIMES[layer];
-
-        head = String.valueOf(areac).substring(0, params[0]);
-        anys = String.valueOf(params[1]);
-        zero = String.valueOf(params[2]);
-
-        return new String[] {
-                REGBASE.replace(REG_HEAD, head)
-                    .replace(REG_ANYS, anys)
-                    .replace(REG_ZERO, zero),
-                NOTREGBASE.replace(REG_HEAD, head)
-                        .replace(REG_ANYS, anys)
-                        .replace(REG_ZERO, zero)};
     }
 
 }

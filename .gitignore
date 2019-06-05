@@ -41,3 +41,5 @@ server-order/src/main/java/order.js
 server-order/src/main/java/myOrder.js
 server-order/src/main/java/cstruct.js
 server-report/out/production/classes/
+server-report/src/main/resources/
+server-report/out/

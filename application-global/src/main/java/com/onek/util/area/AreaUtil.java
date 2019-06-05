@@ -1,5 +1,6 @@
 package com.onek.util.area;
 
+import constant.DSMConst;
 import util.MathUtil;
 
 /**
@@ -16,6 +17,29 @@ public class AreaUtil {
             1000L * 1000,
             1000L,
     };
+
+    private static final String REG_HEAD = "${{HEAD}}";
+    private static final String REG_ANYS = "${{ANYS}}";
+    private static final String REG_ZERO = "${{ZERO}}";
+
+    private static final String REGBASE =
+            "^" + REG_HEAD
+                    + "[0-9]{" + REG_ANYS + "}"
+                    + "[0]{" + REG_ZERO + "}$";
+
+    private static final String NOTREGBASE =
+            "^" + REG_HEAD
+                    + "[0]{" + REG_ANYS + "}"
+                    + "[0]{" + REG_ZERO + "}$";
+
+    private static int[][] REG_TIMES =
+            {
+                    {0, 2, 10},
+                    {2, 2, 8},
+                    {4, 2, 6},
+                    {6, 3, 3},
+                    {9, 3, 0},
+            };
 
     /**
      * @param c1
@@ -113,5 +137,29 @@ public class AreaUtil {
         return getLayer(areac) == 0;
     }
 
+
+    public static String[] getChildrenRegexps(long areac) {
+        String head, anys, zero;
+
+        int layer = areac == 0 ? 0 : AreaUtil.getLayer(areac) + 1;
+
+        if (layer >= REG_TIMES.length) {
+            throw new IllegalArgumentException("areac is error " + areac);
+        }
+
+        int[] params = REG_TIMES[layer];
+
+        head = String.valueOf(areac).substring(0, params[0]);
+        anys = String.valueOf(params[1]);
+        zero = String.valueOf(params[2]);
+
+        return new String[] {
+                REGBASE.replace(REG_HEAD, head)
+                        .replace(REG_ANYS, anys)
+                        .replace(REG_ZERO, zero),
+                NOTREGBASE.replace(REG_HEAD, head)
+                        .replace(REG_ANYS, anys)
+                        .replace(REG_ZERO, zero)};
+    }
 
 }
