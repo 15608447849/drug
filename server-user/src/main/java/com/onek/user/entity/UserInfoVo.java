@@ -8,26 +8,26 @@ package com.onek.user.entity;
  **/
 public class UserInfoVo {
 //    private int oid;
-    private int uid;
-    private long uphone;
-    private String uaccount;
-    private String urealname;
-    private String upw;
-    private long roleid;
-    private String adddate;
-    private String addtime;
-    private String offdate;
-    private String offtime;
-    private String ip;
-    private String logindate;
-    private String logintime;
-    private int cstatus;
-    private String rname;
-    private String arean;
-    private int belong;
+    private int uid;//用户码
+    private long uphone;//手机号
+    private String uaccount;//账号
+    private String urealname;//真实姓名
+    private String upw;//密码
+    private long roleid;//角色码
+    private String adddate;//新增日期
+    private String addtime;//新增时间
+    private String offdate;//停用日期
+    private String offtime;//停用时间
+    private String ip;//最后登录ip
+    private String logindate;//登录日期
+    private String logintime;//登录时间
+    private int cstatus;//综合状态码
+    private String rname;//角色名称
+    private String arean;//地区名称
+    private int belong;//所属
     private int mroleid;
     private String arearng;
-    private int cid;
+    private int cid;//企业码
     private int buid;
     private String buname;
 
