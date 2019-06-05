@@ -98,17 +98,17 @@ public class BDManageModule {
                     return new Result().fail("该BD已存在！");
                 }
             }
-            int code = 0;
+            int code;
 
-            String queryCid = "select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0";
+//            String queryCid = "select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0";
+//
+//            List<Object[]> queryCidRet = baseDao.queryNative(queryCid, userInfoVo.getBelong());
+//
+//            if(queryCidRet == null || queryCidRet.isEmpty()){
+//                return new Result().fail("用户操作失败！");
+//            }
 
-            List<Object[]> queryCidRet = baseDao.queryNative(queryCid, userInfoVo.getBelong());
-
-            if(queryCidRet == null || queryCidRet.isEmpty()){
-                return new Result().fail("用户操作失败！");
-            }
-
-            userInfoVo.setCid(Integer.parseInt(queryCidRet.get(0)[0].toString()));
+//            userInfoVo.setCid(cid);
 
 
             if (userInfoVo.getUid() <= 0) {
@@ -168,21 +168,34 @@ public class BDManageModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int belong = jsonObject.get("belong").getAsInt();
+        long roleId = appContext.getUserSession().roleCode;
+        int cid = appContext.getUserSession().compId;
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
         PageHolder pageHolder = new PageHolder(page);
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
+        Object[] params;
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
                 + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and (u.roleid&8192>0 or u.roleid&4096>0) "
-                + " and (belong=? or belong in ("
+                + " and cid=? and (belong=? or belong in ("
                 + " select uid from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and belong=?)) ";
+
+        if ((roleId & 1) > 0) {
+            selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
+                    + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
+                    + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
+                    + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and (u.roleid&8192>0 or u.roleid&4096>0) ";
+            params = new Object[]{};
+        } else {
+            params = new Object[]{cid, belong, belong};
+        }
         sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 1).append(" group by uid order by oid desc");
-        List<Object[]> queryResult = baseDao.queryNativeC(pageHolder, page, sqlBuilder.toString(), belong, belong);
+        List<Object[]> queryResult = baseDao.queryNativeC(pageHolder, page, sqlBuilder.toString(), params);
         if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class, new String[]{
@@ -207,17 +220,29 @@ public class BDManageModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int belong = jsonObject.get("belong").getAsInt();
+        long roleId = appContext.getUserSession().roleCode;
+        int cid = appContext.getUserSession().compId;
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
         PageHolder pageHolder = new PageHolder(page);
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
+        Object[] params;
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
                 + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and u.roleid&8192>0 "
-                + " and belong=? ";
+                + " and belong=? and cid=?";
+        if ((roleId & 1) > 0) {
+            selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
+                    + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
+                    + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
+                    + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and u.roleid&8192>0 ";
+            params = new Object[]{};
+        } else {
+            params = new Object[]{belong,cid};
+        }
 //        String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
 //                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, GROUP_CONCAT(rname) as rname,"
 //                + " CONCAT('[',GROUP_CONCAT(arearng,','),']') as arearng from {{?"
@@ -227,7 +252,7 @@ public class BDManageModule {
 //                + " group by ua.uid";
         sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 0).append(" group by uid desc");
-        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString(), belong);
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString(), params);
         if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class, new String[]{
@@ -409,7 +434,7 @@ public class BDManageModule {
             }
             String optSQL = "insert into {{?" + DSMConst.TB_PROXY_UAREA + "}} (unqid,uid,areac,cstatus,arearng) "
                     + " values(?,?,?,?,?)";
-            boolean b = ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
+            boolean b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
             return b ? result.success("设置成功") : result.fail("设置失败");
         }
         return result.fail("设置失败");
