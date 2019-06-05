@@ -28,9 +28,9 @@ public class MyDrugStoreInfoModule {
     private static IRedisCache myCgProxy = CacheProxyInstance.createInstance(new MyConsigneeImpl());
     
     /* *
-     * @description 查询
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 查询我的收货人
+     * @params [compid：企业码]
+     * @return 见ConsigneeVO.class
      * @exception
      * @author 11842
      * @time  2019/3/21 13:51
@@ -52,9 +52,9 @@ public class MyDrugStoreInfoModule {
     }
 
     /* *
-     * @description 新增修改
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 新增修改我的收货人
+     * @params [compid：企业码 contactname：收货人  contactphone：收货人电话 shipid：收货人id(新增传0)]
+     * @return -1 失败（收货人已达到上限 收货人已存在）  200 成功
      * @exception
      * @author 11842
      * @time  2019/3/21 13:51
@@ -112,9 +112,9 @@ public class MyDrugStoreInfoModule {
     }
 
     /* *
-     * @description 设置默认
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 设置默认收货人
+     * @params [compid 企业码 shipid：收货人id]
+     * @return -1 失败  200 成功
      * @exception
      * @author 11842
      * @time  2019/3/21 13:51
@@ -141,9 +141,9 @@ public class MyDrugStoreInfoModule {
     }
 
     /* *
-     * @description 删除
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 删除我的收货人
+     * @params [shipid： 收货人id]
+     * @return -1 失败 200成功
      * @exception
      * @author 11842
      * @time  2019/3/21 13:52

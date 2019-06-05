@@ -7,11 +7,11 @@ package com.onek.user.entity;
  * @time 2019/3/21 13:44
  **/
 public class ConsigneeVO {
-    private int shipid;
-    private int compid;
-    private String contactname;
-    private String contactphone;
-    private int cstatus;
+    private int shipid;//收货人id
+    private int compid;//企业码
+    private String contactname;//联系人
+    private String contactphone;//联系人电话
+    private int cstatus;//综合状态码 1删除 2默认
 
     public int getShipid() {
         return shipid;
