@@ -1,13 +1,20 @@
 package com.onek.report;
 
+import IceInternal.Ex;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.report.col.ColTotal;
+import com.onek.report.core.Reporter;
 import com.onek.report.service.MarketAnalysisServiceImpl;
+import util.ArrayUtil;
 import util.StringUtils;
+
+import java.util.Arrays;
 
 
 /**
@@ -72,5 +79,29 @@ public class ReportModule {
         return new Result().success(title);
     }
 
+      /**
+     *
+     * 功能: 站在时间维度订单分析报表
+     * 参数类型: json
+     * 参数集: date:日期  areac:地区码  type:统计类型]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/5 22:08
+     * 作者: Helena Rubinstein
+     */
+    public Result orderAnalysisByTime(AppContext appContext) {
+        JSONObject json = JSON.parseObject(appContext.param.json);
+
+        try {
+            ColTotal result =
+                    new Reporter(json.getIntValue("type"), json.getLongValue("areac"), json.getString("date")).getResult();
+
+            return new Result().success(JSON.toJSON(result));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Result().fail("查询失败");
+        }
+
+    }
 
 }

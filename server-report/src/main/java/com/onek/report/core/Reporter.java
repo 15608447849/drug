@@ -9,6 +9,7 @@ import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.ds.AppConfig;
+import util.StringUtils;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
@@ -125,6 +126,10 @@ public class Reporter {
     }
 
     public ColTotal getResult() {
+        if (areac <= 0 || StringUtils.isEmpty(date)) {
+            return null;
+        }
+
         executorService.execute(new Runnable() {
             @Override
             public void run() {
@@ -468,16 +473,4 @@ public class Reporter {
         return getAreaLeftNum(this.areac);
     }
 
-    static {
-        /**初始化LOG4J2日志环境*/
-        AppConfig.initLogger("log4j2.xml");
-        /**初始化应用程序环境，如数据源等*/
-        AppConfig.initialize();
-    }
-
-
-    public static void main(String[] args) {
-        ColTotal colTotal = new Reporter(3, 0, "2019-05").getResult();
-        System.out.println(JSON.toJSONString(colTotal));
-    }
 }
