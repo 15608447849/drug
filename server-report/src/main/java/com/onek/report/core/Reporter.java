@@ -1,24 +1,87 @@
 package com.onek.report.core;
 
-import com.onek.report.vo.CanceledNum;
-import com.onek.report.vo.CompPrice;
-import com.onek.report.vo.ReturnResult;
+import com.alibaba.fastjson.JSON;
+import com.onek.report.col.ColGroup;
+import com.onek.report.col.ColItem;
+import com.onek.report.col.ColTotal;
+import com.onek.report.vo.*;
 import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.ds.AppConfig;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class Reporter {
-    private static final String[] GROUPS = {
-        " odate ",
-        " (DAY(odate)+WEEKDAY(odate-INTERVAL DAY(odate) DAY)) DIV 7 + 1 ",
-        " MONTH(odate) ",
-        " YEAR(odate) ",
+    private static final Map<Long, String[]> areaStore = new HashMap<>();
+
+    private static final String[][] GROUPS = {
+        {
+            " odate ",
+            " (DAY(odate)+WEEKDAY(odate-INTERVAL DAY(odate) DAY)) DIV 7 + 1 ",
+            " MONTH(odate) ",
+            " YEAR(odate) ",
+        },
+        {
+            " $ ",
+            " 第$周 ",
+            " $月 ",
+            " $年 ",
+        }
+//        {
+//            " CONCAT($) ",
+//            " CONCAT('第', $, '周') ",
+//            " CONCAT($, '月') ",
+//            " CONCAT($, '年') ",
+//        }
+    };
+
+    private static Comparator<ColGroup>[] COL_GROUP_COMPARATOR = new Comparator[] {
+            new Comparator() {
+                private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+                @Override
+                public int compare(Object o1, Object o2) {
+                    ColGroup oo1 = (ColGroup) o1;
+                    ColGroup oo2 = (ColGroup) o2;
+
+                    try {
+                        return sdf.parse(oo1.getDate()).compareTo(sdf.parse(oo2.getDate()));
+                    } catch (ParseException e) {
+                        return 0;
+                    }
+                }
+            },
+
+            new Comparator() {
+                @Override
+                public int compare(Object o1, Object o2) {
+                    ColGroup oo1 = (ColGroup) o1;
+                    ColGroup oo2 = (ColGroup) o2;
+                    return Integer.parseInt(oo1.getDate()) - Integer.parseInt(oo2.getDate());
+                }
+            },
+            new Comparator() {
+                @Override
+                public int compare(Object o1, Object o2) {
+                    ColGroup oo1 = (ColGroup) o1;
+                    ColGroup oo2 = (ColGroup) o2;
+                    return Integer.parseInt(oo1.getDate()) - Integer.parseInt(oo2.getDate());
+                }
+            },
+            new Comparator() {
+                @Override
+                public int compare(Object o1, Object o2) {
+                    ColGroup oo1 = (ColGroup) o1;
+                    ColGroup oo2 = (ColGroup) o2;
+                    return Integer.parseInt(oo1.getDate()) - Integer.parseInt(oo2.getDate());
+                }
+            },
     };
 
     private enum REPORTTYPE {
@@ -44,10 +107,11 @@ public class Reporter {
     private final String date;
     private final String where;
     private final String groupBy;
+    private final String orderBy;
     private final Object[] params;
-    private final Map<Area, Map<String, ReturnResult>> resultMap = Collections.synchronizedMap(new LinkedHashMap<>());
+    private final Map<String, ColGroup> resultMap = new LinkedHashMap<>();
 
-    private ExecutorService executorService = Executors.newFixedThreadPool(10);
+    private ThreadPoolExecutor executorService = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
     private CountDownLatch countDownLatch = new CountDownLatch(5);
 
     public Reporter(int reportType, long areac, String date) {
@@ -57,17 +121,212 @@ public class Reporter {
         this.where = getWhere();
         this.params = getWhereParams();
         this.groupBy = getGroupBy();
+        this.orderBy = getOrderBy();
     }
-    
+
+    public ColTotal getResult() {
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getCanceledNum();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            }
+        });
+
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getCancelVolume();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            }
+        });
+
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getSuccessNum();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            }
+        });
+
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getSuccessVolume();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            }
+        });
+
+        executorService.execute(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    getCompPrice();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    countDownLatch.countDown();
+                }
+            }
+        });
+
+        try {
+            boolean isTimeOut = !countDownLatch.await(10, TimeUnit.MINUTES);
+
+            Map returnMap;
+
+            if (isTimeOut) {
+                returnMap = Collections.EMPTY_MAP;
+            } else {
+                returnMap = resultMap;
+            }
+
+            ColTotal returnCol = new ColTotal(new ArrayList<>(returnMap.values()));
+
+            returnCol.getColGroups().sort(COL_GROUP_COMPARATOR[this.reportType.type]);
+
+            if ((this.reportType.status&1) > 0) {
+                accResult(returnCol);
+            }
+
+            return returnCol;
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+            return null;
+        } finally {
+            executorService.shutdown();
+            executorService = null;
+        }
+
+    }
+
+    private void accResult(ColTotal colTotal) {
+        List<ColGroup> groups = colTotal.getColGroups();
+
+        if (groups == null || groups.size() <= 1) {
+            return;
+        }
+
+        ColGroup last = groups.get(0);
+        ColGroup curr;
+        for (int i = 1; i < groups.size(); i++) {
+            curr = groups.get(i);
+            for (ColItem lastItem : last.getColItems()) {
+                ColItem currItem = findReturnResult(curr, lastItem.getAreac());
+
+                if (currItem == null) {
+                    curr.getColItems().add(lastItem);
+                } else {
+                    currItem.accItem(lastItem);
+                }
+
+            }
+        }
+
+    }
+
+    private void getSuccessVolume() {
+        String sql =
+                getSelectHead() + ", "
+                        + " CONVERT (SUM(pdamt * pdnum + freight) / 100, DECIMAL ( 65, 2 )) total, "
+                        + " CONVERT (SUM( ao.refee ) / 100 , DECIMAL ( 65, 2 )) ret  "
+                        + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} o "
+                        + " LEFT JOIN ( SELECT orderno, SUM( a.refamt ) refee "
+                                    + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} a "
+                                    + " WHERE a.astype = 1 GROUP BY orderno) ao ON o.orderno = ao.orderno "
+                        + where + " AND ostatus > 1 AND settstatus > 0 "
+                        + groupBy + this.orderBy;
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO()
+                .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
+
+        if (queryResult.isEmpty()) {
+            return;
+        }
+
+        SuccessVolume[] canceledNums = new SuccessVolume[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, canceledNums, SuccessVolume.class);
+
+        for (SuccessVolume canceledNum : canceledNums) {
+            putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
+        }
+    }
+
+
+    private void getCancelVolume() {
+        String sql =
+                getSelectHead() + ", "
+                        + " CONVERT(SUM(IF(cstatus & 1024 > 0, (pdamt * pdnum + freight), 0)) / 100, DECIMAL(65, 2)) bCancel, "
+                        + " CONVERT(SUM(IF(cstatus & 1024 = 0, (pdamt * pdnum + freight), 0)) / 100, DECIMAL(65, 2)) cCancel "
+                        + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
+                        + where + " AND ostatus = - 4 "
+                        + groupBy + this.orderBy;
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO()
+                .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
+
+        CancelVolume[] canceledNums = new CancelVolume[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, canceledNums, CancelVolume.class);
+
+        for (CancelVolume canceledNum : canceledNums) {
+            putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
+        }
+    }
+
+    private void getSuccessNum() {
+        String sql =
+                getSelectHead() + ", "
+                + " COUNT( DISTINCT o.orderno ) total, "
+                + " COUNT( ao.astype = 1 || NULL ) ret, "
+                + " COUNT( DISTINCT ao.orderno ) back "
+                + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} o "
+                + " LEFT JOIN ( SELECT orderno, astype "
+                        + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} a "
+                        + " GROUP BY orderno, astype ) ao ON o.orderno = ao.orderno "
+                + where + " AND ostatus > 1 AND settstatus > 0 " + groupBy + this.orderBy;
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO()
+                .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
+
+        SuccessNum[] canceledNums = new SuccessNum[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, canceledNums, SuccessNum.class);
+
+        for (SuccessNum canceledNum : canceledNums) {
+            putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
+        }
+    }
+
     private void getCompPrice() {
         String sql =
-                " SELECT LEFT ( rvaddno, 4 ), "
-                + " odate, "
+                getSelectHead() + ", "
                 + " CONVERT(MAX(pdamt * pdnum + freight) / 100, DECIMAL(65, 2)) max, "
                 + " CONVERT(MIN(pdamt * pdnum + freight) / 100, DECIMAL(65, 2)) min, "
                 + " CONVERT(AVG(pdamt * pdnum + freight) / 100, DECIMAL(65, 2)) avg "
                 + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
-                + where + groupBy;
+                + where + " AND ostatus > 1 AND settstatus > 0 " + groupBy + this.orderBy;
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
                 .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
@@ -80,16 +339,20 @@ public class Reporter {
             putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
         }
     }
-    
+
+    private String getSelectHead() {
+        return " SELECT RPAD(LEFT(rvaddno, " + getAreaLeftNum() +  "), 12, 0) areac, "
+                    + GROUPS[0][this.reportType.type];
+    }
+
     private void getCanceledNum() {
         String sql =
-            " SELECT RPAD(LEFT(rvaddno, " + getAreaLeftNum() +  "), 12, 0) areac, "
-                    + GROUPS[this.reportType.type] + ", "
-                    + " COUNT( ( ostatus = -4 && ( cstatus & 1024 ) > 0 ) || NULL ), "
-                    + " COUNT( ( ostatus = -4 && ( cstatus & 1024 ) = 0 ) || NULL ) "
+            getSelectHead() + ", "
+                + " COUNT( cstatus & 1024 > 0 || NULL ), "
+                + " COUNT( cstatus & 1024 = 0 || NULL ) "
             + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
-            + where
-            + groupBy;
+            + where + " AND ostatus = -4 "
+            + groupBy + this.orderBy;
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
                 .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
@@ -103,47 +366,62 @@ public class Reporter {
         }
     }
 
-    private void putMap(Object obj, long areac, String date) {
-        Map<String, ReturnResult> map2 = findByAreac(areac);
+    private synchronized void putMap(Object obj, long areac, String date) {
+        ColGroup colGroup = resultMap.get(date);
 
-        if (map2 == null) {
-            Area a = new Area();
-            a.setAreac(areac);
-            map2 = new LinkedHashMap<>();
-            resultMap.put(a, map2);
+        if (colGroup == null) {
+            colGroup = new ColGroup();
+            colGroup.setDate(date);
+            colGroup.setDateLabel(
+                    GROUPS[1][this.reportType.type].replace("$", date));
+
+            resultMap.put(date, colGroup);
         }
 
-        ReturnResult result = map2.get(date);
+        ColItem result = findReturnResult(colGroup, areac);
 
         if (result == null) {
-            result = new ReturnResult();
-            map2.put(date, result);
+            result = new ColItem(areac);
+            colGroup.getColItems().add(result);
         }
 
         if (obj instanceof CanceledNum) {
             result.getOrderNum().setCanceledNum((CanceledNum) obj);
         } else if (obj instanceof CompPrice) {
             result.setCompPrice((CompPrice) obj);
+        } else if (obj instanceof SuccessNum) {
+            result.getOrderNum().setSuccessNum((SuccessNum) obj);
+        } else if (obj instanceof CancelVolume) {
+            result.getGmv().setCancelVolume((CancelVolume) obj);
+        } else if (obj instanceof SuccessVolume) {
+            result.getGmv().setSuccessVolume((SuccessVolume) obj);
         }
-
     }
 
-    private Map<String, ReturnResult> findByAreac(long areac) {
-        Set<Area> keys = resultMap.keySet();
-        Map<String, ReturnResult> result = null;
-        for (Area key : keys) {
-            if (key.getAreac() == areac) {
-                result = resultMap.get(key);
-                break;
+    private ColItem findReturnResult(ColGroup colTotalLine, long areac) {
+        if (colTotalLine == null) {
+            return null;
+        }
+
+        List<ColItem> datas =colTotalLine.getColItems();
+
+        for (ColItem data : datas) {
+            if (data.getAreac() == areac) {
+                return data;
             }
         }
 
-        return result;
+        return null;
     }
 
     private String getGroupBy() {
-        return " GROUP BY " + GROUPS[this.reportType.type]
+        return " GROUP BY " + GROUPS[0][this.reportType.type]
                 + " , LEFT(rvaddno, " + getAreaLeftNum() + ") ";
+    }
+
+    private String getOrderBy() {
+        return " ORDER BY " + " LEFT(rvaddno, " + getAreaLeftNum() + "), "
+                + GROUPS[0][this.reportType.type];
     }
 
     private String getWhere() {
@@ -165,7 +443,7 @@ public class Reporter {
     }
 
     private String getWhereLike(long areac) {
-        int layer = AreaUtil.getLayer(areac);
+        int layer = areac == 0 ? -1 : AreaUtil.getLayer(areac);
 
         String like = String.valueOf(areac)
                 .substring(0,
@@ -181,7 +459,7 @@ public class Reporter {
     }
 
     private int getAreaLeftNum(long areac) {
-        int layer = AreaUtil.getLayer(areac);
+        int layer = areac == 0 ? -1 : AreaUtil.getLayer(areac);
 
         return layer < 2 ? layer * 2 + 4 : (layer + 1) * 3;
     }
@@ -199,67 +477,7 @@ public class Reporter {
 
 
     public static void main(String[] args) {
-        new Reporter(0, 430100000000L, "2019-05").getCanceledNum();
-    }
-
-    private class Area {
-        long areac;
-        String arean;
-        int compNum;
-
-        public Area() {}
-
-        public Area(long areac) {
-            this.areac = areac;
-        }
-
-        public long getAreac() {
-            return areac;
-        }
-
-        public void setAreac(long areac) {
-            if (this.areac == 0) {
-                synchronized (Area.class) {
-                    if (this.areac == 0) {
-                        this.areac = areac;
-                        executorService.execute(new Runnable() {
-                            @Override
-                            public void run() {
-//                                Area.this.arean = IceRemoteUtil.getArean(areac);
-
-                                String sql =
-                                        " SELECT COUNT(0) "
-                                        + " FROM {{?" + DSMConst.TB_COMP + "}} "
-                                        + " WHERE cstatus&1 = 0 AND ctype = 0 AND caddrcode LIKE ? ";
-
-                                List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(sql, getWhereLike(Area.this.areac));
-
-                                compNum = Integer.parseInt(queryResult.get(0)[0].toString());
-                            }
-                        });
-                    }
-                }
-            }
-        }
-
-        public String getArean() {
-            return arean;
-        }
-
-        @Override
-        public boolean equals(Object o) {
-            if (this == o) return true;
-            if (o == null || getClass() != o.getClass()) return false;
-
-            Area area = (Area) o;
-
-            return areac == area.areac;
-
-        }
-
-        @Override
-        public int hashCode() {
-            return (int) (areac ^ (areac >>> 32));
-        }
+        ColTotal colTotal = new Reporter(3, 0, "2019-05").getResult();
+        System.out.println(JSON.toJSONString(colTotal));
     }
 }

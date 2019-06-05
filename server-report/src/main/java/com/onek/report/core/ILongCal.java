@@ -18,6 +18,10 @@ public interface ILongCal {
     }
 
     default long divLong(long a, long b) {
+        if (b == 0) {
+            return 0;
+        }
+
         return BigInteger.valueOf(a).divide(BigInteger.valueOf(b)).longValue();
     }
 }

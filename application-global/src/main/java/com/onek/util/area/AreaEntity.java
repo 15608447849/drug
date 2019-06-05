@@ -58,4 +58,20 @@ public class AreaEntity {
     public void setLiuQi(Object[] liuQi) {
         this.liuQi = liuQi;
     }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AreaEntity that = (AreaEntity) o;
+
+        return areac == that.areac;
+
+    }
+
+    @Override
+    public int hashCode() {
+        return (int) (areac ^ (areac >>> 32));
+    }
 }

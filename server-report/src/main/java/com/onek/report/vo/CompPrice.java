@@ -1,28 +1,37 @@
 package com.onek.report.vo;
 
+import com.onek.report.core.IDoubleCal;
 import com.onek.report.core.IRowData;
 
-public class CompPrice implements IRowData {
+public class CompPrice implements IRowData, IDoubleCal {
     private long areac;
     private String date;
-    private long max;
-    private long min;
+    private double max;
+    private double min;
     private double avg;
 
-    public long getMax() {
+    public double getMax() {
         return max;
     }
 
-    public void setMax(long max) {
+    public void setMax(double max) {
         this.max = max;
     }
 
-    public long getMin() {
+    public void addMax(double max) {
+        this.max = Math.max(max, this.max);
+    }
+
+    public double getMin() {
         return min;
     }
 
-    public void setMin(long min) {
+    public void setMin(double min) {
         this.min = min;
+    }
+
+    public void addMin(double min) {
+        this.min = Math.min(min, this.min);
     }
 
     public double getAvg() {
@@ -31,6 +40,10 @@ public class CompPrice implements IRowData {
 
     public void setAvg(double avg) {
         this.avg = avg;
+    }
+
+    public void addAvg(double avg) {
+        this.avg = divDouble(addDouble(avg, this.avg), 2);
     }
 
     public long getAreac() {
@@ -51,6 +64,6 @@ public class CompPrice implements IRowData {
 
     @Override
     public double[] getEachCol() {
-        return new double[] { this.max, this.max, this.avg };
+        return new double[] { this.max, this.min, this.avg };
     }
 }
