@@ -1,5 +1,6 @@
 package com.onek.report.init;
 
+import com.onek.report.data.MarketStoreData;
 import com.onek.report.data.SystemConfigData;
 import com.onek.server.infimp.IIceInitialize;
 
@@ -13,6 +14,7 @@ public class ReportInitialize implements IIceInitialize {
         try{
             Thread.sleep(2000);
             SystemConfigData.init();
+            MarketStoreData.init();
         }catch (Exception e){
             e.printStackTrace();
         }

@@ -8,8 +8,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static dao.BaseDAO.getBaseDAO;
-
 public class SystemConfigData {
 
     public static final String DAY_ACTIVE_NUM	= "DAY_ACTIVE_NUM"; //市场分析报表-日活跃数量基准数
