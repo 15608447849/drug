@@ -429,9 +429,11 @@ public class BackGroundProxyMoudule {
                 LogUtil.getDefaultLogger().debug(areaSql);
             }else if((mroleid & RoleCodeCons._PROXY_MGR) > 0){
 
+
+
                 for(String areac : areaArry){
                     if(areac != null && !StringUtils.isEmpty(areac)){
-                        areaSb.append(Integer.parseInt(areac)).append(",");
+                        areaSb.append(Long.parseLong(areac)).append(",");
                     }
                 }
                 String areacStr = areaSb.toString();
@@ -719,11 +721,11 @@ public class BackGroundProxyMoudule {
 
         //审核资质
         if(ctype == 1){
-            int cstatus = ckstatus == 1 ? 256 : 512;
+           // int cstatus = ckstatus == 1 ? 256 : 512;
             String ckSql = " update {{?"+DSMConst.TB_COMP+"}}" +
                     " set cstatus = ?,auditdate = CURRENT_DATE,audittime = CURRENT_TIME,"
                     + "examine = ?,auditer = ?  where cid = ? ";
-            if(baseDao.updateNative(ckSql,cstatus,ckreson,uid,cid) > 0){
+            if(baseDao.updateNative(ckSql,ckstatus,ckreson,uid,cid) > 0){
                 return new Result().success("操作成功！");
             }
         }
@@ -789,9 +791,11 @@ public class BackGroundProxyMoudule {
         sqlBuilder = getgetParamsUDYSQL(sqlBuilder, jsonObject).append(" group by u.uid desc ");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page,
                 sqlBuilder.toString(),new Object[]{cid});
-
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
+
+        if (queryResult == null || queryResult.isEmpty()){
+           return result.setQuery(userInfoVos,pageHolder);
+        }
 
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class,
                 new String[]{"uid","uphone","urealname","roleid","adddate","addtime","offdate",
@@ -1031,53 +1035,92 @@ public class BackGroundProxyMoudule {
         sqlBuilder.append(selectSQL);
 
 
-        if((mroleid & (RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM+RoleCodeCons._DB)) > 0){
-            sqlBuilder.append(" and (");
+        StringBuilder dySql  = new StringBuilder();
+        if((mroleid & (RoleCodeCons._PROXY_DIRECTOR+RoleCodeCons._PROXY_MGR
+                +RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM+RoleCodeCons._DB)) > 0){
+            dySql.append(" and (");
 
-            if((mroleid & RoleCodeCons._PROXY_PARTNER)> 0){
-
-
-                String queryArea =  " select areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where uid = ? and cstatus & 1 = 0";
-
-                List<Object[]> areaRet = baseDao.queryNative(queryArea, puid);
-
-                if(areaRet == null || areaRet.isEmpty()){
-                    return result.success(null);
-                }
-
-                StringBuilder areaSb = new StringBuilder();
-                for (Object[] objs : areaRet){
-                    areaSb.append(objs[0].toString()).append(",");
-                }
-                String areaStr = areaSb.toString();
-                if(areaStr.endsWith(",")){
-                    areaStr = areaStr.substring(0,areaStr.length() - 1);
-                }
-                sqlBuilder.append("caddrcode in ("+areaStr+")");
+            boolean drctFlag = false;
+            if((mroleid & RoleCodeCons._PROXY_DIRECTOR)> 0){
+                dySql.append(" 1=1 ");
+                drctFlag = true;
             }
 
-            if((mroleid & RoleCodeCons._DBM) > 0){
-                if((mroleid & RoleCodeCons._PROXY_PARTNER) > 0){
-                    sqlBuilder.append(" or ");
+            if(!drctFlag){
+                dySql.append(" 1=2 ");
+                if((mroleid & RoleCodeCons._PROXY_MGR)> 0){
+                    String queryAreaSql = " select distinct areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where uid = ? and cstatus & 1 = 0";
+
+                    List<Object[]> areaArry = baseDao.queryNative(queryAreaSql, puid);
+
+                    if(areaArry != null && !areaArry.isEmpty()){
+
+                        StringBuilder areaSb = new StringBuilder();
+                        for(Object[] objs : areaArry){
+                            if(objs[0] != null && !StringUtils.isEmpty(objs[0].toString())){
+                                String areac = objs[0].toString().substring(0,4);
+                                areaSb.append("^");
+                                areaSb.append(areac.substring(0,4));
+                                areaSb.append("[0-9]{1}[1-9]{1}[0]{6}$");
+                                areaSb.append("|");
+                            }
+                        }
+
+                        String areacStr = areaSb.toString();
+                        if(areacStr.endsWith("|")){
+                            areacStr = areacStr.substring(0,areacStr.length() - 1);
+                        }
+
+                        if(!StringUtils.isEmpty(areacStr)){
+                            dySql.append(" or caddrcode REGEXP '"+areacStr+"'");
+                        }
+
+                    }
+
                 }
-                sqlBuilder.append(" tu.belong = ").append(puid);
+
+                if((mroleid & RoleCodeCons._PROXY_PARTNER)> 0){
+
+
+                    String queryArea =  " select areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where uid = ? and cstatus & 1 = 0";
+
+                    List<Object[]> areaRet = baseDao.queryNative(queryArea, puid);
+
+                    if(areaRet != null && !areaRet.isEmpty()){
+                        StringBuilder areaSb = new StringBuilder();
+                        for (Object[] objs : areaRet){
+                            areaSb.append(objs[0].toString()).append(",");
+                        }
+                        String areaStr = areaSb.toString();
+                        if(areaStr.endsWith(",")){
+                            areaStr = areaStr.substring(0,areaStr.length() - 1);
+                        }
+
+                        dySql.append(" or caddrcode in ("+areaStr+")");
+                    }
+                }
+
+                if((mroleid & RoleCodeCons._DBM) > 0){
+                    dySql.append(" or tu.belong = ").append(puid);
+                }
+
+                if((mroleid & RoleCodeCons._DB) > 0){
+                    dySql.append(" or tu.uid = ").append(puid);
+                }
             }
 
-            if((mroleid & RoleCodeCons._DB) > 0){
-                if((mroleid & (RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM)) > 0){
-                    sqlBuilder.append(" or ");
-                }
-                sqlBuilder.append(" tu.uid = ").append(puid);
-            }
-            sqlBuilder.append(")");
+            dySql.append(")");
         }
 
-
+//        if(dySql.toString().trim().equals("and ()")){
+//            return result.setQuery(null,pageHolder);
+//        }
+        sqlBuilder.append(dySql.toString());
         sqlBuilder = getgetParamsSTDYSQL(sqlBuilder, jsonObject).append(" group by tu.uid desc ");
+        LogUtil.getDefaultLogger().debug(sqlBuilder.toString());
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
-
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
         ProxyStoreVO[] proxyStoreVOS = new ProxyStoreVO[queryResult.size()];
+        if (queryResult == null || queryResult.isEmpty()) return result.setQuery(proxyStoreVOS,pageHolder);
 
         baseDao.convToEntity(queryResult, proxyStoreVOS, ProxyStoreVO.class,
                 new String[]{"companyId","phone","uid","company","addressCode","address","createdate",

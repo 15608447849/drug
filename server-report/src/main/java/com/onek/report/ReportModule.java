@@ -7,6 +7,7 @@ import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.report.data.MarketStoreData;
 import com.onek.report.data.SystemConfigData;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -470,19 +471,20 @@ public class ReportModule {
         int REPURCHASE_ONE_TOTAL = 0, REPURCHASE_TWO_TOTAL = 0,REPURCHASE_THREE_TOTAL = 0, REPURCHASE_SUM_TOTAL  = 0;
         // 累计报表
         for(JSONObject js : jsonList) {
-            String a = js.getString(col_areac);
+//            String a = js.getString(col_areac);
             JSONArray array = js.getJSONArray(col_detail);
+
+            int mark_etm = js.getInteger(col_mark_etm);
+            int mark_chain = js.getInteger(col_mark_chain);
+            int mark_other = js.getInteger(col_mark_other);
+            int mark_sum = js.getInteger(col_mark_sum);
+
             int REG_ONE = 0, REG_TWO = 0, REG_THREE = 0,REG_SUM  = 0;
             int AUTH_ONE = 0, AUTH_TWO = 0,AUTH_THREE = 0, AUTH_SUM  = 0;
             int ACTIVE_ONE = 0, ACTIVE_TWO = 0, ACTIVE_THREE = 0,ACTIVE_SUM = 0;
             int REPURCHASE_ONE = 0, REPURCHASE_TWO = 0,REPURCHASE_THREE = 0, REPURCHASE_SUM  = 0;
             for (int i = 0; i < array.size(); i++) {
                 JSONObject subJs = array.getJSONObject(i);
-
-                int mark_etm = subJs.getInteger(col_mark_etm);
-                int mark_chain = subJs.getInteger(col_mark_chain);
-                int mark_other = subJs.getInteger(col_mark_other);
-                int mark_sum = subJs.getInteger(col_mark_sum);
 
                 int reg_etm = subJs.getInteger(col_reg_etm);
                 int reg_chain = subJs.getInteger(col_reg_chain);
@@ -535,6 +537,11 @@ public class ReportModule {
                     subJs.put(col_rep_chain_rate, NumUtil.div(REPURCHASE_TWO, AUTH_TWO));
                     subJs.put(col_rep_other_rate, NumUtil.div(REPURCHASE_THREE, AUTH_THREE));
                     subJs.put(col_rep_sum_rate, NumUtil.div(REPURCHASE_SUM, AUTH_SUM));
+
+                    subJs.put(col_occ_etm_rate,  NumUtil.div(REG_ONE, mark_etm));
+                    subJs.put(col_occ_chain_rate,  NumUtil.div(REG_TWO, mark_chain));
+                    subJs.put(col_occ_other_rate,  NumUtil.div(REG_THREE, mark_other));
+                    subJs.put(col_occ_sum_rate,  NumUtil.div(REG_SUM, mark_sum));
                 }
 
                 MARK_ONE_TOTAL += mark_etm;  MARK_TWO_TOTAL += mark_chain; MARK_THREE_TOTAL += mark_other;  MARK_SUM_TOTAL += mark_sum;
@@ -571,10 +578,10 @@ public class ReportModule {
         subJS.put(col_rep_chain, REPURCHASE_TWO_TOTAL);
         subJS.put(col_rep_other, REPURCHASE_THREE_TOTAL);
         subJS.put(col_rep_sum, REPURCHASE_SUM_TOTAL);
-        subJS.put(col_occ_etm_rate, "0");
-        subJS.put(col_occ_chain_rate, "0");
-        subJS.put(col_occ_other_rate, "0");
-        subJS.put(col_occ_sum_rate, "0");
+        subJS.put(col_occ_etm_rate,  NumUtil.div(REG_ONE_TOTAL, MARK_ONE_TOTAL));
+        subJS.put(col_occ_chain_rate,  NumUtil.div(REG_TWO_TOTAL, MARK_TWO_TOTAL));
+        subJS.put(col_occ_other_rate,  NumUtil.div(REG_THREE_TOTAL, MARK_THREE_TOTAL));
+        subJS.put(col_occ_sum_rate,  NumUtil.div(REG_SUM_TOTAL, MARK_SUM_TOTAL));
         subJS.put(col_act_etm_rate, NumUtil.div(ACTIVE_ONE_TOTAL, AUTH_ONE_TOTAL));
         subJS.put(col_act_chain_rate, NumUtil.div(ACTIVE_TWO_TOTAL, AUTH_TWO_TOTAL));
         subJS.put(col_act_other_rate, NumUtil.div(ACTIVE_THREE_TOTAL, AUTH_THREE_TOTAL));
@@ -599,6 +606,13 @@ public class ReportModule {
                 JSONObject js = new JSONObject();
                 js.put(col_areac, c);
                 js.put(col_arean, areaMap.get(c));
+                int m1 = MarketStoreData.getEtmByAreac(c);
+                int m2 = MarketStoreData.getChainByAreac(c);
+                int m3 = MarketStoreData.getOtherByAreac(c);
+                js.put(col_mark_etm, m1);
+                js.put(col_mark_chain, m2);
+                js.put(col_mark_other, m3);
+                js.put(col_mark_sum, m1 + m2 + m3);
                 List<JSONObject> subList = new ArrayList<>();
                 for(int i = 1; i <= maxDate; i++){
                     String d = i < 10 ?  "0" + i : i +"";
@@ -625,6 +639,13 @@ public class ReportModule {
                 JSONObject js = new JSONObject();
                 js.put(col_areac, c);
                 js.put(col_arean, areaMap.get(c));
+                int m1 = MarketStoreData.getEtmByAreac(c);
+                int m2 = MarketStoreData.getChainByAreac(c);
+                int m3 = MarketStoreData.getOtherByAreac(c);
+                js.put(col_mark_etm, m1);
+                js.put(col_mark_chain, m2);
+                js.put(col_mark_other, m3);
+                js.put(col_mark_sum, m1 + m2 + m3);
                 List<JSONObject> subList = new ArrayList<>();
                 for(int i = 1; i <= set.size(); i++){
                     WeekRange weekRange = maps.get(i);
@@ -645,6 +666,13 @@ public class ReportModule {
                 JSONObject js = new JSONObject();
                 js.put(col_areac, c);
                 js.put(col_arean, areaMap.get(c));
+                int m1 = MarketStoreData.getEtmByAreac(c);
+                int m2 = MarketStoreData.getChainByAreac(c);
+                int m3 = MarketStoreData.getOtherByAreac(c);
+                js.put(col_mark_etm, m1);
+                js.put(col_mark_chain, m2);
+                js.put(col_mark_other, m3);
+                js.put(col_mark_sum, m1 + m2 + m3);
                 List<JSONObject> subList = new ArrayList<>();
                 for(int i = 1; i <= 12; i++){
                     JSONObject subJS = new JSONObject();
@@ -664,6 +692,13 @@ public class ReportModule {
                 JSONObject js = new JSONObject();
                 js.put(col_areac, c);
                 js.put(col_arean, areaMap.get(c));
+                int m1 = MarketStoreData.getEtmByAreac(c);
+                int m2 = MarketStoreData.getChainByAreac(c);
+                int m3 = MarketStoreData.getOtherByAreac(c);
+                js.put(col_mark_etm, m1);
+                js.put(col_mark_chain, m2);
+                js.put(col_mark_other, m3);
+                js.put(col_mark_sum, m1 + m2 + m3);
 
                 List<JSONObject> subList = new ArrayList<>();
                 JSONObject subJS = new JSONObject();
@@ -680,10 +715,6 @@ public class ReportModule {
     }
 
     private void generateDetailJSON(JSONObject subJS) {
-        subJS.put(col_mark_etm, "0");
-        subJS.put(col_mark_chain, "0");
-        subJS.put(col_mark_other, "0");
-        subJS.put(col_mark_sum, "0");
         subJS.put(col_reg_etm, "0");
         subJS.put(col_reg_chain, "0");
         subJS.put(col_reg_other, "0");
