@@ -47,6 +47,7 @@ public class ReportModule {
 
     private static final String col_areac = "areac";
     private static final String col_detail = "detail";
+    private static final String col_total = "total";
     private static final String col_arean = "arean";
     private static final String col_first = "first";
     private static final String col_showdate = "showdate";
@@ -463,6 +464,237 @@ public class ReportModule {
 //        return new Result().success();
     }
 
+    @UserPermission(ignore = true)
+    public Result marketAnalysisByTime(AppContext appContext) {
+         Result r = marketAnalysis(appContext);
+         if(r.code != 200){
+             return r;
+         }
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        String _areac_p = json.has("areac") ? json.get("areac").getAsString() : "";
+        String _arean_p = json.has("arean") ? json.get("arean").getAsString() : "";
+        int _type_p = json.has("type") ? json.get("type").getAsInt() : 0;
+        List<JSONObject> jsonList = (List<JSONObject>) r.data;
+
+        JSONObject resultJson = new JSONObject();
+        resultJson.put("sumtotal",new JSONObject());
+        List<JSONObject> list = new ArrayList<>();
+         if(jsonList != null && jsonList.size() > 0){
+             List<JSONObject> newJsonList = new ArrayList<>();
+             JSONArray jsArr = jsonList.get(0).getJSONArray(col_detail);
+             if(jsArr != null && jsArr.size() > 0){
+                 for (int j = 0; j < jsArr.size(); j++) {
+                     JSONObject subJs = jsArr.getJSONObject(j);
+                     JSONObject newJson = new JSONObject();
+                     newJson.put(col_showdate, subJs.getString(col_showdate));
+                     newJsonList.add(newJson);
+                 }
+             }
+             for(int i = 0; i < jsonList.size() -1; i++){
+                 JSONObject jsonObject = jsonList.get(i);
+                 String areac = jsonList.get(i).getString(col_areac);
+                 String arean = jsonList.get(i).getString(col_arean);
+                 int mark_etm = jsonObject.getInteger(col_mark_etm);
+                 int mark_chain = jsonObject.getInteger(col_mark_chain);
+                 int mark_other = jsonObject.getInteger(col_mark_other);
+                 int mark_sum = jsonObject.getInteger(col_mark_sum);
+                 JSONArray jsonArray = jsonObject.getJSONArray(col_detail);
+                 for (int j = 0; j < jsonArray.size(); j++) {
+                     JSONObject subJs = jsonArray.getJSONObject(j);
+                     JSONObject newJson = newJsonList.get(j);
+                     if(newJson.getString(col_showdate).equals(subJs.getString(col_showdate))){
+                         JSONObject newSubJson = new JSONObject();
+                         newSubJson.put(col_areac, areac);
+                         newSubJson.put(col_arean, arean);
+                         newSubJson.put(col_mark_etm, mark_etm);
+                         newSubJson.put(col_mark_chain, mark_chain);
+                         newSubJson.put(col_mark_other, mark_other);
+                         newSubJson.put(col_mark_sum, mark_sum);
+                         newSubJson.put(col_reg_etm, subJs.getIntValue(col_reg_etm));
+                         newSubJson.put(col_reg_chain, subJs.getIntValue(col_reg_chain));
+                         newSubJson.put(col_reg_other, subJs.getIntValue(col_reg_other));
+                         newSubJson.put(col_reg_sum, subJs.getIntValue(col_reg_sum));
+                         newSubJson.put(col_auth_etm, subJs.getIntValue(col_auth_etm));
+                         newSubJson.put(col_auth_chain, subJs.getIntValue(col_auth_chain));
+                         newSubJson.put(col_auth_other, subJs.getIntValue(col_auth_other));
+                         newSubJson.put(col_auth_sum, subJs.getIntValue(col_auth_sum));
+                         newSubJson.put(col_act_etm, subJs.getIntValue(col_act_etm));
+                         newSubJson.put(col_act_chain, subJs.getIntValue(col_act_chain));
+                         newSubJson.put(col_act_other, subJs.getIntValue(col_act_other));
+                         newSubJson.put(col_act_sum, subJs.getIntValue(col_act_sum));
+                         newSubJson.put(col_rep_etm, subJs.getIntValue(col_rep_etm));
+                         newSubJson.put(col_rep_chain, subJs.getIntValue(col_rep_chain));
+                         newSubJson.put(col_rep_other, subJs.getIntValue(col_rep_other));
+                         newSubJson.put(col_rep_sum, subJs.getIntValue(col_rep_sum));
+                         newSubJson.put(col_occ_etm_rate, subJs.getIntValue(col_occ_etm_rate));
+                         newSubJson.put(col_occ_chain_rate, subJs.getIntValue(col_occ_chain_rate));
+                         newSubJson.put(col_occ_other_rate, subJs.getIntValue(col_occ_other_rate));
+                         newSubJson.put(col_occ_sum_rate, subJs.getIntValue(col_occ_sum_rate));
+                         newSubJson.put(col_act_etm_rate, subJs.getIntValue(col_act_etm_rate));
+                         newSubJson.put(col_act_chain_rate, subJs.getIntValue(col_act_chain_rate));
+                         newSubJson.put(col_act_other_rate, subJs.getIntValue(col_act_other_rate));
+                         newSubJson.put(col_act_sum_rate, subJs.getIntValue(col_act_sum_rate));
+                         newSubJson.put(col_rep_etm_rate, subJs.getIntValue(col_rep_etm_rate));
+                         newSubJson.put(col_rep_chain_rate, subJs.getIntValue(col_rep_chain_rate));
+                         newSubJson.put(col_rep_other_rate, subJs.getIntValue(col_rep_other_rate));
+                         newSubJson.put(col_rep_sum_rate, subJs.getIntValue(col_rep_sum_rate));
+                         JSONArray newJsonArray = newJson.getJSONArray(col_detail);
+                         if(newJsonArray == null || newJsonArray.size()  <= 0){
+                             newJsonArray = new JSONArray();
+                         }
+                         newJsonArray.add(newSubJson);
+                         newJson.put(col_detail, newJsonArray);
+                     }
+                 }
+             }
+
+             int MARK_ONE_TOTAL = 0, MARK_TWO_TOTAL = 0, MARK_THREE_TOTAL = 0,MARK_SUM_TOTAL  = 0;
+             int REG_ONE_TOTAL = 0, REG_TWO_TOTAL = 0, REG_THREE_TOTAL = 0,REG_SUM_TOTAL  = 0;
+             int AUTH_ONE_TOTAL = 0, AUTH_TWO_TOTAL = 0,AUTH_THREE_TOTAL = 0, AUTH_SUM_TOTAL  = 0;
+             int ACTIVE_ONE_TOTAL = 0, ACTIVE_TWO_TOTAL = 0, ACTIVE_THREE_TOTAL = 0,ACTIVE_SUM_TOTAL = 0;
+             int REPURCHASE_ONE_TOTAL = 0, REPURCHASE_TWO_TOTAL = 0,REPURCHASE_THREE_TOTAL = 0, REPURCHASE_SUM_TOTAL  = 0;
+             for(JSONObject obj : newJsonList){
+                 JSONArray jsonArray = obj.getJSONArray(col_detail);
+                 int MARK_ONE = 0, MARK_TWO = 0, MARK_THREE = 0,MARK_SUM  = 0;
+                 int REG_ONE = 0, REG_TWO = 0, REG_THREE = 0,REG_SUM  = 0;
+                 int AUTH_ONE = 0, AUTH_TWO = 0,AUTH_THREE = 0, AUTH_SUM  = 0;
+                 int ACTIVE_ONE = 0, ACTIVE_TWO = 0, ACTIVE_THREE = 0,ACTIVE_SUM = 0;
+                 int REPURCHASE_ONE = 0, REPURCHASE_TWO = 0,REPURCHASE_THREE = 0, REPURCHASE_SUM  = 0;
+
+                 for (int j = 0; j < jsonArray.size(); j++) {
+                     JSONObject subJs = jsonArray.getJSONObject(j);
+
+                     int mark_etm = subJs.getInteger(col_mark_etm);
+                     int mark_chain = subJs.getInteger(col_mark_chain);
+                     int mark_other = subJs.getInteger(col_mark_other);
+                     int mark_sum = subJs.getInteger(col_mark_sum);
+
+                     int reg_etm = subJs.getInteger(col_reg_etm);
+                     int reg_chain = subJs.getInteger(col_reg_chain);
+                     int reg_other = subJs.getInteger(col_reg_other);
+                     int reg_sum = subJs.getInteger(col_reg_sum);
+
+                     int auth_etm = subJs.getInteger(col_auth_etm);
+                     int auth_chain = subJs.getInteger(col_reg_chain);
+                     int auth_other = subJs.getInteger(col_reg_other);
+                     int auth_sum = subJs.getInteger(col_reg_sum);
+
+                     int act_etm = subJs.getInteger(col_act_etm);
+                     int act_chain = subJs.getInteger(col_act_chain);
+                     int act_other = subJs.getInteger(col_act_other);
+                     int act_sum = subJs.getInteger(col_act_sum);
+
+                     int rep_etm = subJs.getInteger(col_rep_etm);
+                     int rep_chain = subJs.getInteger(col_rep_chain);
+                     int rep_other = subJs.getInteger(col_rep_other);
+                     int rep_sum = subJs.getInteger(col_rep_sum);
+
+                     MARK_ONE += mark_etm;  MARK_TWO += mark_chain; MARK_THREE += mark_other;  MARK_SUM += mark_sum;
+                     REG_ONE += reg_etm;  REG_TWO += reg_chain; REG_THREE += reg_other;  REG_SUM += reg_sum;
+                     AUTH_ONE += auth_etm; AUTH_TWO += auth_chain; AUTH_THREE += auth_other; AUTH_SUM += auth_sum;
+                     ACTIVE_ONE += act_etm; ACTIVE_TWO += act_chain; ACTIVE_THREE += act_other; ACTIVE_SUM += act_sum;
+                     REPURCHASE_ONE += rep_etm; REPURCHASE_TWO += rep_chain; REPURCHASE_THREE += rep_other; REPURCHASE_SUM += rep_sum;
+
+                     REG_ONE_TOTAL += reg_etm;  REG_TWO_TOTAL += reg_chain; REG_THREE_TOTAL += reg_other;  REG_SUM_TOTAL += reg_sum;
+                     AUTH_ONE_TOTAL += auth_etm; AUTH_TWO_TOTAL += auth_chain; AUTH_THREE_TOTAL += auth_other; AUTH_SUM_TOTAL += auth_sum;
+                     ACTIVE_ONE_TOTAL += act_etm; ACTIVE_TWO_TOTAL += act_chain; ACTIVE_THREE_TOTAL += act_other; ACTIVE_SUM_TOTAL += act_sum;
+                     REPURCHASE_ONE_TOTAL += rep_etm; REPURCHASE_TWO_TOTAL += rep_chain; REPURCHASE_THREE_TOTAL += rep_other; REPURCHASE_SUM_TOTAL += rep_sum;
+
+                 }
+                 obj.put(col_detail, jsonArray);
+                 list.add(obj);
+
+                 if(_type_p != 6){ // 不是年报
+                     JSONObject jsonObject = new JSONObject();
+                     jsonObject.put(col_showdate, "合计");
+                     jsonObject.put(col_areac, _areac_p);
+                     jsonObject.put(col_arean, _arean_p);
+                     jsonObject.put(col_mark_etm, MARK_ONE);
+                     jsonObject.put(col_mark_chain, MARK_TWO);
+                     jsonObject.put(col_mark_other, MARK_THREE);
+                     jsonObject.put(col_mark_sum, MARK_SUM);
+                     jsonObject.put(col_reg_etm, REG_ONE);
+                     jsonObject.put(col_reg_chain, REG_TWO);
+                     jsonObject.put(col_reg_other, REG_THREE);
+                     jsonObject.put(col_reg_sum, REG_SUM);
+                     jsonObject.put(col_auth_etm, AUTH_ONE);
+                     jsonObject.put(col_auth_chain, AUTH_TWO);
+                     jsonObject.put(col_auth_other, AUTH_THREE);
+                     jsonObject.put(col_auth_sum, AUTH_SUM);
+                     jsonObject.put(col_act_etm, ACTIVE_ONE);
+                     jsonObject.put(col_act_chain, ACTIVE_TWO);
+                     jsonObject.put(col_act_other, ACTIVE_THREE);
+                     jsonObject.put(col_act_sum, ACTIVE_SUM);
+                     jsonObject.put(col_rep_etm, REPURCHASE_ONE);
+                     jsonObject.put(col_rep_chain, REPURCHASE_TWO);
+                     jsonObject.put(col_rep_other, REPURCHASE_THREE);
+                     jsonObject.put(col_rep_sum, REPURCHASE_SUM);
+                     jsonObject.put(col_act_etm_rate, NumUtil.div(ACTIVE_ONE, AUTH_ONE));
+                     jsonObject.put(col_act_chain_rate, NumUtil.div(ACTIVE_TWO, AUTH_TWO));
+                     jsonObject.put(col_act_other_rate, NumUtil.div(ACTIVE_THREE, AUTH_THREE));
+                     jsonObject.put(col_act_sum_rate, NumUtil.div(ACTIVE_SUM, AUTH_SUM));
+                     jsonObject.put(col_rep_etm_rate, NumUtil.div(REPURCHASE_ONE, AUTH_ONE));
+                     jsonObject.put(col_rep_chain_rate, NumUtil.div(REPURCHASE_TWO, AUTH_TWO));
+                     jsonObject.put(col_rep_other_rate, NumUtil.div(REPURCHASE_THREE, AUTH_THREE));
+                     jsonObject.put(col_rep_sum_rate, NumUtil.div(REPURCHASE_SUM, AUTH_SUM));
+
+                     jsonObject.put(col_occ_etm_rate,  NumUtil.div(REG_ONE, MARK_ONE));
+                     jsonObject.put(col_occ_chain_rate,  NumUtil.div(REG_TWO, MARK_TWO));
+                     jsonObject.put(col_occ_other_rate,  NumUtil.div(REG_THREE, MARK_THREE));
+                     jsonObject.put(col_occ_sum_rate,  NumUtil.div(REG_SUM, MARK_SUM));
+                     obj.put(col_total, jsonObject);
+
+                 }
+
+                 MARK_ONE_TOTAL = MARK_ONE;  MARK_TWO_TOTAL = MARK_TWO; MARK_THREE_TOTAL = MARK_THREE;  MARK_SUM_TOTAL = MARK_SUM;
+             }
+             resultJson.put("list", list);
+             // 不为累计报表
+             if(_type_p == 0 || _type_p ==2 || _type_p == 4 || _type_p == 6){
+                 JSONObject jsonObject = new JSONObject();
+                 jsonObject.put(col_showdate, "合计");
+                 jsonObject.put(col_areac, _areac_p);
+                 jsonObject.put(col_arean, _arean_p);
+                 jsonObject.put(col_mark_etm, MARK_ONE_TOTAL);
+                 jsonObject.put(col_mark_chain, MARK_TWO_TOTAL);
+                 jsonObject.put(col_mark_other, MARK_THREE_TOTAL);
+                 jsonObject.put(col_mark_sum, MARK_SUM_TOTAL);
+                 jsonObject.put(col_reg_etm, REG_ONE_TOTAL);
+                 jsonObject.put(col_reg_chain, REG_TWO_TOTAL);
+                 jsonObject.put(col_reg_other, REG_THREE_TOTAL);
+                 jsonObject.put(col_reg_sum, REG_SUM_TOTAL);
+                 jsonObject.put(col_auth_etm, AUTH_ONE_TOTAL);
+                 jsonObject.put(col_auth_chain, AUTH_TWO_TOTAL);
+                 jsonObject.put(col_auth_other, AUTH_THREE_TOTAL);
+                 jsonObject.put(col_auth_sum, AUTH_SUM_TOTAL);
+                 jsonObject.put(col_act_etm, ACTIVE_ONE_TOTAL);
+                 jsonObject.put(col_act_chain, ACTIVE_TWO_TOTAL);
+                 jsonObject.put(col_act_other, ACTIVE_THREE_TOTAL);
+                 jsonObject.put(col_act_sum, ACTIVE_SUM_TOTAL);
+                 jsonObject.put(col_rep_etm, REPURCHASE_ONE_TOTAL);
+                 jsonObject.put(col_rep_chain, REPURCHASE_TWO_TOTAL);
+                 jsonObject.put(col_rep_other, REPURCHASE_THREE_TOTAL);
+                 jsonObject.put(col_rep_sum, REPURCHASE_SUM_TOTAL);
+                 jsonObject.put(col_act_etm_rate, NumUtil.div(ACTIVE_ONE_TOTAL, AUTH_ONE_TOTAL));
+                 jsonObject.put(col_act_chain_rate, NumUtil.div(ACTIVE_TWO_TOTAL, AUTH_TWO_TOTAL));
+                 jsonObject.put(col_act_other_rate, NumUtil.div(ACTIVE_THREE_TOTAL, AUTH_THREE_TOTAL));
+                 jsonObject.put(col_act_sum_rate, NumUtil.div(ACTIVE_SUM_TOTAL, AUTH_SUM_TOTAL));
+                 jsonObject.put(col_rep_etm_rate, NumUtil.div(REPURCHASE_ONE_TOTAL, AUTH_ONE_TOTAL));
+                 jsonObject.put(col_rep_chain_rate, NumUtil.div(REPURCHASE_TWO_TOTAL, AUTH_TWO_TOTAL));
+                 jsonObject.put(col_rep_other_rate, NumUtil.div(REPURCHASE_THREE_TOTAL, AUTH_THREE_TOTAL));
+                 jsonObject.put(col_rep_sum_rate, NumUtil.div(REPURCHASE_SUM_TOTAL, AUTH_SUM_TOTAL));
+
+                 jsonObject.put(col_occ_etm_rate,  NumUtil.div(REG_ONE_TOTAL, MARK_ONE_TOTAL));
+                 jsonObject.put(col_occ_chain_rate,  NumUtil.div(REG_TWO_TOTAL, MARK_TWO_TOTAL));
+                 jsonObject.put(col_occ_other_rate,  NumUtil.div(REG_THREE_TOTAL, MARK_THREE_TOTAL));
+                 jsonObject.put(col_occ_sum_rate,  NumUtil.div(REG_SUM_TOTAL, MARK_SUM_TOTAL));
+                 resultJson.put("sumtotal", jsonObject);
+             }
+
+         }
+         return new Result().success(resultJson);
+    }
+
     private void calcTotal(int type, List<JSONObject> jsonList) {
         int MARK_ONE_TOTAL = 0, MARK_TWO_TOTAL = 0, MARK_THREE_TOTAL = 0,MARK_SUM_TOTAL  = 0;
         int REG_ONE_TOTAL = 0, REG_TWO_TOTAL = 0, REG_THREE_TOTAL = 0,REG_SUM_TOTAL  = 0;
@@ -544,12 +776,13 @@ public class ReportModule {
                     subJs.put(col_occ_sum_rate,  NumUtil.div(REG_SUM, mark_sum));
                 }
 
-                MARK_ONE_TOTAL += mark_etm;  MARK_TWO_TOTAL += mark_chain; MARK_THREE_TOTAL += mark_other;  MARK_SUM_TOTAL += mark_sum;
                 REG_ONE_TOTAL += reg_etm;  REG_TWO_TOTAL += reg_chain; REG_THREE_TOTAL += reg_other;  REG_SUM_TOTAL += reg_sum;
                 AUTH_ONE_TOTAL += auth_etm; AUTH_TWO_TOTAL += auth_chain; AUTH_THREE_TOTAL += auth_other; AUTH_SUM_TOTAL += auth_sum;
                 ACTIVE_ONE_TOTAL += act_etm; ACTIVE_TWO_TOTAL += act_chain; ACTIVE_THREE_TOTAL += act_other; ACTIVE_SUM_TOTAL += act_sum;
                 REPURCHASE_ONE_TOTAL += rep_etm; REPURCHASE_TWO_TOTAL += rep_chain; REPURCHASE_THREE_TOTAL += rep_other; REPURCHASE_SUM_TOTAL += rep_sum;
             }
+
+            MARK_ONE_TOTAL += mark_etm;  MARK_TWO_TOTAL += mark_chain; MARK_THREE_TOTAL += mark_other;  MARK_SUM_TOTAL += mark_sum;
         }
 
 
