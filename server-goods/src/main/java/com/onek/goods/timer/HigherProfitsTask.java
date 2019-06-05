@@ -18,6 +18,12 @@ import util.TimeUtils;
 
 import java.util.*;
 
+/**
+ *
+ * 功能: 高毛利定时任务
+ * 详情说明: 抽取30条高毛利商品
+ * 作者: 蒋文广
+ */
 public class HigherProfitsTask extends TimerTask {
 
     private static final String SELECT_OLD_HIGHPROFIT_SQL = "select sku from {{?"+ DSMConst.TD_PROD_SKU+"}} sku " +
