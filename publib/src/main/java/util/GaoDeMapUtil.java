@@ -6,6 +6,8 @@ import java.awt.geom.Line2D;
 import java.awt.geom.Point2D;
 import java.net.URLEncoder;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static java.lang.Double.parseDouble;
 
@@ -83,16 +85,68 @@ public class GaoDeMapUtil {
         }
         return null;
     }
+    /**
+     * 解析地址
+     * @param address
+     * @return
+     */
+    public static List<Map<String,String>> addressResolution(String address){
+        /*
+         * java.util.regex是一个用正则表达式所订制的模式来对字符串进行匹配工作的类库包。它包括两个类：Pattern和Matcher Pattern
+         *    一个Pattern是一个正则表达式经编译后的表现模式。 Matcher
+         *    一个Matcher对象是一个状态机器，它依据Pattern对象做为匹配模式对字符串展开匹配检查。
+         *    首先一个Pattern实例订制了一个所用语法与PERL的类似的正则表达式经编译后的模式，然后一个Matcher实例在这个给定的Pattern实例的模式控制下进行字符串的匹配工作。
+         */
+        String regex="(?<province>[^省]+自治区|.*?省|.*?行政区|.*?市)(?<city>[^市]+自治州|.*?地区|.*?行政单位|.+盟|市辖区|.*?市|.*?县)(?<county>[^县]+县|.+区|.+市|.+旗|.+海域|.+岛)?(?<town>[^区]+区|.+镇)?(?<village>.*)";
+        Matcher m= Pattern.compile(regex).matcher(address);
+        String province=null,city=null,county=null,town=null,village=null;
+        List<Map<String,String>> table=new ArrayList<Map<String,String>>();
+        Map<String,String> row=null;
+        while(m.find()){
+            row=new LinkedHashMap<String,String>();
+            province=m.group("province");
+            row.put("province", province==null?"":province.trim());
+            city=m.group("city");
+            row.put("city", city==null?"":city.trim());
+            county=m.group("county");
+            row.put("county", county==null?"":county.trim());
+            town=m.group("town");
+            row.put("town", town==null?"":town.trim());
+            village=m.group("village");
+            row.put("village", village==null?"":village.trim());
+            table.add(row);
+        }
+        return table;
+    }
+
+
     //获取地区边界信息
     private static DataBean areaPolyline(String address,int index){
         try{
-            DataBean d = addressConvertLatLon(address, 0);
+            String temp = address;
+            if (index<4){
+                Map<String,String>  map = addressResolution(address).get(0);
+                if (!StringUtils.isEmpty(map.get("province"))){
+                    temp = map.get("province");
+                }
+                if (!StringUtils.isEmpty(map.get("city"))){
+                    temp = map.get("city");
+                }
+                if (!StringUtils.isEmpty(map.get("county"))){
+                    temp = map.get("county");
+                }
+            }else{
+                DataBean d = addressConvertLatLon(address, 0);
+                temp = d.adcode;
+            }
+
+            temp = URLEncoder.encode(temp,"UTF-8");
             StringBuffer sb = new StringBuffer( "https://restapi.amap.com/v3/config/district?");
             HashMap<String,String> map = new HashMap<>();
             map.put("key",apiKey);
-            map.put("keywords",d.adcode);
+            map.put("keywords",temp);
             map.put("subdistrict","0");
-            map.put("filter",d.adcode);
+            if (index>=4) map.put("filter",temp);
             map.put("extensions","all");
             String result = new HttpRequest().bindParam(sb,map).getRespondContent();
             System.out.println(result);
@@ -102,7 +156,7 @@ public class GaoDeMapUtil {
             return jsonBean.districts.get(0);
         } catch (Exception e) {
             index++;
-            if (index<3) return areaPolyline(address,index);
+            if (index<6) return areaPolyline(address,index);
         }
         return null;
     }
@@ -280,8 +334,7 @@ public class GaoDeMapUtil {
 
 //        System.out.println(pointJsonToListArrayJson(json));
 
-//                List<Point> points = areaPolyline("湖南省长沙市");
-//        System.out.println(points);
+        System.out.println( areaPolyline("湖南省株洲市渌口区"));
 
 //https://lbs.amap.com/api/javascript-api/example/relationship-judgment/point-surface-relation  console.log(JSON.stringify(point))
 
