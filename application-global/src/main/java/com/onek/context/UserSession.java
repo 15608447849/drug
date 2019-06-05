@@ -56,6 +56,7 @@ public class UserSession implements Serializable{
         userSession.userName = userName;
         userSession.phone = phone;
         userSession.belong = belong;
+        userSession.compId = compId;
         return userSession;
     }
 

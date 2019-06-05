@@ -33,6 +33,16 @@ import static com.onek.util.RedisGlobalKeys.getUserCode;
 public class BackgroundUserModule {
     private static final BaseDAO baseDao = BaseDAO.getBaseDAO();
 
+  /* *
+   * @description 新增或者修改用户
+   * @params [uid用户码（新增传0）,uphone（手机号）,uaccount（账户）,urealname（真实姓名）,
+   * upw（密码默认手机号后六位）,roleid（角色码）,adddate,addtime,belong（上级（地推））]
+   * @return -1失败（参数错误 用户已存在 ） 200成功
+   * @exception
+   * @author 11842
+   * @time  2019/6/5 13:49
+   * @version 1.1.1
+   **/
     @UserPermission(ignore = true)
     public Result insertOrUpdUser(AppContext appContext) {
         String json = appContext.param.json;
@@ -136,6 +146,16 @@ public class BackgroundUserModule {
         return count > 0;
     }
 
+
+    /* *
+     * @description 用户启用停用
+     * @params [type（0， 停用  1 启用）]
+     * @return -1失败 200成功
+     * @exception
+     * @author 11842
+     * @time  2019/6/5 13:52
+     * @version 1.1.1
+     **/
     @UserPermission(ignore = true)
     public Result cancelOrFrozenUser(AppContext appContext){
         Result result = new Result();
@@ -157,6 +177,17 @@ public class BackgroundUserModule {
         return result.fail("操作失败");
     }
 
+
+    /* *
+     * @description 用户查询接口
+     * @params [pageSize：每页数量 pageNo： 第几页  urealname：真实姓名 roleid：角色码 uphone：电话号码 cstatus：用户状态
+     * areac：所在地区码 ]
+     * @return 见UserInfoVo.class
+     * @exception
+     * @author 11842
+     * @time  2019/6/5 13:54
+     * @version 1.1.1
+     **/
     @UserPermission(ignore = true)
     public Result queryUsers(AppContext appContext) {
         String json = appContext.param.json;
@@ -271,6 +302,15 @@ public class BackgroundUserModule {
         return sqlBuilder;
     }
 
+    /* *
+     * @description 获取用户详情
+     * @params [uid：用户码 ]
+     * @return 见UserInfoVo.class
+     * @exception
+     * @author 11842
+     * @time  2019/6/5 13:58
+     * @version 1.1.1
+     **/
     @UserPermission(ignore = true)
     public Result getUserDetail(AppContext appContext) {
         Result result = new Result();
@@ -305,6 +345,15 @@ public class BackgroundUserModule {
         return result;
     }
 
+    /* *
+     * @description 重置密码
+     * @params [uid：用户码]
+     * @return -1 失败  200 成功
+     * @exception
+     * @author 11842
+     * @time  2019/6/5 13:59
+     * @version 1.1.1
+     **/
     @UserPermission(ignore = true)
     public Result resetPwd(AppContext appContext) {
         Result result = new Result();

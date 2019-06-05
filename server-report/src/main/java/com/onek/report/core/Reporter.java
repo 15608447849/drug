@@ -1,15 +1,13 @@
 package com.onek.report.core;
 
 import com.onek.report.vo.CanceledNum;
+import com.onek.report.vo.CompPrice;
 import com.onek.report.vo.ReturnResult;
-import com.onek.util.IceRemoteUtil;
 import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.ds.AppConfig;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
@@ -60,7 +58,29 @@ public class Reporter {
         this.params = getWhereParams();
         this.groupBy = getGroupBy();
     }
+    
+    private void getCompPrice() {
+        String sql =
+                " SELECT LEFT ( rvaddno, 4 ), "
+                + " odate, "
+                + " CONVERT(MAX(pdamt * pdnum + freight) / 100, DECIMAL(65, 2)) max, "
+                + " CONVERT(MIN(pdamt * pdnum + freight) / 100, DECIMAL(65, 2)) min, "
+                + " CONVERT(AVG(pdamt * pdnum + freight) / 100, DECIMAL(65, 2)) avg "
+                + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
+                + where + groupBy;
 
+        List<Object[]> queryResult = BaseDAO.getBaseDAO()
+                .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
+
+        CompPrice[] canceledNums = new CompPrice[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, canceledNums, CompPrice.class);
+
+        for (CompPrice canceledNum : canceledNums) {
+            putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
+        }
+    }
+    
     private void getCanceledNum() {
         String sql =
             " SELECT RPAD(LEFT(rvaddno, " + getAreaLeftNum() +  "), 12, 0) areac, "
@@ -102,6 +122,8 @@ public class Reporter {
 
         if (obj instanceof CanceledNum) {
             result.getOrderNum().setCanceledNum((CanceledNum) obj);
+        } else if (obj instanceof CompPrice) {
+            result.setCompPrice((CompPrice) obj);
         }
 
     }
