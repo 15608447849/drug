@@ -156,7 +156,7 @@ public class BackGroundProxyMoudule {
             case 2:
                 return  result.success(getAddProxyAreac(roleid,uid));
             case 3:
-                return  result.success(getOtherProxyAreac(roleid,suid,uid));
+                return  result.success(getOtherProxyAreac(roleid,suid));
         }
 
         return result.success(null);
@@ -295,14 +295,14 @@ public class BackGroundProxyMoudule {
     }
 
 
-    public ProxyUareaVO[] getOtherProxyAreac(int roleid,int suid,int uid){
+    public ProxyUareaVO[] getOtherProxyAreac(int roleid,int suid){
 
         if(suid <= 0){
             return null;
         }
 
-        StringBuilder sqlbuild = new StringBuilder(QUERY_DIST_AREAC);
-        sqlbuild.append(" and su.uid != ").append(suid);
+//        StringBuilder sqlbuild = new StringBuilder(QUERY_DIST_AREAC);
+//        sqlbuild.append(" and su.uid != ").append(suid);
 
 
         int roleParm = 0;
@@ -315,7 +315,7 @@ public class BackGroundProxyMoudule {
             roleParm = RoleCodeCons._PROXY_PARTNER;
        }
 
-        List<Object[]> queryRet = baseDao.queryNative(sqlbuild.toString(),
+        List<Object[]> queryRet = baseDao.queryNative(QUERY_DIST_AREAC,
                 roleParm);
 
             if(queryRet == null || queryRet.isEmpty()){
@@ -878,36 +878,60 @@ public class BackGroundProxyMoudule {
         int cid = appContext.getUserSession().compId;
         long roleCode = appContext.getUserSession().roleCode;
 
-        String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? ";
         List<Object[]> queryResult = null;
+
+        if((roleCode & RoleCodeCons._PROXY_DIRECTOR) > 0){
+            String querySql = "select uid,urealname from {{?"+DSMConst.TB_SYSTEM_USER+"}} u join " +
+                    "(select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} su where belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} u " +
+                    "  where belong = ? and u.cstatus & 1 = 0) and su.cstatus & 1 = 0) a " +
+                    "on u.cid = a.cid where u.roleid & ? > 0 and u.cstatus & 1 = 0 ";
+            queryResult = baseDao.queryNative(querySql
+                    ,uid,RoleCodeCons._DBM+RoleCodeCons._DB);
+
+            if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+
+            return  result.success(convBdList(queryResult));
+        }
+
+        if((roleCode & RoleCodeCons._PROXY_MGR) > 0){
+           String querySql = "select uid,urealname from {{?"+DSMConst.TB_SYSTEM_USER+"}} u join "+
+           " (select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} su where belong = ?) a "+
+           " on u.cid = a.cid where u.roleid & ? > 0 and u.cstatus & 1 = 0 ";
+
+            queryResult = baseDao.queryNative(querySql
+                    ,uid,RoleCodeCons._DBM+RoleCodeCons._DB);
+            if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+            return  result.success(convBdList(queryResult));
+        }
+
         if((roleCode & RoleCodeCons._PROXY_PARTNER) > 0){
-            queryResult = baseDao.queryNative(selectSQL,roleid,cid);
+            String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? ";
+            queryResult = baseDao.queryNative(selectSQL,RoleCodeCons._DBM+RoleCodeCons._DB,cid);
+            if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+            return  result.success(convBdList(queryResult));
         }
 
         if((roleCode & RoleCodeCons._DBM) > 0){
-            selectSQL =  " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and belong = ? ";
-            queryResult = baseDao.queryNative(selectSQL,roleid,uid);
+            String selectSQL =  " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and belong = ? or uid = ? ";
+            queryResult = baseDao.queryNative(selectSQL,roleid,uid,uid);
+            if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+            return  result.success(convBdList(queryResult));
         }
-//
-//
-//        StringBuilder sqlBuilder = new StringBuilder();
-//        String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and belong = ? ";
-//        sqlBuilder.append(selectSQL);
-      //  List<Object[]> queryResult = baseDao.queryNative(selectSQL,roleid,uid);
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
 
+        return  result.success(null);
+    }
+
+    public List<BindBdVO> convBdList(List<Object[]> queryResult){
         List<BindBdVO> bdList = new ArrayList<>();
         for (Object[] objects : queryResult){
-
             if(objects[0] != null || objects[1] != null){
                 BindBdVO bindBdVO = new BindBdVO();
                 bindBdVO.setBuid(objects[0].toString());
                 bindBdVO.setBname(objects[1].toString());
                 bdList.add(bindBdVO);
             }
-
         }
-        return  result.success(bdList);
+        return bdList;
     }
 
 
@@ -946,6 +970,54 @@ public class BackGroundProxyMoudule {
         return  new Result().fail("指派BDM失败！");
     }
 
+    @UserPermission(ignore = true)
+    public Result bindCheck(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int bdid = jsonObject.get("bd").getAsInt();
+        int cid = jsonObject.get("cid").getAsInt();
+
+        if(bdid <= 0){
+            return new Result().fail("参数错误！");
+        }
+        String selectCompSQL = " select lng,lat from {{?" + DSMConst.TB_COMP + "}} where cid = ? and cstatus&1 = 0";
+        List<Object[]> cppoint = baseDao.queryNative(selectCompSQL,cid);
+
+        if(cppoint == null || cppoint.isEmpty()){
+            return new Result().fail("当前门店不在该BD管辖范围内！");
+        }
+
+        GaoDeMapUtil.Point compPoint
+                = new GaoDeMapUtil.Point(Double.parseDouble(cppoint.get(0)[0].toString()),
+                Double.parseDouble(cppoint.get(0)[1].toString()));
+
+        String selectAreaSQL = " select arearng from {{?" + DSMConst.TB_PROXY_UAREA + "}} where uid = ? and cstatus&1 = 0";
+
+        List<Object[]> arpoint = null;
+        if(bdid > 0){
+            arpoint = baseDao.queryNative(selectAreaSQL,bdid);
+            for(Object[] objs : arpoint){
+                if(objs == null || StringUtils.isEmpty(objs[0].toString())){
+                    continue;
+                }
+                try{
+                    List<GaoDeMapUtil.Point>
+                            points = GsonUtils.json2List(objs[0].toString(), GaoDeMapUtil.Point.class);
+                    if(GaoDeMapUtil.checkPointOnRange(compPoint,points)){
+                        String bingSql = "update {{?" + DSMConst.TB_COMP + "}} set inviter = ? where cid = ?";
+                        if(baseDao.updateNative(bingSql,bdid,cid) > 0){
+                            return new Result().success("校验通过!");
+                        }
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                    continue;
+                }
+            }
+        }
+        return new Result().fail("当前门店不在该BD管辖范围内！");
+    }
 
 
     @UserPermission(ignore = true)
@@ -955,54 +1027,17 @@ public class BackGroundProxyMoudule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int bdid = jsonObject.get("bd").getAsInt();
         int cid = jsonObject.get("cid").getAsInt();
-        int uid = jsonObject.get("uid").getAsInt();
 
         if(bdid <= 0){
-            return new Result().fail("绑定失败！");
+            return new Result().fail("参数错误，绑定失败！");
         }
 
-        String selectCompSQL = " select lng,lat from {{?" + DSMConst.TB_COMP + "}} where cid = ? and cstatus&1 = 0";
-        List<Object[]> cppoint = baseDao.queryNative(selectCompSQL,cid);
+        String bingSql = "update {{?" + DSMConst.TB_COMP + "}} set inviter = ? where cid = ?";
 
-        if(cppoint == null || cppoint.isEmpty()){
-            return new Result().fail("绑定失败！");
+        if(baseDao.updateNative(bingSql,bdid,cid) > 0){
+            return new Result().success("绑定成功!");
         }
-
-        String selectAreaSQL = " select arearng from {{?" + DSMConst.TB_PROXY_UAREA + "}} where uid = ? and cstatus&1 = 0";
-
-        List<Object[]> arpoint = null;
-        if(bdid > 0){
-            arpoint = baseDao.queryNative(selectAreaSQL,bdid);
-        }
-
-
-        if(arpoint == null || arpoint.isEmpty()){
-            return new Result().fail("绑定失败！");
-        }
-
-        GaoDeMapUtil.Point compPoint
-                = new GaoDeMapUtil.Point(Double.parseDouble(cppoint.get(0)[0].toString()),
-                Double.parseDouble(cppoint.get(0)[1].toString()));
-        for(Object[] objs : arpoint){
-            if(objs == null || StringUtils.isEmpty(objs[0].toString())){
-                continue;
-            }
-            try{
-                List<GaoDeMapUtil.Point>
-                        points = GsonUtils.json2List(objs[0].toString(), GaoDeMapUtil.Point.class);
-                if(GaoDeMapUtil.checkPointOnRange(compPoint,points)){
-                    String bingSql = "update {{?" + DSMConst.TB_COMP + "}} set inviter = ? where cid = ?";
-                    if(baseDao.updateNative(bingSql,bdid,cid) > 0){
-                        return new Result().success("绑定成功!");
-                    }
-                 }
-
-            }catch (Exception e){
-                e.printStackTrace();
-                continue;
-            }
-        }
-        return  new Result().fail("绑定失败！");
+        return new Result().fail("绑定失败！");
     }
 
 
@@ -1105,7 +1140,7 @@ public class BackGroundProxyMoudule {
                 }
 
                 if((mroleid & RoleCodeCons._DB) > 0){
-                    dySql.append(" or tu.uid = ").append(puid);
+                    dySql.append(" or stu.uid = ").append(puid);
                 }
             }
 
