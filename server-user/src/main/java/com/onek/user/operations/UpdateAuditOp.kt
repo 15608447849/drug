@@ -44,9 +44,11 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
             if (!isOK) return Result().fail("资质信息保存失败")
         }
 
+        val storetype = settingCompStoretype(permitId!!);
+
         //修改门店审核状态
-        val updateSql = "UPDATE {{?$TB_COMP}} SET cstatus=?,examine=?,auditer=?,auditdate=CURRENT_DATE,audittime=CURRENT_TIME WHERE cstatus&1=0 AND cid=?"
-        val i = BaseDAO.getBaseDAO().updateNative(updateSql,auditStatus,auditCause,auditer,companyId)
+        val updateSql = "UPDATE {{?$TB_COMP}} SET cstatus=?,examine=?,auditer=?,auditdate=CURRENT_DATE,audittime=CURRENT_TIME,storetype=? WHERE cstatus&1=0 AND cid=?"
+        val i = BaseDAO.getBaseDAO().updateNative(updateSql,auditStatus,auditCause,auditer,storetype,companyId)
 
         if(i > 0){
             val tempLines = BaseDAO.getBaseDAO().queryNative("SELECT uphone FROM {{?$TB_SYSTEM_USER}} WHERE cid = ?", companyId)
@@ -95,9 +97,6 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
     //更新企业资质
     private fun updateIds(companyId: String, id: String, idStartTime: String, idEndTime: String, type:Int) :Boolean{
         try {
-            if (type == 11) {
-                settingCompStoretype(companyId,id);
-            }
             val selectSql = "SELECT aptid FROM {{?${DSMConst.TB_COMP_APTITUDE}}} WHERE compid = $companyId AND atype = $type"
             val lines = BaseDAO.getBaseDAO().queryNative(selectSql);
             if (lines.size == 0){
@@ -119,28 +118,28 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
                 val i = BaseDAO.getBaseDAO().updateNative(updateSql)
                 if (i > 0) return true
             }
-        } catch (e: Exception) { }
+        } catch (e: Exception) {
+
+        }
         return false
     }
-
-    private fun settingCompStoretype(companyId: String, id: String) {
+    //设置企业类型,单体/连锁等
+    private fun settingCompStoretype(id: String) :Int{
         try {
             val pattern = Pattern.compile("^[\\u4e00-\\u9fa5]([A-D])[A-B][0-9].*$")
             val m = pattern.matcher(id)
             var index = -1;
             while (m.find()) {
              val res =   m.group(1);
-                index =  when (res){
+                return when (res){
                     "A" -> -1;
                     "D" -> 0;
                     else -> 1;
                 }
             }
-            //修改门店审核状态
-            val updateSql = "UPDATE {{?$TB_COMP}} SET storetype=? WHERE cstatus&1=0 AND cid=?"
-            BaseDAO.getBaseDAO().updateNative(updateSql,index,companyId)
         } catch (e: Exception) {
         }
+        return -1;
     }
 
     /**
