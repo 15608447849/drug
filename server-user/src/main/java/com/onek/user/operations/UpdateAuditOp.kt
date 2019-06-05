@@ -18,6 +18,9 @@ import constant.DSMConst.TB_SYSTEM_USER
 import dao.BaseDAO
 import redis.IRedisPartCache
 import redis.proxy.CacheProxyInstance
+import java.util.regex.Pattern
+
+
 
 /**
  * @Author: leeping
@@ -92,6 +95,9 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
     //更新企业资质
     private fun updateIds(companyId: String, id: String, idStartTime: String, idEndTime: String, type:Int) :Boolean{
         try {
+            if (type == 11) {
+                settingCompStoretype(companyId,id);
+            }
             val selectSql = "SELECT aptid FROM {{?${DSMConst.TB_COMP_APTITUDE}}} WHERE compid = $companyId AND atype = $type"
             val lines = BaseDAO.getBaseDAO().queryNative(selectSql);
             if (lines.size == 0){
@@ -116,6 +122,27 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
         } catch (e: Exception) { }
         return false
     }
+
+    private fun settingCompStoretype(companyId: String, id: String) {
+        try {
+            val pattern = Pattern.compile("^[\\u4e00-\\u9fa5]([A-D])[A-B][0-9].*$")
+            val m = pattern.matcher(id)
+            var index = -1;
+            while (m.find()) {
+             val res =   m.group(1);
+                index =  when (res){
+                    "A" -> -1;
+                    "D" -> 0;
+                    else -> 1;
+                }
+            }
+            //修改门店审核状态
+            val updateSql = "UPDATE {{?$TB_COMP}} SET storetype=? WHERE cstatus&1=0 AND cid=?"
+            BaseDAO.getBaseDAO().updateNative(updateSql,index,companyId)
+        } catch (e: Exception) {
+        }
+    }
+
     /**
      * 生成企业资质ID
      */
