@@ -40,8 +40,8 @@ public class BDManageModule {
 
     /* *
      * @description 查询合伙人下所有BDM
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @params json {belong 所属合伙人}
+     * @return json数组 [{uid 用户码 urealname 用户真实姓名}]
      * @exception
      * @author 11842
      * @time  2019/5/30 11:01
@@ -73,9 +73,10 @@ public class BDManageModule {
     }
 
     /* *
-     * @description 操作BDM和BD
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 操作BDM和BD（新增修改）
+     * @params json { uid用户码（新增传0）,uphone（手机号）,uaccount（账户）,urealname（真实姓名）,
+     * upw（密码默认手机号后六位）,roleid（角色码）,adddate,addtime,belong（上级（地推））}
+     * @return -1失败 200成功
      * @exception
      * @author 11842
      * @time  2019/5/30 10:59
@@ -98,17 +99,17 @@ public class BDManageModule {
                     return new Result().fail("该BD已存在！");
                 }
             }
-            int code = 0;
+            int code;
 
-            String queryCid = "select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0";
+//            String queryCid = "select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0";
+//
+//            List<Object[]> queryCidRet = baseDao.queryNative(queryCid, userInfoVo.getBelong());
+//
+//            if(queryCidRet == null || queryCidRet.isEmpty()){
+//                return new Result().fail("用户操作失败！");
+//            }
 
-            List<Object[]> queryCidRet = baseDao.queryNative(queryCid, userInfoVo.getBelong());
-
-            if(queryCidRet == null || queryCidRet.isEmpty()){
-                return new Result().fail("用户操作失败！");
-            }
-
-            userInfoVo.setCid(Integer.parseInt(queryCidRet.get(0)[0].toString()));
+//            userInfoVo.setCid(cid);
 
 
             if (userInfoVo.getUid() <= 0) {
@@ -155,7 +156,7 @@ public class BDManageModule {
 
     /* *
      * @description 查询合伙人下的BDM和BD
-     * @params
+     * @params json {belong: 用户码 }
      * @return
      * @exception
      * @author 11842
@@ -168,21 +169,34 @@ public class BDManageModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int belong = jsonObject.get("belong").getAsInt();
+        long roleId = appContext.getUserSession().roleCode;
+        int cid = appContext.getUserSession().compId;
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
         PageHolder pageHolder = new PageHolder(page);
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
+        Object[] params;
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
                 + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and (u.roleid&8192>0 or u.roleid&4096>0) "
-                + " and (belong=? or belong in ("
+                + " and cid=? and (belong=? or belong in ("
                 + " select uid from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and belong=?)) ";
+
+        if ((roleId & 1) > 0) {
+            selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
+                    + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
+                    + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
+                    + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and (u.roleid&8192>0 or u.roleid&4096>0) ";
+            params = new Object[]{};
+        } else {
+            params = new Object[]{cid, belong, belong};
+        }
         sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 1).append(" group by uid order by oid desc");
-        List<Object[]> queryResult = baseDao.queryNativeC(pageHolder, page, sqlBuilder.toString(), belong, belong);
+        List<Object[]> queryResult = baseDao.queryNativeC(pageHolder, page, sqlBuilder.toString(), params);
         if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class, new String[]{
@@ -194,8 +208,9 @@ public class BDManageModule {
 
     /* *
      * @description 查询BDM下的BD
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @params json {urealname：真实姓名 roleid：角色码 uphone：电话号码 cstatus：用户状态 }
+     *   分页参数 pageSize：每页数量 pageNo： 第几页
+     * @return UserInfoVo对象数组（见UserInfoVo.class）
      * @exception
      * @author 11842
      * @time  2019/5/30 17:30
@@ -207,17 +222,29 @@ public class BDManageModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int belong = jsonObject.get("belong").getAsInt();
+        long roleId = appContext.getUserSession().roleCode;
+        int cid = appContext.getUserSession().compId;
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
         PageHolder pageHolder = new PageHolder(page);
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
+        Object[] params;
         String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
                 + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
                 + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
                 + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and u.roleid&8192>0 "
-                + " and belong=? ";
+                + " and belong=? and cid=?";
+        if ((roleId & 1) > 0) {
+            selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
+                    + ",u.offdate,u.offtime,u.cstatus,logindate,logintime, GROUP_CONCAT(rname) as rname from {{?"
+                    + DSMConst.TB_SYSTEM_USER + "}} u left join {{?" + DSMConst.TB_SYSTEM_ROLE + "}} r "
+                    + " on u.roleid&r.roleid>0 and r.cstatus&1=0 where u.cstatus&1=0 and u.roleid&8192>0 ";
+            params = new Object[]{};
+        } else {
+            params = new Object[]{belong,cid};
+        }
 //        String selectSQL = "select uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime"
 //                + ",u.offdate,u.offtime,ip,logindate,logintime,u.cstatus, GROUP_CONCAT(rname) as rname,"
 //                + " CONCAT('[',GROUP_CONCAT(arearng,','),']') as arearng from {{?"
@@ -227,7 +254,7 @@ public class BDManageModule {
 //                + " group by ua.uid";
         sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 0).append(" group by uid desc");
-        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString(), belong);
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString(), params);
         if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class, new String[]{
@@ -263,9 +290,9 @@ public class BDManageModule {
     }
 
     /* *
-     * @description 详情
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 查询BD或者BDM详情
+     * @params json {uid 用户码}
+     * @return 见 UserInfoVo.class
      * @exception
      * @author 11842
      * @time  2019/5/30 14:30
@@ -300,9 +327,9 @@ public class BDManageModule {
 
 
     /* *
-     * @description 查看辖区
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 查看BD或者BDM辖区
+     * @params json {uid: 用户码 puid：上级用户码}
+     * @return json数组 [{areac 地区码 areaName 地区名 arearng 区域经纬度}]
      * @exception
      * @author 11842
      * @time  2019/5/30 14:17
@@ -353,9 +380,9 @@ public class BDManageModule {
 
 
     /* *
-     * @description 设置辖区
-     * @params []
-     * @return com.onek.entitys.Result
+     * @description 设置BD或者BDM辖区
+     * @params json {areac 地区码 uid 用户码}
+     * @return -1失败 200成功
      * @exception
      * @author 11842
      * @time  2019/5/30 14:31
@@ -379,8 +406,8 @@ public class BDManageModule {
 
     /* *
      * @description 批量设置管辖区域
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @params json {uid 用户码 areaArr[{areac 地区码 arearng 经纬度数组字符串}]}
+     * @return -1失败 200成功
      * @exception
      * @author 11842
      * @time  2019/6/4 11:25
@@ -409,7 +436,7 @@ public class BDManageModule {
             }
             String optSQL = "insert into {{?" + DSMConst.TB_PROXY_UAREA + "}} (unqid,uid,areac,cstatus,arearng) "
                     + " values(?,?,?,?,?)";
-            boolean b = ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
+            boolean b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
             return b ? result.success("设置成功") : result.fail("设置失败");
         }
         return result.fail("设置失败");

@@ -19,8 +19,13 @@ import static constant.DSMConst.TB_SYSTEM_USER;
  */
 public class LoginRegistrationModule {
 
+
     /**
-     * 校验手机号码是否存在
+     * 功能:  校验手机号码是否存在
+     * 参数类型:    json
+     * 参数集:  phone=手机号码
+     * 返回值:  code=200(存在) data=结果信息
+     * 详情说明:
      */
     @UserPermission (ignore = true)
     public Result checkPhoneExist(AppContext appContext){
@@ -32,13 +37,19 @@ public class LoginRegistrationModule {
     }
 
     /**
-     * 门店用户注册
+     * 功能: 门店注册
+     * 参数类型:    json
+     * 参数集:  phone=手机号码,password=明文密码,password2=二次确认密码,smsCode=短信验证码
+     * storeName=门店名,addressCode=地区码
+     * 返回值:  code=200(成功) data=结果信息 ,map.compid = 企业ID
+     * 详情说明: 企业修改接口复用
      */
     @UserPermission (ignore = true)
     public Result register(AppContext appContext){
         String json = appContext.param.json;
         //提交用户信息
         RegisterStoreUserOp userOp = GsonUtils.jsonToJavaBean(json, RegisterStoreUserOp.class);
+        userOp.type = 3;
         assert userOp!=null;
         Result result = userOp.execute(appContext);
         if (!result.isSuccess()){
@@ -60,12 +71,13 @@ public class LoginRegistrationModule {
 
     }
 
-
-    /**
-     * 获取验证码
-     * 1 图形
-     * 2 短信
-     */
+     /*
+      * 功能: 获取验证码
+      * 参数类型: json
+      * 参数集: phone=手机号码,type=类型(1,图形验证码,2,短信验证码)
+      * 返回值: code=200(成功) , data=图形验证码url/结果信息
+      * 详情说明:
+      */
     @UserPermission (ignore = true)
     public Result obtainVerificationCode(AppContext appContext){
         String json = appContext.param.json;
@@ -74,8 +86,13 @@ public class LoginRegistrationModule {
         return op.execute(appContext);
     }
 
+
     /**
-     * 门店登陆平台系统
+     * 功能:门店登陆平台系统
+     * 参数类型: json
+     * 参数集: phone=手机号码,password=密文密码,key=图形验证码key(uncheck不验证) verification=图形验证
+     * 返回值: code=200(成功)
+     * 详情说明:
      */
     @UserPermission (ignore = true)
     public Result loginStore(AppContext appContext){
@@ -84,8 +101,14 @@ public class LoginRegistrationModule {
         assert op!=null;
         return op.execute(appContext);
     }
-    /**
-     * 解锁门店用户锁定
+
+
+    /*
+     * 功能: 门店登陆锁定,管理系统解锁
+     * 参数类型: json
+     * 参数集: phone=手机号码
+     * 返回值:
+     * 详情说明:
      */
     @UserPermission(ignore = true)
     public Result removeUserLoginLock(AppContext appContext){
@@ -95,9 +118,12 @@ public class LoginRegistrationModule {
         op.removeLockCache();
         return new Result().success("解锁成功");
     }
-
-    /**
-     * 管理员登陆后台系统
+    /*
+     * 功能: 管理端登陆后台系统
+     * 参数类型: json
+     * 参数集: account=手机号码 password=密文密码
+     * 返回值:
+     * 详情说明:
      */
     @UserPermission (ignore = true)
     public Result loginBack(AppContext appContext){
@@ -106,11 +132,13 @@ public class LoginRegistrationModule {
         assert op!=null;
         return op.execute(appContext);
     }
-
-    /**
-     * 修改手机号
-     *  修改密码
-     *
+    
+    /*
+     * 功能: 修改手机号/密码
+     * 参数类型: json
+     * 参数集: 修改手机号码: oldPhone=旧手机号码,newPhone=新手机号码,smsCode=短信验证码; 修改密码: oldPassword=MD5旧密码,newPassword=明文密码
+     * 返回值:
+     * 详情说明:
      */
     public Result changeUserInfo(AppContext appContext){
         String json = appContext.param.json;

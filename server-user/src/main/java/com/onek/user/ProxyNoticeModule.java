@@ -2,7 +2,6 @@ package com.onek.user;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -29,9 +28,10 @@ public class ProxyNoticeModule {
 
 
     /* *
-     * @description 新增修改公告
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 新增或修改公告
+     * @params json （ProxyNoticeVO.class）{msgid 消息id(新增传0),sender（发送人id）,msgtxt(消息内容json),createdate,createtime,invdtime(失效时间)," +
+                "readtimes(强制阅读次数  0不强制阅读),effcttime（生效时间）,revobj（发送对象角色叠加吗）,cstatus, areaList[发送地区码数组]}
+     * @return -1 失败  200 成功
      * @exception
      * @author 11842
      * @time  2019/5/28 16:21
@@ -117,9 +117,9 @@ public class ProxyNoticeModule {
 
 
     /* *
-     * @description 查询
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 查询公告
+     * @params json {title:公告标题}
+     * @return 见 ProxyNoticeVO.class
      * @exception
      * @author 11842
      * @time  2019/5/28 18:49
@@ -155,9 +155,9 @@ public class ProxyNoticeModule {
     }
 
     /* *
-     * @description 详情
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 查询公告详情
+     * @params json {msgid 公告id }
+     * @return 见 ProxyNoticeVO.class
      * @exception
      * @author 11842
      * @time  2019/5/28 18:57
@@ -189,8 +189,8 @@ public class ProxyNoticeModule {
 
     /* *
      * @description 消息接收操作
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @params json {msgid 消息id  receiver 接收人id}
+     * @return -1 失败 200成功
      * @exception
      * @author 11842
      * @time  2019/5/29 11:55
@@ -223,9 +223,9 @@ public class ProxyNoticeModule {
 
 
     /* *
-     * @description 获取公告
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 获取公告推送
+     * @params json {roleid 角色码 receiver 接收人id}
+     * @return map集合 msgid 消息id msgtxt 消息内容
      * @exception
      * @author 11842
      * @time  2019/5/29 14:22
