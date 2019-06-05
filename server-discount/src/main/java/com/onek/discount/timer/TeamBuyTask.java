@@ -15,6 +15,12 @@ import util.TimeUtils;
 import java.math.BigDecimal;
 import java.util.*;
 
+/**
+ *
+ * 功能: 团购活动结束后返利给用户定期任务
+ * 详情说明:定时任务触发[凌晨触发]
+ * 作者: 蒋文广
+ */
 public class TeamBuyTask extends TimerTask {
 
     private static final String SQL = "select a.unqid,a.sdate,a.edate from {{?"+ DSMConst.TD_PROM_ACT+"}} a " +
