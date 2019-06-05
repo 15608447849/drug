@@ -3,6 +3,7 @@ package com.onek.user;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -12,10 +13,13 @@ import com.onek.user.entity.UserInfoVo;
 import com.onek.util.GenIdUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
+import util.ModelUtil;
 import util.StringUtils;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -50,9 +54,11 @@ public class BDManageModule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int cid = jsonObject.get("cid").getAsInt();
+//        int cid = jsonObject.get("cid").getAsInt();
         int belong = jsonObject.get("belong").getAsInt();
-        int uid = jsonObject.get("uid").getAsInt();
+//        int uid = jsonObject.get("uid").getAsInt();
+        int cid = appContext.getUserSession().compId;
+        int uid = appContext.getUserSession().userId;
         String selectSQL = "select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 "
                 + " and cid=? and roleid&4096>0 and belong=? and uid<>" + uid;
         List<Object[]> objects = baseDao.queryNative(selectSQL, cid, belong);
@@ -78,6 +84,8 @@ public class BDManageModule {
     @UserPermission(ignore = false)
     public Result optBDMByPartner(AppContext appContext) {
         String json = appContext.param.json;
+        int cid = appContext.getUserSession().compId;
+        int uid = appContext.getUserSession().userId;
         UserInfoVo userInfoVo = GsonUtils.jsonToJavaBean(json, UserInfoVo.class);
         if (userInfoVo != null) {
             if (userInfoVo.getUphone() <= 0 || userInfoVo.getUpw() == null || userInfoVo.getUpw().isEmpty()) {
@@ -102,20 +110,23 @@ public class BDManageModule {
 
             userInfoVo.setCid(Integer.parseInt(queryCidRet.get(0)[0].toString()));
 
+
             if (userInfoVo.getUid() <= 0) {
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime,cid,belong)"
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?,?)";
 
                 String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
-                code = baseDao.updateNative(insertSQL, getUserCode(),
+                int userCode = getUserCode();
+                userInfoVo.setUid(userCode);
+                code = baseDao.updateNative(insertSQL, userCode,
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
-                        pwd, userInfoVo.getRoleid(), userInfoVo.getCid(), userInfoVo.getBelong());
+                        pwd, userInfoVo.getRoleid(), cid, userInfoVo.getBelong());
             } else {
                 String updSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
                         + "urealname=?, roleid=?,cid=?, belong=? where cstatus&1=0 and uid=? ";
                 code = baseDao.updateNative(updSQL, userInfoVo.getUphone(), userInfoVo.getUaccount(),
-                        userInfoVo.getUrealname(), userInfoVo.getRoleid(), userInfoVo.getCid(),
+                        userInfoVo.getUrealname(), userInfoVo.getRoleid(), cid,
                         userInfoVo.getBelong(), userInfoVo.getUid());
             }
             if ((userInfoVo.getRoleid() & 4096) > 0) {
@@ -123,7 +134,7 @@ public class BDManageModule {
 
             }
             if (code > 0) {
-                return new Result().success("操作成功");
+                return new Result().success(userInfoVo);
             }
         }
         return new Result().fail("用户操作失败！");
@@ -366,8 +377,42 @@ public class BDManageModule {
         return code > 0 ? result.success("设置成功") : result.fail("设置失败");
     }
 
-//
-//    public static void main(String[] args) {
-//        System.out.println(7168&1);
-//    }
+    /* *
+     * @description 批量设置管辖区域
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/6/4 11:25
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = false)
+    public Result setAreaArr(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int uid = jsonObject.get("uid").getAsInt();
+        //删除之前的
+        String updSQL = "update {{?" + DSMConst.TB_PROXY_UAREA + "}} set cstatus=cstatus|1 where cstatus&1=0 "
+                + " and uid=" + uid;
+        int code = baseDao.updateNative(updSQL);
+        LogUtil.getDefaultLogger().info("code---- " + code);
+        if(code >= 0) {
+            List<Object[]> params  = new ArrayList<>();
+            JsonArray areaArr = jsonObject.get("areaArr").getAsJsonArray();
+            for (int i = 0; i < areaArr.size(); i++) {
+                JsonElement areaObj = areaArr.get(i);
+                long areac =areaObj.getAsJsonObject().get("areac").getAsLong();
+                String arearng = areaObj.getAsJsonObject().get("arearng").getAsString();
+                params.add(new Object[]{GenIdUtil.getUnqId(), uid, areac, 0, arearng});
+            }
+            String optSQL = "insert into {{?" + DSMConst.TB_PROXY_UAREA + "}} (unqid,uid,areac,cstatus,arearng) "
+                    + " values(?,?,?,?,?)";
+            boolean b = ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
+            return b ? result.success("设置成功") : result.fail("设置失败");
+        }
+        return result.fail("设置失败");
+    }
+
 }
