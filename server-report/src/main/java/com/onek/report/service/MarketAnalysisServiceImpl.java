@@ -154,69 +154,9 @@ public class MarketAnalysisServiceImpl {
         // 初始化表格数据
         initTableData(year, month, type, codeList, areaMap, cale, jsonList);
 
-        List<Object> paramCompList = new ArrayList<Object>();
-        StringBuilder compSql = new StringBuilder(COMP_SQL);
-        paramCompList.add(_areac + "%");
-
-        List<Object> paramOrderList = new ArrayList<>();
-        StringBuilder orderSql = new StringBuilder(ORDER_SQL);
-
-        if(type == 0 || type == 2){ // 天报(单天) 周报(单周)
-            compSql.append(" and year(tab.createdate) = ? and month(tab.createdate) = ? ");
-            paramCompList.add(year);
-            paramCompList.add(month);
-
-            orderSql.append(" and year(odate) = ? and month(odate) = ? ");
-            paramOrderList.add(year);
-            paramOrderList.add(month);
-
-        }else if(type == 1 || type == 3){ // 天报(累计)
-            orderSql.append(" and year(odate) = ? and month(odate) = ? ");
-            paramOrderList.add(year);
-            paramOrderList.add(month);
-
-        }else if(type == 4 || type == 6){ // 月报(单月)
-            compSql.append(" and year(tab.createdate) = ? ");
-            paramCompList.add(year);
-
-            orderSql.append(" and year(odate) = ? ");
-            paramOrderList.add(year);
-
-        }else if(type == 5){ // 月报(累计)
-            orderSql.append(" and year(odate) = ? ");
-            paramOrderList.add(year);
-
-        }else if(type == 6){ // 年报
-            compSql.append(" and year(tab.createdate) = ? ");
-            paramCompList.add(year);
-
-            orderSql.append(" and year(odate) = ? ");
-            paramOrderList.add(year);
-
-        }
-        compSql.append(" group by createdate,caddrcode,cid,storetype order by caddrcode asc,createdate asc");
-        List<Object[]> queryList = BASE_DAO.queryNative(compSql.toString(), paramCompList.toArray());
-        List<Integer> comList = new ArrayList<>();
-        List<String[]> list = new ArrayList<>();
-        if(queryList != null && queryList.size() > 0){
-            for(Object[] obj : queryList){
-                comList.add(Integer.parseInt(obj[0].toString()));
-                list.add(new String[]{obj[0].toString(), obj[1].toString(), obj[2].toString(), obj[3].toString(), obj[4].toString(), obj[5].toString(), obj[6].toString(), obj[7].toString()});
-            }
-        }
-
-        orderSql.append(" group by cusno,odate");
-        List<Object[]> orderQueryList = BASE_DAO.queryNativeSharding(0, year, orderSql.toString(), paramOrderList.toArray());
-        List<String[]> orderList = new ArrayList<>();
-        if(orderQueryList != null && orderQueryList.size() > 0){
-            for(Object[] obj : orderQueryList){
-                int compid = Integer.parseInt(obj[0].toString());
-                if(!comList.contains(compid)){
-                    continue;
-                }
-                orderList.add(new String[]{obj[0].toString(), obj[1].toString(), obj[2].toString(), obj[3].toString(), obj[4].toString()});
-            }
-        }
+        GetDbData getDbData = new GetDbData(year, month, type, _areac).invoke();
+        List<String[]> list = getDbData.getList();
+        List<String[]> orderList = getDbData.getOrderList();
 
         if(list != null && list.size() > 0){
             for(JSONObject js : jsonList){
@@ -1317,6 +1257,97 @@ public class MarketAnalysisServiceImpl {
             } else if (type == 6) {
                 baseVal = YEAR_ACTIVE_NUM;
                 baseVal1 = YEAR_REPURCHASE_NUM;
+            }
+            return this;
+        }
+    }
+
+    private class GetDbData {
+        private int year;
+        private int month;
+        private int type;
+        private String areac;
+        private List<String[]> list;
+        private List<String[]> orderList;
+
+        public GetDbData(int year, int month, int type, String _areac) {
+            this.year = year;
+            this.month = month;
+            this.type = type;
+            areac = _areac;
+        }
+
+        public List<String[]> getList() {
+            return list;
+        }
+
+        public List<String[]> getOrderList() {
+            return orderList;
+        }
+
+        public GetDbData invoke() {
+            List<Object> paramCompList = new ArrayList<Object>();
+            StringBuilder compSql = new StringBuilder(COMP_SQL);
+            paramCompList.add(areac + "%");
+
+            List<Object> paramOrderList = new ArrayList<>();
+            StringBuilder orderSql = new StringBuilder(ORDER_SQL);
+
+            if(type == 0 || type == 2){ // 天报(单天) 周报(单周)
+                compSql.append(" and year(tab.createdate) = ? and month(tab.createdate) = ? ");
+                paramCompList.add(year);
+                paramCompList.add(month);
+
+                orderSql.append(" and year(odate) = ? and month(odate) = ? ");
+                paramOrderList.add(year);
+                paramOrderList.add(month);
+
+            }else if(type == 1 || type == 3){ // 天报(累计)
+                orderSql.append(" and year(odate) = ? and month(odate) = ? ");
+                paramOrderList.add(year);
+                paramOrderList.add(month);
+
+            }else if(type == 4 || type == 6){ // 月报(单月)
+                compSql.append(" and year(tab.createdate) = ? ");
+                paramCompList.add(year);
+
+                orderSql.append(" and year(odate) = ? ");
+                paramOrderList.add(year);
+
+            }else if(type == 5){ // 月报(累计)
+                orderSql.append(" and year(odate) = ? ");
+                paramOrderList.add(year);
+
+            }else if(type == 6){ // 年报
+                compSql.append(" and year(tab.createdate) = ? ");
+                paramCompList.add(year);
+
+                orderSql.append(" and year(odate) = ? ");
+                paramOrderList.add(year);
+
+            }
+            compSql.append(" group by createdate,caddrcode,cid,storetype order by caddrcode asc,createdate asc");
+            List<Object[]> queryList = BASE_DAO.queryNative(compSql.toString(), paramCompList.toArray());
+            List<Integer> comList = new ArrayList<>();
+            list = new ArrayList<>();
+            if(queryList != null && queryList.size() > 0){
+                for(Object[] obj : queryList){
+                    comList.add(Integer.parseInt(obj[0].toString()));
+                    list.add(new String[]{obj[0].toString(), obj[1].toString(), obj[2].toString(), obj[3].toString(), obj[4].toString(), obj[5].toString(), obj[6].toString(), obj[7].toString()});
+                }
+            }
+
+            orderSql.append(" group by cusno,odate");
+            List<Object[]> orderQueryList = BASE_DAO.queryNativeSharding(0, year, orderSql.toString(), paramOrderList.toArray());
+            orderList = new ArrayList<>();
+            if(orderQueryList != null && orderQueryList.size() > 0){
+                for(Object[] obj : orderQueryList){
+                    int compid = Integer.parseInt(obj[0].toString());
+                    if(!comList.contains(compid)){
+                        continue;
+                    }
+                    orderList.add(new String[]{obj[0].toString(), obj[1].toString(), obj[2].toString(), obj[3].toString(), obj[4].toString()});
+                }
             }
             return this;
         }
