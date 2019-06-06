@@ -15,6 +15,12 @@ import util.TimeUtils;
 
 import java.util.*;
 
+/**
+ *
+ * 功能: 活动到期时清空活动库存和活动购买量
+ * 详情说明:定时任务触发
+ * 作者: 蒋文广
+ */
 public class ActStockCheckTask extends TimerTask {
 
     private static final String SQL = "select d.gcode,d.actcode,a.brulecode,d.cstatus from {{?"+ DSMConst.TD_PROM_ASSDRUG +"}} d " +

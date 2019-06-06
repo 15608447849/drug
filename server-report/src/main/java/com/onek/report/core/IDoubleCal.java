@@ -16,6 +16,10 @@ public interface IDoubleCal {
     }
 
     default double divDouble(double a, double b) {
-        return BigDecimal.valueOf(a).divide(BigDecimal.valueOf(b)).doubleValue();
+        if (b == 0) {
+            return 0;
+        }
+
+        return BigDecimal.valueOf(a).divide(BigDecimal.valueOf(b), 2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
 }

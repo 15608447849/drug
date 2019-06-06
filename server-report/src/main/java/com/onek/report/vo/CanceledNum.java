@@ -6,8 +6,8 @@ import com.onek.report.core.IRowData;
 public class CanceledNum implements IColTotaler, IRowData {
     private long areac;
     private String date;
-    private long userCanceled;
     private long backCanceled;
+    private long userCanceled;
 
     public long getUserCanceled() {
         return userCanceled;
@@ -17,12 +17,20 @@ public class CanceledNum implements IColTotaler, IRowData {
         this.userCanceled = userCanceled;
     }
 
+    public void addUserCanceled(long userCanceled) {
+        this.userCanceled = addLong(userCanceled, this.userCanceled);
+    }
+
     public long getBackCanceled() {
         return backCanceled;
     }
 
     public void setBackCanceled(long backCanceled) {
         this.backCanceled = backCanceled;
+    }
+
+    public void addBackCanceled(long backCanceled) {
+        this.backCanceled = addLong(backCanceled, this.backCanceled);
     }
 
     public long getAreac() {
