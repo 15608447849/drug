@@ -2,9 +2,12 @@ package com.onek.user;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.user.entity.*;
 import com.onek.util.GenIdUtil;
@@ -156,7 +159,7 @@ public class BackGroundProxyMoudule {
             case 2:
                 return  result.success(getAddProxyAreac(roleid,uid));
             case 3:
-                return  result.success(getOtherProxyAreac(roleid,suid));
+                return  result.success(getOtherProxyAreac(roleid,suid,uid));
         }
 
         return result.success(null);
@@ -295,7 +298,7 @@ public class BackGroundProxyMoudule {
     }
 
 
-    public ProxyUareaVO[] getOtherProxyAreac(int roleid,int suid){
+    public ProxyUareaVO[] getOtherProxyAreac(int roleid,int suid,int uid){
 
         if(suid <= 0){
             return null;
@@ -305,6 +308,7 @@ public class BackGroundProxyMoudule {
 //        sqlbuild.append(" and su.uid != ").append(suid);
 
 
+        StringBuilder sb = new StringBuilder(QUERY_DIST_AREAC);
         int roleParm = 0;
         if((roleid & RoleCodeCons._PROXY_DIRECTOR) > 0){
             roleParm = RoleCodeCons._PROXY_MGR;
@@ -312,11 +316,17 @@ public class BackGroundProxyMoudule {
 
         //合伙人
         if((roleid & RoleCodeCons._PROXY_MGR) > 0){
+//            String queryMgr = " select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? ";
+//            List<Object[]> mgrs = baseDao.queryNative(queryMgr);
+//            if(mgrs == null || mgrs.isEmpty()){
+//
+//            }
             roleParm = RoleCodeCons._PROXY_PARTNER;
+            sb.append(" and su.belong = ").append(uid);
        }
-
-        List<Object[]> queryRet = baseDao.queryNative(QUERY_DIST_AREAC,
+        List<Object[]> queryRet = baseDao.queryNative(sb.toString(),
                 roleParm);
+
 
             if(queryRet == null || queryRet.isEmpty()){
                 return null;
@@ -357,7 +367,7 @@ public class BackGroundProxyMoudule {
         sqlBuilder.append(selectSQL);
         sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by tu.uid desc ");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+        if (queryResult == null || queryResult.isEmpty()) return result.setQuery(null,pageHolder);
         ProxyPartnerVO[] proxyPartnerVOS = new ProxyPartnerVO[queryResult.size()];
         baseDao.convToEntity(queryResult, proxyPartnerVOS, ProxyPartnerVO.class,
                 new String[]{"cid","uid","cname","ckstatus","opstatus","urealname","createdate",
@@ -906,7 +916,7 @@ public class BackGroundProxyMoudule {
 
         if((roleCode & RoleCodeCons._PROXY_PARTNER) > 0){
             String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? ";
-            queryResult = baseDao.queryNative(selectSQL,RoleCodeCons._DBM+RoleCodeCons._DB,cid);
+            queryResult = baseDao.queryNative(selectSQL,roleid,cid);
             if (queryResult == null || queryResult.isEmpty()) return result.success(null);
             return  result.success(convBdList(queryResult));
         }
@@ -975,8 +985,25 @@ public class BackGroundProxyMoudule {
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int bdid = jsonObject.get("bd").getAsInt();
-        int cid = jsonObject.get("cid").getAsInt();
+
+        int ctype = jsonObject.get("ctype").getAsInt();
+        int bdid = 0;
+        int cid = 0;
+        if(ctype == 1){
+            String phone = jsonObject.get("phone").getAsString();
+            String querySql = "select uid,cid {{?"+DSMConst.TB_SYSTEM_USER+"}} where uphone = ?  and cstatus & 1 = 0 ";
+            List<Object[]> ret = baseDao.queryNative(querySql, new Object[]{phone});
+
+            if(ret == null || ret.isEmpty()){
+                return new Result().fail("当前门店不在该BD管辖范围内！");
+            }
+
+            bdid = Integer.parseInt(ret.get(0)[0].toString());
+            cid = Integer.parseInt(ret.get(0)[1].toString());
+        }else{
+            bdid = jsonObject.get("bd").getAsInt();
+            cid = jsonObject.get("cid").getAsInt();
+        }
 
         if(bdid <= 0){
             return new Result().fail("参数错误！");
@@ -1005,10 +1032,7 @@ public class BackGroundProxyMoudule {
                     List<GaoDeMapUtil.Point>
                             points = GsonUtils.json2List(objs[0].toString(), GaoDeMapUtil.Point.class);
                     if(GaoDeMapUtil.checkPointOnRange(compPoint,points)){
-                        String bingSql = "update {{?" + DSMConst.TB_COMP + "}} set inviter = ? where cid = ?";
-                        if(baseDao.updateNative(bingSql,bdid,cid) > 0){
-                            return new Result().success("校验通过!");
-                        }
+                        return new Result().success("校验通过!");
                     }
                 }catch (Exception e){
                     e.printStackTrace();
@@ -1210,6 +1234,50 @@ public class BackGroundProxyMoudule {
 
         return sqlBuilder;
     }
+
+
+    @UserPermission(ignore = true)
+    public Result switchStatus(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        UserSession userSession = appContext.getUserSession();
+        int ctype = jsonObject.get("ctype").getAsInt();
+        int suid = jsonObject.get("uid").getAsInt();
+        int sroleid = jsonObject.get("roleid").getAsInt();
+        long roleid = userSession.roleCode;
+        int cid = userSession.compId;
+        int userId = userSession.userId;
+
+        String  optSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus | 32  where uid = ? and cstatus&1=0 and cstatus&32=0 ";
+        String coptSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus | 32  where  cid = ? and cstatus&1=0 and cstatus&32=0 ";
+        String pcSql = "update {{?"+DSMConst.TB_COMP+"}} set cstatus = cstatus | 32 where cid = ? and cstatus&1=0 and cstatus&32=0 ";
+        if(ctype == 1){
+            optSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus & ~32  where uid = ? and cstatus&1=0 and cstatus&32>0 ";
+            coptSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus & ~32  where  cid = ? and cstatus&1=0 and cstatus&32>0 ";
+            pcSql = "update {{?"+DSMConst.TB_COMP+"}} set cstatus = cstatus  & ~32 where cid = ?  and cstatus&1=0 and cstatus&32>0 ";
+        }
+
+        if((sroleid & RoleCodeCons._PROXY_DIRECTOR) > 0){
+            return new Result().fail("渠道总监不允许停用！");
+        }
+
+        if((sroleid & RoleCodeCons._PROXY_PARTNER) > 0 && (roleid & RoleCodeCons._PROXY_MGR) > 0)  {
+            List<Object[]> parm = new ArrayList<>();
+            parm.add(new Object[]{cid});
+            parm.add(new Object[]{cid});
+            if(!ModelUtil.updateTransEmpty(baseDao.
+                    updateTransNative(new String[]{coptSql, pcSql}, parm))){
+                return new Result().success("操作成功！");
+            }
+        }
+
+        if(baseDao.updateNative(optSql,suid) > 0){
+            return new Result().success("操作成功！");
+        }
+        return new Result().fail("操作失败！");
+    }
+
 
     public static void main(String[] args) {
 
