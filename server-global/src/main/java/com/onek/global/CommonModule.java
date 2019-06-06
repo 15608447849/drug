@@ -133,6 +133,21 @@ public class CommonModule {
         return sb.toString();
     }
 
+
+      /**
+           *
+           * 功能:
+           * 参数集:
+           * 返回值: Result
+           * 详情说明:
+           * 日期: 2019/6/6 13:59
+           * 作者: Helena Rubinstein
+           */
+    @UserPermission(ignore = true)
+    public Result getAllCities(AppContext appContext){
+        return new Result().success(AreaStore.getAllCities());
+    }
+
     public  static JSONObject getAllDict(){
         JSONObject j = new JSONObject();
         List<Object[]> result = baseDao.queryNative("select * from {{?"+ DSMConst.TB_GLOBAL_DICT +"}} where cstatus&1= 0");
