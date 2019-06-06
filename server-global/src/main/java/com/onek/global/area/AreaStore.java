@@ -4,7 +4,10 @@ import com.onek.util.area.AreaEntity;
 import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.ds.AppConfig;
+import util.ArrayUtil;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class AreaStore {
@@ -111,5 +114,45 @@ public class AreaStore {
 
         return tArray[0];
     }
+
+      /**
+           *
+           * 功能: 获取所有城市(市级别) (特殊地：四大直辖和自治区直辖县级行政区划为特殊值 注意区分)
+           * 参数类型:
+           * 参数集:
+           * 返回值:
+           * 详情说明:
+           * 日期: 2019/6/6 14:47
+           * 作者: Helena Rubinstein
+           */
+      
+    public static AreaEntity[] getAllCities() {
+        String sql = AREA_SELECT_BASE + FROMS[0]
+                + " WHERE cstatus&1 = 0 AND areac REGEXP ? AND areac NOT REGEXP ? "
+                + " AND areac NOT REGEXP ? AND areac NOT IN (110100000000, 120100000000, 310100000000, 500100000000) ";
+        
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(sql,
+                "[1-9]{1}[0-9]{3}[0]{8}", "[0-9]{2}[0]{10}", "[0-9]{2}90[0]{8}");
+
+        AreaEntity[] returnResult = new AreaEntity[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, returnResult, AreaEntity.class);
+
+        // 加入特殊值 (四大直辖和自治区直辖县级行政区划)
+        String findSP = AREA_SELECT_BASE + FROMS[0]
+                + " WHERE cstatus&1 = 0 "
+                + " AND ((areac NOT REGEXP ? AND areac LIKE ?) "
+                + " OR areac IN (110000000000, 120000000000, 310000000000, 500000000000)) ";
+
+        queryResult = BaseDAO.getBaseDAO().queryNative(findSP, "[0-9]{2}90[0]{8}", "__90%");
+
+        AreaEntity[] spResult = new AreaEntity[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, spResult, AreaEntity.class);
+
+        return ArrayUtil.concat(returnResult, spResult);
+    }
+
+
 
 }

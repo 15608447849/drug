@@ -34,12 +34,20 @@ public class SuccessNum implements IColTotaler, IRowData {
         this.successTotal = successTotal;
     }
 
+    public void addSuccessTotal(long successTotal) {
+        this.successTotal = addLong(this.successTotal, successTotal);
+    }
+
     public long getRet() {
         return ret;
     }
 
     public void setRet(long ret) {
         this.ret = ret;
+    }
+
+    public void addRet(long ret) {
+        this.ret = addLong(ret, this.ret);
     }
 
     public long getBack() {
@@ -50,12 +58,16 @@ public class SuccessNum implements IColTotaler, IRowData {
         this.back = back;
     }
 
+    public void addBack(long back) {
+        this.back = addLong(back, this.back);
+    }
+
     public double getRetPercent() {
-        return divDouble(this.ret, getTotal());
+        return divDouble(100 * this.ret, getTotal());
     }
 
     public double getBackPercent() {
-        return divDouble(this.back, getTotal());
+        return divDouble(100 * this.back, getTotal());
     }
 
     @Override

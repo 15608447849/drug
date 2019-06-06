@@ -21,6 +21,12 @@ import util.TimeUtils;
 
 import java.util.*;
 
+/**
+ *
+ * 功能: 去除商品新品标记
+ * 详情说明: 定时器触发
+ * 作者: 蒋文广
+ */
 public class RemoveNewFlagTask extends TimerTask {
 
     private static final String SELECT_SQL = "select sku from {{?"+ DSMConst.TD_PROD_SKU+"}} where ondate = ?";

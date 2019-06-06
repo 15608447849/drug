@@ -33,6 +33,10 @@ public class SuccessVolume implements IRowData, IColTotaler {
         this.successTotal = successTotal;
     }
 
+    public void addSuccessTotal(double successTotal) {
+        this.successTotal = addDouble(successTotal, this.successTotal);
+    }
+
     public double getRet() {
         return ret;
     }
@@ -41,8 +45,12 @@ public class SuccessVolume implements IRowData, IColTotaler {
         this.ret = ret;
     }
 
+    public void addRet(double ret) {
+        this.ret = addDouble(ret, this.ret);
+    }
+
     public double getRetPercent() {
-        return divDouble(ret, getTotal());
+        return divDouble(100 * ret, getTotal());
     }
 
     @Override

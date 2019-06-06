@@ -8,6 +8,11 @@ public class GMV implements IRowData, IColTotaler {
     private CancelVolume cancelVolume;
     private SuccessVolume successVolume;
 
+    public GMV() {
+        cancelVolume = new CancelVolume();
+        successVolume = new SuccessVolume();
+    }
+
     public CancelVolume getCancelVolume() {
         return cancelVolume;
     }
@@ -25,7 +30,7 @@ public class GMV implements IRowData, IColTotaler {
     }
 
     public double getSuccessPercent() {
-        return divDouble(this.successVolume.getTotal(), getTotal());
+        return divDouble(100 * this.successVolume.getTotal(), getTotal());
     }
 
     @Override

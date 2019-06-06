@@ -10,6 +10,11 @@ public class OrderNum implements IRowData, IColTotaler {
     private CanceledNum canceledNum;
     private SuccessNum  successNum;
 
+    public OrderNum() {
+        canceledNum = new CanceledNum();
+        successNum  = new SuccessNum();
+    }
+
     public CanceledNum getCanceledNum() {
         return canceledNum;
     }
@@ -27,7 +32,7 @@ public class OrderNum implements IRowData, IColTotaler {
     }
 
     public double getSuccessPercent() {
-        return divDouble(successNum.getTotal(), getTotal());
+        return divDouble(100 * successNum.getTotal(), getTotal());
     }
 
     @Override

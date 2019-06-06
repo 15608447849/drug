@@ -105,6 +105,16 @@ public class DiscountModule {
         return new Result().success(discounts);
     }*/
 
+
+    /**
+     *
+     * 功能: 调整活动库存
+     * 参数类型: json
+     * 参数集: actstock=活动库存 actno=活动码 sku=商品SKU码
+     * 返回值: code=200 data=结果集 构造的购物车数据
+     * 详情说明:当活动库存大于库存时调整时触发,并发送短信给运营人员
+     * 作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public int adjustActivityStock(AppContext appContext) {
 

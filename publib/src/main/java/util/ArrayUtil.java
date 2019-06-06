@@ -8,6 +8,18 @@ public class ArrayUtil {
         return arr == null || arr.length == 0;
     }
 
+    public static boolean isEmpty(double[] arr) {
+        return arr == null || arr.length == 0;
+    }
+
+    public static boolean isEmpty(int[] arr) {
+        return arr == null || arr.length == 0;
+    }
+
+    public static boolean isEmpty(long[] arr) {
+        return arr == null || arr.length == 0;
+    }
+
     /**
      * 加在队首。
      * @param arr
@@ -101,6 +113,24 @@ public class ArrayUtil {
         }
 
         return Arrays.copyOfRange(arr, 1, arr.length);
+    }
+
+    public static double[] addAllItems(double[] a, double[] b) {
+        if (isEmpty(a) && isEmpty(b)) {
+            throw new IllegalArgumentException("The arrays contain NULL!");
+        }
+
+        if (a.length != b.length) {
+            throw new IllegalArgumentException("The array's length is not equals!");
+        }
+
+        double[] result = new double[a.length];
+
+        for (int i = 0; i < a.length; i++) {
+            result[i] = a[i] + b[i];
+        }
+
+        return result;
     }
 
 }
