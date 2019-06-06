@@ -19,6 +19,7 @@ public class ProxyNoticeVO {
     private String effcttime;//生效时间
     private int revobj;//发送对象（角色叠加码）
     private int cstatus;//综合状态码 1 删除
+    private int roleid;//发送人角色码
     private String title;//公告标=标题
     private String content;//公告内容
     private List<Long> areaList;//公告发送地区码集合
@@ -125,5 +126,13 @@ public class ProxyNoticeVO {
 
     public void setEffcttime(String effcttime) {
         this.effcttime = effcttime;
+    }
+
+    public int getRoleid() {
+        return roleid;
+    }
+
+    public void setRoleid(int roleid) {
+        this.roleid = roleid;
     }
 }
