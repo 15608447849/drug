@@ -55,12 +55,15 @@ public class BDManageModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
 //        int cid = jsonObject.get("cid").getAsInt();
+        int ruid = 0;
         int belong = jsonObject.get("belong").getAsInt();
-//        int uid = jsonObject.get("uid").getAsInt();
+        if (jsonObject.get("ruid") != null && !jsonObject.get("ruid").getAsString().isEmpty()) {
+            ruid = jsonObject.get("ruid").getAsInt();
+        }
         int cid = appContext.getUserSession().compId;
         int uid = appContext.getUserSession().userId;
         String selectSQL = "select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 "
-                + " and cid=? and roleid&4096>0 and belong=? and uid<>" + uid;
+                + " and cid=? and roleid&4096>0 and belong=? and uid<>" + uid + " and uid<>" + ruid;
         List<Object[]> objects = baseDao.queryNative(selectSQL, cid, belong);
         if (objects == null || objects.isEmpty()) return result.success(resArr);
         for (Object[] obj : objects) {
@@ -99,18 +102,7 @@ public class BDManageModule {
                     return new Result().fail("该BD已存在！");
                 }
             }
-            int code;
-
-//            String queryCid = "select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0";
-//
-//            List<Object[]> queryCidRet = baseDao.queryNative(queryCid, userInfoVo.getBelong());
-//
-//            if(queryCidRet == null || queryCidRet.isEmpty()){
-//                return new Result().fail("用户操作失败！");
-//            }
-
-//            userInfoVo.setCid(cid);
-
+            boolean code;
 
             if (userInfoVo.getUid() <= 0) {
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
@@ -122,23 +114,57 @@ public class BDManageModule {
                 userInfoVo.setUid(userCode);
                 code = baseDao.updateNative(insertSQL, userCode,
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
-                        pwd, userInfoVo.getRoleid(), cid, userInfoVo.getBelong());
+                        pwd, userInfoVo.getRoleid(), cid, userInfoVo.getBelong()) > 0;
             } else {
+                List<Object[]> params = new ArrayList<>();
                 String updSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
                         + "urealname=?, roleid=?,cid=?, belong=? where cstatus&1=0 and uid=? ";
-                code = baseDao.updateNative(updSQL, userInfoVo.getUphone(), userInfoVo.getUaccount(),
-                        userInfoVo.getUrealname(), userInfoVo.getRoleid(), cid,
-                        userInfoVo.getBelong(), userInfoVo.getUid());
-            }
-            if ((userInfoVo.getRoleid() & 4096) > 0) {
-                //合伙人为BDM设置辖区
+                String delAreaSQL = "update {{?" + DSMConst.TB_PROXY_UAREA + "}} set cstatus=cstatus|1 "
+                        + " where cstatus&1=0 and uid=" + userInfoVo.getUid();
+                long roleid = getRoleIdByUid(userInfoVo.getUid());
+                if ((roleid & userInfoVo.getRoleid()) > 0) {
+                    code = baseDao.updateNative(updSQL, userInfoVo.getUphone(), userInfoVo.getUaccount(),
+                            userInfoVo.getUrealname(), userInfoVo.getRoleid(), cid,
+                            userInfoVo.getBelong(), userInfoVo.getUid()) > 0;
+                } else {
+                    if ((roleid & 4096) > 0) {
+                        if (BDMHasBD(userInfoVo.getUid())) {
+                            return new Result().fail("该BDM下已存在BD,无法变更为BD!");
+                        }
+                    }
+                    //如果BDM下不存在BD 删除该BDM辖区
+                    params.add(new Object[]{userInfoVo.getUphone(), userInfoVo.getUaccount(),
+                            userInfoVo.getUrealname(), userInfoVo.getRoleid(), cid,
+                            userInfoVo.getBelong(), userInfoVo.getUid()});
+                    params.add(new Object[]{});
+                    code = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{updSQL, delAreaSQL}, params));
+                }
 
             }
-            if (code > 0) {
+            if (code) {
                 return new Result().success(userInfoVo);
             }
         }
         return new Result().fail("用户操作失败！");
+    }
+
+    private void deleteAreas() {
+
+    }
+
+    private boolean BDMHasBD(int ruid) {
+        String selectSQL = "select count(*) from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 "
+                + " and belong=" + ruid;
+        List<Object[]> qResult = baseDao.queryNative(selectSQL);
+        long count = Long.parseLong(String.valueOf(qResult.get(0)[0]));
+        return count > 0;
+    }
+
+    private long getRoleIdByUid(int ruid) {
+        String selectSQL = "select roleid from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 "
+                + " and uid=" + ruid;
+        List<Object[]> qResult = baseDao.queryNative(selectSQL);
+        return Long.parseLong(String.valueOf(qResult.get(0)[0]));
     }
 
     private boolean checkBDM(UserInfoVo userInfoVo) {
@@ -440,6 +466,26 @@ public class BDManageModule {
             return b ? result.success("设置成功") : result.fail("设置失败");
         }
         return result.fail("设置失败");
+    }
+
+    /**
+     * 功能: BDM下是否存在BD
+     * 参数类型: json {ruid: 所选BDM uid}
+     * 返回值: false 不存在
+     * 详情说明:
+     */
+    @UserPermission(ignore = false)
+    public Result BDMHasBD(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int ruid = jsonObject.get("ruid").getAsInt();
+        String selectSQL = "select count(*) from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 "
+                + " and belong=" + ruid;
+        List<Object[]> qResult = baseDao.queryNative(selectSQL);
+        long count = Long.parseLong(String.valueOf(qResult.get(0)[0]));
+        return count > 0 ? result.success(true) : result.success(false);
     }
 
 }

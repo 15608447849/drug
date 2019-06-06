@@ -392,7 +392,7 @@ public class BackgroundUserModule {
 //                    + RoleCodeCons._DB;
 //            sqlSb.append(" AND roleid &  ").append(addRole).append(" > 0 ");
 //        }
-        if ((roleid & RoleCodeCons._SYS) > 0) {
+        if ((roleid & RoleCodeCons._SYS) > 0 || (roleid & RoleCodeCons._OPER) > 0) {
             sqlSb.append(" AND roleid &  ")
                     .append(RoleCodeCons._PROXY_MGR|RoleCodeCons._PROXY_PARTNER
                             |RoleCodeCons._DBM|RoleCodeCons._DB).append(" = 0 ");
