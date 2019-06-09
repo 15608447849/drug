@@ -25,7 +25,7 @@ public class StoreCustomerOp implements IOperation<AppContext> {
     Object uid;//客服专员ID
     String name = "";
     int belong; //DB用户归属
-    int areac;//门店地区码
+    String areac;//门店地区码
     @Override
     public Result execute(AppContext context) {
 

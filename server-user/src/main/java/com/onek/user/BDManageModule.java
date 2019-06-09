@@ -180,7 +180,6 @@ public class BDManageModule {
                     params.add(new Object[]{});
                     code = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{updSQL, delAreaSQL}, params));
                 }
-
             }
             if (code) {
                 return new Result().success(userInfoVo);
