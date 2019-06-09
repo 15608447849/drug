@@ -107,7 +107,7 @@ public class BDManageModule {
 
             String queryIsHasDb = "select 1 from {{?"+DSMConst.TB_SYSTEM_USER+"}} where belong = ? and roleid & 8192 > 0 ";
 
-            int code;
+            boolean code;
             if (userInfoVo.getUid() <= 0 && checkBDM(userInfoVo)) {
                 String updateCompBd = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "set cid = ?,upw = ?,urealname = ?,belong = ?,roleid = ?,cstatus = ? where uphone = ? ";
@@ -127,9 +127,9 @@ public class BDManageModule {
                     }
                 }
                 code = baseDao.updateNative(updateCompBd,new Object[]{cid,pwd,userInfoVo.getUrealname(),
-                        userInfoVo.getBelong(),userInfoVo.getRoleid(),0,userInfoVo.getUphone()});
+                        userInfoVo.getBelong(),userInfoVo.getRoleid(),0,userInfoVo.getUphone()}) > 0;
 
-                if(code > 0){
+                if(code){
                     StringBuilder sqlSb = new StringBuilder(deleteArea);
                     sqlSb.append("and uid in (select uid from {{?");
                     sqlSb.append(DSMConst.TB_SYSTEM_USER);
