@@ -366,6 +366,7 @@ public class BackGroundProxyMoudule {
 
         sqlBuilder.append(selectSQL);
         sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by tu.uid desc ");
+        LogUtil.getDefaultLogger().debug("queryPartners: "+sqlBuilder.toString());
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
         if (queryResult == null || queryResult.isEmpty()) return result.setQuery(null,pageHolder);
         ProxyPartnerVO[] proxyPartnerVOS = new ProxyPartnerVO[queryResult.size()];

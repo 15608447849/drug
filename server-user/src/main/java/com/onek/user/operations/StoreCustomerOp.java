@@ -42,7 +42,7 @@ public class StoreCustomerOp implements IOperation<AppContext> {
                         uphone);
                 if (lines.size() == 1 && lines.get(0)[0] != null){
                     uid = lines.get(0)[0];
-                    cid = Integer.parseInt(lines.get(0)[0].toString());
+                    cid = Integer.parseInt(lines.get(0)[1].toString());
                     String aSql =  "select arearng from {{?"+TB_PROXY_UAREA+"}} where uid = ? and areac = ? and cstatus & 1 = 0 ";
                     List<Object[]> ret = BaseDAO.getBaseDAO().queryNative(aSql,uid,areac);
                     if(ret == null || ret.isEmpty()){
