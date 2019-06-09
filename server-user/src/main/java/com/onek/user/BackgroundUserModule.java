@@ -55,7 +55,7 @@ public class BackgroundUserModule {
             List<Object[]> parmList = new ArrayList<>();
 
             String queryAreaExtSql = "select 1 from {{?"+DSMConst.TB_PROXY_UAREA+"}} where  uid = ? and areac = ? and cstatus & 1 = 0 ";
-
+            String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
             if (userInfoVo.getUid() <= 0) {
                 if (checkUser(userInfoVo)) return new Result().fail("该用户已存在！");
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
@@ -63,7 +63,6 @@ public class BackgroundUserModule {
                         + " values (?,?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";
 
                 sqlList.add(insertSQL);
-                String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
 
                 parmList.add(new Object[]{getUserCode(),
                         userInfoVo.getUphone(), userInfoVo.getUaccount(), userInfoVo.getUrealname(),
@@ -88,10 +87,10 @@ public class BackgroundUserModule {
                 }
             } else {
                 String updSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
-                        + "urealname=?, roleid=? where cstatus&1=0 and uid=? ";
+                        + "urealname=?, roleid=?, upw=? where cstatus&1=0 and uid=? ";
                 sqlList.add(updSQL);
                 parmList.add(new Object[]{userInfoVo.getUphone(),userInfoVo.getUaccount(),
-                        userInfoVo.getUrealname(),userInfoVo.getRoleid(),userInfoVo.getUid()});
+                        userInfoVo.getUrealname(),userInfoVo.getRoleid(),pwd,userInfoVo.getUid()});
 
                 if(userInfoVo.getArean() != null
                         && !StringUtils.isEmpty(userInfoVo.getArean())){
@@ -383,7 +382,7 @@ public class BackgroundUserModule {
         int sroleid = jsonObject.get("sroleid").getAsInt();
         StringBuilder sqlSb = new StringBuilder("SELECT roleid,rname,adddate,addtime,offdate,offtime,0 cstatus  FROM {{?");
         sqlSb.append(DSMConst.TB_SYSTEM_ROLE);
-        sqlSb.append("}} WHERE cstatus&33 = 0 AND roleid & 1 = 0 ");
+        sqlSb.append("}} WHERE cstatus&33 = 0 ");
 
 //        if((roleid & RoleCodeCons._PROXY_DIRECTOR) > 0){
 //            int addRole = RoleCodeCons._PROXY_MGR
@@ -392,12 +391,18 @@ public class BackgroundUserModule {
 //                    + RoleCodeCons._DB;
 //            sqlSb.append(" AND roleid &  ").append(addRole).append(" > 0 ");
 //        }
-        if ((roleid & RoleCodeCons._SYS) > 0 || (roleid & RoleCodeCons._OPER) > 0) {
+        if ((roleid & RoleCodeCons._SYS) > 0 ) {
             sqlSb.append(" AND roleid &  ")
                     .append(RoleCodeCons._PROXY_MGR|RoleCodeCons._PROXY_PARTNER
                             |RoleCodeCons._DBM|RoleCodeCons._DB).append(" = 0 ");
+        } else if ((roleid & RoleCodeCons._OPER) > 0) {
+            sqlSb.append(" AND roleid & 1 = 0  AND roleid &  ")
+                    .append(RoleCodeCons._PROXY_MGR|RoleCodeCons._PROXY_PARTNER
+                            |RoleCodeCons._DBM|RoleCodeCons._DB).append(" = 0 ");
         } else if ((roleid & RoleCodeCons._PROXY_DIRECTOR) > 0) {
-            sqlSb.append(" AND roleid &  ").append(RoleCodeCons._PROXY_MGR).append(" > 0 ");
+            sqlSb.append(" AND roleid & 1 = 0  AND roleid &  ").append(RoleCodeCons._PROXY_MGR).append(" > 0 ");
+        } else {
+            sqlSb.append(" AND roleid & 1 = 0 ");
         }
 
         List<Object[]> queryResult = baseDao.queryNative(
