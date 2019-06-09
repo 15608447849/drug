@@ -238,12 +238,7 @@ public class BackgroundUserModule {
                 + " from {{?"+DSMConst.TB_PROXY_UAREA+"}} uarea,{{?"+DSMConst.TB_AREA_PCA +"}} pca "
                 + "  where pca.areac = uarea.areac and uarea.cstatus&1 = 0 group by uid) a on a.uid = u.uid "
                 + " where u.cstatus&1=0 ";
-
         sqlBuilder.append(selectSQL);
-        sqlBuilder.append(" and u.roleid & ");
-        sqlBuilder.append(RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM
-                +RoleCodeCons._DB+RoleCodeCons._PROXY_MGR+RoleCodeCons._PROXY_DIRECTOR);
-        sqlBuilder.append(" = 0 ");
         sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by u.uid desc ");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
@@ -255,7 +250,7 @@ public class BackgroundUserModule {
                         "offtime","ip","logindate","logintime",
                         "cstatus","rname","arean"});
 
-        baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class);
+      //  baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class);
         return result.setQuery(userInfoVos,pageHolder);
     }
 
@@ -328,18 +323,29 @@ public class BackgroundUserModule {
         }
 
         if((mroleid & RoleCodeCons._PROXY_DIRECTOR) > 0){
-            sqlBuilder.append(" or (u.roleid & ");
+            sqlBuilder.append(" and u.roleid & ");
             sqlBuilder.append(RoleCodeCons._PROXY_MGR);
             sqlBuilder.append(" > 0 ");
             sqlBuilder.append(" and u.belong = ").append(puid);
-            sqlBuilder.append(")");
         }
 
         if((mroleid & RoleCodeCons._SYS) > 0){
-            sqlBuilder.append(" or u.roleid & ");
-            sqlBuilder.append(RoleCodeCons._PROXY_DIRECTOR);
-            sqlBuilder.append(" > 0 ");
+            sqlBuilder.append(" and u.roleid & ");
+            sqlBuilder.append(RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM
+                    +RoleCodeCons._DB+RoleCodeCons._PROXY_MGR);
+            sqlBuilder.append(" = 0 ");
         }
+
+        if((mroleid & (RoleCodeCons._SYS+RoleCodeCons._PROXY_DIRECTOR)) == 0){
+            sqlBuilder.append(" and u.roleid & ");
+            sqlBuilder.append(RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM
+                    +RoleCodeCons._DB+RoleCodeCons._PROXY_MGR+RoleCodeCons._PROXY_DIRECTOR);
+            sqlBuilder.append(" = 0 ");
+        }
+
+
+//        sqlBuilder.append(RoleCodeCons._PROXY_DIRECTOR);
+//        sqlBuilder.append(" > 0 ");
 
         return sqlBuilder;
     }
