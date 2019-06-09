@@ -1101,9 +1101,8 @@ public class BackGroundProxyMoudule {
                 " stu.uphone cursorPhone,sstu.uid bdmid,sstu.urealname bdmn from {{?"
                 + DSMConst.TB_COMP + "}} cp  join {{?" + DSMConst.TB_SYSTEM_USER + "}} tu  on cp.cid = tu.cid "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} stu on stu.uid = cp.inviter "
-                + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} sstu on sstu.uid = tu.belong "
+                + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} sstu on sstu.uid = stu.belong "
                 + " where tu.cstatus&1=0 and ctype = 0  ";
-
         sqlBuilder.append(selectSQL);
 
 
@@ -1173,7 +1172,7 @@ public class BackGroundProxyMoudule {
                 }
 
                 if((mroleid & RoleCodeCons._DBM) > 0){
-                    dySql.append(" or tu.belong = ").append(puid);
+                    dySql.append(" or stu.belong = ").append(puid);
                 }
 
                 if((mroleid & RoleCodeCons._DB) > 0){
