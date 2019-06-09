@@ -24,7 +24,15 @@ public class ProxyPartnerVO {
     private int ctype;
     private int roleid;
     private String examine;
+    private int puid;
 
+    public int getPuid() {
+        return puid;
+    }
+
+    public void setPuid(int puid) {
+        this.puid = puid;
+    }
 
     public String getArean() {
         return arean;

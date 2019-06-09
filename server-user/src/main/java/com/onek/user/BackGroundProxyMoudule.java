@@ -356,7 +356,7 @@ public class BackGroundProxyMoudule {
         StringBuilder sqlBuilder = new StringBuilder();
 
         String selectSQL = "select cp.cid,tu.uid,cname,cp.cstatus ckstatus,tu.cstatus opstatus,tu.urealname "
-                + ",createdate,createtime,arean,ctype,tu.roleid,examine,tu.uphone,stu.urealname purealname from {{?"
+                + ",createdate,createtime,arean,ctype,tu.roleid,examine,tu.uphone,stu.urealname purealname,stu.uid puid from {{?"
                 + DSMConst.TB_COMP + "}} cp  join {{?" + DSMConst.TB_SYSTEM_USER + "}} tu  on cp.cid = tu.cid "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} stu on stu.uid = tu.belong "
                 + " left join (select uid,GROUP_CONCAT(distinct pca.arean) as arean "
@@ -372,7 +372,7 @@ public class BackGroundProxyMoudule {
         ProxyPartnerVO[] proxyPartnerVOS = new ProxyPartnerVO[queryResult.size()];
         baseDao.convToEntity(queryResult, proxyPartnerVOS, ProxyPartnerVO.class,
                 new String[]{"cid","uid","cname","ckstatus","opstatus","urealname","createdate",
-                "createtime","arean","ctype","roleid","examine","uphone","purealname"});
+                "createtime","arean","ctype","roleid","examine","uphone","purealname","puid"});
         return result.setQuery(proxyPartnerVOS,pageHolder);
     }
 
@@ -1313,7 +1313,7 @@ public class BackGroundProxyMoudule {
 
         if((sroleid & RoleCodeCons._DBM) > 0){
             String selectSQL = "select count(*) from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&33=0 "
-                    + " and belong=" + suid;
+                    + " and roleid & 8192 > 0 and belong=" + suid;
             List<Object[]> qResult = baseDao.queryNative(selectSQL);
             long count = Long.parseLong(String.valueOf(qResult.get(0)[0]));
             if(count > 0){

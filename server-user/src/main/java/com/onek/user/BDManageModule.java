@@ -113,19 +113,25 @@ public class BDManageModule {
                         + "set cid = ?,upw = ?,urealname = ?,belong = ?,roleid = ?,cstatus = ? where uphone = ? ";
                 String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
                 if(isNeedSmsVerify(userInfoVo.getUphone()+"")){
-                    String queryRole = "select roleid,uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uphone = ? ";
-                    List<Object[]> roleRet = baseDao.queryNative(queryRole,userInfoVo.getUphone());
-                    List<Object[]> hasDb = baseDao.queryNative(queryIsHasDb,roleRet.get(0)[1]);
-                    if((Integer.parseInt(roleRet.get(0)[0].toString())
-                            & RoleCodeCons._DBM) > 0 &&
-                            (hasDb != null && !hasDb.isEmpty())){
-                        return new Result().fail("当前DBM有关联DB存在，需先解除DB与DBM关系才能添加！");
-                    }
-                    String res = RedisUtil.getStringProvide().get("SMS"+userInfoVo.getUphone());
-                    if(StringUtils.isEmpty(userInfoVo.getVcode()) || !res.equals(userInfoVo.getVcode())){
-                        return new Result().fail("验证码验证错误！");
+                    if ((userInfoVo.getRoleid() & 4096) > 0) {
+                        return new Result().fail("该BDM已存在！");
+                    } else {
+                        return new Result().fail("该BD已存在！");
                     }
                 }
+//                    String queryRole = "select roleid,uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uphone = ? ";
+//                    List<Object[]> roleRet = baseDao.queryNative(queryRole,userInfoVo.getUphone());
+//                    List<Object[]> hasDb = baseDao.queryNative(queryIsHasDb,roleRet.get(0)[1]);
+//                    if((Integer.parseInt(roleRet.get(0)[0].toString())
+//                            & RoleCodeCons._DBM) > 0 &&
+//                            (hasDb != null && !hasDb.isEmpty())){
+//                        return new Result().fail("当前DBM有关联DB存在，需先解除DB与DBM关系才能添加！");
+//                    }
+//                    String res = RedisUtil.getStringProvide().get("SMS"+userInfoVo.getUphone());
+//                    if(StringUtils.isEmpty(userInfoVo.getVcode()) || !res.equals(userInfoVo.getVcode())){
+//                       // return new Result().fail("验证码验证错误！");
+//                    }
+//                }
                 code = baseDao.updateNative(updateCompBd,new Object[]{cid,pwd,userInfoVo.getUrealname(),
                         userInfoVo.getBelong(),userInfoVo.getRoleid(),0,userInfoVo.getUphone()}) > 0;
 
@@ -143,6 +149,15 @@ public class BDManageModule {
 //                    return new Result().fail("该BD已存在！");
 //                }
             }
+
+            if(checkBDM(userInfoVo)){
+                if ((userInfoVo.getRoleid() & 4096) > 0) {
+                    return new Result().fail("该BDM已存在！");
+                } else {
+                    return new Result().fail("该BD已存在！");
+                }
+            }
+
 
             boolean isDelArea = false;
             if (userInfoVo.getUid() <= 0) {

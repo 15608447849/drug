@@ -30,7 +30,7 @@ public class LoginBackOp extends LoginAbsOp implements IOperation<AppContext> {
             if (!checkAccountPassword(account,password)) return new Result().fail(error);
             //检测用户名/密码是否正确
             if (!checkSqlAndUserExist(context.remoteIp,account,password)) return new Result().fail(error);
-            if (!partnerCheck(account))  return new Result().fail("内部账户,拒绝登陆");
+            if (!partnerCheck(account))  return new Result().fail("该账号已被停用");
             //关联token-用户信息
             if (relationTokenUserSession(context,false)) return new Result().success("登陆成功");
         } catch (Exception e) {
