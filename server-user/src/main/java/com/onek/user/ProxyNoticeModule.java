@@ -141,7 +141,7 @@ public class ProxyNoticeModule {
         if (title != null && !title.isEmpty()) {
             selectSQL = selectSQL + " and  json_extract(msgtxt,'$.title') like '%" + title + "%'";
         }
-        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, selectSQL);
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, selectSQL + " order by n.oid desc");
         if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         ProxyNoticeVO[] proxyNoticeVOS = new ProxyNoticeVO[queryResult.size()];
         baseDao.convToEntity(queryResult, proxyNoticeVOS, ProxyNoticeVO.class);
