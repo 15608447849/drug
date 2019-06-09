@@ -57,6 +57,15 @@ public class BackgroundUserModule {
             String queryAreaExtSql = "select 1 from {{?"+DSMConst.TB_PROXY_UAREA+"}} where  uid = ? and areac = ? and cstatus & 1 = 0 ";
 
             if (userInfoVo.getUid() <= 0) {
+
+                if((userInfoVo.getRoleid() & RoleCodeCons._PROXY_DIRECTOR) > 0){
+                    String queryDirect = "select 1 from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid & 512 > 0 and cstatus & 1 = 0";
+                    List<Object[]> objs  = baseDao.queryNative(queryDirect);
+                    if(objs != null && !objs.isEmpty()){
+                        return new Result().fail("渠道总监不允许新增多个，用户操作失败！");
+                    }
+                }
+
                 if (checkUser(userInfoVo)) return new Result().fail("该用户已存在！");
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime,belong)"
@@ -170,6 +179,27 @@ public class BackgroundUserModule {
             updateSql = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set cstatus=cstatus|32 "
                     + " where cstatus&1=0 and cstatus&32=0 and uid=?";
         }
+
+        String queryRole = "select roleid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where  uid = ? and cstatus & 1 = 0 ";
+        List<Object[]> ret = baseDao.queryNative(queryRole, new Object[]{uid});
+        if(ret == null || ret.isEmpty()){
+            return result.fail("操作失败");
+        }
+
+        long roleid = Long.parseLong(ret.get(0)[0].toString());
+
+        if((roleid & RoleCodeCons._PROXY_DIRECTOR) > 0 ){
+            return result.fail("渠道总监不允许停用！");
+        }
+
+        if((roleid & RoleCodeCons._PROXY_MGR) > 0 ){
+            String mgrSql = "select 1 from {{?"+DSMConst.TB_SYSTEM_USER+"}} where belong = ? and cstatus & 1 = 0";
+            List<Object[]> mgrRet = baseDao.queryNative(mgrSql, uid);
+            if(mgrRet != null && !mgrRet.isEmpty()){
+                return result.fail("当前渠道经理不能被停用，存在关联下属！需解除关联下属关系，才可被停用！");
+            }
+        }
+
         int code = baseDao.updateNative(updateSql, uid);
         if (code > 0) {
             return result.success("操作成功");
@@ -210,6 +240,10 @@ public class BackgroundUserModule {
                 + "  where pca.areac = uarea.areac and uarea.cstatus&1 = 0 group by uid) a on a.uid = u.uid "
                 + " where u.cstatus&1=0 ";
 
+        sqlBuilder.append(" and u.roleid & ");
+        sqlBuilder.append(RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM
+                +RoleCodeCons._DB+RoleCodeCons._PROXY_MGR+RoleCodeCons._PROXY_DIRECTOR);
+        sqlBuilder.append(" = 0 ");
         sqlBuilder.append(selectSQL);
         sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by u.uid desc ");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
@@ -292,11 +326,20 @@ public class BackgroundUserModule {
             }else{
                 sqlBuilder.append(" and 1=2 ");
             }
-
         }
 
         if((mroleid & RoleCodeCons._PROXY_DIRECTOR) > 0){
+            sqlBuilder.append(" or (u.roleid & ");
+            sqlBuilder.append(RoleCodeCons._PROXY_MGR);
+            sqlBuilder.append(" > 0 ");
             sqlBuilder.append(" and u.belong = ").append(puid);
+            sqlBuilder.append(")");
+        }
+
+        if((mroleid & RoleCodeCons._SYS) > 0){
+            sqlBuilder.append(" or u.roleid & ");
+            sqlBuilder.append(RoleCodeCons._PROXY_DIRECTOR);
+            sqlBuilder.append(" > 0 ");
         }
 
         return sqlBuilder;

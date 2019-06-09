@@ -532,9 +532,11 @@ public class BackGroundProxyMoudule {
         String json = appContext.param.json;
         ProxyPartnerVO proxyPartnerVO = GsonUtils.jsonToJavaBean(json, ProxyPartnerVO.class);
         if (proxyPartnerVO != null) {
-            if (checkUser(proxyPartnerVO)) return new Result().fail("该用户已存在！");
             if (StringUtils.isEmpty(proxyPartnerVO.getUphone())) {
                 return new Result().fail("参数错误！");
+            }
+            if (checkUser(proxyPartnerVO)){
+                return new Result().fail("当前用户已存在！");
             }
             List<String> sqlList = new ArrayList<>();
             List<Object[]> parmList = new ArrayList<>();
@@ -615,9 +617,13 @@ public class BackGroundProxyMoudule {
 
 
 
+
+
     @UserPermission(ignore = true)
     public Result updatePartners(AppContext appContext) {
         String json = appContext.param.json;
+        UserSession userSession = appContext.getUserSession();
+        long roleid = userSession.roleCode;
         ProxyPartnerVO proxyPartnerVO = GsonUtils.jsonToJavaBean(json, ProxyPartnerVO.class);
         if (proxyPartnerVO != null) {
             if (StringUtils.isEmpty(proxyPartnerVO.getUphone())) {
@@ -627,11 +633,11 @@ public class BackGroundProxyMoudule {
             List<Object[]> parmList = new ArrayList<>();
             if (proxyPartnerVO.getUid() > 0) {
                 String updateUserSql = "update {{?" +DSMConst.TB_SYSTEM_USER +"}} "
-                        + " set urealname = ? where uid = ?";
+                        + " set uphone = ?,urealname = ?,belong = ? where uid = ?";
                 sqlList.add(updateUserSql);
 
-                parmList.add(new Object[]{proxyPartnerVO.getUrealname()
-                        ,proxyPartnerVO.getUid()});
+                parmList.add(new Object[]{proxyPartnerVO.getUphone(),proxyPartnerVO.getUrealname()
+                        ,proxyPartnerVO.getBelong(),proxyPartnerVO.getUid()});
 
                 String updateCompSql = "update {{?"+DSMConst.TB_COMP +"}} set cname = ?," +
                         " cnamehash = crc32(?) where cid = ?";
@@ -664,16 +670,9 @@ public class BackGroundProxyMoudule {
                                 if(isExt == null || isExt.isEmpty()){
 
                                 String completeName = IceRemoteUtil.getCompleteName(areaArry[i]);
-//                                StringBuilder asb = new StringBuilder();
-//                                for (String area : allArea){
-//                                    asb.append(area);
-//                                }
                                     String jwp = null;
                                     try{
                                        LogUtil.getDefaultLogger().debug(completeName);
-//                                        List<GaoDeMapUtil.Point> points = GaoDeMapUtil.areaPolyline(completeName);
-//                                        jwp = GsonUtils.javaBeanToJson(points);
-
                                         List<List<GaoDeMapUtil.Point>> lists = GaoDeMapUtil.areaPolyline(IceRemoteUtil.getCompleteName(areaArry[i]));
                                         for (List<GaoDeMapUtil.Point> plist : lists){
                                             jwp = GsonUtils.javaBeanToJson(plist);
@@ -687,15 +686,26 @@ public class BackGroundProxyMoudule {
                                         LogUtil.getDefaultLogger().debug("获取区域经纬度失败！");
                                         e.printStackTrace();
                                     }
-
-
                                 }
-                               // String[] allArea =  AreaStore.getCompleteName(Long.parseLong(areaArry[i]));
-
                             }
                         }
                     }
                 }
+
+                if((roleid & RoleCodeCons._PROXY_DIRECTOR) > 0){
+                    String queryBlong = "select belong from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0 ";
+                    List<Object[]> belongRet = baseDao.queryNative(queryBlong, proxyPartnerVO.getUid());
+                    int sbelong = Integer.parseInt(belongRet.get(0)[0].toString());
+                    if(sbelong != proxyPartnerVO.getBelong() && proxyPartnerVO.getBelong() != 0){
+                        String updateAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA +"}} set uid = ? where uid = ? and cstatus & 1 = 0 ";
+                        String deleteAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA +"}} set cstatus = cstatus | 1  where uid = ? and cstatus & 1 = 0 ";
+                        sqlList.add(deleteAreaSql);
+                        sqlList.add(updateAreaSql);
+                        parmList.add(new Object[]{proxyPartnerVO.getBelong()});
+                        parmList.add(new Object[]{proxyPartnerVO.getBelong(),sbelong});
+                    }
+                }
+
                 String[] sqlNative = new String[sqlList.size()];
                 sqlNative = sqlList.toArray(sqlNative);
                 boolean b = !ModelUtil.updateTransEmpty(
@@ -949,7 +959,7 @@ public class BackGroundProxyMoudule {
     public Result queryAllBds(AppContext appContext) {
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
-        String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & (4096+8192) > 0 and cstatus & 1 = 0 ";
+        String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & (4096+8192) > 0 and cstatus & 33 = 0 ";
         sqlBuilder.append(selectSQL);
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
@@ -991,7 +1001,7 @@ public class BackGroundProxyMoudule {
         int cid = 0;
         if(ctype == 1){
             String phone = jsonObject.get("phone").getAsString();
-            String querySql = "select uid,cid {{?"+DSMConst.TB_SYSTEM_USER+"}} where uphone = ?  and cstatus & 1 = 0 ";
+            String querySql = "select uid,cid {{?"+DSMConst.TB_SYSTEM_USER+"}} where uphone = ?  and cstatus & 33 = 0 ";
             List<Object[]> ret = baseDao.queryNative(querySql, new Object[]{phone});
 
             if(ret == null || ret.isEmpty()){
@@ -1051,14 +1061,16 @@ public class BackGroundProxyMoudule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int bdid = jsonObject.get("bd").getAsInt();
         int cid = jsonObject.get("cid").getAsInt();
+        UserSession userSession = appContext.getUserSession();
+        int scid = userSession.compId;
 
         if(bdid <= 0){
             return new Result().fail("参数错误，绑定失败！");
         }
 
-        String bingSql = "update {{?" + DSMConst.TB_COMP + "}} set inviter = ? where cid = ?";
+        String bingSql = "update {{?" + DSMConst.TB_COMP + "}} set inviter = ?,invitercid = ? where cid = ?";
 
-        if(baseDao.updateNative(bingSql,bdid,cid) > 0){
+        if(baseDao.updateNative(bingSql,bdid,scid,cid) > 0){
             return new Result().success("绑定成功!");
         }
         return new Result().fail("绑定失败！");
@@ -1230,8 +1242,6 @@ public class BackGroundProxyMoudule {
         if (bd > 0) {
             sqlBuilder.append(" and cp.inviter=").append(bd);
         }
-
-
         return sqlBuilder;
     }
 
@@ -1250,11 +1260,12 @@ public class BackGroundProxyMoudule {
         int userId = userSession.userId;
 
         String  optSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus | 32  where uid = ? and cstatus&1=0 and cstatus&32=0 ";
-        String coptSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus | 32  where  cid = ? and cstatus&1=0 and cstatus&32=0 ";
+       // String coptSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus | 32  where  cid = ? and cstatus&1=0 and cstatus&32=0 ";
         String pcSql = "update {{?"+DSMConst.TB_COMP+"}} set cstatus = cstatus | 32 where cid = ? and cstatus&1=0 and cstatus&32=0 ";
+        String aerSql =  "update {{?"+DSMConst.TB_PROXY_UAREA+"}} set cstatus = cstatus | 1 where cstatus & 1 = 0 ";
         if(ctype == 1){
             optSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus & ~32  where uid = ? and cstatus&1=0 and cstatus&32>0 ";
-            coptSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus & ~32  where  cid = ? and cstatus&1=0 and cstatus&32>0 ";
+         //   coptSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus & ~32  where  cid = ? and cstatus&1=0 and cstatus&32>0 ";
             pcSql = "update {{?"+DSMConst.TB_COMP+"}} set cstatus = cstatus  & ~32 where cid = ?  and cstatus&1=0 and cstatus&32>0 ";
         }
 
@@ -1262,15 +1273,45 @@ public class BackGroundProxyMoudule {
             return new Result().fail("渠道总监不允许停用！");
         }
 
-        if((sroleid & RoleCodeCons._PROXY_PARTNER) > 0 && (roleid & RoleCodeCons._PROXY_MGR) > 0)  {
-            List<Object[]> parm = new ArrayList<>();
-            parm.add(new Object[]{cid});
-            parm.add(new Object[]{cid});
-            if(!ModelUtil.updateTransEmpty(baseDao.
-                    updateTransNative(new String[]{coptSql, pcSql}, parm))){
-                return new Result().success("操作成功！");
+        if((sroleid & RoleCodeCons._PROXY_PARTNER) > 0)  {
+            String queryIsDrect = "select 1 from {{?"+DSMConst.TB_COMP+"}} where cid = ? and ctype = 2 ";
+            String compSql = "select uid from {{?"+DSMConst.TB_SYSTEM_USER +"}} where cid = ? and cstatus & 1 = 0";
+            List<Object[]> drectRet = baseDao.queryNative(queryIsDrect, cid);
+            if(drectRet != null && !drectRet.isEmpty()){
+                List<Object[]> uidList = baseDao.queryNative(compSql, cid);
+                StringBuilder sb = new StringBuilder();
+                for(Object[] objects: uidList){
+                    sb.append(Integer.parseInt(objects.toString())).append(",");
+                }
+
+                String uidStr = sb.toString();
+                if(uidStr.endsWith(",")){
+                    uidStr = uidStr.substring(0,uidStr.length()-1);
+                }
+
+                List<Object[]> parm = new ArrayList<>();
+                List<String> sqlList = new ArrayList<>();
+                if(!StringUtils.isEmpty(uidStr)){
+                    aerSql = aerSql + " and uid in ("+aerSql+")";
+                    parm.add(new Object[]{});
+                    sqlList.add(aerSql);
+                }
+
+                parm.add(new Object[]{cid});
+                sqlList.add(pcSql);
+                String[] sqlArray = new String[sqlList.size()];
+                sqlList.toArray(sqlArray);
+                boolean b = !ModelUtil.updateTransEmpty(
+                        baseDao.updateTransNative(sqlArray,parm));
+                if(b){
+                    return new Result().success("操作成功！");
+                }
             }
         }
+
+//        if((sroleid & RoleCodeCons._DBM) > 0){
+//
+//        }
 
         if(baseDao.updateNative(optSql,suid) > 0){
             return new Result().success("操作成功！");

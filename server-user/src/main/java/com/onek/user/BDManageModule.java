@@ -9,11 +9,17 @@ import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.user.entity.ProxyPartnerVO;
 import com.onek.user.entity.UserInfoVo;
+import com.onek.user.service.USProperties;
 import com.onek.util.GenIdUtil;
+import com.onek.util.RoleCodeCons;
+import com.onek.util.SmsTempNo;
+import com.onek.util.SmsUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
+import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.ModelUtil;
@@ -26,6 +32,7 @@ import java.util.Map;
 
 import static com.onek.util.RedisGlobalKeys.getUserCode;
 import static util.GaoDeMapUtil.pointJsonToListArrayJson;
+import static util.ImageVerificationUtils.getRandomCodeByNum;
 
 /**
  * @author 11842
@@ -92,26 +99,49 @@ public class BDManageModule {
             if (userInfoVo.getUphone() <= 0 || userInfoVo.getUpw() == null || userInfoVo.getUpw().isEmpty()) {
                 return new Result().fail("参数错误！");
             }
-            if (checkBDM(userInfoVo)) {
-                if ((userInfoVo.getRoleid() & 4096) > 0) {
-                    return new Result().fail("该BDM已存在！");
-                } else {
-                    return new Result().fail("该BD已存在！");
-                }
-            }
+
+            String deleteArea =  "update {{?"+DSMConst.TB_PROXY_UAREA+"}} set cstatus = cstatus | 1 where cstatus & 1 = 0  ";
+
+            String queryIsHasDb = "select 1 from {{?"+DSMConst.TB_SYSTEM_USER+"}} where belong = ? and roleid & 8192 > 0 ";
+
             int code;
+            if (userInfoVo.getUid() <= 0 && checkBDM(userInfoVo)) {
+                String updateCompBd = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} "
+                        + "set cid = ?,upw = ?,urealname = ?,belong = ?,roleid = ?,cstatus = ? where uphone = ? ";
+                String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
+                if(isNeedSmsVerify(userInfoVo.getUphone()+"")){
+                    String queryRole = "select roleid,uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uphone = ? ";
+                    List<Object[]> roleRet = baseDao.queryNative(queryRole,userInfoVo.getUphone());
+                    List<Object[]> hasDb = baseDao.queryNative(queryIsHasDb,roleRet.get(0)[1]);
+                    if((Integer.parseInt(roleRet.get(0)[0].toString())
+                            & RoleCodeCons._DBM) > 0 &&
+                            (hasDb != null && !hasDb.isEmpty())){
+                        return new Result().fail("当前DBM有关联DB存在，需先解除DB与DBM关系才能添加！");
+                    }
+                    String res = RedisUtil.getStringProvide().get("SMS"+userInfoVo.getUphone());
+                    if(StringUtils.isEmpty(userInfoVo.getVcode()) || !res.equals(userInfoVo.getVcode())){
+                        return new Result().fail("验证码验证错误！");
+                    }
+                }
+                code = baseDao.updateNative(updateCompBd,new Object[]{cid,pwd,userInfoVo.getUrealname(),
+                        userInfoVo.getBelong(),userInfoVo.getRoleid(),0,userInfoVo.getUphone()});
 
-//            String queryCid = "select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0";
-//
-//            List<Object[]> queryCidRet = baseDao.queryNative(queryCid, userInfoVo.getBelong());
-//
-//            if(queryCidRet == null || queryCidRet.isEmpty()){
-//                return new Result().fail("用户操作失败！");
-//            }
+                if(code > 0){
+                    StringBuilder sqlSb = new StringBuilder(deleteArea);
+                    sqlSb.append("and uid in (select uid from {{?");
+                    sqlSb.append(DSMConst.TB_SYSTEM_USER);
+                    sqlSb.append("}} where uphone = ? and cstatus & 1 = 0)");
+                    baseDao.updateNative(deleteArea,sqlSb.toString(),userInfoVo.getUphone());
+                    return new Result().success("操作成功！");
+                }
+//                if ((userInfoVo.getRoleid() & 4096) > 0) {
+//                    return new Result().fail("该BDM已存在！");
+//                } else {
+//                    return new Result().fail("该BD已存在！");
+//                }
+            }
 
-//            userInfoVo.setCid(cid);
-
-
+            boolean isDelArea = false;
             if (userInfoVo.getUid() <= 0) {
                 String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "(uid,uphone,uaccount,urealname,upw,roleid,adddate,addtime,cid,belong)"
@@ -126,6 +156,21 @@ public class BDManageModule {
             } else {
                 String updSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set uphone=?,uaccount=?,"
                         + "urealname=?, roleid=?,cid=?, belong=? where cstatus&1=0 and uid=? ";
+
+                String queryRole = "select roleid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? ";
+                List<Object[]> roleRets = baseDao.queryNative(queryRole, userInfoVo.getUid());
+                long sroleid = Long.parseLong(roleRets.get(0)[0].toString());
+
+                if(userInfoVo.getRoleid() != sroleid){
+                    isDelArea = true;
+                    if((userInfoVo.getRoleid() & RoleCodeCons._DB) > 0 &&
+                            (sroleid & RoleCodeCons._DBM) > 0 ){
+                        List<Object[]> hasDb = baseDao.queryNative(queryIsHasDb,userInfoVo.getUid());
+                       if (hasDb != null && !hasDb.isEmpty()){
+                            return new Result().fail("当前DBM有关联DB存在，需先解除DB与DBM关系才能修改！");
+                        }
+                    }
+                }
                 code = baseDao.updateNative(updSQL, userInfoVo.getUphone(), userInfoVo.getUaccount(),
                         userInfoVo.getUrealname(), userInfoVo.getRoleid(), cid,
                         userInfoVo.getBelong(), userInfoVo.getUid());
@@ -135,10 +180,66 @@ public class BDManageModule {
 
             }
             if (code > 0) {
+                if(isDelArea){
+                    StringBuilder sb = new StringBuilder(deleteArea);
+                    sb.append(" and uid = ? ");
+                    baseDao.queryNative(sb.toString(),userInfoVo.getUid());
+                }
                 return new Result().success(userInfoVo);
             }
         }
         return new Result().fail("用户操作失败！");
+    }
+
+    @UserPermission(ignore = true)
+    public Result addBdVerifySms(AppContext appContext){
+        String json = appContext.param.json;
+        int cid = appContext.getUserSession().compId;
+        UserInfoVo userInfoVo = GsonUtils.jsonToJavaBean(json, UserInfoVo.class);
+        if (userInfoVo != null) {
+            if (userInfoVo.getUphone() <= 0 || userInfoVo.getUpw() == null || userInfoVo.getUpw().isEmpty()) {
+                return new Result().fail("参数错误！");
+            }
+            if (checkBDM(userInfoVo) && isNeedSmsVerify(userInfoVo.getUphone()+"")) {
+                String getcnameSql = "select cname from {{?"+DSMConst.TB_COMP+"}} where cid = ? ";
+                List<Object[]> ret = baseDao.queryNative(getcnameSql, new Object[]{cid});
+                if(ret != null && !ret.isEmpty()){
+                    String code = genSmsCodeStoreCache(userInfoVo.getUphone()+"");
+                    if (!StringUtils.isEmpty(code)){
+                        SmsUtil.sendSmsBySystemTemp(userInfoVo.getUphone()+"",
+                                SmsTempNo.PROXY_PARNER_ADD_USER_VERIFY,ret.get(0)[0].toString(),code);
+                        return new Result().success("该手机号已存在，需短信验证，已发送短信验证信息！");
+                    }
+                }
+            }
+        }
+        return new Result().fail("");
+    }
+
+
+    public boolean isNeedSmsVerify(String phone) {
+        String queryCompStatus = "select cp.cstatus from {{?" + DSMConst.TB_COMP + "}} " +
+                " cp join {{?" + DSMConst.TB_SYSTEM_USER + "}} su on cp.cid = su.cid and su.uphone = ? ";
+        List<Object[]> queryStatus = baseDao.queryNative(queryCompStatus, phone);
+        if (queryStatus != null && !queryStatus.isEmpty()) {
+            int cstatus = Integer.parseInt(queryStatus.get(0)[0].toString());
+            if ((cstatus & 33) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static String genSmsCodeStoreCache(String phone){
+        if(StringUtils.isEmpty(phone)) return null; //手机号码不能为空
+        String code = getRandomCodeByNum(6);
+        //存入缓存
+        String res = RedisUtil.getStringProvide().set("SMS"+phone,code);
+        if (res.equals("OK")){
+            RedisUtil.getStringProvide().expire("SMS"+phone, USProperties.INSTANCE.smsSurviveTime); // 5分钟内有效
+            return code;
+        }
+        return null;
     }
 
     private boolean checkBDM(UserInfoVo userInfoVo) {
