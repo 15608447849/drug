@@ -239,11 +239,11 @@ public class BackgroundUserModule {
                 + "  where pca.areac = uarea.areac and uarea.cstatus&1 = 0 group by uid) a on a.uid = u.uid "
                 + " where u.cstatus&1=0 ";
 
+        sqlBuilder.append(selectSQL);
         sqlBuilder.append(" and u.roleid & ");
         sqlBuilder.append(RoleCodeCons._PROXY_PARTNER+RoleCodeCons._DBM
                 +RoleCodeCons._DB+RoleCodeCons._PROXY_MGR+RoleCodeCons._PROXY_DIRECTOR);
         sqlBuilder.append(" = 0 ");
-        sqlBuilder.append(selectSQL);
         sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by u.uid desc ");
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
