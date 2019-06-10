@@ -126,7 +126,7 @@ public class Reporter {
     }
 
     public ColTotal getResult() {
-        if (areac <= 0 || StringUtils.isEmpty(date)) {
+        if (StringUtils.isEmpty(date)) {
             return null;
         }
 
@@ -253,13 +253,13 @@ public class Reporter {
     private void getSuccessVolume() {
         String sql =
                 getSelectHead() + ", "
-                        + " CONVERT (SUM(pdamt * pdnum + freight) / 100, DECIMAL ( 65, 2 )) total, "
+                        + " CONVERT (SUM(pdamt + freight) / 100, DECIMAL ( 65, 2 )) total, "
                         + " CONVERT (SUM( ao.refee ) / 100 , DECIMAL ( 65, 2 )) ret  "
                         + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} o "
                         + " LEFT JOIN ( SELECT orderno, SUM( a.refamt ) refee "
                                     + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} a "
                                     + " WHERE a.astype = 1 GROUP BY orderno) ao ON o.orderno = ao.orderno "
-                        + where + " AND ostatus > 1 AND settstatus > 0 "
+                        + where + " AND (ostatus > 0 OR ostatus = -2) AND settstatus > 0 "
                         + groupBy + this.orderBy;
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
@@ -282,10 +282,10 @@ public class Reporter {
     private void getCancelVolume() {
         String sql =
                 getSelectHead() + ", "
-                        + " CONVERT(SUM(IF(cstatus & 1024 > 0, (pdamt * pdnum + freight), 0)) / 100, DECIMAL(65, 2)) bCancel, "
-                        + " CONVERT(SUM(IF(cstatus & 1024 = 0, (pdamt * pdnum + freight), 0)) / 100, DECIMAL(65, 2)) cCancel "
+                        + " CONVERT(SUM(IF(cstatus & 1024 > 0, (pdamt + freight), 0)) / 100, DECIMAL(65, 2)) bCancel, "
+                        + " CONVERT(SUM(IF(cstatus & 1024 = 0, (pdamt + freight), 0)) / 100, DECIMAL(65, 2)) cCancel "
                         + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
-                        + where + " AND ostatus = - 4 "
+                        + where + " AND ostatus = -4 "
                         + groupBy + this.orderBy;
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
@@ -310,7 +310,7 @@ public class Reporter {
                 + " LEFT JOIN ( SELECT orderno, astype "
                         + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} a "
                         + " GROUP BY orderno, astype ) ao ON o.orderno = ao.orderno "
-                + where + " AND ostatus > 1 AND settstatus > 0 " + groupBy + this.orderBy;
+                + where + " AND (ostatus > 0 OR ostatus = -2) AND settstatus > 0 " + groupBy + this.orderBy;
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
                 .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
@@ -327,11 +327,11 @@ public class Reporter {
     private void getCompPrice() {
         String sql =
                 getSelectHead() + ", "
-                + " CONVERT(MAX(pdamt * pdnum + freight) / 100, DECIMAL(65, 2)) max, "
-                + " CONVERT(MIN(pdamt * pdnum + freight) / 100, DECIMAL(65, 2)) min, "
-                + " CONVERT(AVG(pdamt * pdnum + freight) / 100, DECIMAL(65, 2)) avg "
+                + " CONVERT(MAX(pdamt + freight) / 100, DECIMAL(65, 2)) max, "
+                + " CONVERT(MIN(pdamt + freight) / 100, DECIMAL(65, 2)) min, "
+                + " CONVERT(AVG(pdamt + freight) / 100, DECIMAL(65, 2)) avg "
                 + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
-                + where + " AND ostatus > 1 AND settstatus > 0 " + groupBy + this.orderBy;
+                + where + " AND (ostatus > 0 OR ostatus = -2) AND settstatus > 0 " + groupBy + this.orderBy;
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
                 .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
