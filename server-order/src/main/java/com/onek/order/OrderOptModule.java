@@ -774,7 +774,7 @@ public class OrderOptModule {
         if(!StringUtils.isEmpty(sdate) && !StringUtils.isEmpty(edate)){
             sqlBuilder.append(" and apdata between '").append(sdate).append("' and '").append(edate).append("' ");
         }
-        sqlBuilder.append(" order by asapp.apdata,asapp.aptime desc ");
+        sqlBuilder.append(" order by asapp.apdata desc,asapp.aptime desc ");
 
         List<Object[]> queryResult = baseDao.queryNativeSharding(0,
                 TimeUtils.getCurrentYear(), pageHolder, page,sqlBuilder.toString());

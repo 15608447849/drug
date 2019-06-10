@@ -2,6 +2,7 @@ package com.onek.user;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import cn.hy.otms.rpcproxy.sysmanage.User;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
@@ -694,16 +695,34 @@ public class BackGroundProxyMoudule {
                 }
 
                 if((roleid & RoleCodeCons._PROXY_DIRECTOR) > 0){
-                    String queryBlong = "select belong from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0 ";
+                    String queryBlong = "select belong,cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and cstatus & 1 = 0 ";
                     List<Object[]> belongRet = baseDao.queryNative(queryBlong, proxyPartnerVO.getUid());
                     int sbelong = Integer.parseInt(belongRet.get(0)[0].toString());
                     if(sbelong != proxyPartnerVO.getBelong() && proxyPartnerVO.getBelong() != 0){
-                        String updateAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA +"}} set uid = ? where uid = ? and cstatus & 1 = 0 ";
-                        String deleteAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA +"}} set cstatus = cstatus | 1  where uid = ? and cstatus & 1 = 0 ";
-                        sqlList.add(deleteAreaSql);
-                        sqlList.add(updateAreaSql);
-                        parmList.add(new Object[]{proxyPartnerVO.getBelong()});
-                        parmList.add(new Object[]{proxyPartnerVO.getBelong(),sbelong});
+                        String deleteAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA +"}} set cstatus = cstatus | 1  where  cstatus & 1 = 0 ";
+                        String compSql = "select uid from {{?"+DSMConst.TB_SYSTEM_USER +"}} where cid = ? and cstatus & 1 = 0";
+                            List<Object[]> uidList = baseDao.queryNative(compSql, belongRet.get(0)[1]);
+                            StringBuilder sb = new StringBuilder();
+                            for(Object[] objects: uidList){
+                                sb.append(Integer.parseInt(objects[0].toString())).append(",");
+                            }
+
+                            String uidStr = sb.toString();
+                            if(uidStr.endsWith(",")){
+                                uidStr = uidStr.substring(0,uidStr.length()-1);
+                            }
+
+                            if(!StringUtils.isEmpty(uidStr)){
+                                deleteAreaSql = deleteAreaSql + " and uid in ("+uidStr+")";
+                                sqlList.add(deleteAreaSql);
+                                parmList.add(new Object[]{});
+                            }
+
+                    //    String updateAreaSql = "update {{?"+DSMConst.TB_PROXY_UAREA +"}} set uid = ? where uid = ? and cstatus & 1 = 0 ";
+
+                      //  sqlList.add(updateAreaSql);
+
+                        //parmList.add(new Object[]{proxyPartnerVO.getBelong(),sbelong});
                     }
                 }
 
@@ -1091,7 +1110,6 @@ public class BackGroundProxyMoudule {
         PageHolder pageHolder = new PageHolder(page);
         Result result = new Result();
         StringBuilder sqlBuilder = new StringBuilder();
-
         int puid = jsonObject.get("puid").getAsInt();
         int mroleid = jsonObject.get("mroleid").getAsInt();
 
@@ -1173,6 +1191,7 @@ public class BackGroundProxyMoudule {
 
                 if((mroleid & RoleCodeCons._DBM) > 0){
                     dySql.append(" or stu.belong = ").append(puid);
+                    dySql.append(" or stu.uid = ").append(puid);
                 }
 
                 if((mroleid & RoleCodeCons._DB) > 0){
