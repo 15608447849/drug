@@ -2,13 +2,16 @@ package com.onek.global;
 
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
+import com.onek.global.area.AreaStore;
+import com.onek.util.area.AreaEntity;
 import com.onek.util.fs.FileServerUtils;
-import util.GsonUtils;
 import util.http.HttpRequest;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+
+import static util.StringUtils.converterToFirstSpell;
 
 /**
  * @Author: leeping
@@ -35,14 +38,49 @@ public class WebAppModule {
         return new HttpRequest().accessUrl(FileServerUtils.fileDownloadPrev()+"/page.json").getRespondContent();
     }
 
-    public static void main(String[] args) {
-        List<Bean> list = new ArrayList<>();
-        Bean b = new Bean("content", "com.bottom.wvapp.fragments.WebFragment","web");
-        b.map = new HashMap<>();
-        b.map.put("url","www.baidu.com");
-        list.add(b);
-        list.add(new Bean("content", "com.bottom.wvapp.fragments.TestFragment","web"));
+    /** APP 地区数据对象*/
+    private static class AreaEntityByApp {
+        //地区码  : 110111000000
+        long value;
+        //地区名  : 房山区
+        String label;
+        int type = 1;
+        String letter;
 
-        System.out.println(GsonUtils.javaBeanToJson(list));
+        public AreaEntityByApp(long value, String label,int tyep) {
+            this.value = value;
+            this.label = label;
+            this.type = tyep;
+            this.letter = converterToFirstSpell(label);
+        }
     }
+
+    @UserPermission(ignore = true)
+    public List<AreaEntityByApp> appAreaAll(AppContext context){
+        long areaCode = 0;
+        if (context.param.arrays!=null && context.param.arrays.length>0){
+            areaCode = Long.parseLong(context.param.arrays[0]);
+        }
+
+        AreaEntity[] array;
+        if (areaCode == 0){
+            // 获取全部区
+            array = AreaStore.getAllCities();
+        }else{
+            // 获取区下面的子集
+            array =  AreaStore.getChildren(areaCode);
+        }
+        List<AreaEntityByApp> list = new ArrayList<>();
+
+        //处理
+        for (AreaEntity areaEntity : array){
+            list.add(new AreaEntityByApp(areaEntity.getAreac(), areaEntity.getArean(), areaCode == 0 ? 1 : 2 ) );
+        }
+
+        return list;
+    }
+
+
+
+
 }

@@ -1,6 +1,11 @@
 package util;
 
 import com.google.gson.JsonParser;
+import net.sourceforge.pinyin4j.PinyinHelper;
+import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
+import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
+import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
+import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -91,6 +96,29 @@ public class StringUtils {
             return false;
         }
         return true;
+    }
+
+    /* 文字转拼音大写字母 */
+    public static String converterToFirstSpell(String chines) {
+        String pinyinFirstKey = "";
+        char[] nameChar = chines.toCharArray();
+        HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
+        defaultFormat.setCaseType(HanyuPinyinCaseType.LOWERCASE);
+        defaultFormat.setToneType(HanyuPinyinToneType.WITHOUT_TONE);
+        for (int i = 0; i < nameChar.length; i++) {
+            String s = String.valueOf(nameChar[i]);
+            if (s.matches("[\\u4e00-\\u9fa5]")) {
+                try {
+                    String[] mPinyinArray = PinyinHelper.toHanyuPinyinStringArray(nameChar[i], defaultFormat);
+                    pinyinFirstKey += mPinyinArray[0].charAt(0);
+                } catch (BadHanyuPinyinOutputFormatCombination e) {
+                    e.printStackTrace();
+                }
+            } else {
+                pinyinFirstKey += nameChar[i];
+            }
+        }
+        return pinyinFirstKey.toUpperCase();
     }
 
 }
