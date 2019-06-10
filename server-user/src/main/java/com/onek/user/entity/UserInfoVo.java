@@ -30,6 +30,15 @@ public class UserInfoVo {
     private int cid;//企业码
     private int buid;
     private String buname;
+    private String vcode;
+
+    public String getVcode() {
+        return vcode;
+    }
+
+    public void setVcode(String vcode) {
+        this.vcode = vcode;
+    }
 
     public int getBuid() {
         return buid;

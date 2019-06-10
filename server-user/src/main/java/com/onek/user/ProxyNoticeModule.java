@@ -136,12 +136,12 @@ public class ProxyNoticeModule {
         page.pageIndex = appContext.param.pageIndex;
         PageHolder pageHolder = new PageHolder(page);
         String title = jsonObject.get("title").getAsString();
-        String selectSQL = "select msgid,sender,msgtxt,createdate,createtime,invdtime,readtimes,effcttime,revobj,cstatus from {{?"
-                + DSMConst.TB_PROXY_NOTICE + "}} where cstatus&1=0 ";
+        String selectSQL = "select msgid,sender,msgtxt,createdate,createtime,invdtime,readtimes,effcttime,revobj,n.cstatus,roleid from {{?"
+                + DSMConst.TB_PROXY_NOTICE + "}} n left join {{?" + DSMConst.TB_SYSTEM_USER+"}} u on n.sender=u.uid  where n.cstatus&1=0 ";
         if (title != null && !title.isEmpty()) {
             selectSQL = selectSQL + " and  json_extract(msgtxt,'$.title') like '%" + title + "%'";
         }
-        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, selectSQL);
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, selectSQL + " order by n.oid desc");
         if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         ProxyNoticeVO[] proxyNoticeVOS = new ProxyNoticeVO[queryResult.size()];
         baseDao.convToEntity(queryResult, proxyNoticeVOS, ProxyNoticeVO.class);

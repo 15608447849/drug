@@ -20,6 +20,7 @@ public class SmsTempNo {
      * 资质过期
      * 售后审核通过
      * 售后审核不通过
+     * 新增合伙人短信验证
      */
     public static final int MESSAGE_AUTHENTICATION_CODE = 1;
     public static final int REGISTERED_SUCCESSFULLY = 2;
@@ -37,6 +38,7 @@ public class SmsTempNo {
     public static final int AFTER_SALE_AUDIT_FAILED_TO_PASSED = 14;
     public static final int AFTER_SALE_BILL_AUDIT_PASSED = 15;
     public static final int AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED = 16;
+    public static final int PROXY_PARNER_ADD_USER_VERIFY= 17;
     //发送推送消息的权限值
     public static final int PUSH_MESSAGE_POWER =  2;
     //发送短信消息的权限值

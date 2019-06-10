@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import static constant.DSMConst.TB_COMP;
+import static constant.DSMConst.TB_PROXY_UAREA;
 import static constant.DSMConst.TB_SYSTEM_USER;
 
 /**
@@ -24,31 +25,42 @@ public class StoreCustomerOp implements IOperation<AppContext> {
     Object uid;//客服专员ID
     String name = "";
     int belong; //DB用户归属
+    String areac;//门店地区码
     @Override
     public Result execute(AppContext context) {
 
+        String msg = "";
         if (type == -1) return new Result().success(queryAllDB(name));
-
+        int cid = 0;
         if (!StringUtils.isEmpty(uphone)) {
             if (type >= 0){
                 //根据手机号码 , 查询是否存在
-                String selectSql = "SELECT uid FROM {{?" + TB_SYSTEM_USER +"}} WHERE cstatus&1=0 AND (roleid&?>0 OR roleid&?>0) AND uphone=?";
+                String selectSql = "SELECT uid,cid FROM {{?" + TB_SYSTEM_USER +"}} WHERE cstatus&1=0 AND (roleid&?>0 OR roleid&?>0) AND uphone=?";
                 List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,
                         RoleCodeCons._DBM,
                         RoleCodeCons._DB,
                         uphone);
-                if (lines.size() == 1){
+                if (lines.size() == 1 && lines.get(0)[0] != null){
                     uid = lines.get(0)[0];
+                    cid = Integer.parseInt(lines.get(0)[1].toString());
+                    String aSql =  "select arearng from {{?"+TB_PROXY_UAREA+"}} where uid = ? and areac = ? and cstatus & 1 = 0 ";
+                    List<Object[]> ret = BaseDAO.getBaseDAO().queryNative(aSql,uid,areac);
+                    if(ret == null || ret.isEmpty()){
+                        msg = "您的门店不在该商务经理服务范围，确定操作？";
+                        uid = null;
+                    }
+                }else{
+                    msg = "商务经理不存在！";
                 }
             }
             if (type >= 1 && uid!=null && compid>0){
                 //公司-客服专员 关联
-                String updateSql = "UPDATE {{?"+TB_COMP+"}} SET inviter=? WHERE ctype=0 AND cid=?";
-                int i = BaseDAO.getBaseDAO().updateNative(updateSql,uid,compid);
+                String updateSql = "UPDATE {{?"+TB_COMP+"}} SET inviter=?,invitercid=? WHERE ctype=0 AND cid=?";
+                int i = BaseDAO.getBaseDAO().updateNative(updateSql,uid,cid,compid);
                 if (i<=0) uid = null;
             }
         }
-        return new Result().success(uid!=null );
+        return new Result().success(uid!=null).message(msg);
     }
 
     private static List<StoreCustomerOp> queryAllDB(String name) {
