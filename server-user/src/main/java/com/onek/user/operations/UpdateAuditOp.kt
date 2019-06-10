@@ -128,9 +128,8 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
         try {
             val pattern = Pattern.compile("^[\\u4e00-\\u9fa5]([A-D])[A-B][0-9].*$")
             val m = pattern.matcher(id)
-            var index = -1;
             while (m.find()) {
-             val res =   m.group(1);
+                val res =   m.group(1);
                 return when (res){
                     "A" -> -1;
                     "D" -> 0;
