@@ -1,7 +1,6 @@
 package threadpool;
 
 import java.util.concurrent.ArrayBlockingQueue;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
@@ -25,17 +24,14 @@ public class IOThreadPool implements IThreadPool {
                      thread.setName("t-pio#-"+thread.getId());
                      return thread;
                  },
-                new RejectedExecutionHandler(){
-                    @Override
-                    public void rejectedExecution(Runnable r, ThreadPoolExecutor executor) {
-                        //超过IO线程池处理能力的任务,进入下一个线程池
-                        if (next == null) {
-                            next = new IOThreadPool();
-                        }
-                        next.post(r);
-                    }
-                }
-        );
+                 (r, executor) -> {
+                     //超过IO线程池处理能力的任务,进入下一个线程池
+                     if (next == null) {
+                         next = new IOThreadPool();
+                     }
+                     next.post(r);
+                 }
+         );
     }
     @Override
     public void post(Runnable runnable){
