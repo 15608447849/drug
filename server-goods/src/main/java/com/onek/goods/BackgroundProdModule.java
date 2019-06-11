@@ -4,7 +4,6 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.Gson;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
@@ -32,11 +31,9 @@ import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
 import util.StringUtils;
-import util.TimeUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -136,6 +133,18 @@ public class BackgroundProdModule {
             + " FROM {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
             + " WHERE cstatus&1 = 0 ";
 
+      /**
+           *
+           * 功能: 商品上架
+           * 参数类型: arrays
+           * 参数集: [sku]
+           * 返回值: Result
+           * 详情说明:
+           * 日期: 2019/6/11 14:12
+           * 作者: Helena Rubinstein
+           */
+
+
     public Result onProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -176,6 +185,17 @@ public class BackgroundProdModule {
 
         return new Result().success(null);
     }
+
+    /**
+     *
+     * 功能: 商品下架
+     * 参数类型: arrays
+     * 参数集: [sku]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
 
     public Result offProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -224,6 +244,17 @@ public class BackgroundProdModule {
 
         return result;
     }
+
+    /**
+     *
+     * 功能: 商品更新
+     * 参数类型: json
+     * 参数集: BgProdVO的json
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
 
     public Result updateProd(AppContext appContext) {
         BgProdVO bgProdVO;
@@ -335,6 +366,18 @@ public class BackgroundProdModule {
         return new Result().success(returnResults);
     }
 
+
+
+    /**
+     *
+     * 功能: 商品详情
+     * 参数类型: arrays
+     * 参数集: [sku]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
     @UserPermission(ignore = true)
     public Result getProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -386,7 +429,16 @@ public class BackgroundProdModule {
         return returnResults[0];
     }
 
-
+    /**
+     *
+     * 功能: 获取SPU信息
+     * 参数类型: arrays
+     * 参数集: [spu]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
     public Result getSPUInfo(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -413,6 +465,17 @@ public class BackgroundProdModule {
         return new Result().success(returnResults[0]);
     }
 
+
+    /**
+     *
+     * 功能: 获取商品列表
+     * 参数类型: arrays
+     * 参数集: [商品名，厂家码，规格，准号，有效期，是否上架，spu，通用名]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
     public Result queryProds(AppContext appContext) {
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
@@ -484,6 +547,17 @@ public class BackgroundProdModule {
 
         return new Result().setQuery(result, pageHolder);
     }
+
+    /**
+     *
+     * 功能: 商品新增
+     * 参数类型: json
+     * 参数集: BgProdVO的json
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
 
     public Result addProd(AppContext appContext) {
         BgProdVO bgProdVO;
@@ -626,6 +700,18 @@ public class BackgroundProdModule {
 
         }
     }
+
+    /**
+     *
+     * 功能: 获取经营范围
+     * 参数类型:
+     * 参数集:
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
+
 
     public Result getBusScopes(AppContext appContext) {
         List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_BUS_SCOPE_BASE);
