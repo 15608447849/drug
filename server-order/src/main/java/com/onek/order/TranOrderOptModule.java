@@ -782,7 +782,7 @@ public class TranOrderOptModule {
             code = baseDao.updateNativeSharding(cusno, year, updateSQL, -4, orderNo);
             if (code > 0) {
                 if (payway == 4) {//取消线下即付一小时轮询
-                    CANCEL_XXJF.removeByKey(orderNo);
+//                    CANCEL_XXJF.removeByKey(orderNo);
                 }
                 if (payway == 5) {
                     //取消24小时轮询
@@ -844,7 +844,7 @@ public class TranOrderOptModule {
                     recoverGoodsStock(orderNo, cusno, 1);
                     if (payway == 4) {
                         //取消1小时轮询
-                        CANCEL_XXJF.removeByKey(orderNo);
+//                        CANCEL_XXJF.removeByKey(orderNo);
                     }
                     //未结算退回余额
                     if (balamt > 0 && settstatus == 0) {
@@ -1113,7 +1113,7 @@ public class TranOrderOptModule {
             b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, paramsObj));
             if (b) {
                 if (paytype == 4) {//取消线下即付一小时轮询
-                    CANCEL_XXJF.removeByKey(orderNo);
+//                    CANCEL_XXJF.removeByKey(orderNo);
                     //生成订单到一块物流
                     OrderUtil.generateLccOrder(compid, orderNo);
                 }
