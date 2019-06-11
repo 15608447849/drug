@@ -680,10 +680,10 @@ public class TranOrderOptModule {
 
 
     /**
-     * @return com.onek.entitys.Result
+     * @return 200 成功 -1 失败
      * @throws
-     * @description 取消订单
-     * @params [appContext]
+     * @description 取消订单(自动取消或线上支付取消)
+     * @params json {orderno: 订单号 cusno：门店id}
      * @author 11842
      * @time 2019/4/17 17:00
      * @version 1.1.1
@@ -747,8 +747,8 @@ public class TranOrderOptModule {
 
     /**
      * @description 线下即付、线下到付门店30分钟内取消
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @params json {orderno: 订单号  cusno: 门店id}
+     * @return  200 成功 -1 失败
      * @exception
      * @author 11842
      * @time  2019/5/10 17:38
@@ -805,9 +805,9 @@ public class TranOrderOptModule {
 
 
     /* *
-     * @description 客服取消订单
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 客服取消订单(待发货时)
+     * @params json {orderno: 订单号  cusno: 门店id}
+     * @return 200 成功 -1 失败
      * @exception
      * @author 11842
      * @time  2019/5/10 16:33
@@ -869,9 +869,9 @@ public class TranOrderOptModule {
 
 
     /* *
-     * @description 确认退款
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @description 客服确认退款
+     * @params json {orderno: 订单号  cusno: 门店id}
+     * @return 200 成功 -1 失败
      * @exception
      * @author 11842
      * @time  2019/5/13 10:30
@@ -1034,11 +1034,15 @@ public class TranOrderOptModule {
         return result ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 
-    /**
-     * 确认收款（线下订单）
-     * @param appContext
-     * @return
-     */
+   /* *
+    * @description 客服确认收款（线下订单）
+    * @params arrays [orderno(订单号)]
+    * @return 200 成功 -1 失败
+    * @exception
+    * @author 11842
+    * @time  2019/6/11 15:32
+    * @version 1.1.1
+    **/
     @UserPermission(ignore = true)
     public Result confirmCash(AppContext appContext) {
         boolean b = false;
