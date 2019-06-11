@@ -4,12 +4,12 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.Gson;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
+import com.onek.goods.entities.BusScopeVo;
 import com.onek.goods.util.CalculateUtil;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.IceRemoteUtil;
@@ -31,11 +31,9 @@ import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
 import util.StringUtils;
-import util.TimeUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -62,10 +60,10 @@ public class BackgroundProdModule {
             " INSERT INTO {{?" + DSMConst.TD_PROD_SPU + "}} "
                     + " (spu, popname, popnameh, prodname, prodnameh, "
                     + " standarno, standarnoh, brandno, manuno, rx, "
-                    + " insurance, gspgms, gspsc, detail) "
+                    + " insurance, gspgms, gspsc, detail, busscope) "
                     + " SELECT ?, ?, CRC32(?), ?, CRC32(?), "
                     + " ?, CRC32(?), ?, ?, ?, "
-                    + " ?, ?, ?, ? "
+                    + " ?, ?, ?, ?, ? "
                     + " FROM DUAL "
                     + " WHERE NOT EXISTS ( "
                     + " SELECT *"
@@ -78,12 +76,12 @@ public class BackgroundProdModule {
                     + " vaildsdate, vaildedate, "
                     + " prodsdate, prodedate, store, "
                     + " limits, wholenum, medpacknum, unit,"
-                    + " ondate, ontime, spec, cstatus) "
+                    + " ondate, ontime, spec, cstatus, expmonth) "
                     + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, "
-                    + " CURRENT_DATE, CURRENT_TIME, ?, ?) ";
+                    + " CURRENT_DATE, CURRENT_TIME, ?, ?, ?) ";
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -97,18 +95,21 @@ public class BackgroundProdModule {
     private static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
                     + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
-                    + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus,"
-                    + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.vaildsdate, sku.vaildedate,"
+                    + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus, "
+                    + " spu.qsc, spu.busscope, s.codename, "
+                    + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.vaildsdate, sku.vaildedate, "
                     + " sku.prodsdate, sku.prodedate, sku.store, "
                     + " sku.limits, sku.sales, sku.wholenum, sku.medpacknum, sku.unit, "
                     + " sku.ondate, sku.ontime, sku.offdate, sku.offtime, sku.spec, sku.prodstatus, "
-                    + " sku.imagestatus, sku.cstatus "
+                    + " sku.imagestatus, sku.cstatus, sku.expmonth, sku.wp "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU
-                    + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
+                    + "}} m ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND
-                    + "}} b   ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
+                    + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
+                    + " LEFT  JOIN {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE
+                    + "}} s ON s.cstatus&1 = 0 AND spu.busscope = s.code "
                     + " WHERE 1=1 ";
 
     private static final String UPDATE_PROD_BASE =
@@ -123,8 +124,26 @@ public class BackgroundProdModule {
                     + " sku.store = ?, sku.limits = ?, sku.wholenum = ?, "
                     + " sku.medpacknum = ?, sku.cstatus = ?,"
                     + " spu.rx = ?, spu.insurance = ?, spu.gspgms = ?, "
-                    + " spu.brandno = ?, spu.detail = ?, spu.gspsc = ? "
+                    + " spu.brandno = ?, spu.detail = ?, spu.gspsc = ?, "
+                    + " sku.expmonth = ?, spu.busscope = ? "
                     + " WHERE sku.spu = spu.spu AND sku.sku = ? ";
+
+    private static final String QUERY_BUS_SCOPE_BASE =
+            " SELECT code, codename "
+            + " FROM {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
+            + " WHERE cstatus&1 = 0 ";
+
+      /**
+           *
+           * 功能: 商品上架
+           * 参数类型: arrays
+           * 参数集: [sku]
+           * 返回值: Result
+           * 详情说明:
+           * 日期: 2019/6/11 14:12
+           * 作者: Helena Rubinstein
+           */
+
 
     public Result onProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -166,6 +185,17 @@ public class BackgroundProdModule {
 
         return new Result().success(null);
     }
+
+    /**
+     *
+     * 功能: 商品下架
+     * 参数类型: arrays
+     * 参数集: [sku]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
 
     public Result offProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -214,6 +244,17 @@ public class BackgroundProdModule {
 
         return result;
     }
+
+    /**
+     *
+     * 功能: 商品更新
+     * 参数类型: json
+     * 参数集: BgProdVO的json
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
 
     public Result updateProd(AppContext appContext) {
         BgProdVO bgProdVO;
@@ -267,6 +308,7 @@ public class BackgroundProdModule {
                 bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getSkuCstatus(),
                 bgProdVO.getRx(), bgProdVO.getInsurance(), bgProdVO.getGspGMS(),
                 bgProdVO.getBrandNo(), bgProdVO.getDetail(), bgProdVO.getGspSC(),
+                bgProdVO.getExpmonth(), bgProdVO.getBusscope(),
                 bgProdVO.getSku());
 
         new ProdReducePriceThread(bgProdVO.getSku(), bgProdVO.getProdname(), bgProdVO.getVatp()).start();
@@ -324,6 +366,18 @@ public class BackgroundProdModule {
         return new Result().success(returnResults);
     }
 
+
+
+    /**
+     *
+     * 功能: 商品详情
+     * 参数类型: arrays
+     * 参数集: [sku]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
     @UserPermission(ignore = true)
     public Result getProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -375,7 +429,16 @@ public class BackgroundProdModule {
         return returnResults[0];
     }
 
-
+    /**
+     *
+     * 功能: 获取SPU信息
+     * 参数类型: arrays
+     * 参数集: [spu]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
     public Result getSPUInfo(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -402,6 +465,17 @@ public class BackgroundProdModule {
         return new Result().success(returnResults[0]);
     }
 
+
+    /**
+     *
+     * 功能: 获取商品列表
+     * 参数类型: arrays
+     * 参数集: [商品名，厂家码，规格，准号，有效期，是否上架，spu，通用名]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
     public Result queryProds(AppContext appContext) {
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
@@ -474,6 +548,17 @@ public class BackgroundProdModule {
         return new Result().setQuery(result, pageHolder);
     }
 
+    /**
+     *
+     * 功能: 商品新增
+     * 参数类型: json
+     * 参数集: BgProdVO的json
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
+
     public Result addProd(AppContext appContext) {
         BgProdVO bgProdVO;
         try {
@@ -536,7 +621,7 @@ public class BackgroundProdModule {
                     bgProdVO.getStandarNo(), bgProdVO.getStandarNo(),
                     bgProdVO.getBrandNo(), bgProdVO.getManuNo(), bgProdVO.getRx(),
                     bgProdVO.getInsurance(), bgProdVO.getGspGMS(), bgProdVO.getGspSC(),
-                    bgProdVO.getDetail(),
+                    bgProdVO.getDetail(), bgProdVO.getBusscope(),
                     bgProdVO.getSpu()
             });
 
@@ -558,7 +643,7 @@ public class BackgroundProdModule {
                     bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                     bgProdVO.getStore(), bgProdVO.getLimits(),
                     bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getUnit(),
-                    bgProdVO.getSpec(), bgProdVO.getSkuCstatus()
+                    bgProdVO.getSpec(), bgProdVO.getSkuCstatus(), bgProdVO.getExpmonth(),
             });
 
             RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
@@ -596,6 +681,7 @@ public class BackgroundProdModule {
             bgProdVO.setVatp(MathUtil.exactDiv(bgProdVO.getVatp(), 100).doubleValue());
             bgProdVO.setRrp(MathUtil.exactDiv(bgProdVO.getRrp(), 100).doubleValue());
             bgProdVO.setMp(MathUtil.exactDiv(bgProdVO.getMp(), 100).doubleValue());
+            bgProdVO.setWp(MathUtil.exactDiv(bgProdVO.getWp(), 100).doubleValue());
 
             spuParser = parseSPU(bgProdVO.getSpu());
 
@@ -613,6 +699,28 @@ public class BackgroundProdModule {
             }
 
         }
+    }
+
+    /**
+     *
+     * 功能: 获取经营范围
+     * 参数类型:
+     * 参数集:
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
+
+
+    public Result getBusScopes(AppContext appContext) {
+        List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_BUS_SCOPE_BASE);
+
+        BusScopeVo[] returnResults = new BusScopeVo[queryResult.size()];
+
+        BASE_DAO.convToEntity(queryResult, returnResults, BusScopeVo.class);
+
+        return new Result().success(returnResults);
     }
 
     /**
@@ -687,6 +795,10 @@ public class BackgroundProdModule {
         // 剂型码
         if (prodVO.getForm() <= 0) {
             throw new IllegalArgumentException("剂型码为空");
+        }
+
+        if (prodVO.getBusscope() <= 0) {
+            throw new IllegalArgumentException("经营范围为空");
         }
 
         // 准号

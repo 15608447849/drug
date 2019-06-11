@@ -2,6 +2,7 @@ package com.onek.report.col;
 
 import com.onek.report.core.IDoubleCal;
 import com.onek.report.core.IRowData;
+import com.onek.report.init.ColInfo;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.area.AreaUtil;
 
@@ -71,7 +72,7 @@ public class ColGroup implements IRowData, IDoubleCal {
         double totalAvg = .0;
         for (ColItem data : colItems) {
             dataCol = data.getEachCol();
-            totalAvg = addDouble(totalAvg, dataCol[20]);
+            totalAvg = addDouble(totalAvg, dataCol[ColInfo.COL_NUM_ORDERNUM_AVG]);
 
             if (result == null) {
                 result = dataCol;
@@ -79,10 +80,10 @@ public class ColGroup implements IRowData, IDoubleCal {
                 for (int i = 0; i < result.length; i++) {
                     if (i >= result.length - 3) {
                         switch (i) {
-                            case 18:
+                            case ColInfo.COL_NUM_ORDERNUM_MAX:
                                 result[i] = Math.max(result[i], dataCol[i]);
                                 break;
-                            case 19:
+                            case ColInfo.COL_NUM_ORDERNUM_MIN:
                                 result[i] = Math.min(result[i], dataCol[i]);
                                 break;
                         }
@@ -93,7 +94,7 @@ public class ColGroup implements IRowData, IDoubleCal {
             }
         }
 
-        result[20] = divDouble(totalAvg, colItems.size());
+        result[ColInfo.COL_NUM_ORDERNUM_AVG] = divDouble(totalAvg, colItems.size());
 
         return result;
     }

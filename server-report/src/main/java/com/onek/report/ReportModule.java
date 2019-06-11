@@ -11,6 +11,7 @@ import com.onek.entitys.Result;
 import com.onek.report.col.ColTotal;
 import com.onek.report.core.Reporter;
 import com.onek.report.service.MarketAnalysisServiceImpl;
+import org.hyrdpf.ds.AppConfig;
 import util.ArrayUtil;
 import util.StringUtils;
 
@@ -102,6 +103,22 @@ public class ReportModule {
             return new Result().fail("查询失败");
         }
 
+    }
+
+    static {
+        /**初始化LOG4J2日志环境*/
+        AppConfig.initLogger("log4j2.xml");
+        /**初始化应用程序环境，如数据源等*/
+        AppConfig.initialize();
+    }
+
+
+
+    public static void main(String[] args) {
+            ColTotal result =
+                    new Reporter(0, 0, "2019-06").getResult();
+
+        System.out.println(JSON.toJSONString(result));
     }
 
 }
