@@ -14,6 +14,7 @@ import redis.proxy.CacheProxyInstance;
 import util.ModelUtil;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -121,7 +122,8 @@ public class MyDrugStoreInfoModule {
      **/
     public Result optConsigneeForApp(AppContext appContext) {
         Result result = new Result();
-        int code;
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> params = new ArrayList<>();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
@@ -141,17 +143,35 @@ public class MyDrugStoreInfoModule {
                 + " values(?,?,?,?,?)";
         String updSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set contactname=?, contactphone=?, cstatus=?  "
                 + " where cstatus&1=0 and shipid=?";
-        if (shipId > 0) {
-            code = baseDao.updateNative(updSQL, contactName, contactPhone,cstatus, shipId);
-
-        } else {
-            shipId = RedisGlobalKeys.getShipId();
-            code = baseDao.updateNative(insertSQL, shipId, compId, contactName, contactPhone, cstatus);
+        String updateSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set cstatus=cstatus&~2 "
+                + " where cstatus&1=0 and compid=? and cstatus&2>0";
+        //查询当前企业是否存在默认收货人
+        boolean hsDf = hasDefault(compId);
+        if (cstatus == 2 && hsDf) {//已存在默认收货人将原来的变为非默认
+            sqlList.add(updateSQL);
+            params.add(new Object[]{compId});
         }
+        if (shipId > 0) {//修改
+            sqlList.add(updSQL);
+            params.add(new Object[]{contactName, contactPhone,cstatus, shipId});
+        } else {//新增
+            shipId = RedisGlobalKeys.getShipId();
+            sqlList.add(insertSQL);
+            params.add(new Object[]{shipId, compId, contactName, contactPhone, cstatus});
+        }
+        String[] sqlNative = new String[sqlList.size()];
+        sqlNative = sqlList.toArray(sqlNative);
+        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(sqlNative, params));
         myCgProxy.update(null);
-        return code > 0 ? result.success("操作成功") : result.fail("操作失败");
+        return b ? result.success("操作成功") : result.fail("操作失败");
     }
 
+    private boolean hasDefault(int compId) {
+        String selectSQL = "select count(*) from {{?" +  DSMConst.TB_COMP_SHIP_INFO + "}} where "
+                + " cstatus&1=0 and compid=? and cstatus&2>0";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, compId);
+        return Integer.parseInt(String.valueOf(queryResult.get(0)[0])) > 0;
+    }
 
 
     /* *
