@@ -66,6 +66,8 @@ public class UserSession implements Serializable{
         sb.append( "用户码:"+userId+",角色码:"+roleCode+" ,手机号码:"+phone );
         if (compId>0) sb.append(" ,门店编码:"+compId);
         if (belong>0) sb.append(" ,归属编码:"+belong);
+        if (comp != null) sb.append(" ,门店状态:"+ comp.authenticationStatus);
+
         return sb.toString();
 
     }

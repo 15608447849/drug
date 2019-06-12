@@ -3,6 +3,31 @@ package util;
 import java.util.Arrays;
 
 public class BUSUtil {
+    public interface BreakHandler<T> {
+        T getNext(T curr);
+    }
+
+    public static <T> T getBreak(T[] points, BreakHandler<T> handler) {
+        if (ArrayUtil.isEmpty(points)) {
+            throw new IllegalArgumentException("The points is null.");
+        }
+
+        T curr = points[0];
+        T next;
+
+        for (int i = 1; i < points.length; i++) {
+            next = handler.getNext(curr);
+
+            if (!points[i].equals(next)) {
+                return next;
+            }
+
+            curr = points[i];
+        }
+
+        return handler.getNext(curr);
+    }
+
     public static int getBreak(int[] points, int start, int end) {
         if (points == null) {
             throw new IllegalArgumentException("the points is null.");

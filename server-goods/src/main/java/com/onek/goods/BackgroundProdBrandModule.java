@@ -32,6 +32,16 @@ public class BackgroundProdBrandModule {
                     + " FROM {{?" + DSMConst.TD_PROD_BRAND + "}} "
                     + " WHERE cstatus&1 = 0 ";
 
+    /**
+     *
+     * 功能: 增加商品品牌
+     * 参数类型: json
+     * 参数集: ProdBrandVO的json
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
     public Result addProdBrand(AppContext appContext) {
         ProdBrandVO brandVO;
         try {
@@ -60,6 +70,16 @@ public class BackgroundProdBrandModule {
         return new Result().success(result > 0 ? brandId : 0);
     }
 
+    /**
+     *
+     * 功能: 查询商品品牌
+     * 参数类型: arrays
+     * 参数集: [商品名]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
     public Result queryProdBrand(AppContext appContext) {
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;

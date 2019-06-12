@@ -33,6 +33,16 @@ public class BackgroundProdManuModule {
             + " FROM {{?" + DSMConst.TD_PROD_MANU + "}} "
             + " WHERE cstatus&1 = 0 ";
 
+    /**
+     *
+     * 功能: 增加商品厂商
+     * 参数类型: json
+     * 参数集: ProdManuVO的json
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
     public Result addProdManu(AppContext appContext) {
         ProdManuVO prodManuVO;
         try {
@@ -60,6 +70,17 @@ public class BackgroundProdManuModule {
 
         return new Result().success(result > 0 ? manuId : 0);
     }
+
+    /**
+     *
+     * 功能: 查询产品厂商
+     * 参数类型: arrays
+     * 参数集: [厂商名]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
 
     public Result queryProdManu(AppContext appContext) {
         Page page = new Page();
