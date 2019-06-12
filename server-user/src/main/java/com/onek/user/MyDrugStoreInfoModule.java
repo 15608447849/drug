@@ -11,7 +11,6 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
-import redis.util.RedisUtil;
 import util.ModelUtil;
 
 import java.util.ArrayList;
@@ -110,6 +109,50 @@ public class MyDrugStoreInfoModule {
                 return 0;
         }
     }
+
+    /* *
+     * @description 新增修改我的收货人(包含设置默认收货人)
+     * @params {compid：企业码 contactname：收货人  contactphone：收货人电话 shipid：收货人id(新增传0), cstatus : 2 默认   0 非默认}
+     * @return -1 失败（收货人已达到上限 收货人已存在）  200 成功
+     * @exception
+     * @author 11842
+     * @time  2019/3/21 13:51
+     * @version 1.1.1
+     **/
+    public Result optConsigneeForApp(AppContext appContext) {
+        Result result = new Result();
+        int code;
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int compId = jsonObject.get("compid").getAsInt();
+        String contactName = jsonObject.get("contactname").getAsString();
+        long contactPhone = jsonObject.get("contactphone").getAsLong();
+        int shipId = jsonObject.get("shipid").getAsInt();
+        int cstatus = jsonObject.get("cstatus").getAsInt();//0 一般  2 默认
+        if (queryCount(compId, shipId, contactPhone,2) >= 5) {
+            return result.fail("收货人已达到上限！");
+        }
+        if (queryCount(compId, shipId, contactPhone,1) > 0) {
+            return result.fail("收货人已存在！");
+        }
+        String insertSQL = "insert into {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} "
+                + "(shipid, compid, contactname, contactphone, cstatus)"
+                + " values(?,?,?,?,?)";
+        String updSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set contactname=?, contactphone=?, cstatus=?  "
+                + " where cstatus&1=0 and shipid=?";
+        if (shipId > 0) {
+            code = baseDao.updateNative(updSQL, contactName, contactPhone,cstatus, shipId);
+
+        } else {
+            shipId = RedisGlobalKeys.getShipId();
+            code = baseDao.updateNative(insertSQL, shipId, compId, contactName, contactPhone, cstatus);
+        }
+        myCgProxy.update(null);
+        return code > 0 ? result.success("操作成功") : result.fail("操作失败");
+    }
+
+
 
     /* *
      * @description 设置默认收货人

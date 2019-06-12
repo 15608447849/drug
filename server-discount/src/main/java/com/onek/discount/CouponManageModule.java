@@ -2004,7 +2004,6 @@ public class CouponManageModule {
         int amt = Integer.parseInt(appContext.param.arrays[1]);
         int ret = baseDao.updateNative(UPDATE_COMP_BAL,
                 new Object[]{amt,compid});
-
         return ret;
     }
 
