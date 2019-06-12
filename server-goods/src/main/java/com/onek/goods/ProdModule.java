@@ -7,10 +7,14 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
+import com.onek.calculate.entity.IDiscount;
+import com.onek.calculate.entity.Product;
+import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
+import com.onek.goods.calculate.ActivityFilterService;
 import com.onek.goods.entities.AppriseVO;
 import com.onek.goods.entities.MallFloorVO;
 import com.onek.goods.entities.ProdVO;
@@ -1629,4 +1633,97 @@ public class ProdModule {
                 INSERT_APPRISE_SQL, params, params.size())) ? 1 : 0;
     }
 
+
+    /**
+     * app端获取团购商品信息
+     * add by liaoz 2019年6月11日
+     * @param appContext 全局缓存
+     * @return 活动商品，活动商品类型
+     */
+    @UserPermission(ignore = true)
+    public Result appGetTeamBuyMallFloor(AppContext appContext) {
+        Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
+        String mmdd = TimeUtils.date_Md_2String(new Date());
+        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1133, mmdd});
+        List<ProdVO> prodVOList = new ArrayList<>();
+        JSONObject result = new JSONObject();
+        if (list != null && list.size() > 0) {
+            List<Long> actCodeList = new ArrayList<>();
+            List<Long> skuList = new ArrayList<>();
+
+            int compid = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
+            int qualcode = Integer.parseInt(list.get(0)[6].toString());
+            Long qualvalue = Long.parseLong(list.get(0)[7].toString());
+            if(!QualJudge.hasPermission(compid, qualcode, qualvalue)){
+                return new Result().success(null);
+            }
+
+            assemblySpecActProd(list);
+
+            Map<Long, Integer[]> dataMap = new HashMap<>();
+            getActData(list, actCodeList, skuList, dataMap);
+
+            long actCode = actCodeList.get(0);
+
+            JSONArray ladOffArray = new JSONArray();
+            int minOff = getMinOff(actCode, ladOffArray);
+
+            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 100);
+
+            if (response != null && response.getHits().totalHits > 0) {
+                assembleData(appContext, response, prodVOList);
+            }
+            if (prodVOList != null && prodVOList.size() > 0) {
+                for (ProdVO prodVO : prodVOList) {
+                    skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
+                    convertTeamBuyData(dataMap, actCode, minOff, prodVO);
+                }
+            }
+
+            List<String[]> times = timeService.getTimesByActcode(actCode);
+
+            GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
+            String sdate = getEffectiveTimeByActCode.getSdate();
+            String edate = getEffectiveTimeByActCode.getEdate();
+
+            result.put("actcode", actCodeList.get(0));
+            result.put("sdate", sdate);
+            result.put("edate", edate);
+            result.put("ladoffArray", ladOffArray);
+            result.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+
+
+            result.put("list", prodVOList);
+            result.put("prodType",skuMap);
+        }
+
+        return new Result().success(result);
+    }
+
+    /**
+     * app内部调用方法
+     * add by liaz 2019年6月11日
+     * @param proSku 商品sku码
+     * @return key->商品sku  val->当前商品活动类型
+     */
+    private List<IDiscount>  appGetProdCalType(long proSku,int compid){
+
+        List<Product> products = new ArrayList<>();
+        Product p = new Product();
+        p.setSku(proSku);
+        products.add(p);
+
+        List<IDiscount> discounts
+
+
+                = new ActivityFilterService(
+                new ActivitiesFilter[] {
+                        new CycleFilter(),
+                        new QualFilter(compid),
+                        new PriorityFilter(),
+                        new StoreFilter(),})
+                .getCurrentActivities(products);
+
+        return discounts;
+    }
 }

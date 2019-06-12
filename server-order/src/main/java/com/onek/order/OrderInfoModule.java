@@ -537,6 +537,16 @@ public class OrderInfoModule {
     }
 
 
+    /**
+     * app端调用，查询企业门店信息，门店积分，门店优惠券，门店余额信息
+     * add by liaoz 2019年6月11日
+     * @param appContext 参入参数， 获取session.getCompId ,当前企业码查询
+     * @return （200==成功，对象object[]对象size=7 [优惠券数量,积分余额，待付数量，待发货数量，待收货数量，待评价数量，退货数量]）
+     * 内部复用countCompInfo方法。
+     */
+    public Result appCountCompInfo(AppContext appContext){
+        return countCompInfo(appContext);
+    }
 
 
 }

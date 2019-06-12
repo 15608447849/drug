@@ -142,4 +142,18 @@ public class StoreManageModule {
         }
         return "";
     }
+
+
+    /**
+     * app端调用我的门店信息修改
+     * add by liaoz 2019年6月11日
+     * @param appContext （入参，storeName 门店名称，address 门店地址，addressCode 地区码）
+     * @return（200==成功）
+     * 内部调用updateStoreInfo修改门店信息function
+     */
+    public Result appUpdateStoreInfo(AppContext appContext){
+        return updateStoreInfo(appContext);
+    }
+
+
 }
