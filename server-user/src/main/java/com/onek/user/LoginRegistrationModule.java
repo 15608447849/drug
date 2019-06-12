@@ -205,6 +205,20 @@ public class LoginRegistrationModule {
 
 
     /**
+     * APP获取门店用户信息
+     */
+    public Result appStoreInfo(AppContext context){
+        if (context.getUserSession().compId > 0){
+            StoreBasicInfo info = new StoreBasicInfo(context.getUserSession().compId);
+            if (getStoreInfoById(info)){
+                UserSession userSession = context.getUserSession().cloneStoreUserInfo(info);
+                return new Result().success(userSession);//返回用户信息
+            };
+        }
+        return new Result().success(null);//返回用户信息
+    }
+
+    /**
      * 获取用户信息 - 后台运营使用
      */
     public Result getUserSession(AppContext appContext){

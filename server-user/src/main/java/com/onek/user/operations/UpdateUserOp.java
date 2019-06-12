@@ -32,10 +32,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
 
     @Override
     public Result execute(AppContext context) {
-
-
         boolean flag = false;
-
         if (type == 0){
             //修改手机/密码
             UserSession session = context.getUserSession();
@@ -68,7 +65,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
                         if( !inputNewPassword.equalsIgnoreCase(curPassword)){
                             //如果当前密码与输入的旧密码相同 并且 新密码与旧密码不相同
                             //检查密码正确性
-                            if (validPassword(inputNewPassword)){
+                            if (validPassword(newPassword)){
                                 session.password = inputNewPassword;
                                 flag = changUserByUid("upw='"+ inputNewPassword +"'","uid='"+ uid+"'");
                                 if(flag) rmsg = "修改成功,请使用新密码登陆";
