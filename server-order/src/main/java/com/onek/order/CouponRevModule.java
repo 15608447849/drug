@@ -595,13 +595,12 @@ public class CouponRevModule {
         bal = MathUtil.exactDiv(bal,100L).
                 setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
 
-        resultMap.put("bal",0);
+        resultMap.put("bal",bal);
         resultMap.put("debal",0);
         resultMap.put("acpay",payamt);
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
         if(couponUseDTOS.get(0).getBalway() > 0){
-            resultMap.put("bal",bal);
             if(bal >= payamt){
                 resultMap.put("debal",payamt);
                 resultMap.put("acpay",0);

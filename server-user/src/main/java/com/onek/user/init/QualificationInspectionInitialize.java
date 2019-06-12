@@ -56,7 +56,7 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
             if (typeStr == null) return;
 
             if(compid > 0 && compid < 536862720){
-                SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.QUALIFICATION_EXPIRED,typeStr);
+                SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.QUALIFICATION_PRE_EXPIRED,typeStr);
             }else{
                 sendMessageToSpecify(compid,phone,SmsTempNo.QUALIFICATION_EXPIRED,typeStr);
             }
@@ -68,7 +68,26 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
             if (flag){
                 //判断是否还在过期中
                 final String sql = "SELECT * FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND validitye<CURRENT_DATE";
-                List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql,atype,compid);
+
+                final String presql = "SELECT * FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND  date_sub(validitye, interval 15 day) < CURRENT_DATE";
+
+                List<Object[]> lines = null;
+                if(compid > 0 && compid < 536862720){
+                    lines = BaseDAO.getBaseDAO().queryNative(presql,atype,compid);
+
+                  //  select 1 from tb_comp tbcp join tb_comp_aptitude tbca on tbcp.cid = tbca.compid where validitye<=CURRENT_DATE AND tbcp.cstatus & 128 = 0
+                    String cksql = "SELECT 1 FROM {{?"+ TB_COMP +"}} tbcp join {{?"+TB_COMP_APTITUDE+"}} tbca on tbcp.cid = tbca.compid " +
+                            " where validitye<=CURRENT_DATE AND tbcp.cstatus & 128 = 0 ";
+
+                    List<Object[]> certRet = BaseDAO.getBaseDAO().queryNative(cksql,compid);
+                    if(certRet != null && !certRet.isEmpty()){
+                        String updateSql = "update {{?"+TB_COMP+"}} set cstatus = 128 where cid = ? ";
+                        BaseDAO.getBaseDAO().updateNative(updateSql,compid);
+                    }
+                }else{
+                    lines = BaseDAO.getBaseDAO().queryNative(sql,atype,compid);
+                }
+
                 if (lines.size()>0){
                     sendMessage();//发送消息
                     timer.schedule(new CusTimerTask(atype,compid,phone,true),TimeUtils.PERIOD_MONTH);//设置下一次提醒时间 一个月后
@@ -84,7 +103,23 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
             }else{
                 //判断是否今天过期
                 final String sql = "SELECT * FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND validitye=CURRENT_DATE";
-                List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql,atype,compid);
+              //  final String presql = "SELECT * FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND  date_sub(validitye, interval 15 day) = CURRENT_DATE";
+                final String presql = "SELECT * FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND  date_sub(validitye, interval 15 day) = CURRENT_DATE";
+
+                List<Object[]> lines = null;
+                if(compid > 0 && compid < 536862720){
+                    lines = BaseDAO.getBaseDAO().queryNative(presql,atype,compid);
+                    String cksql = "SELECT 1 FROM {{?"+ TB_COMP +"}} tbcp join {{?"+TB_COMP_APTITUDE+"}} tbca on tbcp.cid = tbca.compid " +
+                            " where validitye<=CURRENT_DATE AND tbcp.cstatus & 128 = 0 ";
+                   // String cksql = "SELECT 1 FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND validitye <= CURRENT_DATE AND cstatus & 128 = 0 ";
+                    List<Object[]> certRet = BaseDAO.getBaseDAO().queryNative(cksql,compid);
+                    if(certRet != null && !certRet.isEmpty()){
+                        String updateSql = "update {{?"+TB_COMP+"}} set cstatus = 128 where cid = ? ";
+                        BaseDAO.getBaseDAO().updateNative(updateSql,compid);
+                    }
+                }else{
+                    lines = BaseDAO.getBaseDAO().queryNative(sql,atype,compid);
+                }
                 if (lines.size()>0){
                     sendMessage();//发送消息
                 }
