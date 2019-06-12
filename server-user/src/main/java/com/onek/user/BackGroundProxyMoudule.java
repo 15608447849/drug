@@ -765,6 +765,7 @@ public class BackGroundProxyMoudule {
             String ckSql = " update {{?"+DSMConst.TB_COMP+"}}" +
                     " set cstatus = ?,auditdate = CURRENT_DATE,audittime = CURRENT_TIME,"
                     + "examine = ?,auditer = ?  where cid = ? ";
+
             if(baseDao.updateNative(ckSql,ckstatus,ckreson,uid,cid) > 0){
                 return new Result().success("操作成功！");
             }
@@ -957,6 +958,41 @@ public class BackGroundProxyMoudule {
             if (queryResult == null || queryResult.isEmpty()) return result.success(null);
             return  result.success(convBdList(queryResult));
         }
+        return  result.success(null);
+    }
+
+
+
+    @UserPermission(ignore = true)
+    public Result queryBdByArea(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+        int uid = jsonObject.get("uid").getAsInt();
+        int roleid = jsonObject.get("roleid").getAsInt();
+        long areac = jsonObject.get("areac").getAsLong();
+        int cid = appContext.getUserSession().compId;
+        long roleCode = appContext.getUserSession().roleCode;
+
+        List<Object[]> queryResult = null;
+
+        if((roleCode & RoleCodeCons._PROXY_PARTNER) > 0){
+            String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? " +
+                    "and uid in (select distinct uid from {{?" +DSMConst.TB_PROXY_UAREA+"}} where areac = ? and cstatus & 1 = 0)";
+            queryResult = baseDao.queryNative(selectSQL,roleid,cid,areac);
+            if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+            return  result.success(convBdList(queryResult));
+        }
+
+        if((roleCode & RoleCodeCons._DBM) > 0){
+            String selectSQL =  " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0" +
+                    " and cstatus & 1 = 0 and belong = ? or uid = ? "+
+            "and uid in (select distinct uid from {{?" +DSMConst.TB_PROXY_UAREA+"}} where areac = ? and cstatus & 1 = 0)";
+            queryResult = baseDao.queryNative(selectSQL,roleid,uid,uid,areac);
+            if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+            return  result.success(convBdList(queryResult));
+        }
 
         return  result.success(null);
     }
@@ -1042,7 +1078,7 @@ public class BackGroundProxyMoudule {
         List<Object[]> cppoint = baseDao.queryNative(selectCompSQL,cid);
 
         if(cppoint == null || cppoint.isEmpty()){
-            return new Result().fail("当前门店不在该BD管辖范围内！");
+            return new Result().fail("当前门店不在该BD管辖范围内,确定是否继续操作？");
         }
 
         GaoDeMapUtil.Point compPoint
@@ -1055,7 +1091,7 @@ public class BackGroundProxyMoudule {
         if(bdid > 0){
             arpoint = baseDao.queryNative(selectAreaSQL,bdid);
             for(Object[] objs : arpoint){
-                if(objs == null || StringUtils.isEmpty(objs[0].toString())){
+                if(objs == null || objs[0] == null || StringUtils.isEmpty(objs[0].toString())){
                     continue;
                 }
                 try{
@@ -1070,7 +1106,7 @@ public class BackGroundProxyMoudule {
                 }
             }
         }
-        return new Result().fail("当前门店不在该BD管辖范围内！");
+        return new Result().fail("当前门店不在该BD管辖范围内,确定是否继续操作？");
     }
 
 
@@ -1116,10 +1152,11 @@ public class BackGroundProxyMoudule {
 
         String selectSQL = "select distinct cp.cid companyId,tu.uphone phone,tu.uid,cname company,caddrcode addressCode, "
                 + "caddr address,createdate,createtime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName," +
-                " stu.uphone cursorPhone,sstu.uid bdmid,sstu.urealname bdmn from {{?"
+                " stu.uphone cursorPhone,IFNULL(sstu.uid,bdu.uid) bdmid,IFNULL(sstu.urealname,bdu.urealname) bdmn from {{?"
                 + DSMConst.TB_COMP + "}} cp  join {{?" + DSMConst.TB_SYSTEM_USER + "}} tu  on cp.cid = tu.cid "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} stu on stu.uid = cp.inviter "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} sstu on sstu.uid = stu.belong "
+                + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} bdu on bdu.uid = tu.belong "
                 + " where tu.cstatus&1=0 and ctype = 0  ";
         sqlBuilder.append(selectSQL);
 
@@ -1192,6 +1229,7 @@ public class BackGroundProxyMoudule {
                 if((mroleid & RoleCodeCons._DBM) > 0){
                     dySql.append(" or stu.belong = ").append(puid);
                     dySql.append(" or stu.uid = ").append(puid);
+                    dySql.append(" or tu.belong = ").append(puid);
                 }
 
                 if((mroleid & RoleCodeCons._DB) > 0){
@@ -1277,8 +1315,8 @@ public class BackGroundProxyMoudule {
         long roleid = userSession.roleCode;
         int cid = userSession.compId;
         int userId = userSession.userId;
-
-        String  optSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus | 32  where uid = ? and cstatus&1=0 and cstatus&32=0 ";
+        //CURRENT_DATE,CURRENT_TIME
+        String  optSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus | 32,offdate = CURRENT_DATE,offtime = CURRENT_TIME  where uid = ? and cstatus&1=0 and cstatus&32=0 ";
        // String coptSql = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set cstatus = cstatus | 32  where  cid = ? and cstatus&1=0 and cstatus&32=0 ";
         String pcSql = "update {{?"+DSMConst.TB_COMP+"}} set cstatus = cstatus | 32 where cid = ? and cstatus&1=0 and cstatus&32=0 ";
         String aerSql =  "update {{?"+DSMConst.TB_PROXY_UAREA+"}} set cstatus = cstatus | 1 where cstatus & 1 = 0 ";
@@ -1351,6 +1389,94 @@ public class BackGroundProxyMoudule {
         }
         return new Result().fail("操作失败！");
     }
+
+
+    @UserPermission(ignore = true)
+    public Result optQualificationCert(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+        List<ProxyQualificationCert> proxyQualificationCerts = new ArrayList<>();
+        Gson gson = new Gson();
+        for (JsonElement proxyQualif : jsonArray) {
+            ProxyQualificationCert proxyQualificationCert = gson.fromJson(proxyQualif, ProxyQualificationCert.class);
+            proxyQualificationCerts.add(proxyQualificationCert);
+        }
+
+        if(proxyQualificationCerts.isEmpty()){
+            return new Result().fail("操作失败！");
+        }
+        String selectAptSql = "SELECT aptid FROM {{?"+DSMConst.TB_COMP_APTITUDE+"}} WHERE compid = ? AND atype = ?";
+
+        String insertSql = "INSERT INTO {{?"+DSMConst.TB_COMP_APTITUDE+"}} (aptid,compid,atype,certificateno,validitys,validitye) VALUES (?,?,?,?,?,?)";
+
+        String updateSql = "UPDATE {{?"+DSMConst.TB_COMP_APTITUDE+"}} SET certificateno=?,validitys=?,validitye=? WHERE aptid = ?";
+
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> parmList = new ArrayList<>();
+        for (ProxyQualificationCert proxyQualificationCert:proxyQualificationCerts){
+            List<Object[]> isExtRet = baseDao.queryNative(selectAptSql,
+                    new Object[]{proxyQualificationCert.getCompid(),
+                    proxyQualificationCert.getAtype()});
+
+            if(isExtRet != null && !isExtRet.isEmpty()){
+                sqlList.add(updateSql);
+                parmList.add(new Object[]{proxyQualificationCert.getCertificateno(),
+                        proxyQualificationCert.getValiditys(),
+                        proxyQualificationCert.getValiditye(),
+                        proxyQualificationCert.getAptid()});
+            }else{
+                sqlList.add(insertSql);
+
+                parmList.add(new Object[]{proxyQualificationCert.getCompid()+proxyQualificationCert.getAtype(),
+                        proxyQualificationCert.getCompid(),
+                        proxyQualificationCert.getAtype(),
+                        proxyQualificationCert.getCertificateno(),
+                        proxyQualificationCert.getValiditys(),
+                        proxyQualificationCert.getValiditye() });
+            }
+        }
+
+        String[] sqlNative = new String[sqlList.size()];
+        sqlNative = sqlList.toArray(sqlNative);
+        boolean b = !ModelUtil.updateTransEmpty(
+                baseDao.updateTransNative(sqlNative,parmList));
+
+        if(b){
+            String stopSql = " update {{?"+DSMConst.TB_COMP+"}}" +
+                    " set cstatus = ? where cid = ? ";
+
+            baseDao.updateNative(stopSql,new Object[]{128,proxyQualificationCerts.get(0).getCompid()});
+
+            return new Result().success("操作成功！");
+        }
+        return new Result().success("操作失败！");
+    }
+
+
+    @UserPermission(ignore = true)
+    public Result queryQualificationCert(AppContext appContext) {
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+        int cid = jsonObject.get("cid").getAsInt();
+        if(cid <= 0){
+            return  result.success(null);
+        }
+
+        String selectSQL = " select aptid,compid,atype,certificateno,validitys,validitye from {{?"+DSMConst.TB_COMP_APTITUDE+"}} where compid = ? and cstatus & 1 = 0 ";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL,cid);
+        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+        ProxyQualificationCert[] proxyQualificationCerts = new ProxyQualificationCert[queryResult.size()];
+
+        baseDao.convToEntity(queryResult, proxyQualificationCerts, ProxyQualificationCert.class,
+                new String[]{"aptid","compid","atype","certificateno","validitys","validitye"});
+
+        return  result.success(proxyQualificationCerts);
+    }
+
+
 
 
     public static void main(String[] args) {

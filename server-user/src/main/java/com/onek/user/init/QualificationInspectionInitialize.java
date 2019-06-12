@@ -3,6 +3,7 @@ package com.onek.user.init;
 import Ice.Application;
 import com.onek.server.infimp.IIceInitialize;
 import com.onek.util.SmsTempNo;
+import com.onek.util.SmsUtil;
 import dao.BaseDAO;
 import org.jetbrains.annotations.NotNull;
 import util.StringUtils;
@@ -49,9 +50,17 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
                 typeStr = "药店经营许可证";
             }else if (atype == 12){
                 typeStr = "gsp认证";
+            }else if (atype == 13){
+                typeStr = "居民身份证";
             }
             if (typeStr == null) return;
-            sendMessageToSpecify(compid,phone,SmsTempNo.QUALIFICATION_EXPIRED,typeStr);
+
+            if(compid > 0 && compid < 536862720){
+                SmsUtil.sendSmsBySystemTemp(phone, SmsTempNo.QUALIFICATION_EXPIRED,typeStr);
+            }else{
+                sendMessageToSpecify(compid,phone,SmsTempNo.QUALIFICATION_EXPIRED,typeStr);
+            }
+
         }
 
         @Override

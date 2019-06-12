@@ -44,10 +44,10 @@ public class PayModule {
                     DelayedHandler.TIME_TYPE.HOUR);
 
     //线下即付变为待发货一小时轮询
-    public static final DelayedHandler<DelayedBase> CANCEL_XXJF =
-            new RedisDelayedHandler<>("_CANEL_XXJF", 60,
-                    (d) -> toBeShipped(d.getOrderNo(), d.getCompid()),
-                    DelayedHandler.TIME_TYPE.MINUTES);
+//    public static final DelayedHandler<DelayedBase> CANCEL_XXJF =
+//            new RedisDelayedHandler<>("_CANEL_XXJF", 60,
+//                    (d) -> toBeShipped(d.getOrderNo(), d.getCompid()),
+//                    DelayedHandler.TIME_TYPE.MINUTES);
 
     public static final String PAY_TYPE_ALI = "alipay";
     public static final String PAY_TYPE_WX = "wxpay";
@@ -736,6 +736,15 @@ public class PayModule {
         return !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,TimeUtils.getCurrentYear(), sqlNative, params));
     }
 
+    /* *
+     * @description 线下支付处理
+     * @params json {orderno：订单号 compid：企业码 paytype：支付方式(4线下转账 5线下到付)}
+     * @return 200 成功 -1 失败
+     * @exception
+     * @author 11842
+     * @time  2019/6/11 15:37
+     * @version 1.1.1
+     **/
     @UserPermission(ignore = false)
     public Result offlinePay(AppContext appContext) {
         int result;
@@ -758,7 +767,7 @@ public class PayModule {
             result = baseDao.updateNativeSharding(compid, year, updateSQL, 0,paytype, orderno, 0);
             if (result > 0) {
                 CANCEL_DELAYED.removeByKey(orderno);
-                CANCEL_XXJF.add(new DelayedBase(compid, orderno));
+//                CANCEL_XXJF.add(new DelayedBase(compid, orderno));
             }
         } else {
             result = baseDao.updateNativeSharding(compid, year, updateSQL,
@@ -899,7 +908,7 @@ public class PayModule {
         if (result > 0) {
             //生成订单到一块物流
             OrderUtil.generateLccOrder(compid, orderNo);
-            CANCEL_XXJF.removeByKey(orderNo);
+//            CANCEL_XXJF.removeByKey(orderNo);
             DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
         }
         return result > 0;

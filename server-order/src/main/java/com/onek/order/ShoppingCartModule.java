@@ -828,4 +828,15 @@ public class ShoppingCartModule {
 
     }
 
+
+    /**
+     * app 调用新增购物车功能
+     * add by liaoz 2019年6月10日
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result appSaveShopCart(AppContext appContext) {
+        return saveShopCart(appContext);
+    }
 }

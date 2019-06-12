@@ -1568,8 +1568,8 @@ public class ProdModule {
 
     /* *
      * @description 查询商品评价
-     * @params [appContext]
-     * @return com.onek.entitys.Result
+     * @params json {sku: 商品sku}
+     * @return AppriseVO[] 见AppriseVO.class
      * @exception
      * @author 11842
      * @time  2019/4/20 15:07
@@ -1609,6 +1609,15 @@ public class ProdModule {
     }
 
 
+    /**
+     * @description 订单评价商品接口
+     * @params json {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
+     * @return int code > 0成功 否则失败
+     * @exception
+     * @author 11842
+     * @time  2019/6/11 14:53
+     * @version 1.1.1
+     **/
     @UserPermission(ignore = true)
     public int insertApprise(AppContext appContext) {
         Gson gson = new Gson();

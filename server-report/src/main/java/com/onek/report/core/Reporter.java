@@ -1,6 +1,5 @@
 package com.onek.report.core;
 
-import com.alibaba.fastjson.JSON;
 import com.onek.report.col.ColGroup;
 import com.onek.report.col.ColItem;
 import com.onek.report.col.ColTotal;
@@ -8,7 +7,6 @@ import com.onek.report.vo.*;
 import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 import util.StringUtils;
 
 import java.text.ParseException;
@@ -25,7 +23,7 @@ public class Reporter {
     private static final String[][] GROUPS = {
         {
             " odate ",
-            " (DAY(odate)+WEEKDAY(odate-INTERVAL DAY(odate) DAY)) DIV 7 + 1 ",
+            " (DAY(odate) + WEEKDAY(odate - INTERVAL DAY(odate) DAY)) DIV 7 + 1 ",
             " MONTH(odate) ",
             " YEAR(odate) ",
         },
@@ -34,13 +32,13 @@ public class Reporter {
             " 第$周 ",
             " $月 ",
             " $年 ",
-        }
+        },
 //        {
 //            " CONCAT($) ",
 //            " CONCAT('第', $, '周') ",
 //            " CONCAT($, '月') ",
 //            " CONCAT($, '年') ",
-//        }
+//        },
     };
 
     private static Comparator<ColGroup>[] COL_GROUP_COMPARATOR = new Comparator[] {
