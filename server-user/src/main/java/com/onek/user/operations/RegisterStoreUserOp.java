@@ -6,6 +6,7 @@ import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.util.RoleCodeCons;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.StringUtils;
@@ -66,14 +67,17 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
 //                "(?![A-Za-z\\W]+$)" +
 //                "(?![A-Z0-9\\W]+$)" +
 //                "[A-Za-z0-9\\W]{6,}$";
-        String pattern  = "^" +
-//                "(?![A-Za-z0-9]+$)" +
-                "(?![a-z0-9\\W]+$)" +
-                "(?![A-Za-z\\W]+$)" +
-                "(?![A-Z0-9\\W]+$)" +
-                "[A-Za-z0-9\\W]{6,}";
+
+        LogUtil.getDefaultLogger().info("验证密码规则:" + psd);
+        //
+//        String pattern = "^.*(?=.{6,})(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*?]).*$";
+        String pattern = "^.*(?=.{6,})(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])().*$";
+
         return Pattern.matches(pattern, psd);
     }
+
+
+
 
     // 提交
     private Result submit(AppContext context) {

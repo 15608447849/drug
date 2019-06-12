@@ -11,10 +11,10 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
-import redis.util.RedisUtil;
 import util.ModelUtil;
 
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -110,6 +110,69 @@ public class MyDrugStoreInfoModule {
                 return 0;
         }
     }
+
+    /* *
+     * @description 新增修改我的收货人(包含设置默认收货人)
+     * @params {compid：企业码 contactname：收货人  contactphone：收货人电话 shipid：收货人id(新增传0), cstatus : 2 默认   0 非默认}
+     * @return -1 失败（收货人已达到上限 收货人已存在）  200 成功
+     * @exception
+     * @author 11842
+     * @time  2019/3/21 13:51
+     * @version 1.1.1
+     **/
+    public Result optConsigneeForApp(AppContext appContext) {
+        Result result = new Result();
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> params = new ArrayList<>();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int compId = jsonObject.get("compid").getAsInt();
+        String contactName = jsonObject.get("contactname").getAsString();
+        long contactPhone = jsonObject.get("contactphone").getAsLong();
+        int shipId = jsonObject.get("shipid").getAsInt();
+        int cstatus = jsonObject.get("cstatus").getAsInt();//0 一般  2 默认
+        if (queryCount(compId, shipId, contactPhone,2) >= 5) {
+            return result.fail("收货人已达到上限！");
+        }
+        if (queryCount(compId, shipId, contactPhone,1) > 0) {
+            return result.fail("收货人已存在！");
+        }
+        String insertSQL = "insert into {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} "
+                + "(shipid, compid, contactname, contactphone, cstatus)"
+                + " values(?,?,?,?,?)";
+        String updSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set contactname=?, contactphone=?, cstatus=?  "
+                + " where cstatus&1=0 and shipid=?";
+        String updateSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set cstatus=cstatus&~2 "
+                + " where cstatus&1=0 and compid=? and cstatus&2>0";
+        //查询当前企业是否存在默认收货人
+        boolean hsDf = hasDefault(compId);
+        if (cstatus == 2 && hsDf) {//已存在默认收货人将原来的变为非默认
+            sqlList.add(updateSQL);
+            params.add(new Object[]{compId});
+        }
+        if (shipId > 0) {//修改
+            sqlList.add(updSQL);
+            params.add(new Object[]{contactName, contactPhone,cstatus, shipId});
+        } else {//新增
+            shipId = RedisGlobalKeys.getShipId();
+            sqlList.add(insertSQL);
+            params.add(new Object[]{shipId, compId, contactName, contactPhone, cstatus});
+        }
+        String[] sqlNative = new String[sqlList.size()];
+        sqlNative = sqlList.toArray(sqlNative);
+        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(sqlNative, params));
+        myCgProxy.update(null);
+        return b ? result.success("操作成功") : result.fail("操作失败");
+    }
+
+    private boolean hasDefault(int compId) {
+        String selectSQL = "select count(*) from {{?" +  DSMConst.TB_COMP_SHIP_INFO + "}} where "
+                + " cstatus&1=0 and compid=? and cstatus&2>0";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, compId);
+        return Integer.parseInt(String.valueOf(queryResult.get(0)[0])) > 0;
+    }
+
 
     /* *
      * @description 设置默认收货人
