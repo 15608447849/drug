@@ -1682,10 +1682,28 @@ public class ProdModule {
             if (response != null && response.getHits().totalHits > 0) {
                 assembleData(appContext, response, prodVOList);
             }
+            List<Long> sList = new ArrayList<Long>();
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
+                    sList.add(prodVO.getSku());
                     skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
                     convertTeamBuyData(dataMap, actCode, minOff, prodVO);
+                }
+            }
+
+            /**
+             * 获取当前用户购物车中的商品信息
+             */
+            Map<Long,String> proShopNumMap = new HashMap<Long,String>();
+            String jsonStr = IceRemoteUtil.appGetCompShopNum(compid);
+            JsonParser jsonParser = new JsonParser();
+            JsonArray jsonArray = jsonParser.parse(jsonStr).getAsJsonArray();
+            for (int i =0;i<sList.size();i++){
+                proShopNumMap.put(sList.get(i),"0");
+                for(JsonElement jsonElement : jsonArray){
+                    if(jsonElement.getAsJsonObject().get("pdno").getAsLong() == sList.get(i)){
+                        proShopNumMap.put(sList.get(i),jsonElement.getAsJsonObject().get("pnum").getAsString());
+                    }
                 }
             }
 
@@ -1704,6 +1722,7 @@ public class ProdModule {
 
             result.put("list", prodVOList);
             result.put("prodType",skuMap);
+            result.put("proShopNum",proShopNumMap);
         }
 
         return new Result().success(result);
