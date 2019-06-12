@@ -11,6 +11,7 @@ import com.onek.entitys.Result;
 import com.onek.report.col.ColTotal;
 import com.onek.report.core.Reporter;
 import com.onek.report.service.MarketAnalysisServiceImpl;
+import org.hyrdpf.ds.AppConfig;
 import util.ArrayUtil;
 import util.StringUtils;
 
@@ -79,7 +80,7 @@ public class ReportModule {
         return new Result().success(title);
     }
 
-      /**
+    /**
      *
      * 功能: 站在时间维度订单分析报表
      * 参数类型: json

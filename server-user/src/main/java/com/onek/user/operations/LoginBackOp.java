@@ -30,7 +30,7 @@ public class LoginBackOp extends LoginAbsOp implements IOperation<AppContext> {
             if (!checkAccountPassword(account,password)) return new Result().fail(error);
             //检测用户名/密码是否正确
             if (!checkSqlAndUserExist(context.remoteIp,account,password)) return new Result().fail(error);
-            if (!partnerCheck(account))  return new Result().fail("该账号已被停用");
+            if (!partnerCheck(account))  return new Result().fail("该账号已被停用或该企业审核未通过！");
             //关联token-用户信息
             if (relationTokenUserSession(context,false)) return new Result().success("登陆成功");
         } catch (Exception e) {
@@ -57,7 +57,7 @@ public class LoginBackOp extends LoginAbsOp implements IOperation<AppContext> {
             if(cid == 0){
                 return false;
             }
-            String queryCmp = "select 1 from {{?"+TB_COMP+"}} where cid = ? and ctype = 2 and cstatus & 33 > 0 ";
+            String queryCmp = "select 1 from {{?"+TB_COMP+"}} where cid = ? and ctype = 2 and (cstatus & 33 > 0 or cstatus & 256 = 0)";
             List<Object[]> extComp = BaseDAO.getBaseDAO().queryNative(queryCmp, cid);
             return extComp == null || extComp.isEmpty();
         }

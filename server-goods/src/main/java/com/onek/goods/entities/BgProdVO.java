@@ -24,6 +24,9 @@ public class BgProdVO implements Cloneable{
     private int gspSC;
     private String detail;
     private String spuCstatus;
+    private String qsc;
+    private int busscope;
+    private String busscopen;
 
     /* ----------- 商品SKU表 ------------- */
     private long sku;
@@ -53,6 +56,9 @@ public class BgProdVO implements Cloneable{
     private int prodstatus;
     private int imagestatus;
     private int skuCstatus;
+    private int expmonth;
+    private double wp;
+
 
     private long classNo;
     private String className;
@@ -406,6 +412,46 @@ public class BgProdVO implements Cloneable{
 
     public void setFormName(String formName) {
         this.formName = formName;
+    }
+
+    public int getExpmonth() {
+        return expmonth;
+    }
+
+    public void setExpmonth(int expmonth) {
+        this.expmonth = expmonth;
+    }
+
+    public double getWp() {
+        return wp;
+    }
+
+    public void setWp(double wp) {
+        this.wp = wp;
+    }
+
+    public String getQsc() {
+        return qsc;
+    }
+
+    public void setQsc(String qsc) {
+        this.qsc = qsc;
+    }
+
+    public int getBusscope() {
+        return busscope;
+    }
+
+    public void setBusscope(int busscope) {
+        this.busscope = busscope;
+    }
+
+    public String getBusscopen() {
+        return busscopen;
+    }
+
+    public void setBusscopen(String busscopen) {
+        this.busscopen = busscopen;
     }
 
     @Override
