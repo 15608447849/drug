@@ -203,6 +203,7 @@ public class LoginRegistrationModule {
         return new Result().success(null);//返回用户信息
     }
 
+
     /**
      * 获取用户信息 - 后台运营使用
      */
