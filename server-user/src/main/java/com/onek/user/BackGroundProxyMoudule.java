@@ -1494,7 +1494,7 @@ public class BackGroundProxyMoudule {
         List<Object[]> queryResult = baseDao.queryNative(querySql
                     ,cid);
 
-        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+        if (queryResult == null || queryResult.isEmpty()) return result.success("该门店没有绑定BD",null);
 
         Map<String,String> retMap = null;
         try{
