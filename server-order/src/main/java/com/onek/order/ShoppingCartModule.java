@@ -839,4 +839,30 @@ public class ShoppingCartModule {
     public Result appSaveShopCart(AppContext appContext) {
         return saveShopCart(appContext);
     }
+
+    /**
+     * app 获取当前企业购物车信息
+     * add by liaoz 2019年6月12日
+     * @param appContext 企业码
+     * @return 当前购物车内容
+     */
+    @UserPermission(ignore = true)
+    public ShoppingCartDTO[] appGetShopCatProNum(AppContext appContext){
+        //查询购物车列表
+        String compid =  appContext.param.arrays[0];
+        System.out.println("==============>" + compid);
+        List<Object[]> queryResult = baseDao.queryNativeSharding(Integer.parseInt(compid),TimeUtils.getCurrentYear(),QUERY_SHOPCART_SQL,Integer.parseInt(compid));
+        System.out.println("query size ====" + queryResult.size());
+        ShoppingCartDTO[] shoppingCartVOS = new ShoppingCartDTO[queryResult.size()];
+        if(queryResult.size()<0){
+            return shoppingCartVOS;
+        }
+
+
+        baseDao.convToEntity(queryResult, shoppingCartVOS, ShoppingCartDTO.class,
+                new String[]{"unqid","pdno","compid","cstatus","pnum"});
+
+
+        return shoppingCartVOS;
+    }
 }
