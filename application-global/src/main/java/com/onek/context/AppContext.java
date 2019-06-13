@@ -66,7 +66,16 @@ public class AppContext extends IceContext {
 
     //创建多端检测key
     private String genUKeyByMore(){
-        return  userSession.userId+ "@" +userSession.compId ;//EncryptUtils.encryption();
+        return  userSession.userId+ "@" +userSession.compId + "@" +genTempType() ;//EncryptUtils.encryption();
+    }
+
+    //终端类型
+    private String genTempType() {
+        if (!StringUtils.isEmpty(param.token) && param.token.contains("@")){
+            String[] arr = param.token.split("@");
+            return arr[arr.length-1];
+        }
+        return "Unknown";
     }
 
     //创建用户会话到缓存 lzp
@@ -85,9 +94,6 @@ public class AppContext extends IceContext {
         logger.print("登陆成功, 设置当前用户("+genUKeyByMore()+") 唯一token = " +" = "+ genUKey());
 
     }
-
-
-
 
 
     //检测是存在多端登陆的情况
