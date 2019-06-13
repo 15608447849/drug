@@ -736,7 +736,9 @@ public class TranOrderOptModule {
         }
         try{
             RedisOrderUtil.reduceOrderNumByCompid(cusno);
-        }catch (Exception e){}
+        }catch (Exception e){
+
+        }
         if (type == 0) {//线上支付释放锁定库存 远程调用
             LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ------- 线上支付释放锁定库存操作开始");
             boolean res = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateBatchNative(UPD_GOODS_FSTORE, params, tranOrderGoods.length));
@@ -822,49 +824,66 @@ public class TranOrderOptModule {
         String orderNo = jsonObject.get("orderno").getAsString();//订单号
         int cusno = jsonObject.get("cusno").getAsInt(); //企业码
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
-        String selectSQL = "select payway, balamt,payamt,settstatus from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
+        String selectSQL = "select payway, balamt,payamt,settstatus,ostatus from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
         List<Object[]> list = baseDao.queryNativeSharding(cusno, year, selectSQL, orderNo);
         if(list != null && list.size() > 0) {
             int payway = (int)list.get(0)[0];//支付方式
             int balamt = (int)list.get(0)[1];//订单使用的余额
-//            int payamt = (int)list.get(0)[2];//订单支付金额
+            int payamt = (int)list.get(0)[2];//订单支付金额
             int settstatus = (int)list.get(0)[3];//订单支付金额
+            int ostatus = (int)list.get(0)[4];//订单状态
             String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, cstatus=cstatus|? "
                     + " where cstatus&1=0 and orderno=? and ostatus=?";
-            int res = baseDao.updateNativeSharding(cusno, year, updSQL, -4, CSTATUS.ORDER_BACK_CANCEL, orderNo, 1);
-            if (res > 0) {//退款
-                if (payway == 4 || payway == 5) {//线下即付退款???
-                    //客服取消返还数据库相关库存
-                    LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder offline-----------线下支付客服取消订单返还库存操作开始");
-                    addGoodsDbStock(orderNo, cusno);
-//                    LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder offline-----------线下支付客服取消订单返还库存操作结束");
-                    //取消24小时轮询
-                    DELIVERY_DELAYED.removeByKey(orderNo);
-                    //库存操作(redis库存返还)
-                    recoverGoodsStock(orderNo, cusno, 1);
-                    if (payway == 4) {
-                        //取消1小时轮询
-//                        CANCEL_XXJF.removeByKey(orderNo);
+            if (ostatus == 0 && payway == 4) {//线下转账未付款未结算客服取消订单
+                if (baseDao.updateNativeSharding(cusno, year, updSQL,
+                        -4, CSTATUS.ORDER_BACK_CANCEL, orderNo, 0) > 0) {
+                   return offLineCancelOrderOpt(orderNo, cusno, balamt, settstatus, result);
+                }
+            } else {
+                int res = baseDao.updateNativeSharding(cusno, year, updSQL, -4, CSTATUS.ORDER_BACK_CANCEL, orderNo, 1);
+                if (res > 0) {//退款
+                    if (payway == 4 || payway == 5) {//线下即付退款???
+                        //取消24小时轮询
+                        DELIVERY_DELAYED.removeByKey(orderNo);
+                        LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder offline-----------线下支付客服取消订单返还库存操作开始");
+                        return offLineCancelOrderOpt(orderNo, cusno, balamt, settstatus, result);
+                    } else {//线上支付退款
+                        // 取消24小时轮询
+                        DELIVERY_DELAYED.removeByKey(orderNo);
+                        LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder online-----------线上支付客服取消订单返还库存操作开始");
+
+                        //客服取消返还数据库相关库存
+                        addGoodsDbStock(orderNo, cusno);
+                        //库存操作(redis库存返还)
+                        recoverGoodsStock(orderNo, cusno, 0);
+                        return result.success("订单取消成功，请及时处理退款并确认退款");
                     }
-                    //未结算退回余额
-                    if (balamt > 0 && settstatus == 0) {
-                        IceRemoteUtil.updateCompBal(cusno, balamt);
-                        return result.success("订单取消成功");
-                    }
-                    return result.success("订单取消成功，请及时处理退款并确认退款");
-                } else {//线上支付退款
-                    //客服取消返还数据库相关库存
-                    LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder online-----------线上支付客服取消订单返还库存操作开始");
-                    addGoodsDbStock(orderNo, cusno);
-//                    LogUtil.getDefaultLogger().info("print by cyq cancelBackOrder online-----------线上支付客服取消订单返还库存操作结束");
-                    //取消24小时轮询
-                    DELIVERY_DELAYED.removeByKey(orderNo);
-                    recoverGoodsStock(orderNo, cusno, 0);
-                    return result.success("订单取消成功，请及时处理退款并确认退款");
                 }
             }
         }
         return result.fail("订单取消失败");
+    }
+    
+    /* *
+     * @description 线下订单相关操作
+     * @params [orderNo, cusno, balamt, settstatus, result]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/6/12 14:55
+     * @version 1.1.1
+     **/
+    private Result offLineCancelOrderOpt(String orderNo, int cusno, int balamt, int settstatus, Result result) {
+        //客服取消返还数据库相关库存
+        addGoodsDbStock(orderNo, cusno);
+        //库存操作(redis库存返还)
+        recoverGoodsStock(orderNo, cusno, 1);
+        //未结算退回余额
+        if (balamt > 0 && settstatus == 0) {
+            IceRemoteUtil.updateCompBal(cusno, balamt);
+            return result.success("订单取消成功！");
+        }
+        return result.success("订单取消成功，已付款的订单请及时进行退款处理！");
     }
 
 
@@ -947,8 +966,8 @@ public class TranOrderOptModule {
 
         if (result) {
             PayModule.DELIVERY_DELAYED.removeByKey(orderno);
-
-            String sql = " SELECT payway "
+            TAKE_DELAYED.add(new DelayedBase(compid, orderno));
+/*            String sql = " SELECT payway "
                         + " FROM {{?" + DSMConst.TD_TRAN_TRANS + "}} "
                         + " WHERE cstatus&1 = 0 AND compid = ? AND orderno = ? ";
 
@@ -960,7 +979,7 @@ public class TranOrderOptModule {
                 if (t != 4 && t != 5) {
                     TAKE_DELAYED.add(new DelayedBase(compid, orderno));
                 }
-            }
+            }*/
 
         }
 
@@ -1112,7 +1131,10 @@ public class TranOrderOptModule {
             sqlNative = sqlList.toArray(sqlNative);
             b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, paramsObj));
             if (b) {
-                if (paytype == 4) {//取消线下即付一小时轮询
+                if (paytype == 4) {
+                    //线下转账确认收款后24小时变为已发货
+                    DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
+                    //取消线下即付一小时轮询
 //                    CANCEL_XXJF.removeByKey(orderNo);
                     //生成订单到一块物流
                     OrderUtil.generateLccOrder(compid, orderNo);
