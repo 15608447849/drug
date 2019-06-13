@@ -1477,9 +1477,35 @@ public class BackGroundProxyMoudule {
     }
 
 
+    /**
+     * liuhui
+     * 查询门店下绑定的的BD
+     * @return json {uid 用户码 urealname 用户真实姓名 uphone 手机号}
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result queryStoreBd(AppContext appContext) {
+        Result result = new Result();
+        int cid = appContext.getUserSession().compId;
+        String querySql = "select su.uid,su.urealname,su.uphone from {{?"+DSMConst.TB_COMP+"}} cp join " +
+                    " {{?"+DSMConst.TB_SYSTEM_USER+"}} su on su.uid = cp.inviter where cp.cid = ? ";
 
+        List<Object[]> queryResult = baseDao.queryNative(querySql
+                    ,cid);
 
-    public static void main(String[] args) {
+        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
 
+        Map<String,String> retMap = null;
+        try{
+            retMap = new HashMap<>();
+            retMap.put("uid",queryResult.get(0)[0].toString());
+            retMap.put("urealname",queryResult.get(0)[1].toString());
+            retMap.put("uphone",queryResult.get(0)[2].toString());
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return  result.success(retMap);
     }
+
 }
