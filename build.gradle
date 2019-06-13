@@ -1,3 +1,4 @@
+
 buildscript {
     repositories {
         maven { url "https://plugins.gradle.org/m2/" }
@@ -37,9 +38,19 @@ subprojects {
         options.addStringOption('deprecation', 'true')
     }
 
+    
+    sourceSets{
+        main{
+            resources {
+                srcDir dbconfig
+            }
+        }
+    }
+
     dependencies {
         
     }
 }
+
 
 
