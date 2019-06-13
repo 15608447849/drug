@@ -18,10 +18,16 @@ compileTestKotlin {
     kotlinOptions.jvmTarget = "1.8"
 }
 
+
+
 shadowJar {
+//    zip64 true
     baseName = 'user'
     classifier = null
     version = null
+//    mergeServiceFiles()
+//    from sourceSets.main.output
+//    configurations = [project.configurations.testRuntime]
 //    dependencies {
 //    
 //    }
