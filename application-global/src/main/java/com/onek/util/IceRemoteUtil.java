@@ -754,6 +754,21 @@ public class IceRemoteUtil {
         }
         return 0;
     }
+
+
+
+
+    public static String appGetCompShopNum(int compid){
+        String result = "";
+        try{
+            System.out.println(">>>>>" + compid);
+             result =  ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"ShoppingCartModule","appGetShopCatProNum").setArrayParams(compid).execute();
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return result;
+    }
 }
 
 
