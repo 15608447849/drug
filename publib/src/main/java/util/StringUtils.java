@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 
 public class StringUtils {
     private static final String INTEGER_REGEX = "0|-?([1-9]{1}[0-9]*)";
+    private final static String EMAIL_REGEXP =
+            "^[a-zA-Z0-9_-]+@[a-zA-Z0-9_-]+(\\.[a-zA-Z0-9_-]+)+$";
 
     //字符串不为空
     public static boolean isEmpty(String str){
@@ -87,6 +89,10 @@ public class StringUtils {
         }
 
         return true;
+    }
+
+    public static boolean isEmail(String str) {
+        return !isEmpty(str) && Pattern.matches(EMAIL_REGEXP, str);
     }
 
     public static boolean isJsonFormatter(String str) {
