@@ -8,6 +8,7 @@ import com.onek.calculate.entity.*;
 import com.onek.calculate.filter.*;
 import com.onek.calculate.util.DiscountUtil;
 import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.entity.DiscountRule;
 import com.onek.entity.OfferTipsVO;
 import com.onek.entity.ShoppingCartDTO;
@@ -87,6 +88,11 @@ public class ShoppingCartModule {
     //远程调用
     private  final String QUERY_ONE_PROD_INV = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice from " +
             " {{?" + DSMConst.TD_PROD_SKU   + "}} where sku =? and cstatus & 1 = 0";
+
+
+    //查询购物车商品数量
+    private final String SELECT_SKUNUM_SQL = "select pdno,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+            + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
 
 
 
@@ -378,6 +384,8 @@ public class ShoppingCartModule {
             }
         }
     }
+
+
 
 
 
@@ -864,5 +872,34 @@ public class ShoppingCartModule {
 
 
         return shoppingCartVOS;
+    }
+
+
+
+    /**
+     * 根据SKU查询购物车现有数量
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result queryShopCartNumBySku(AppContext appContext){
+        String json = appContext.param.json;
+        Result result = new Result();
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        UserSession userSession = appContext.getUserSession();
+        int compid = userSession.compId;
+        long pdno = jsonObject.get("pdno").getAsLong();
+
+        Map map = new HashMap<String,String>();
+        map.put("pdno",pdno);
+        map.put("pnum",0);
+        List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                SELECT_SKUNUM_SQL, compid, pdno);
+        if(queryRet == null || queryRet.isEmpty()){
+            return result.success(map);
+        }
+        map.put("pnum",queryRet.get(0)[1]);
+        return result.success(map);
     }
 }
