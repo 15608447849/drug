@@ -110,7 +110,7 @@ public class PayModule {
      * 功能: 显示付款信息
      * 参数类型: json
      * 参数集: orderno=订单号 compid=企业码
-     * 返回值: code=200 data=结果信息 data.payamt=付款金额 data.odate=订单日期
+     * 返回值: code=200 date=结果信息 date.payamt=付款金额 date.odate=订单日期
      * 详情说明:
      * 作者: 蒋文广
      */
@@ -160,7 +160,7 @@ public class PayModule {
      * 功能: 显示运费付款信息
      * 参数类型: json
      * 参数集: orderno=订单号 compid=企业码
-     * 返回值: code=200 data=结果信息 data.payamt=运费金额
+     * 返回值: code=200 date=结果信息 date.payamt=运费金额
      * 详情说明:
      * 作者: 蒋文广
      */
@@ -200,7 +200,7 @@ public class PayModule {
      * 功能: 订单预支付[用来展示付款二维码]
      * 参数类型: json
      * 参数集: orderno=订单号 compid=企业码 paytype=付款方式
-     * 返回值: code=200 data=付款二维码地址
+     * 返回值: code=200 date=付款二维码地址
      * 详情说明:
      * 作者: 蒋文广
      */
@@ -244,7 +244,7 @@ public class PayModule {
      * 功能: 运费预支付[用来展示付款二维码]
      * 参数类型: json
      * 参数集: orderno=订单号 afsano=售后单号 compid=企业码 paytype=付款方式
-     * 返回值: code=200 data=付款二维码地址
+     * 返回值: code=200 date=付款二维码地址
      * 详情说明:
      * 作者: 蒋文广
      */
@@ -362,42 +362,47 @@ public class PayModule {
     @UserPermission(ignore = true)
     public Result payFeeCallBack(AppContext appContext){
 
-        String[] arrays = appContext.param.arrays;
-        String afsano = arrays[0];
-        String paytype = arrays[1];
-        String thirdPayNo = arrays[2];
-        String tradeStatus = arrays[3];
-        String tradeDate = arrays[4];
-        double money = Double.parseDouble(arrays[5]);
-        int compid = Integer.parseInt(arrays[6]);
+        try {
+            String[] arrays = appContext.param.arrays;
+            String afsano = arrays[0];
+            String paytype = arrays[1];
+            String thirdPayNo = arrays[2];
+            String tradeStatus = arrays[3];
+            String tradeDate = arrays[4];
+            double money = Double.parseDouble(arrays[5]);
+            int compid = Integer.parseInt(arrays[6]);
 
-        int paychannel = -1;
-        if(PAY_TYPE_ALI.equals(paytype)){
-            paychannel = 2;
-        }else if(PAY_TYPE_WX.equals(paytype)){
-            paychannel = 1;
+            int paychannel = -1;
+            if(PAY_TYPE_ALI.equals(paytype)){
+                paychannel = 2;
+            }else if(PAY_TYPE_WX.equals(paytype)){
+                paychannel = 1;
+            }
+            Date date = TimeUtils.str_yMd_Hms_2Date(tradeDate);
+            boolean result = false;
+            if("1".equals(tradeStatus)){
+                String tdate = TimeUtils.date_yMd_2String(date);
+                String time = TimeUtils.date_Hms_2String(date);
+                result = successFeeOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+
+            }else if("2".equals(tradeStatus)){
+                String tdate = TimeUtils.date_yMd_2String(date);
+                String time = TimeUtils.date_Hms_2String(date);
+                result = failOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+            }
+
+            OrderUtil.sendMsg(afsano, tradeStatus ,money, compid, tradeDate);
+
+            if(result){
+                return new Result().success(null);
+            }else{
+                return new Result().fail(null);
+            }
+        } catch (Exception e) {
+
+            LogUtil.getDefaultLogger().error("接受支付结果回调错误:"+e);
         }
-        Date date = TimeUtils.str_yMd_Hms_2Date(tradeDate);
-        boolean result = false;
-        if("1".equals(tradeStatus)){
-            String tdate = TimeUtils.date_yMd_2String(date);
-            String time = TimeUtils.date_Hms_2String(date);
-            result = successFeeOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
-
-        }else if("2".equals(tradeStatus)){
-            String tdate = TimeUtils.date_yMd_2String(date);
-            String time = TimeUtils.date_Hms_2String(date);
-            result = failOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
-        }
-
-        OrderUtil.sendMsg(afsano, tradeStatus ,money, compid, tradeDate);
-
-        if(result){
-            return new Result().success(null);
-        }else{
-            return new Result().fail(null);
-        }
-
+        return new Result().fail(null);
     }
 
     /**
@@ -405,11 +410,11 @@ public class PayModule {
      * 功能: 获取支付结果
      * 参数类型: json
      * 参数集: orderno=订单号 compid=企业码
-     * 返回值: code=200 data=结果信息 data.payamt=运费金额 data.odate=订单日期
-     *         data.otime=订单时间 data.pdamt=优惠金额 data.freight=运费
-     *         data.coupamt=优惠券金额 data.distamt= data.balamt=余额抵扣
-     *         data.consignee=收货人 data.contact=收货联系方式 data.paystatus=支付状态
-     *         data.address=收款具体地址
+     * 返回值: code=200 date=结果信息 date.payamt=运费金额 date.odate=订单日期
+     *         date.otime=订单时间 date.pdamt=优惠金额 date.freight=运费
+     *         date.coupamt=优惠券金额 date.distamt= date.balamt=余额抵扣
+     *         date.consignee=收货人 date.contact=收货联系方式 date.paystatus=支付状态
+     *         date.address=收款具体地址
      * 详情说明: 支付宝、微信支付完后回调此接口
      * 作者: 蒋文广
      */
@@ -477,7 +482,7 @@ public class PayModule {
      * 功能: 获取运费支付结果
      * 参数类型: json
      * 参数集: orderno=订单号 compid=企业码
-     * 返回值: code=200 data=结果信息 data.paystatus=支付状态
+     * 返回值: code=200 date=结果信息 date.paystatus=支付状态
      * 详情说明: 支付宝、微信支付完后回调此接口
      * 作者: 蒋文广
      */
