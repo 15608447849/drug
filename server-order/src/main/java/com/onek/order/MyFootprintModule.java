@@ -28,7 +28,7 @@ public class MyFootprintModule {
         String compid;
         String unqid; //
         String sku;
-        String data;//
+        String date;//
         String time;//
     }
 
@@ -108,8 +108,6 @@ public class MyFootprintModule {
         return new Result().fail("删除失败");
     }
 
-
-
     private class ResultItem{
         String date; //日期
         List<ProdEntity> list = new ArrayList<>(); //商品信息
@@ -130,6 +128,7 @@ public class MyFootprintModule {
 
     private List<Param> selectInfoByComp(int compId,String dateStr){
 
+        System.out.println(dateStr);
         if (StringUtils.isEmpty(dateStr)) dateStr = "CURRENT_DATE";
 
         ArrayList<Param> list = new ArrayList<>();
@@ -146,7 +145,7 @@ public class MyFootprintModule {
             data.compid = compId+"";
             data.unqid = StringUtils.checkObjectNull(arr[0],"");
             data.sku = StringUtils.checkObjectNull(arr[1],"");
-            data.data = StringUtils.checkObjectNull(arr[2],"");
+            data.date = StringUtils.checkObjectNull(arr[2],"");
             data.time = StringUtils.checkObjectNull(arr[3],"");
             list.add(data);
         }
@@ -165,17 +164,18 @@ public class MyFootprintModule {
         List<ResultItem> items = new ArrayList<>();
         try {
             Param query = GsonUtils.jsonToJavaBean(appContext.param.json,Param.class);
-            String time = null;
-            if (query == null) {
-                time = query.data;
+            String date = null;
+            if (query != null) {
+                date = query.date;
             }
+            appContext.logger.print("---------------------" +query.date +" - " +  date);
             int compId = appContext.getUserSession().compId;
-            List<Param> list = selectInfoByComp(compId,time);
+            List<Param> list = selectInfoByComp(compId,date);
             for (Param it : list){
                 ResultItem rit = null;
                 boolean isAdd = true;
                 for (ResultItem item : items){
-                    if (item.date.equals(it.data)){
+                    if (item.date.equals(it.date)){
                         rit = item;
                         isAdd = false;
                         break;
@@ -183,7 +183,7 @@ public class MyFootprintModule {
                 }
                 if (isAdd){
                     rit = new ResultItem();
-                    rit.date = it.data;
+                    rit.date = it.date;
                     items.add(rit);
                 }
                 try {
