@@ -51,10 +51,10 @@ public class OrderOptModule {
     //售后申请
     private static final String INSERT_ASAPP_SQL = "insert into {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
             + "(orderno,pdno,asno,compid,astype,gstatus,reason,ckstatus,"
-            + "ckdesc,invoice,cstatus,apdata,aptime,apdesc,refamt,asnum) "
+            + "ckdesc,invoice,cstatus,apdata,aptime,apdesc,refamt,asnum,invoicetype) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "?,CURRENT_DATE,CURRENT_TIME,?,?,?)";
+            + "?,CURRENT_DATE,CURRENT_TIME,?,?,?,?)";
 
     //更新订单售后状态
     private static final String UPD_ORDER_SQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
@@ -229,7 +229,7 @@ public class OrderOptModule {
                 Object[] pramsObj = new Object[]{asAppVOS.get(0).getOrderno(), asAppVOS.get(0).getPdno(), asOrderId,
                         asAppVOS.get(0).getCompid(), asAppVOS.get(0).getAstype(), asAppVOS.get(0).getGstatus(), asAppVOS.get(0).getReason(),
                         asAppVOS.get(0).getCkstatus(), asAppVOS.get(0).getCkdesc(), asAppVOS.get(0).getInvoice(), 1,
-                        asAppVOS.get(0).getApdesc(), asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum()};
+                        asAppVOS.get(0).getApdesc(), asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum(), asAppVOS.get(0).getInvoicetype()};
                 int res = baseDao.updateNativeSharding(0, localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
 
                 return res > 0 ? result.success(asOrderId) : result.fail("申请失败");
@@ -349,7 +349,7 @@ public class OrderOptModule {
             paramsInsert.add(new Object[]{asAppVO.getOrderno(), asAppVO.getPdno(), GenIdUtil.getAsOrderId(),
                     asAppVO.getCompid(), asAppVO.getAstype(), asAppVO.getGstatus(), asAppVO.getReason(),
                     asAppVO.getCkstatus(), asAppVO.getCkdesc(), asAppVO.getInvoice(),0,
-                    asAppVO.getApdesc(), asAppVO.getRefamt() * 100, asAppVO.getAsnum()});
+                    asAppVO.getApdesc(), asAppVO.getRefamt() * 100, asAppVO.getAsnum(), asAppVO.getInvoicetype()});
         }
     }
 

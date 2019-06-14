@@ -144,7 +144,11 @@ public class MyCollectModule {
            data.unqid = StringUtils.checkObjectNull(arr[0],0L);
            data.sku = StringUtils.checkObjectNull(arr[1],0L);
            int i = (int)arr[2];
-           data.prize = i/100.f;
+           if (appContext.isAnonymous()){
+               data.prize = -1;
+           }else{
+               data.prize = i/100.f;
+           }
            data.promtype = StringUtils.checkObjectNull(arr[3],0);
            data.data = StringUtils.checkObjectNull(arr[4],"");
            data.time = StringUtils.checkObjectNull(arr[5],"");

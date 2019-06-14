@@ -8,6 +8,15 @@ public class InvoiceVO {
     private String account;
     private String tel;
     private int cstatus;
+    private String email;
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
     public int getOid() {
         return oid;

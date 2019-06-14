@@ -27,6 +27,7 @@ public class AsAppVO {
     private int asnum;//退款数量
     private String checkern; //审核人
     private String compn; //公司名
+    private int invoicetype; //发票类型
 
     /* goods */
     private double pdprice;
@@ -324,5 +325,13 @@ public class AsAppVO {
 
     public void setReasonName(String reasonName) {
         this.reasonName = reasonName;
+    }
+
+    public int getInvoicetype() {
+        return invoicetype;
+    }
+
+    public void setInvoicetype(int invoicetype) {
+        this.invoicetype = invoicetype;
     }
 }

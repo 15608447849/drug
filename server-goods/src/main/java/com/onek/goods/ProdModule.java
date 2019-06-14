@@ -9,7 +9,10 @@ import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
-import com.onek.calculate.filter.*;
+import com.onek.calculate.filter.ActivitiesFilter;
+import com.onek.calculate.filter.CycleFilter;
+import com.onek.calculate.filter.PriorityFilter;
+import com.onek.calculate.filter.StoreFilter;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
@@ -51,6 +54,9 @@ import java.util.*;
  */
 @SuppressWarnings({"unchecked"})
 public class ProdModule {
+
+    /**过滤做大商品数量，大于当前数量显示出楼层**/
+    private static int MAX_SELECT_PRO_NUM = 0;
 
     private static IRedisCache mallFloorProxy = (IRedisCache) CacheProxyInstance.createInstance(new MallFloorImpl());
 
@@ -112,6 +118,8 @@ public class ProdModule {
         List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
         return new Result().success(mallFloorVOList);
     }
+
+
 
     /**
      *
@@ -404,7 +412,7 @@ public class ProdModule {
             if (response != null && response.getHits().totalHits > 0) {
                 assembleData(appContext, response, prodVOList);
             }
-            if (prodVOList != null && prodVOList.size() > 0) {
+            if (prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
                     convertTeamBuyData(dataMap, actCode, minOff, prodVO);
                 }
@@ -1644,88 +1652,195 @@ public class ProdModule {
 
 
     /**
-     * app端获取团购商品信息
-     * add by liaoz 2019年6月11日
-     * @param appContext 全局缓存
-     * @return 活动商品，活动商品类型
+     * app获取所有楼层信息
+     * @param appContext 全局参数
+     * @return 每一楼层对应该楼层商品，（code==200  data=[{楼层：商品}]）
      */
     @UserPermission(ignore = true)
-    public Result appGetTeamBuyMallFloor(AppContext appContext) {
-        Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
-        String mmdd = TimeUtils.date_Md_2String(new Date());
-        List<Object[]> list = BASE_DAO.queryNative(RULE_CODE_ACT_PROD_SQL, new Object[]{1133, mmdd});
-        List<ProdVO> prodVOList = new ArrayList<>();
-        JSONObject result = new JSONObject();
-        if (list != null && list.size() > 0) {
-            List<Long> actCodeList = new ArrayList<>();
-            List<Long> skuList = new ArrayList<>();
+    public Result appGetMallFloorProd(AppContext appContext) {
+        try {
+            //获取存在的所有楼层
+            System.out.println(GsonUtils.javaBeanToJson(appContext.param));
+            List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
+            appContext.logger.print("获取到楼层信息:"+mallFloorVOList);
+            JSONObject jsonObject = new JSONObject();
+            getSuccessResult(mallFloorVOList,jsonObject,appContext);
 
-            int compid = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
-            int qualcode = Integer.parseInt(list.get(0)[6].toString());
-            Long qualvalue = Long.parseLong(list.get(0)[7].toString());
-            if(!QualJudge.hasPermission(compid, qualcode, qualvalue)){
-                return new Result().success(null);
+            return new Result().success(jsonObject);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new Result().fail("无法获取楼层信息");
+    }
+
+    /**
+     * 将获取的楼层信息添加商品信息
+     * @param mallFloorVOList 楼层信息集合
+     * @param jsonObject 返回app端参数
+     * @param appContext 全局参数
+     */
+    private void getSuccessResult(List<MallFloorVO> mallFloorVOList,JSONObject jsonObject,AppContext appContext){
+        JSONArray jsonArray = new JSONArray();
+        for(MallFloorVO mallFloorVO:mallFloorVOList){
+            JSONObject json = getFloorMsgAcitveToJson(mallFloorVO,appContext);
+            if(json != null) {
+                appContext.logger.print("JSON = " + json);
+                jsonArray.add(json);
             }
+        }
+        jsonObject.put("resultMsg",jsonArray);
+    }
 
-            assemblySpecActProd(list);
+    /**
+     * 获取当前楼层下的商品信息
+     * @param mallFloorVO 当前楼层信息
+     * @param appContext 全局参数
+     * @return 返参（code==200 {楼层id，楼层码，楼层名称，楼层状态，楼层下商品信息}）
+     */
+    private JSONObject getFloorMsgAcitveToJson(MallFloorVO mallFloorVO,AppContext appContext){
+        JSONObject jsonObject = null;
+        int compid = appContext.isAnonymous() ? 0 : appContext.getUserSession().compId;
+        Result rs = getFloorMsgAcitve(String.valueOf(mallFloorVO.getUnqid()),appContext);
 
-            Map<Long, Integer[]> dataMap = new HashMap<>();
-            getActData(list, actCodeList, skuList, dataMap);
+        Object obj = rs.data;
 
-            long actCode = actCodeList.get(0);
+        if (obj!=null){
 
-            JSONArray ladOffArray = new JSONArray();
-            int minOff = getMinOff(actCode, ladOffArray);
+            if(obj instanceof List){
+                List<ProdVO> prodList = (List<ProdVO>) rs.data;
+                if(prodList.size()>=MAX_SELECT_PRO_NUM) {
+                    jsonObject = new JSONObject();
 
-            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 100);
+                    jsonObject.put("oid", mallFloorVO.getOid());
+                    jsonObject.put("unqid", mallFloorVO.getUnqid());
+                    jsonObject.put("fname", mallFloorVO.getFname());
+                    jsonObject.put("cstatus", mallFloorVO.getCstatus());
+                    jsonObject.put("proList", prodList);
 
-            if (response != null && response.getHits().totalHits > 0) {
-                assembleData(appContext, response, prodVOList);
-            }
-            List<Long> sList = new ArrayList<Long>();
-            if (prodVOList != null && prodVOList.size() > 0) {
-                for (ProdVO prodVO : prodVOList) {
-                    sList.add(prodVO.getSku());
-                    skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
-                    convertTeamBuyData(dataMap, actCode, minOff, prodVO);
-                }
-            }
-
-            /**
-             * 获取当前用户购物车中的商品信息
-             */
-            Map<Long,String> proShopNumMap = new HashMap<Long,String>();
-            String jsonStr = IceRemoteUtil.appGetCompShopNum(compid);
-            JsonParser jsonParser = new JsonParser();
-            JsonArray jsonArray = jsonParser.parse(jsonStr).getAsJsonArray();
-            for (int i =0;i<sList.size();i++){
-                proShopNumMap.put(sList.get(i),"0");
-                for(JsonElement jsonElement : jsonArray){
-                    if(jsonElement.getAsJsonObject().get("pdno").getAsLong() == sList.get(i)){
-                        proShopNumMap.put(sList.get(i),jsonElement.getAsJsonObject().get("pnum").getAsString());
+                    //获取商品活动类型
+                    Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
+                    if (prodList.size() > 0) {
+                        for (ProdVO prodVO : prodList) {
+                            skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
+                        }
                     }
+                    jsonObject.put("activeProType",skuMap);
+                }
+            }else if(obj instanceof JSONObject){
+                JSONObject proJson = (JSONObject) rs.data;
+                System.out.println(">>>>>>>>>>>>>>\n" + proJson);
+                List list = (List)proJson.get("list");
+                if(list!=null && list.size()>=MAX_SELECT_PRO_NUM) {
+                    jsonObject = new JSONObject();
+                    jsonObject.put("oid", mallFloorVO.getOid());
+                    jsonObject.put("unqid", mallFloorVO.getUnqid());
+                    jsonObject.put("fname", mallFloorVO.getFname());
+                    jsonObject.put("cstatus", mallFloorVO.getCstatus());
+                    jsonObject.put("proJson", proJson);
+
+                    //获取商品活动类型
+                    //将商品信息json转换为List<ProdVO>集合
+                    List<ProdVO> proList  = jsonToProductList(proJson.toString());
+
+                    Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
+                    if (proList != null && proList.size() > 0) {
+                        for (ProdVO prodVO : proList) {
+                            skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
+                        }
+                    }
+                    jsonObject.put("activeProType",skuMap);
                 }
             }
 
-            List<String[]> times = timeService.getTimesByActcode(actCode);
-
-            GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
-            String sdate = getEffectiveTimeByActCode.getSdate();
-            String edate = getEffectiveTimeByActCode.getEdate();
-
-            result.put("actcode", actCodeList.get(0));
-            result.put("sdate", sdate);
-            result.put("edate", edate);
-            result.put("ladoffArray", ladOffArray);
-            result.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
 
 
-            result.put("list", prodVOList);
-            result.put("prodType",skuMap);
-            result.put("proShopNum",proShopNumMap);
+
+
+
+
+
+
+        }
+        return jsonObject;
+    }
+
+    /**
+     * 根据不同楼层码获取该楼层下的商品数据（内部调用）
+     * @param avtiveId 楼层码。（活动码）
+     * @param appContext 全局参数
+     * @return 当前楼层下商品信息   Result.data为该楼层下商品信息
+     */
+    private Result getFloorMsgAcitve(String avtiveId,AppContext appContext){
+
+        System.out.println(" ------------ " + avtiveId +" --------------------------");
+        Result rs;
+        switch (avtiveId) {
+            case "1"://新品专区
+                rs = getNewMallFloor(appContext);
+                break;
+            case "2"://热销专区
+                rs = getHotMallFloor(appContext);
+                break;
+            case "4"://秒杀专区
+                rs = getDiscountMallFloor(appContext);
+                break;
+            case "8"://一块购
+                rs = getTeamBuyMallFloor(appContext);
+                break;
+            case "16"://包邮专区
+                rs = getExemPostMallFloor(appContext);
+                break;
+            case "32"://新人专享
+                rs = getNewMemberMallFloor(appContext);
+                break;
+            case "64"://中华名方
+                rs = getFamousPrescriptionFloor(appContext);
+                break;
+            case "128"://为你精选
+                rs = getChooseForYouMallFloor(appContext);
+                break;
+            case "256"://品牌专区
+                if(appContext.param.json == null || "".equals(appContext.param.json)){
+                    appContext.param.json = new JSONObject().toString();
+                }
+                rs = getBrandMallFloor(appContext);
+                break;
+            case "512"://限时抢购
+                rs = getDiscountMallFloor(appContext);
+                break;
+            default:
+                rs = new Result();
+                break;
         }
 
-        return new Result().success(result);
+        return rs;
+    }
+
+
+    /**
+     * 根据json获取商品集合
+     * @param jsonStr
+     * @return
+     */
+    private static List<ProdVO> jsonToProductList(String jsonStr){
+        JsonParser jsonParser = new JsonParser();
+        Gson gson = new Gson();
+
+        List<ProdVO> pList = new ArrayList<ProdVO>();
+        JsonObject jsonObject = jsonParser.parse(jsonStr).getAsJsonObject();
+        if(jsonObject.get("list") != null && !"".equals(jsonObject.get("list"))) {
+            String prodata = jsonObject.get("list").toString();
+            JsonArray jsonArray = jsonParser.parse(prodata).getAsJsonArray();
+            if(jsonArray.size()<=0){
+                return new ArrayList<ProdVO>();
+            }
+
+            for (JsonElement jsonElement : jsonArray){
+                ProdVO product = gson.fromJson(jsonElement,ProdVO.class);
+                pList.add(product);
+            }
+        }
+        return pList;
     }
 
     /**
@@ -1747,11 +1862,13 @@ public class ProdModule {
                 = new ActivityFilterService(
                 new ActivitiesFilter[] {
                         new CycleFilter(),
-                        new QualFilter(compid),
+                        //new QualFilter(compid),
                         new PriorityFilter(),
                         new StoreFilter(),})
                 .getCurrentActivities(products);
 
         return discounts;
     }
+
+
 }

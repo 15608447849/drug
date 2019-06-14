@@ -4,11 +4,20 @@ import com.google.gson.Gson;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.entity.InvoiceVO;
+import com.onek.util.RandomUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import redis.util.RedisUtil;
+import util.ArrayUtil;
+import com.onek.util.EmailUtil;
 import util.MathUtil;
+import util.StringUtils;
 
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Pattern;
+
+import static constant.DSMConst.TB_SMS_TEMPLATE;
 
 /**
  * 我的发票模块
@@ -16,14 +25,19 @@ import java.util.List;
 
 public class MyInvoiceModule {
     private final static String QUERY_INVOICE_BASE =
-            "SELECT * "
-            + " FROM {{?" + DSMConst.TB_COMP_INVOICE + "}} "
-            + " WHERE cstatus&1 = 0 AND cid = ? ";
+            "SELECT i.oid, i.cid, a.certificateno, i.bankers, i.account, i.tel, i.cstatus, i.email "
+            + " FROM {{?" + DSMConst.TB_COMP_INVOICE + "}} i "
+            + " LEFT JOIN {{?" + DSMConst.TB_COMP_APTITUDE + "}} a "
+            + " ON a.cstatus&1 = 0 AND a.atype = 10 "
+                + " AND i.cid = a.compid "
+//                + " AND a.validitys <= CURRENT_DATE "
+//                + " AND CURRENT_DATE <= a.validitye"
+            + " WHERE i.cstatus&1 = 0 AND i.cid = ? ";
 
     private final static String INSERT_INVOICE =
             "INSERT INTO {{?" + DSMConst.TB_COMP_INVOICE + "}}"
-            + " (cid, taxpayer, bankers, account, tel) "
-            + " SELECT ?, ?, ?, ?, ? "
+            + " (cid, bankers, account, tel) "
+            + " SELECT ?, ?, ?, ? "
             + " FROM DUAL "
             + " WHERE NOT EXISTS ("
                     + " SELECT * "
@@ -32,20 +46,134 @@ public class MyInvoiceModule {
 
     private final static String UPDATE_INVOICE =
             "UPDATE {{?" + DSMConst.TB_COMP_INVOICE + "}}"
-            + " SET taxpayer = ?, bankers = ?, account = ?, tel = ? "
+            + " SET bankers = ?, account = ?, tel = ? "
+            + " WHERE cstatus&1 = 0 AND cid = ? ";
+
+    private final static String UPDATE_EMAIL =
+            "UPDATE {{?" + DSMConst.TB_COMP_INVOICE + "}}"
+            + " SET email = ? "
             + " WHERE cstatus&1 = 0 AND cid = ? ";
 
     public Result getInvoice(AppContext appContext) {
-        int compId = appContext.getUserSession().compId;
+        int compid = appContext.getUserSession().compId;
 
         List<Object[]> queryResult =
-                BaseDAO.getBaseDAO().queryNative(QUERY_INVOICE_BASE, compId);
+                BaseDAO.getBaseDAO().queryNative(QUERY_INVOICE_BASE, compid);
 
         InvoiceVO[] results = new InvoiceVO[queryResult.size()];
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, results, InvoiceVO.class);
 
         return new Result().setQuery(results, null);
+    }
+
+    private static final String EMAIL_VALID_HEAD =
+            "INVOICE_EMAIL_V_";
+
+    private String genVaildKey(int compid) {
+        return EMAIL_VALID_HEAD + compid;
+    }
+
+    public Result applyEmailVaildCode(AppContext appContext) {
+        String[] params = appContext.param.arrays;
+        int compid = appContext.getUserSession().compId;
+
+        if (ArrayUtil.isEmpty(params)) {
+            return new Result().fail("参数错误！");
+        }
+
+        String email = params[0];
+
+        if (!StringUtils.isEmail(email)) {
+            return new Result().fail("邮箱格式不正确！");
+        }
+
+        String vcode = RandomUtil.getRandomNumber(6);
+
+        if (!setEmail(compid, vcode, email)) {
+            return new Result().fail("生成异常，请重新尝试生成！");
+        }
+
+        // 发送验证邮箱
+        boolean sendResult =
+                EmailUtil.getEmailUtil().sendEmail(templateConvertMessage(18, vcode), email);
+
+        return sendResult ? new Result().success("发送成功！") : new Result().fail("发送失败！");
+    }
+
+    private static String templateConvertMessage(int tempNo,Object... args){
+        String msg = getTmpByTno(tempNo);
+        if (msg == null) return "";
+        if (args!=null && args.length>0) msg = String.format(Locale.CHINA,msg,args);
+        return msg;
+    }
+
+    //数据库获取模板
+    private static String getTmpByTno(int tno) {
+        String selectSql = "SELECT tcontext FROM {{?" + TB_SMS_TEMPLATE + "}} WHERE cstatus&1=0 and tno= ?";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,tno);
+        if (lines.size() == 1){
+            return lines.get(0)[0].toString();
+        }
+        return null;
+    }
+
+    private boolean setEmail(int compid, String vcode, String email) {
+        String key = genVaildKey(compid);
+        String value = vcode + "|" + email;
+        String setResult = RedisUtil.getStringProvide().set(key, value);
+
+        if ("OK".equalsIgnoreCase(setResult)) {
+            RedisUtil.getStringProvide().expire(key, 30 * 60);
+            return true;
+        }
+
+        return false;
+    }
+
+    private String getEmailByCode(int compid, String vcode) {
+        if (StringUtils.isEmpty(vcode)) {
+            return null;
+        }
+
+        String key = genVaildKey(compid);
+
+        String vaildCode = RedisUtil.getStringProvide().get(key);
+
+        if (!StringUtils.isEmpty(vaildCode)) {
+            int index = vaildCode.indexOf("|");
+            if (vcode.equals(vaildCode.substring(0, index))) {
+                RedisUtil.getStringProvide().delete(key);
+                return vaildCode.substring(index + 1);
+            }
+        }
+
+        return null;
+    }
+
+    public Result saveEmail(AppContext appContext) {
+        int compId = appContext.getUserSession().compId;
+
+        String[] params = appContext.param.arrays;
+
+        if (ArrayUtil.isEmpty(params)) {
+            return new Result().fail("参数错误！");
+        }
+
+        String email = getEmailByCode(compId, params[0]);
+
+        if (StringUtils.isEmpty(email)) {
+            return new Result().fail("验证码错误！");
+        }
+
+        if (!email.equals(params[1])) {
+            return new Result().fail("当前邮箱与验证邮箱不一致！请重新获取验证码！");
+        }
+
+        int result =
+                BaseDAO.getBaseDAO().updateNative(UPDATE_EMAIL, email, compId);
+
+        return result > 0 ? new Result().success("操作成功") : new Result().fail("操作失败");
     }
 
     public Result saveInvoice(AppContext appContext) {
@@ -73,9 +201,9 @@ public class MyInvoiceModule {
         if (!MathUtil.isBetween(0, frontVO.getBankers().length(), 20)) {
             return new Result().fail("开户行过长！");
         }
-        if (!MathUtil.isBetween(0, frontVO.getTaxpayer().length(), 20)) {
-            return new Result().fail("纳税人识别号过长！");
-        }
+//        if (!MathUtil.isBetween(0, frontVO.getTaxpayer().length(), 20)) {
+//            return new Result().fail("纳税人识别号过长！");
+//        }
 
         InvoiceVO[] query = (InvoiceVO[]) getInvoice(appContext).data;
 
@@ -85,13 +213,13 @@ public class MyInvoiceModule {
             if (query.length == 0) {
                 // insert
                 result = BaseDAO.getBaseDAO().updateNative(INSERT_INVOICE, compId,
-                            frontVO.getTaxpayer(), frontVO.getBankers(),
-                            frontVO.getAccount (), frontVO.getTel(), compId);
+                            frontVO.getBankers(), frontVO.getAccount (),
+                            frontVO.getTel(), compId);
             } else {
                 // update
                 result = BaseDAO.getBaseDAO().updateNative(UPDATE_INVOICE,
-                            frontVO.getTaxpayer(), frontVO.getBankers(),
-                            frontVO.getAccount (), frontVO.getTel(), compId);
+                            frontVO.getBankers(), frontVO.getAccount (),
+                            frontVO.getTel(), compId);
             }
         } catch (Exception e) {
             e.printStackTrace();
