@@ -9,7 +9,10 @@ import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
-import com.onek.calculate.filter.*;
+import com.onek.calculate.filter.ActivitiesFilter;
+import com.onek.calculate.filter.CycleFilter;
+import com.onek.calculate.filter.PriorityFilter;
+import com.onek.calculate.filter.StoreFilter;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
@@ -38,7 +41,6 @@ import redis.proxy.CacheProxyInstance;
 import redis.util.RedisUtil;
 import util.*;
 
-import java.lang.reflect.Field;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
@@ -1656,13 +1658,22 @@ public class ProdModule {
      */
     @UserPermission(ignore = true)
     public Result appGetMallFloorProd(AppContext appContext) {
-        JSONObject jsonObject = new JSONObject();
-        //获取存在的所有楼层
-        List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
+        try {
 
-        getSuccessResult(mallFloorVOList,jsonObject,appContext);
 
-        return new Result().success(jsonObject);
+            //获取存在的所有楼层
+            List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
+            appContext.logger.print("获取到楼层信息:"+mallFloorVOList);
+
+
+            JSONObject jsonObject = new JSONObject();
+            getSuccessResult(mallFloorVOList,jsonObject,appContext);
+
+            return new Result().success(jsonObject);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new Result().fail("无法获取楼层信息");
     }
 
     /**
@@ -1676,6 +1687,7 @@ public class ProdModule {
         for(MallFloorVO mallFloorVO:mallFloorVOList){
             JSONObject json = getFloorMsgAcitveToJson(mallFloorVO,appContext);
             if(json != null) {
+                appContext.logger.print("JSON = " + json);
                 jsonArray.add(json);
             }
         }
@@ -1706,7 +1718,7 @@ public class ProdModule {
 
                 //获取商品活动类型
                 Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
-                if (prodList != null && prodList.size() > 0) {
+                if (prodList.size() > 0) {
                     for (ProdVO prodVO : prodList) {
                         skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
                     }
