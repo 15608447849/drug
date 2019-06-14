@@ -26,6 +26,7 @@ import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.fs.FileServerUtils;
+import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdPriceEntity;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
@@ -1735,6 +1736,10 @@ public class ProdModule {
                     }
                 }
                 jsonObject.put("activeProType",skuMap);
+                if(mallFloorVO.getUnqid()==8){
+                    JsonObject asJsonObject = new JsonParser().parse(proJson.toString()).getAsJsonObject();
+                    jsonObject.put("currNums", IceRemoteUtil.getGroupCount(Long.parseLong(asJsonObject.get("actcode").toString())));
+                }
             }
         }
         return jsonObject;
@@ -1832,8 +1837,6 @@ public class ProdModule {
         products.add(p);
 
         List<IDiscount> discounts
-
-
                 = new ActivityFilterService(
                 new ActivitiesFilter[] {
                         new CycleFilter(),
@@ -1845,5 +1848,58 @@ public class ProdModule {
         return discounts;
     }
 
+
+    /**
+     * app端调用实现点击添加商品数量至购物车
+     * add by liaoz 2019年6月13日
+     * @param appContext 全局参数，操作类型1---增加数量，0---减少数量，sku---商品sku码，compid---企业码
+     * @return 当前商品购物车操作之后数量
+     */
+    @UserPermission(ignore = true)
+    public Result appShopAUProNum(AppContext appContext){
+        String compid = appContext.param.arrays[0];//企业码
+
+        System.out.println("compid = " + compid);
+        if(compid.isEmpty()){
+            return new Result().fail("当前未登录！请做登陆操作！");
+       }
+        String useType = appContext.param.arrays[1];//操作类型
+        System.out.println("useType = " + useType);
+
+
+
+        String skuid = appContext.param.arrays[2];//商品sku码
+
+        System.out.println("skuid = " + skuid);
+
+        ProdEntity prodEntity =  IceRemoteUtil.getProdBySku(Long.parseLong(skuid));
+//        IceRemoteUtil.appGetCompShopNum(Integer.parseInt(compid));
+        String jsonStr = IceRemoteUtil.appGetCompShopNum(Integer.parseInt(compid));
+        System.out.println("jsonStr = " + jsonStr);
+        JsonParser jsonParser = new JsonParser();
+        int updateNum = 0;
+        JsonArray jsonArray = jsonParser.parse(jsonStr).getAsJsonArray();
+        for (JsonElement jsonElement:jsonArray){
+            long proSku = jsonElement.getAsJsonObject().get("pdno").getAsLong();
+            if(skuid.equals(String.valueOf(proSku))){
+                updateNum = jsonElement.getAsJsonObject().get("pnum").getAsInt();
+            }
+        }
+        if("0".equals(useType))
+            updateNum = updateNum-prodEntity.getMedpacknum();
+        else
+            updateNum = updateNum+prodEntity.getMedpacknum();
+
+        System.out.println("updateNum = " + updateNum);
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("pdno",skuid);
+        jsonObject.put("pnum",updateNum);
+        jsonObject.put("compid",compid);
+        jsonObject.put("checked","0");
+        String result = IceRemoteUtil.appSaveCompShopNum(Integer.parseInt(compid),jsonObject.toString());
+
+        return new Result().success(result);
+    }
 
 }
