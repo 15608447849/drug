@@ -23,6 +23,7 @@ import com.onek.util.order.RedisOrderUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.math.BigDecimal;
@@ -117,16 +118,16 @@ public class ShoppingCartModule {
         ShoppingCartDTO shopVO = GsonUtils.jsonToJavaBean(json, ShoppingCartDTO.class);
 
         if (shopVO == null){
-            return result.fail("操作失败");
+            LogUtil.getDefaultLogger().debug("参数有误");
+            return result.fail("参数有误");
         }
 
         int compid = shopVO.getCompid();
 
         //远程调用
         List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV, shopVO.getPdno());
-
         if(queryInvRet == null || queryInvRet.isEmpty()){
-            return result.fail("操作失败");
+            return result.fail("查询商品失败");
         }
 
         int inventory = Integer.parseInt(queryInvRet.get(0)[0].toString());
