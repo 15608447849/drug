@@ -275,6 +275,9 @@ public class CouponRevModule {
                 break;
             case 2:
                 sqlBuilder.append(" and  CURRENT_DATE > enddate ");
+                break;
+            case 3:
+                sqlBuilder.append(" and (cstatus & 64 > 0 or CURRENT_DATE > enddate) ");
         }
 
 

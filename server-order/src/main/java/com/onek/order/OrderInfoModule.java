@@ -26,7 +26,7 @@ public class OrderInfoModule {
           + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
           + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
           + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
-          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway, ord.remarks ";
+          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway, ord.remarks, ord.invoicetype ";
 
     private static final String QUERY_TRAN_TRANS_PARAMS =
             " trans.payno, trans.payprice, "
@@ -84,7 +84,7 @@ public class OrderInfoModule {
             " SELECT ap.orderno, ap.pdno, ap.asno, ap.compid, ap.astype, "
                     + " ap.gstatus, ap.reason, ap.ckstatus, ap.ckdate, ap.cktime, "
                     + " ap.ckdesc, ap.invoice, ap.cstatus, ap.apdata, ap.aptime, "
-                    + " ap.apdesc, ap.refamt, ap.asnum, ap.checkern, ap.compn, "
+                    + " ap.apdesc, ap.refamt, ap.asnum, ap.checkern, ap.compn, ap.invoicetype, "
                     + " goods.pdprice, goods.distprice, goods.payamt, goods.coupamt, "
                     + " goods.asstatus, goods.createdate, goods.createtime, goods.pnum, "
                     + " goods.balamt "
@@ -95,9 +95,14 @@ public class OrderInfoModule {
                     + " WHERE ap.cstatus&1 = 0 AND ap.compid = ? ";
 
     private final static String QUERY_INVOICE_BASE =
-            "SELECT * "
-                    + " FROM {{?" + DSMConst.TB_COMP_INVOICE + "}} "
-                    + " WHERE cstatus&1 = 0 AND cid = ? ";
+            "SELECT i.oid, i.cid, a.certificateno, i.bankers, i.account, i.tel, i.cstatus, i.email "
+                    + " FROM {{?" + DSMConst.TB_COMP_INVOICE + "}} i "
+                    + " LEFT JOIN {{?" + DSMConst.TB_COMP_APTITUDE + "}} a "
+                    + " ON a.cstatus&1 = 0 AND a.atype = 10 "
+                    + " AND i.cid = a.compid "
+//                + " AND a.validitys <= CURRENT_DATE "
+//                + " AND CURRENT_DATE <= a.validitye"
+                    + " WHERE i.cstatus&1 = 0 AND i.cid = ? ";
 
     public Result getOrderDetail(AppContext appContext) {
         String[] params = appContext.param.arrays;

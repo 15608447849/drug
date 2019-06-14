@@ -121,21 +121,24 @@ public class MyFootprintModule {
         List<String> list = new ArrayList<>();
         try {
             int compId  = Integer.parseInt(appContext.param.arrays[0]);
-            List<Param> plist = selectInfoByComp(compId);
+            List<Param> plist = selectInfoByComp(compId,null);
             for (Param p : plist) list.add(p.sku);
         } catch (Exception ignored) {
         }
         return list;
     }
 
-    private List<Param> selectInfoByComp(int compId){
+    private List<Param> selectInfoByComp(int compId,String dateStr){
+
+        if (StringUtils.isEmpty(dateStr)) dateStr = "CURRENT_DATE";
+
         ArrayList<Param> list = new ArrayList<>();
 
         String selectSql = "SELECT unqid,sku,browsedate,browsetime " +
                 "FROM {{?"+TD_FOOTPRINT+"}} " +
-                "WHERE compid = ? ORDER BY browsedate DESC,browsetime DESC";
+                "WHERE compid = ? AND browsedate<= ? ORDER BY browsedate DESC,browsetime DESC";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
-                selectSql,compId);
+                selectSql,compId,dateStr);
         assert lines!=null;
         Param data;
         for (Object[] arr: lines){
@@ -150,14 +153,24 @@ public class MyFootprintModule {
         return list;
     }
 
+
     /**
-     * 查询
+     * 功能:查询足迹
+     * 参数类型:json
+     * 参数集: date=yyyy-MM-dd
+     * 返回值:
+     * 详情说明:
      */
     public Result query(AppContext appContext){
         List<ResultItem> items = new ArrayList<>();
         try {
+            Param query = GsonUtils.jsonToJavaBean(appContext.param.json,Param.class);
+            String time = null;
+            if (query == null) {
+                time = query.data;
+            }
             int compId = appContext.getUserSession().compId;
-            List<Param> list = selectInfoByComp(compId);
+            List<Param> list = selectInfoByComp(compId,time);
             for (Param it : list){
                 ResultItem rit = null;
                 boolean isAdd = true;

@@ -13,6 +13,7 @@ import com.onek.report.core.Reporter;
 import com.onek.report.service.MarketAnalysisServiceImpl;
 import org.hyrdpf.ds.AppConfig;
 import util.ArrayUtil;
+import util.MathUtil;
 import util.StringUtils;
 
 import java.util.Arrays;
@@ -84,7 +85,7 @@ public class ReportModule {
      *
      * 功能: 站在时间维度订单分析报表
      * 参数类型: json
-     * 参数集: date:日期  areac:地区码  type:统计类型]
+     * 参数集: year:年 month:月  areac:地区码  type:统计类型]
      * 返回值: Result
      * 详情说明:
      * 日期: 2019/6/5 22:08
@@ -94,8 +95,23 @@ public class ReportModule {
         JSONObject json = JSON.parseObject(appContext.param.json);
 
         try {
+            Integer year = json.getInteger("year");
+
+            if (year < 2019) {
+                return new Result().success(null);
+            }
+
+            Integer month = json.getInteger("month");
+            String date;
+
+            if (!MathUtil.isBetween(1, month, 12)) {
+                date = String.valueOf(year);
+            } else {
+                date = year + "-" + String.format("%02d", month);
+            }
+
             ColTotal result =
-                    new Reporter(json.getIntValue("type"), json.getLongValue("areac"), json.getString("date")).getResult();
+                    new Reporter(json.getIntValue("type"), json.getLongValue("areac"), date).getResult();
 
             return new Result().success(JSON.toJSON(result));
         } catch (Exception e) {

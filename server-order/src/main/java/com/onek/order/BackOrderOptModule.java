@@ -21,7 +21,7 @@ public class BackOrderOptModule {
             " SELECT orderno, pdno, asno, compid, astype, "
             + " gstatus, reason, ckstatus, ckdate, cktime, "
             + " ckdesc, invoice, cstatus, apdata, aptime, "
-            + " apdesc, checker, refamt, asnum, checkern, compn "
+            + " apdesc, checker, refamt, asnum, checkern, compn, invoicetype "
             + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
             + " WHERE cstatus&1 = 0 ";
 

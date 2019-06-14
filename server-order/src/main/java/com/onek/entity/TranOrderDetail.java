@@ -36,6 +36,7 @@ public class TranOrderDetail {
     private double balamt;
     private int opayway;
     private String remarks;
+    private int invoicetype;
 
     /**      trans         **/
     private int payno;
@@ -513,5 +514,13 @@ public class TranOrderDetail {
 
     public void setRemarks(String remarks) {
         this.remarks = remarks;
+    }
+
+    public int getInvoicetype() {
+        return invoicetype;
+    }
+
+    public void setInvoicetype(int invoicetype) {
+        this.invoicetype = invoicetype;
     }
 }

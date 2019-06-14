@@ -39,10 +39,19 @@ public class TranOrder implements IDelayedObject {
     private double balamt;//余额扣除
     private String payway; // 支付方式
     private String remarks; // 备注
+    private int invoicetype = 1; //发票类型
 
     private List<TranOrderGoods> goods;
 
     private String cusname;
+
+    public int getInvoicetype() {
+        return invoicetype;
+    }
+
+    public void setInvoicetype(int invoicetype) {
+        this.invoicetype = invoicetype;
+    }
 
     public String getRemarks() {
         return remarks;

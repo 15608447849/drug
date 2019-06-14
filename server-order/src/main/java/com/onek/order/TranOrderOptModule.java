@@ -73,13 +73,16 @@ public class TranOrderOptModule {
 
     //订单表新增
     private static final String INSERT_TRAN_ORDER = "insert into {{?" + DSMConst.TD_TRAN_ORDER + "}} "
-            + "(orderno,tradeno,cusno,busno,ostatus,asstatus,pdnum," +
-            "pdamt,freight,payamt,coupamt,distamt,rvaddno," +
-            "settstatus,otype,odate,otime,cstatus,consignee,contact,address,balamt,payway, remarks) "
+            + "(orderno,tradeno,cusno,busno,ostatus,"
+            + "asstatus,pdnum,pdamt,freight,payamt,"
+            + "coupamt,distamt,rvaddno,settstatus,otype,"
+            + "odate,otime,cstatus,consignee,contact,"
+            + "address,balamt,payway,remarks,invoicetype) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "CURRENT_DATE,CURRENT_TIME,0,?,?,?,?,-1,?)";
+            + "CURRENT_DATE,CURRENT_TIME,0,?,?,"
+            + "?,?,-1,?,?)";
 
     //订单商品表新增
     private static final String INSERT_TRAN_GOODS = "insert into {{?" + DSMConst.TD_TRAN_GOODS + "}} "
@@ -328,7 +331,7 @@ public class TranOrderOptModule {
         params.addFirst(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
                 tranOrder.getPdamt(), tranOrder.getFreight(), payamt, tranOrder.getCoupamt(), tranOrder.getDistamt(),
                 tranOrder.getRvaddno(), 0, 0, tranOrder.getConsignee(), tranOrder.getContact(), tranOrder.getAddress(),
-                bal, tranOrder.getRemarks()});
+                bal, tranOrder.getRemarks(), tranOrder.getInvoicetype()});
 
         if (unqid > 0) {
             //使用优惠券
