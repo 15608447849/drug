@@ -2,6 +2,7 @@ package com.onek.goods;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
@@ -55,7 +56,9 @@ import java.util.*;
 @SuppressWarnings({"unchecked"})
 public class ProdModule {
 
-    /**过滤做大商品数量，大于当前数量显示出楼层**/
+    /**
+     * 过滤做大商品数量，大于当前数量显示出楼层
+     **/
     private static int MAX_SELECT_PRO_NUM = 0;
 
     private static IRedisCache mallFloorProxy = (IRedisCache) CacheProxyInstance.createInstance(new MallFloorImpl());
@@ -80,7 +83,7 @@ public class ProdModule {
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
             "and a.cstatus&1 = 0 " +
-            "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 " ;
+            "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
     private static String EXEMPOST_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
@@ -100,12 +103,11 @@ public class ProdModule {
     private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
             "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ?";
 
-    private static final String QUERY_SPU = "select spu from {{?" + DSMConst.TD_PROD_SPU +"}} where spu REGEXP ?";
+    private static final String QUERY_SPU = "select spu from {{?" + DSMConst.TD_PROD_SPU + "}} where spu REGEXP ?";
 
-    private static final String QUERY_PROD = "select sku from {{?" + DSMConst.TD_PROD_SKU +"}} where cstatus&1=0 and prodstatus = 1";
+    private static final String QUERY_PROD = "select sku from {{?" + DSMConst.TD_PROD_SKU + "}} where cstatus&1=0 and prodstatus = 1";
 
     /**
-     *
      * 功能: 获取楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -120,9 +122,7 @@ public class ProdModule {
     }
 
 
-
     /**
-     *
      * 功能: 获取新品楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -139,7 +139,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 获取为你精选楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -156,7 +155,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 获取中华名方楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -173,7 +171,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 根据不同状态来查询不同楼层数据
      * 参数类型: int
      * 参数集: state 1:新品 2:为你精选 3:中华名方
@@ -181,24 +178,30 @@ public class ProdModule {
      * 详情说明:
      * 作者: 蒋文广
      */
-    public List<ProdVO> getFloorByState(int state, AppContext appContext){
+    public List<ProdVO> getFloorByState(int state, AppContext appContext) {
 
         Set<Integer> result = new HashSet<>();
-        if(state == 1){ // 新品
+        if (state == 1) { // 新品
             List<Integer> bb = new ArrayList() {{
-                add(128); add(512); add(1024);
+                add(128);
+                add(512);
+                add(1024);
             }};
             NumUtil.perComAdd(256, bb, result);
             result.add(256);
-        }else if(state == 2){ // 为你精选
+        } else if (state == 2) { // 为你精选
             List<Integer> bb1 = new ArrayList() {{
-                add(218); add(256); add(1024);
+                add(218);
+                add(256);
+                add(1024);
             }};
             NumUtil.perComAdd(512, bb1, result);
             result.add(512);
-        }else if(state == 3){ // 名方
+        } else if (state == 3) { // 名方
             List<Integer> bb1 = new ArrayList() {{
-                add(218); add(256); add(512);
+                add(218);
+                add(256);
+                add(512);
             }};
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
@@ -207,14 +210,13 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        Map<String, Object> resultMap  = getFilterProdsCommon(appContext, result,  "",1, pageIndex, pageSize);
-        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
+        Map<String, Object> resultMap = getFilterProdsCommon(appContext, result, "", 1, pageIndex, pageSize);
+        List<ProdVO> prodList = (List<ProdVO>) resultMap.get("prodList");
 
         return prodList;
     }
 
     /**
-     *
      * 功能: 获取热销楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -228,14 +230,13 @@ public class ProdModule {
         int pageIndex = appContext.param.pageIndex <= 0 ? 1 : appContext.param.pageIndex;
         int pageSize = appContext.param.pageNumber <= 0 ? 100 : appContext.param.pageNumber;
 
-        Map<String, Object> resultMap = getFilterHotProds(appContext,"",  pageIndex, pageSize);
-        List<ProdVO> hotProdList = (List<ProdVO>)resultMap.get("prodList");
+        Map<String, Object> resultMap = getFilterHotProds(appContext, "", pageIndex, pageSize);
+        List<ProdVO> hotProdList = (List<ProdVO>) resultMap.get("prodList");
 
         return new Result().success(hotProdList);
     }
 
     /**
-     *
      * 功能: 获取品牌楼层信息
      * 参数类型: json
      * 参数集: keyword:关键字 brandno:品牌码
@@ -260,7 +261,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 获取新人专享楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -293,7 +293,7 @@ public class ProdModule {
 
             }
 
-            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList,"", 1, 100);
+            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
 
             if (response != null && response.getHits().totalHits > 0) {
                 assembleData(appContext, response, prodVOList);
@@ -315,7 +315,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 获取包邮楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -337,7 +336,7 @@ public class ProdModule {
                 int compid = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
                 int qualcode = Integer.parseInt(list.get(0)[4].toString());
                 Long qualvalue = Long.parseLong(list.get(0)[5].toString());
-                if(!QualJudge.hasPermission(compid, qualcode, qualvalue)){
+                if (!QualJudge.hasPermission(compid, qualcode, qualvalue)) {
                     return new Result().success(null);
                 }
 
@@ -355,7 +354,7 @@ public class ProdModule {
 
             }
 
-            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 100);
+            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
 
             if (response != null && response.getHits().totalHits > 0) {
                 assembleData(appContext, response, prodVOList);
@@ -371,7 +370,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 获取团购楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -393,7 +391,7 @@ public class ProdModule {
             int compid = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
             int qualcode = Integer.parseInt(list.get(0)[6].toString());
             Long qualvalue = Long.parseLong(list.get(0)[7].toString());
-            if(!QualJudge.hasPermission(compid, qualcode, qualvalue)){
+            if (!QualJudge.hasPermission(compid, qualcode, qualvalue)) {
                 return new Result().success(null);
             }
 
@@ -407,7 +405,7 @@ public class ProdModule {
             JSONArray ladOffArray = new JSONArray();
             int minOff = getMinOff(actCode, ladOffArray);
 
-            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 100);
+            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
 
             if (response != null && response.getHits().totalHits > 0) {
                 assembleData(appContext, response, prodVOList);
@@ -435,7 +433,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 获取秒杀楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -451,7 +448,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 获取限时折扣楼层信息
      * 参数类型: json
      * 参数集: 无
@@ -474,7 +470,7 @@ public class ProdModule {
             int compid = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
             int qualcode = Integer.parseInt(list.get(0)[6].toString());
             Long qualvalue = Long.parseLong(list.get(0)[7].toString());
-            if(!QualJudge.hasPermission(compid, qualcode, qualvalue)){
+            if (!QualJudge.hasPermission(compid, qualcode, qualvalue)) {
                 return new Result().success(null);
             }
 
@@ -484,7 +480,7 @@ public class ProdModule {
 
             long actCode = actCodeList.get(0);
 
-            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 100);
+            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
 
             if (response != null && response.getHits().totalHits > 0) {
                 assembleData(appContext, response, prodVOList);
@@ -510,7 +506,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 品牌专区搜索
      * 参数类型: json
      * 参数集: keyword:关键字 brandno:品牌码
@@ -543,7 +538,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 热销专区搜索
      * 参数类型: json
      * 参数集: keyword:关键字
@@ -560,22 +554,21 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        Map<String, Object> resultMap = getFilterHotProds(appContext,keyword,  pageIndex, pageSize);
-        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
-        SearchResponse response = (SearchResponse)resultMap.get("response");
+        Map<String, Object> resultMap = getFilterHotProds(appContext, keyword, pageIndex, pageSize);
+        List<ProdVO> prodList = (List<ProdVO>) resultMap.get("prodList");
+        SearchResponse response = (SearchResponse) resultMap.get("response");
 
         Result r = new Result();
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
-        page.totalItems = response != null  && response.getHits() != null ?  (int)response.getHits().getTotalHits() : 0;
+        page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().getTotalHits() : 0;
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
         return r.setQuery(prodList, pageHolder);
     }
 
     /**
-     *
      * 功能: 新人专享专区搜索
      * 参数类型: json
      * 参数集: keyword:关键字
@@ -595,7 +588,7 @@ public class ProdModule {
         String day = TimeUtils.date_Md_2String(new Date());
         List<Object[]> list = BASE_DAO.queryNative(NEWMEMBER_ACT_PROD_SQL, new Object[]{day});
         List<ProdVO> prodVOList = new ArrayList<>();
-        SearchResponse response  = null;
+        SearchResponse response = null;
         if (list != null && list.size() > 0) {
             List<Long> skuList = new ArrayList<>();
             for (Object[] objects : list) {
@@ -618,7 +611,7 @@ public class ProdModule {
             response = ProdESUtil.searchProdBySpuList(skuList, keyword, pageIndex, pageSize);
 
             if (response != null && response.getHits().totalHits > 0) {
-                assembleData(appContext,response, prodVOList);
+                assembleData(appContext, response, prodVOList);
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
@@ -632,14 +625,13 @@ public class ProdModule {
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
-        page.totalItems = response != null  && response.getHits() != null ?  (int)response.getHits().getTotalHits() : 0;
+        page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().getTotalHits() : 0;
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
         return r.setQuery(prodVOList, pageHolder);
     }
 
     /**
-     *
      * 功能: 新品专区搜索
      * 参数类型: json
      * 参数集: keyword:关键字
@@ -655,7 +647,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 为你精选专区搜索
      * 参数类型: json
      * 参数集: keyword:关键字
@@ -671,7 +662,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 中华名方专区搜索
      * 参数类型: json
      * 参数集: keyword:关键字
@@ -685,25 +675,33 @@ public class ProdModule {
         return searchByState(3, appContext);
     }
 
-    public Result searchByState(int state,AppContext appContext){
+    public Result searchByState(int state, AppContext appContext) {
 
         Set<Integer> result = new HashSet<>();
-        if(state == 1){ // 新品
+        if (state == 1) { // 新品
             List<Integer> bb = new ArrayList() {{
-                add(128);  add(512); ; add(1024);
+                add(128);
+                add(512);
+                ;
+                add(1024);
             }};
             NumUtil.perComAdd(256, bb, result);
             result.add(256);
-        }else if(state == 2){ // 为你精选
+        } else if (state == 2) { // 为你精选
             List<Integer> bb1 = new ArrayList() {{
-                add(218); add(256); add(1024);
+                add(218);
+                add(256);
+                add(1024);
             }};
             NumUtil.perComAdd(512, bb1, result);
             result.add(512);
-        }else if(state == 3){ // 中华名方
+        } else if (state == 3) { // 中华名方
             List<Integer> bb1 = new ArrayList() {{
-                add(218); add(256); add(512);
-            }};;
+                add(218);
+                add(256);
+                add(512);
+            }};
+            ;
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
         }
@@ -714,14 +712,14 @@ public class ProdModule {
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
         Map<String, Object> resultMap = getFilterProdsCommon(appContext, result, keyword, 2, pageIndex, pageSize);
-        List<ProdVO> prodList = (List<ProdVO>)resultMap.get("prodList");
-        SearchResponse response = (SearchResponse)resultMap.get("response");
+        List<ProdVO> prodList = (List<ProdVO>) resultMap.get("prodList");
+        SearchResponse response = (SearchResponse) resultMap.get("response");
 
         Result r = new Result();
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
-        page.totalItems = response != null  && response.getHits() != null ?  (int)response.getHits().getTotalHits() : 0;
+        page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().getTotalHits() : 0;
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
         return r.setQuery(prodList, pageHolder);
@@ -729,7 +727,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 限时折扣专区搜索
      * 参数类型: json
      * 参数集: actcode:活动码 keyword:关键字
@@ -766,7 +763,7 @@ public class ProdModule {
         String startDate = getEffectiveTimeByActCode.getSdate(), endDate = getEffectiveTimeByActCode.getEdate();
 
         JSONArray array = new JSONArray();
-        if(times != null && times.size() > 0){
+        if (times != null && times.size() > 0) {
             for (String[] objects1 : times) {
                 String s = objects1[0], d = objects1[1];
                 JSONObject time = new JSONObject();
@@ -800,7 +797,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 团购专区搜索
      * 参数类型: json
      * 参数集: actcode:活动码 keyword:关键字
@@ -841,7 +837,7 @@ public class ProdModule {
 
         JSONArray array = new JSONArray();
 
-        if(times != null && times.size() > 0){
+        if (times != null && times.size() > 0) {
             for (String[] objects1 : times) {
                 String s = objects1[0], d = objects1[1];
                 JSONObject time = new JSONObject();
@@ -855,7 +851,7 @@ public class ProdModule {
             SearchResponse response = ProdESUtil.searchProdBySpuListAndKeyword(skuList, keyword);
 
             if (response != null && response.getHits().totalHits > 0) {
-                assembleData(appContext,response, prodVOList);
+                assembleData(appContext, response, prodVOList);
             }
             if (prodVOList != null && prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
@@ -875,7 +871,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 产品详情页推荐
      * 参数类型: json
      * 参数集: spu:spu码
@@ -892,7 +887,7 @@ public class ProdModule {
         List<ProdVO> prodVOList = new ArrayList<>();
         if (searchResponse == null || searchResponse.getHits().totalHits < 5) {
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
-                assembleData(appContext,searchResponse, prodVOList);
+                assembleData(appContext, searchResponse, prodVOList);
             }
             searchResponse = ProdESUtil.searchProdWithHotAndSpu(null, 0, 1, 10);
             if (searchResponse != null && searchResponse.getHits().totalHits > 0) {
@@ -905,7 +900,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 猜你喜欢推荐
      * 参数类型: json
      * 参数集: spu:spu码
@@ -922,21 +916,23 @@ public class ProdModule {
             List<String> footPrintMap = IceRemoteUtil.queryFootprint(userSession.compId);
             List<Long> skuList = new ArrayList<>();
             if (footPrintMap != null && footPrintMap.size() > 0) {
-                for (String sku  : footPrintMap) {
+                for (String sku : footPrintMap) {
                     try {
                         skuList.add(Long.parseLong(sku));
                     } catch (NumberFormatException ignored) {
                     }
                 }
             }
-            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "",1, 10);
+            SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 10);
             if (response == null || response.getHits().totalHits <= 5) {
                 long totalHits = response != null ? response.getHits().totalHits : 0;
                 if (totalHits > 0) {
                     assembleData(appContext, response, prodList);
                 }
                 List<Integer> bb1 = new ArrayList() {{
-                    add(218);  add(256); add(1024);
+                    add(218);
+                    add(256);
+                    add(1024);
                 }};
                 Set<Integer> result1 = new HashSet<>();
                 NumUtil.perComAdd(512, bb1, result1);
@@ -952,7 +948,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 商城全文搜索商品的搜索条件区域
      * 参数类型: json
      * 参数集: keyword=关键字 spu=药品分类码
@@ -979,11 +974,10 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 商城全文搜索商品
      * 参数类型: json
      * 参数集: keyword=关键字 spu=药品分类码 specArray[]=规格数组 manuArray[]=厂商数组  brandArray[]=品牌数组
-     *         sort=排序
+     * sort=排序
      * 返回值: code=200 data=结果信息
      * 详情说明:
      * 作者: 蒋文广
@@ -1045,7 +1039,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 商城智能推荐
      * 参数类型: json
      * 参数集: keyword=关键字
@@ -1063,7 +1056,7 @@ public class ProdModule {
         if (response != null) {
             for (SearchHit searchHit : response.getHits()) {
                 String content = searchHit.getSourceAsMap().get("content").toString();
-                String [] arr = content.split("[|]");
+                String[] arr = content.split("[|]");
                 contentList.add(arr[1] + " " + arr[2] + " " + arr[3]);
             }
 
@@ -1072,7 +1065,6 @@ public class ProdModule {
     }
 
     /**
-     *
      * 功能: 商城智能推荐关键字
      * 参数类型: json
      * 参数集: keyword=关键字
@@ -1089,22 +1081,21 @@ public class ProdModule {
         List<String> filterKeywords = new ArrayList<>();
         if (response != null) {
             for (SearchHit searchHit : response.getHits()) {
-                Map<String,Object> sourceMap = searchHit.getSourceAsMap();
+                Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                 HashMap detail = (HashMap) sourceMap.get("detail");
                 String popname = detail.get("popname") != null ? detail.get("popname").toString() : "";
-                if(!keywords.contains(popname)){
+                if (!keywords.contains(popname)) {
                     keywords.add(popname);
                 }
             }
         }
-        if(keywords != null && keywords.size() > 0 && keywords.size() >= 6){
+        if (keywords != null && keywords.size() > 0 && keywords.size() >= 6) {
             filterKeywords = keywords.subList(0, 6);
         }
         return new Result().success(filterKeywords);
     }
 
     /**
-     *
      * 功能: 运营后台全文搜索商品提供方法
      * 参数类型: json
      * 参数集: keyword=关键字 spu=药品分类码 specArray[]=规格数组 manuArray[]=厂商数组  spuArray[]=商品分类码数组
@@ -1147,15 +1138,15 @@ public class ProdModule {
                         new StringBuilder("^")
                                 .append("[0-9]{1}");
 
-                if(val.length() == 2){
+                if (val.length() == 2) {
                     regexp.append(val)
                             .append("[0-9]{9}")
                             .append("$");
-                }else if(val.length() == 4){
+                } else if (val.length() == 4) {
                     regexp.append(val)
                             .append("[0-9]{7}")
                             .append("$");
-                }else if(val.length() == 6){
+                } else if (val.length() == 6) {
                     regexp.append(val)
                             .append("[0-9]{5}")
                             .append("$");
@@ -1163,11 +1154,11 @@ public class ProdModule {
 
 
                 List<Object[]> queryList = BASE_DAO.queryNative(QUERY_SPU, regexp.toString());
-                if(queryList != null && queryList.size() > 0){
-                    for(Object[] obj : queryList){
+                if (queryList != null && queryList.size() > 0) {
+                    for (Object[] obj : queryList) {
                         spuList.add(Long.parseLong(obj[0].toString()));
                     }
-                }else{
+                } else {
                     spuList.add(Long.parseLong(val));
                 }
             }
@@ -1209,7 +1200,8 @@ public class ProdModule {
         return resultMap;
     }
 
-    private static Map<String, Object> getFilterProdsCommon(AppContext context, Set<Integer> result, String keyword, int sort,int pageNum, int pageSize) {
+
+    private static Map<String, Object> getFilterProdsCommon(AppContext context, Set<Integer> result, String keyword, int sort, int pageNum, int pageSize) {
         Map<String, Object> resultMap = new HashMap<>();
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, keyword, sort, pageNum, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
@@ -1239,19 +1231,19 @@ public class ProdModule {
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
             int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(ruleStatus);
-            if(!context.isAnonymous()){ // 有权限
+            if (!context.isAnonymous()) { // 有权限
                 prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
                 prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
                 prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
-            }else{
+            } else {
                 prodVO.setVatp(-1);
                 prodVO.setMp(-1);
                 prodVO.setRrp(-1);
             }
             prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
-            try{
+            try {
                 DictStore.translate(prodVO);
-            }catch(Exception e){
+            } catch (Exception e) {
                 e.printStackTrace();
             }
         }
@@ -1368,7 +1360,7 @@ public class ProdModule {
         int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), actCode);
         prodVO.setBuynum(initStock - surplusStock);
         prodVO.setStartnum(prodVO.getMedpacknum());
-        prodVO.setActlimit(dataMap.containsKey(prodVO.getSku()) ? dataMap.get(prodVO.getSku())[0]: 0);
+        prodVO.setActlimit(dataMap.containsKey(prodVO.getSku()) ? dataMap.get(prodVO.getSku())[0] : 0);
         prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
         prodVO.setActinitstock(initStock);
         prodVO.setSurplusstock(surplusStock);
@@ -1388,17 +1380,17 @@ public class ProdModule {
         int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), actCode);
         prodVO.setBuynum(initStock - surplusStock);
         prodVO.setStartnum(prodVO.getMedpacknum());
-        prodVO.setActlimit(dataMap.containsKey(prodVO.getSku()) ? dataMap.get(prodVO.getSku())[0]: 0);
+        prodVO.setActlimit(dataMap.containsKey(prodVO.getSku()) ? dataMap.get(prodVO.getSku())[0] : 0);
         prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
         prodVO.setActinitstock(initStock);
         prodVO.setSurplusstock(surplusStock);
 
         int cstatus = dataMap.get(prodVO.getSku())[3];
-        if((cstatus & 512) > 0){
+        if ((cstatus & 512) > 0) {
             double rate = MathUtil.exactDiv(dataMap.get(prodVO.getSku())[2], 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
             double actprice = MathUtil.exactMul(prodVO.getVatp(), rate).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
             prodVO.setActprize(actprice);
-        }else{
+        } else {
             prodVO.setActprize(NumUtil.div(dataMap.get(prodVO.getSku())[2], 100));
         }
         if (prodVO.getRulestatus() > 0) prodVO.setActprod(true);
@@ -1410,7 +1402,7 @@ public class ProdModule {
      * @param prodList
      * @param searchHit
      */
-    private static void convertSearchData(AppContext context,List<ProdVO> prodList, SearchHit searchHit) {
+    private static void convertSearchData(AppContext context, List<ProdVO> prodList, SearchHit searchHit) {
         Map<String, Object> sourceMap = searchHit.getSourceAsMap();
         ProdVO prodVO = new ProdVO();
         HashMap detail = (HashMap) sourceMap.get("detail");
@@ -1425,11 +1417,11 @@ public class ProdModule {
 
         prodVO.setRulestatus(ruleStatus);
 
-        if(!context.isAnonymous()){ // 有权限
+        if (!context.isAnonymous()) { // 有权限
             prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
             prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
             prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
-        }else{
+        } else {
             prodVO.setVatp(-1);
             prodVO.setMp(-1);
             prodVO.setRrp(-1);
@@ -1443,12 +1435,12 @@ public class ProdModule {
                 prodVO.setMutiact(true);
             }
 
-            if((ruleStatus & 2048 ) > 0){ // 秒杀
+            if ((ruleStatus & 2048) > 0) { // 秒杀
                 ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
                 if (prizeEntity != null) {
                     prodVO.setMinprize(prizeEntity.getMinactprize());
                     prodVO.setMaxprize(prizeEntity.getMaxactprize());
-                    prodVO.setActcode(prizeEntity.getActcode()+"");
+                    prodVO.setActcode(prizeEntity.getActcode() + "");
                     // 代表值存在一个活动
                     if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
                         List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
@@ -1463,7 +1455,7 @@ public class ProdModule {
                             prodVO.setMinprize(prodVO.getVatp());
                             prodVO.setMaxprize(prodVO.getVatp());
                             prodVO.setActprize(prodVO.getVatp());
-                            prodVO.setActcode(prizeEntity.getActcode()+"");
+                            prodVO.setActcode(prizeEntity.getActcode() + "");
                         } else {
                             prodVO.setSdate(sdate);
                             prodVO.setEdate(edate);
@@ -1476,13 +1468,12 @@ public class ProdModule {
                         }
                     }
                 }
-            }
-            else{
+            } else {
                 ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
                 if (prizeEntity != null) {
                     prodVO.setMinprize(prizeEntity.getMinactprize());
                     prodVO.setMaxprize(prizeEntity.getMaxactprize());
-                    prodVO.setActcode(prizeEntity.getActcode()+"");
+                    prodVO.setActcode(prizeEntity.getActcode() + "");
                     int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
                     // 代表值存在一个活动
                     if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
@@ -1496,7 +1487,7 @@ public class ProdModule {
                             prodVO.setActprod(false);
                             prodVO.setMutiact(false);
                         }
-                    }else if(prizeEntity.getActcode() == 0){ // 没有活动
+                    } else if (prizeEntity.getActcode() == 0) { // 没有活动
                         prodVO.setRulestatus(0);
                         prodVO.setActprod(false);
                         prodVO.setMutiact(false);
@@ -1516,20 +1507,20 @@ public class ProdModule {
         List<Object[]> newList = new ArrayList<>();
         Long gCode = Long.parseLong(list.get(0)[1].toString());
         boolean isAll = false;
-        if(gCode == 0){
-            List<Object[]> prodList =  BASE_DAO.queryNative(QUERY_PROD);
-            for(Object[] objects : prodList) {
+        if (gCode == 0) {
+            List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD);
+            for (Object[] objects : prodList) {
                 Long sku = Long.parseLong(objects[0].toString());
 
                 newList.add(new Object[]{list.get(0)[0], sku, list.get(0)[2], list.get(0)[3], list.get(0)[4], list.get(0)[5]});
             }
             isAll = true;
-        }else{
-            for(Object[] aa : list){
+        } else {
+            for (Object[] aa : list) {
                 String gc = aa[1].toString();
-                if(gc.length() < 14){
+                if (gc.length() < 14) {
                     List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD + " and spu like CONCAT('_', ?,'%')", new Object[]{gc});
-                    for(Object[] obj : prodList) {
+                    for (Object[] obj : prodList) {
                         Long sku = Long.parseLong(obj[0].toString());
 
                         newList.add(new Object[]{aa[0], sku, aa[2], aa[3], aa[4], aa[5]});
@@ -1614,7 +1605,7 @@ public class ProdModule {
                 appriseVO.setCompName(storeBasicInfo.storeName);//暂无接口。。。。
             }
             double compEval = BigDecimal.valueOf((appriseVO.getLevel()
-                    + appriseVO.getDescmatch() + appriseVO.getLogisticssrv()) / 3.0).setScale(1,BigDecimal.ROUND_CEILING).doubleValue();
+                    + appriseVO.getDescmatch() + appriseVO.getLogisticssrv()) / 3.0).setScale(1, BigDecimal.ROUND_CEILING).doubleValue();
             appriseVO.setCompEval(compEval);
         }
         return result.setQuery(appriseVOS, pageHolder);
@@ -1622,12 +1613,12 @@ public class ProdModule {
 
 
     /**
+     * @return int code > 0成功 否则失败
+     * @throws
      * @description 订单评价商品接口
      * @params json {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
-     * @return int code > 0成功 否则失败
-     * @exception
      * @author 11842
-     * @time  2019/6/11 14:53
+     * @time 2019/6/11 14:53
      * @version 1.1.1
      **/
     @UserPermission(ignore = true)
@@ -1653,6 +1644,7 @@ public class ProdModule {
 
     /**
      * app获取所有楼层信息
+     *
      * @param appContext 全局参数
      * @return 每一楼层对应该楼层商品，（code==200  data=[{楼层：商品}]）
      */
@@ -1660,13 +1652,15 @@ public class ProdModule {
     public Result appGetMallFloorProd(AppContext appContext) {
         try {
             //获取存在的所有楼层
-            System.out.println(GsonUtils.javaBeanToJson(appContext.param));
             List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
-            appContext.logger.print("获取到楼层信息:"+mallFloorVOList);
-            JSONObject jsonObject = new JSONObject();
-            getSuccessResult(mallFloorVOList,jsonObject,appContext);
-
-            return new Result().success(jsonObject);
+            List<MallFloorVO> newMallFloor = new ArrayList<>();
+            getSuccessResult(mallFloorVOList, appContext);
+            for (MallFloorVO aMallFloorVOList : mallFloorVOList) {
+                if (aMallFloorVOList.getProdVOS() != null && aMallFloorVOList.getProdVOS().size() > 5) {
+                    newMallFloor.add(aMallFloorVOList);
+                }
+            }
+            return new Result().success(newMallFloor);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -1675,42 +1669,103 @@ public class ProdModule {
 
     /**
      * 将获取的楼层信息添加商品信息
+     *
      * @param mallFloorVOList 楼层信息集合
-     * @param jsonObject 返回app端参数
-     * @param appContext 全局参数
+     * @param appContext      全局参数
      */
-    private void getSuccessResult(List<MallFloorVO> mallFloorVOList,JSONObject jsonObject,AppContext appContext){
-        JSONArray jsonArray = new JSONArray();
-        for(MallFloorVO mallFloorVO:mallFloorVOList){
-            JSONObject json = getFloorMsgAcitveToJson(mallFloorVO,appContext);
-            if(json != null) {
-                appContext.logger.print("JSON = " + json);
-                jsonArray.add(json);
+    private void getSuccessResult(List<MallFloorVO> mallFloorVOList, AppContext appContext) {
+        for (MallFloorVO mallFloorVO : mallFloorVOList) {
+            int floorID = (int)mallFloorVO.getUnqid();
+            if (floorID == 4 || floorID == 8 || floorID == 512) {
+                getSpecialFloor(floorID, appContext, mallFloorVO);
+            } else {
+                mallFloorVO.setProdVOS(getCommonFloor(floorID, appContext));
             }
         }
-        jsonObject.put("resultMsg",jsonArray);
     }
+
+    /* *
+     * @description 普通楼层
+     * @params [floorID, appContext]
+     * @return java.util.List<com.onek.goods.entities.ProdVO>
+     * @exception
+     * @author 11842
+     * @time  2019/6/14 12:25
+     * @version 1.1.1
+     **/
+    private List<ProdVO> getCommonFloor(int floorID, AppContext appContext) {
+        Result result;
+        switch (floorID) {//1:新品 128:为你精选 64:中华名方
+            case 1:
+                return getFloorByState(1, appContext);
+            case 64:
+                return getFloorByState(3, appContext);
+            case 128:
+                return getFloorByState(2, appContext);
+            case 2://热销专区
+                result = getHotMallFloor(appContext);
+                break;
+            case 16://包邮专区
+                result = getExemPostMallFloor(appContext);
+                break;
+            case 32://新人专享
+                result = getNewMemberMallFloor(appContext);
+                break;
+            default://品牌专区 256
+                result = getBrandMallFloor(appContext);
+                break;
+        }
+        return (List<ProdVO>)result.data;
+    }
+
+    /* *
+     * @description 秒杀 限时抢购 团购楼层
+     * @params [floorID, appContext, mallFloorVO]
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/6/14 12:25
+     * @version 1.1.1
+     **/
+    private void getSpecialFloor(int floorID, AppContext appContext, MallFloorVO mallFloorVO) {
+        Result result;
+        JSONObject jsonObject;
+        switch (floorID) {
+            case 4://秒杀专区
+            case 512://限时抢购
+                result = getDiscountMallFloor(appContext);
+                break;
+            default://一块购
+                result = getTeamBuyMallFloor(appContext);
+                break;
+        }
+        jsonObject = JSON.parseObject(result.data.toString());
+        if (jsonObject.containsKey("list")){
+            mallFloorVO.setProdVOS(JSON.parseArray(jsonObject.getString("list")).toJavaList(ProdVO.class));
+            jsonObject.remove("list");
+        }
+        mallFloorVO.setOtherParams(jsonObject.toJSONString());
+    }
+
 
     /**
      * 获取当前楼层下的商品信息
+     *
      * @param mallFloorVO 当前楼层信息
-     * @param appContext 全局参数
+     * @param appContext  全局参数
      * @return 返参（code==200 {楼层id，楼层码，楼层名称，楼层状态，楼层下商品信息}）
      */
-    private JSONObject getFloorMsgAcitveToJson(MallFloorVO mallFloorVO,AppContext appContext){
+    private JSONObject getFloorMsgAcitveToJson(MallFloorVO mallFloorVO, AppContext appContext) {
         JSONObject jsonObject = null;
         int compid = appContext.isAnonymous() ? 0 : appContext.getUserSession().compId;
-        Result rs = getFloorMsgAcitve(String.valueOf(mallFloorVO.getUnqid()),appContext);
+        Result rs = getFloorMsgActive((int) mallFloorVO.getUnqid(), appContext);
 
         Object obj = rs.data;
-
-        if (obj!=null){
-
-            if(obj instanceof List){
+        if (obj != null) {
+            if (obj instanceof List) {
                 List<ProdVO> prodList = (List<ProdVO>) rs.data;
-                if(prodList.size()>=MAX_SELECT_PRO_NUM) {
+                if (prodList.size() >= MAX_SELECT_PRO_NUM) {
                     jsonObject = new JSONObject();
-
                     jsonObject.put("oid", mallFloorVO.getOid());
                     jsonObject.put("unqid", mallFloorVO.getUnqid());
                     jsonObject.put("fname", mallFloorVO.getFname());
@@ -1718,19 +1773,19 @@ public class ProdModule {
                     jsonObject.put("proList", prodList);
 
                     //获取商品活动类型
-                    Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
+                    Map<Long, List<IDiscount>> skuMap = new HashMap<Long, List<IDiscount>>();
                     if (prodList.size() > 0) {
                         for (ProdVO prodVO : prodList) {
-                            skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
+                            skuMap.put(prodVO.getSku(), appGetProdCalType(prodVO.getSku(), compid));
                         }
                     }
-                    jsonObject.put("activeProType",skuMap);
+                    jsonObject.put("activeProType", skuMap);
                 }
-            }else if(obj instanceof JSONObject){
+            } else if (obj instanceof JSONObject) {
                 JSONObject proJson = (JSONObject) rs.data;
                 System.out.println(">>>>>>>>>>>>>>\n" + proJson);
-                List list = (List)proJson.get("list");
-                if(list!=null && list.size()>=MAX_SELECT_PRO_NUM) {
+                List list = (List) proJson.get("list");
+                if (list != null && list.size() >= MAX_SELECT_PRO_NUM) {
                     jsonObject = new JSONObject();
                     jsonObject.put("oid", mallFloorVO.getOid());
                     jsonObject.put("unqid", mallFloorVO.getUnqid());
@@ -1740,24 +1795,17 @@ public class ProdModule {
 
                     //获取商品活动类型
                     //将商品信息json转换为List<ProdVO>集合
-                    List<ProdVO> proList  = jsonToProductList(proJson.toString());
+                    List<ProdVO> proList = jsonToProductList(proJson.toString());
 
-                    Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
+                    Map<Long, List<IDiscount>> skuMap = new HashMap<Long, List<IDiscount>>();
                     if (proList != null && proList.size() > 0) {
                         for (ProdVO prodVO : proList) {
-                            skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
+                            skuMap.put(prodVO.getSku(), appGetProdCalType(prodVO.getSku(), compid));
                         }
                     }
-                    jsonObject.put("activeProType",skuMap);
+                    jsonObject.put("activeProType", skuMap);
                 }
             }
-
-
-
-
-
-
-
 
 
         }
@@ -1766,47 +1814,28 @@ public class ProdModule {
 
     /**
      * 根据不同楼层码获取该楼层下的商品数据（内部调用）
-     * @param avtiveId 楼层码。（活动码）
+     *
+     * @param floorID   楼层码。（活动码）
      * @param appContext 全局参数
      * @return 当前楼层下商品信息   Result.data为该楼层下商品信息
      */
-    private Result getFloorMsgAcitve(String avtiveId,AppContext appContext){
-
-        System.out.println(" ------------ " + avtiveId +" --------------------------");
+    private Result getFloorMsgActive(int floorID, AppContext appContext) {
         Result rs;
-        switch (avtiveId) {
-            case "1"://新品专区
-                rs = getNewMallFloor(appContext);
-                break;
-            case "2"://热销专区
+        switch (floorID) {
+            case 2://热销专区
                 rs = getHotMallFloor(appContext);
                 break;
-            case "4"://秒杀专区
-                rs = getDiscountMallFloor(appContext);
-                break;
-            case "8"://一块购
-                rs = getTeamBuyMallFloor(appContext);
-                break;
-            case "16"://包邮专区
+            case 16://包邮专区
                 rs = getExemPostMallFloor(appContext);
                 break;
-            case "32"://新人专享
+            case 32://新人专享
                 rs = getNewMemberMallFloor(appContext);
                 break;
-            case "64"://中华名方
-                rs = getFamousPrescriptionFloor(appContext);
-                break;
-            case "128"://为你精选
-                rs = getChooseForYouMallFloor(appContext);
-                break;
-            case "256"://品牌专区
-                if(appContext.param.json == null || "".equals(appContext.param.json)){
+            case 256://品牌专区
+                if (appContext.param.json == null || "".equals(appContext.param.json)) {
                     appContext.param.json = new JSONObject().toString();
                 }
                 rs = getBrandMallFloor(appContext);
-                break;
-            case "512"://限时抢购
-                rs = getDiscountMallFloor(appContext);
                 break;
             default:
                 rs = new Result();
@@ -1819,24 +1848,25 @@ public class ProdModule {
 
     /**
      * 根据json获取商品集合
+     *
      * @param jsonStr
      * @return
      */
-    private static List<ProdVO> jsonToProductList(String jsonStr){
+    private static List<ProdVO> jsonToProductList(String jsonStr) {
         JsonParser jsonParser = new JsonParser();
         Gson gson = new Gson();
 
         List<ProdVO> pList = new ArrayList<ProdVO>();
         JsonObject jsonObject = jsonParser.parse(jsonStr).getAsJsonObject();
-        if(jsonObject.get("list") != null && !"".equals(jsonObject.get("list"))) {
+        if (jsonObject.get("list") != null && !"".equals(jsonObject.get("list"))) {
             String prodata = jsonObject.get("list").toString();
             JsonArray jsonArray = jsonParser.parse(prodata).getAsJsonArray();
-            if(jsonArray.size()<=0){
+            if (jsonArray.size() <= 0) {
                 return new ArrayList<ProdVO>();
             }
 
-            for (JsonElement jsonElement : jsonArray){
-                ProdVO product = gson.fromJson(jsonElement,ProdVO.class);
+            for (JsonElement jsonElement : jsonArray) {
+                ProdVO product = gson.fromJson(jsonElement, ProdVO.class);
                 pList.add(product);
             }
         }
@@ -1846,10 +1876,11 @@ public class ProdModule {
     /**
      * app内部调用方法
      * add by liaz 2019年6月11日
+     *
      * @param proSku 商品sku码
      * @return key->商品sku  val->当前商品活动类型
      */
-    private List<IDiscount>  appGetProdCalType(long proSku,int compid){
+    private List<IDiscount> appGetProdCalType(long proSku, int compid) {
 
         List<Product> products = new ArrayList<>();
         Product p = new Product();
@@ -1860,7 +1891,7 @@ public class ProdModule {
 
 
                 = new ActivityFilterService(
-                new ActivitiesFilter[] {
+                new ActivitiesFilter[]{
                         new CycleFilter(),
                         //new QualFilter(compid),
                         new PriorityFilter(),

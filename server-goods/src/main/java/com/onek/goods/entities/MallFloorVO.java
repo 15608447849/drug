@@ -1,5 +1,7 @@
 package com.onek.goods.entities;
 
+import java.util.List;
+
 /**
  * 楼层
  *
@@ -12,6 +14,8 @@ public class MallFloorVO {
     private long unqid;
     private String fname;
     private int cstatus;
+    private String otherParams;//其他属性
+    private List<ProdVO> prodVOS;//楼层下的商品
 
     public int getOid() {
         return oid;
@@ -43,5 +47,21 @@ public class MallFloorVO {
 
     public void setCstatus(int cstatus) {
         this.cstatus = cstatus;
+    }
+
+    public String getOtherParams() {
+        return otherParams;
+    }
+
+    public void setOtherParams(String otherParams) {
+        this.otherParams = otherParams;
+    }
+
+    public List<ProdVO> getProdVOS() {
+        return prodVOS;
+    }
+
+    public void setProdVOS(List<ProdVO> prodVOS) {
+        this.prodVOS = prodVOS;
     }
 }
