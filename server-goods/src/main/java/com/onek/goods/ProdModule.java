@@ -412,7 +412,7 @@ public class ProdModule {
             if (response != null && response.getHits().totalHits > 0) {
                 assembleData(appContext, response, prodVOList);
             }
-            if (prodVOList != null && prodVOList.size() > 0) {
+            if (prodVOList.size() > 0) {
                 for (ProdVO prodVO : prodVOList) {
                     convertTeamBuyData(dataMap, actCode, minOff, prodVO);
                 }
@@ -1659,13 +1659,10 @@ public class ProdModule {
     @UserPermission(ignore = true)
     public Result appGetMallFloorProd(AppContext appContext) {
         try {
-
-
             //获取存在的所有楼层
+            System.out.println(GsonUtils.javaBeanToJson(appContext.param));
             List<MallFloorVO> mallFloorVOList = (List<MallFloorVO>) mallFloorProxy.queryAll();
             appContext.logger.print("获取到楼层信息:"+mallFloorVOList);
-
-
             JSONObject jsonObject = new JSONObject();
             getSuccessResult(mallFloorVOList,jsonObject,appContext);
 
@@ -1702,52 +1699,67 @@ public class ProdModule {
      */
     private JSONObject getFloorMsgAcitveToJson(MallFloorVO mallFloorVO,AppContext appContext){
         JSONObject jsonObject = null;
-        int compid = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
+        int compid = appContext.isAnonymous() ? 0 : appContext.getUserSession().compId;
         Result rs = getFloorMsgAcitve(String.valueOf(mallFloorVO.getUnqid()),appContext);
+
         Object obj = rs.data;
-        if(obj instanceof List){
-            List<ProdVO> prodList = (List<ProdVO>) rs.data;
-            if(prodList.size()>=MAX_SELECT_PRO_NUM) {
-                jsonObject = new JSONObject();
 
-                jsonObject.put("oid", mallFloorVO.getOid());
-                jsonObject.put("unqid", mallFloorVO.getUnqid());
-                jsonObject.put("fname", mallFloorVO.getFname());
-                jsonObject.put("cstatus", mallFloorVO.getCstatus());
-                jsonObject.put("proList", prodList);
+        if (obj!=null){
 
-                //获取商品活动类型
-                Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
-                if (prodList.size() > 0) {
-                    for (ProdVO prodVO : prodList) {
-                        skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
+            if(obj instanceof List){
+                List<ProdVO> prodList = (List<ProdVO>) rs.data;
+                if(prodList.size()>=MAX_SELECT_PRO_NUM) {
+                    jsonObject = new JSONObject();
+
+                    jsonObject.put("oid", mallFloorVO.getOid());
+                    jsonObject.put("unqid", mallFloorVO.getUnqid());
+                    jsonObject.put("fname", mallFloorVO.getFname());
+                    jsonObject.put("cstatus", mallFloorVO.getCstatus());
+                    jsonObject.put("proList", prodList);
+
+                    //获取商品活动类型
+                    Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
+                    if (prodList.size() > 0) {
+                        for (ProdVO prodVO : prodList) {
+                            skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
+                        }
                     }
+                    jsonObject.put("activeProType",skuMap);
                 }
-                jsonObject.put("activeProType",skuMap);
-            }
-        }else if(obj instanceof JSONObject){
-            JSONObject proJson = (JSONObject) rs.data;
-            List list = (List)proJson.get("list");
-            if(list.size()>=MAX_SELECT_PRO_NUM) {
-                jsonObject = new JSONObject();
-                jsonObject.put("oid", mallFloorVO.getOid());
-                jsonObject.put("unqid", mallFloorVO.getUnqid());
-                jsonObject.put("fname", mallFloorVO.getFname());
-                jsonObject.put("cstatus", mallFloorVO.getCstatus());
-                jsonObject.put("proJson", proJson);
+            }else if(obj instanceof JSONObject){
+                JSONObject proJson = (JSONObject) rs.data;
+                System.out.println(">>>>>>>>>>>>>>\n" + proJson);
+                List list = (List)proJson.get("list");
+                if(list!=null && list.size()>=MAX_SELECT_PRO_NUM) {
+                    jsonObject = new JSONObject();
+                    jsonObject.put("oid", mallFloorVO.getOid());
+                    jsonObject.put("unqid", mallFloorVO.getUnqid());
+                    jsonObject.put("fname", mallFloorVO.getFname());
+                    jsonObject.put("cstatus", mallFloorVO.getCstatus());
+                    jsonObject.put("proJson", proJson);
 
-                //获取商品活动类型
-                //将商品信息json转换为List<ProdVO>集合
-                List<ProdVO> proList  = jsonToProductList(proJson.toString());
+                    //获取商品活动类型
+                    //将商品信息json转换为List<ProdVO>集合
+                    List<ProdVO> proList  = jsonToProductList(proJson.toString());
 
-                Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
-                if (proList != null && proList.size() > 0) {
-                    for (ProdVO prodVO : proList) {
-                        skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
+                    Map<Long,List<IDiscount>> skuMap = new HashMap<Long,List<IDiscount>>();
+                    if (proList != null && proList.size() > 0) {
+                        for (ProdVO prodVO : proList) {
+                            skuMap.put(prodVO.getSku(),appGetProdCalType(prodVO.getSku(),compid));
+                        }
                     }
+                    jsonObject.put("activeProType",skuMap);
                 }
-                jsonObject.put("activeProType",skuMap);
             }
+
+
+
+
+
+
+
+
+
         }
         return jsonObject;
     }
@@ -1759,7 +1771,9 @@ public class ProdModule {
      * @return 当前楼层下商品信息   Result.data为该楼层下商品信息
      */
     private Result getFloorMsgAcitve(String avtiveId,AppContext appContext){
-        Result rs = null;
+
+        System.out.println(" ------------ " + avtiveId +" --------------------------");
+        Result rs;
         switch (avtiveId) {
             case "1"://新品专区
                 rs = getNewMallFloor(appContext);
@@ -1787,7 +1801,6 @@ public class ProdModule {
                 break;
             case "256"://品牌专区
                 if(appContext.param.json == null || "".equals(appContext.param.json)){
-                    System.out.println("JSON ----- NULL");
                     appContext.param.json = new JSONObject().toString();
                 }
                 rs = getBrandMallFloor(appContext);
