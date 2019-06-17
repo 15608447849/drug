@@ -46,6 +46,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static com.onek.util.IceRemoteUtil.getGroupCount;
+import static com.onek.util.IceRemoteUtil.remoteQueryShopCartNumBySku;
+
 /**
  * 商城商品模块
  *
@@ -428,6 +431,7 @@ public class ProdModule {
             result.put("list", prodVOList);
             result.put("ladoffArray", ladOffArray);
             result.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+            result.put("currNums",getGroupCount(actCodeList.get(0)));
         }
         return new Result().success(result);
     }
@@ -1647,6 +1651,7 @@ public class ProdModule {
      *
      * @param appContext 全局参数
      * @return 每一楼层对应该楼层商品，（code==200  data=[{楼层：商品}]）
+     *
      */
     @UserPermission(ignore = true)
     public Result appGetMallFloorProd(AppContext appContext) {
@@ -1657,9 +1662,17 @@ public class ProdModule {
             getSuccessResult(mallFloorVOList, appContext);
             for (MallFloorVO aMallFloorVOList : mallFloorVOList) {
                 if (aMallFloorVOList.getProdVOS() != null && aMallFloorVOList.getProdVOS().size() > 5) {
+
+                    if (!appContext.isAnonymous()){
+                        List<ProdVO> list = aMallFloorVOList.getProdVOS();
+                        for (ProdVO p : list){
+                            p.cart = remoteQueryShopCartNumBySku(appContext.getUserSession().compId,p.getSku());
+                        }
+                    }
                     newMallFloor.add(aMallFloorVOList);
                 }
             }
+
             return new Result().success(newMallFloor);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1888,8 +1901,6 @@ public class ProdModule {
         products.add(p);
 
         List<IDiscount> discounts
-
-
                 = new ActivityFilterService(
                 new ActivitiesFilter[]{
                         new CycleFilter(),

@@ -12,11 +12,10 @@ import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entity.IntegralDetailVO;
 import com.onek.entitys.Result;
+import com.onek.util.GenIdUtil;
 import com.onek.util.member.MemberStore;
 import constant.DSMConst;
 import dao.BaseDAO;
-import com.onek.util.GenIdUtil;
-import com.onek.util.IceRemoteUtil;
 import util.GsonUtils;
 import util.StringUtils;
 import util.TimeUtils;
@@ -42,7 +41,7 @@ public class IntegralModule {
      * 功能: 签到
      * 参数类型: json
      * 参数集: 无
-     * 返回值: code=200 data=结果集
+     * 返回值: code=200 date=结果集
      * 详情说明:
      * 作者: 蒋文广
      */
@@ -98,7 +97,7 @@ public class IntegralModule {
      * 功能: 获取历史签到信息
      * 参数类型: json
      * 参数集: 无
-     * 返回值: code=200 data=结果集
+     * 返回值: code=200 date=结果集
      * 详情说明:
      * 作者: 蒋文广
      */
@@ -152,7 +151,7 @@ public class IntegralModule {
      * 功能: 添加积分
      * 参数类型: json
      * 参数集: istatus=积分来源 integral=积分值 compid=企业码 busid=相关业务id
-     * 返回值: code=200 data=结果集
+     * 返回值: code=200 date=结果集
      * 详情说明: 企业认证审核复用
      * 作者: 蒋文广
      */
@@ -174,7 +173,7 @@ public class IntegralModule {
      * 功能: 积分明细
      * 参数类型: json
      * 参数集: compid=公司码 pageNo=当前页码 pageSize=条数
-     * 返回值: code=200 data=结果集
+     * 返回值: code=200 date=结果集
      * 详情说明:
      * 作者: 蒋文广
      */

@@ -200,7 +200,7 @@ public class BackGroundProxyMoudule {
                 ProxyAreaTreeVO proxyAreaVO = new ProxyAreaTreeVO();
                 proxyAreaVO.setArean(objects[1].toString());
                 proxyAreaVO.setAreac((objects[0].toString()));
-                proxyAreaVO.setLayer(1);
+               // proxyAreaVO.setLayer(1);
                 areaList.add(proxyAreaVO);
             }
             for (Object[] objs : queryRet) {

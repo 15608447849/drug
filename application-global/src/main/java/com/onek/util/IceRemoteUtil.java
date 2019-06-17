@@ -2,7 +2,6 @@ package com.onek.util;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonArray;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
@@ -21,11 +20,7 @@ import util.StringUtils;
 import util.http.HttpRequest;
 
 import java.io.File;
-import java.io.InputStream;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Objects;
+import java.util.*;
 
 /**
  * @Author: leeping
@@ -74,7 +69,9 @@ public class IceRemoteUtil {
      */
     public static ProdEntity getProdBySku(long sku) {
         try {
-            String result = ic.setServerAndRequest("globalServer","CommonModule","getProdBySku").setArrayParams(sku).execute();
+            String result = ic.setServerAndRequest("globalServer",
+                    "CommonModule",
+                    "getProdBySku").setArrayParams(sku).execute();
             return GsonUtils.jsonToJavaBean(result,ProdEntity.class);
         } catch (Exception e) {
             e.printStackTrace();
@@ -755,20 +752,17 @@ public class IceRemoteUtil {
         return 0;
     }
 
-
-
-
-    public static String appGetCompShopNum(int compid){
-        String result = "";
-        try{
-            System.out.println(">>>>>" + compid);
-             result =  ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"ShoppingCartModule","appGetShopCatProNum").setArrayParams(compid).execute();
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return result;
+    /**
+     * 获取购物车数量
+     */
+    public static int remoteQueryShopCartNumBySku(int compid,long sku){
+        return Integer.parseInt(ic.setServerAndRequest("orderServer" + getOrderServerNo(compid),
+                "ShoppingCartModule",
+                "remoteQueryShopCartNumBySku").setArrayParams(compid,sku).execute());
     }
+
+
+
 }
 
 

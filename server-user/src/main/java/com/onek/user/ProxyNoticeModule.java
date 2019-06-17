@@ -241,7 +241,7 @@ public class ProxyNoticeModule {
         long roleId =  jsonObject.get("roleid").getAsLong();//角色码
 //        long areac =  jsonObject.get("areac").getAsLong();//地区码
         int receiver = jsonObject.get("receiver").getAsInt();
-        String selectSQL = "select DISTINCT a.msgid,msgtxt from {{?" + DSMConst.TB_PROXY_NOTICE + "}} a left join {{?"
+        String selectSQL = "select DISTINCT a.msgid,msgtxt,effcttime from {{?" + DSMConst.TB_PROXY_NOTICE + "}} a left join {{?"
                 + DSMConst.TB_PROXY_NOTICEAREC + "}} b on a.msgid=b.msgid left join {{?"
                 + DSMConst.TB_PROXY_NOTICEDT + "}} c on a.msgid=c.msgid  and receiver=? where a.cstatus&1=0 and b.cstatus&1=0 "
                 + " and revobj&(revobj&?)>0 and areac in(select areac from {{?" + DSMConst.TB_PROXY_UAREA
