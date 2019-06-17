@@ -24,6 +24,9 @@ import static constant.DSMConst.TB_SMS_TEMPLATE;
  */
 
 public class MyInvoiceModule {
+    private final static int EMAIL_REMAIN_TIME = 30 * 60; // 30分钟存活时间
+    private final static String EMAIL_VAILD_SPILTER = "|";
+
     private final static String QUERY_INVOICE_BASE =
             "SELECT i.oid, i.cid, a.certificateno, i.bankers, i.account, i.tel, i.cstatus, i.email "
             + " FROM {{?" + DSMConst.TB_COMP_INVOICE + "}} i "
@@ -90,8 +93,15 @@ public class MyInvoiceModule {
 
         String vcode = RandomUtil.getRandomNumber(6);
 
-        if (!setEmail(compid, vcode, email)) {
-            return new Result().fail("生成异常，请重新尝试生成！");
+        int setEmailValue = setEmail(compid, vcode, email);
+
+        if (setEmailValue != 0) {
+            if (setEmailValue == -1) {
+                return new Result().fail("生成异常，请重新尝试生成！");
+            }
+            if (setEmailValue == -2) {
+                return new Result().fail("请求频繁，请稍后重试！");
+            }
         }
 
         // 发送验证邮箱
@@ -118,17 +128,27 @@ public class MyInvoiceModule {
         return null;
     }
 
-    private boolean setEmail(int compid, String vcode, String email) {
+    private int setEmail(int compid, String vcode, String email) {
         String key = genVaildKey(compid);
-        String value = vcode + "|" + email;
+        String value = vcode + EMAIL_VAILD_SPILTER + email;
+
+        long remainTime =
+                RedisUtil.getStringProvide().remainingSurvivalTime(key);
+
+        if (remainTime > 0) {
+            if (EMAIL_REMAIN_TIME - remainTime <= 60) {
+                return -2;
+            }
+        }
+
         String setResult = RedisUtil.getStringProvide().set(key, value);
 
         if ("OK".equalsIgnoreCase(setResult)) {
-            RedisUtil.getStringProvide().expire(key, 30 * 60);
-            return true;
+            RedisUtil.getStringProvide().expire(key, EMAIL_REMAIN_TIME);
+            return 0;
         }
 
-        return false;
+        return -1;
     }
 
     private String getEmailByCode(int compid, String vcode) {
@@ -141,7 +161,7 @@ public class MyInvoiceModule {
         String vaildCode = RedisUtil.getStringProvide().get(key);
 
         if (!StringUtils.isEmpty(vaildCode)) {
-            int index = vaildCode.indexOf("|");
+            int index = vaildCode.indexOf(EMAIL_VAILD_SPILTER);
             if (vcode.equals(vaildCode.substring(0, index))) {
                 RedisUtil.getStringProvide().delete(key);
                 return vaildCode.substring(index + 1);

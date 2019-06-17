@@ -2,7 +2,6 @@ package com.onek.report.col;
 
 import com.onek.report.core.IRowData;
 import com.onek.report.vo.*;
-import com.onek.util.IceRemoteUtil;
 import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -57,7 +56,7 @@ public class ColItem implements IRowData {
         if (an == null) {
             an = new String[2];
 
-            an[0] = IceRemoteUtil.getArean(areac);
+            an[0] = getArean(areac);
 
             String sql =
                     " SELECT COUNT(0) "
@@ -74,6 +73,23 @@ public class ColItem implements IRowData {
         ColItem.this.compNum = Integer.parseInt(an[1]);
     }
 
+    private String getArean(long areac) {
+        if (areac == 0) {
+            return "";
+        }
+
+        String sql = " SELECT arean "
+                + " FROM {{?" + DSMConst.TB_AREA_PCA + "}} "
+                + " WHERE cstatus&1 = 0 AND areac = ? ";
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(sql, areac);
+
+        if (queryResult.isEmpty()) {
+            return "";
+        }
+
+        return queryResult.get(0)[0].toString();
+    }
 
     private String getWhereLike(long areac) {
         int layer = AreaUtil.getLayer(areac);

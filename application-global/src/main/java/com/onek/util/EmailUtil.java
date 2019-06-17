@@ -70,12 +70,7 @@ public class EmailUtil extends ApplicationPropertiesBase {
         return true;
     }
 
-    /**
-     * 获得创建一封邮件的实例对象
-     * @param session
-     * @return
-     */
-    public MimeMessage getMimeMessage(Session session, String targetMail, String content) throws Exception{
+    private MimeMessage getMimeMessage(Session session, String targetMail, String content) throws Exception{
         MimeMessage msg = new MimeMessage(session);
         msg.setFrom(new InternetAddress(senderAddress));
         msg.setRecipients(MimeMessage.RecipientType.TO, new InternetAddress[] {
