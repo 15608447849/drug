@@ -215,6 +215,87 @@ public class ShoppingCartModule {
     }
 
 
+    /**
+     * 获取SKU可以购买的数量
+     * @param compid 企业码
+     * @param sku SKU码
+     * @param skuNum SKU购买数量
+     * @param type 0 购物车购买 1非购物车购买
+     * @return 可以购买的数量
+     */
+    public int getCanbuySkuNum(int compid,long sku,int skuNum,int type){
+        List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV, sku);
+        if(queryInvRet == null || queryInvRet.isEmpty()){
+            return 0;
+        }
+        List<Product> productList = new ArrayList<>();
+        Product product = new Product();
+        product.setSku(sku);
+        double pdprice = Double.parseDouble(queryInvRet.get(0)[2].toString());
+        int inventory = Integer.parseInt(queryInvRet.get(0)[0].toString());
+        List<Object[]> queryRet = null;
+        if(type == 0){
+            queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                     SELECT_SHOPCART_SQL_EXT, compid, sku);
+        }
+        if(queryRet == null || queryRet.isEmpty()){
+            product.setNums(skuNum);
+            product.autoSetCurrentPrice(pdprice,skuNum);
+            productList.add(product);
+        }else{
+            int pnum = Integer.parseInt(queryRet.get(0)[1].toString());
+            product.setNums(skuNum+pnum);
+            product.autoSetCurrentPrice(pdprice,skuNum+pnum);
+            productList.add(product);
+        }
+
+        List<IDiscount> discountList = getActivityList(compid,productList);
+        int pnum = productList.get(0).getNums();
+        int subStock = Integer.MAX_VALUE;
+        int actStock = Integer.MAX_VALUE;
+        if(discountList != null && !discountList.isEmpty()){
+            for (IDiscount discount : discountList){
+                Activity activity = (Activity)discount;
+
+                actStock = Math.min(
+                        RedisStockUtil
+                                .getActStockBySkuAndActno(productList.get(0).getSku(),
+                                        discount.getDiscountNo()),
+                        actStock);
+
+                if(activity.getLimits(productList.get(0).getSku()) == 0){
+                    continue;
+                }
+
+                subStock = Math.min
+                        (activity.getLimits(productList.get(0).getSku())
+                                - RedisOrderUtil.getActBuyNum(compid, productList.get(0).getSku(),
+                                activity.getUnqid()),subStock);
+            }
+        }
+        int stock = inventory;
+        try{
+            stock = RedisStockUtil.getStock(productList.get(0).getSku());
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        int minStock = stock;
+
+        if(actStock < minStock){
+            minStock = actStock;
+        }
+
+        if(subStock < minStock){
+            minStock = subStock;
+        }
+        if(minStock < pnum){
+            return minStock;
+        }
+        return pnum;
+    }
+
+
 
     /**
      * @description 再次购买（购物车批量保存）
