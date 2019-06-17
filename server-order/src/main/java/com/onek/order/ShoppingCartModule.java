@@ -6,7 +6,6 @@ import com.onek.annotation.UserPermission;
 import com.onek.calculate.ActivityFilterService;
 import com.onek.calculate.entity.*;
 import com.onek.calculate.filter.*;
-import com.onek.calculate.util.DiscountUtil;
 import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entity.DiscountRule;
@@ -94,14 +93,6 @@ public class ShoppingCartModule {
     //查询购物车商品数量
     private final String SELECT_SKUNUM_SQL = "select pdno,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
-
-
-
-
-
-
-
-
 
     /**
      * @description 购物车保存
@@ -912,48 +903,6 @@ public class ShoppingCartModule {
             offerTipsVOS.add(offerTipsVO);
         }
         return result.success(offerTipsVOS);
-    }
-
-    public static void main(String[] args) {
-
-    }
-
-
-    /**
-     * app 调用新增购物车功能
-     * add by liaoz 2019年6月10日
-     * @param appContext
-     * @return
-     */
-    @UserPermission(ignore = true)
-    public Result appSaveShopCart(AppContext appContext) {
-        return saveShopCart(appContext);
-    }
-
-    /**
-     * app 获取当前企业购物车信息
-     * add by liaoz 2019年6月12日
-     * @param appContext 企业码
-     * @return 当前购物车内容
-     */
-    @UserPermission(ignore = true)
-    public ShoppingCartDTO[] appGetShopCatProNum(AppContext appContext){
-        //查询购物车列表
-        String compid =  appContext.param.arrays[0];
-        System.out.println("==============>" + compid);
-        List<Object[]> queryResult = baseDao.queryNativeSharding(Integer.parseInt(compid),TimeUtils.getCurrentYear(),QUERY_SHOPCART_SQL,Integer.parseInt(compid));
-        System.out.println("query size ====" + queryResult.size());
-        ShoppingCartDTO[] shoppingCartVOS = new ShoppingCartDTO[queryResult.size()];
-        if(queryResult.size()<0){
-            return shoppingCartVOS;
-        }
-
-
-        baseDao.convToEntity(queryResult, shoppingCartVOS, ShoppingCartDTO.class,
-                new String[]{"unqid","pdno","compid","cstatus","pnum"});
-
-
-        return shoppingCartVOS;
     }
 
 
