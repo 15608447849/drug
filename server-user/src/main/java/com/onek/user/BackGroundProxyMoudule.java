@@ -190,26 +190,32 @@ public class BackGroundProxyMoudule {
 
         //渠道经理
         if((roleid & RoleCodeCons._PROXY_MGR) > 0){
+            List<ProxyAreaTreeVO>  areaList = new ArrayList<>();
             List<Object[]> queryParentRet = baseDao.queryNative(QUERY_MY_AREAC, uid);
             if(queryParentRet == null || queryParentRet.isEmpty()){
                 return null;
             }
 
-            List<ProxyAreaTreeVO>  areaList = new ArrayList<>();
+
             for (Object[] objects : queryParentRet){
                 ProxyAreaTreeVO proxyAreaVO = new ProxyAreaTreeVO();
                 proxyAreaVO.setArean(objects[1].toString());
                 proxyAreaVO.setAreac((objects[0].toString()));
-               // proxyAreaVO.setLayer(1);
+                proxyAreaVO.setLayer(1);
                 areaList.add(proxyAreaVO);
+
+                LogUtil.getDefaultLogger().debug(proxyAreaVO.getArean()+"  "+proxyAreaVO.getAreac());
+
             }
             for (Object[] objs : queryRet) {
                 ProxyAreaTreeVO pproxyAreaVO = new ProxyAreaTreeVO();
                 pproxyAreaVO.setArean(objs[1].toString());
                 pproxyAreaVO.setAreac((objs[0].toString()));
-                pproxyAreaVO.setLayer(1);
+                pproxyAreaVO.setLayer(0);
                 areaList.add(pproxyAreaVO);
+                LogUtil.getDefaultLogger().debug(pproxyAreaVO.getArean()+"  "+pproxyAreaVO.getAreac());
             }
+            LogUtil.getDefaultLogger().debug(areaList.size());
             return TreeUtil.list2Tree(areaList);
         }
         return null;
