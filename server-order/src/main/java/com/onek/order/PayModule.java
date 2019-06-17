@@ -400,7 +400,7 @@ public class PayModule {
             }
         } catch (Exception e) {
 
-            LogUtil.getDefaultLogger().error("接受支付结果回调错误:"+e);
+//            LogUtil.getDefaultLogger().error("接受支付结果回调错误:"+e);
         }
         return new Result().fail(null);
     }

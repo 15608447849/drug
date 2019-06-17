@@ -64,6 +64,10 @@ public class IceClient {
         return this;
     }
 
+    public IceClient settingReq(String token,String serverName,String clazz,String method){
+        return settingProxy(serverName).settingReq(token,clazz,method);
+    }
+
     public IceClient setServerAndRequest(String serverName,String clazz,String method){
         return settingProxy(serverName).settingReq("",clazz,method);
     }
