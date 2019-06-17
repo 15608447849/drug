@@ -925,4 +925,14 @@ public class ShoppingCartModule {
         }
         return Integer.parseInt(queryRet.get(0)[0].toString());
     }
+
+    @UserPermission(ignore = true)
+    public int remoteQueryShopCartNumBySku(AppContext context){
+        try{
+            return queryShopCartNumBySku(Integer.parseInt(context.param.arrays[0]),Long.parseLong(context.param.arrays[1]));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+            return 0;
+    }
 }

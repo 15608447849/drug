@@ -752,6 +752,15 @@ public class IceRemoteUtil {
         return 0;
     }
 
+    /**
+     * 获取购物车数量
+     */
+    public static int remoteQueryShopCartNumBySku(int compid,long sku){
+        return Integer.parseInt(ic.setServerAndRequest("orderServer" + getOrderServerNo(compid),
+                "ShoppingCartModule",
+                "remoteQueryShopCartNumBySku").setArrayParams(compid,sku).execute());
+    }
+
 
 
 }
