@@ -1,7 +1,6 @@
 package com.onek.goods.entities;
 
 import redis.annation.DictCacheField;
-import redis.annation.GetDictWay;
 
 public class ProdVO {
     /* ----------- 商品SPU表 ------------- */
@@ -53,6 +52,11 @@ public class ProdVO {
     private double minprize;
     private double maxprize;
     private String actcode;
+
+    /** 动态属性 */
+    //当前商品购物车数量 - 针对不同企业数值不同
+    public int cart;
+
 
     public long getSpu() {
         return spu;

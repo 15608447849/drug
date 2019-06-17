@@ -1,13 +1,13 @@
 package com.onek.order;
 
 import Ice.Application;
+import Ice.Logger;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.ActivityFilterService;
 import com.onek.calculate.entity.*;
 import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
-import com.onek.context.UserSession;
 import com.onek.entity.DiscountRule;
 import com.onek.entity.OfferTipsVO;
 import com.onek.entity.ShoppingCartDTO;
@@ -46,7 +46,7 @@ public class ShoppingCartModule {
 
 
     //新增购物车
-    private final String SELECT_SHOPCART_SQL_EXT = "select unqid,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+    private static final String SELECT_SHOPCART_SQL_EXT = "select unqid,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
 
     //新增数量
@@ -86,12 +86,12 @@ public class ShoppingCartModule {
                     + " WHERE 1=1 ";
 
     //远程调用
-    private  final String QUERY_ONE_PROD_INV = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice from " +
+    private static final String QUERY_ONE_PROD_INV = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice from " +
             " {{?" + DSMConst.TD_PROD_SKU   + "}} where sku =? and cstatus & 1 = 0";
 
 
     //查询购物车商品数量
-    private final String SELECT_SKUNUM_SQL = "select pdno,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+    private static final String SELECT_SKUNUM_SQL = "select pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
 
     /**
@@ -214,9 +214,14 @@ public class ShoppingCartModule {
      * @param type 0 购物车购买 1非购物车购买
      * @return 可以购买的数量
      */
-    public int getCanbuySkuNum(int compid,long sku,int skuNum,int type){
+    public static int  getCanbuySkuNum(int compid,long sku,int skuNum,int type){
+        Logger logger = Application.communicator().getLogger();
+
         List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV, sku);
-        if(queryInvRet == null || queryInvRet.isEmpty()){
+        logger.print("IceRemoteUtil.queryNative = " + queryInvRet.size()  );
+        for (Object[] arr : queryInvRet) logger.print("\t" + Arrays.toString(arr));
+
+        if(queryInvRet.isEmpty()){
             return 0;
         }
         List<Product> productList = new ArrayList<>();
@@ -224,34 +229,35 @@ public class ShoppingCartModule {
         product.setSku(sku);
         double pdprice = Double.parseDouble(queryInvRet.get(0)[2].toString());
         int inventory = Integer.parseInt(queryInvRet.get(0)[0].toString());
+        logger.print("商品sku = " + sku + " 当前价格: " + pdprice +" , 库存 - "+ inventory);
         List<Object[]> queryRet = null;
         if(type == 0){
             queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
                      SELECT_SHOPCART_SQL_EXT, compid, sku);
         }
-        if(queryRet == null || queryRet.isEmpty()){
+        if(queryRet == null || queryRet.isEmpty()){ //不存在购物车数量记录,新购买
             product.setNums(skuNum);
             product.autoSetCurrentPrice(pdprice,skuNum);
             productList.add(product);
-        }else{
+        }else{ //存在购物车数量记录
             int pnum = Integer.parseInt(queryRet.get(0)[1].toString());
             product.setNums(skuNum+pnum);
             product.autoSetCurrentPrice(pdprice,skuNum+pnum);
             productList.add(product);
         }
 
+        //活动列表
         List<IDiscount> discountList = getActivityList(compid,productList);
         int pnum = productList.get(0).getNums();
         int subStock = Integer.MAX_VALUE;
         int actStock = Integer.MAX_VALUE;
         if(discountList != null && !discountList.isEmpty()){
+            logger.print("活动列表数量; " + discountList.size());
             for (IDiscount discount : discountList){
                 Activity activity = (Activity)discount;
 
                 actStock = Math.min(
-                        RedisStockUtil
-                                .getActStockBySkuAndActno(productList.get(0).getSku(),
-                                        discount.getDiscountNo()),
+                        RedisStockUtil.getActStockBySkuAndActno(productList.get(0).getSku(), discount.getDiscountNo()),
                         actStock);
 
                 if(activity.getLimits(productList.get(0).getSku()) == 0){
@@ -263,6 +269,7 @@ public class ShoppingCartModule {
                                 - RedisOrderUtil.getActBuyNum(compid, productList.get(0).getSku(),
                                 activity.getUnqid()),subStock);
             }
+            logger.print(" actStock = "+ actStock + " , subStock = "+ subStock);
         }
         int stock = inventory;
         try{
@@ -272,6 +279,8 @@ public class ShoppingCartModule {
         }
 
         int minStock = stock;
+
+        logger.print("minStock = "+ minStock + " , actStock = "+ actStock + " , subStock = "+ subStock);
 
         if(actStock < minStock){
             minStock = actStock;
@@ -785,7 +794,7 @@ public class ShoppingCartModule {
     }
 
 
-    private List<IDiscount> getActivityList(int compid, List<Product> products){
+    private static List<IDiscount> getActivityList(int compid, List<Product> products){
         List<IDiscount> activityList =
                 new ActivityFilterService(
                         new ActivitiesFilter[] {
@@ -905,32 +914,25 @@ public class ShoppingCartModule {
         return result.success(offerTipsVOS);
     }
 
-
-
     /**
      * 根据SKU查询购物车现有数量
-     * @param appContext
-     * @return
      */
-    @UserPermission(ignore = true)
-    public Result queryShopCartNumBySku(AppContext appContext){
-        String json = appContext.param.json;
-        Result result = new Result();
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        UserSession userSession = appContext.getUserSession();
-        int compid = userSession.compId;
-        long pdno = jsonObject.get("pdno").getAsLong();
-
-        Map map = new HashMap<String,String>();
-        map.put("pdno",pdno);
-        map.put("pnum",0);
+    public static int queryShopCartNumBySku(int compid ,long sku){
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
-                SELECT_SKUNUM_SQL, compid, pdno);
+                SELECT_SKUNUM_SQL, compid, sku);
         if(queryRet == null || queryRet.isEmpty()){
-            return result.success(map);
+            return 0;
         }
-        map.put("pnum",queryRet.get(0)[1]);
-        return result.success(map);
+        return Integer.parseInt(queryRet.get(0)[0].toString());
+    }
+
+    @UserPermission(ignore = true)
+    public int remoteQueryShopCartNumBySku(AppContext context){
+        try{
+            return queryShopCartNumBySku(Integer.parseInt(context.param.arrays[0]),Long.parseLong(context.param.arrays[1]));
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+            return 0;
     }
 }

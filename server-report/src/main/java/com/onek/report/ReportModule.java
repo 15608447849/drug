@@ -1,6 +1,5 @@
 package com.onek.report;
 
-import IceInternal.Ex;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
@@ -9,14 +8,13 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.report.col.ColTotal;
-import com.onek.report.core.Reporter;
+import com.onek.report.service.OrderAnalysisServiceImpl;
 import com.onek.report.service.MarketAnalysisServiceImpl;
 import org.hyrdpf.ds.AppConfig;
-import util.ArrayUtil;
 import util.MathUtil;
 import util.StringUtils;
 
-import java.util.Arrays;
+import java.io.FileOutputStream;
 
 
 /**
@@ -85,7 +83,7 @@ public class ReportModule {
      *
      * 功能: 站在时间维度订单分析报表
      * 参数类型: json
-     * 参数集: year:年 month:月  areac:地区码  type:统计类型]
+     * 参数集: year:年 month:月  areac:地区码  type:统计类型
      * 返回值: Result
      * 详情说明:
      * 日期: 2019/6/5 22:08
@@ -111,7 +109,7 @@ public class ReportModule {
             }
 
             ColTotal result =
-                    new Reporter(json.getIntValue("type"), json.getLongValue("areac"), date).getResult();
+                    new OrderAnalysisServiceImpl(json.getIntValue("type"), json.getLongValue("areac"), date).getResult();
 
             return new Result().success(JSON.toJSON(result));
         } catch (Exception e) {
@@ -119,6 +117,29 @@ public class ReportModule {
             return new Result().fail("查询失败");
         }
 
+    }
+
+    /**
+     *
+     * 功能: 导出订单分析报表
+     * 参数类型: json
+     * 参数集: year:年 month:月  areac:地区码  type:统计类型
+     * 返回值: Result 下载地址
+     * 详情说明:
+     * 日期: 2019/6/5 22:08
+     * 作者: Helena Rubinstein
+     */
+    public Result orderAnalysisExport(AppContext appContext) {
+        Result infoResult = orderAnalysisByTime(appContext);
+
+        if (infoResult == null || infoResult.code != 200) {
+            return new Result().fail("导出失败");
+        }
+
+        ColTotal colTotal = (ColTotal) infoResult.data;
+
+
+        return new Result().success("");
     }
 
 }

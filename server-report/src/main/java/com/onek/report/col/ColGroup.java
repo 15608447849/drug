@@ -3,8 +3,9 @@ package com.onek.report.col;
 import com.onek.report.core.IDoubleCal;
 import com.onek.report.core.IRowData;
 import com.onek.report.init.ColInfo;
-import com.onek.util.IceRemoteUtil;
 import com.onek.util.area.AreaUtil;
+import constant.DSMConst;
+import dao.BaseDAO;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -49,11 +50,29 @@ public class ColGroup implements IRowData, IDoubleCal {
         String name = NAMESTORE.get(parent);
 
         if (name == null) {
-            name = IceRemoteUtil.getArean(parent);
+            name = getArean(parent);
             NAMESTORE.put(parent, name);
         }
 
         return groupLable = name;
+    }
+
+    private String getArean(long areac) {
+        if (areac == 0) {
+            return "";
+        }
+
+        String sql = " SELECT arean "
+                + " FROM {{?" + DSMConst.TB_AREA_PCA + "}} "
+                + " WHERE cstatus&1 = 0 AND areac = ? ";
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(sql, areac);
+
+        if (queryResult.isEmpty()) {
+            return "";
+        }
+
+        return queryResult.get(0)[0].toString();
     }
 
     public String getDate() {
