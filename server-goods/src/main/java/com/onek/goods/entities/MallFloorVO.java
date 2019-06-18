@@ -14,7 +14,7 @@ public class MallFloorVO {
     private long unqid;
     private String fname;
     private int cstatus;
-    private String otherParams;//其他属性
+    private Object otherParams;//其他属性
     private List<ProdVO> prodVOS;//楼层下的商品
 
     public int getOid() {
@@ -49,11 +49,11 @@ public class MallFloorVO {
         this.cstatus = cstatus;
     }
 
-    public String getOtherParams() {
+    public Object getOtherParams() {
         return otherParams;
     }
 
-    public void setOtherParams(String otherParams) {
+    public void setOtherParams(Object otherParams) {
         this.otherParams = otherParams;
     }
 
