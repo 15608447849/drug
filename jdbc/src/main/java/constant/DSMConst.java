@@ -74,6 +74,13 @@ public interface DSMConst extends UDAConst {
             {"tb_system_config"}, //56 系统配置表
             {"tb_market_store"}, //57 市场门店表
             {"tb_system_bus_scope"}, //58 经营范围表
+            {"tp_report_daystock"}, //59 商品库存记录临时表
+            {"tp_report_monstock"}, //60 SKU月库存统计表
+            {"v_pd_sales_mons"}, //61 月销售统计报表
+            {"v_pd_sales_days"}, //62 日销售统计报表
+            {"v_pd_sales_weeks"}, //63 周销售统计报表
+            {"v_pd_sales_years"} //64 年销售统计报表
+
     };
 
 
@@ -139,6 +146,13 @@ public interface DSMConst extends UDAConst {
     public final static int TB_SYSTEM_CONFIG = 56;
     public final static int TB_MARKET_STORE = 57;
     public final static int TB_SYSTEM_BUS_SCOPE = 58;
+    public final static int TP_REPORT_DAYSTOCK = 59;
+    public final static int TP_REPORT_MONSTOCK = 60;
+    public final static int V_PD_SALES_MONS = 61;
+    public final static int V_PD_SALES_DAYS = 62;
+    public final static int V_PD_SALES_WEEKS = 63;
+    public final static int V_PD_SALES_YEARS = 64;
+
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
     // 索引必须同_DB_TABLES里的索引对应
@@ -155,7 +169,7 @@ public interface DSMConst extends UDAConst {
             1, 4, 4, 4, 2,//45-49
             0, 0, 0, 0, 0,//50-54
             1, 0, 0, 0, 0,//55-59
-            0, 0, 0, 0, 0,
+            0, 4, 4, 4, 4,//60-64
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,

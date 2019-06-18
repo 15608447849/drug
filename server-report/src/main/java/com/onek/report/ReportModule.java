@@ -10,6 +10,7 @@ import com.onek.entitys.Result;
 import com.onek.report.col.ColTotal;
 import com.onek.report.service.OrderAnalysisServiceImpl;
 import com.onek.report.service.MarketAnalysisServiceImpl;
+import com.onek.report.service.ProductAnalysisServiceImpl;
 import org.hyrdpf.ds.AppConfig;
 import util.MathUtil;
 import util.StringUtils;
@@ -27,6 +28,8 @@ import java.io.FileOutputStream;
 public class ReportModule {
 
     private static MarketAnalysisServiceImpl marketAnalysisService = new MarketAnalysisServiceImpl();
+
+    private static ProductAnalysisServiceImpl productAnalysisService = new ProductAnalysisServiceImpl();
 
     /**
      *
@@ -119,6 +122,7 @@ public class ReportModule {
 
     }
 
+
     /**
      *
      * 功能: 导出订单分析报表
@@ -166,11 +170,37 @@ public class ReportModule {
     }
 
 
-    public static void main(String[] args) {
+    /*public static void main(String[] args) {
         String r = new OrderAnalysisServiceImpl(0, 430100000000L, "2019-06").getExportPath();
         System.out.println(r);
-        System.exit(0);
-    }*/
+	}*/
+	
+	
+	
+    /*
+     * 功能: 商品报表
+     * 参数类型: json
+     * 参数集: year=年份 month=月份 areac=地区码 arean=地区名 type=报表类型
+     *         type详细说明: 0:日报; 1:日报(累计); 2:周报; 3:周报(累计); 4:月报; 5:月报(累计); 6:年报
+     * 返回值: code=200 data=结果信息 data.list=统计结果信息 data.sumtotal=合计信息
+     * 详情说明: 导出报表可复用
+     * 作者: liuhui
+     */
+    @UserPermission(ignore = true)
+    public Result pruductAnalysisByTime(AppContext appContext) {
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        int year = json.has("year") ? json.get("year").getAsInt() : 0;
+        int month = json.has("month") ? json.get("month").getAsInt() : 0;
+        int classno = json.has("classno") ? json.get("classno").getAsInt() : 0;
+        if(StringUtils.isEmpty(json.get("classno").getAsString()) || classno == 0){
+            classno = 10;
+        }
+        String classname = json.has("classname") ? json.get("classname").getAsString() : "";
+        int type = json.has("type") ? json.get("type").getAsInt() : 0;
 
+        JSONObject resultJson = productAnalysisService.pruductAnalysisByTime(year,month, classno,classname, type);
+
+        return new Result().success(resultJson);
+    }
 
 }

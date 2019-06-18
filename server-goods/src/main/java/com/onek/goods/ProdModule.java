@@ -1757,7 +1757,7 @@ public class ProdModule {
             mallFloorVO.setProdVOS(JSON.parseArray(jsonObject.getString("list")).toJavaList(ProdVO.class));
             jsonObject.remove("list");
         }
-        mallFloorVO.setOtherParams(jsonObject.toJSONString());
+        mallFloorVO.setOtherParams(jsonObject);
     }
 
 
