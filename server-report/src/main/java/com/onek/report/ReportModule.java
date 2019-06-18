@@ -129,17 +129,48 @@ public class ReportModule {
      * 日期: 2019/6/5 22:08
      * 作者: Helena Rubinstein
      */
-    public Result orderAnalysisExport(AppContext appContext) {
-        Result infoResult = orderAnalysisByTime(appContext);
+    public Result exportOrderAnalysis(AppContext appContext) {
+        JSONObject json = JSON.parseObject(appContext.param.json);
 
-        if (infoResult == null || infoResult.code != 200) {
-            return new Result().fail("导出失败");
+        try {
+            Integer year = json.getInteger("year");
+
+            if (year < 2019) {
+                return new Result().success(null);
+            }
+
+            Integer month = json.getInteger("month");
+            String date;
+
+            if (!MathUtil.isBetween(1, month, 12)) {
+                date = String.valueOf(year);
+            } else {
+                date = year + "-" + String.format("%02d", month);
+            }
+
+            String result =
+                    new OrderAnalysisServiceImpl(json.getIntValue("type"), json.getLongValue("areac"), date).getExportPath();
+
+            return new Result().success(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Result().fail("查询失败");
         }
-
-        ColTotal colTotal = (ColTotal) infoResult.data;
-
-
-        return new Result().success("");
     }
+
+    /*static {
+        *//**初始化LOG4J2日志环境*//*
+        AppConfig.initLogger("log4j2.xml");
+        *//**初始化应用程序环境，如数据源等*//*
+        AppConfig.initialize();
+    }
+
+
+    public static void main(String[] args) {
+        String r = new OrderAnalysisServiceImpl(0, 430100000000L, "2019-06").getExportPath();
+        System.out.println(r);
+        System.exit(0);
+    }*/
+
 
 }

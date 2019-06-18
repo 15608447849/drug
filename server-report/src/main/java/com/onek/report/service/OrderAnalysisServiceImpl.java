@@ -15,6 +15,7 @@ import util.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -535,12 +536,12 @@ public class OrderAnalysisServiceImpl {
             CellRangeAddress cellRangeAddress,
             HSSFSheet sheet) {
         sheet.addMergedRegion(cellRangeAddress);
-        setBorderStyle(HSSFCellStyle.BORDER_THIN, cellRangeAddress, sheet, sheet.getWorkbook());
+        setBorderStyle(HSSFCellStyle.BORDER_THIN, cellRangeAddress, sheet);
     }
 
     public String getExportPath() {
         ColTotal colTotal = getResult();
-//
+
         if (colTotal == null) {
             return null;
         }
@@ -598,6 +599,12 @@ public class OrderAnalysisServiceImpl {
                 return title;
             }
 
+            /*try (FileOutputStream bos = new FileOutputStream("D:/demo.xls")) {
+                hwb.write(bos);
+            }*/
+
+
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -605,12 +612,12 @@ public class OrderAnalysisServiceImpl {
         return null;
     }
 
-    public void setBorderStyle(int border, CellRangeAddress region, HSSFSheet sheet, HSSFWorkbook wb){
+    private void setBorderStyle(int border, CellRangeAddress region, HSSFSheet sheet){
         if (region != null) {
-            RegionUtil.setBorderBottom(border, region, sheet, wb);  //下边框
-            RegionUtil.setBorderLeft(border, region, sheet, wb);     //左边框
-            RegionUtil.setBorderRight(border, region, sheet, wb);    //右边框
-            RegionUtil.setBorderTop(border, region, sheet, wb);      //上边框
+            RegionUtil.setBorderBottom(border, region, sheet, sheet.getWorkbook());  //下边框
+            RegionUtil.setBorderLeft(border, region, sheet, sheet.getWorkbook());     //左边框
+            RegionUtil.setBorderRight(border, region, sheet, sheet.getWorkbook());    //右边框
+            RegionUtil.setBorderTop(border, region, sheet, sheet.getWorkbook());      //上边框
         }
     }
 
@@ -634,15 +641,15 @@ public class OrderAnalysisServiceImpl {
             insertItem(items.get(i), row);
         }
 
-
         if (startRow < currRow - 1) {
             addMergedRegion(new CellRangeAddress(startRow, currRow - 1, 0, 0), sheet);
         }
 
         row = sheet.createRow(currRow++);
         insertCell(0, row, "合计");
+        insertCell(1, row, group.getGroupLabel());
         insertCols(3, group.getEachCol(), row);
-        addMergedRegion(new CellRangeAddress(currRow - 1, currRow - 1, 0, 2), sheet);
+        addMergedRegion(new CellRangeAddress(currRow - 1, currRow - 1, 1, 2), sheet);
 
         return currRow;
     }

@@ -7,10 +7,7 @@ import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ColGroup implements IRowData, IDoubleCal {
     private static final Map<Long, String> NAMESTORE = new HashMap<>();
@@ -33,6 +30,13 @@ public class ColGroup implements IRowData, IDoubleCal {
     }
 
     public List<ColItem> getColItems() {
+        this.colItems.sort(new Comparator<ColItem>() {
+            @Override
+            public int compare(ColItem o1, ColItem o2) {
+                return (int) (o1.getAreac() - o2.getAreac());
+            }
+        });
+
         return colItems;
     }
 
