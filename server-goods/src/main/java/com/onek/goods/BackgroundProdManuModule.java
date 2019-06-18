@@ -61,6 +61,10 @@ public class BackgroundProdManuModule {
             return new Result().fail(e.getMessage());
         }
 
+        if (checkContains(prodManuVO.getManuname())) {
+            return new Result().fail("该厂商已存在！");
+        }
+
         long manuId = GenIdUtil.getUnqId();
 
         int result = BASE_DAO.updateNative(INSERT_PRODMANU_BASE,
@@ -69,6 +73,18 @@ public class BackgroundProdManuModule {
                         prodManuVO.getManuname(), prodManuVO.getManuname());
 
         return new Result().success(result > 0 ? manuId : 0);
+    }
+
+    private boolean checkContains(String manuname) {
+        String sql = " SELECT IFNULL(COUNT(0), 0) "
+                + " FROM {{?" + DSMConst.TD_PROD_MANU + "}} "
+                + " WHERE cstatus&1 = 0 AND manunameh = CRC32(?) "
+                + " AND manuname = ? ";
+
+        List<Object[]> queryResult =
+                BASE_DAO.queryNative(sql, manuname, manuname);
+
+        return !StringUtils.isBiggerZero(queryResult.get(0)[0].toString());
     }
 
     /**
