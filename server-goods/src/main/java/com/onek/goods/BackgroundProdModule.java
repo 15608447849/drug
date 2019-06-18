@@ -31,9 +31,11 @@ import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -76,12 +78,14 @@ public class BackgroundProdModule {
                     + " vaildsdate, vaildedate, "
                     + " prodsdate, prodedate, store, "
                     + " limits, wholenum, medpacknum, unit,"
-                    + " ondate, ontime, spec, cstatus, expmonth) "
+                    + " ondate, ontime, spec, cstatus, expmonth, "
+                    + " wp, erpsku) "
                     + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, "
-                    + " CURRENT_DATE, CURRENT_TIME, ?, ?, ?) ";
+                    + " CURRENT_DATE, CURRENT_TIME, ?, ?, ?,"
+                    + " ?, ?) ";
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -130,19 +134,18 @@ public class BackgroundProdModule {
 
     private static final String QUERY_BUS_SCOPE_BASE =
             " SELECT code, codename "
-            + " FROM {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
-            + " WHERE cstatus&1 = 0 ";
+                    + " FROM {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
+                    + " WHERE cstatus&1 = 0 ";
 
-      /**
-           *
-           * 功能: 商品上架
-           * 参数类型: arrays
-           * 参数集: [sku]
-           * 返回值: Result
-           * 详情说明:
-           * 日期: 2019/6/11 14:12
-           * 作者: Helena Rubinstein
-           */
+    /**
+     * 功能: 商品上架
+     * 参数类型: arrays
+     * 参数集: [sku]
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
 
 
     public Result onProd(AppContext appContext) {
@@ -187,7 +190,6 @@ public class BackgroundProdModule {
     }
 
     /**
-     *
      * 功能: 商品下架
      * 参数类型: arrays
      * 参数集: [sku]
@@ -246,7 +248,6 @@ public class BackgroundProdModule {
     }
 
     /**
-     *
      * 功能: 商品更新
      * 参数类型: json
      * 参数集: BgProdVO的json
@@ -367,9 +368,7 @@ public class BackgroundProdModule {
     }
 
 
-
     /**
-     *
      * 功能: 商品详情
      * 参数类型: arrays
      * 参数集: [sku]
@@ -430,7 +429,6 @@ public class BackgroundProdModule {
     }
 
     /**
-     *
      * 功能: 获取SPU信息
      * 参数类型: arrays
      * 参数集: [spu]
@@ -467,7 +465,6 @@ public class BackgroundProdModule {
 
 
     /**
-     *
      * 功能: 获取商品列表
      * 参数类型: arrays
      * 参数集: [商品名，厂家码，规格，准号，有效期，是否上架，spu，通用名]
@@ -548,23 +545,8 @@ public class BackgroundProdModule {
         return new Result().setQuery(result, pageHolder);
     }
 
-    /**
-     *
-     * 功能: 商品新增
-     * 参数类型: json
-     * 参数集: BgProdVO的json
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
-     */
-
-    public Result addProd(AppContext appContext) {
-        BgProdVO bgProdVO;
+    private BgProdVO addProd(BgProdVO bgProdVO) {
         try {
-            bgProdVO =
-                    JSON.parseObject(appContext.param.json, BgProdVO.class);
-
             if (bgProdVO == null) {
                 throw new IllegalArgumentException("VO is NULL");
             }
@@ -574,10 +556,11 @@ public class BackgroundProdModule {
             bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
             bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp(), 100).intValue());
             bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp(), 100).intValue());
+            bgProdVO.setWp(MathUtil.exactMul(bgProdVO.getWp(), 100).intValue());
             bgProdVO.setSkuCstatus(bgProdVO.getSkuCstatus() | 256);
         } catch (Exception e) {
             e.printStackTrace();
-            return new Result().fail(e.getMessage());
+            throw new IllegalArgumentException(e);
         }
 
         String spu = containsSPU(bgProdVO);
@@ -586,11 +569,12 @@ public class BackgroundProdModule {
             try {
                 spu = getNextSPU(bgProdVO.getClassNo(), bgProdVO.getStandarNo(), bgProdVO.getForm());
             } catch (Exception e) {
-                return new Result().fail(e.getMessage());
+                e.printStackTrace();
+                throw new IllegalArgumentException(e);
             }
 
             if (spu == null) {
-                return new Result().fail("SPU生成失败");
+                throw new IllegalArgumentException("SPU生成失败");
             }
         }
 
@@ -600,7 +584,7 @@ public class BackgroundProdModule {
             long spu_crease = RedisUtil.getStringProvide().increase(spu);
 
             if (spu_crease > 99) {
-                return new Result().fail("SKU满了");
+                throw new IllegalArgumentException("SKU满了");
             }
 
             String sku = spu + String.format("%02d", spu_crease);
@@ -644,6 +628,7 @@ public class BackgroundProdModule {
                     bgProdVO.getStore(), bgProdVO.getLimits(),
                     bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getUnit(),
                     bgProdVO.getSpec(), bgProdVO.getSkuCstatus(), bgProdVO.getExpmonth(),
+                    bgProdVO.getWp(), bgProdVO.getErpcode(),
             });
 
             RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
@@ -651,7 +636,7 @@ public class BackgroundProdModule {
 
             if (esResult != 0) {
                 RedisUtil.getStringProvide().decrease(spu);
-                return new Result().fail("操作失败");
+                throw new IllegalArgumentException("操作失败");
             }
 
             try {
@@ -662,7 +647,7 @@ public class BackgroundProdModule {
                 e.printStackTrace();
                 ProdESUtil.deleteProdDocument(Long.parseLong(sku));
                 RedisUtil.getStringProvide().decrease(spu);
-                return new Result().fail("SQL异常");
+                throw new IllegalArgumentException("SQL异常");
             }
         }
 
@@ -670,6 +655,33 @@ public class BackgroundProdModule {
         bgProdVO.setVatp(MathUtil.exactDiv(bgProdVO.getVatp(), 100).intValue());
         bgProdVO.setMp(MathUtil.exactDiv(bgProdVO.getMp(), 100).intValue());
         bgProdVO.setRrp(MathUtil.exactDiv(bgProdVO.getRrp(), 100).intValue());
+        bgProdVO.setWp(MathUtil.exactDiv(bgProdVO.getWp(), 100).intValue());
+
+        return bgProdVO;
+    }
+
+    /**
+     * 功能: 商品新增
+     * 参数类型: json
+     * 参数集: BgProdVO的json
+     * 返回值: Result
+     * 详情说明:
+     * 日期: 2019/6/11 14:12
+     * 作者: Helena Rubinstein
+     */
+
+    public Result addProd(AppContext appContext) {
+        BgProdVO bgProdVO;
+        try {
+            bgProdVO =
+                    JSON.parseObject(appContext.param.json, BgProdVO.class);
+
+            addProd(bgProdVO);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Result().fail(e.getMessage());
+        }
+
 
         return new Result().success(bgProdVO);
     }
@@ -702,7 +714,6 @@ public class BackgroundProdModule {
     }
 
     /**
-     *
      * 功能: 获取经营范围
      * 参数类型:
      * 参数集:
@@ -738,7 +749,7 @@ public class BackgroundProdModule {
         }
 
         String classNo = spuStr.substring(1, 7);
-        String formNo = spuStr.substring(10, 12);
+        String formNo  = spuStr.substring(10, 12);
 
         return new String[] { classNo, formNo };
     }
@@ -930,6 +941,138 @@ public class BackgroundProdModule {
         }
     }
 
+    public Result importProdFromERP(AppContext appContext) {
+        JSONObject erpProd =
+                JSON.parseObject(appContext.param.json);
+
+        if (erpProd == null) {
+            return new Result().fail("参数格式错误！");
+        }
+
+        long erpcode = erpProd.getLongValue("erpcode");
+
+        if (erpcode <= 0) {
+            return new Result().fail("非法唯一码！");
+        }
+
+        BgProdVO bgProd = getProdByERPCode(erpcode);
+
+        try {
+            if (bgProd == null) {
+                // 插入
+                bgProd = JSON.toJavaObject(erpProd, BgProdVO.class);
+                bgProd.setDetail("[{\"name\": \"功能主治\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"主要成分\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"用法用量\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"不良反应\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"id\": 50, \"name\": \"注意事项\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"禁忌\", \"isShow\": true, \"content\": \"\", \"required\": false}]");
+                if (StringUtils.isEmpty(bgProd.getProdname())) {
+                    bgProd.setProdname(bgProd.getPopname());
+                }
+                setVaildDate(bgProd);
+                addProd(bgProd);
+            } else {
+                // 修改
+                int freezeStore = getFreezeStore(bgProd.getSku());
+
+                if (freezeStore < 0) {
+                    return new Result().fail("该商品不存在！");
+                }
+
+                bgProd.setBusscope(erpProd.getInteger("busscope"));
+                bgProd.setSpec(erpProd.getString("spec"));
+                bgProd.setUnit(erpProd.getIntValue("unit"));
+                bgProd.setQsc(erpProd.getString("qsc"));
+                bgProd.setWp(erpProd.getDoubleValue("wp") * 100);
+                bgProd.setGspSC(erpProd.getIntValue("gspSC"));
+                bgProd.setRx(erpProd.getIntValue("rx"));
+                bgProd.setGspGMS(erpProd.getIntValue("gspGMS"));
+                bgProd.setExpmonth(erpProd.getIntValue("expmonth"));
+                bgProd.setProdsdate(erpProd.getString("prodsdate"));
+                bgProd.setProdedate(erpProd.getString("prodedate"));
+                setVaildDate(bgProd);
+
+                if (erpProd.getIntValue("store") < freezeStore) {
+//                if (checkStore(bgProd.getSku(), erpProd.getIntValue("store"))) {
+                    bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
+                } else {
+                    bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
+                    bgProd.setStore(erpProd.getIntValue("store"));
+                }
+
+                int esResult = ProdESUtil.updateProdDocument(bgProd);
+
+                if (esResult != 0) {
+                    return new Result().fail("操作失败");
+                }
+
+                RedisStockUtil.setStock(bgProd.getSku(), bgProd.getStore());
+
+                String updateSql =
+                        " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} sku, "
+                        + " {{?" + DSMConst.TD_PROD_SPU + "}} spu "
+                        + " SET spu.rx = ?, spu.gspgms = ?, spu.gspsc = ?, spu.qsc = ?, spu.busscope = ?, "
+                        + " sku.vaildsdate = ?, sku.vaildedate = ?, sku.prodsdate = ?, sku.prodedate = ?, sku.store = ?, "
+                        + " sku.unit = ?, sku.spec = ?, sku.cstatus = ?, sku.expmonth = ?, sku.wp = ? "
+                        + " WHERE sku.spu = spu.spu AND sku.sku = ? ";
+
+                BASE_DAO.updateNative(updateSql,
+                        bgProd.getRx(), bgProd.getGspGMS(), bgProd.getGspSC(), bgProd.getQsc(), bgProd.getBusscope(),
+                        bgProd.getVaildsdate(), bgProd.getVaildedate(), bgProd.getProdsdate(), bgProd.getProdedate(), bgProd.getStore(),
+                        bgProd.getUnit(), bgProd.getSpec(), bgProd.getSkuCstatus(), bgProd.getExpmonth(), bgProd.getWp(),
+                        bgProd.getSku());
+
+            }
+        } catch (Exception e) {
+            return new Result().fail(e.getMessage());
+        }
+
+        return new Result().success();
+    }
+
+    private int getFreezeStore(long sku) {
+        if (sku <= 0) {
+            return -1;
+        }
+
+        List<Object[]> queryResult =
+                BASE_DAO.queryNative("SELECT freezestore "
+                    + " FROM {{?" + DSMConst.TD_PROD_SKU + "}} "
+                    + " WHERE cstatus&1 = 0 AND sku = ? ", sku);
+
+        if (queryResult.isEmpty()) {
+            return -1;
+        }
+
+        return Integer.parseInt(queryResult.get(0)[0].toString());
+    }
+
+    private void setVaildDate(BgProdVO bgProdVO) {
+        Calendar date = Calendar.getInstance();
+        date.setTime(TimeUtils.str_yMd_2Date(bgProdVO.getProdsdate()));
+        date.add(Calendar.MONTH, bgProdVO.getExpmonth());
+        bgProdVO.setVaildsdate(TimeUtils.date_yMd_2String(date.getTime()));
+
+        date.setTime(TimeUtils.str_yMd_2Date(bgProdVO.getProdedate()));
+        date.add(Calendar.MONTH, bgProdVO.getExpmonth());
+        bgProdVO.setVaildedate(TimeUtils.date_yMd_2String(date.getTime()));
+    }
+
+    private BgProdVO getProdByERPCode(long erpCode) {
+        if (erpCode <= 0) {
+            return null;
+        }
+
+        List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_PROD_BASE + " AND sku.erpsku = ? ", erpCode);
+
+        if (queryResult.isEmpty()) {
+            return null;
+        }
+
+        BgProdVO[] returnResults = new BgProdVO[queryResult.size()];
+
+        BASE_DAO.convToEntity(queryResult, returnResults, BgProdVO.class);
+
+        return returnResults[0];
+    }
+
+
     /**
      * 药品减价通知
      */
@@ -948,7 +1091,7 @@ public class BackgroundProdModule {
         @Override
         public void run() {
             LogUtil.getDefaultLogger().info("++++++ prod reduce price sendMsg start +++++++");
-            SearchResponse response = null;
+            SearchResponse response;
             try {
                 BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
                 TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.COLLECT_COLUMN_SKU, sku + "");
@@ -996,4 +1139,5 @@ public class BackgroundProdModule {
             LogUtil.getDefaultLogger().info("++++++ prod reduce price sendMsg end +++++++");
         }
     }
+
 }

@@ -66,6 +66,15 @@ public class ProdEntity {
     private String rxName;
     private String insuranceName;
     private String unitName;
+    private String erpcode;
+
+    public String getErpcode() {
+        return erpcode;
+    }
+
+    public void setErpcode(String erpcode) {
+        this.erpcode = erpcode;
+    }
 
     public long getSpu() {
         return spu;

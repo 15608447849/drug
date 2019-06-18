@@ -6,69 +6,78 @@ import redis.annation.GetDictWay;
 public class BgProdVO implements Cloneable{
     /* ----------- 商品SPU表 ------------- */
     private long spu;
-    private String popname;
-    private String prodname;
-    private String standarNo;
-    private long brandNo;
+    private String popname;   // 通用名
+    private String prodname;  // 商品名
+    private String standarNo;  // 批准文号
+    private long brandNo;  // 品牌码
     private String brandName;
-    private long manuNo;
+    private long manuNo; // 厂商码
     private String manuName;
 
     @DictCacheField(reflectcolumn ="rxName")
-    private int rx;
+    private int rx; // 处方药标记
 
     @DictCacheField(reflectcolumn ="insuranceName")
-    private int insurance;
+    private int insurance; // 医保药码
 
-    private int gspGMS;
-    private int gspSC;
-    private String detail;
+    private int gspGMS;  // GSP质量管理标准码
+    private int gspSC;  // GSP存储条件码
+    private String detail; // 商品详情
     private String spuCstatus;
-    private String qsc;
-    private int busscope;
+    private String qsc;  // 商品名快找码
+    private int busscope; // 经营范围
     private String busscopen;
 
     /* ----------- 商品SKU表 ------------- */
     private long sku;
-    private double vatp;
-    private double mp;
-    private double rrp;
-    private String vaildsdate;
-    private String vaildedate;
-    private String prodsdate;
-    private String prodedate;
+    private double vatp;  // 含税价
+    private double mp;  // 市场价
+    private double rrp; // 零售价
+    private String vaildsdate; // 有效期起
+    private String vaildedate; // 有效期止
+    private String prodsdate; // 生产日期起
+    private String prodedate; // 生产日期止
 
-    private int store;
+    private int store;  // 库存
     private int limits;
-    private int sales;
-    private int wholenum;
-    private int medpacknum;
+    private int sales; // 销售量
+    private int wholenum; // 件装量
+    private int medpacknum; // 中包装
 
     @DictCacheField(reflectcolumn ="unitName")
-    private int unit;
+    private int unit; // 单位
 
-    private String ondate;
-    private String ontime;
-    private String offdate;
-    private String offtime;
-    private String spec;
+    private String ondate; // 上架日期
+    private String ontime; // 上架时间
+    private String offdate; // 下架日期
+    private String offtime; // 下架时间
+    private String spec; // 规格
 
-    private int prodstatus;
-    private int imagestatus;
+    private int prodstatus; // 商品状态
+    private int imagestatus; // 商品图片码
     private int skuCstatus;
-    private int expmonth;
-    private double wp;
+    private int expmonth; // 有效期月数
+    private double wp; // 批发价
 
 
-    private long classNo;
+    private long classNo;  // 类别码
     private String className;
 
     @DictCacheField(reflectcolumn ="formName", type = "dosageform", dictWay = GetDictWay.CUSTOMC_AND_TYPE)
-    private int form;
+    private int form; // 剂型码
     private String formName;
     private String rxName;
     private String insuranceName;
     private String unitName;
+    private String erpcode; // erp唯一码
+
+    public String getErpcode() {
+        return erpcode;
+    }
+
+    public void setErpcode(String erpcode) {
+        this.erpcode = erpcode;
+    }
 
     public long getSpu() {
         return spu;
