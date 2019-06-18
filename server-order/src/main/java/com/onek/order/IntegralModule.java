@@ -203,4 +203,33 @@ public class IntegralModule {
         return result.setQuery(integralDetails, pageHolder);
     }
 
+
+    /**
+     * 根据查询当前企业用户积分明细获取签到明细
+     * add by liaoz 2019年6月18日
+     * @param appContext 入参[开始时间，结束时间]（当前时间月份开始，当前时间月份结束）
+     * @return {code==200，data:[{积分来源（此处为签到来源）,生成时间（签到时间）}]}
+     */
+    public Result queryIntegralDetailBySign(AppContext appContext){
+        Result result = new Result();
+        String[] arrays = appContext.param.arrays;
+
+        String beginDate = arrays[0];//开始时间
+        String endDate = arrays[1];//结束时间
+        System.out.println("BEGIN = " + beginDate + " END = " + endDate);
+        int compid = appContext.getUserSession().compId;
+        if(compid <= 0){
+            return result.fail("企业码不能为空！");
+        }
+        StringBuilder sqlBuilder = new StringBuilder();
+        //查询签到所获积分明细===》获取签到时间
+        sqlBuilder.append(SELECT_INTEGRAL_DETAIL_BY_COMP).append(" and istatus = '1'");
+        //根据时间，当前月份查询
+        sqlBuilder.append(" and createdate between ? and ? ");
+        List<Object[]> queryList = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), sqlBuilder.toString(), compid,beginDate,endDate);
+        IntegralDetailVO[] integralDetails = new IntegralDetailVO[queryList.size()];
+        baseDao.convToEntity(queryList, integralDetails, IntegralDetailVO.class,new String[]{
+                "istatus","createdate"});
+        return result.success(integralDetails);
+    }
 }
