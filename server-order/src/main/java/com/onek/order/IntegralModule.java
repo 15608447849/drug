@@ -228,8 +228,7 @@ public class IntegralModule {
         sqlBuilder.append(" and createdate between ? and ? ");
         List<Object[]> queryList = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), sqlBuilder.toString(), compid,beginDate,endDate);
         IntegralDetailVO[] integralDetails = new IntegralDetailVO[queryList.size()];
-        baseDao.convToEntity(queryList, integralDetails, IntegralDetailVO.class,new String[]{
-                "istatus","createdate"});
+        baseDao.convToEntity(queryList, integralDetails, IntegralDetailVO.class,new String[]{"istatus","integral","busid","createdate", "createtime"});
         return result.success(integralDetails);
     }
 }
