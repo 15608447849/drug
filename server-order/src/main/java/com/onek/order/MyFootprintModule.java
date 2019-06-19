@@ -187,7 +187,18 @@ public class MyFootprintModule {
                     items.add(rit);
                 }
                 try {
-                    rit.list.add(IceRemoteUtil.getProdBySku(Long.parseLong(it.sku)));
+                    /**
+                     * add by liaozhou 2019年6月19日
+                     * 判断查看我的足迹时登陆账号是否已认证，认证显示价格，反之显示未认证
+                     */
+                    ProdEntity prod =  IceRemoteUtil.getProdBySku(Long.parseLong(it.sku));
+                    if(appContext.isAnonymous()){
+                        prod.setMp(-1);
+                        prod.setRrp(-1);
+                        prod.setVatp(-1);
+                    }
+                    /*add end */
+                    rit.list.add(prod);
                 } catch (Exception e) {
                     e.printStackTrace();
                 }

@@ -941,6 +941,7 @@ public class BackgroundProdModule {
         }
     }
 
+    @UserPermission(ignore = true)
     public Result importProdFromERP(AppContext appContext) {
         JSONObject erpProd =
                 JSON.parseObject(appContext.param.json);

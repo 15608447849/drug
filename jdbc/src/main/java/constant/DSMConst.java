@@ -79,7 +79,11 @@ public interface DSMConst extends UDAConst {
             {"v_pd_sales_mons"}, //61 月销售统计报表
             {"v_pd_sales_days"}, //62 日销售统计报表
             {"v_pd_sales_weeks"}, //63 周销售统计报表
-            {"v_pd_sales_years"} //64 年销售统计报表
+            {"v_pd_sales_years"}, //64 年销售统计报表
+            {"v_sku_new_days"}, //65 SKU新增记录天统计报表
+            {"v_sku_new_mons"}, //66 SKU新增记录月统计报表
+            {"v_sku_new_weeks"}, //67 SKU新增记录周销售统计报表
+            {"v_sku_new_years"} //68 SKU新增记录年销售统计报表
 
     };
 
@@ -153,6 +157,11 @@ public interface DSMConst extends UDAConst {
     public final static int V_PD_SALES_WEEKS = 63;
     public final static int V_PD_SALES_YEARS = 64;
 
+    public final static int V_SKU_NEW_DAY = 65;
+    public final static int V_SKU_NEW_MONS = 66;
+    public final static int V_SKU_NEW_WEEKS = 67;
+    public final static int V_SKU_NEW_YEARS = 68;
+
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
     // 索引必须同_DB_TABLES里的索引对应
@@ -170,7 +179,7 @@ public interface DSMConst extends UDAConst {
             0, 0, 0, 0, 0,//50-54
             1, 0, 0, 0, 0,//55-59
             0, 4, 4, 4, 4,//60-64
-            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0,//65-68
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
