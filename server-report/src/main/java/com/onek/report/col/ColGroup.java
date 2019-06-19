@@ -42,6 +42,16 @@ public class ColGroup implements IRowData, IDoubleCal {
         return colItems;
     }
 
+    public int getCompTotal() {
+        int total = 0;
+
+        for (ColItem colItem : colItems) {
+            total += colItem.getCompNum();
+        }
+
+        return total;
+    }
+
     public String getGroupLabel() {
         if (groupLable != null) {
             return groupLable;

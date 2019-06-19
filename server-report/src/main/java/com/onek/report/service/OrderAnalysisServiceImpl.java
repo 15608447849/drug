@@ -105,11 +105,11 @@ public class OrderAnalysisServiceImpl {
     };
 
     private enum REPORTTYPE {
-        DAY_SIP(0, 0, "天报(单天)"),
+        DAY_SIP(0, 0, "天报"),
         DAY_ACC(1, 0, "天报(累计)"),
-        WEEK_SIP(0, 1, "周报(单天)"),
+        WEEK_SIP(0, 1, "周报"),
         WEEK_ACC(1, 1, "周报(累计)"),
-        MONTH_SIP(0, 2, "月报(单天)"),
+        MONTH_SIP(0, 2, "月报"),
         MONTH_ACC(1, 2, "月报(累计)"),
         YEAR_SIP(0, 3, "年报");
 
@@ -686,6 +686,7 @@ public class OrderAnalysisServiceImpl {
         row = sheet.createRow(currRow++);
         insertCell(0, row, "合计");
         insertCell(1, row, group.getGroupLabel());
+//        insertCell(2, row, group.getCompTotal());
         insertCols(3, group.getEachCol(), row);
         addMergedRegion(new CellRangeAddress(currRow - 1, currRow - 1, 1, 2), sheet);
 
