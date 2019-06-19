@@ -65,7 +65,7 @@ public class BackgroundProdManuModule {
             return new Result().fail("该厂商已存在！");
         }
 
-        long manuId = GenIdUtil.getUnqId();
+        long manuId = prodManuVO.getManuno() == 0 ? GenIdUtil.getUnqId() : prodManuVO.getManuno();
 
         int result = BASE_DAO.updateNative(INSERT_PRODMANU_BASE,
                         manuId, prodManuVO.getManuname(), prodManuVO.getManuname(),
