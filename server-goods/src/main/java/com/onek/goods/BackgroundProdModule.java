@@ -978,14 +978,14 @@ public class BackgroundProdModule {
             bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
         } else {
             bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
-            bgProd.setStore(erpProd.getIntValue("store"));
+            bgProd.setStore(store);
         }
 
         String updateSQL = " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
                 + " SET store = ?, cstatus = ? "
                 + " WHERE erpcode = ? ";
 
-        BASE_DAO.updateNative(updateSQL, store, bgProd.getSkuCstatus(), erpcode);
+        BASE_DAO.updateNative(updateSQL, bgProd.getStore(), bgProd.getSkuCstatus(), erpcode);
 
         return new Result().success();
     }
