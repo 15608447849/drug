@@ -46,6 +46,9 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
 
+import static com.onek.util.IceRemoteUtil.getGroupCount;
+import static com.onek.util.IceRemoteUtil.remoteQueryShopCartNumBySku;
+
 /**
  * 商城商品模块
  *
@@ -428,6 +431,8 @@ public class ProdModule {
             result.put("list", prodVOList);
             result.put("ladoffArray", ladOffArray);
             result.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+            result.put("currNums",getGroupCount(actCodeList.get(0)));
+
         }
         return new Result().success(result);
     }
@@ -1658,6 +1663,13 @@ public class ProdModule {
             getSuccessResult(mallFloorVOList, appContext);
             for (MallFloorVO aMallFloorVOList : mallFloorVOList) {
                 if (aMallFloorVOList.getProdVOS() != null && aMallFloorVOList.getProdVOS().size() > 5) {
+                    if (!appContext.isAnonymous()){
+                        List<ProdVO> list = aMallFloorVOList.getProdVOS();
+                        for (ProdVO p : list){
+                            p.cart = remoteQueryShopCartNumBySku(appContext.getUserSession().compId,p.getSku());
+                        }
+                    }
+
                     newMallFloor.add(aMallFloorVOList);
                 }
             }
@@ -1745,7 +1757,7 @@ public class ProdModule {
             mallFloorVO.setProdVOS(JSON.parseArray(jsonObject.getString("list")).toJavaList(ProdVO.class));
             jsonObject.remove("list");
         }
-        mallFloorVO.setOtherParams(jsonObject.toJSONString());
+        mallFloorVO.setOtherParams(jsonObject);
     }
 
 
