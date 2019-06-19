@@ -11,11 +11,12 @@ import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.util.CellRangeAddress;
 import org.apache.poi.ss.util.RegionUtil;
+import org.hyrdpf.ds.AppConfig;
+import util.MathUtil;
 import util.StringUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileOutputStream;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -27,7 +28,17 @@ import java.util.concurrent.TimeUnit;
 import static com.onek.util.fs.FileServerUtils.getExcelDownPath;
 
 public class OrderAnalysisServiceImpl {
-    private static final Map<Long, String[]> areaStore = new HashMap<>();
+//    static {
+//        /**初始化LOG4J2日志环境*/
+//        AppConfig.initLogger("log4j2.xml");
+//        /**初始化应用程序环境，如数据源等*/
+//        AppConfig.initialize();
+//    }
+//
+//    public static void main(String[] args) {
+//        new OrderAnalysisServiceImpl(0, 430000000000L, "2019-06").getResult();
+//    }
+
 
     private static final String[][] GROUPS = {
             {
@@ -94,11 +105,11 @@ public class OrderAnalysisServiceImpl {
     };
 
     private enum REPORTTYPE {
-        DAY_SIP(0, 0, "天报(单天)"),
+        DAY_SIP(0, 0, "天报"),
         DAY_ACC(1, 0, "天报(累计)"),
-        WEEK_SIP(0, 1, "周报(单天)"),
+        WEEK_SIP(0, 1, "周报"),
         WEEK_ACC(1, 1, "周报(累计)"),
-        MONTH_SIP(0, 2, "月报(单天)"),
+        MONTH_SIP(0, 2, "月报"),
         MONTH_ACC(1, 2, "月报(累计)"),
         YEAR_SIP(0, 3, "年报");
 
@@ -218,12 +229,25 @@ public class OrderAnalysisServiceImpl {
                 returnMap = resultMap;
             }
 
-            ColTotal returnCol = new ColTotal(new ArrayList<>(returnMap.values()));
+            boolean isAcc = (this.reportType.status & 1) > 0;
+
+            ColTotal returnCol = new ColTotal(
+                    new ArrayList<>(returnMap.values()), isAcc);
 
             returnCol.getColGroups().sort(COL_GROUP_COMPARATOR[this.reportType.type]);
 
-            if ((this.reportType.status & 1) > 0) {
+            if (isAcc) {
                 accResult(returnCol);
+            }
+
+            for (ColGroup colGroup : returnCol.getColGroups()) {
+                for (ColItem colItem : colGroup.getColItems()) {
+                    colItem.getCompPrice().setAvg(
+                            MathUtil.exactDiv(
+                                    colItem.getGmv().getTotal(),
+                                    colItem.getOrderNum().getTotal()).doubleValue()
+                    );
+                }
             }
 
             return returnCol;
@@ -244,22 +268,49 @@ public class OrderAnalysisServiceImpl {
             return;
         }
 
-        ColGroup last = groups.get(0);
-        ColGroup curr;
+        ColGroup lastGroup = groups.get(0);
+        ColGroup currGroup;
         for (int i = 1; i < groups.size(); i++) {
-            curr = groups.get(i);
-            for (ColItem lastItem : last.getColItems()) {
-                ColItem currItem = findReturnResult(curr, lastItem.getAreac());
+            currGroup = groups.get(i);
+            for (ColItem lastItem : lastGroup.getColItems()) {
+                ColItem currItem = findReturnResult(currGroup, lastItem.getAreac());
 
                 if (currItem == null) {
-                    curr.getColItems().add(lastItem);
+                    currGroup.getColItems().add(lastItem);
                 } else {
                     currItem.accItem(lastItem);
                 }
-
             }
+
+            lastGroup = currGroup;
         }
 
+    }
+
+    private void getSuccessNum() {
+        String sql =
+                getSelectHead() + ", "
+                        + " COUNT( DISTINCT o.orderno ) total, "
+                        + " COUNT( ao.astype = 1 || NULL ) ret, "
+                        + " COUNT( DISTINCT ao.orderno ) back "
+                        + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} o "
+                        + " LEFT JOIN ( SELECT orderno, astype "
+                        + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} a "
+                        + " WHERE a.cstatus&1 = 0  AND (a.ckstatus = 1 OR a.ckstatus = 200) "
+                        + " GROUP BY orderno, astype ) ao ON o.orderno = ao.orderno "
+                        + where + " AND (ostatus > 0 OR ostatus = -2 OR ostatus = -3) AND settstatus > 0 "
+                        + groupBy + this.orderBy;
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO()
+                .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
+
+        SuccessNum[] canceledNums = new SuccessNum[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, canceledNums, SuccessNum.class);
+
+        for (SuccessNum canceledNum : canceledNums) {
+            putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
+        }
     }
 
     private void getSuccessVolume() {
@@ -268,10 +319,11 @@ public class OrderAnalysisServiceImpl {
                         + " CONVERT (SUM(pdamt + freight) / 100, DECIMAL ( 65, 2 )) total, "
                         + " CONVERT (SUM( ao.refee ) / 100 , DECIMAL ( 65, 2 )) ret  "
                         + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} o "
-                        + " LEFT JOIN ( SELECT orderno, SUM( a.refamt ) refee "
+                        + " LEFT JOIN ( SELECT orderno, SUM( IFNULL(a.refamt, 0) ) refee "
                         + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} a "
-                        + " WHERE a.astype = 1 GROUP BY orderno) ao ON o.orderno = ao.orderno "
-                        + where + " AND (ostatus > 0 OR ostatus = -2) AND settstatus > 0 "
+                        + " WHERE a.cstatus&1 = 0 AND (a.ckstatus = 1 OR a.ckstatus = 200) "
+                        + " GROUP BY orderno) ao ON o.orderno = ao.orderno "
+                        + where + " AND (ostatus > 0 OR ostatus = -2 OR ostatus = -3) AND settstatus > 0 "
                         + groupBy + this.orderBy;
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
@@ -290,6 +342,31 @@ public class OrderAnalysisServiceImpl {
         }
     }
 
+    private void getCompPrice() {
+        String sql =
+                getSelectHead() + ", "
+                        + " CONVERT(MAX(pdamt + freight) / 100, DECIMAL(65, 2)) max, "
+                        + " CONVERT(MIN(pdamt + freight) / 100, DECIMAL(65, 2)) min, "
+                        + " CONVERT(AVG(pdamt + freight) / 100, DECIMAL(65, 2)) avg "
+                        + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
+                        + where + " AND (((ostatus > 0 OR ostatus = -2 OR ostatus = -3) AND settstatus > 0) OR ostatus = -4) " + groupBy + this.orderBy;
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO()
+                .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
+
+        CompPrice[] canceledNums = new CompPrice[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, canceledNums, CompPrice.class);
+
+        for (CompPrice canceledNum : canceledNums) {
+            putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
+        }
+    }
+
+    private String getSelectHead() {
+        return " SELECT RPAD(LEFT(rvaddno, " + getAreaLeftNum() + "), 12, 0) areac, "
+                + GROUPS[0][this.reportType.type];
+    }
 
     private void getCancelVolume() {
         String sql =
@@ -310,56 +387,6 @@ public class OrderAnalysisServiceImpl {
         for (CancelVolume canceledNum : canceledNums) {
             putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
         }
-    }
-
-    private void getSuccessNum() {
-        String sql =
-                getSelectHead() + ", "
-                        + " COUNT( DISTINCT o.orderno ) total, "
-                        + " COUNT( ao.astype = 1 || NULL ) ret, "
-                        + " COUNT( DISTINCT ao.orderno ) back "
-                        + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} o "
-                        + " LEFT JOIN ( SELECT orderno, astype "
-                        + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} a "
-                        + " GROUP BY orderno, astype ) ao ON o.orderno = ao.orderno "
-                        + where + " AND (ostatus > 0 OR ostatus = -2) AND settstatus > 0 " + groupBy + this.orderBy;
-
-        List<Object[]> queryResult = BaseDAO.getBaseDAO()
-                .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
-
-        SuccessNum[] canceledNums = new SuccessNum[queryResult.size()];
-
-        BaseDAO.getBaseDAO().convToEntity(queryResult, canceledNums, SuccessNum.class);
-
-        for (SuccessNum canceledNum : canceledNums) {
-            putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
-        }
-    }
-
-    private void getCompPrice() {
-        String sql =
-                getSelectHead() + ", "
-                        + " CONVERT(MAX(pdamt + freight) / 100, DECIMAL(65, 2)) max, "
-                        + " CONVERT(MIN(pdamt + freight) / 100, DECIMAL(65, 2)) min, "
-                        + " CONVERT(AVG(pdamt + freight) / 100, DECIMAL(65, 2)) avg "
-                        + " FROM {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} "
-                        + where + " AND (ostatus > 0 OR ostatus = -2) AND settstatus > 0 " + groupBy + this.orderBy;
-
-        List<Object[]> queryResult = BaseDAO.getBaseDAO()
-                .queryNativeSharding(Integer.parseInt(date.split("-")[0]), 0, sql, params);
-
-        CompPrice[] canceledNums = new CompPrice[queryResult.size()];
-
-        BaseDAO.getBaseDAO().convToEntity(queryResult, canceledNums, CompPrice.class);
-
-        for (CompPrice canceledNum : canceledNums) {
-            putMap(canceledNum, canceledNum.getAreac(), canceledNum.getDate());
-        }
-    }
-
-    private String getSelectHead() {
-        return " SELECT RPAD(LEFT(rvaddno, " + getAreaLeftNum() + "), 12, 0) areac, "
-                + GROUPS[0][this.reportType.type];
     }
 
     private void getCanceledNum() {
@@ -444,8 +471,13 @@ public class OrderAnalysisServiceImpl {
     private String getWhere() {
         StringBuilder sb = new StringBuilder(" WHERE 1=1 ");
 
-        sb.append(" AND rvaddno LIKE ? ");
-        sb.append(" AND rvaddno <> ? ");
+        if (!isBottom()) {
+            sb.append(" AND rvaddno LIKE ? ");
+            sb.append(" AND rvaddno <> ? ");
+        } else {
+            sb.append(" AND rvaddno = ? ");
+        }
+
         if (date.contains("-")) {
             sb.append(" AND DATE_FORMAT(odate, '%Y-%m') = ? ");
         } else {
@@ -455,8 +487,14 @@ public class OrderAnalysisServiceImpl {
         return sb.toString();
     }
 
+    private boolean isBottom() {
+        return this.areac > 0 && AreaUtil.getLayer(this.areac) >= 2;
+    }
+
     private Object[] getWhereParams() {
-        return new Object[] { getWhereLike(), this.areac, this.date };
+        return isBottom()
+                ? new Object[] { this.areac, this.date }
+                : new Object[] { getWhereLike(), this.areac, this.date };
     }
 
     private String getWhereLike(long areac) {
@@ -648,6 +686,7 @@ public class OrderAnalysisServiceImpl {
         row = sheet.createRow(currRow++);
         insertCell(0, row, "合计");
         insertCell(1, row, group.getGroupLabel());
+//        insertCell(2, row, group.getCompTotal());
         insertCols(3, group.getEachCol(), row);
         addMergedRegion(new CellRangeAddress(currRow - 1, currRow - 1, 1, 2), sheet);
 
