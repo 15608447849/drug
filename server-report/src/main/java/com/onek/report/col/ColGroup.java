@@ -6,6 +6,7 @@ import com.onek.report.init.ColInfo;
 import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import util.ArrayUtil;
 
 import java.util.*;
 
@@ -16,6 +17,7 @@ public class ColGroup implements IRowData, IDoubleCal {
     private String date;
     private String groupLable;
     private List<ColItem> colItems;
+
 
     public ColGroup() {
         this.colItems = new ArrayList<>();
@@ -101,23 +103,42 @@ public class ColGroup implements IRowData, IDoubleCal {
                 result = dataCol;
             } else {
                 for (int i = 0; i < result.length; i++) {
-                    if (i >= result.length - 3) {
-                        switch (i) {
-                            case ColInfo.COL_NUM_ORDERNUM_MAX:
-                                result[i] = Math.max(result[i], dataCol[i]);
-                                break;
-                            case ColInfo.COL_NUM_ORDERNUM_MIN:
-                                result[i] = Math.min(result[i], dataCol[i]);
-                                break;
-                        }
-                    } else {
-                        result[i] = addDouble(result[i], dataCol[i]);
+                    switch (ColInfo.COL_STATUS[i]) {
+                        case 0:
+                            result[i] = addDouble(result[i], dataCol[i]);
+                            break;
+                        case 1:
+                            result[i] = Math.max(result[i], dataCol[i]);
+                            break;
+                        case 2:
+                            result[i] = Math.min(result[i], dataCol[i]);
+                            break;
+                        case 3:
+                            break;
+                        case 4:
+                            if (i == 6) {
+                                result[i] = divDouble(result[4] * 100, result[3]);
+                            } else if (i == 7) {
+                                result[i] = divDouble(result[5] * 100, result[3]);
+                            } else if (i == 9) {
+                                result[i] = divDouble(result[3] * 100, result[8]);
+                            } else if (i == 15) {
+                                result[i] = divDouble(result[14] * 100, result[13]);
+                            } else if (i == 17) {
+                                result[i] = divDouble(result[13] * 100, result[16]);
+                            } else if (i == 20) {
+                                result[i] = divDouble(result[16], result[8]);
+                            }
+
+                            break;
                     }
                 }
             }
         }
 
-        result[ColInfo.COL_NUM_ORDERNUM_AVG] = divDouble(totalAvg, colItems.size());
+//        if (!ArrayUtil.isEmpty(result)) {
+//            result[ColInfo.COL_NUM_ORDERNUM_AVG] = divDouble(totalAvg, colItems.size());
+//        }
 
         return result;
     }

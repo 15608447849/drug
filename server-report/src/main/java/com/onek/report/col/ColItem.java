@@ -5,6 +5,7 @@ import com.onek.report.vo.*;
 import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.ds.AppConfig;
 import util.ArrayUtil;
 
 import java.util.HashMap;
@@ -21,6 +22,7 @@ public class ColItem implements IRowData {
     private long areac;
     private String arean;
     private int compNum;
+    private boolean flag1, flag2;
 
     public ColItem() {
         orderNum = new OrderNum();
@@ -136,7 +138,7 @@ public class ColItem implements IRowData {
     private void accCompPrice(CompPrice compPrice) {
         this.getCompPrice().addMax(compPrice.getMax());
         this.getCompPrice().addMin(compPrice.getMin());
-        this.getCompPrice().addAvg(compPrice.getAvg());
+//        this.getCompPrice().addAvg(compPrice.getAvg());
     }
 
     private void accOrderNum(OrderNum orderNum) {
