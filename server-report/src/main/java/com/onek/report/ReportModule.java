@@ -8,14 +8,11 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.report.col.ColTotal;
-import com.onek.report.service.OrderAnalysisServiceImpl;
 import com.onek.report.service.MarketAnalysisServiceImpl;
+import com.onek.report.service.OrderAnalysisServiceImpl;
 import com.onek.report.service.ProductAnalysisServiceImpl;
-import org.hyrdpf.ds.AppConfig;
 import util.MathUtil;
 import util.StringUtils;
-
-import java.io.FileOutputStream;
 
 
 /**
@@ -96,23 +93,24 @@ public class ReportModule {
         JSONObject json = JSON.parseObject(appContext.param.json);
 
         try {
-            Integer year = json.getInteger("year");
+            int year = json.getIntValue("year");
 
             if (year < 2019) {
                 return new Result().success(null);
             }
 
-            Integer month = json.getInteger("month");
+            int month = json.getIntValue("month");
+            int type = json.getIntValue("type");
             String date;
 
-            if (!MathUtil.isBetween(1, month, 12)) {
-                date = String.valueOf(year);
-            } else {
-                date = year + "-" + String.format("%02d", month);
+            try {
+                 date = genDateStr(year, month, type);
+            } catch (Exception e) {
+                return new Result().fail(e.getMessage());
             }
 
             ColTotal result =
-                    new OrderAnalysisServiceImpl(json.getIntValue("type"), json.getLongValue("areac"), date).getResult();
+                    new OrderAnalysisServiceImpl(type, json.getLongValue("areac"), date).getResult();
 
             return new Result().success(JSON.toJSON(result));
         } catch (Exception e) {
@@ -122,6 +120,27 @@ public class ReportModule {
 
     }
 
+    // 1-必有月; 2-必无月
+    private static final int[] TYPE_LIMIT = { 1, 1, 1, 1, 0, 2, 2 };
+
+    private String genDateStr(int year, int month, int type) {
+        int limit = TYPE_LIMIT[type];
+        String date = String.valueOf(year);
+
+        if ((limit & 1) > 0) {
+            if (!MathUtil.isBetween(1, month, 12)) {
+                throw new IllegalArgumentException("月份缺失");
+            }
+
+            date = date + "-" + String.format("%02d", month);
+        } else {
+            if ((limit & 2) == 0 && MathUtil.isBetween(1, month, 12)) {
+                date = date + "-" + String.format("%02d", month);
+            }
+        }
+
+        return date;
+    }
 
     /**
      *
@@ -133,21 +152,52 @@ public class ReportModule {
      * 日期: 2019/6/5 22:08
      * 作者: Helena Rubinstein
      */
-    public Result orderAnalysisExport(AppContext appContext) {
-        Result infoResult = orderAnalysisByTime(appContext);
+    public Result exportOrderAnalysis(AppContext appContext) {
+        JSONObject json = JSON.parseObject(appContext.param.json);
 
-        if (infoResult == null || infoResult.code != 200) {
-            return new Result().fail("导出失败");
+        try {
+            int year = json.getIntValue("year");
+
+            if (year < 2019) {
+                return new Result().success(null);
+            }
+
+            int month = json.getIntValue("month");
+            int type = json.getIntValue("type");
+            String date;
+
+            try {
+                date = genDateStr(year, month, type);
+            } catch (Exception e) {
+                return new Result().fail(e.getMessage());
+            }
+
+            String result =
+                    new OrderAnalysisServiceImpl(type, json.getLongValue("areac"), date).getExportPath();
+
+            return new Result().success(result);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Result().fail("查询失败");
         }
-
-        ColTotal colTotal = (ColTotal) infoResult.data;
-
-
-        return new Result().success("");
     }
 
-    /**
-     *
+    /*static {
+        *//**初始化LOG4J2日志环境*//*
+        AppConfig.initLogger("log4j2.xml");
+        *//**初始化应用程序环境，如数据源等*//*
+        AppConfig.initialize();
+    }
+
+
+    /*public static void main(String[] args) {
+        String r = new OrderAnalysisServiceImpl(0, 430100000000L, "2019-06").getExportPath();
+        System.out.println(r);
+	}*/
+	
+	
+	
+    /*
      * 功能: 商品报表
      * 参数类型: json
      * 参数集: year=年份 month=月份 areac=地区码 arean=地区名 type=报表类型

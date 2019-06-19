@@ -5,7 +5,7 @@ public class ProdManuVO {
     private long manuno;
     private String manuname;
     private long areac;
-    private String address;
+    private String address = "";
     private String createdate;
     private String createtime;
     private int cstatus;
