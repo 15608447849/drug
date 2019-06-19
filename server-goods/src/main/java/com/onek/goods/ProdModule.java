@@ -406,7 +406,7 @@ public class ProdModule {
             long actCode = actCodeList.get(0);
 
             JSONArray ladOffArray = new JSONArray();
-            int minOff = getMinOff(actCode, ladOffArray);
+            double minOff = getMinOff(actCode, ladOffArray);
 
             SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
 
@@ -833,7 +833,7 @@ public class ProdModule {
         getActData(list, actCodeList, skuList, dataMap);
 
         JSONArray ladoffArray = new JSONArray();
-        int minOff = getMinOff(actCode, ladoffArray);
+        double minOff = getMinOff(actCode, ladoffArray);
         List<String[]> times = timeService.getTimesByActcode(actCode);
 
         GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
@@ -1361,7 +1361,7 @@ public class ProdModule {
      * @param minOff
      * @param prodVO
      */
-    private static void convertTeamBuyData(Map<Long, Integer[]> dataMap, long actCode, int minOff, ProdVO prodVO) {
+    private static void convertTeamBuyData(Map<Long, Integer[]> dataMap, long actCode, double minOff, ProdVO prodVO) {
         int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), actCode);
         int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), actCode);
         prodVO.setBuynum(initStock - surplusStock);
