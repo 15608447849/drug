@@ -950,9 +950,9 @@ public class BackgroundProdModule {
             return new Result().fail("参数格式错误！");
         }
 
-        long erpcode = erpProd.getLongValue("erpcode");
+        String erpcode = erpProd.getString("erpcode");
 
-        if (erpcode <= 0) {
+        if (StringUtils.isEmpty(erpcode)) {
             return new Result().fail("非法唯一码！");
         }
 
@@ -1092,8 +1092,8 @@ public class BackgroundProdModule {
         bgProdVO.setVaildedate(TimeUtils.date_yMd_2String(date.getTime()));
     }
 
-    private BgProdVO getProdByERPCode(long erpCode) {
-        if (erpCode <= 0) {
+    private BgProdVO getProdByERPCode(String erpCode) {
+        if (StringUtils.isEmpty(erpCode)) {
             return null;
         }
 
