@@ -104,7 +104,7 @@ public class ProdModule {
             + "?)";
 
     private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
-            "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ?";
+            "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ? and r.cstatus&1=0 ";
 
     private static final String QUERY_SPU = "select spu from {{?" + DSMConst.TD_PROD_SPU + "}} where spu REGEXP ?";
 
@@ -1329,16 +1329,16 @@ public class ProdModule {
      * @param ladOffArray 存放优惠阶梯
      * @return
      */
-    private static int getMinOff(long actCode, JSONArray ladOffArray) {
+    private static double getMinOff(long actCode, JSONArray ladOffArray) {
 
         List<Object[]> ladOffList = BASE_DAO.queryNative(TEAM_BUY_LADOFF_SQL, new Object[]{actCode});
-        int minOff = 100;
+        double minOff = 100;
         if (ladOffList != null && ladOffList.size() > 0) {
             int i = 0;
             for (Object[] objects : ladOffList) {
                 int amt = Integer.parseInt(objects[0].toString());
                 int num = Integer.parseInt(objects[1].toString());
-                int offer = Integer.parseInt(objects[2].toString()) / 100;
+                double offer = MathUtil.exactDiv(Integer.parseInt( objects[2].toString()), 100.0).doubleValue();
                 if (i == 0) {
                     minOff = offer;
                 }
