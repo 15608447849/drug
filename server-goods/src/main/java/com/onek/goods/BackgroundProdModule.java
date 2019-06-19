@@ -942,6 +942,56 @@ public class BackgroundProdModule {
     }
 
     @UserPermission(ignore = true)
+    public Result updateStoreFromERP(AppContext appContext) {
+        JSONObject erpProd =
+                JSON.parseObject(appContext.param.json);
+
+        if (erpProd == null) {
+            return new Result().fail("参数格式错误！");
+        }
+
+        String erpcode = erpProd.getString("erpcode");
+
+        if (StringUtils.isEmpty(erpcode)) {
+            return new Result().fail("非法唯一码！");
+        }
+
+        int store = erpProd.getIntValue("store");
+
+        if (store < 0) {
+            return new Result().fail("非法库存！");
+        }
+
+        BgProdVO bgProd = getProdByERPCode(erpcode);
+
+        if (bgProd == null) {
+            return new Result().fail("非法erp码！");
+        }
+
+        int freezeStore = getFreezeStore(bgProd.getSku());
+
+        if (freezeStore < 0) {
+            return new Result().fail("该商品不存在！");
+        }
+
+        if (store < freezeStore) {
+            bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
+        } else {
+            bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
+            bgProd.setStore(erpProd.getIntValue("store"));
+        }
+
+        String updateSQL = " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
+                + " SET store = ? "
+                + " WHERE erpcode = ? ";
+
+        BASE_DAO.updateNative(updateSQL, store, erpcode);
+
+        return new Result().success();
+    }
+
+
+    @UserPermission(ignore = true)
     public Result importProdFromERP(AppContext appContext) {
         JSONObject erpProd =
                 JSON.parseObject(appContext.param.json);
@@ -1027,7 +1077,6 @@ public class BackgroundProdModule {
                 setVaildDate(bgProd);
 
                 if (erpProd.getIntValue("store") < freezeStore) {
-//                if (checkStore(bgProd.getSku(), erpProd.getIntValue("store"))) {
                     bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
                 } else {
                     bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
