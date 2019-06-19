@@ -20,7 +20,9 @@ import util.GsonUtils;
 import util.StringUtils;
 import util.TimeUtils;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
@@ -211,11 +213,20 @@ public class IntegralModule {
      * @return {code==200，data:[{积分来源（此处为签到来源）,生成时间（签到时间）}]}
      */
     public Result queryIntegralDetailBySign(AppContext appContext){
-        Result result = new Result();
-        String[] arrays = appContext.param.arrays;
 
-        String beginDate = arrays[0];//开始时间
-        String endDate = arrays[1];//结束时间
+        //获取时间
+        SimpleDateFormat format = new SimpleDateFormat("yyyy-MM");
+        Calendar calendar = Calendar.getInstance();
+        calendar.setTime(new Date());
+        int maxDay = calendar.getActualMaximum(Calendar.DAY_OF_MONTH);
+        int minDay = calendar.getActualMinimum(Calendar.DAY_OF_MONTH);
+        Date date = calendar.getTime();
+        String dayYM = format.format(date);
+        //return param
+        Result result = new Result();
+
+        String beginDate = dayYM+"-0"+minDay;//开始时间
+        String endDate = dayYM+"-"+maxDay;//结束时间
         System.out.println("BEGIN = " + beginDate + " END = " + endDate);
         int compid = appContext.getUserSession().compId;
         if(compid <= 0){
@@ -229,6 +240,31 @@ public class IntegralModule {
         List<Object[]> queryList = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), sqlBuilder.toString(), compid,beginDate,endDate);
         IntegralDetailVO[] integralDetails = new IntegralDetailVO[queryList.size()];
         baseDao.convToEntity(queryList, integralDetails, IntegralDetailVO.class,new String[]{"istatus","integral","busid","createdate", "createtime"});
-        return result.success(integralDetails);
+
+
+        //存储当月签到日期
+        List<String> list = new ArrayList<String>();
+        for(IntegralDetailVO detailVO : integralDetails){
+            list.add(detailVO.getCreatedate());
+        }
+        //获取当月签到记录
+        JSONArray jsonArray = new JSONArray();
+        for(int i = minDay;i<=maxDay;i++){
+            JSONObject jsonObject = new JSONObject();
+            String ymd = "";
+            if(i<10){
+                ymd = dayYM+"-0"+i;
+            }else{;
+                ymd = dayYM+"-"+i;
+            }
+            if(list.contains(ymd)){
+                jsonObject.put(ymd.split("-")[2],"1");
+            }else{
+                jsonObject.put(ymd.split("-")[2],"0");
+            }
+            jsonArray.add(jsonObject);
+        }
+
+        return result.success(jsonArray);
     }
 }

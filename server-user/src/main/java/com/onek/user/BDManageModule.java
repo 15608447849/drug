@@ -533,12 +533,28 @@ public class BDManageModule {
         String optSQL = "insert into {{?" + DSMConst.TB_PROXY_UAREA + "}} (unqid,uid,areac,cstatus,arearng) "
                 + " values(?,?,?,?,?)";
         if (superiorArr.size() > 0) {
-            params = getDefaultAreaParams(superiorArr, uid);
-            boolean b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
-            return b ? result.success("设置成功") : result.fail("设置失败");
+            //修改用户综合状态码 256（设置全部辖区）
+            if (updOrin(uid)) {
+                params = getDefaultAreaParams(superiorArr, uid);
+                boolean b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(optSQL, params, params.size()));
+                return b ? result.success("设置成功") : result.fail("设置失败");
+            } else {
+                return result.fail("设置失败");
+            }
         } else {
             return  result.fail(appContext.getUserSession().userName + "下无辖区！");
         }
+    }
+
+    private boolean updOrin(int uid) {
+        List<Object[]> paramsOne = new ArrayList<>();
+        String updUserSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set cstatus=cstatus|256 where "
+                + " cstatus&1=0 and uid=" + uid;
+        paramsOne.add(new Object[]{});
+        String updSQL = "update {{?" + DSMConst.TB_PROXY_UAREA + "}} set cstatus=cstatus|1 where cstatus&1=0 "
+                + " and uid=" + uid;
+        paramsOne.add(new Object[]{});
+        return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{updSQL, updUserSQL},paramsOne));
     }
 
     //根据用户id获取用户所有的管辖区域
@@ -579,15 +595,19 @@ public class BDManageModule {
     public Result setAreaArr(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
+        List<Object[]> paramsOne = new ArrayList<>();
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int uid = jsonObject.get("uid").getAsInt();
         //删除之前的
         String updSQL = "update {{?" + DSMConst.TB_PROXY_UAREA + "}} set cstatus=cstatus|1 where cstatus&1=0 "
                 + " and uid=" + uid;
-        int code = baseDao.updateNative(updSQL);
-        LogUtil.getDefaultLogger().info("code---- " + code);
-        if(code >= 0) {
+        paramsOne.add(new Object[]{});
+        String updUserSQL = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} set cstatus=cstatus&~256 where "
+                + " cstatus&1=0 and uid=" + uid;
+        paramsOne.add(new Object[]{});
+        boolean code = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{updSQL, updUserSQL},paramsOne));
+        if(code) {
             List<Object[]> params  = new ArrayList<>();
             JsonArray areaArr = jsonObject.get("areaArr").getAsJsonArray();
             for (int i = 0; i < areaArr.size(); i++) {
