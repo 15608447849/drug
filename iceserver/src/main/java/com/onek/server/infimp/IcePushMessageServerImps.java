@@ -24,7 +24,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
 
 
     //超时时间毫秒数
-    private final int PING_TIMEOUT_MAX = 1000;
+    private final int PING_TIMEOUT_MAX = 30 * 1000;
     private final ReentrantLock lock = new ReentrantLock();
     /**
      *  当前在线的所有客户端
@@ -272,13 +272,14 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                 while (it3.hasNext()){
                     PushMessageClientPrx clientPrx = it3.next();
                     try {
-
+                        long t = System.currentTimeMillis();
                         clientPrx.ice_invocationTimeout(PING_TIMEOUT_MAX).ice_ping();
-
+                        communicator.getLogger().print("检测存活: " + clientPrx.ice_getIdentity() +" , 耗时: " + (System.currentTimeMillis() - t)+" 毫秒");
                     } catch (Exception e) {
                         it3.remove();
+                        e.printStackTrace();
                         communicator.getLogger().print(
-                                Thread.currentThread()+" , "+"在线监测客户端移除:" +
+                                Thread.currentThread()+" , "+"在线监测失败, 移除客户端:" +
                                 " "+ communicator.identityToString(clientPrx.ice_getIdentity())+" 原因:"+  e);
                     }
                 }
