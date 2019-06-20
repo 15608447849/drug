@@ -73,7 +73,8 @@ public class DictUtilRemoteModule {
                     + " (`customc`, `type`, `text`, `cstatus`, `remark`) "
                     + " SELECT IFNULL(?, ?), IFNULL(?, ?), IFNULL(?, ?), IFNULL(0, 0), IFNULL(remark, '') "
                     + " FROM {{?" + DSMConst.TB_GLOBAL_DICT + "}} "
-                    + " WHERE cstatus&1 = 0 AND type = ? ";
+                    + " WHERE cstatus&1 = 0 AND type = ? "
+                    + " LIMIT 1 ";
 
             baseDao.updateNative(sql, customc, customc, type, type, text, text, type);
         } else {
