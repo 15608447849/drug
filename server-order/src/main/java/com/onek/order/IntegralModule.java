@@ -255,7 +255,7 @@ public class IntegralModule {
             String ymd = "";
             if(i<10){
                 ymd = dayYM+"-0"+i;
-            }else{;
+            }else{
                 ymd = dayYM+"-"+i;
             }
             if(list.contains(ymd)){
