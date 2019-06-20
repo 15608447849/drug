@@ -734,6 +734,29 @@ public class BackgroundProdModule {
         return new Result().success(returnResults);
     }
 
+    @UserPermission(ignore = true)
+    public Result saveBusScopeFromERP(AppContext appContext) {
+        BusScopeVo busJson = JSON.parseObject(appContext.param.json, BusScopeVo.class);
+
+        if (busJson == null) {
+            return new Result().fail("参数为空！");
+        }
+
+        List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_BUS_SCOPE_BASE + " AND code = ? ");
+
+        if (queryResult.isEmpty()) {
+            BASE_DAO.updateNative(" INSERT INTO {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
+                    + " VALUES (?, ?) ", busJson.getCode(), busJson.getCodename());
+
+        } else {
+            BASE_DAO.updateNative(" UPDATE {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
+                    + " SET codename = ? "
+                    + " WHERE cstatus&1 = 0 AND code = ? ", busJson.getCodename(), busJson.getCode());
+        }
+
+        return new Result().success();
+    }
+
     /**
      * 解析SPU码
      *
@@ -983,7 +1006,7 @@ public class BackgroundProdModule {
 
         String updateSQL = " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
                 + " SET store = ?, cstatus = ? "
-                + " WHERE erpcode = ? ";
+                + " WHERE cstatus&1 = 0 AND erpcode = ? ";
 
         BASE_DAO.updateNative(updateSQL, bgProd.getStore(), bgProd.getSkuCstatus(), erpcode);
 
