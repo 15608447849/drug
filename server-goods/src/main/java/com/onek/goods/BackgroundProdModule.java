@@ -742,7 +742,8 @@ public class BackgroundProdModule {
             return new Result().fail("参数为空！");
         }
 
-        List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_BUS_SCOPE_BASE + " AND code = ? ");
+        List<Object[]> queryResult
+                = BASE_DAO.queryNative(QUERY_BUS_SCOPE_BASE + " AND code = ? ", busJson.getCode());
 
         if (queryResult.isEmpty()) {
             BASE_DAO.updateNative(" INSERT INTO {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
