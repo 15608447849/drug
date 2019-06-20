@@ -31,6 +31,11 @@ public class MyCollectModule {
         String time;
 
         ProdEntity info;
+        String ids;
+        public Param(){}
+        public Param(String sku) {
+            this.sku = Long.parseLong(sku);
+        }
     }
 
 
@@ -62,12 +67,25 @@ public class MyCollectModule {
         String json = appContext.param.json;
         Param p = GsonUtils.jsonToJavaBean(json, Param.class);
         assert p != null;
+        if (!StringUtils.isEmpty(p.ids)){
+            String[] list = p.ids.split(",");
+            for (String sku : list){
+                add(new Param(sku),compId);
+            }
+        }
+        if (p.sku > 0){
+            add(p,compId);
+        }
+        return new Result().success("收藏成功");
+    }
+
+    public Result add(Param p,int compId){
         if (p.sku > 0) {
 
             //查询
             String selectSql = "SELECT unqid FROM {{?"+TD_TRAN_COLLE+"}} WHERE compid = ? AND sku = ?";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNativeSharding(compId,getCurrentYear(),
-                   selectSql,compId,p.sku);
+                    selectSql,compId,p.sku);
             int i;
             long unqid;
             if (lines.size()==1){
@@ -101,7 +119,7 @@ public class MyCollectModule {
                 return new Result().success("收藏成功");
             }
         }
-        return new Result().fail("收藏失败");
+        return new Result().success("收藏成功");
     }
 
     //自动删除
