@@ -22,10 +22,18 @@ public interface IPushMessageStore {
            this.id = id;
            this.content = message;
        }
+
+       @Override
+       public String toString() {
+           return "IPMessage{" +
+                   "identityName='" + identityName + '\'' +
+                   ", content='" + content + '\'' +
+                   ", id=" + id +
+                   '}';
+       }
    }
 
-    boolean storeMessageToQueue(IPMessage message);
-    IPMessage pullMessageFromQueue();
+
     long storeMessageToDb(IPMessage message) ;
     void changeMessageStateToDb(IPMessage message) ;
     List<IPMessage> checkOfflineMessageFromDbByIdentityName(String identityName);

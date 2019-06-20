@@ -43,9 +43,7 @@ public class AppContext extends IceContext {
                 json = RedisUtil.getStringProvide().get(userSession.compId+"");
                 if(StringUtils.isEmpty(json)) {
                     //远程调用查询
-                    logger.print("调用服务加载公司信息 start");
                     json = IceRemoteUtil.getCompanyJson(userSession.compId);
-                    logger.print("调用服务加载公司信息 end");
                 };
                 userSession.comp = GsonUtils.jsonToJavaBean(json, StoreBasicInfo.class);
             }
