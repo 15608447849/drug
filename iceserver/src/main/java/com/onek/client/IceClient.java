@@ -125,16 +125,17 @@ public class IceClient {
 
     public String execute() {
         if (isLocal && request!=null){
-            ServerIceBoxImp.INSTANCE.accessService(request);
-        }else
-        if (curPrx!=null && request!=null){
+            return ServerIceBoxImp.INSTANCE.accessService(request);
+        }else if (curPrx!=null && request!=null){
             return curPrx.accessService(request);
         }
         throw new RuntimeException("ICE 未开始连接或找不到远程代理或请求参数异常");
     }
 
     public void sendMessageToClient(String identity,String message){
-        if (curPrx!=null){
+        if (isLocal){
+            ServerIceBoxImp.INSTANCE.sendMessageToClient(identity,message);
+        } else if (curPrx!=null){
              curPrx.sendMessageToClient(identity,message);
         }
     }
