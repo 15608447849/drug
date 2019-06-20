@@ -120,7 +120,8 @@ public class ReportModule {
 
     }
 
-    // 1-必有月; 2-必无月
+    // 1-是否必须有月;2-是否必须无月
+    // 0天，1天累，2周，3周累，4月，5月累，6年
     private static final int[] TYPE_LIMIT = { 1, 1, 1, 1, 0, 2, 2 };
 
     private String genDateStr(int year, int month, int type) {

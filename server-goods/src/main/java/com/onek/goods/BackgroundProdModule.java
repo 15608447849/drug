@@ -941,6 +941,57 @@ public class BackgroundProdModule {
         }
     }
 
+    @UserPermission(ignore = true)
+    public Result updateStoreFromERP(AppContext appContext) {
+        JSONObject erpProd =
+                JSON.parseObject(appContext.param.json);
+
+        if (erpProd == null) {
+            return new Result().fail("参数格式错误！");
+        }
+
+        String erpcode = erpProd.getString("erpcode");
+
+        if (StringUtils.isEmpty(erpcode)) {
+            return new Result().fail("非法唯一码！");
+        }
+
+        int store = erpProd.getIntValue("store");
+
+        if (store < 0) {
+            return new Result().fail("非法库存！");
+        }
+
+        BgProdVO bgProd = getProdByERPCode(erpcode);
+
+        if (bgProd == null) {
+            return new Result().fail("非法erp码！");
+        }
+
+        int freezeStore = getFreezeStore(bgProd.getSku());
+
+        if (freezeStore < 0) {
+            return new Result().fail("该商品不存在！");
+        }
+
+        if (store < freezeStore) {
+            bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
+        } else {
+            bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
+            bgProd.setStore(store);
+        }
+
+        String updateSQL = " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
+                + " SET store = ?, cstatus = ? "
+                + " WHERE erpcode = ? ";
+
+        BASE_DAO.updateNative(updateSQL, bgProd.getStore(), bgProd.getSkuCstatus(), erpcode);
+
+        return new Result().success();
+    }
+
+
+    @UserPermission(ignore = true)
     public Result importProdFromERP(AppContext appContext) {
         JSONObject erpProd =
                 JSON.parseObject(appContext.param.json);
@@ -949,18 +1000,53 @@ public class BackgroundProdModule {
             return new Result().fail("参数格式错误！");
         }
 
-        long erpcode = erpProd.getLongValue("erpcode");
+        String erpcode = erpProd.getString("erpcode");
 
-        if (erpcode <= 0) {
+        if (StringUtils.isEmpty(erpcode)) {
             return new Result().fail("非法唯一码！");
         }
 
         BgProdVO bgProd = getProdByERPCode(erpcode);
 
+        int rx = erpProd.getIntValue("rx");
+
+        if (rx > 0) {
+            String rxSQL = " SELECT dictc "
+                    + " FROM {{?" + DSMConst.TB_GLOBAL_DICT + "}} "
+                    + " WHERE cstatus&1 = 0 AND customc = ? AND type = 'rx' ";
+
+            List<Object[]> rxResult = BASE_DAO.queryNative(rxSQL, rx);
+
+            if (rxResult.isEmpty()) {
+                return new Result().fail("RX无此码！");
+            }
+
+            rx = Integer.parseInt(rxResult.get(0)[0].toString());
+        }
+
+        String unitName = erpProd.getString("unitName");
+        int unit = 0;
+
+        if (!StringUtils.isEmpty(unitName)) {
+            String unitSQL = " SELECT dictc "
+                    + " FROM {{?" + DSMConst.TB_GLOBAL_DICT + "}} "
+                    + " WHERE cstatus&1 = 0 AND text = ? AND type = 'unit' ";
+
+            List<Object[]> unitResult = BASE_DAO.queryNative(unitSQL, unitName);
+
+            if (unitResult.isEmpty()) {
+                return new Result().fail("unit无此名！");
+            }
+
+            unit = Integer.parseInt(unitResult.get(0)[0].toString());
+        }
+
         try {
             if (bgProd == null) {
                 // 插入
                 bgProd = JSON.toJavaObject(erpProd, BgProdVO.class);
+                bgProd.setRx(rx);
+                bgProd.setUnit(unit);
                 bgProd.setDetail("[{\"name\": \"功能主治\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"主要成分\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"用法用量\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"不良反应\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"id\": 50, \"name\": \"注意事项\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"禁忌\", \"isShow\": true, \"content\": \"\", \"required\": false}]");
                 if (StringUtils.isEmpty(bgProd.getProdname())) {
                     bgProd.setProdname(bgProd.getPopname());
@@ -975,6 +1061,8 @@ public class BackgroundProdModule {
                     return new Result().fail("该商品不存在！");
                 }
 
+                bgProd.setUnit(unit);
+                bgProd.setRx(rx);
                 bgProd.setBusscope(erpProd.getInteger("busscope"));
                 bgProd.setSpec(erpProd.getString("spec"));
                 bgProd.setUnit(erpProd.getIntValue("unit"));
@@ -989,7 +1077,6 @@ public class BackgroundProdModule {
                 setVaildDate(bgProd);
 
                 if (erpProd.getIntValue("store") < freezeStore) {
-//                if (checkStore(bgProd.getSku(), erpProd.getIntValue("store"))) {
                     bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
                 } else {
                     bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
@@ -1054,8 +1141,8 @@ public class BackgroundProdModule {
         bgProdVO.setVaildedate(TimeUtils.date_yMd_2String(date.getTime()));
     }
 
-    private BgProdVO getProdByERPCode(long erpCode) {
-        if (erpCode <= 0) {
+    private BgProdVO getProdByERPCode(String erpCode) {
+        if (StringUtils.isEmpty(erpCode)) {
             return null;
         }
 

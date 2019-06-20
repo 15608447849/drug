@@ -97,6 +97,26 @@ public class ShoppingCartVO {
 
     private int actstock;
 
+    private int unit;
+
+    private double mp;
+
+    public int getUnit() {
+        return unit;
+    }
+
+    public void setUnit(int unit) {
+        this.unit = unit;
+    }
+
+    public double getMp() {
+        return mp;
+    }
+
+    public void setMp(double mp) {
+        this.mp = mp;
+    }
+
     public int getActstock() {
         return actstock;
     }

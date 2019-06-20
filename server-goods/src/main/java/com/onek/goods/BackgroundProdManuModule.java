@@ -3,6 +3,7 @@ package com.onek.goods;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.Gson;
+import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.ProdManuVO;
@@ -43,6 +44,7 @@ public class BackgroundProdManuModule {
      * 日期: 2019/6/11 14:12
      * 作者: Helena Rubinstein
      */
+    @UserPermission(ignore = true)
     public Result addProdManu(AppContext appContext) {
         ProdManuVO prodManuVO;
         try {
@@ -61,11 +63,7 @@ public class BackgroundProdManuModule {
             return new Result().fail(e.getMessage());
         }
 
-        if (checkContains(prodManuVO.getManuname())) {
-            return new Result().fail("该厂商已存在！");
-        }
-
-        long manuId = GenIdUtil.getUnqId();
+        long manuId = prodManuVO.getManuno() == 0 ? GenIdUtil.getUnqId() : prodManuVO.getManuno();
 
         int result = BASE_DAO.updateNative(INSERT_PRODMANU_BASE,
                         manuId, prodManuVO.getManuname(), prodManuVO.getManuname(),

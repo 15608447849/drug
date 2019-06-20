@@ -69,7 +69,7 @@ public class OrderInfoModule {
                     + " LEFT JOIN " + FROM_APPRAISE
                     + " ON  app.cstatus&1 = 0 "
                     + " AND app.orderno = ord.orderno "
-            + " WHERE ord.cstatus&1 = 0 AND ord.orderno = ?"
+            + " WHERE ord.orderno = ?"
             + " LIMIT 1 ";
 
     private static final String QUERY_COMP_ORDER_INFO_BASE =
