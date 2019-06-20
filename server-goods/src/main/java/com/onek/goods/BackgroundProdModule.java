@@ -747,7 +747,7 @@ public class BackgroundProdModule {
 
         if (queryResult.isEmpty()) {
             BASE_DAO.updateNative(" INSERT INTO {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
-                    + " VALUES (?, ?) ", busJson.getCode(), busJson.getCodename());
+                    + " VALUES (?, ?, 0) ", busJson.getCode(), busJson.getCodename());
 
         } else {
             BASE_DAO.updateNative(" UPDATE {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
