@@ -31,5 +31,4 @@ public interface IPushMessageStore {
     List<IPMessage> checkOfflineMessageFromDbByIdentityName(String identityName);
     String convertMessage(IPMessage message);
 
-
 }

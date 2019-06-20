@@ -3,6 +3,7 @@ package com.onek.client;
 import com.onek.server.inf.IRequest;
 import com.onek.server.inf.InterfacesPrx;
 import com.onek.server.inf.InterfacesPrxHelper;
+import com.onek.server.infimp.ServerIceBoxImp;
 import util.GsonUtils;
 
 import java.util.HashMap;
@@ -45,13 +46,19 @@ public class IceClient {
     public InterfacesPrx curPrx;
 
     public IceClient settingProxy(String serverName){
-        InterfacesPrx prx = prxMaps.get(serverName);
-        if (prx == null){
-            Ice.ObjectPrx base = ic.stringToProxy(serverName).ice_invocationTimeout(1000);
-            prx =  InterfacesPrxHelper.checkedCast(base);
-            if (prx!=null) prxMaps.put(serverName,prx);
+        if (isLocalCallback(serverName)){
+            curPrx = null;
+            isLocal = true;
+        }else{
+            InterfacesPrx prx = prxMaps.get(serverName);
+            if (prx == null){
+                Ice.ObjectPrx base = ic.stringToProxy(serverName).ice_invocationTimeout(1000);
+                prx =  InterfacesPrxHelper.checkedCast(base);
+                if (prx!=null) prxMaps.put(serverName,prx);
+            }
+            curPrx = prx;
+            isLocal = false;
         }
-        curPrx = prx;
         return this;
     }
     private IRequest request;
@@ -105,7 +112,21 @@ public class IceClient {
         return this;
     }
 
+    private boolean isLocalCallback(String remoteServerName){
+        if (ServerIceBoxImp.INSTANCE == null || ServerIceBoxImp.rpcGroupName == null){
+            return false;
+        }
+        if (ServerIceBoxImp.rpcGroupName.equals(remoteServerName)){
+            return true;
+        }
+        return false;
+    }
+    private boolean isLocal = false;
+
     public String execute() {
+        if (isLocal && request!=null){
+            ServerIceBoxImp.INSTANCE.accessService(request);
+        }else
         if (curPrx!=null && request!=null){
             return curPrx.accessService(request);
         }

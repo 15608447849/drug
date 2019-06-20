@@ -19,7 +19,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @Date: 2019/4/9 17:57
  * 消息推送 服务端实现
  */
-public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMessageStore,Runnable {
+public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMessageStore {
 
 
     //超时时间毫秒数
@@ -50,8 +50,8 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         onlineClientMaps = new HashMap<>();
         //注入消息存储实现
         createMessageStoreImps();
-        new Thread(this).start();//心跳线程
-        new Thread(pushRunnable()).start();//消息发送
+        pool.post(heartRunnable());//心跳线程
+        pool.post(pushRunnable());//消息发送
     }
 
 
@@ -257,20 +257,21 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         };
     }
 
-
-
-    @Override
-    public void run() {
-        //循环检测 -保活
-        while (!communicator.isShutdown()){
-            try {
-                Thread.sleep( 30 * 1000);
-                checkConnect(); //监测
-            } catch (Exception e) {
-                e.printStackTrace();
+    private Runnable heartRunnable(){
+        return () ->{
+            //循环检测 -保活
+            while (!communicator.isShutdown()){
+                try {
+                    Thread.sleep( 30 * 1000);
+                    checkConnect(); //监测
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
             }
-        }
+        };
     }
+
+
 
     private void checkConnect() {
 
