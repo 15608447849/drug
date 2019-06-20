@@ -82,55 +82,92 @@ public class ProductAnalysisServiceImpl {
             " on substring(b.sku, 2) REGEXP CONCAT('^',pc.classid)  group by pc.classid ";
 
     //查询周销量
-    private static final String SKU_SALE_WEEK_SQL = "select cid,soldsku," +
-            " skunum,maxskunum,minskunum,skuamt,maxskuamt,minskuamt," +
+    private static final String SKU_SALE_WEEK_SQL = "select cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
+            " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
             " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hskunum," +
             " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
             " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hminskunum," +
-            " (select sum(skuamt)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hskuamt," +
-            " (select max(skuamt)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
-            " (select min(skuamt)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
+            " (select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hskuamt," +
+            " (select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
+            " (select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
             " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
-            " years,mons,days,weeks from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} b ";
+            " years,mons,days,weeks,mincxlv from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} b ";
 
 
     //查询日销量
-    private static final String SKU_SALE_DAY_SQL = "select cid,soldsku," +
-            " skunum,maxskunum,minskunum,skuamt,maxskuamt,minskuamt," +
+    private static final String SKU_SALE_DAY_SQL = "select cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
+            " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
             " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hskunum," +
             " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
             " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hminskunum," +
-            " (select sum(skuamt)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hskuamt," +
-            " (select max(skuamt)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
-            " (select min(skuamt)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
+            " (select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hskuamt," +
+            " (select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
+            " (select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
             " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
-            " years,mons,days,weeks from {{?"+DSMConst.V_PD_SALES_DAYS +"}} b ";
+            " years,mons,days,weeks,mincxlv from {{?"+DSMConst.V_PD_SALES_DAYS +"}} b ";
+
+    //查询日销量
+//    private static final String SKU_SALE_DAY_SQL = "select cid,soldsku," +
+//            " skunum,maxskunum,minskunum,skuamt,maxskuamt,minskuamt," +
+//            " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hskunum," +
+//            " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
+//            " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hminskunum," +
+//            " (select sum(skuamt)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hskuamt," +
+//            " (select max(skuamt)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
+//            " (select min(skuamt)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
+//            " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
+//            " years,mons,days,weeks from {{?"+DSMConst.V_PD_SALES_DAYS +"}} b ";
+
+
 
 
     //查询月销量
-    private static final String SKU_SALE_MON_SQL = "select cid,soldsku," +
-            " skunum,maxskunum,minskunum,skuamt,maxskuamt,minskuamt," +
+//    private static final String SKU_SALE_MON_SQL = "select cid,soldsku," +
+//            " skunum,maxskunum,minskunum,skuamt,maxskuamt,minskuamt," +
+//            " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hskunum," +
+//            " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
+//            " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hminskunum," +
+//            " (select sum(skuamt)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hskuamt," +
+//            " (select max(skuamt)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
+//            " (select min(skuamt)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
+//            " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
+//            " years,mons,days,weeks from {{?"+DSMConst.V_PD_SALES_MONS +"}} b ";
+
+    //查询月销量
+    private static final String SKU_SALE_MON_SQL = "select cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
+            " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
             " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hskunum," +
             " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
             " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hminskunum," +
-            " (select sum(skuamt)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hskuamt," +
-            " (select max(skuamt)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
-            " (select min(skuamt)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
+            " (select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hskuamt," +
+            " (select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
+            " (select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
             " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
-            " years,mons,days,weeks from {{?"+DSMConst.V_PD_SALES_MONS +"}} b ";
+            " years,mons,days,weeks,mincxlv from {{?"+DSMConst.V_PD_SALES_MONS +"}} b ";
 
 
     //年销量
-    private static final String SKU_SALE_YEAR_SQL = "select cid,soldsku," +
-            " skunum,maxskunum,minskunum,skuamt,maxskuamt,minskuamt," +
+    private static final String SKU_SALE_YEAR_SQL = "select cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
+            " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
             " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hskunum," +
             " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
             " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hminskunum," +
-            " (select sum(skuamt)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hskuamt," +
-            " (select max(skuamt)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
-            " (select min(skuamt)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
+            " (select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hskuamt," +
+            " (select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
+            " (select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
             " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
-            " years,mons,days,weeks from {{?"+DSMConst.V_PD_SALES_YEARS +"}} b ";
+            " years,mons,days,weeks,mincxlv from {{?"+DSMConst.V_PD_SALES_YEARS +"}} b ";
+    //年销量
+//    private static final String SKU_SALE_YEAR_SQL = "select cid,soldsku," +
+//            " skunum,maxskunum,minskunum,skuamt,maxskuamt,minskuamt," +
+//            " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hskunum," +
+//            " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
+//            " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hminskunum," +
+//            " (select sum(skuamt)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hskuamt," +
+//            " (select max(skuamt)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
+//            " (select min(skuamt)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
+//            " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
+//            " years,mons,days,weeks from {{?"+DSMConst.V_PD_SALES_YEARS +"}} b ";
 
 
     private static final String SKU_NEW_DAY_SQL = "select cid,nskucnt," +
@@ -224,6 +261,10 @@ public class ProductAnalysisServiceImpl {
     private static final String COL_SUM_TOTAL  = "sumtotal";
     private static final String COL_LIST  = "list";
 
+    private static final int START_YEAR = 2019;
+
+    private static final int START_MON = 5;
+
     public List<JSONObject> productAnalysis(int year,int month,
                                             int classno,String classname,int type) {
 
@@ -292,6 +333,21 @@ public class ProductAnalysisServiceImpl {
     }
 
     public JSONObject pruductAnalysisByTime(int year,int month,int classno,String classname,int type) {
+
+        Calendar mcale = Calendar.getInstance();
+        if(year < START_YEAR || year > mcale.get(Calendar.YEAR)){
+            return null;
+        }
+
+        if(type < 4 && year == 2019 && month < START_MON){
+            return null;
+        }
+
+        if(type < 4 && year == mcale.get(Calendar.YEAR) && month > (mcale.get(Calendar.MONTH)+1)){
+            return null;
+        }
+
+
         List<JSONObject> jsonList = productAnalysis(year, month,classno,classname, type);
         if(jsonList == null || jsonList.size() <= 0){
             return null;
@@ -567,6 +623,7 @@ public class ProductAnalysisServiceImpl {
     private void initTableData(int year, int month, int type, Calendar cale,
                                int classno,String classname, List<JSONObject>
                                        jsonList,List<Object[]> initList) {
+        Calendar curCale = Calendar.getInstance();
         if(type == 0 || type == 1){
             cale.set(Calendar.YEAR, year);
             cale.set(Calendar.MONTH, month);
@@ -574,7 +631,13 @@ public class ProductAnalysisServiceImpl {
             int maxDate = cale.get(Calendar.DAY_OF_MONTH);
             String m = month < 10 ?  "0" + month : month +"";
             JSONObject js = new JSONObject();
-                List<JSONObject> subList = new ArrayList<>();
+            List<JSONObject> subList = new ArrayList<>();
+
+            if(curCale.get(Calendar.YEAR) == year
+                    && (curCale.get(Calendar.MONTH)+1) == month){
+                maxDate = curCale.get(Calendar.DATE);
+            }
+
 
                 for(int i = 1; i <= maxDate; i++){
                     String d = i < 10 ?  "0" + i : i +"";
@@ -663,11 +726,16 @@ public class ProductAnalysisServiceImpl {
                 JSONObject js = new JSONObject();
                 List<JSONObject> subList = new ArrayList<>();
                 int monSize = 12;
+                int startMon = 1;
                 Calendar mcale = Calendar.getInstance();
                 if(year == mcale.get(Calendar.YEAR)){
                     monSize = mcale.get(Calendar.MONTH) + 1;
                 }
-                for(int i = 1; i <= monSize; i++){
+
+                if(year == START_YEAR){
+                    startMon = START_MON;
+                }
+                for(int i = startMon; i <= monSize; i++){
                     for(int j = 0; j <initList.size(); j++ ){
                         if(j == 0){
                             continue;
@@ -1224,24 +1292,62 @@ public class ProductAnalysisServiceImpl {
                 //0:日报; 1:日报(累计); 2:周报; 3:周报(累计); 4:月报; 5:月报(累计); 6:年报
                 if (skuSaleList != null && !skuSaleList.isEmpty()) {
                     for (Object[] objs : skuSaleList) {
+
                         if (isMatch(type, Integer.parseInt(objs[0].toString()),
-                                subJs, objs[17].toString(), Integer.parseInt(objs[15].toString()),
-                                Integer.parseInt(objs[16].toString()),
-                                Integer.parseInt(objs[18].toString()))) {
+                                subJs, objs[22].toString(), Integer.parseInt(objs[20].toString()),
+                                Integer.parseInt(objs[21].toString()),
+                                Integer.parseInt(objs[23].toString()))) {
+
+                            String maxdxlv = "";
+                            if(objs[2] != null){
+                                maxdxlv = objs[2].toString();
+                                subJs.put(COL_SALESPC_MAX, maxdxlv+"%");
+                            }
+                            String mindxlv = "";
+                            if(objs[3] != null){
+                                mindxlv = objs[3].toString();
+                                subJs.put(COL_SALESPC_MIN, mindxlv+"%");
+                            }
+
+                            String maxcxlv = "";
+                            if(objs[4] != null){
+                                maxcxlv = objs[4].toString();
+                                subJs.put(COL_STOCK_SALESPC_MAX, maxcxlv);
+                            }
+
+                            String avdxlv = "";
+                            if(objs[5] != null){
+                                avdxlv = objs[5].toString();
+                                subJs.put(COL_SALESPC_SUM, avdxlv+"%");
+                            }
+
+                            String avcxlv = "";
+                            if(objs[5] != null){
+                                avcxlv = objs[6].toString();
+                                subJs.put(COL_STOCK_SALESPC_SUM, avcxlv);
+                            }
+
+                            String mincxlv = "";
+                            if(objs[24] != null){
+                                mincxlv = objs[24].toString();
+                                subJs.put(COL_STOCK_SALESPC_MIN, mincxlv);
+                            }
+
                             int salesku = Integer.parseInt(objs[1].toString());
-                            int skunum = Integer.parseInt(objs[2].toString());
-                            int maxskunum = Integer.parseInt(objs[3].toString());
-                            int minskunum = Integer.parseInt(objs[4].toString());
-                            double skuamt = Double.parseDouble(objs[5].toString());
-                            double maxskuamt = Double.parseDouble(objs[6].toString());
-                            double minskuamt = Double.parseDouble(objs[7].toString());
-                            int hskunum = Integer.parseInt(objs[8].toString());
-                            int hmaxskunum = Integer.parseInt(objs[9].toString());
-                            int hminskunum = Integer.parseInt(objs[10].toString());
-                            double hskuamt = Double.parseDouble(objs[11].toString());
-                            double hmaxskuamt = Double.parseDouble(objs[12].toString());
-                            double hminskuamt = Double.parseDouble(objs[13].toString());
-                            int hsalesku = Integer.parseInt(objs[14].toString());
+                            int skunum = Integer.parseInt(objs[9].toString());
+                            int maxskunum = Integer.parseInt(objs[7].toString());
+                            int minskunum = Integer.parseInt(objs[8].toString());
+                            double skuamt = Double.parseDouble(objs[12].toString());
+                            double maxskuamt = Double.parseDouble(objs[10].toString());
+                            double minskuamt = Double.parseDouble(objs[11].toString());
+                            int hskunum = Integer.parseInt(objs[13].toString());
+                            int hmaxskunum = Integer.parseInt(objs[14].toString());
+                            int hminskunum = Integer.parseInt(objs[15].toString());
+                            double hskuamt = Double.parseDouble(objs[16].toString());
+                            double hmaxskuamt = Double.parseDouble(objs[17].toString());
+                            double hminskuamt = Double.parseDouble(objs[18].toString());
+                            int hsalesku = Integer.parseInt(objs[19].toString());
+
 
                             if (type == 1 || type == 3 || type == 5) {
                                 subJs.put(COL_SALEAMT_MAXH, hmaxskuamt);
@@ -1265,6 +1371,7 @@ public class ProductAnalysisServiceImpl {
                                 subJs.put(COL_PRODUCT_SALES, hsalesku);
                                 subJs.put(COL_PRODUCT_SALESH, hsalesku);
                                 subJs.put(COL_PRODUCT_SALESC, salesku);
+
                             } else {
                                 subJs.put(COL_SALEAMT_MAXH, hmaxskuamt);
                                 subJs.put(COL_SALEAMT_MAX, maxskuamt);
@@ -1296,51 +1403,6 @@ public class ProductAnalysisServiceImpl {
         return initList;
     }
 
-    private void convSkuStoreAdd(int type, List<JSONObject> jsonList){
-        for (JSONObject js : jsonList) {
-            JSONArray array = js.getJSONArray(COL_DETAIL);
-            for (int i = 0; i < array.size(); i++) {
-                if(i == 0){
-                    continue;
-                }
-                JSONObject subJs = array.getJSONObject(i);
-                //SKU计算
-                int pdSkuSum = subJs.getIntValue(COL_PRODUCT_SUM);
-                int pdSkuSale = subJs.getIntValue(COL_PRODUCT_SALES);
-                int pdSkuSold = subJs.getIntValue(COL_PRODUCT_SOLD);
-                subJs.put(COL_PRODUCT_SALESPC, calcPercentage(pdSkuSale, pdSkuSum));
-                subJs.put(COL_PRODUCT_SOLDPC, calcPercentage(pdSkuSold, pdSkuSum));
-
-                //动销率计算
-                int saleSkuNum = subJs.getIntValue(COL_SALENUM_SUMH);
-                int saleSkuMinNum = subJs.getIntValue(COL_SALENUM_MINH);
-                int saleSkuMaxNum = subJs.getIntValue(COL_SALENUM_MAXH);
-                int skuStoreNum = subJs.getIntValue(COL_STOCK_SUM);
-                LogUtil.getDefaultLogger().debug("skuStoreNum:"+skuStoreNum);
-
-                subJs.put(COL_SALESPC_SUM, calcPercentage(saleSkuNum, skuStoreNum));
-                subJs.put(COL_SALESPC_MAX, calcPercentage(saleSkuMaxNum, skuStoreNum));
-                subJs.put(COL_SALESPC_MIN, calcPercentage(saleSkuMinNum, skuStoreNum));
-
-                //计算存销比
-                int saleSkuNumc = subJs.getIntValue(COL_SALENUM_SUMC);
-                int saleSkuMinNumc = subJs.getIntValue(COL_SALENUM_MINC);
-                int saleSkuMaxNumc = subJs.getIntValue(COL_SALENUM_MAXC);
-
-                LogUtil.getDefaultLogger().debug("saleSkuNumc:"+saleSkuNumc);
-                LogUtil.getDefaultLogger().debug("saleSkuMinNumc:"+saleSkuMinNumc);
-                LogUtil.getDefaultLogger().debug("saleSkuMaxNumc:"+saleSkuMaxNumc);
-                if (skuStoreNum > 0) {
-                    LogUtil.getDefaultLogger().debug("COL_STOCK_SALESPC_MAX:"+MathUtil.exactDiv(saleSkuMaxNumc, skuStoreNum).doubleValue());
-                    LogUtil.getDefaultLogger().debug("saleSkuNumc:"+saleSkuNumc);
-                    DecimalFormat df = new DecimalFormat("0.000000");
-                    subJs.put(COL_STOCK_SALESPC_MAX, df.format((float)saleSkuMaxNumc/skuStoreNum));
-                    subJs.put(COL_STOCK_SALESPC_MIN, df.format((float)saleSkuMinNumc/skuStoreNum));
-                    subJs.put(COL_STOCK_SALESPC_SUM, df.format((float)saleSkuNumc/skuStoreNum));
-                }
-            }
-        }
-    }
 
 
     private void calcPercent(int type, List<JSONObject> jsonList){
@@ -1356,32 +1418,32 @@ public class ProductAnalysisServiceImpl {
                 subJs.put(COL_PRODUCT_SOLDPC, calcPercentage(pdSkuSold, pdSkuSum));
 
                 //动销率计算
-                int saleSkuNum = subJs.getIntValue(COL_SALENUM_SUMH);
-                int saleSkuMinNum = subJs.getIntValue(COL_SALENUM_MINH);
-                int saleSkuMaxNum = subJs.getIntValue(COL_SALENUM_MAXH);
-                int skuStoreNum = subJs.getIntValue(COL_STOCK_SUM);
-                LogUtil.getDefaultLogger().debug("skuStoreNum:"+skuStoreNum);
-
-                subJs.put(COL_SALESPC_SUM, calcPercentage(saleSkuNum, skuStoreNum));
-                subJs.put(COL_SALESPC_MAX, calcPercentage(saleSkuMaxNum, skuStoreNum));
-                subJs.put(COL_SALESPC_MIN, calcPercentage(saleSkuMinNum, skuStoreNum));
+//                int saleSkuNum = subJs.getIntValue(COL_SALENUM_SUMH);
+//                int saleSkuMinNum = subJs.getIntValue(COL_SALENUM_MINH);
+//                int saleSkuMaxNum = subJs.getIntValue(COL_SALENUM_MAXH);
+//                int skuStoreNum = subJs.getIntValue(COL_STOCK_SUM);
+//                LogUtil.getDefaultLogger().debug("skuStoreNum:"+skuStoreNum);
+//
+//                subJs.put(COL_SALESPC_SUM, calcPercentage(saleSkuNum, skuStoreNum));
+//                subJs.put(COL_SALESPC_MAX, calcPercentage(saleSkuMaxNum, skuStoreNum));
+//                subJs.put(COL_SALESPC_MIN, calcPercentage(saleSkuMinNum, skuStoreNum));
 
                 //计算存销比
-                int saleSkuNumc = subJs.getIntValue(COL_SALENUM_SUMC);
-                int saleSkuMinNumc = subJs.getIntValue(COL_SALENUM_MINC);
-                int saleSkuMaxNumc = subJs.getIntValue(COL_SALENUM_MAXC);
-
-                LogUtil.getDefaultLogger().debug("saleSkuNumc:"+saleSkuNumc);
-                LogUtil.getDefaultLogger().debug("saleSkuMinNumc:"+saleSkuMinNumc);
-                LogUtil.getDefaultLogger().debug("saleSkuMaxNumc:"+saleSkuMaxNumc);
-                if (skuStoreNum > 0) {
-                    LogUtil.getDefaultLogger().debug("saleSkuNumc:"+saleSkuNumc);
-                    DecimalFormat df = new DecimalFormat("0.000000");
-                    subJs.put(COL_STOCK_SALESPC_MAX, df.format((float)saleSkuMaxNumc/skuStoreNum));
-                    subJs.put(COL_STOCK_SALESPC_MIN, df.format((float)saleSkuMinNumc/skuStoreNum));
-                    subJs.put(COL_STOCK_SALESPC_SUM, df.format((float)saleSkuNumc/skuStoreNum));
-                }
-            }
+//                int saleSkuNumc = subJs.getIntValue(COL_SALENUM_SUMC);
+//                int saleSkuMinNumc = subJs.getIntValue(COL_SALENUM_MINC);
+//                int saleSkuMaxNumc = subJs.getIntValue(COL_SALENUM_MAXC);
+//
+//                LogUtil.getDefaultLogger().debug("saleSkuNumc:"+saleSkuNumc);
+//                LogUtil.getDefaultLogger().debug("saleSkuMinNumc:"+saleSkuMinNumc);
+//                LogUtil.getDefaultLogger().debug("saleSkuMaxNumc:"+saleSkuMaxNumc);
+//                if (skuStoreNum > 0) {
+//                    LogUtil.getDefaultLogger().debug("saleSkuNumc:"+saleSkuNumc);
+//                    DecimalFormat df = new DecimalFormat("0.000000");
+//                    subJs.put(COL_STOCK_SALESPC_MAX, df.format((float)saleSkuMaxNumc/skuStoreNum));
+//                    subJs.put(COL_STOCK_SALESPC_MIN, df.format((float)saleSkuMinNumc/skuStoreNum));
+//                    subJs.put(COL_STOCK_SALESPC_SUM, df.format((float)saleSkuNumc/skuStoreNum));
+//                }
+           }
         }
     }
 
