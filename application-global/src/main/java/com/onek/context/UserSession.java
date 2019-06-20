@@ -44,6 +44,7 @@ public class UserSession implements Serializable{
         userSession.userId = userId;
         userSession.roleCode = roleCode;
         userSession.phone = phone;
+        userSession.compId = compId;
         userSession.comp = info;
         return userSession;
     }

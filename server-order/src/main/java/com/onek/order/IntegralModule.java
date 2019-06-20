@@ -214,6 +214,9 @@ public class IntegralModule {
      */
     public Result queryIntegralDetailBySign(AppContext appContext){
 
+        //return param
+        Result result = new Result();
+
         //获取时间
         SimpleDateFormat format = new SimpleDateFormat("yyyy-MM");
         Calendar calendar = Calendar.getInstance();
@@ -222,8 +225,6 @@ public class IntegralModule {
         int minDay = calendar.getActualMinimum(Calendar.DAY_OF_MONTH);
         Date date = calendar.getTime();
         String dayYM = format.format(date);
-        //return param
-        Result result = new Result();
 
         String beginDate = dayYM+"-0"+minDay;//开始时间
         String endDate = dayYM+"-"+maxDay;//结束时间
@@ -241,30 +242,30 @@ public class IntegralModule {
         IntegralDetailVO[] integralDetails = new IntegralDetailVO[queryList.size()];
         baseDao.convToEntity(queryList, integralDetails, IntegralDetailVO.class,new String[]{"istatus","integral","busid","createdate", "createtime"});
 
-
+        JSONObject reJson = new JSONObject();
         //存储当月签到日期
         List<String> list = new ArrayList<String>();
         for(IntegralDetailVO detailVO : integralDetails){
             list.add(detailVO.getCreatedate());
         }
         //获取当月签到记录
-        JSONArray jsonArray = new JSONArray();
+        List signlist = new ArrayList();
         for(int i = minDay;i<=maxDay;i++){
             JSONObject jsonObject = new JSONObject();
             String ymd = "";
             if(i<10){
                 ymd = dayYM+"-0"+i;
-            }else{;
+            }else{
                 ymd = dayYM+"-"+i;
             }
             if(list.contains(ymd)){
-                jsonObject.put(ymd.split("-")[2],"1");
-            }else{
-                jsonObject.put(ymd.split("-")[2],"0");
+                signlist.add(i);
             }
-            jsonArray.add(jsonObject);
         }
-
-        return result.success(jsonArray);
+        reJson.put("signList",signlist);
+        reJson.put("signSum",integralDetails.length);
+        reJson.put("nowDate",new SimpleDateFormat("yyyy年MM月dd日").format(new Date()));
+        reJson.put("signMsg",integralDetails);
+        return result.success(reJson);
     }
 }

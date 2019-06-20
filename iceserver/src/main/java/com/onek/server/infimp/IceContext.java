@@ -1,5 +1,6 @@
 package com.onek.server.infimp;
 
+import Ice.Application;
 import Ice.Current;
 import Ice.Logger;
 import com.onek.entitys.Result;
@@ -24,16 +25,18 @@ public class IceContext {
     public IParam param;
 
     public IceContext(Current current, IRequest request)  {
+        if (current!=null){
             this.serverName = current.id.name;
             this.current = current;
             String[] arr = current.con._toString().split("\\n")[1].split("=")[1].trim().split(":");
             this.remoteIp = arr[0];
             this.remotePoint = Integer.parseInt(arr[1]);
-            this.logger = current.adapter.getCommunicator().getLogger();
-            this.refPkg = request.pkg;
-            this.refCls = request.cls;
-            this.refMed = request.method;
-            this.param = request.param;
+        }
+        this.logger = Application.communicator().getLogger();
+        this.refPkg = request.pkg;
+        this.refCls = request.cls;
+        this.refMed = request.method;
+        this.param = request.param;
     }
 
     /**初始化*/

@@ -51,7 +51,7 @@ public class AppModule {
             if (current >= unit){
                 beanGop.number = -unit;
             }else{
-                return new Result().fail("操作失败",current);
+                beanGop.number = -current;
             }
         }else if (beanGop.number == -2){
             //加

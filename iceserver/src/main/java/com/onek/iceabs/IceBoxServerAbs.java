@@ -18,9 +18,10 @@ public abstract class IceBoxServerAbs implements Service {
 
     //服务名
     protected String _serverName;
-    private ObjectAdapter _adapter;
+    private static ObjectAdapter _adapter;
 
     protected Communicator _communicator;
+
 
     @Override
     public void start(String name, Communicator communicator, String[] args) {
@@ -91,10 +92,15 @@ public abstract class IceBoxServerAbs implements Service {
         if (name == null) return;
         identity = communicator.stringToIdentity(name);
         _adapter.add(IceServiceDispatchInterceptor.getInstance().addIceObject(identity,object),identity);
+        addRpcGroup(name);
         _communicator.getLogger().print("服务: "+_serverName +" ,加入负载均衡组 " + name);
     }
 
     protected abstract Object specificServices();
+
+    protected void addRpcGroup(String rpcName){
+        //pass
+    }
 
     @Override
     public void stop() {

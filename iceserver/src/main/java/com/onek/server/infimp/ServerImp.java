@@ -21,6 +21,8 @@ import java.util.Arrays;
  */
 public class ServerImp extends IcePushMessageServerImps {
 
+
+
     //拦截器
     private ArrayList<IServerInterceptor> interceptorList;
 
@@ -81,27 +83,32 @@ public class ServerImp extends IcePushMessageServerImps {
 
     //打印参数
     private String printParam(IRequest request, Current __current) {
-        try {
-            StringBuilder sb = new StringBuilder();
-            sb.append(__current.con.toString().split("\n")[1]);
-            sb.append("\t" +serverName+ " >>> " + request.pkg +" >>> " + request.cls +" >>> "+request.method);
-            if(!StringUtils.isEmpty(request.param.token)){
-                sb.append( "\ntoken:\t"+ request.param.token);
+
+            try {
+                StringBuilder sb = new StringBuilder();
+                if (__current != null) {
+                    sb.append(__current.con.toString().split("\n")[1]);
+                }else{
+                    sb.append("本地调用");
+                }
+                sb.append("\t" +serverName+ " >>> " + request.pkg +" >>> " + request.cls +" >>> "+request.method);
+                if(!StringUtils.isEmpty(request.param.token)){
+                    sb.append( "\ntoken:\t"+ request.param.token);
+                }
+                if(!StringUtils.isEmpty(request.param.json)){
+                    sb.append("\njson:\t" + request.param.json );
+                }
+                if(request.param.arrays!=null &&request.param.arrays.length>0){
+                    sb.append("\narray:\t" + Arrays.toString(request.param.arrays));
+                }
+                if(request.param.pageIndex > 0 && request.param.pageNumber > 0){
+                    sb.append("\npaging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
+                }
+                logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString());
+                return sb.toString();
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            if(!StringUtils.isEmpty(request.param.json)){
-                sb.append("\njson:\t" + request.param.json );
-            }
-            if(request.param.arrays!=null &&request.param.arrays.length>0){
-                sb.append("\narray:\t" + Arrays.toString(request.param.arrays));
-            }
-            if(request.param.pageIndex > 0 && request.param.pageNumber > 0){
-                sb.append("\npaging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
-            }
-            logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString());
-            return sb.toString();
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
         return "";
     }
 
