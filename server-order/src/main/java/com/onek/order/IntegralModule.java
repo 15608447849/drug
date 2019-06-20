@@ -259,10 +259,11 @@ public class IntegralModule {
                 ymd = dayYM+"-"+i;
             }
             if(list.contains(ymd)){
-                jsonObject.put(ymd.split("-")[2],"1");
+                jsonObject.put("issign"+i,true);
             }else{
-                jsonObject.put(ymd.split("-")[2],"0");
+                jsonObject.put("issign"+i,false);
             }
+            jsonObject.put("week",new SimpleDateFormat("EEEE").format(TimeUtils.str_yMd_2Date(ymd)));
             jsonArray.add(jsonObject);
         }
         reJson.put("signList",jsonArray);
