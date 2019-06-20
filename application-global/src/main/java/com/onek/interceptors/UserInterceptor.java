@@ -8,8 +8,6 @@ import com.onek.server.infimp.IServerInterceptor;
 import com.onek.server.infimp.IceContext;
 
 import java.lang.reflect.Method;
-import java.util.HashMap;
-import java.util.Map;
 
 /**
  * @Author: leeping
@@ -19,8 +17,6 @@ import java.util.Map;
 public class UserInterceptor implements IServerInterceptor {
 
     //缓存列表
-    private final static Map<String, UserPermission> permissionStatusMap = new HashMap<>();
-
     @Override
     public Result interceptor( IceContext context) throws Exception {
 
@@ -28,15 +24,10 @@ public class UserInterceptor implements IServerInterceptor {
             String classpath = context.refPkg + "." +context.refCls;
             String method = context.refMed;
             String key = classpath + method;
-            UserPermission up;
-            if(permissionStatusMap.containsKey(key)){
-                up = permissionStatusMap.get(key);
-            }else{
-                Class<?> clazz = Class.forName(classpath);
-                Method m = clazz.getMethod(method, appContext.getClass());
-                up = m.getAnnotation(UserPermission.class);
-                permissionStatusMap.put(key, up); //存
-            }
+
+            Class<?> clazz = Class.forName(classpath);
+            Method m = clazz.getMethod(method, appContext.getClass());
+            UserPermission up = m.getAnnotation(UserPermission.class);
             
             appContext.initialization();//初始化上下文用户信息
 
