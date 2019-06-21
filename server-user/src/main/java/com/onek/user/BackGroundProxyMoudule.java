@@ -24,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.onek.util.RedisGlobalKeys.getAptID;
+import static com.onek.util.RedisGlobalKeys.getBusID;
 import static com.onek.util.RedisGlobalKeys.getUserCode;
 import static constant.DSMConst.TB_COMP;
 
