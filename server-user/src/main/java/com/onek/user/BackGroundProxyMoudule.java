@@ -2,6 +2,7 @@ package com.onek.user;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
@@ -23,6 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.onek.util.RedisGlobalKeys.getAptID;
+import static com.onek.util.RedisGlobalKeys.getBusID;
 import static com.onek.util.RedisGlobalKeys.getUserCode;
 import static constant.DSMConst.TB_COMP;
 
@@ -1522,28 +1524,21 @@ public class BackGroundProxyMoudule {
     }
 
 
-    /* *
-     * @description 门店管理资质完善
-     * @params json 见CompInfoVO.class
-     * @return 200成功 -1失败
-     * @exception
-     * @author 11842
-     * @time  2019/6/20 17:51
-     * @version 1.1.1
-     **/
+    /**
+     * 功能: 门店管理资质完善
+     * 参数类型: json
+     * 参数集: 见CompInfoVO.class
+     * 返回值:  code=200(成功) data=结果信息
+     * 详情说明: 所有参数查看CompInfoVO.class说明
+     */
     public Result storePerfectingInfo(AppContext appContext) {
         String taxpayer = "";//营业执照证件编号（纳税人识别号）
         Result result = new Result();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         CompInfoVO compInfoVO = GsonUtils.jsonToJavaBean(json, CompInfoVO.class);
         //药店类型  0 医疗单位, 1 批发企业, 2零售连锁门店, 3零售单体门店
-//        int storetype = jsonObject.get("storetype").getAsInt();//门店类型
-//        int compId = jsonObject.get("compId").getAsInt();//企业码
-//        String invoice = jsonObject.get("invoice").getAsString();//发票信息
-//        JsonArray aptArr = jsonObject.get("aptArr").getAsJsonArray();
-
+        assert compInfoVO != null;
         int storetype = compInfoVO.getStoretype();//门店类型
         int compId = compInfoVO.getCid();//企业码
         InvoiceVO invoice = compInfoVO.getInvoiceVO();//发票信息
@@ -1571,7 +1566,7 @@ public class BackGroundProxyMoudule {
             if (!updCompType(storetype, compId,invoice,taxpayer)) {
                 return result.fail("修改失败！");
             }
-            return optAptInfo(compId,frontAptList) ? result.success("保存成功") : result.fail("保存失败");
+            return optAptInfo(compId,frontAptList,aTypeList) ? result.success("保存成功") : result.fail("保存失败");
         } else {
             return result.fail("资质信息未完善！");
         }
@@ -1638,6 +1633,7 @@ public class BackGroundProxyMoudule {
         return -1;
     }
 
+
     //10-营业执照  11-药店经营许可证  12-gsp认证  13-采购/提货委托书  14-采购/提货人员复印件  15-医疗机构执业许可证(医疗单位)
     //药店类型  0 医疗单位(10,13,14,15 ), 1 批发企业(10,11, 12,13, 14), 2零售连锁企业(10,11, 12,13, 14),
     // 3 零售连锁门店 4 零售单体企业(10,11, 12,13, 14) 4
@@ -1645,16 +1641,27 @@ public class BackGroundProxyMoudule {
         Integer[] aTArr = new Integer[aTypeList.size()];
         Integer[] ylArr = {10,13,14,15};
         Integer[] otherArr = {10,11,12,13,14};
+        Integer[] newArr;
         aTArr = aTypeList.toArray(aTArr);
         Arrays.sort(aTArr);
         switch (storetype) {
             case 0://医疗机构
-                if (aTArr.length < ylArr.length) {
+                if (aTArr.length >= ylArr.length) {
+                    newArr = Arrays.copyOfRange(aTArr,0,4);
+                    if (!Arrays.equals(newArr,ylArr)) {
+                        return "资质信息不完整！";
+                    }
+                } else {
                     return "资质信息不完整！";
                 }
                 break;
             default://其他
-                if (aTArr.length < otherArr.length) {
+                if (aTArr.length >= otherArr.length) {
+                    newArr = Arrays.copyOfRange(aTArr,0,5);
+                    if (!Arrays.equals(newArr,otherArr)) {
+                        return "资质信息不完整！";
+                    }
+                } else {
                     return "资质信息不完整！";
                 }
                 break;
@@ -1663,13 +1670,16 @@ public class BackGroundProxyMoudule {
     }
 
 
-    private boolean optAptInfo(int compId, List<AptitudeVO> frontAptList) {
+    private boolean optAptInfo(int compId, List<AptitudeVO> frontAptList, Set<Integer> faTypeList) {
         String insertAptSql = "insert into {{?" + DSMConst.TB_COMP_APTITUDE + "}} "
                 + "(aptid,compid,atype,certificateno,validitys,validitye,cstatus,pname) "
                 + " values(?,?,?,?,?,?,?,?) ";
         String updAptSql = "update {{?" + DSMConst.TB_COMP_APTITUDE + "}} set certificateno=?,"
                 + " validitys=?,validitye=?,pname=? where cstatus&1=0 and compid=? and atype=?";
+        String delSql = "update {{?" + DSMConst.TB_COMP_APTITUDE + "}} set cstatus=cstatus|1 where "
+                + " cstatus&1=0 and compid=? and atype=?";
         List<AptitudeVO> aptitudeVOList = selectApt(compId);//该企业下已上传的资质
+        List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
         if (aptitudeVOList.size() == 0) {//第一次完善资质信息
             for (AptitudeVO aptitudeVO :frontAptList) {
@@ -1677,12 +1687,30 @@ public class BackGroundProxyMoudule {
                         aptitudeVO.getValiditys(),aptitudeVO.getValiditye(), 0, aptitudeVO.getPname()});
             }
             return !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(insertAptSql, params, params.size()));
-        } else {//之前完善过资质修改即可
-            for (AptitudeVO aptitudeVO :frontAptList) {
-                params.add(new Object[]{aptitudeVO.getCertificateno(), aptitudeVO.getValiditys(),
-                        aptitudeVO.getValiditye(), aptitudeVO.getPname(), compId, aptitudeVO.getAtype()});
+        } else {//之前完善过资质
+            Set<Integer> oTypeList = new HashSet<>();//后台已保存的资质类型
+            for (AptitudeVO aptitudeVO :aptitudeVOList) {
+                oTypeList.add(aptitudeVO.getAtype());
+                if (!faTypeList.contains(aptitudeVO.getAtype())) {
+                    sqlList.add(delSql);
+                    params.add(new Object[]{compId, aptitudeVO.getAtype()});
+                }
             }
-            return !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(updAptSql, params, params.size()));
+            for (AptitudeVO aptitudeFrontVO :frontAptList) {//遍历前台传过来的资质
+                if (oTypeList.contains(aptitudeFrontVO.getAtype())) {//若存在更新资质
+                    sqlList.add(updAptSql);
+                    params.add(new Object[]{aptitudeFrontVO.getCertificateno(), aptitudeFrontVO.getValiditys(),
+                            aptitudeFrontVO.getValiditye(), aptitudeFrontVO.getPname(), compId, aptitudeFrontVO.getAtype()});
+                } else {//否则新增资质
+                    sqlList.add(insertAptSql);
+                    params.add(new Object[]{getAptID(), compId, aptitudeFrontVO.getAtype(), aptitudeFrontVO.getCertificateno(),
+                            aptitudeFrontVO.getValiditys(),aptitudeFrontVO.getValiditye(), 0, aptitudeFrontVO.getPname()});
+                }
+            }
+            String[] sqlNative = new String[sqlList.size()];
+            sqlNative = sqlList.toArray(sqlNative);
+            return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(sqlNative, params));
+
         }
 
     }
@@ -1719,15 +1747,13 @@ public class BackGroundProxyMoudule {
     }
 
 
-    /* *
-     * @description 注册详情
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/6/20 18:56
-     * @version 1.1.1
-     **/
+    /**
+     * 功能: 门店管理资质完善
+     * 参数类型: json
+     * 参数集: compid 所选门店企业id
+     * 返回值:  code=200(成功) data=结果信息
+     * 详情说明: 返回值所有参数查看CompInfoVO.class说明
+     */
     public Result getCompInfo(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
@@ -1757,6 +1783,62 @@ public class BackGroundProxyMoudule {
         return result.success(compInfoVOS[0]);
     }
 
+    /**
+     * 功能: 门店经营范围维护
+     * 参数类型: json
+     * 参数集:
+     * 返回值:  code=200(成功) data=结果信息
+     * 详情说明: 一块医药erp对接使用
+     */
+    public Result optBusScope(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject busObj = jsonParser.parse(json).getAsJsonObject();
+        int compId = busObj.get("compid").getAsInt();
+        String busArr = busObj.get("busArr").getAsString();
+        if (compId > 0){
+            List<Integer> newBusIdList = JSON.parseArray(busArr).toJavaList(Integer.class);
+            operateData(newBusIdList, compId);
+        } else {
+            return result.fail("企业码为空！");
+        }
+        return result.success("操作成功！");
+    }
 
+    private List<Integer> getBusIdByCompId(int compId) {
+        List<Integer> busList = new ArrayList<>();
+        String selectSQL = "select busscope from {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} where "
+                + " cstatus&1=0 and compid=?";
+        List<Object[]> qResult = baseDao.queryNative(selectSQL, compId);
+        if (qResult == null || qResult.isEmpty()) return busList;
+        qResult.forEach(q -> {
+            busList.add(Integer.parseInt(String.valueOf(q[0])));
+        });
+        return busList;
+    }
+
+    private void operateData(List<Integer> newBusIdList, int compId) {
+        List<Object[]> insertParams = new ArrayList<>();
+        List<Object[]> delParams = new ArrayList<>();
+        List<Integer> oldBusIdList = getBusIdByCompId(compId);
+        String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
+                + " (compid,busscope,bscid,cstatus) "
+                + " (?,?,?,?)";
+        String delSql = "update {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} set cstatus=cstatus|1 where "
+                + " cstatus&1=0 and compid=? and busscope=?";
+        for (int newBusId: newBusIdList) {
+            if (!oldBusIdList.contains(newBusId)) {
+                insertParams.add(new Object[]{compId, newBusId,getBusID(),0});
+            }
+        }
+        for (int oldBudId:oldBusIdList) {
+            if (!newBusIdList.contains(oldBudId)) {
+                delParams.add(new Object[]{compId, oldBudId});
+            }
+        }
+        baseDao.updateBatchNative(insertSQL, insertParams, insertParams.size());
+        baseDao.updateBatchNative(delSql, delParams, delParams.size());
+    }
 
 }
