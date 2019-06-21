@@ -94,6 +94,8 @@ public class ProductAnalysisServiceImpl {
             " years,mons,days,weeks,mincxlv from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} b ";
 
 
+
+
     //查询日销量
     private static final String SKU_SALE_DAY_SQL = "select cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
             " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
@@ -282,6 +284,8 @@ public class ProductAnalysisServiceImpl {
 
         convInitList(jsonList,getDbData);
 
+        convSkuNewAdd(jsonList,getDbData);
+
         calcPercent(type,jsonList);
 
 
@@ -297,14 +301,14 @@ public class ProductAnalysisServiceImpl {
                             String _date, int _year, int _month,int _week) {
         LogUtil.getDefaultLogger().debug(subJs.toJSONString());
         int scid = subJs.getIntValue(COL_CLASSC);
-        LogUtil.getDefaultLogger().debug("_year:"+_year+"  _month:"+_month);
-        LogUtil.getDefaultLogger().debug("_date:"+_date+"  _week:"+_week);
+       // LogUtil.getDefaultLogger().debug("_year:"+_year+"  _month:"+_month);
+       // LogUtil.getDefaultLogger().debug("_date:"+_date+"  _week:"+_week);
         if(cid == scid) {
-            LogUtil.getDefaultLogger().debug("类别码相等："+cid);
+         //   LogUtil.getDefaultLogger().debug("类别码相等："+cid);
             if (type == 0 || type == 1) { // 天报(单天)
                 String d = subJs.getString(COL_DATE);
                 if (d.equals(_date)) {
-                    LogUtil.getDefaultLogger().debug("月报测试："+cid+" "+d);
+                 //   LogUtil.getDefaultLogger().debug("月报测试："+cid+" "+d);
                     return true;
                 }
             } else if (type == 2 || type == 3) { // 周(累计)
@@ -317,9 +321,9 @@ public class ProductAnalysisServiceImpl {
             } else if (type == 4 || type == 5) { // 周报(单周)
                 int y = subJs.getInteger(COL_YEAR);
                 int m = subJs.getInteger(COL_MONTH);
-                LogUtil.getDefaultLogger().debug("月报测试："+cid+" "+y+" "+m);
+               // LogUtil.getDefaultLogger().debug("月报测试："+cid+" "+y+" "+m);
                 if (_year == y && _month == m) {
-                    LogUtil.getDefaultLogger().debug("月报测试匹配成功："+cid);
+                  //  LogUtil.getDefaultLogger().debug("月报测试匹配成功："+cid);
                     return true;
                 }
             } else if (type == 6) { // 周报(累计)
@@ -356,269 +360,7 @@ public class ProductAnalysisServiceImpl {
     }
 
 
-//    public String exportMarketAnalysisByTime(int year,int month,String areaC,String areaN,int type) {
-//        JSONObject r = marketAnalysisByTime(year, month, areaC, areaN, type);
-//        if(r == null){
-//            return "";
-//        }
-//
-//        String str = month > 0 ? (year + "_" + month) : year + "";
-//        StringBuilder fileName = new StringBuilder(str).append("_").append(areaN);
-//        if(type == 0) { fileName.append("日报"); }
-//        else if(type == 1) { fileName.append("日报(累计)"); }
-//        else if(type == 2) { fileName.append("周报"); }
-//        else if(type == 3) { fileName.append("周报(累计)"); }
-//        else if(type == 4) { fileName.append("月报"); }
-//        else if(type == 5) { fileName.append("月报(累计)"); }
-//        else  { fileName.append("年报"); }
-//
-//        try (HSSFWorkbook hwb = new HSSFWorkbook()){
-//            HSSFSheet sheet = hwb.createSheet();
-//            HSSFCellStyle style = hwb.createCellStyle();
-//            style.setAlignment(HSSFCellStyle.ALIGN_CENTER);
-//            style.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
-//            style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
-//            style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
-//            style.setBorderRight(HSSFCellStyle.BORDER_THIN);
-//            style.setBorderTop(HSSFCellStyle.BORDER_THIN);
-//            style.setTopBorderColor(HSSFColor.BLACK.index);
-//            style.setBottomBorderColor(HSSFColor.BLACK.index);
-//            style.setLeftBorderColor(HSSFColor.BLACK.index);
-//            style.setRightBorderColor(HSSFColor.BLACK.index);
-//            HSSFRow row;
-//            HSSFCell cell;
-//
-//            row = sheet.createRow(0);
-//            String [] columns = new String [] {"时间", "地区", "市场容量(累计)", "市场容量(累计)", "市场容量(累计)", "市场容量(累计)",
-//                    "注册数量", "注册数量", "注册数量", "注册数量", "认证数量", "认证数量", "认证数量", "认证数量",
-//                    "活跃数量", "活跃数量", "活跃数量", "活跃数量", "复购数量", "复购数量", "复购数量", "复购数量",
-//                    "市场占有率", "市场占有率", "市场占有率", "市场占有率", "活跃率", "活跃率", "活跃率", "活跃率",
-//                    "复购率", "复购率", "复购率", "复购率"
-//            };
-//            for(int i = 0; i < columns.length; i++){
-//                cell = row.createCell(i);
-//                cell.setCellStyle(style);
-//                cell.setCellValue(columns[i]);
-//            }
-//
-//            row = sheet.createRow(1);
-//            String [] columns1 = new String [] {"时间", "地区", "单体", "连锁", "其他", "小计",
-//                    "单体", "连锁", "其他", "小计","单体", "连锁", "其他", "小计",
-//                    "单体", "连锁", "其他", "小计","单体", "连锁", "其他", "小计",
-//                    "单体", "连锁", "其他", "小计","单体", "连锁", "其他", "小计",
-//                    "单体", "连锁", "其他", "小计"
-//            };
-//            for(int i = 0; i < columns1.length; i++){
-//                cell = row.createCell(i);
-//                cell.setCellStyle(style);
-//                cell.setCellValue(columns1[i]);
-//            }
-//
-//            int [][] mergedCol = {
-//                    {0, 0, 2, 5},
-//                    {0, 0, 6, 9},
-//                    {0, 0, 10, 13},
-//                    {0, 0, 14, 17},
-//                    {0, 0, 18, 21},
-//                    {0, 0, 22, 25},
-//                    {0, 0, 26, 29},
-//                    {0, 0, 30, 33},
-//                    {0, 1, 0, 0},
-//                    {0, 1, 1, 1}
-//
-//            };
-//            if(mergedCol != null && mergedCol.length > 0){
-//                for(int i = 0; i < mergedCol.length; i++){
-//                    CellRangeAddress region = new CellRangeAddress(mergedCol[i][0], mergedCol[i][1], mergedCol[i][2], mergedCol[i][3]);
-//                    sheet.addMergedRegion(region);
-//                }
-//            }
-//
-//            CellRangeAddress region = null;
-//            int k = 2;
-//            JSONArray array = r.getJSONArray(COL_LIST);
-//            for(int i = 0; i < array.size(); i++){
-//                JSONObject jss = array.getJSONObject(i);
-//                String showdate = jss.getString(COL_SHOWDATE);
-//                JSONArray subJsonArray = jss.getJSONArray(COL_DETAIL);
-//                int start = k;
-//                for(int j = 0; j < subJsonArray.size(); j++){
-//                    JSONObject js = subJsonArray.getJSONObject(j);
-//                    row = sheet.createRow(k);
-//                    k++;
-//                    createExcelDataRow(style, row, js, showdate);
-//                }
-//                int end = k - 1;
-//                if(start != end){ // 不合并同一行
-//                    region = new CellRangeAddress(start, end, 0, 0);
-//                    sheet.addMergedRegion(region);
-//                }
-//                if(jss.containsKey(COL_TOTAL) && jss.getJSONObject(COL_TOTAL).containsKey(COL_AREAN)){
-//                    JSONObject js = jss.getJSONObject(COL_TOTAL);
-//                    row = sheet.createRow(k);
-//                    k++;
-//                    createExcelDataRow(style, row, js, js.getString(COL_SHOWDATE));
-//                }
-//            }
-//
-//            JSONObject js = r.getJSONObject(COL_SUM_TOTAL);
-//            if(js != null && js.containsKey(COL_AREAN)){
-//                row = sheet.createRow(k);
-//                k++;
-//                createExcelDataRow(style, row, js, js.getString(COL_SHOWDATE));
-//            }
-//
-//            try (ByteArrayOutputStream bos = new ByteArrayOutputStream()){
-//                hwb.write(bos);
-//
-//                String title = getExcelDownPath(fileName.toString(), new ByteArrayInputStream(bos.toByteArray()));
-//                return title;
-//            }
-//
-//        } catch (Exception e) {
-//            e.printStackTrace();
-//        }
-//
-//        return "";
-//    }
 
-    /**
-     * 创建excel数据行
-     *
-     * @param style excel样式
-     * @param row excel行
-     * @param js 结果集的JSON数据
-     * @param data 数据
-     */
-//    private void createExcelDataRow(HSSFCellStyle style, HSSFRow row, JSONObject js, String data) {
-//        createCell(style, row, 0, data);
-//        createCell(style, row, 1, js.getString(COL_AREAN));
-//        createCell(style, row, 2, js.getString(COL_MARK_ETM));
-//        createCell(style, row, 3, js.getString(COL_MARK_CHAIN));
-//        createCell(style, row, 4, js.getString(COL_MARK_OTHER));
-//        createCell(style, row, 5, js.getString(COL_MARK_SUM));
-//        createCell(style, row, 6, js.getString(COL_REG_ETM));
-//        createCell(style, row, 7, js.getString(COL_REG_CHAIN));
-//        createCell(style, row, 8, js.getString(COL_REG_OTHER));
-//        createCell(style, row, 9, js.getString(COL_REG_SUM));
-//        createCell(style, row, 10, js.getString(COL_AUTH_ETM));
-//        createCell(style, row, 11, js.getString(COL_AUTH_CHAIN));
-//        createCell(style, row, 12, js.getString(COL_AUTH_OTHER));
-//        createCell(style, row, 13, js.getString(COL_AUTH_SUM));
-//        createCell(style, row, 14, js.getString(COL_ACT_ETM));
-//        createCell(style, row, 15, js.getString(COL_ACT_CHAIN));
-//        createCell(style, row, 16, js.getString(COL_ACT_OTHER));
-//        createCell(style, row, 17, js.getString(COL_ACT_SUM));
-//        createCell(style, row, 18, js.getString(COL_REP_ETM));
-//        createCell(style, row, 19, js.getString(COL_REP_CHAIN));
-//        createCell(style, row, 20, js.getString(COL_REP_OTHER));
-//        createCell(style, row, 21, js.getString(COL_REP_SUM));
-//        createCell(style, row, 22, js.getString(COL_OCC_ETM_RATE));
-//        createCell(style, row, 23, js.getString(COL_OCC_CHAIN_RATE));
-//        createCell(style, row, 24, js.getString(COL_OCC_OTHER_RATE));
-//        createCell(style, row, 25, js.getString(COL_OCC_SUM_RATE));
-//        createCell(style, row, 26, js.getString(COL_ACT_ETM_RATE));
-//        createCell(style, row, 27, js.getString(COL_ACT_CHAIN_RATE));
-//        createCell(style, row, 28, js.getString(COL_ACT_OTHER_RATE));
-//        createCell(style, row, 29, js.getString(COL_ACT_SUM_RATE));
-//        createCell(style, row, 30, js.getString(COL_REP_ETM_RATE));
-//        createCell(style, row, 31, js.getString(COL_REP_CHAIN_RATE));
-//        createCell(style, row, 32, js.getString(COL_REP_OTHER_RATE));
-//        createCell(style, row, 33, js.getString(COL_REP_SUM_RATE));
-//    }
-
-    private void calcTotal(int type, List<JSONObject> jsonList) {
-//        int MARK_ONE_TOTAL = 0, MARK_TWO_TOTAL = 0, MARK_THREE_TOTAL = 0,MARK_SUM_TOTAL  = 0;
-//        int REG_ONE_TOTAL = 0, REG_TWO_TOTAL = 0, REG_THREE_TOTAL = 0,REG_SUM_TOTAL  = 0;
-//        int AUTH_ONE_TOTAL = 0, AUTH_TWO_TOTAL = 0,AUTH_THREE_TOTAL = 0, AUTH_SUM_TOTAL  = 0;
-//        int ACTIVE_ONE_TOTAL = 0, ACTIVE_TWO_TOTAL = 0, ACTIVE_THREE_TOTAL = 0,ACTIVE_SUM_TOTAL = 0;
-//        int REPURCHASE_ONE_TOTAL = 0, REPURCHASE_TWO_TOTAL = 0,REPURCHASE_THREE_TOTAL = 0, REPURCHASE_SUM_TOTAL  = 0;
-        // 累计报表
-//        for(JSONObject js : jsonList) {
-////            String a = js.getString(COL_AREAC);
-//            JSONArray array = js.getJSONArray(COL_DETAIL);
-//
-//            int mark_etm = js.getInteger(COL_MARK_ETM);
-//            int mark_chain = js.getInteger(COL_MARK_CHAIN);
-//            int mark_other = js.getInteger(COL_MARK_OTHER);
-//            int mark_sum = js.getInteger(COL_MARK_SUM);
-//
-//            int REG_ONE = 0, REG_TWO = 0, REG_THREE = 0,REG_SUM  = 0;
-//            int AUTH_ONE = 0, AUTH_TWO = 0,AUTH_THREE = 0, AUTH_SUM  = 0;
-//            int ACTIVE_ONE = 0, ACTIVE_TWO = 0, ACTIVE_THREE = 0,ACTIVE_SUM = 0;
-//            int REPURCHASE_ONE = 0, REPURCHASE_TWO = 0,REPURCHASE_THREE = 0, REPURCHASE_SUM  = 0;
-//            for (int i = 0; i < array.size(); i++) {
-//                JSONObject subJs = array.getJSONObject(i);
-//
-//                int reg_etm = subJs.getInteger(COL_REG_ETM);
-//                int reg_chain = subJs.getInteger(COL_REG_CHAIN);
-//                int reg_other = subJs.getInteger(COL_REG_OTHER);
-//                int reg_sum = subJs.getInteger(COL_REG_SUM);
-//
-//                int auth_etm = subJs.getInteger(COL_AUTH_ETM);
-//                int auth_chain = subJs.getInteger(COL_REG_CHAIN);
-//                int auth_other = subJs.getInteger(COL_REG_OTHER);
-//                int auth_sum = subJs.getInteger(COL_REG_SUM);
-//
-//                int act_etm = subJs.getInteger(COL_ACT_ETM);
-//                int act_chain = subJs.getInteger(COL_ACT_CHAIN);
-//                int act_other = subJs.getInteger(COL_ACT_OTHER);
-//                int act_sum = subJs.getInteger(COL_ACT_SUM);
-//
-//                int rep_etm = subJs.getInteger(COL_REP_ETM);
-//                int rep_chain = subJs.getInteger(COL_REP_CHAIN);
-//                int rep_other = subJs.getInteger(COL_REP_OTHER);
-//                int rep_sum = subJs.getInteger(COL_REP_SUM);
-//
-//                if(type == 1 || type == 3 || type == 5){
-//
-//                    REG_ONE += reg_etm;  REG_TWO += reg_chain; REG_THREE += reg_other;  REG_SUM += reg_sum;
-//
-//                    subJs.put(COL_REG_ETM, REG_ONE); subJs.put(COL_REG_CHAIN, REG_TWO);
-//                    subJs.put(COL_REG_OTHER, REG_THREE); subJs.put(COL_REG_SUM, REG_SUM);
-//
-//                    AUTH_ONE += auth_etm; AUTH_TWO += auth_chain; AUTH_THREE += auth_other; AUTH_SUM += auth_sum;
-//
-//                    subJs.put(COL_AUTH_ETM, AUTH_ONE); subJs.put(COL_AUTH_CHAIN, AUTH_TWO);
-//                    subJs.put(COL_AUTH_OTHER, AUTH_THREE); subJs.put(COL_AUTH_SUM, AUTH_SUM);
-//
-//                    ACTIVE_ONE += act_etm; ACTIVE_TWO += act_chain; ACTIVE_THREE += act_other; ACTIVE_SUM += act_sum;
-//
-//                    subJs.put(COL_ACT_ETM, ACTIVE_ONE); subJs.put(COL_ACT_CHAIN, ACTIVE_TWO);
-//                    subJs.put(COL_ACT_OTHER, ACTIVE_THREE); subJs.put(COL_ACT_SUM, ACTIVE_SUM);
-//
-//                    REPURCHASE_ONE += rep_etm; REPURCHASE_TWO += rep_chain; REPURCHASE_THREE += rep_other; REPURCHASE_SUM += rep_sum;
-//
-//                    subJs.put(COL_REP_ETM, REPURCHASE_ONE); subJs.put(COL_REP_CHAIN, REPURCHASE_TWO);
-//                    subJs.put(COL_REP_OTHER, REPURCHASE_THREE); subJs.put(COL_REP_SUM, REPURCHASE_SUM);
-//
-//
-//                    subJs.put(COL_ACT_ETM_RATE, calcPercentage(ACTIVE_ONE, AUTH_ONE));
-//                    subJs.put(COL_ACT_CHAIN_RATE, calcPercentage(ACTIVE_TWO, AUTH_TWO));
-//                    subJs.put(COL_ACT_OTHER_RATE, calcPercentage(ACTIVE_THREE, AUTH_THREE));
-//                    subJs.put(COL_ACT_SUM_RATE, calcPercentage(ACTIVE_SUM, AUTH_SUM));
-//                    subJs.put(COL_REP_ETM_RATE, calcPercentage(REPURCHASE_ONE, AUTH_ONE));
-//                    subJs.put(COL_REP_CHAIN_RATE, calcPercentage(REPURCHASE_TWO, AUTH_TWO));
-//                    subJs.put(COL_REP_OTHER_RATE, calcPercentage(REPURCHASE_THREE, AUTH_THREE));
-//                    subJs.put(COL_REP_SUM_RATE, calcPercentage(REPURCHASE_SUM, AUTH_SUM));
-//
-//                    subJs.put(COL_OCC_ETM_RATE,  calcPercentage(REG_ONE, mark_etm));
-//                    subJs.put(COL_OCC_CHAIN_RATE,  calcPercentage(REG_TWO, mark_chain));
-//                    subJs.put(COL_OCC_OTHER_RATE,  calcPercentage(REG_THREE, mark_other));
-//                    subJs.put(COL_OCC_SUM_RATE,  calcPercentage(REG_SUM, mark_sum));
-//                }
-//
-//                REG_ONE_TOTAL += reg_etm;  REG_TWO_TOTAL += reg_chain; REG_THREE_TOTAL += reg_other;  REG_SUM_TOTAL += reg_sum;
-//                AUTH_ONE_TOTAL += auth_etm; AUTH_TWO_TOTAL += auth_chain; AUTH_THREE_TOTAL += auth_other; AUTH_SUM_TOTAL += auth_sum;
-//                ACTIVE_ONE_TOTAL += act_etm; ACTIVE_TWO_TOTAL += act_chain; ACTIVE_THREE_TOTAL += act_other; ACTIVE_SUM_TOTAL += act_sum;
-//                REPURCHASE_ONE_TOTAL += rep_etm; REPURCHASE_TWO_TOTAL += rep_chain; REPURCHASE_THREE_TOTAL += rep_other; REPURCHASE_SUM_TOTAL += rep_sum;
-//            }
-//
-//            MARK_ONE_TOTAL += mark_etm;  MARK_TWO_TOTAL += mark_chain; MARK_THREE_TOTAL += mark_other;  MARK_SUM_TOTAL += mark_sum;
-//        }
-
-
-    }
 
     private void initTableData(int year, int month, int type, Calendar cale,
                                int classno,String classname, List<JSONObject>
@@ -1231,14 +973,15 @@ public class ProductAnalysisServiceImpl {
 
         for (JSONObject js : initList) {
             JSONArray array = js.getJSONArray(COL_DETAIL);
+
             for (int i = 0; i < array.size(); i++) {
                 JSONObject subJs = array.getJSONObject(i);
                 if (skuNewList != null && !skuNewList.isEmpty()) {
                     for (Object[] objs : skuNewList) {
-                        LogUtil.getDefaultLogger().debug("新增SKU:" + skuNewList.size());
-                        LogUtil.getDefaultLogger().debug("新增SKU参数:" + objs[0]);
-                        LogUtil.getDefaultLogger().debug("新增SKU参数:" + objs[4]);
-                        LogUtil.getDefaultLogger().debug("新增SKU月:" + objs[3]);
+//                        LogUtil.getDefaultLogger().debug("新增SKU:" + skuNewList.size());
+//                        LogUtil.getDefaultLogger().debug("新增SKU参数:" + objs[0]);
+//                        LogUtil.getDefaultLogger().debug("新增SKU参数:" + objs[4]);
+//                        LogUtil.getDefaultLogger().debug("新增SKU月:" + objs[3]);
                         if (isMatch(type, Integer.parseInt(objs[0].toString()),
                                 subJs, objs[5].toString(),Integer.parseInt(objs[3].toString()),
                                 Integer.parseInt(objs[4].toString()),
@@ -1247,7 +990,8 @@ public class ProductAnalysisServiceImpl {
                             int skunum = subJs.getIntValue(COL_PRODUCT_SUM);
                             int skuAdd = Integer.parseInt(objs[1].toString());
                             int hskuAdd = Integer.parseInt(objs[2].toString());
-                            subJs.put(COL_PRODUCT_SUM, skunum - hskuAdd);
+                           // subJs.put(COL_PRODUCT_SUM, skunum - hskuAdd);
+                            subJs.put(COL_PRODUCT_SUM,hskuAdd);
                             subJs.put(COL_PRODUCT_ADD, skuAdd);
                             subJs.put(COL_PRODUCT_ADDC, skuAdd);
                             subJs.put(COL_PRODUCT_ADDH, hskuAdd);
@@ -1298,6 +1042,13 @@ public class ProductAnalysisServiceImpl {
                                 Integer.parseInt(objs[21].toString()),
                                 Integer.parseInt(objs[23].toString()))) {
 
+
+//                            cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
+//                            " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
+//                                    "years,mons,days,weeks,mincxlv
+
+
+
                             String maxdxlv = "";
                             if(objs[2] != null){
                                 maxdxlv = objs[2].toString();
@@ -1322,7 +1073,7 @@ public class ProductAnalysisServiceImpl {
                             }
 
                             String avcxlv = "";
-                            if(objs[5] != null){
+                            if(objs[6] != null){
                                 avcxlv = objs[6].toString();
                                 subJs.put(COL_STOCK_SALESPC_SUM, avcxlv);
                             }
@@ -1403,6 +1154,139 @@ public class ProductAnalysisServiceImpl {
         return initList;
     }
 
+    private void convSkuNewAdd(List<JSONObject> jsonList,GetDbData dbData){
+        List<Object[]> skuNewList = dbData.getSkuNewList();
+        Map<Integer,List<HashMap<String,String>>> skuNewMap = new HashMap<>();
+        int type = dbData.getType();
+        for(Object[] ojbs : skuNewList){
+            HashMap<String,String> map = new HashMap();
+            if(type == 0 || type == 1){
+                map.put("date",ojbs[5].toString());
+            }
+            if(type == 2 || type == 3){
+                map.put("date",ojbs[6].toString());
+            }
+
+            if(type == 4 || type == 5){
+                map.put("date",ojbs[4].toString());
+            }
+
+            if(type == 6){
+                map.put("date",ojbs[3].toString());
+            }
+
+            map.put("type",type+"");
+            map.put("skucnt",ojbs[1].toString());
+            map.put("hskucnt",ojbs[2].toString());
+
+            if(!skuNewMap.containsKey(Integer.parseInt(ojbs[0].toString()))){
+                List<HashMap<String,String>> list = new ArrayList<>();
+                list.add(map);
+                skuNewMap.put(Integer.parseInt(ojbs[0].toString()),list);
+            }else{
+                List<HashMap<String,String>> extlist = skuNewMap.get(Integer.parseInt(ojbs[0].toString()));
+                extlist.add(map);
+            }
+        }
+
+
+        for (JSONObject js : jsonList) {
+            JSONArray array = js.getJSONArray(COL_DETAIL);
+
+            for (int i = 0; i < array.size(); i++) {
+                JSONObject subJs = array.getJSONObject(i);
+                int cid = subJs.getIntValue(COL_CLASSC);
+                if(skuNewMap.containsKey(cid)){
+                    List<HashMap<String,String>> list = skuNewMap.get(cid);
+                    for(int j = 0; j < list.size(); j++){
+                        HashMap<String,String> map = list.get(j);
+                        String date = "";
+                        if(type == 0 || type == 1){
+                            date = subJs.getString(COL_DATE);
+                        }
+
+                        if(type == 2 || type == 3){
+                            date = subJs.getString(COL_WEEK);
+                        }
+
+                        if(type == 4 || type == 5){
+                            date = subJs.getString(COL_MONTH);
+                        }
+
+                        if(type == 6){
+                            date = subJs.getString(COL_YEAR);
+                        }
+
+                        int addh =  subJs.getIntValue(COL_PRODUCT_ADDH);
+                        if(addh > 0){
+                            break;
+                        }
+
+                        if(compareDate(type,date,map.get("date")) == -1){
+                           int cskucnt =  Integer.parseInt(map.get("hskucnt"))
+                                   - Integer.parseInt(map.get("skucnt"));
+                            subJs.put(COL_PRODUCT_ADDH,cskucnt);
+                            subJs.put(COL_PRODUCT_SUM,cskucnt);
+                            break;
+                        }
+                    }
+                    int addh =  subJs.getIntValue(COL_PRODUCT_ADDH);
+                    if(addh == 0){
+                        HashMap<String, String> map = skuNewMap.get(cid).get(skuNewMap.get(cid).size() - 1);
+                        int cskucnt = Integer.parseInt(map.get("hskucnt"));
+                        subJs.put(COL_PRODUCT_ADDH,cskucnt);
+                        subJs.put(COL_PRODUCT_SUM,cskucnt);
+                    }
+
+                }
+
+                if(type == 1 || type == 3 || type == 5){
+                    subJs.put(COL_PRODUCT_ADD,subJs.getIntValue(COL_PRODUCT_SUM));
+                }
+
+            }
+        }
+
+
+
+
+
+
+
+    }
+
+    private int compareDate(int type,String sdate,String tdate){
+        if(type == 0 || type == 1){
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            try{
+               return sdf.parse(sdate.toString()).compareTo(sdf.parse(tdate.toString()));
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            return -2;
+        }else{
+            int svalue = Integer.parseInt(sdate);
+            int tvalue = Integer.parseInt(tdate);
+
+            if(svalue < tvalue){
+                return -1;
+            }
+
+            if(svalue == tvalue){
+                return 0;
+            }
+
+            if(svalue > tvalue){
+                return 1;
+            }
+
+
+
+        }
+        return -2;
+
+    }
+
 
 
     private void calcPercent(int type, List<JSONObject> jsonList){
@@ -1475,14 +1359,18 @@ public class ProductAnalysisServiceImpl {
         double stsalespcsums = 0;
         double stsalespcmaxs = 0;
         double stsalespcmins = 0;
-
+        int countdx = 0;
+        int countcx = 0;
 
         for (JSONObject js : jsonList) {
             JSONArray array = js.getJSONArray(COL_DETAIL);
+
             for (int i = 0; i < array.size(); i++) {
                 JSONObject subJs = array.getJSONObject(i);
                 int classNo = subJs.getIntValue(COL_CLASSC);
                 if (classNo == classno) {
+                    countdx++;
+                    countcx++;
                     int pdsum = subJs.getIntValue(COL_PRODUCT_SUM);
                     int addnum = subJs.getIntValue(COL_PRODUCT_ADD);
                     int pdsold = subJs.getIntValue(COL_PRODUCT_SOLD);
@@ -1543,6 +1431,7 @@ public class ProductAnalysisServiceImpl {
                         stockmins = stockmin;
                     }
 
+
                     stsalespcsums = stsalespcsums + stsalespcsum;
                     saleamts = saleamts + saleamt;
                     salenums = salenums + salenum;
@@ -1574,36 +1463,49 @@ public class ProductAnalysisServiceImpl {
                         }
                     }
 
+
                     if (salespcsum.contains("%")) {
                         salespcsum = salespcsum.replaceAll("%", "");
                         if (!StringUtils.isEmpty(salespcsum)) {
                             salespcsums = salespcsums + Double.parseDouble(salespcsum);
+                            countdx++;
                         }
                     }
 
                     if (salespcmax.contains("%")) {
                         salespcmax = salespcmax.replaceAll("%", "");
                         if (!StringUtils.isEmpty(salespcmax)) {
-                            salespcmaxs = salespcmaxs + Double.parseDouble(salespcmax);
+                            if(salespcmaxs < Double.parseDouble(salespcmax)){
+                                salespcmaxs = Double.parseDouble(salespcmax);
+                            }
+                          //  salespcmaxs = salespcmaxs + Double.parseDouble(salespcmax);
                         }
                     }
 
                     if (salespcmin.contains("%")) {
                         salespcmin = salespcmin.replaceAll("%", "");
                         if (!StringUtils.isEmpty(salespcmin)) {
-                            salespcmins = salespcmins + Double.parseDouble(salespcmin);
+                            if(salespcmins > Double.parseDouble(salespcmin)){
+                                salespcmins = Double.parseDouble(salespcmin);
+                            }
+                           // salespcmins = salespcmins + Double.parseDouble(salespcmin);
                         }
+                    }else{
+                        salespcmins = 0;
                     }
                 }
             }
         }
 
+        DecimalFormat df=new DecimalFormat("0.0000");
+
+
         nsJson.put(COL_PRODUCT_SUM,pdsums);
         nsJson.put(COL_PRODUCT_ADD,addnums);
         nsJson.put(COL_PRODUCT_SOLD, pdsolds);
         nsJson.put(COL_PRODUCT_SALES, pdsales);
-        nsJson.put(COL_PRODUCT_SALESPC, pdsalepcs+"%");
-        nsJson.put(COL_PRODUCT_SOLDPC,pdsoldpcs+"%");
+        nsJson.put(COL_PRODUCT_SALESPC, df.format(pdsalepcs)+"%");
+        nsJson.put(COL_PRODUCT_SOLDPC,df.format(pdsoldpcs)+"%");
         nsJson.put(COL_STOCK_SUM, stocksums);
         nsJson.put(COL_STOCK_MAX, stockmaxs);
         nsJson.put(COL_STOCK_MIN, stockmins);
@@ -1615,15 +1517,186 @@ public class ProductAnalysisServiceImpl {
         nsJson.put(COL_SALEAMT_MAX, saleamtmaxs);
         nsJson.put(COL_SALEAMT_MIN, saleamtmins);
 
-        nsJson.put(COL_SALESPC_SUM, salespcsums+"%");
+        nsJson.put(COL_SALESPC_SUM, df.format(salespcsums/countdx)+"%");
         nsJson.put(COL_SALESPC_MAX, salespcmaxs+"%");
         nsJson.put(COL_SALESPC_MIN,salespcmins+"%");
-        nsJson.put(COL_STOCK_SALESPC_SUM, stsalespcsums);
+        nsJson.put(COL_STOCK_SALESPC_SUM, df.format(stsalespcsums/countcx));
         nsJson.put(COL_STOCK_SALESPC_MAX, stsalespcmaxs);
         nsJson.put(COL_STOCK_SALESPC_MIN, stsalespcmins);
         resultJson.put("list",jsonList);
         resultJson.put(COL_SUM_TOTAL,nsJson);
         return resultJson;
+    }
+
+
+    public String exportProductAnalysisByTime(int year,int month,int classno,String classname,int type) {
+
+        JSONObject r = pruductAnalysisByTime(year, month, classno, classname, type);
+        if(r == null){
+            return "";
+        }
+
+        String str = month > 0 ? (year + "_" + month) : year + "";
+        StringBuilder fileName = new StringBuilder(str).append("_").append(classname);
+        if(type == 0) { fileName.append("日报"); }
+        else if(type == 1) { fileName.append("日报(累计)"); }
+        else if(type == 2) { fileName.append("周报"); }
+        else if(type == 3) { fileName.append("周报(累计)"); }
+        else if(type == 4) { fileName.append("月报"); }
+        else if(type == 5) { fileName.append("月报(累计)"); }
+        else  { fileName.append("年报"); }
+
+        try (HSSFWorkbook hwb = new HSSFWorkbook()){
+            HSSFSheet sheet = hwb.createSheet();
+            HSSFCellStyle style = hwb.createCellStyle();
+            style.setAlignment(HSSFCellStyle.ALIGN_CENTER);
+            style.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
+            style.setBorderBottom(HSSFCellStyle.BORDER_THIN);
+            style.setBorderLeft(HSSFCellStyle.BORDER_THIN);
+            style.setBorderRight(HSSFCellStyle.BORDER_THIN);
+            style.setBorderTop(HSSFCellStyle.BORDER_THIN);
+            style.setTopBorderColor(HSSFColor.BLACK.index);
+            style.setBottomBorderColor(HSSFColor.BLACK.index);
+            style.setLeftBorderColor(HSSFColor.BLACK.index);
+            style.setRightBorderColor(HSSFColor.BLACK.index);
+            HSSFRow row;
+            HSSFCell cell;
+
+            row = sheet.createRow(0);
+            String [] columns = new String [] {"时间", "类目", "SKU", "SKU", "SKU", "SKU",
+                    "SKU", "SKU", "库存", "库存", "库存", "销售量", "销售量", "销售量",
+                    "销售额", "销售额", "销售额", "动销率", "动销率", "动销率", "存销比", "存销比",
+                    "存销比"
+            };
+            for(int i = 0; i < columns.length; i++){
+                cell = row.createCell(i);
+                cell.setCellStyle(style);
+                cell.setCellValue(columns[i]);
+            }
+
+            row = sheet.createRow(1);
+            String [] columns1 = new String [] {"时间", "类目", "总量", "新增", "售罄", "动销",
+                    "SKU动销率", "售罄率", "总量", "最高","最低", "总量", "最高", "最低",
+                    "总额", "最高", "最低", "最高","最低", "平均", "最高", "最低",
+                    "平均"
+            };
+            for(int i = 0; i < columns1.length; i++){
+                cell = row.createCell(i);
+                cell.setCellStyle(style);
+                cell.setCellValue(columns1[i]);
+            }
+
+            int [][] mergedCol = {
+                    {0, 0, 2, 7},
+                    {0, 0, 8, 10},
+                    {0, 0, 11, 13},
+                    {0, 0, 14, 16},
+                    {0, 0, 17, 19},
+                    {0, 0, 20, 22},
+                    {0, 1, 0, 0},
+                    {0, 1, 1, 1}
+
+            };
+            //起始行号，终止行号， 起始列号，终止列号
+
+
+
+            if(mergedCol != null && mergedCol.length > 0){
+                for(int i = 0; i < mergedCol.length; i++){
+                    CellRangeAddress region = new CellRangeAddress(mergedCol[i][0], mergedCol[i][1], mergedCol[i][2], mergedCol[i][3]);
+                    sheet.addMergedRegion(region);
+                }
+            }
+
+            CellRangeAddress region = null;
+            int k = 2;
+            JSONArray array = r.getJSONArray(COL_LIST);
+            for(int i = 0; i < array.size(); i++){
+                JSONObject jss = array.getJSONObject(i);
+                String showdate = jss.getString(COL_SHOWDATE);
+                JSONArray subJsonArray = jss.getJSONArray(COL_DETAIL);
+                int start = k;
+                for(int j = 0; j < subJsonArray.size(); j++){
+                    JSONObject js = subJsonArray.getJSONObject(j);
+                    String subShowdate = js.getString(COL_SHOWDATE);
+                    row = sheet.createRow(k);
+                    k++;
+                    createExcelDataRow(style, row, js, subShowdate);
+                    if(subShowdate.equals("合计")){
+                        createExcelDataRow(style, row, js, subShowdate);
+                        int colsize = js.getIntValue("colSize");
+                        region = new CellRangeAddress(start, k-2, 0, 0);
+                        sheet.addMergedRegion(region);
+                        start = k;
+                    }
+;
+                }
+//                int end = k - 1;
+//                if(start != end){ // 不合并同一行
+//                    region = new CellRangeAddress(start, end, 0, 0);
+//                    sheet.addMergedRegion(region);
+//                }
+//                if(jss.containsKey(COL_TOTAL) && jss.getJSONObject(COL_TOTAL).containsKey(COL_CLASSN)){
+//                    JSONObject js = jss.getJSONObject(COL_TOTAL);
+//                    row = sheet.createRow(k);
+//                    k++;
+//                    createExcelDataRow(style, row, js, js.getString(COL_SHOWDATE));
+//                }
+            }
+
+            JSONObject js = r.getJSONObject(COL_SUM_TOTAL);
+            if(js != null && js.containsKey(COL_CLASSN)){
+                row = sheet.createRow(k);
+                k++;
+                createExcelDataRow(style, row, js, js.getString(COL_SHOWDATE));
+            }
+
+            try (ByteArrayOutputStream bos = new ByteArrayOutputStream()){
+                hwb.write(bos);
+
+                String title = getExcelDownPath(fileName.toString(), new ByteArrayInputStream(bos.toByteArray()));
+                return title;
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        return "";
+    }
+
+    /**
+     * 创建excel数据行
+     *
+     * @param style excel样式
+     * @param row excel行
+     * @param js 结果集的JSON数据
+     * @param data 数据
+     */
+    private void createExcelDataRow(HSSFCellStyle style, HSSFRow row, JSONObject js, String data) {
+        createCell(style, row, 0, data);
+        createCell(style, row, 1, js.getString(COL_CLASSN));
+        createCell(style, row, 2, js.getString(COL_PRODUCT_SUM));
+        createCell(style, row, 3, js.getString(COL_PRODUCT_ADD));
+        createCell(style, row, 4, js.getString(COL_PRODUCT_SOLD));
+        createCell(style, row, 5, js.getString(COL_PRODUCT_SALES));
+        createCell(style, row, 6, js.getString(COL_PRODUCT_SALESPC));
+        createCell(style, row, 7, js.getString(COL_PRODUCT_SOLDPC));
+        createCell(style, row, 8, js.getString(COL_STOCK_SUM));
+        createCell(style, row, 9, js.getString(COL_STOCK_MAX));
+        createCell(style, row, 10, js.getString(COL_STOCK_MIN));
+        createCell(style, row, 11, js.getString(COL_SALENUM_SUM));
+        createCell(style, row, 12, js.getString(COL_SALENUM_MAX));
+        createCell(style, row, 13, js.getString(COL_SALENUM_MIN));
+        createCell(style, row, 14, js.getString(COL_SALEAMT_SUM));
+        createCell(style, row, 15, js.getString(COL_SALEAMT_MAX));
+        createCell(style, row, 16, js.getString(COL_SALEAMT_MIN));
+        createCell(style, row, 17, js.getString(COL_SALESPC_MAX));
+        createCell(style, row, 18, js.getString(COL_SALESPC_MIN));
+        createCell(style, row, 19, js.getString(COL_SALESPC_SUM));
+        createCell(style, row, 20, js.getString(COL_STOCK_SALESPC_MAX));
+        createCell(style, row, 21, js.getString(COL_STOCK_SALESPC_MIN));
+        createCell(style, row, 22, js.getString(COL_STOCK_SALESPC_SUM));
     }
 
 

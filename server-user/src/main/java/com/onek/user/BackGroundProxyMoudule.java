@@ -144,6 +144,8 @@ public class BackGroundProxyMoudule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         Result result = new Result();
+        UserSession userSession = appContext.getUserSession();
+        long curRoleid = userSession.roleCode;
         int roleid = jsonObject.get("role").getAsInt();
         int uid = jsonObject.get("uid").getAsInt();
         int suid = jsonObject.get("suid").getAsInt();
@@ -155,7 +157,7 @@ public class BackGroundProxyMoudule {
 
         switch (ctype){
             case 1:
-                return  result.success(getMyProxyAreac(roleid,suid,uid));
+                return  result.success(getMyProxyAreac(roleid,suid,uid,curRoleid));
             case 2:
                 return  result.success(getAddProxyAreac(roleid,uid));
             case 3:
@@ -165,7 +167,7 @@ public class BackGroundProxyMoudule {
         return result.success(null);
     }
 
-    public List<ProxyAreaTreeVO> getMyProxyAreac(int roleid,int suid,int uid){
+    public List<ProxyAreaTreeVO> getMyProxyAreac(int roleid,int suid,int uid,long curRoleid){
 
         if(suid <= 0){
             return null;
@@ -190,12 +192,18 @@ public class BackGroundProxyMoudule {
         //渠道经理
         if((roleid & RoleCodeCons._PROXY_MGR) > 0){
             List<ProxyAreaTreeVO>  areaList = new ArrayList<>();
+            if((curRoleid & RoleCodeCons._PROXY_DIRECTOR) > 0){
+                String queryPuidSql = "select belong from {{?"+ DSMConst.TB_SYSTEM_USER+"}} where uid = ?";
+                List<Object[]> puidRet = baseDao.queryNative(queryPuidSql, suid);
+                if(puidRet == null || puidRet.isEmpty()){
+                    return null;
+                }
+                uid = Integer.parseInt(puidRet.get(0)[0].toString());
+            }
             List<Object[]> queryParentRet = baseDao.queryNative(QUERY_MY_AREAC, uid);
             if(queryParentRet == null || queryParentRet.isEmpty()){
                 return null;
             }
-
-
             for (Object[] objects : queryParentRet){
                 ProxyAreaTreeVO proxyAreaVO = new ProxyAreaTreeVO();
                 proxyAreaVO.setArean(objects[1].toString());

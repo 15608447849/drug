@@ -249,7 +249,7 @@ public class IntegralModule {
             list.add(detailVO.getCreatedate());
         }
         //获取当月签到记录
-        JSONArray jsonArray = new JSONArray();
+        List signlist = new ArrayList();
         for(int i = minDay;i<=maxDay;i++){
             JSONObject jsonObject = new JSONObject();
             String ymd = "";
@@ -259,13 +259,10 @@ public class IntegralModule {
                 ymd = dayYM+"-"+i;
             }
             if(list.contains(ymd)){
-                jsonObject.put(ymd.split("-")[2],"1");
-            }else{
-                jsonObject.put(ymd.split("-")[2],"0");
+                signlist.add(i);
             }
-            jsonArray.add(jsonObject);
         }
-        reJson.put("signList",jsonArray);
+        reJson.put("signList",signlist);
         reJson.put("signSum",integralDetails.length);
         reJson.put("nowDate",new SimpleDateFormat("yyyy年MM月dd日").format(new Date()));
         reJson.put("signMsg",integralDetails);

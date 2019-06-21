@@ -7,7 +7,6 @@ import util.StringUtils;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingQueue;
 
 import static Ice.Application.communicator;
 import static com.onek.util.GenIdUtil.getUnqId;
@@ -21,27 +20,7 @@ import static util.TimeUtils.getCurrentYear;
  */
 public class PushMessageMySqlImps implements IPushMessageStore {
 
-    private final LinkedBlockingQueue<IPMessage> messageQueue = new LinkedBlockingQueue<>();
 
-    @Override
-    public boolean storeMessageToQueue(IPMessage message) {
-        try {
-            messageQueue.put(message);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return false;
-    }
-
-    @Override
-    public IPMessage pullMessageFromQueue() {
-        try {
-            return messageQueue.take();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-        return null;
-    }
 
     @Override
     public long storeMessageToDb(IPMessage message) {

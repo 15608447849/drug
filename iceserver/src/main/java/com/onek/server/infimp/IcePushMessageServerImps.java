@@ -12,6 +12,7 @@ import threadpool.IOThreadPool;
 import util.StringUtils;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.locks.ReentrantLock;
 
 /**
@@ -23,7 +24,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
 
 
     //超时时间毫秒数
-    private final int PING_TIMEOUT_MAX = 1000;
+    private final int PING_TIMEOUT_MAX = 30 * 1000;
     private final ReentrantLock lock = new ReentrantLock();
     /**
      *  当前在线的所有客户端
@@ -36,7 +37,9 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
 
     private IPushMessageStore iPushMessageStore;
 
-    private volatile boolean lockQueue = false;
+
+    //待发送消息存储的队列
+    private ConcurrentLinkedQueue<IPMessage> messageQueue;
 
     IcePushMessageServerImps(Communicator communicator,String serverName) {
         this.communicator = communicator;
@@ -48,6 +51,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         if (!IceProperties.INSTANCE.allowPushMessageServer.contains(serverName)) return;
         pool = new IOThreadPool();
         onlineClientMaps = new HashMap<>();
+        messageQueue = new ConcurrentLinkedQueue<>();
         //注入消息存储实现
         createMessageStoreImps();
         pool.post(heartRunnable());//心跳线程
@@ -135,23 +139,13 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     //发送消息到客户端
     @Override
     public void sendMessageToClient(String identityName, String message, Current __current) {
-        pool.post(()->{
-            addMessage(identityName,message);
-        });
-    }
-
-    //添加消息到队列
-    private void addMessage(String identityName, String message) {
-        //放入队列
-        storeMessageToQueue(new IPMessage(identityName, message));
-        if (lockQueue){
-            //解锁
-            synchronized (communicator){
-                communicator.notify();
-            }
-            lockQueue = false;
+        //放入消息队列
+        messageQueue.offer(new IPMessage(identityName, message));
+        synchronized (messageQueue){
+            messageQueue.notify();
         }
     }
+
 
     //发送消息到客户端
     private boolean sendMessage(IPMessage message) {
@@ -184,21 +178,9 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         return false;
     }
 
-    @Override
-    public boolean storeMessageToQueue(IPMessage message) {
-        if (iPushMessageStore!=null){
-            return iPushMessageStore.storeMessageToQueue(message);
-        }
-        return false;
-    }
 
-    @Override
-    public IPMessage pullMessageFromQueue() {
-        if (iPushMessageStore!=null){
-            return iPushMessageStore.pullMessageFromQueue();
-        }
-        return null;
-    }
+
+
 
     @Override
     public long storeMessageToDb(IPMessage message) {
@@ -242,16 +224,21 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         return () -> {
             while (!communicator.isShutdown()){
                 try {
-                    IPMessage message = pullMessageFromQueue();
+                    IPMessage message = messageQueue.poll();
                     if (message == null){
-                        lockQueue = true;
-                        synchronized (communicator){
-                            communicator.wait();
+                        communicator.getLogger().print("当前没有可发送消息,进入等待状态...");
+                        synchronized (messageQueue){
+                            try {
+                                messageQueue.wait();
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                         }
                         continue;
                     }
+                    communicator.getLogger().print("发送消息>>"+message);
                     sendMessage(message);
-                } catch (InterruptedException ignored) {
+                } catch (Exception ignored) {
                 }
             }
         };
@@ -285,13 +272,14 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                 while (it3.hasNext()){
                     PushMessageClientPrx clientPrx = it3.next();
                     try {
-
+                        long t = System.currentTimeMillis();
                         clientPrx.ice_invocationTimeout(PING_TIMEOUT_MAX).ice_ping();
-
+                        communicator.getLogger().print("检测存活: " + clientPrx.ice_getIdentity() +" , 耗时: " + (System.currentTimeMillis() - t)+" 毫秒");
                     } catch (Exception e) {
                         it3.remove();
+                        e.printStackTrace();
                         communicator.getLogger().print(
-                                Thread.currentThread()+" , "+"在线监测客户端移除:" +
+                                Thread.currentThread()+" , "+"在线监测失败, 移除客户端:" +
                                 " "+ communicator.identityToString(clientPrx.ice_getIdentity())+" 原因:"+  e);
                     }
                 }

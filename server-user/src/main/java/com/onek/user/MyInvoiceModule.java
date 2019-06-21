@@ -106,26 +106,11 @@ public class MyInvoiceModule {
 
         // 发送验证邮箱
         boolean sendResult =
-                EmailUtil.getEmailUtil().sendEmail(templateConvertMessage(18, vcode), email);
+                EmailUtil.getEmailUtil().sendEmail(
+                        "【一块医药】尊敬的用户：您正在绑定一块医药电子发票收件邮箱，验证码为："
+                        + vcode + "，有效期30分钟。", email);
 
         return sendResult ? new Result().success("发送成功！") : new Result().fail("发送失败！");
-    }
-
-    private static String templateConvertMessage(int tempNo,Object... args){
-        String msg = getTmpByTno(tempNo);
-        if (msg == null) return "";
-        if (args!=null && args.length>0) msg = String.format(Locale.CHINA,msg,args);
-        return msg;
-    }
-
-    //数据库获取模板
-    private static String getTmpByTno(int tno) {
-        String selectSql = "SELECT tcontext FROM {{?" + TB_SMS_TEMPLATE + "}} WHERE cstatus&1=0 and tno= ?";
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,tno);
-        if (lines.size() == 1){
-            return lines.get(0)[0].toString();
-        }
-        return null;
     }
 
     private int setEmail(int compid, String vcode, String email) {
