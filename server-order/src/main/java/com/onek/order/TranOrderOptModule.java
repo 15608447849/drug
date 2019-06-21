@@ -233,10 +233,12 @@ public class TranOrderOptModule {
         int placeType = jsonObject.getInteger("placeType");//1、直接下单 2、购物车下单
         JSONObject orderObj = jsonObject.getJSONObject("orderObj");
         JSONArray goodsArr = jsonObject.getJSONArray("goodsArr");
+        if (goodsArr == null || goodsArr.size() == 0) {
+            LogUtil.getDefaultLogger().info("print by cyq placeOrder ----------- 下单操作未选择商品");
+            return result.fail("请选择商品！");
+        }
         TranOrder tranOrder = JSON.parseObject(orderObj.toJSONString(), TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
-        String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
-        tranOrder.setOrderno(orderNo);
         if (!jsonObject.getString("unqid").isEmpty()) {
             unqid = jsonObject.getLong("unqid");
         }
@@ -327,6 +329,8 @@ public class TranOrderOptModule {
             e.printStackTrace();
         }
 
+        String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
+        tranOrder.setOrderno(orderNo);
         sqlList.addFirst(INSERT_TRAN_ORDER);
         params.addFirst(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
                 tranOrder.getPdamt(), tranOrder.getFreight(), payamt, tranOrder.getCoupamt(), tranOrder.getDistamt(),
