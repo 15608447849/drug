@@ -412,7 +412,7 @@ public class BackgroundProdModule {
          */
         List<Product> products = new ArrayList<>();
         Product p = new Product();
-        p.setSku(Integer.parseInt(params[0]));
+        p.setSku(Long.parseLong(params[0]));
         products.add(p);
         List<IDiscount> discounts
                 = new ActivityFilterService(
@@ -423,9 +423,9 @@ public class BackgroundProdModule {
                         new StoreFilter(),})
                 .getCurrentActivities(products);
         if(discounts == null || discounts.size()<=0){
-            jo.put("appLimitnum","0");
+            jo.put("appLimitnum",0);
         }else{
-            jo.put("appLimitnum",discounts.get(0).getLimits(Integer.parseInt(params[0])));
+            jo.put("appLimitnum",discounts.get(0).getLimits(Long.parseLong(params[0])));
         }
         //add end
         return new Result().success(jo);
