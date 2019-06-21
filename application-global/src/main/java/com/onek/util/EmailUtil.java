@@ -58,6 +58,7 @@ public class EmailUtil extends ApplicationPropertiesBase {
         try {
             System.out.println("----------------- sendEmail start --------------------");
             Session session = Session.getInstance(MAIL_PROP);
+            session.setDebug(true);
             System.out.println("----------------- sendEmail 60 --------------------");
             Message msg = getMimeMessage(session, targetMail, content);
             System.out.println("----------------- sendEmail 62 --------------------");
