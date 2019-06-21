@@ -144,7 +144,11 @@ public class IntegralModule {
         }
         JSONObject result = new JSONObject();
         result.put("times", times);
-        result.put("signGetJf", base[times]);
+        if(times > 6){
+            result.put("signGetJf",30);
+        }else{
+            result.put("signGetJf", base[times]);
+        }
         result.put("dates", dateArray);
         return new Result().success(result);
     }
