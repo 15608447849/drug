@@ -1,5 +1,9 @@
 package com.onek.entity;
 
+import com.onek.calculate.entity.Gift;
+
+import java.util.List;
+
 /**
  * @author Administrator
  * @version V1.0
@@ -25,6 +29,16 @@ public class ShoppingCartDTO {
     private int cstatus;
 
     private long areano;
+
+    private double pdprice;
+
+    public double getPdprice() {
+        return pdprice;
+    }
+
+    public void setPdprice(double pdprice) {
+        this.pdprice = pdprice;
+    }
 
     public long getAreano() {
         return areano;
