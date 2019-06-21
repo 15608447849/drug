@@ -224,4 +224,23 @@ public class ReportModule {
         return new Result().success(resultJson);
     }
 
+    @UserPermission(ignore = true)
+    public Result exportProuductAnalysisByTime(AppContext appContext) {
+        JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
+        int year = json.has("year") ? json.get("year").getAsInt() : 0;
+        int month = json.has("month") ? json.get("month").getAsInt() : 0;
+        int classno = json.has("classno") ? json.get("classno").getAsInt() : 0;
+        if(StringUtils.isEmpty(json.get("classno").getAsString()) || classno == 0){
+            classno = 10;
+        }
+        String classname = json.has("classname") ? json.get("classname").getAsString() : "";
+        int type = json.has("type") ? json.get("type").getAsInt() : 0;
+
+        String title = productAnalysisService.exportProductAnalysisByTime(year, month, classno, classname, type);
+        if(StringUtils.isEmpty(title)){
+            return new Result().fail("导出失败");
+        }
+        return new Result().success(title);
+    }
+
 }
