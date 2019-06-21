@@ -964,7 +964,7 @@ public class MarketAnalysisServiceImpl {
             int maxDate = 0;
             if(month < maxMonth){
                 cale.set(Calendar.MONTH, month - 1);
-                maxDate = cale.get(Calendar.DAY_OF_MONTH);
+                maxDate = cale.getActualMaximum(Calendar.DAY_OF_MONTH);
             }else{
                 cale.set(Calendar.MONTH, month - 1);
                 maxDate = cale.get(Calendar.DATE);
