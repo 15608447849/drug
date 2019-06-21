@@ -93,6 +93,8 @@ public class CouponListVO {
 
     private double amt;
 
+    private int ckstatus;
+
     public double getAmt() {
         return amt;
     }
@@ -203,5 +205,13 @@ public class CouponListVO {
 
     public void setCstatus(int cstatus) {
         this.cstatus = cstatus;
+    }
+
+    public int getCkstatus() {
+        return ckstatus;
+    }
+
+    public void setCkstatus(int ckstatus) {
+        this.ckstatus = ckstatus;
     }
 }
