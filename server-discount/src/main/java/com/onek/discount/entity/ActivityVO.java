@@ -29,6 +29,7 @@ public class ActivityVO implements IDelayedObject {
     private int ruletype; // 活动类型
     private int preWay; // 活动优惠方式
     private int rulecomp;//优惠算法
+    private int ckstatus;//审核状态
 
 //    private List<AssDrugVO> assDrugVOS;//活动关联商品集合
 
@@ -230,5 +231,13 @@ public class ActivityVO implements IDelayedObject {
     @Override
     public String getUnqKey() {
         return unqid;
+    }
+
+    public int getCkstatus() {
+        return ckstatus;
+    }
+
+    public void setCkstatus(int ckstatus) {
+        this.ckstatus = ckstatus;
     }
 }

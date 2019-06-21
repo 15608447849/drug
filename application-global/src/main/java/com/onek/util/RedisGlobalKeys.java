@@ -14,6 +14,12 @@ public class RedisGlobalKeys {
     //用户表 uid 自增键
     public static final String USER_TAB_UID = "USER_TAB_UID";
 
+    //资质id 自增键
+    public static final String APT_TAB_UID = "APT_TAB_UID";
+
+    //经营范围id 自增键
+    public static final String BUS_TAB_UID = "BUS_TAB_UID";
+
     //企业码初始值 分库分表相关
     public static final int  COMP_INIT_VAR =  536862720;
 
@@ -115,5 +121,19 @@ public class RedisGlobalKeys {
      */
     public static int getShipId(){
         return Math.toIntExact(RedisUtil.getStringProvide().increase(SHIP_ID));
+    }
+
+    /**
+     * 获取资质ID
+     */
+    public static int getAptID(){
+        return   Math.toIntExact(getCurrentYear()+getCurrentDate_Md()+RedisUtil.getStringProvide().increase(APT_TAB_UID));
+    }
+
+    /**
+     * 获取资质ID
+     */
+    public static int getBusID(){
+        return   Math.toIntExact(getCurrentYear()+getCurrentDate_Md()+RedisUtil.getStringProvide().increase(BUS_TAB_UID));
     }
 }

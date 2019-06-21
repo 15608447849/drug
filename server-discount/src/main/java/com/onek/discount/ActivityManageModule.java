@@ -9,6 +9,7 @@ import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
+import com.onek.context.UserSession;
 import com.onek.discount.entity.*;
 import com.onek.discount.util.RelationGoodsSQL;
 import com.onek.entitys.Result;
@@ -92,8 +93,8 @@ public class ActivityManageModule {
 
     //优惠赠换商品
     private static final String INSERT_ASS_GIFT_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSGIFT + "}} "
-            + "(unqid,assgiftno,offercode)"
-            + " values(?,?,?)";
+            + "(unqid,assgiftno,offercode,giftnum)"
+            + " values(?,?,?,?)";
 
     private static final String DEL_ASS_GIFT_SQL = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 ";
@@ -148,7 +149,7 @@ public class ActivityManageModule {
         StringBuilder sqlBuilder = new StringBuilder();
         String selectSQL = "select a.unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename,ckstatus from {{?" + DSMConst.TD_PROM_ACT + "}} a "
                 + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.brulecode=b.brulecode"
                 + " where a.cstatus&1=0 ";
         sqlBuilder.append(selectSQL);
@@ -159,7 +160,7 @@ public class ActivityManageModule {
                 "unqid","actname","incpriority","cpriority",
                 "qualcode","qualvalue","actdesc","excdiscount",
                 "acttype","actcycle","sdate","edate","brulecode",
-                "cstatus","ruleName"});
+                "cstatus","ruleName","ckstatus"});
         return result.setQuery(activityVOS, pageHolder);
     }
 
@@ -198,9 +199,9 @@ public class ActivityManageModule {
         int cpt = getCPCount(activityVO.getIncpriority(), activityVO.getCpriority());
         if (cpt == -1) return result.fail("优先级已超过");
         if (Long.parseLong(activityVO.getUnqid()) > 0) {//修改
-            if (theActInProgress(Long.parseLong(activityVO.getUnqid()))) {
-                return result.fail("活动正在进行中，无法修改！");
-            }
+//            if (theActInProgress(Long.parseLong(activityVO.getUnqid()))) {
+//                return result.fail("活动正在进行中，无法修改！");
+//            }
             result =  updateActivity(activityVO, cpt);
         } else {//新增
             result = insertActivity(activityVO, cpt);
@@ -428,7 +429,10 @@ public class ActivityManageModule {
                 relaParams.add(new Object[]{GenIdUtil.getUnqId(),actCode,ladderId});
                 //新增优惠赠换商品
                 if (stype.startsWith("124")) {
-                    assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), ladderVOS.get(i).getAssgiftno(),offerCode[i]});
+                    List<AssGiftVO> assGiftVOList = ladderVOS.get(i).getAssGiftVOS();
+                    for (AssGiftVO assGiftVO : assGiftVOList) {
+                        assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), assGiftVO.getAssgiftno(),offerCode[i], assGiftVO.getGiftnum()});
+                    }
                 }
             }
         }
@@ -634,16 +638,16 @@ public class ActivityManageModule {
 
 
     private List<LadderVO> getLadder(ActivityVO activityVO, long actCode) {
-        String selectSQL = "select a.unqid,ladamt,ladnum,b.offercode,offer,a.cstatus, assgiftno from {{?" + DSMConst.TD_PROM_RELA
-                + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid left join {{?"
-                + DSMConst.TD_PROM_ASSGIFT + "}} c on b.offercode=c.offercode and c.cstatus&1=0 where a.cstatus&1=0 "
-                + " and a.actcode=" + actCode;
+        String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer,a.cstatus from {{?" + DSMConst.TD_PROM_RELA
+                + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid "
+                + " where a.cstatus&1=0 and a.actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         LadderVO[] ladderVOS = new LadderVO[queryResult.size()];
         baseDao.convToEntity(queryResult, ladderVOS, LadderVO.class);
         for (LadderVO ladderVO:ladderVOS) {
             ladderVO.setLadamt(ladderVO.getLadamt()/100);
             ladderVO.setOffer(ladderVO.getOffer()/100);
+            ladderVO.setAssGiftVOS(getAssGift(ladderVO.getOffercode()));
         }
         String offerCode = ladderVOS[0].getOffercode() + "";
         activityVO.setRulecomp(Integer.parseInt(offerCode.substring(4,5)));
@@ -664,13 +668,15 @@ public class ActivityManageModule {
         return Arrays.asList(rulesVOS);
     }
 
-    private List<AssGiftVO> getAssGift(long actCode) {
-        String sql = "select unqid,offerno,assgiftno,cstatus,giftname from {{?" + DSMConst.TD_PROM_ASSGIFT
+    private List<AssGiftVO> getAssGift(int offercode) {
+        String sql = "select assgiftno,giftnum,giftname from {{?" + DSMConst.TD_PROM_ASSGIFT
                 + "}} a left join {{?" + DSMConst.TD_PROM_GIFT + "}} g on a.assgiftno=g.unqid "
-                + " where cstatus&1=0 and actcode=" + actCode;
+                + " where a.cstatus&1=0 and offercode=" + offercode;
         List<Object[]> queryResult = baseDao.queryNative(sql);
         AssGiftVO[] assGiftVOS = new AssGiftVO[queryResult.size()];
-        baseDao.convToEntity(queryResult, assGiftVOS, AssGiftVO.class);
+        baseDao.convToEntity(queryResult, assGiftVOS, AssGiftVO.class, new String[]{
+                "assgiftno", "giftnum", "giftname"
+        });
         return Arrays.asList(assGiftVOS);
     }
 
@@ -804,9 +810,9 @@ public class ActivityManageModule {
         long actCode = jsonObject.get("actCode").getAsLong();
         int ruleCode = jsonObject.get("rulecode").getAsInt();
         //判断活动是否在进行中。。。
-        if (theActInProgress(actCode)) {
-            return result.fail("活动正在进行中，无法修改！");
-        }
+//        if (theActInProgress(actCode)) {
+//            return result.fail("活动正在进行中，无法修改！");
+//        }
         long code;
         switch (type) {
             case 1://全部商品
@@ -1617,6 +1623,78 @@ public class ActivityManageModule {
             this.cstatus = cstatus;
         }
     }
+
+    /**
+     * 审批活动、优惠券
+     * @param appContext 审批活动
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result approvalAct(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+        UserSession userSession = appContext.getUserSession();
+        long roleid = userSession.roleCode;
+        long actcode = jsonObject.get("actcode").getAsLong();
+        int type = jsonObject.get("ctype").getAsInt();
+        int cstatus = jsonObject.get("cstatus").getAsInt();
+
+
+        String cussActSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}" +
+                " SET cstatus = cstatus | 2048,ckstatus = 2 WHERE unqid = ? ";
+
+
+        String cussCoupSql = " UPDATE {{?" + DSMConst.TD_PROM_COUPON + "}}" +
+                " SET cstatus = cstatus | 2048,ckstatus = 2 WHERE unqid = ? ";
+
+
+        String failActSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}" +
+                " set ckstatus = -1 WHERE unqid = ? ";
+
+
+        String failCoupSql = " UPDATE {{?" + DSMConst.TD_PROM_COUPON + "}}" +
+                " set ckstatus = -1 WHERE unqid = ? ";
+
+
+
+        String exSqlAct = "";
+        String exSqlCoup = "";
+
+        if(cstatus == 1){
+            if((roleid & 32) > 0){
+                exSqlAct = cussActSql;
+                exSqlCoup = cussCoupSql;
+            }
+            if((roleid & 128) > 0){
+                exSqlAct = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}" +
+                        " SET ckstatus = 1 WHERE unqid = ? ";
+
+                exSqlCoup = " UPDATE {{?" + DSMConst.TD_PROM_COUPON + "}}" +
+                        " SET ckstatus = 1 WHERE unqid = ? ";
+            }
+        }else{
+            exSqlAct = failActSql;
+            exSqlCoup = failCoupSql;
+        }
+
+
+        int ret = 0;
+        switch (type){
+            case 1:
+                ret = baseDao.updateNative(exSqlAct,actcode);
+                break;
+            case 2:
+                ret = baseDao.updateNative(exSqlCoup,actcode);
+                break;
+        }
+
+        return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
+    }
+
+
+
 
 
 }

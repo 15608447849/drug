@@ -12,6 +12,7 @@ public class AssGiftVO {
     private int offercode;//优惠码
     private String assgiftno;//赠换商品码
     private int cstatus;
+    private int giftnum;//赠品数量
     private String giftname;//商品名称
 
     public String getGiftname() {
@@ -52,5 +53,13 @@ public class AssGiftVO {
 
     public void setCstatus(int cstatus) {
         this.cstatus = cstatus;
+    }
+
+    public int getGiftnum() {
+        return giftnum;
+    }
+
+    public void setGiftnum(int giftnum) {
+        this.giftnum = giftnum;
     }
 }

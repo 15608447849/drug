@@ -960,9 +960,16 @@ public class MarketAnalysisServiceImpl {
     private void initTableData(int year, int month, int type, List<String> codeList, Map<String, String> areaMap, Calendar cale, List<JSONObject> jsonList) {
         if(type == 0 || type == 1){
             cale.set(Calendar.YEAR, year);
-            cale.set(Calendar.MONTH, month);
-//            cale.set(Calendar.DAY_OF_MONTH, 0);
-            int maxDate = cale.get(Calendar.DATE);
+            int maxMonth = cale.get(Calendar.MONTH) + 1;
+            int maxDate = 0;
+            if(month < maxMonth){
+                cale.set(Calendar.MONTH, month - 1);
+                maxDate = cale.getActualMaximum(Calendar.DAY_OF_MONTH);
+            }else{
+                cale.set(Calendar.MONTH, month - 1);
+                maxDate = cale.get(Calendar.DATE);
+            }
+
             //int maxDate = cale.get(Calendar.DAY_OF_MONTH);
             String m = month < 10 ?  "0" + month : month +"";
             for(String c : codeList){

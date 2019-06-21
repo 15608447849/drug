@@ -233,10 +233,12 @@ public class TranOrderOptModule {
         int placeType = jsonObject.getInteger("placeType");//1、直接下单 2、购物车下单
         JSONObject orderObj = jsonObject.getJSONObject("orderObj");
         JSONArray goodsArr = jsonObject.getJSONArray("goodsArr");
+        if (goodsArr == null || goodsArr.size() == 0) {
+            LogUtil.getDefaultLogger().info("print by cyq placeOrder ----------- 下单操作未选择商品");
+            return result.fail("请选择商品！");
+        }
         TranOrder tranOrder = JSON.parseObject(orderObj.toJSONString(), TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
-        String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
-        tranOrder.setOrderno(orderNo);
         if (!jsonObject.getString("unqid").isEmpty()) {
             unqid = jsonObject.getLong("unqid");
         }
@@ -254,6 +256,8 @@ public class TranOrderOptModule {
         }
         tranOrder.setPdnum(pdnum);
         List<GoodsStock> goodsStockList = new ArrayList<>();
+        String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
+        tranOrder.setOrderno(orderNo);
         if (orderType == 0) {
             //订单费用计算（费用分摊以及总费用计算）
             try {

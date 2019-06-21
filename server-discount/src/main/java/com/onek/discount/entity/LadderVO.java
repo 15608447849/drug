@@ -1,5 +1,7 @@
 package com.onek.discount.entity;
 
+import java.util.List;
+
 /**
  * @author Administrator
  * @version V1.0
@@ -25,6 +27,8 @@ public class LadderVO {
 
     //综合状态
     private int cstatus;
+
+    private List<AssGiftVO> assGiftVOS;
 
     private String assgiftno;//赠换商品码
 
@@ -92,5 +96,13 @@ public class LadderVO {
 
     public void setGiftname(String giftname) {
         this.giftname = giftname;
+    }
+
+    public List<AssGiftVO> getAssGiftVOS() {
+        return assGiftVOS;
+    }
+
+    public void setAssGiftVOS(List<AssGiftVO> assGiftVOS) {
+        this.assGiftVOS = assGiftVOS;
     }
 }
