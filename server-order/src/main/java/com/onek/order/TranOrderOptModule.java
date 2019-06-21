@@ -256,6 +256,8 @@ public class TranOrderOptModule {
         }
         tranOrder.setPdnum(pdnum);
         List<GoodsStock> goodsStockList = new ArrayList<>();
+        String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
+        tranOrder.setOrderno(orderNo);
         if (orderType == 0) {
             //订单费用计算（费用分摊以及总费用计算）
             try {
@@ -329,8 +331,6 @@ public class TranOrderOptModule {
             e.printStackTrace();
         }
 
-        String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
-        tranOrder.setOrderno(orderNo);
         sqlList.addFirst(INSERT_TRAN_ORDER);
         params.addFirst(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
                 tranOrder.getPdamt(), tranOrder.getFreight(), payamt, tranOrder.getCoupamt(), tranOrder.getDistamt(),
