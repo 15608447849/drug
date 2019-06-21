@@ -264,7 +264,6 @@ public class MarketAnalysisServiceImpl {
                                 continue;
                             }
                         }
-                        System.out.println("####### 498 line ["+compId+"]["+orderNum+"] ###########");
 
                         if(orderNum >= baseVal){
                             if(storeType.equals("0")) ACTIVE_ONE = ACTIVE_ONE + 1;
@@ -602,7 +601,7 @@ public class MarketAnalysisServiceImpl {
 
             resultJson.put(COL_LIST, filterList);
             // 不为累计报表
-            if((type == 0 || type ==2 || type == 4 || type == 6) && filterList.size() > 1){
+            if(((type == 0 || type ==2 || type == 4 ) && filterList.size() > 1)  || type == 6){
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put(COL_SHOWDATE, "合计");
                 jsonObject.put(COL_AREAC, areaC);
