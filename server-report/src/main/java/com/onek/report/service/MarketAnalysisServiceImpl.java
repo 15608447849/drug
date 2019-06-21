@@ -1,5 +1,6 @@
 package com.onek.report.service;
 
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.report.data.MarketStoreData;
@@ -404,6 +405,11 @@ public class MarketAnalysisServiceImpl {
                 for (int j = 0; j < jsArr.size(); j++) {
                     JSONObject subJs = jsArr.getJSONObject(j);
                     JSONObject newJson = new JSONObject();
+                    if(subJs.containsKey(COL_MONTH)){
+                        newJson.put(COL_MONTH, subJs.get(COL_MONTH));
+                    }else{
+                        newJson.put(COL_MONTH, "");
+                    }
                     newJson.put(COL_SHOWDATE, subJs.getString(COL_SHOWDATE));
                     newJsonList.add(newJson);
                 }
@@ -456,6 +462,9 @@ public class MarketAnalysisServiceImpl {
                         newSubJson.put(COL_REP_CHAIN_RATE, subJs.getString(COL_REP_CHAIN_RATE));
                         newSubJson.put(COL_REP_OTHER_RATE, subJs.getString(COL_REP_OTHER_RATE));
                         newSubJson.put(COL_REP_SUM_RATE, subJs.getString(COL_REP_SUM_RATE));
+
+                        String m = newJson.containsKey(COL_MONTH) ? newJson.getString(COL_MONTH) : "";
+                        newSubJson.put(COL_MONTH, m);
                         JSONArray newJsonArray = newJson.getJSONArray(COL_DETAIL);
                         if(newJsonArray == null || newJsonArray.size()  <= 0){
                             newJsonArray = new JSONArray();
@@ -478,6 +487,8 @@ public class MarketAnalysisServiceImpl {
                 int AUTH_ONE = 0, AUTH_TWO = 0,AUTH_THREE = 0, AUTH_SUM  = 0;
                 int ACTIVE_ONE = 0, ACTIVE_TWO = 0, ACTIVE_THREE = 0,ACTIVE_SUM = 0;
                 int REPURCHASE_ONE = 0, REPURCHASE_TWO = 0,REPURCHASE_THREE = 0, REPURCHASE_SUM  = 0;
+
+                String m = obj.containsKey(COL_MONTH) ? obj.getString(COL_MONTH) : "";
 
                 for (int j = 0; j < jsonArray.size(); j++) {
                     JSONObject subJs = jsonArray.getJSONObject(j);
@@ -524,6 +535,7 @@ public class MarketAnalysisServiceImpl {
 
                 if(type != 6){ // 不是年报
                     JSONObject jsonObject = new JSONObject();
+                    jsonObject.put(COL_MONTH, m);
                     jsonObject.put(COL_SHOWDATE, "合计");
                     jsonObject.put(COL_AREAC, areaC);
                     jsonObject.put(COL_AREAN, areaN);
@@ -566,9 +578,31 @@ public class MarketAnalysisServiceImpl {
 
                 MARK_ONE_TOTAL = MARK_ONE;  MARK_TWO_TOTAL = MARK_TWO; MARK_THREE_TOTAL = MARK_THREE;  MARK_SUM_TOTAL = MARK_SUM;
             }
-            resultJson.put(COL_LIST, list);
+
+            List<JSONObject> filterList = new ArrayList<>();
+            if(month > 0 && (type == 4 || type == 5)){
+                if(list != null && list.size() > 0){
+                    for(JSONObject jsonObject : list){
+                        boolean isMatch = true;
+
+                        if(jsonObject.containsKey(COL_MONTH)){
+                            if(!jsonObject.getString(COL_MONTH).equals(month+"")){
+                                isMatch = false;
+                            }
+                        }
+                        if(isMatch){
+                            filterList.add(jsonObject);
+                        }
+                    }
+                }
+            }else{
+                filterList = list;
+            }
+
+
+            resultJson.put(COL_LIST, filterList);
             // 不为累计报表
-            if(type == 0 || type ==2 || type == 4 || type == 6){
+            if((type == 0 || type ==2 || type == 4 || type == 6) && filterList.size() > 1){
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put(COL_SHOWDATE, "合计");
                 jsonObject.put(COL_AREAC, areaC);
@@ -828,6 +862,12 @@ public class MarketAnalysisServiceImpl {
                 int rep_other = subJs.getInteger(COL_REP_OTHER);
                 int rep_sum = subJs.getInteger(COL_REP_SUM);
 
+
+                subJs.put(COL_OCC_ETM_RATE,  calcPercentage(reg_etm, mark_etm));
+                subJs.put(COL_OCC_CHAIN_RATE,  calcPercentage(reg_chain, mark_chain));
+                subJs.put(COL_OCC_OTHER_RATE,  calcPercentage(reg_other, mark_other));
+                subJs.put(COL_OCC_SUM_RATE,  calcPercentage(reg_sum, mark_sum));
+
                 if(type == 1 || type == 3 || type == 5){
 
                     REG_ONE += reg_etm;  REG_TWO += reg_chain; REG_THREE += reg_other;  REG_SUM += reg_sum;
@@ -922,8 +962,9 @@ public class MarketAnalysisServiceImpl {
         if(type == 0 || type == 1){
             cale.set(Calendar.YEAR, year);
             cale.set(Calendar.MONTH, month);
-            cale.set(Calendar.DAY_OF_MONTH, 0);
-            int maxDate = cale.get(Calendar.DAY_OF_MONTH);
+//            cale.set(Calendar.DAY_OF_MONTH, 0);
+            int maxDate = cale.get(Calendar.DATE);
+            //int maxDate = cale.get(Calendar.DAY_OF_MONTH);
             String m = month < 10 ?  "0" + month : month +"";
             for(String c : codeList){
                 JSONObject js = new JSONObject();
@@ -940,6 +981,7 @@ public class MarketAnalysisServiceImpl {
                 for(int i = 1; i <= maxDate; i++){
                     String d = i < 10 ?  "0" + i : i +"";
                     JSONObject subJS = new JSONObject();
+                    subJS.put(COL_MONTH, month);
                     subJS.put(COL_DATE, year + "-" + m + "-" + d);
                     subJS.put(COL_FIRST, i == 1 ? 1 : 0);
                     subJS.put(COL_SHOWDATE, i + "号");
@@ -973,6 +1015,7 @@ public class MarketAnalysisServiceImpl {
                 for(int i = 1; i <= set.size(); i++){
                     WeekRange weekRange = maps.get(i);
                     JSONObject subJS = new JSONObject();
+                    subJS.put(COL_MONTH, month);
                     subJS.put(COL_BEGINDATE, DATEFORMAT.format(weekRange.getBegin()));
                     subJS.put(COL_ENDDATE, DATEFORMAT.format(weekRange.getEnd()));
                     subJS.put(COL_FIRST, i == 1 ? 1 : 0);
@@ -985,6 +1028,8 @@ public class MarketAnalysisServiceImpl {
             }
 
         }else if(type == 4 || type == 5){
+            cale.set(Calendar.YEAR, year);
+            int maxMonth = cale.get(Calendar.MONTH) + 1;
             for(String c : codeList){
                 JSONObject js = new JSONObject();
                 js.put(COL_AREAC, c);
@@ -997,7 +1042,7 @@ public class MarketAnalysisServiceImpl {
                 js.put(COL_MARK_OTHER, m3);
                 js.put(COL_MARK_SUM, m1 + m2 + m3);
                 List<JSONObject> subList = new ArrayList<>();
-                for(int i = 1; i <= 12; i++){
+                for(int i = 1; i <= maxMonth; i++){
                     JSONObject subJS = new JSONObject();
                     subJS.put(COL_FIRST, i == 1 ? 1 : 0);
                     subJS.put(COL_YEAR, year);
