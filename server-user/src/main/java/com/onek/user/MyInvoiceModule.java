@@ -4,20 +4,16 @@ import com.google.gson.Gson;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.user.entity.InvoiceVO;
+import com.onek.util.EmailUtil;
 import com.onek.util.RandomUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.ArrayUtil;
-import com.onek.util.EmailUtil;
 import util.MathUtil;
 import util.StringUtils;
 
 import java.util.List;
-import java.util.Locale;
-import java.util.regex.Pattern;
-
-import static constant.DSMConst.TB_SMS_TEMPLATE;
 
 /**
  * 我的发票模块
@@ -71,7 +67,7 @@ public class MyInvoiceModule {
     }
 
     private static final String EMAIL_VALID_HEAD =
-            "INVOICE_EMAIL_V_";
+                "INVOICE_EMAIL_V_";
 
     private String genVaildKey(int compid) {
         return EMAIL_VALID_HEAD + compid;
@@ -93,16 +89,21 @@ public class MyInvoiceModule {
 
         String vcode = RandomUtil.getRandomNumber(6);
 
+        System.out.println("----------- setEmail before --------------");
         int setEmailValue = setEmail(compid, vcode, email);
+        System.out.println("----------- setEmail after --------------");
 
         if (setEmailValue != 0) {
             if (setEmailValue == -1) {
                 return new Result().fail("生成异常，请重新尝试生成！");
             }
+
             if (setEmailValue == -2) {
                 return new Result().fail("请求频繁，请稍后重试！");
             }
         }
+
+        System.out.println("----------- sendResult before --------------");
 
         // 发送验证邮箱
         boolean sendResult =
@@ -110,7 +111,15 @@ public class MyInvoiceModule {
                         "【一块医药】尊敬的用户：您正在绑定一块医药电子发票收件邮箱，验证码为："
                         + vcode + "，有效期30分钟。", email);
 
-        return sendResult ? new Result().success("发送成功！") : new Result().fail("发送失败！");
+        System.out.println("----------- sendResult after --------------");
+
+        if (!sendResult) {
+            String key = genVaildKey(compid);
+            RedisUtil.getStringProvide().delete(key);
+            return new Result().fail("发送失败！");
+        }
+
+        return new Result().success("发送成功！");
     }
 
     private int setEmail(int compid, String vcode, String email) {
