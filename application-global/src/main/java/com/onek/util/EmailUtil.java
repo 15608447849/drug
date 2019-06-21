@@ -38,15 +38,15 @@ public class EmailUtil extends ApplicationPropertiesBase {
 
     private final Properties MAIL_PROP = new Properties();
 
-    {
+    private EmailUtil() {
+        System.out.println("------------------ EmailUtil --------------------- ");
         MAIL_PROP.setProperty("mail.smtp.auth", smtp_auth);
         MAIL_PROP.setProperty("mail.transport.protocol", transport_protocol);
         MAIL_PROP.setProperty("mail.smtp.host", smtp_host);
     }
 
-    private EmailUtil() {}
-
     public static EmailUtil getEmailUtil() {
+        System.out.println("------------------ getEmailUtil --------------------- ");
         return HOLDER;
     }
 
