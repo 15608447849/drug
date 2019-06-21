@@ -84,14 +84,16 @@ public class ProductAnalysisServiceImpl {
     //查询周销量
     private static final String SKU_SALE_WEEK_SQL = "select cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
             " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
-            " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hskunum," +
-            " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
-            " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hminskunum," +
-            " (select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hskuamt," +
-            " (select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
-            " (select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
-            " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
+            " IFNULL((select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days),0) hskunum," +
+            " IFNULL((select max(skunum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days),0) hmaxskunum," +
+            " IFNULL((select min(skunum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days),0) hminskunum," +
+            " IFNULL((select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days),0) hskuamt," +
+            " IFNULL((select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days),0) hmaxskuamt," +
+            " IFNULL((select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days),0) hminskuamt," +
+            " IFNULL((select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} where cid = b.cid and days <= b.days),0) hsoldsku," +
             " years,mons,days,weeks,mincxlv from {{?"+DSMConst.V_PD_SALES_WEEKS +"}} b ";
+
+
 
 
 
@@ -99,13 +101,13 @@ public class ProductAnalysisServiceImpl {
     //查询日销量
     private static final String SKU_SALE_DAY_SQL = "select cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
             " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
-            " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hskunum," +
-            " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
-            " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hminskunum," +
-            " (select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hskuamt," +
-            " (select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
-            " (select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
-            " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
+            " IFNULL((select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days),0) hskunum," +
+            " IFNULL((select max(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days),0) hmaxskunum," +
+            " IFNULL((select min(skunum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days),0) hminskunum," +
+            " IFNULL((select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days),0) hskuamt," +
+            " IFNULL((select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days),0) hmaxskuamt," +
+            " IFNULL((select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days),0) hminskuamt," +
+            " IFNULL((select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_DAYS +"}} where cid = b.cid and days <= b.days),0) hsoldsku," +
             " years,mons,days,weeks,mincxlv from {{?"+DSMConst.V_PD_SALES_DAYS +"}} b ";
 
     //查询日销量
@@ -138,26 +140,26 @@ public class ProductAnalysisServiceImpl {
     //查询月销量
     private static final String SKU_SALE_MON_SQL = "select cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
             " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
-            " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hskunum," +
-            " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
-            " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hminskunum," +
-            " (select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hskuamt," +
-            " (select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
-            " (select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
-            " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
+            " IFNULL((select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days),0) hskunum," +
+            " IFNULL((select max(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days),0) hmaxskunum," +
+            " IFNULL((select min(skunum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days),0) hminskunum," +
+            " IFNULL((select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days),0) hskuamt," +
+            " IFNULL((select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days),0) hmaxskuamt," +
+            " IFNULL((select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days),0) hminskuamt," +
+            " IFNULL((select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_MONS +"}} where cid = b.cid and days <= b.days),0) hsoldsku," +
             " years,mons,days,weeks,mincxlv from {{?"+DSMConst.V_PD_SALES_MONS +"}} b ";
 
 
     //年销量
     private static final String SKU_SALE_YEAR_SQL = "select cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
             " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
-            " (select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hskunum," +
-            " (select max(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hmaxskunum," +
-            " (select min(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hminskunum," +
-            " (select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hskuamt," +
-            " (select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hmaxskuamt," +
-            " (select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hminskuamt," +
-            " (select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days) hsoldsku," +
+            " IFNULL((select sum(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days),0) hskunum," +
+            " IFNULL((select max(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days),0) hmaxskunum," +
+            " IFNULL((select min(skunum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days),0) hminskunum," +
+            " IFNULL((select sum(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days),0) hskuamt," +
+            " IFNULL((select max(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days),0) hmaxskuamt," +
+            " IFNULL((select min(skuamtsum)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days),0) hminskuamt," +
+            " IFNULL((select sum(soldsku)  from {{?"+DSMConst.V_PD_SALES_YEARS +"}} where cid = b.cid and days <= b.days),0) hsoldsku," +
             " years,mons,days,weeks,mincxlv from {{?"+DSMConst.V_PD_SALES_YEARS +"}} b ";
     //年销量
 //    private static final String SKU_SALE_YEAR_SQL = "select cid,soldsku," +
