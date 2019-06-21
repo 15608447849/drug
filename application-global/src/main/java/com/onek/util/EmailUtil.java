@@ -39,14 +39,15 @@ public class EmailUtil extends ApplicationPropertiesBase {
     private final Properties MAIL_PROP = new Properties();
 
     private EmailUtil() {
-        System.out.println("------------------ EmailUtil --------------------- ");
         MAIL_PROP.setProperty("mail.smtp.auth", smtp_auth);
         MAIL_PROP.setProperty("mail.transport.protocol", transport_protocol);
         MAIL_PROP.setProperty("mail.smtp.host", smtp_host);
+        MAIL_PROP.setProperty("mail.smtp.port", "465");
+        MAIL_PROP.setProperty("mail.smtp.socketFactory.class", "javax.net.ssl.SSLSocketFactory");
+        MAIL_PROP.setProperty("mail.smtp.socketFactory.port", "465");
     }
 
     public static EmailUtil getEmailUtil() {
-        System.out.println("------------------ getEmailUtil --------------------- ");
         return HOLDER;
     }
 
@@ -56,22 +57,14 @@ public class EmailUtil extends ApplicationPropertiesBase {
         }
 
         try {
-            System.out.println("----------------- sendEmail start --------------------");
             Session session = Session.getInstance(MAIL_PROP);
             session.setDebug(true);
-            System.out.println("----------------- sendEmail 60 --------------------");
             Message msg = getMimeMessage(session, targetMail, content);
-            System.out.println("----------------- sendEmail 62 --------------------");
             Transport transport = session.getTransport();
-            System.out.println("----------------- sendEmail 64 --------------------");
             transport.connect(senderAccount, senderPassword);
-            System.out.println("----------------- sendEmail 66 --------------------");
             transport.sendMessage(msg, msg.getAllRecipients());
-            System.out.println("----------------- sendEmail 68 --------------------");
             transport.close();
-            System.out.println("----------------- sendEmail 70 --------------------");
         } catch (Exception e) {
-            System.out.println("----------------- sendEmail Error --------------------");
             e.printStackTrace();
             return false;
         }

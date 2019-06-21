@@ -89,9 +89,7 @@ public class MyInvoiceModule {
 
         String vcode = RandomUtil.getRandomNumber(6);
 
-        System.out.println("----------- setEmail before --------------");
         int setEmailValue = setEmail(compid, vcode, email);
-        System.out.println("----------- setEmail after --------------");
 
         if (setEmailValue != 0) {
             if (setEmailValue == -1) {
@@ -103,15 +101,11 @@ public class MyInvoiceModule {
             }
         }
 
-        System.out.println("----------- sendResult before --------------");
-
         // 发送验证邮箱
         boolean sendResult =
                 EmailUtil.getEmailUtil().sendEmail(
                         "【一块医药】尊敬的用户：您正在绑定一块医药电子发票收件邮箱，验证码为："
                         + vcode + "，有效期30分钟。", email);
-
-        System.out.println("----------- sendResult after --------------");
 
         if (!sendResult) {
             String key = genVaildKey(compid);
