@@ -301,7 +301,7 @@ public class ProductAnalysisServiceImpl {
      */
     private boolean isMatch(int type, int cid, JSONObject subJs,
                             String _date, int _year, int _month,int _week) {
-        LogUtil.getDefaultLogger().debug(subJs.toJSONString());
+        //LogUtil.getDefaultLogger().debug(subJs.toJSONString());
         int scid = subJs.getIntValue(COL_CLASSC);
        // LogUtil.getDefaultLogger().debug("_year:"+_year+"  _month:"+_month);
        // LogUtil.getDefaultLogger().debug("_date:"+_date+"  _week:"+_week);
