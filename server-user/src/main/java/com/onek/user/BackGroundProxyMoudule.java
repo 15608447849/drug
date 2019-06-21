@@ -2,9 +2,6 @@ package com.onek.user;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import cn.hy.otms.rpcproxy.sysmanage.User;
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
@@ -18,12 +15,14 @@ import com.onek.util.RoleCodeCons;
 import com.onek.util.area.AreaEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
+import static com.onek.util.RedisGlobalKeys.getAptID;
 import static com.onek.util.RedisGlobalKeys.getUserCode;
 import static constant.DSMConst.TB_COMP;
 
@@ -1513,5 +1512,243 @@ public class BackGroundProxyMoudule {
         }
         return  result.success(retMap);
     }
+
+
+    /* *
+     * @description 门店管理资质完善
+     * @params json 见CompInfoVO.class
+     * @return 200成功 -1失败
+     * @exception
+     * @author 11842
+     * @time  2019/6/20 17:51
+     * @version 1.1.1
+     **/
+    public Result storePerfectingInfo(AppContext appContext) {
+        String taxpayer = "";//营业执照证件编号（纳税人识别号）
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        CompInfoVO compInfoVO = GsonUtils.jsonToJavaBean(json, CompInfoVO.class);
+        //药店类型  0 医疗单位, 1 批发企业, 2零售连锁门店, 3零售单体门店
+//        int storetype = jsonObject.get("storetype").getAsInt();//门店类型
+//        int compId = jsonObject.get("compId").getAsInt();//企业码
+//        String invoice = jsonObject.get("invoice").getAsString();//发票信息
+//        JsonArray aptArr = jsonObject.get("aptArr").getAsJsonArray();
+
+        int storetype = compInfoVO.getStoretype();//门店类型
+        int compId = compInfoVO.getCid();//企业码
+        InvoiceVO invoice = compInfoVO.getInvoiceVO();//发票信息
+        List<AptitudeVO> frontAptList = compInfoVO.getAptitudeVOS();
+        if (frontAptList.size() > 0) {
+//            List<AptitudeVO> frontAptList = new ArrayList<>();//前端传过来的资质信息
+            Set<Integer> aTypeList = new HashSet<>();
+            for (AptitudeVO aptitudeVO : frontAptList) {
+//                AptitudeVO aptitudeVO = GsonUtils.jsonToJavaBean(apt.getAsString(), AptitudeVO.class);
+                assert aptitudeVO != null;
+                aTypeList.add(aptitudeVO.getAtype());
+//                frontAptList.add(aptitudeVO);
+                if (aptitudeVO.getAtype() == 11 && storetype != 0) {
+                    storetype = settingCompStoretype(aptitudeVO.getCertificateno());
+                }
+                if (aptitudeVO.getAtype() == 10) {
+                    taxpayer = aptitudeVO.getCertificateno();
+                }
+            }
+            //判断必填资质是否都有
+            String checkStr = checkAptInfo(storetype, aTypeList);
+            if (checkStr != null) {
+                return result.fail(checkStr);
+            }
+            if (!updCompType(storetype, compId,invoice,taxpayer)) {
+                return result.fail("修改失败！");
+            }
+            return optAptInfo(compId,frontAptList) ? result.success("保存成功") : result.fail("保存失败");
+        } else {
+            return result.fail("资质信息未完善！");
+        }
+    }
+
+    /* *
+     * @description 更新门店类型
+     * @params [storetype, compId]
+     * @return boolean
+     * @exception
+     * @author 11842
+     * @time  2019/6/20 15:51
+     * @version 1.1.1
+     **/
+    private boolean updCompType(int storetype, int compId, InvoiceVO invoiceVO, String taxpayer) {
+//        String updCompSQL = "update {{?" + DSMConst.TB_COMP + "}} set storetype=?, caddr=?, caddrcode=?,lat=?,lng=? "
+//                + " where cstatus&1=0 and cid=?";
+        List<Object[]> params = new ArrayList<>();
+//        InvoiceVO invoiceVO = GsonUtils.jsonToJavaBean(invoice, InvoiceVO.class);
+//        assert invoiceVO != null;
+        String optInvSQL;
+        if (getInvoice(compId) == null) {
+            optInvSQL = "insert into {{?" + DSMConst.TB_COMP_INVOICE + "}} "
+                    + "(cid, taxpayer, bankers, account, tel, cstatus, email) "
+                    + " values(?,?,?,?,?,?,?)";
+            params.add(new Object[]{compId, taxpayer, invoiceVO.getBankers(),invoiceVO.getAccount(),
+                    invoiceVO.getTel(), 0, invoiceVO.getEmail()});
+        } else {
+            optInvSQL = "update {{?" + DSMConst.TB_COMP_INVOICE + "}} set taxpayer=?,bankers=?,account=?,"
+                     + "tel=?, email=? where cstatus&1=0 and cid=?";
+            params.add(new Object[]{taxpayer, invoiceVO.getBankers(),invoiceVO.getAccount(),
+                    invoiceVO.getTel(),invoiceVO.getEmail(), compId});
+        }
+        //修改门店类型
+        String updCompSQL = "update {{?" + DSMConst.TB_COMP + "}} set storetype=? "
+                + " where cstatus&1=0 and cid=?";
+        params.add(new Object[]{storetype, compId});
+        return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{optInvSQL, updCompSQL}, params));
+    }
+
+    private InvoiceVO getInvoice(int compId) {
+        String selectSQL = "select taxpayer,bankers,account,tel,email from {{?" + DSMConst.TB_COMP_INVOICE
+                + "}} where cstatus&1=0 and cid=" + compId;
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        if (queryResult == null || queryResult.isEmpty()) return null;
+        InvoiceVO[] invoiceVOS = new InvoiceVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, invoiceVOS, InvoiceVO.class, new String[]{
+                "taxpayer","bankers","account", "tel","email"
+        });
+        return invoiceVOS[0];
+    }
+
+
+    private int settingCompStoretype(String certificateno) {
+        Pattern pattern = Pattern.compile("^[\\u4e00-\\u9fa5]([A-D])[A-B][0-9].*$");
+        Matcher matcher = pattern.matcher(certificateno);
+        while (matcher.find()) {
+            String str = matcher.group(1);
+            return str.equals("A") ? 1 :
+                    (str.equals("B") ? 2 :
+                            (str.equals("C") ? 3 :
+                                    (str.equals("D") ? 4 : -1) ));
+        }
+        return -1;
+    }
+
+    //10-营业执照  11-药店经营许可证  12-gsp认证  13-采购/提货委托书  14-采购/提货人员复印件  15-医疗机构执业许可证(医疗单位)
+    //药店类型  0 医疗单位(10,13,14,15 ), 1 批发企业(10,11, 12,13, 14), 2零售连锁企业(10,11, 12,13, 14),
+    // 3 零售连锁门店 4 零售单体企业(10,11, 12,13, 14) 4
+    private String checkAptInfo(int storetype, Set<Integer> aTypeList) {
+        Integer[] aTArr = new Integer[aTypeList.size()];
+        Integer[] ylArr = {10,13,14,15};
+        Integer[] otherArr = {10,11,12,13,14};
+        aTArr = aTypeList.toArray(aTArr);
+        Arrays.sort(aTArr);
+        switch (storetype) {
+            case 0://医疗机构
+                if (aTArr.length < ylArr.length) {
+                    return "资质信息不完整！";
+                }
+                break;
+            default://其他
+                if (aTArr.length < otherArr.length) {
+                    return "资质信息不完整！";
+                }
+                break;
+        }
+        return null;
+    }
+
+
+    private boolean optAptInfo(int compId, List<AptitudeVO> frontAptList) {
+        String insertAptSql = "insert into {{?" + DSMConst.TB_COMP_APTITUDE + "}} "
+                + "(aptid,compid,atype,certificateno,validitys,validitye,cstatus,pname) "
+                + " values(?,?,?,?,?,?,?,?) ";
+        String updAptSql = "update {{?" + DSMConst.TB_COMP_APTITUDE + "}} set certificateno=?,"
+                + " validitys=?,validitye=?,pname=? where cstatus&1=0 and compid=? and atype=?";
+        List<AptitudeVO> aptitudeVOList = selectApt(compId);//该企业下已上传的资质
+        List<Object[]> params = new ArrayList<>();
+        if (aptitudeVOList.size() == 0) {//第一次完善资质信息
+            for (AptitudeVO aptitudeVO :frontAptList) {
+                params.add(new Object[]{getAptID(), compId, aptitudeVO.getAtype(), aptitudeVO.getCertificateno(),
+                        aptitudeVO.getValiditys(),aptitudeVO.getValiditye(), 0, aptitudeVO.getPname()});
+            }
+            return !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(insertAptSql, params, params.size()));
+        } else {//之前完善过资质修改即可
+            for (AptitudeVO aptitudeVO :frontAptList) {
+                params.add(new Object[]{aptitudeVO.getCertificateno(), aptitudeVO.getValiditys(),
+                        aptitudeVO.getValiditye(), aptitudeVO.getPname(), compId, aptitudeVO.getAtype()});
+            }
+            return !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(updAptSql, params, params.size()));
+        }
+
+    }
+
+    /* *
+     * @description 查询企业下的资质
+     * @params [compId]
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/6/20 16:01
+     * @version 1.1.1
+     **/
+    private List<AptitudeVO> selectApt(int compId) {
+        String selectSQL = "select aptid,compid,atype,certificateno,validitys,validitye,cstatus,pname "
+                + " from {{?" + DSMConst.TB_COMP_APTITUDE + "}} where cstatus&1=0 and compid=? ";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, compId);
+        if (queryResult == null || queryResult.isEmpty()) return new ArrayList<>();
+        AptitudeVO[] aptitudeVOS = new AptitudeVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, aptitudeVOS, AptitudeVO.class);
+        return Arrays.asList(aptitudeVOS);
+    }
+
+    private List<BusScopeVO> getBusScopes(int compId) {
+        String selectSQL = "select bscid,compid,busscope,codename,bs.cstatus "
+                + " from {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} bs left join {{?"
+                + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} ss on bs.busscope=ss.code "
+                + " where bs.cstatus&1=0 and compid=? ";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, compId);
+        if (queryResult == null || queryResult.isEmpty()) return new ArrayList<>();
+        BusScopeVO[] busScopeVOS = new BusScopeVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, busScopeVOS, BusScopeVO.class);
+        return Arrays.asList(busScopeVOS);
+    }
+
+
+    /* *
+     * @description 注册详情
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/6/20 18:56
+     * @version 1.1.1
+     **/
+    public Result getCompInfo(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        int compid = jsonObject.get("compid").getAsInt();
+        String sSQL = "select c.cid,cname,caddrcode,caddr,inviter,storetype,u.uphone,c.cstatus from {{?"
+                + DSMConst.TB_COMP + "}} c left join {{?" + DSMConst.TB_SYSTEM_USER + "}} u "
+                + " on c.cid = u.cid where c.cstatus&1=0 and u.cstatus&1=0 and c.cid=" + compid;
+        List<Object[]> queryResult = baseDao.queryNative(sSQL);
+        if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
+        CompInfoVO[] compInfoVOS = new CompInfoVO[queryResult.size()];
+        baseDao.convToEntity(queryResult,compInfoVOS, CompInfoVO.class);
+        InvoiceVO invoiceVO = getInvoice(compid);
+        compInfoVOS[0].setInvoiceVO(invoiceVO == null ? new InvoiceVO() : invoiceVO);
+        compInfoVOS[0].setAptitudeVOS(selectApt(compid));
+        List<BusScopeVO> busScopeVOS = getBusScopes(compid);
+        compInfoVOS[0].setBusScopeVOS(busScopeVOS);
+        StringBuilder bsSb = new StringBuilder();
+        for (BusScopeVO busScopeVO : busScopeVOS) {
+            bsSb.append(busScopeVO.getCodename()).append(",");
+        }
+        if (!bsSb.toString().isEmpty()){
+            compInfoVOS[0].setBusScopeStr(bsSb.toString().substring(0, bsSb.toString().length() - 1));
+        }
+        compInfoVOS[0].setCaddrname(IceRemoteUtil.getCompleteName(compInfoVOS[0].getCaddrcode() + ""));
+        return result.success(compInfoVOS[0]);
+    }
+
+
 
 }

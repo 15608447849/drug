@@ -92,8 +92,8 @@ public class ActivityManageModule {
 
     //优惠赠换商品
     private static final String INSERT_ASS_GIFT_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSGIFT + "}} "
-            + "(unqid,assgiftno,offercode)"
-            + " values(?,?,?)";
+            + "(unqid,assgiftno,offercode,giftnum)"
+            + " values(?,?,?,?)";
 
     private static final String DEL_ASS_GIFT_SQL = "update {{?" + DSMConst.TD_PROM_ASSGIFT + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 ";
@@ -428,7 +428,10 @@ public class ActivityManageModule {
                 relaParams.add(new Object[]{GenIdUtil.getUnqId(),actCode,ladderId});
                 //新增优惠赠换商品
                 if (stype.startsWith("124")) {
-                    assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), ladderVOS.get(i).getAssgiftno(),offerCode[i]});
+                    List<AssGiftVO> assGiftVOList = ladderVOS.get(i).getAssGiftVOS();
+                    for (AssGiftVO assGiftVO : assGiftVOList) {
+                        assGiftParams.add(new Object[]{GenIdUtil.getUnqId(), assGiftVO.getAssgiftno(),offerCode[i], assGiftVO.getGiftnum()});
+                    }
                 }
             }
         }
@@ -634,16 +637,16 @@ public class ActivityManageModule {
 
 
     private List<LadderVO> getLadder(ActivityVO activityVO, long actCode) {
-        String selectSQL = "select a.unqid,ladamt,ladnum,b.offercode,offer,a.cstatus, assgiftno from {{?" + DSMConst.TD_PROM_RELA
-                + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid left join {{?"
-                + DSMConst.TD_PROM_ASSGIFT + "}} c on b.offercode=c.offercode and c.cstatus&1=0 where a.cstatus&1=0 "
-                + " and a.actcode=" + actCode;
+        String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer,a.cstatus from {{?" + DSMConst.TD_PROM_RELA
+                + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid "
+                + " where a.cstatus&1=0 and a.actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         LadderVO[] ladderVOS = new LadderVO[queryResult.size()];
         baseDao.convToEntity(queryResult, ladderVOS, LadderVO.class);
         for (LadderVO ladderVO:ladderVOS) {
             ladderVO.setLadamt(ladderVO.getLadamt()/100);
             ladderVO.setOffer(ladderVO.getOffer()/100);
+            ladderVO.setAssGiftVOS(getAssGift(ladderVO.getOffercode()));
         }
         String offerCode = ladderVOS[0].getOffercode() + "";
         activityVO.setRulecomp(Integer.parseInt(offerCode.substring(4,5)));
@@ -664,13 +667,15 @@ public class ActivityManageModule {
         return Arrays.asList(rulesVOS);
     }
 
-    private List<AssGiftVO> getAssGift(long actCode) {
-        String sql = "select unqid,offerno,assgiftno,cstatus,giftname from {{?" + DSMConst.TD_PROM_ASSGIFT
+    private List<AssGiftVO> getAssGift(int offercode) {
+        String sql = "select assgiftno,giftnum,giftname from {{?" + DSMConst.TD_PROM_ASSGIFT
                 + "}} a left join {{?" + DSMConst.TD_PROM_GIFT + "}} g on a.assgiftno=g.unqid "
-                + " where cstatus&1=0 and actcode=" + actCode;
+                + " where a.cstatus&1=0 and offercode=" + offercode;
         List<Object[]> queryResult = baseDao.queryNative(sql);
         AssGiftVO[] assGiftVOS = new AssGiftVO[queryResult.size()];
-        baseDao.convToEntity(queryResult, assGiftVOS, AssGiftVO.class);
+        baseDao.convToEntity(queryResult, assGiftVOS, AssGiftVO.class, new String[]{
+                "assgiftno", "giftnum", "giftname"
+        });
         return Arrays.asList(assGiftVOS);
     }
 
