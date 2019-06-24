@@ -48,6 +48,7 @@ public class CommonModule {
         return result.success(promGiftVOS);
     }
 
+    @UserPermission(ignore = true)
     public Result saveGift(AppContext appContext) {
         PromGiftVO gift = JSON.parseObject(appContext.param.json, PromGiftVO.class);
 
