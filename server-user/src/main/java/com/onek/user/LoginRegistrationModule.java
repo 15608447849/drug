@@ -16,16 +16,16 @@ import static constant.DSMConst.TB_SYSTEM_USER;
 /**
  * 登陆 / 注册 模块
  * lzp
+ * @服务名 userServer
  */
 public class LoginRegistrationModule {
 
-
     /**
-     * 功能:  校验手机号码是否存在
-     * 参数类型:    json
-     * 参数集:  phone=手机号码
-     * 返回值:  code=200(存在) data=结果信息
-     * 详情说明:
+     * @接口摘要 校验手机号码是否存在
+     * @业务场景 注册 忘记密码
+     * @传参类型 JSON
+     * @传参列表 phone - 手机号码
+     * @返回列表 code - 200 - 成功 , message - 成功/失败信息
      */
     @UserPermission (ignore = true)
     public Result checkPhoneExist(AppContext appContext){
@@ -37,12 +37,12 @@ public class LoginRegistrationModule {
     }
 
     /**
-     * 功能: 门店注册
-     * 参数类型:    json
-     * 参数集:  phone=手机号码,password=明文密码,password2=二次确认密码,smsCode=短信验证码
-     * storeName=门店名,addressCode=地区码
-     * 返回值:  code=200(成功) data=结果信息 ,map.compid = 企业ID
-     * 详情说明: 企业修改接口复用
+     * @接口摘要 门店注册
+     * @业务场景
+     * @传参类型 JSON
+     * @传参列表 phone=手机号码,password=明文密码,password2=二次确认密码,smsCode=短信验证码,code=200(成功) data=结果信息 ,map.compid = 企业ID
+     * @返回列表
+     *  code-200-成功
      */
     @UserPermission (ignore = true)
     public Result register(AppContext appContext){
@@ -71,13 +71,14 @@ public class LoginRegistrationModule {
 
     }
 
-     /*
-      * 功能: 获取验证码
-      * 参数类型: json
-      * 参数集: phone=手机号码,type=类型(1,图形验证码,2,短信验证码)
-      * 返回值: code=200(成功) , data=图形验证码url/结果信息
-      * 详情说明:
-      */
+    /**
+     * @接口摘要 获取验证码
+     * @业务场景
+     * @传参类型 JSON
+     * @传参列表 phone=手机号码,type=类型(1,图形验证码,2,短信验证码)
+     * @返回列表
+     *   code=200(成功) , data=图形验证码url/结果信息
+     */
     @UserPermission (ignore = true)
     public Result obtainVerificationCode(AppContext appContext){
         String json = appContext.param.json;
@@ -86,13 +87,13 @@ public class LoginRegistrationModule {
         return op.execute(appContext);
     }
 
-
-    /**
-     * 功能:门店登陆平台系统
-     * 参数类型: json
-     * 参数集: phone=手机号码,password=密文密码,key=图形验证码key(uncheck不验证) verification=图形验证
-     * 返回值: code=200(成功)
-     * 详情说明:
+    /***
+     * @接口摘要 门店登陆平台系统
+     * @业务场景
+     * @传参类型 JSON
+     * @传参列表 phone=手机号码,password=密文密码,key=图形验证码key(uncheck不验证) verification=图形验证
+     * @返回列表
+     *code=200(成功)
      */
     @UserPermission (ignore = true)
     public Result loginStore(AppContext appContext){
@@ -101,14 +102,12 @@ public class LoginRegistrationModule {
         assert op!=null;
         return op.execute(appContext);
     }
-
-
-    /*
-     * 功能: 门店登陆锁定,管理系统解锁
-     * 参数类型: json
-     * 参数集: phone=手机号码
-     * 返回值:
-     * 详情说明:
+    /**
+     * @接口摘要 门店登陆锁定,管理系统解锁
+     * @业务场景
+     * @传参类型 JSON
+     * @传参列表 phone=手机号码
+     * @返回列表 code-200-成功
      */
     @UserPermission(ignore = true)
     public Result removeUserLoginLock(AppContext appContext){
@@ -118,12 +117,14 @@ public class LoginRegistrationModule {
         op.removeLockCache();
         return new Result().success("解锁成功");
     }
-    /*
-     * 功能: 管理端登陆后台系统
-     * 参数类型: json
-     * 参数集: account=手机号码 password=密文密码
-     * 返回值:
-     * 详情说明:
+
+    /***
+     * @接口摘要 管理端登陆后台系统
+     * @业务场景
+     * @传参类型 JSON/ARRAY
+     * @传参列表 account=手机号码 password=密文密码
+     * @返回列表
+     *  code-200-成功 , message 成功/失败结果提示
      */
     @UserPermission (ignore = true)
     public Result loginBack(AppContext appContext){
@@ -132,13 +133,14 @@ public class LoginRegistrationModule {
         assert op!=null;
         return op.execute(appContext);
     }
-    
-    /*
-     * 功能: 修改手机号/密码
-     * 参数类型: json
-     * 参数集: 修改手机号码: oldPhone=旧手机号码,newPhone=新手机号码,smsCode=短信验证码; 修改密码: oldPassword=MD5旧密码,newPassword=明文密码
-     * 返回值:
-     * 详情说明:
+
+    /**
+     * @接口摘要 修改手机号/密码
+     * @业务场景
+     * @传参类型 JSON
+     * @传参列表 修改手机号码: oldPhone=旧手机号码,newPhone=新手机号码,smsCode=短信验证码; 修改密码: oldPassword=MD5旧密码,newPassword=明文密码
+     * @返回列表
+     *  code200 修改成功
      */
     public Result changeUserInfo(AppContext appContext){
         String json = appContext.param.json;
@@ -149,7 +151,13 @@ public class LoginRegistrationModule {
     }
 
     /**
-     *  忘记密码
+     * @接口摘要 忘记密码
+     * @业务场景
+     * @传参类型 JSON
+     * @传参列表
+     *  oldPhone 旧手机号码 , newPassword 新密码 ,smsCode短信验证码
+     * @返回列表 code200 成功 / message 成功/失败结果
+     *
      */
     @UserPermission(ignore = true)
     public Result forgetPassword(AppContext appContext){
@@ -159,16 +167,17 @@ public class LoginRegistrationModule {
         op.type = 1;
         return op.execute(appContext);
     }
-
     /**
-     * 登出
+     * @接口摘要 登出
+     * @业务场景
+     * @传参类型 JSON/ARRAY
+     * @传参列表
+     *
+     * @返回列表
+     *
      */
     public Result logout(AppContext appContext){
         try {
-//            UserSession userSession = appContext.getUserSession();
-//            appContext.logger.print("用户:"+ userSession+" 登出中...");
-            String phone = appContext.getUserSession().phone;
-            String ip = appContext.remoteIp;
             if (appContext.clearTokenByUserSession()) {
                 return new Result().success("登出成功");
             }
@@ -179,7 +188,7 @@ public class LoginRegistrationModule {
     }
 
     /**
-     * 内部调用 获取企业信息
+     * @接口摘要 内部调用,获取企业信息
      */
     @UserPermission(ignore = true)
     public StoreBasicInfo getStoreInfo(AppContext appContext){
@@ -189,8 +198,20 @@ public class LoginRegistrationModule {
         infoToCache(info); //保存信息到缓存
         return info;
     }
+
     /**
-     * 获取门店用户信息
+     * @接口摘要 用户获取信息
+     * @业务场景
+     * @传参类型
+     * @传参列表
+     *
+     * @返回列表
+     *      int userId; //用户ID
+     *      long roleCode; //角色复合码
+     *      String phone; //手机号码
+     *      String userName;//姓名
+     *      int compId;//企业ID
+     *      StoreBasicInfo comp; //公司信息
      */
     public Result getStoreSession(AppContext appContext){
         if (appContext.getUserSession().compId > 0){
@@ -204,7 +225,13 @@ public class LoginRegistrationModule {
     }
 
     /**
-     * APP获取门店用户信息
+     * @接口摘要 APP获取门店用户信息
+     * @业务场景
+     * @传参类型 JSON/ARRAY
+     * @传参列表
+     *
+     * @返回列表
+     *
      */
     public UserSession appStoreInfo(AppContext context){
         if (context.getUserSession().compId > 0){
@@ -216,10 +243,21 @@ public class LoginRegistrationModule {
         return null;//返回用户信息
     }
 
-
-
-    /**
-     * 获取用户信息 - 后台运营使用
+    /***
+     * @接口摘要 获取用户信息 - 后台运营使用
+     * @业务场景
+     * @传参类型
+     * @传参列表
+     *
+     * @返回列表
+     *      int userId; //用户ID
+     *      long roleCode; //角色复合码
+     *      String phone; //手机号码
+     *      String userName;//姓名
+     *      int compId;//企业ID
+     *      int belong;//所属ID
+     *      StoreBasicInfo comp; //公司信息
+     *
      */
     public Result getUserSession(AppContext appContext){
         UserSession userSession = appContext.getUserSession().cloneBackUserInfo();
@@ -227,7 +265,13 @@ public class LoginRegistrationModule {
     }
 
     /**
-     * 判断是否已经登陆
+     * @接口摘要 判断是否已经登陆
+     * @业务场景
+     * @传参类型
+     * @传参列表
+     *
+     * @返回列表 data-登陆成功-true
+     *
      */
     @UserPermission(ignore = true)
     public Result checkStoreLoginStatus(AppContext appContext){
