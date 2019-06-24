@@ -349,7 +349,7 @@ public class PayModule {
         }else if("2".equals(tradeStatus)){
             String tdate = TimeUtils.date_yMd_2String(date);
             String time = TimeUtils.date_Hms_2String(date);
-            result = failOpt(orderno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+            result = failOpt(orderno, payno,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
 
         OrderUtil.sendMsg(orderno, tradeStatus ,money, compid, tradeDate);
