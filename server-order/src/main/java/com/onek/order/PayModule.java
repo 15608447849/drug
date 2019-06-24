@@ -404,7 +404,7 @@ public class PayModule {
             }else if("2".equals(tradeStatus)){
                 String tdate = TimeUtils.date_yMd_2String(date);
                 String time = TimeUtils.date_Hms_2String(date);
-                result = failOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+                result = failOpt(afsano, afsano,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
             }
 
             OrderUtil.sendMsg(afsano, tradeStatus ,money, compid, tradeDate);
