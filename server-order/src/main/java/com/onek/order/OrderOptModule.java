@@ -137,7 +137,6 @@ public class OrderOptModule {
             " where cstatus&1=0 and asno = ?  ";
 
 
-
     /**
      * @description 订单评价商品接口
      * @params json {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
@@ -224,15 +223,18 @@ public class OrderOptModule {
             }
         } else {
 //            if (baseDao.updateNativeSharding(compid, year, updSQL, orderNo) > 0) {
-                //向售后表插入申请数据
-                String asOrderId = GenIdUtil.getAsOrderId();
-                Object[] pramsObj = new Object[]{asAppVOS.get(0).getOrderno(), asAppVOS.get(0).getPdno(), asOrderId,
-                        asAppVOS.get(0).getCompid(), asAppVOS.get(0).getAstype(), asAppVOS.get(0).getGstatus(), asAppVOS.get(0).getReason(),
-                        asAppVOS.get(0).getCkstatus(), asAppVOS.get(0).getCkdesc(), asAppVOS.get(0).getInvoice(), 1,
-                        asAppVOS.get(0).getApdesc(), asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum(), asAppVOS.get(0).getInvoicetype()};
-                int res = baseDao.updateNativeSharding(0, localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
+            //向售后表插入申请数据
+            int invoType = jsonObject.get("invoType").getAsInt();
 
-                return res > 0 ? result.success(asOrderId) : result.fail("申请失败");
+            String asOrderId = GenIdUtil.getAsOrderId();
+            Object[] pramsObj = new Object[] { asAppVOS.get(0).getOrderno(), asAppVOS.get(0).getPdno(), asOrderId,
+                    asAppVOS.get(0).getCompid(), asAppVOS.get(0).getAstype(), asAppVOS.get(0).getGstatus(), asAppVOS.get(0).getReason(),
+                    asAppVOS.get(0).getCkstatus(), asAppVOS.get(0).getCkdesc(), asAppVOS.get(0).getInvoice(),
+                    invoType == 1 ? 0 : 1, asAppVOS.get(0).getApdesc(), asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum(), asAppVOS.get(0).getInvoicetype() };
+
+            int res = baseDao.updateNativeSharding(0, localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
+
+            return res > 0 ? result.success(asOrderId) : result.fail("申请失败");
 //            }
         }
         return b ? result.success("申请成功") : result.fail("申请失败");
