@@ -36,7 +36,7 @@ public class OrderAnalysisServiceImpl {
 //    }
 //
 //    public static void main(String[] args) {
-//        new OrderAnalysisServiceImpl(0, 430000000000L, "2019-06").getResult();
+//        new OrderAnalysisServiceImpl(5, 430000000000L, "2019-06").getResult();
 //    }
 
 
@@ -238,6 +238,18 @@ public class OrderAnalysisServiceImpl {
 
             if (isAcc) {
                 accResult(returnCol);
+            }
+
+            if (this.reportType == REPORTTYPE.MONTH_ACC && this.date.contains("-")) {
+                Iterator<ColGroup> it = returnCol.getColGroups().iterator();
+                int len = returnCol.getColGroups().size();
+                while (it.hasNext()) {
+                    it.next();
+
+                    if (--len > 0) {
+                        it.remove();
+                    }
+                }
             }
 
             for (ColGroup colGroup : returnCol.getColGroups()) {
@@ -479,7 +491,11 @@ public class OrderAnalysisServiceImpl {
         }
 
         if (date.contains("-")) {
-            sb.append(" AND DATE_FORMAT(odate, '%Y-%m') = ? ");
+            if (this.reportType == REPORTTYPE.MONTH_ACC) {
+                sb.append(" AND DATE_FORMAT(odate, '%Y-%m') <= ? ");
+            } else {
+                sb.append(" AND DATE_FORMAT(odate, '%Y-%m') = ? ");
+            }
         } else {
             sb.append(" AND DATE_FORMAT(odate, '%Y') = ? ");
         }
