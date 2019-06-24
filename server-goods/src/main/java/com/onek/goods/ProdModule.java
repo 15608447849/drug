@@ -73,25 +73,25 @@ public class ProdModule {
     private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
-            "and a.brulecode = ? and d.cstatus&1 = 0 and a.cstatus&2048>0 " +
+            "and a.brulecode = ? and d.cstatus&1 = 0 and a.cstatus&2048>0 and act.cstatus&32 = 0 " +
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
     private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
-            "and d.actcode = ? and a.cstatus&2048>0 " +
+            "and d.actcode = ? and a.cstatus&2048>0 and act.cstatus&32 = 0 " +
             "and a.sdate <= CURRENT_DATE and CURRENT_DATE<= a.edate ";
 
     private static String NEWMEMBER_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
-            "and a.cstatus&1 = 0 and a.cstatus&2048>0 " +
+            "and a.cstatus&1 = 0 and a.cstatus&2048>0 and act.cstatus&32 = 0 " +
             "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
     private static String EXEMPOST_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
-            "and a.cstatus&1 = 0 and a.cstatus&2048>0 " +
+            "and a.cstatus&1 = 0 and a.cstatus&2048>0 and act.cstatus&32 = 0 " +
             "and brulecode like '112%' " +
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
