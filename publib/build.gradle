@@ -13,5 +13,8 @@ dependencies {
     compile 'com.belerweb:pinyin4j:2.5.1'
     compile 'javax.mail:javax.mail-api:1.5.5'
     compile 'com.sun.mail:javax.mail:1.5.5'
+    compile 'org.apache.httpcomponents:httpclient:4.5.3'
+    compile 'org.apache.httpcomponents:httpcore:4.4.8'
+    compile 'org.apache.httpcomponents:httpmime:4.3'
 }
 

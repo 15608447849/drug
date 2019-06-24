@@ -2,6 +2,8 @@ package com.onek.report.init;
 
 import com.onek.report.data.MarketStoreData;
 import com.onek.report.data.SystemConfigData;
+import com.onek.report.timer.StockDayCountTask;
+import com.onek.report.timer.StockMonCountTimer;
 import com.onek.server.infimp.IIceInitialize;
 
 import static Ice.Application.communicator;
@@ -15,6 +17,8 @@ public class ReportInitialize implements IIceInitialize {
             Thread.sleep(2000);
             SystemConfigData.init();
             MarketStoreData.init();
+            new StockDayCountTask();
+            new StockMonCountTimer();
         }catch (Exception e){
             e.printStackTrace();
         }

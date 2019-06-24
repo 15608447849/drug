@@ -54,7 +54,7 @@ public class PayModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
-    private static final String GET_TO_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,balamt,invoicetype from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ? and ostatus=?";
+    private static final String GET_TO_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,balamt,invoicetype,payway from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ? and ostatus=?";
 
     private static final String GET_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,balamt,orderno,IFNULL(address,'') address,pdnum,IFNULL(consignee,'') consignee,IFNULL(contact,'') contact from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ?";
 
@@ -120,10 +120,11 @@ public class PayModule {
         int compid = jsonObject.get("compid").getAsInt();
 
         List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL,
-                new Object[]{ orderno, compid, 0});
+                orderno, compid, 0);
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt","invoicetype"});
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate",
+                    "otime","pdamt","freight","coupamt","distamt","rvaddno","balamt","invoicetype","payway"});
             double bal = MathUtil.exactDiv(result[0].getBalamt(), 100)
                     .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).
@@ -145,6 +146,7 @@ public class PayModule {
             r.put("otime", result[0].getOtime());
             r.put("invoicetype", result[0].getInvoicetype());
             r.put("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+            r.put("payway", result[0].getPayway());
 
             return  new Result().success(r);
         }else{

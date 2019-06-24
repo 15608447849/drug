@@ -108,6 +108,8 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
 
                 List<Object[]> lines = null;
                 if(compid > 0 && compid < 536862720){
+
+                   // 128:审核中; 256:认证成功 512:认证失败;
                     lines = BaseDAO.getBaseDAO().queryNative(presql,atype,compid);
                     String cksql = "SELECT 1 FROM {{?"+ TB_COMP +"}} tbcp join {{?"+TB_COMP_APTITUDE+"}} tbca on tbcp.cid = tbca.compid " +
                             " where validitye<=CURRENT_DATE AND tbcp.cstatus & 128 = 0 ";
@@ -168,7 +170,13 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
     //设置定时器-一个月后执行
     //定时每次执行时,再次检测自己是否过期,过期-发送消息并再次添加定时任务,否则移除
     private void execute() {
-        String sql = "SELECT atype,compid,uphone,validitye FROM {{?" + TB_COMP_APTITUDE + "}} AS a INNER JOIN {{?" + TB_SYSTEM_USER + "}} AS b ON a.compid=b.cid WHERE compid IN ( SELECT cid FROM {{?" + TB_COMP + "}} WHERE cstatus&256=256 AND ctype=0 ) AND validitye <= CURRENT_DATE";
+        String sql = "SELECT atype,compid,uphone,validitye FROM {{?" + TB_COMP_APTITUDE + "}} AS a INNER JOIN {{?" + TB_SYSTEM_USER + "}} AS b ON a.compid=b.cid WHERE compid IN ( SELECT cid FROM {{?" + TB_COMP + "}} WHERE cstatus&256=256 AND ctype=0 )" +
+                " AND validitye <= CURRENT_DATE " +
+                " UNION " +
+                " SELECT atype,compid,uphone,validitye FROM {{?" + TB_COMP_APTITUDE + "}} AS a INNER JOIN {{?" + TB_SYSTEM_USER + "}} AS b ON a.compid=b.cid WHERE compid IN ( SELECT cid FROM {{?" + TB_COMP + "}} WHERE  ctype in (1,2) ) " +
+                " AND (date_sub(validitye, interval 15 day) < CURRENT_DATE or validitye <= CURRENT_DATE)" +
+                "  AND  b.roleid & 2048 > 0 ";
+
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
         for (Object[] row : lines){
             checkTypeAndSendMsg(row);
