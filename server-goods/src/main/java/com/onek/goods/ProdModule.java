@@ -73,25 +73,25 @@ public class ProdModule {
     private static String RULE_CODE_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
-            "and a.brulecode = ? and d.cstatus&1 = 0 " +
+            "and a.brulecode = ? and d.cstatus&1 = 0 and a.cstatus&2048>0 " +
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
     private static String ACT_PROD_BY_ACTCODE_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,d.price,d.cstatus,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             "where a.unqid = d.actcode " +
-            "and d.actcode = ? " +
+            "and d.actcode = ? and a.cstatus&2048>0 " +
             "and a.sdate <= CURRENT_DATE and CURRENT_DATE<= a.edate ";
 
     private static String NEWMEMBER_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
-            "and a.cstatus&1 = 0 " +
+            "and a.cstatus&1 = 0 and a.cstatus&2048>0 " +
             "and a.qualcode = 1 and a.qualvalue = 0 and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
     private static String EXEMPOST_ACT_PROD_SQL = "select a.unqid,d.gcode,d.actstock,d.limitnum,a.qualcode,a.qualvalue from " +
             "{{?" + DSMConst.TD_PROM_ACT + "}} a, {{?" + DSMConst.TD_PROM_ASSDRUG + "}} d " +
             " where a.unqid = d.actcode  " +
-            "and a.cstatus&1 = 0 " +
+            "and a.cstatus&1 = 0 and a.cstatus&2048>0 " +
             "and brulecode like '112%' " +
             "and fun_prom_cycle(a.unqid, a.acttype, a.actcycle, ?, 1) > 0 ";
 
@@ -1510,32 +1510,35 @@ public class ProdModule {
     }
 
     private boolean assemblySpecActProd(List<Object[]> list) {
-        List<Object[]> newList = new ArrayList<>();
-        Long gCode = Long.parseLong(list.get(0)[1].toString());
         boolean isAll = false;
-        if (gCode == 0) {
-            List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD);
-            for (Object[] objects : prodList) {
-                Long sku = Long.parseLong(objects[0].toString());
+        if(list != null && list.size() > 0){
+            List<Object[]> newList = new ArrayList<>();
+            Long gCode = Long.parseLong(list.get(0)[1].toString());
 
-                newList.add(new Object[]{list.get(0)[0], sku, list.get(0)[2], list.get(0)[3], list.get(0)[4], list.get(0)[5]});
-            }
-            isAll = true;
-        } else {
-            for (Object[] aa : list) {
-                String gc = aa[1].toString();
-                if (gc.length() < 14) {
-                    List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD + " and spu like CONCAT('_', ?,'%')", new Object[]{gc});
-                    for (Object[] obj : prodList) {
-                        Long sku = Long.parseLong(obj[0].toString());
+            if (gCode == 0) {
+                List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD);
+                for (Object[] objects : prodList) {
+                    Long sku = Long.parseLong(objects[0].toString());
 
-                        newList.add(new Object[]{aa[0], sku, aa[2], aa[3], aa[4], aa[5]});
+                    newList.add(new Object[]{list.get(0)[0], sku, list.get(0)[2], list.get(0)[3], list.get(0)[4], list.get(0)[5]});
+                }
+                isAll = true;
+            } else {
+                for (Object[] aa : list) {
+                    String gc = aa[1].toString();
+                    if (gc.length() < 14) {
+                        List<Object[]> prodList = BASE_DAO.queryNative(QUERY_PROD + " and spu like CONCAT('_', ?,'%')", new Object[]{gc});
+                        for (Object[] obj : prodList) {
+                            Long sku = Long.parseLong(obj[0].toString());
+
+                            newList.add(new Object[]{aa[0], sku, aa[2], aa[3], aa[4], aa[5]});
+                        }
                     }
                 }
             }
-        }
 
-        list.addAll(newList);
+            list.addAll(newList);
+        }
 
         return isAll;
     }
