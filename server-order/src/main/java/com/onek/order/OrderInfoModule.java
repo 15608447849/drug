@@ -4,6 +4,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.onek.calculate.entity.Gift;
 import com.onek.context.AppContext;
 import com.onek.entity.*;
 import com.onek.entitys.Result;
@@ -14,7 +15,6 @@ import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 import redis.util.RedisUtil;
 import util.*;
 
@@ -331,7 +331,28 @@ public class OrderInfoModule {
 
         convTranGoods(result);
 
-        return new ArrayList<>(Arrays.asList(result));
+        List<TranOrderGoods> resultList = new ArrayList<>(Arrays.asList(result));
+
+        List<Gift> gifts =
+                CouponRevModule.getGifts(Long.parseLong(orderno), compid);
+
+        if (!gifts.isEmpty()) {
+            TranOrderGoods good;
+            for (Gift gift : gifts) {
+                if (gift.getType() != 3) {
+                    continue;
+                }
+
+                good = new TranOrderGoods();
+                good.setPdno(gift.getId());
+                good.setActcode(String.valueOf(gift.getActivityCode()));
+                good.setPnum(gift.getTotalNums());
+                good.setPname(gift.getGiftName());
+                resultList.add(good);
+            }
+        }
+
+        return resultList;
     }
 
     private void convTranGoods(TranOrderGoods[] result) {

@@ -780,10 +780,9 @@ public class CouponRevModule {
         return !ModelUtil.updateTransEmpty(result);
     }
 
-
-    public static boolean revGiftCoupon(long orderno,int compid){
+    public static List<Gift> getGifts(long orderno, int compid) {
         if(compid <= 0 || orderno <= 0){
-            return false;
+            return Collections.emptyList();
         }
 
         List<Object[]> queryResult = baseDao.queryNativeSharding(
@@ -791,12 +790,20 @@ public class CouponRevModule {
                 QUERY_ORDER_GIFT, compid, orderno);
 
         if(queryResult == null || queryResult.isEmpty()){
+            return Collections.emptyList();
+        }
+
+        return JSON.parseArray(queryResult.get(0)[0].toString(), Gift.class);
+    }
+
+    public static boolean revGiftCoupon(long orderno,int compid){
+        if(compid <= 0 || orderno <= 0){
             return false;
         }
 
-        List<Gift> jsonObj = JSON.parseArray(queryResult.get(0)[0].toString(), Gift.class);
+        List<Gift> jsonObj = getGifts(orderno, compid);
 
-        return insertGiftCoupon(compid,jsonObj);
+        return !jsonObj.isEmpty() && insertGiftCoupon(compid,jsonObj);
     }
 
     /**

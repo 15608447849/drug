@@ -14,6 +14,7 @@ import java.util.List;
 import static util.StringUtils.converterToFirstSpell;
 
 /**
+ * @服务名 globalServer
  * @Author: leeping
  * @Date: 2019/5/17 16:46
  */
@@ -32,6 +33,7 @@ public class WebAppModule {
         HashMap<String,String> map;
 
     }
+
 
     @UserPermission(ignore = true)
     public String pageInfo(AppContext context){
@@ -55,6 +57,14 @@ public class WebAppModule {
         }
     }
 
+
+    /**
+     * @接口摘要 app获取地区层级信息
+     * @业务场景 app地图选择时
+     * @传参类型 array
+     * @传参列表 [地区码]
+     * @返回列表 {value:地区码,label:地区名,type:地区类型,letter=地区首字母大写}
+     */
     @UserPermission(ignore = true)
     public List<AreaEntityByApp> appAreaAll(AppContext context){
         long areaCode = 0;
