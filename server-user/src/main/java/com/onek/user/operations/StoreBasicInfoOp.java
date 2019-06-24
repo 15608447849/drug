@@ -45,7 +45,7 @@ public class StoreBasicInfoOp {
     //获取企业信息
     public static boolean getStoreInfoById(StoreBasicInfo info) {
         //通过企业码获取企业信息
-        String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng" +
+        String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,storetype " +
                 " FROM {{?"+ TB_COMP +"}}"+
                 " WHERE ctype=0 AND cid=?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql, info.storeId);
@@ -79,6 +79,7 @@ public class StoreBasicInfoOp {
         info.addressCode = checkObjectNull(rows[4],0L);
         info.latitude = new BigDecimal(checkObjectNull(rows[5],"0.00")); //纬度
         info.longitude = new BigDecimal(checkObjectNull(rows[6],"0.00")); //精度
+        info.storetype = checkObjectNull(rows[7],0);
 
     }
 
