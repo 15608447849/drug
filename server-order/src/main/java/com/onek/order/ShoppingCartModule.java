@@ -3,6 +3,7 @@ package com.onek.order;
 import Ice.Application;
 import Ice.Logger;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.ActivityFilterService;
@@ -658,11 +659,11 @@ public class ShoppingCartModule {
         return shoppingCartList;
     }
 
-    private void convResult(List<ShoppingCartVO> shoppingCartList, int compid){
-
+    private List<Gift> getGifts(List<ShoppingCartVO> shoppingCartList, int compid){
         if(shoppingCartList == null){
-            return;
+            return Collections.emptyList();
         }
+
         List<Product> productList = new ArrayList<>();
         List<Product> ckProduct = new ArrayList<>();
         BigDecimal result = BigDecimal.ZERO;
@@ -748,8 +749,129 @@ public class ShoppingCartModule {
             shoppingCartVO.setActcode(actCodeList);
             shoppingCartVO.setRule(ruleList);
         }
+
         DiscountResult discountResult
                 = CalculateUtil.calculate(compid,ckProduct,Long.parseLong(shoppingCartList.get(0).getConpno()));
+
+        for (ShoppingCartVO shoppingCartVO : shoppingCartList){
+            for(Product product: ckProduct){
+                if(shoppingCartVO.getPdno() == product.getSKU()
+                        && shoppingCartVO.getChecked() == 1){
+                    shoppingCartVO.setSubtotal(product.getCurrentPrice());
+                    shoppingCartVO.setDiscount(product.getDiscounted());
+                    shoppingCartVO.setAmt(discountResult.getTotalDiscount());
+                    shoppingCartVO.setAcamt(discountResult.getTotalCurrentPrice());
+                    shoppingCartVO.setCounpon(discountResult.getCouponValue());
+                    shoppingCartVO.setFreepost(discountResult.isFreeShipping());
+                    shoppingCartVO.setOflag(discountResult.isExCoupon());
+                    shoppingCartVO.setTotalamt(result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                    shoppingCartVO.setSubtotal(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()).
+                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+                    if(shoppingCartVO.getAreano() > 0 && !discountResult.isFreeShipping()){
+                        shoppingCartVO.setFreight(AreaFeeUtil.getFee(shoppingCartVO.getAreano()));
+                    }
+
+                }
+            }
+        }
+
+        return discountResult.getGiftList();
+    }
+
+    private void convResult(List<ShoppingCartVO> shoppingCartList, int compid){
+        if(shoppingCartList == null){
+            return;
+        }
+
+        List<Product> productList = new ArrayList<>();
+        List<Product> ckProduct = new ArrayList<>();
+        BigDecimal result = BigDecimal.ZERO;
+        for (ShoppingCartVO shoppingCartVO : shoppingCartList){
+            Product product = new Product();
+            product.setSku(shoppingCartVO.getPdno());
+            product.autoSetCurrentPrice(shoppingCartVO.getPdprice(),shoppingCartVO.getNum());
+            productList.add(product);
+            if(shoppingCartVO.getChecked() == 1){
+                ckProduct.add(product);
+                result = result.add(BigDecimal.valueOf(product.getCurrentPrice()));
+            }
+        }
+
+        List<IDiscount> discountList = getActivityList(compid,productList);
+
+        //获取活动
+
+        for (ShoppingCartVO shoppingCartVO : shoppingCartList){
+           List<DiscountRule> ruleList = new ArrayList<>();
+           List<String> actCodeList = new ArrayList<>();
+            int minLimit = Integer.MAX_VALUE;
+            int subStock = Integer.MAX_VALUE;
+            int actStock = Integer.MAX_VALUE;
+            for(IDiscount discount : discountList){
+                Activity activity = (Activity)discount;
+                int brule = (int)discount.getBRule();
+                List<IProduct> pList =  discount.getProductList();
+                for (IProduct product: pList){
+                    if(product.getSKU() == shoppingCartVO.getPdno()){
+                        DiscountRule discountRule = new DiscountRule();
+                        discountRule.setRulecode(brule);
+                        discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
+                        actCodeList.add(activity.getUnqid()+"");
+                        if(activity.getLimits(product.getSKU()) < minLimit){
+                            minLimit = activity.getLimits(product.getSKU());
+                        }
+                        //判断秒杀
+                        if(brule == 1113){
+                            shoppingCartVO.setStatus(1);
+                        }
+                        ruleList.add(discountRule);
+
+
+                        actStock = Math.min(
+                                RedisStockUtil
+                                        .getActStockBySkuAndActno(shoppingCartVO.getPdno(),
+                                                discount.getDiscountNo()),
+                                actStock);
+
+                        if(activity.getLimits(shoppingCartVO.getPdno()) == 0){
+                            break;
+                        }
+
+                        subStock = Math.min
+                                (activity.getLimits(shoppingCartVO.getPdno())
+                                        - RedisOrderUtil.getActBuyNum(compid, shoppingCartVO.getPdno(),
+                                        activity.getUnqid()),subStock);
+
+                        minLimit = Math.min
+                                (activity.getLimits(shoppingCartVO.getPdno())
+                                        ,minLimit);
+                    }
+                }
+            }
+            shoppingCartVO.setLimitnum(minLimit);
+            if(minLimit == Integer.MAX_VALUE){
+                shoppingCartVO.setLimitnum(0);
+            }
+
+            int stock = shoppingCartVO.getInventory();
+            try{
+                stock = RedisStockUtil.getStock(shoppingCartVO.getPdno());
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            if(stock == 0){
+                shoppingCartVO.setStatus(3);
+            }
+            shoppingCartVO.setLimitsub(subStock);
+            shoppingCartVO.setInventory(stock);
+            shoppingCartVO.setActstock(actStock);
+            shoppingCartVO.setActcode(actCodeList);
+            shoppingCartVO.setRule(ruleList);
+        }
+
+        DiscountResult discountResult
+                = CalculateUtil.calculate(compid,ckProduct,Long.parseLong(shoppingCartList.get(0).getConpno()));
+
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
             for(Product product: ckProduct){
                 if(shoppingCartVO.getPdno() == product.getSKU()
@@ -806,11 +928,14 @@ public class ShoppingCartModule {
         return activityList;
     }
 
-
     /**
-     * 查询结算购物车列表
-     * @param appContext
-     * @return
+     * @接口摘要 查询结算购物车列表
+     * @业务场景 下单商品列表展示
+     * @传参类型 json
+     * @参数列表 JsonArray [com.onek.entity.ShoppingCartDTO]
+     * @返回列表 JSONObject:
+     *              goods 商品详情 com.onek.entity.ShoppingCartVO
+     *              gifts 赠品列表 com.onek.entity.ShoppingCartVO
      */
     @UserPermission(ignore = true)
     public Result querySettShopCartList(AppContext appContext){
@@ -841,9 +966,31 @@ public class ShoppingCartModule {
             return new Result().fail(sb.toString());
         }
 
-        convResult(shopCart,shoppingCartDTOS.get(0).getCompid());
+        List<Gift> giftList =
+                getGifts(shopCart,shoppingCartDTOS.get(0).getCompid());
 
-        return result.success(shopCart);
+        List<ShoppingCartVO> giftVOS = new ArrayList<>();
+
+        ShoppingCartVO giftVO;
+        for (Gift gift : giftList) {
+            if (gift.getType() != 3) {
+                continue;
+            }
+
+            giftVO = new ShoppingCartVO();
+
+            giftVO.setPtitle(gift.getGiftName());
+            giftVO.setNum(gift.getTotalNums());
+            giftVO.setPdno(gift.getId());
+
+            giftVOS.add(giftVO);
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("goods", shopCart);
+        jsonObject.put("gifts", giftVOS);
+
+        return result.success(jsonObject);
     }
 
     private List<ShoppingCartVO> getDiffPrice(List<ShoppingCartVO> shopCarts, List<ShoppingCartDTO> shoppingCartDTOs) {

@@ -5,6 +5,7 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.annotation.UserPermission;
+import com.onek.calculate.entity.Gift;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
 import com.onek.calculate.filter.*;
