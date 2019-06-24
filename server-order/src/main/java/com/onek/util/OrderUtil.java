@@ -10,7 +10,6 @@ import com.onek.entity.TranTransVO;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.fs.FileServerUtils;
 import com.onek.util.member.MemberStore;
-import com.onek.util.order.RedisOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchProvider;
@@ -166,17 +165,17 @@ public class OrderUtil {
 
         @Override
         public void run() {
-            JSONObject jsonObject = new JSONObject();
             JSONObject body = new JSONObject();
-            body.put("orderNo", orderno);
-            body.put("tradeStatus", tradeStatus);
-            body.put("money", money);
-            body.put("compid", compid);
-            body.put("tradeDate", tradeDate);
-            jsonObject.put("event", MessageEvent.PAY_CALLBACK.getState());
-            jsonObject.put("body", body);
-            IceRemoteUtil.sendMessageToClient(compid, jsonObject.toJSONString());
-
+                body.put("orderNo", orderno);
+                body.put("tradeStatus", tradeStatus);
+                body.put("money", money);
+                body.put("compid", compid);
+                body.put("tradeDate", tradeDate);
+            JSONObject jsonObject = new JSONObject();
+                jsonObject.put("event", MessageEvent.PAY_CALLBACK.getState());
+                jsonObject.put("body", body);
+             String msg = "pay:" + jsonObject.toJSONString();
+            IceRemoteUtil.sendMessageToClient(compid, msg);
             if(orderno.length() >= 16 &&  "1".equals(tradeStatus)){ // 交易成功
                 try{
                     IceRemoteUtil.sendMessageToClient(compid, SmsTempNo.genPushMessageBySystemTemp(SmsTempNo.ORDER_PAYMENT_SUCCESSFUL,orderno));

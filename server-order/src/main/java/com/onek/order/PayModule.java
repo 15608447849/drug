@@ -247,23 +247,24 @@ public class PayModule {
 
     /**
      *
-     * 功能: 运费预支付[用来展示付款二维码]
+     * 功能: 运费预支付
      * 参数类型: json
-     * 参数集: orderno=订单号 afsano=售后单号 compid=企业码 paytype=付款方式
-     * 返回值: code=200 date=付款二维码地址
+     * 参数集: orderno=订单号 afsano=售后单号 paytype=付款方式 flag 客户端类型
+     * 返回值: code=200 date=付款二维码地址(web),可支付的JSON信息(app)
      * 详情说明:
      * 作者: 蒋文广
      */
-    @UserPermission(ignore = true)
     public Result preFeePay(AppContext appContext){
+        int compid = appContext.getUserSession().compId;
+        if (compid == 0)  return new Result().fail("异常用户,拒绝服务");
 
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         String orderno = jsonObject.get("orderno").getAsString();
         String afsano = jsonObject.get("afsano").getAsString();
-        int compid = jsonObject.get("compid").getAsInt();
         String paytype = jsonObject.get("paytype").getAsString();
+        int flag = jsonObject.has("flag") ? jsonObject.get("flag").getAsInt() : 0;
         if(StringUtils.isEmpty(afsano) || compid <=0){
             return new Result().fail("获取售后单号或企业码失败!");
         }
@@ -279,13 +280,20 @@ public class PayModule {
                 return new Result().fail("该地区暂不支持在线开票，请联系客服");
             }
             try{
-                String r = FileServerUtils.getPayQrImageLink(paytype, "空间折叠", payamt, afsano,
-                        "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
 
+
+                Object r;
+                if(flag == 0){
+                    r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, afsano,
+                            "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+                }else{
+                    r = FileServerUtils.getAppPayInfo(paytype, "一块医药", payamt, afsano,
+                            "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+                }
                 return new Result().success(r);
             }catch (Exception e){
                 e.printStackTrace();
-                return new Result().fail("生成支付二维码图片失败!");
+                return new Result().fail("预付款失败!");
             }
 
 

@@ -13,6 +13,7 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @Author: leeping
@@ -125,19 +126,15 @@ public class FileServerUtils {
     }
 
 
-    /**
-     * @return 付款二维码图片链接
-     */
-    public static String getPayQrImageLink(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr){
-
+    private static HashMap<String,Object> accessPayServer(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr,boolean isApp){
         List<String> list = new ArrayList<>();
-            list.add(AppProperties.INSTANCE.masterName);
-            list.add(AppProperties.INSTANCE.masterHost);
-            list.add(AppProperties.INSTANCE.masterPort+"");
-            list.add(serverName);
-            list.add(callback_clazz);
-            list.add(callback_method);
-            if (attr!=null && attr.length()>0)  list.add(attr);
+        list.add(AppProperties.INSTANCE.masterName);
+        list.add(AppProperties.INSTANCE.masterHost);
+        list.add(AppProperties.INSTANCE.masterPort+"");
+        list.add(serverName);
+        list.add(callback_clazz);
+        list.add(callback_method);
+        if (attr!=null && attr.length()>0)  list.add(attr);
 
         String body = String.join("@",list);
         HashMap<String,String> map = new HashMap<>();
@@ -146,14 +143,25 @@ public class FileServerUtils {
         map.put("price",String.valueOf(price));
         map.put("orderNo",orderNo);
         map.put("body",body);
-
+        map.put("app",String.valueOf(isApp));
         String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/pay","POST",map);
-        HashMap<String,Object> rmap = GsonUtils.string2Map(json);
-        assert rmap != null;
-
-        return rmap.get("data")==null ? null : rmap.get("data").toString();
+        return GsonUtils.string2Map(json);
     }
 
+    /**
+     * @return 付款二维码图片链接
+     */
+    public static String getPayQrImageLink(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr) {
+        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, false);
+        assert rmap != null;
+        return rmap.get("data") == null ? null : rmap.get("data").toString();
+    }
+
+    public static Map getAppPayInfo(String type, String subject, double price, String orderNo, String serverName, String callback_clazz, String callback_method, String attr){
+        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, false);
+        assert rmap != null;
+        return rmap.get("data") == null ? null : (Map)rmap.get("data");
+    }
     /**
      * 查询一个订单支付状态
      * @return 0-待支付 1已支付 -2异常
