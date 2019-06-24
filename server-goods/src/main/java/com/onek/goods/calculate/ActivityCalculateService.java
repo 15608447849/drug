@@ -22,14 +22,14 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
             + " WHERE 1 = 1 ";
     //远程调用
     private static final String GET_GIFT =
-            " SELECT gift.unqid, gift.giftname, gift.giftdesc "
+            " SELECT gift.unqid, gift.giftname, gift.giftdesc, ass.giftnum "
                     + " FROM {{?" + DSMConst.TD_PROM_GIFT + "}} gift "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_ASSGIFT + "}} ass "
                     + " ON gift.unqid = ass.assgiftno AND ass.offercode = ? "
                     + " AND ass.cstatus&1 = 0 AND gift.cstatus&1 = 0 "
                     + " WHERE 1=1 ";
 
-    private List<Gift> getGifts(long offerCode) {
+    private List<Gift> getGifts(long offerCode, long actCode) {
         List<Gift> result = new ArrayList<>();
 
         if (offerCode > 0) {
@@ -39,9 +39,13 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
             Gift[] gArray = new Gift[queryResult.size()];
 
             BaseDAO.getBaseDAO().convToEntity(queryResult, gArray, Gift.class,
-                    new String[] { "id", "giftName", "giftDesc" });
+                    new String[] { "id", "giftName", "giftDesc", "giftNum" });
 
             result.addAll(Arrays.asList(gArray));
+        }
+
+        for (Gift gift : result) {
+            gift.setActivityCode(actCode);
         }
 
         return result;
@@ -60,7 +64,7 @@ public class ActivityCalculateService extends BaseDiscountCalculateService {
         for (Ladoff ladoff : lapArray) {
             ladoff.setLadamt(ladoff.getLadamt() / 100);
             ladoff.setOffer(ladoff.getOffer() / 100);
-            ladoff.setGiftList(getGifts(ladoff.getOffercode()));
+            ladoff.setGiftList(getGifts(ladoff.getOffercode(), actCode));
         }
 
         return lapArray;

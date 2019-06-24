@@ -35,6 +35,16 @@ public class TranOrderGoods {
     private double mp;
     private double rrp;
 
+    private boolean isGift;
+
+    public boolean isGift() {
+        return isGift;
+    }
+
+    public void setGift(boolean gift) {
+        isGift = gift;
+    }
+
     public double getVatp() {
         return vatp;
     }

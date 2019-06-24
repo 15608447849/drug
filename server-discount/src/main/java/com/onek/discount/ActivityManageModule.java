@@ -1626,7 +1626,8 @@ public class ActivityManageModule {
 
     /**
      * 审批活动、优惠券
-     * @param appContext 审批活动
+     * @param appContext
+     * 审批活动 {actcod：活动码/优惠券码,ctype: 1 活动 2 优惠券，cstatus 1 审核通过 -1 审核不通过}
      * @return
      */
     @UserPermission(ignore = true)

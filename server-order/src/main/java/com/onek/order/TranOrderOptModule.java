@@ -248,6 +248,11 @@ public class TranOrderOptModule {
         int pdnum = 0;
         for (int i = 0; i < goodsArr.size(); i++) {
             TranOrderGoods goodsVO = gson.fromJson(goodsArr.get(i).toString(), TranOrderGoods.class);
+
+            if (goodsVO.isGift() || goodsVO.getPdprice() <= .0) {
+                continue;
+            }
+
             pdnum += goodsVO.getPnum();
             goodsVO.setCompid(tranOrder.getCusno());
             goodsVO.setActcode(String.valueOf(goodsVO.getActcode()));

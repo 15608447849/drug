@@ -1181,13 +1181,17 @@ public class BackgroundProdModule {
 
     private void setVaildDate(BgProdVO bgProdVO) {
         Calendar date = Calendar.getInstance();
-        date.setTime(TimeUtils.str_yMd_2Date(bgProdVO.getProdsdate()));
-        date.add(Calendar.MONTH, bgProdVO.getExpmonth());
-        bgProdVO.setVaildsdate(TimeUtils.date_yMd_2String(date.getTime()));
+        if(bgProdVO.getProdsdate() != null && bgProdVO.getExpmonth() > 0){
+            date.setTime(TimeUtils.str_yMd_2Date(bgProdVO.getProdsdate()));
+            date.add(Calendar.MONTH, bgProdVO.getExpmonth());
+            bgProdVO.setVaildsdate(TimeUtils.date_yMd_2String(date.getTime()));
+        }
 
-        date.setTime(TimeUtils.str_yMd_2Date(bgProdVO.getProdedate()));
-        date.add(Calendar.MONTH, bgProdVO.getExpmonth());
-        bgProdVO.setVaildedate(TimeUtils.date_yMd_2String(date.getTime()));
+        if(bgProdVO.getProdedate() != null && bgProdVO.getExpmonth() > 0) {
+            date.setTime(TimeUtils.str_yMd_2Date(bgProdVO.getProdedate()));
+            date.add(Calendar.MONTH, bgProdVO.getExpmonth());
+            bgProdVO.setVaildedate(TimeUtils.date_yMd_2String(date.getTime()));
+        }
     }
 
     private BgProdVO getProdByERPCode(String erpCode) {
