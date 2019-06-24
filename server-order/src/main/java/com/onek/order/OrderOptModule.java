@@ -98,7 +98,7 @@ public class OrderOptModule {
 
     //查询发票售后详情
     private static final String QUERY_ASAPP_INVOICE_INFO_SQL = "  select asapp.orderno,asapp.compid,asapp.asno,asapp.pdno,asapp.asnum," +
-            "astype,reason,apdesc,refamt,ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,invoice " +
+            "astype,reason,apdesc,refamt,ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,invoice,asapp.invoicetype " +
             " from {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp  inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders " +
             " on asapp.orderno = orders.orderno where asapp.cstatus & 1 = 0 and asapp.asno = ? and asno != 0";
 
@@ -108,7 +108,7 @@ public class OrderOptModule {
 
     //查询售后发票列表
     private static final String QUERY_ASAPP_BILL_LIST_SQL = "select distinct asapp.orderno,asapp.compid,asapp.asno,astype,"+
-            "ckstatus,gstatus,apdata,aptime,checkern,contact,address,compn from "+
+            "ckstatus,gstatus,apdata,aptime,checkern,contact,address,compn,invoicetype from "+
             " {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp " +
             " inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders" +
             " on asapp.orderno = orders.orderno where asno != 0 and asapp.cstatus & 1 = 0 and asapp.astype in (3,4) ";
@@ -224,7 +224,7 @@ public class OrderOptModule {
         } else {
 //            if (baseDao.updateNativeSharding(compid, year, updSQL, orderNo) > 0) {
             //向售后表插入申请数据
-            int invoType = jsonObject.get("invoType").getAsInt();
+            int invoType = asAppVOS.get(0).getInvoicetype();
 
             String asOrderId = GenIdUtil.getAsOrderId();
             Object[] pramsObj = new Object[] { asAppVOS.get(0).getOrderno(), asAppVOS.get(0).getPdno(), asOrderId,
@@ -672,7 +672,7 @@ public class OrderOptModule {
         baseDao.convToEntity(queryResult, asAppDtVOs, AsAppDtVO.class,
                 new String[]{"orderno", "compid", "asno", "pdno", "asnum",
                         "astype", "reason", "apdesc", "refamt", "ckstatus", "ckdesc", "gstatus",
-                        "ckdate", "cktime", "apdata", "aptime", "cstatus", "invoice"});
+                        "ckdate", "cktime", "apdata", "aptime", "cstatus", "invoice", "invoicetype"});
 
         JSONObject resultObject = new JSONObject();
         AsAppDtVO asAppDtVO = asAppDtVOs[0];
@@ -877,7 +877,7 @@ public class OrderOptModule {
         baseDao.convToEntity(queryResult, asAppDtListVOS, AsAppDtListVO.class,
                 new String[]{"orderno", "compid", "asno", "astype", "ckstatus",
                         "gstatus", "apdata", "aptime", "checkern",
-                        "contact", "address","compn"});
+                        "contact", "address","compn", "invoicetype"});
 
         for(AsAppDtListVO asAppDtListVO: asAppDtListVOS){
             String compStr = RedisUtil.getStringProvide()

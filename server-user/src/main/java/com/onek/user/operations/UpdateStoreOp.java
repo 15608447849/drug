@@ -29,6 +29,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
     String addressCode; //地区码
     double longitude;//营业执照地址纬度
     double latitude;//营业执照地址经度
+    int storetype;//药店类型  0 医疗单位, 1 批发企业, 2零售连锁门店, 3零售单体门店
 
     @Override
     public Result execute(AppContext context) {
@@ -92,8 +93,8 @@ public class UpdateStoreOp implements IOperation<AppContext> {
         }
         //修改门店信息
         String updateSql = "UPDATE {{?" + TB_COMP + "}} " +
-                "SET cname=?,cnamehash=crc32(?),caddr=?,caddrcode=?,lat=?,lng=?,cstatus=?,submitdate=CURRENT_DATE,submittime=CURRENT_TIME" +
-                " WHERE ctype=0 AND cstatus&1=0 AND cid=?";
+                "SET cname=?,cnamehash=crc32(?),caddr=?,caddrcode=?,lat=?,lng=?,cstatus=?,submitdate=CURRENT_DATE,submittime=CURRENT_TIME," +
+                " storetype=? WHERE ctype=0 AND cstatus&1=0 AND cid=?";
         int i = BaseDAO.getBaseDAO().updateNative(updateSql,
                 storeName,
                 storeName,
@@ -102,6 +103,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 latitude,
                 longitude,
                 128, //审核中
+                storetype,
                 session.compId
         );
         if (i>0){
