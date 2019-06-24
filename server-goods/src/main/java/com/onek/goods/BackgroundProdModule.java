@@ -84,13 +84,13 @@ public class BackgroundProdModule {
                     + " prodsdate, prodedate, store, "
                     + " limits, wholenum, medpacknum, unit,"
                     + " ondate, ontime, spec, cstatus, expmonth, "
-                    + " wp, erpsku) "
+                    + " wp, erpsku,creatdate,creattime) "
                     + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, "
                     + " CURRENT_DATE, CURRENT_TIME, ?, ?, ?,"
-                    + " ?, ?) ";
+                    + " ?, ?,CURRENT_DATE, CURRENT_TIME) ";
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "

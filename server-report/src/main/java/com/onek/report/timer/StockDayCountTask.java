@@ -15,17 +15,17 @@ import java.util.TimerTask;
  */
 public class StockDayCountTask extends TimerTask {
 
-    private static final String SELECTSQL = "SELECT sku,store FROM {{?"+ DSMConst.TD_PROD_SKU +"}} " +
-            " WHERE cstatus & 1 = 0 ";
-
-
-    private static final String INSERTSQL = " INSERT INTO {{?" + DSMConst.TP_REPORT_DAYSTOCK + "}} "
-            + " (optdate,opttime,sku,incrnum,store,cstatus) "
-            + " VALUES (CURRENT_DATE, CURRENT_TIME, ?, ?, ?, 0) ";
+//    private static final String SELECTSQL = "SELECT sku,store FROM {{?"+ DSMConst.TD_PROD_SKU +"}} " +
+//            " WHERE cstatus & 1 = 0 ";
+//
+//
+//    private static final String INSERTSQL = " INSERT INTO {{?" + DSMConst.TP_REPORT_DAYSTOCK + "}} "
+//            + " (optdate,opttime,sku,incrnum,store,cstatus) "
+//            + " VALUES (CURRENT_DATE, CURRENT_TIME, ?, ?, ?, 0) ";
 
 
     private static final String INSERTSELECT = "INSERT INTO  {{?" + DSMConst.TP_REPORT_DAYSTOCK + "}} "
-            + " (optdate,opttime,sku,incrnum,cstatus) select CURRENT_DATE,CURRENT_TIME,sku,store,0"
+            + " (optdate,opttime,sku,store,cstatus) select CURRENT_DATE,CURRENT_TIME,sku,store,0"
             + " from {{?"+DSMConst.TD_PROD_SKU+"}} WHERE cstatus & 1 = 0";
 
 

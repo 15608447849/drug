@@ -386,7 +386,7 @@ public class ProductAnalysisServiceImpl {
                 for(int i = 1; i <= maxDate; i++){
                     String d = i < 10 ?  "0" + i : i +"";
                     for(int j = 0; j <initList.size(); j++ ){
-                        if(j == 0){
+                        if(initList.size() > 1 && j == 0){
                             continue;
                         }
                         JSONObject subJS = new JSONObject();
@@ -429,7 +429,7 @@ public class ProductAnalysisServiceImpl {
                 for(int i = 1; i <= set.size(); i++){
                     WeekRange weekRange = maps.get(i);
                     for(int j = 0; j <initList.size(); j++ ){
-                        if(j == 0){
+                        if(initList.size() > 1 && j == 0){
                             continue;
                         }
                         JSONObject subJS = new JSONObject();
@@ -485,7 +485,7 @@ public class ProductAnalysisServiceImpl {
                 }
                 for(int i = startMon; i <= monSize; i++){
                     for(int j = 0; j <initList.size(); j++ ){
-                        if(j == 0){
+                        if(initList.size() > 1 && j == 0){
                             continue;
                         }
 
@@ -520,7 +520,7 @@ public class ProductAnalysisServiceImpl {
             JSONObject js = new JSONObject();
             List<JSONObject> subList = new ArrayList<>();
             for(int j = 0; j <initList.size(); j++ ){
-                    if(j == 0){
+                    if(initList.size() > 1 && j == 0){
                         continue;
                     }
                     JSONObject subJS = new JSONObject();
@@ -1367,7 +1367,8 @@ public class ProductAnalysisServiceImpl {
             for (int i = 0; i < array.size(); i++) {
                 JSONObject subJs = array.getJSONObject(i);
                 int classNo = subJs.getIntValue(COL_CLASSC);
-                if (classNo == classno) {
+                String showDate = subJs.getString(COL_SHOWDATE);
+                if (classNo == classno && showDate.equals("合计")) {
                     countdx++;
                     countcx++;
                     int pdsum = subJs.getIntValue(COL_PRODUCT_SUM);
@@ -1635,8 +1636,10 @@ public class ProductAnalysisServiceImpl {
                     if(subShowdate.equals("合计")){
                         createExcelDataRow(style, row, js, subShowdate);
                         int colsize = js.getIntValue("colSize");
-                        region = new CellRangeAddress(start, k-2, 0, 0);
-                        sheet.addMergedRegion(region);
+                        if(subJsonArray.size() > 2){
+                            region = new CellRangeAddress(start, k-2, 0, 0);
+                            sheet.addMergedRegion(region);
+                        }
                         start = k;
                     }
 ;
