@@ -2,6 +2,11 @@ package com.onek.util;
 
 import redis.util.RedisUtil;
 
+import java.text.DecimalFormat;
+import java.text.Format;
+import java.util.Date;
+import java.util.Random;
+
 import static util.TimeUtils.getCurrentDate_Md;
 import static util.TimeUtils.getCurrentYear;
 
@@ -105,8 +110,10 @@ public class RedisGlobalKeys {
 
 
     public static void main(String[] args) {
-        System.out.println(getUserCode());
-        System.out.println(getCompanyCode());;
+//        System.out.println(getUserCode());
+//        System.out.println(getCompanyCode());;
+//        System.out.println(getNextPayNo("1905060000009000"));
+        System.out.println("1905060000009000002".substring(0, 16));
     }
 
     /**
@@ -135,5 +142,11 @@ public class RedisGlobalKeys {
      */
     public static int getBusID(){
         return   Math.toIntExact(getCurrentYear()+getCurrentDate_Md()+RedisUtil.getStringProvide().increase(BUS_TAB_UID));
+    }
+
+    public static String getNextPayNo(String orderno){
+        Format f1 = new DecimalFormat("000");
+        int val = Math.toIntExact( RedisUtil.getStringProvide().increase(orderno, 1));
+        return orderno + f1.format(val);
     }
 }

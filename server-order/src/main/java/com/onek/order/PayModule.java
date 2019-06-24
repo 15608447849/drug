@@ -13,10 +13,7 @@ import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
-import com.onek.util.GLOBALConst;
-import com.onek.util.GenIdUtil;
-import com.onek.util.IceRemoteUtil;
-import com.onek.util.OrderUtil;
+import com.onek.util.*;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.fs.FileServerUtils;
 import constant.DSMConst;
@@ -216,6 +213,7 @@ public class PayModule {
         String orderno = jsonObject.get("orderno").getAsString();
         int compid = jsonObject.get("compid").getAsInt();
         String paytype = jsonObject.get("paytype").getAsString();
+        int source = jsonObject.has("source") ? jsonObject.get("source").getAsInt() : 0;
         if(StringUtils.isEmpty(orderno) || compid <=0){
             return new Result().fail("获取订单号或企业码失败!");
         }
@@ -227,11 +225,27 @@ public class PayModule {
             if(payamt <= 0){
                 return new Result().fail("支付金额不能小于0!");
             }
+            String payno = RedisGlobalKeys.getNextPayNo(orderno);
             try{
-                String r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, orderno,
-                        "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+                if(source == 1){
+                    JSONObject resultJson = new JSONObject();
+                    resultJson.put("paytype", paytype);
+                    resultJson.put("subject", "一块医药");
+                    resultJson.put("payamt", payamt);
+                    resultJson.put("payno", payno);
+                    resultJson.put("servername", "orderServer" + getOrderServerNo(compid));
+                    resultJson.put("callback_clazz", "PayModule");
+                    resultJson.put("callback_method", "payCallBack");
+                    resultJson.put("attr", compid + "");
+                    return new Result().success(resultJson);
 
-                return new Result().success(r);
+                }else{
+                    String r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, payno,
+                            "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+
+                    return new Result().success(r);
+                }
+
             }catch (Exception e){
                 e.printStackTrace();
                 return new Result().fail("生成支付二维码图片失败!");
@@ -296,7 +310,7 @@ public class PayModule {
      *
      * 功能: 订单支付回调
      * 参数类型: array
-     * 参数集: array[0]=订单号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
+     * 参数集: array[0]=交易流水号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
      *         array[5]=付款金额 array[6]=企业码
      * 返回值: code=200
      * 详情说明: 支付宝、微信支付完后回调此接口
@@ -306,7 +320,8 @@ public class PayModule {
     public Result payCallBack(AppContext appContext){
 
         String[] arrays = appContext.param.arrays;
-        String orderno = arrays[0];
+        String payno = arrays[0];
+        String orderno = payno.substring(0, 16);
         String paytype = arrays[1];
         String thirdPayNo = arrays[2];
         String tradeStatus = arrays[3];
@@ -332,11 +347,11 @@ public class PayModule {
         if("1".equals(tradeStatus)){
             String tdate = TimeUtils.date_yMd_2String(date);
             String time = TimeUtils.date_Hms_2String(date);
-            result = successOpt(orderno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+            result = successOpt(orderno, payno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }else if("2".equals(tradeStatus)){
             String tdate = TimeUtils.date_yMd_2String(date);
             String time = TimeUtils.date_Hms_2String(date);
-            result = failOpt(orderno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+            result = failOpt(orderno, payno,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
 
         OrderUtil.sendMsg(orderno, tradeStatus ,money, compid, tradeDate);
@@ -391,7 +406,7 @@ public class PayModule {
             }else if("2".equals(tradeStatus)){
                 String tdate = TimeUtils.date_yMd_2String(date);
                 String time = TimeUtils.date_Hms_2String(date);
-                result = failOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+                result = failOpt(afsano, afsano,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
             }
 
             OrderUtil.sendMsg(afsano, tradeStatus ,money, compid, tradeDate);
@@ -522,7 +537,7 @@ public class PayModule {
      * @time  2019/4/18 20:56
      * @version 1.1.1
      **/
-    private boolean successOpt(String orderno, int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
+    private boolean successOpt(String orderno, String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
         int paysource = 0;
 
         List<String> sqlList = new ArrayList<>();
@@ -537,16 +552,16 @@ public class PayModule {
                 orderno,0});
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
-        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, payno, MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
                 thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
 //        + "(unqid,compid,payno,eventdesc,resultdesc,"
 //                + "completedate,completetime,cstatus)"
         sqlList.add(INSERT_TRAN_PAYREC);//新增支付记录
-        params.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, "{}", "{}", tradeDate, tradeTime});
+        params.add(new Object[]{GenIdUtil.getUnqId(),compid, payno, "{}", "{}", tradeDate, tradeTime});
 
         if(paySpreadBal > 0 && paytype != 0){
             sqlList.add(INSERT_TRAN_TRANS);
-            params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, paySpreadBal, 0, paysource, tradeStatus, GenIdUtil.getUnqId(),
+            params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, payno, paySpreadBal, 0, paysource, tradeStatus, GenIdUtil.getUnqId(),
                     thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
         }
 
@@ -647,7 +662,7 @@ public class PayModule {
      * @time  2019/4/18 20:37
      * @version 1.1.1
      **/
-    private boolean failOpt(String orderno, int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
+    private boolean failOpt(String orderno, String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
 
         int paysource = 0;
 
@@ -656,12 +671,12 @@ public class PayModule {
 //        + "(unqid,compid,orderno,payno,payprice,payway,paysource,paystatus,"
 //                + "payorderno,tppno,paydate,paytime,completedate,completetime,cstatus)"
         sqlList.add(INSERT_TRAN_TRANS);
-        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0,  MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, payno,  MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
                 thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
 //        + "(unqid,compid,payno,eventdesc,resultdesc,"
 //                + "completedate,completetime,cstatus)"
         sqlList.add(INSERT_TRAN_PAYREC);
-        params.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, "{}", "{}", tradeDate, tradeTime});
+        params.add(new Object[]{GenIdUtil.getUnqId(),compid, payno, "{}", "{}", tradeDate, tradeTime});
         int year = Integer.parseInt("20" + orderno.substring(0,2));
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);

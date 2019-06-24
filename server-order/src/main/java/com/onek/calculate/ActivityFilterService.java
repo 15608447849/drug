@@ -19,11 +19,16 @@ import java.util.*;
 public class ActivityFilterService extends BaseDiscountFilterService {
     //远程调用
     private static final String GET_ACTIVITIES_BY_SKU =
-            " SELECT act.*, ass.limitnum, time.sdate, time.edate, ass.price, ass.cstatus "
+            " SELECT act.oid, act.unqid, act.actname, act.incpriority, act.cpriority, "
+                    + " act.qualcode, act.qualvalue, act.actdesc, act.excdiscount, act.acttype, "
+                    + " act.actcycle, act.sdate, act.edate, act.brulecode, act.cstatus, "
+                    + " ass.limitnum, time.sdate, time.edate, ass.price, ass.cstatus "
                     + " FROM ({{?" + DSMConst.TD_PROM_ASSDRUG + "}} ass "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_ACT + "}} act"
                     + " ON ass.cstatus&1 = 0 "
                     + " AND act.cstatus&1 = 0 "
+                    + " AND act.cstatus&32 = 0 "
+                    + " AND act.cstatus&2048 > 0 "
                     + " AND ass.actcode = act.unqid "
                     + " AND act.sdate <= CURRENT_DATE "
                     + " AND CURRENT_DATE <= act.edate"

@@ -12,6 +12,7 @@ public class Gift {
     private String giftName;
     private String giftDesc;
     private double giftValue;
+    private int giftNum = 1;
     private int nums = 1;
     private int type = TYPE.GIFT;
     private long activityCode;
@@ -102,5 +103,17 @@ public class Gift {
 
     public void setActivityCode(long activityCode) {
         this.activityCode = activityCode;
+    }
+
+    public int getGiftNum() {
+        return giftNum;
+    }
+
+    public void setGiftNum(int giftNum) {
+        this.giftNum = giftNum;
+    }
+
+    public int getTotalNums() {
+        return this.giftNum * this.nums;
     }
 }

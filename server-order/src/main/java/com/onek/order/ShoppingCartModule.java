@@ -2,6 +2,7 @@ package com.onek.order;
 
 import Ice.Application;
 import Ice.Logger;
+import com.alibaba.fastjson.JSON;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.ActivityFilterService;
@@ -146,7 +147,7 @@ public class ShoppingCartModule {
             product.setNums(shopVO.getPnum()+pnum);
             product.autoSetCurrentPrice(pdprice,shopVO.getPnum()+pnum);
             productList.add(product);
-
+            System.out.println("---- " + JSON.toJSONString(productList));
             ret = baseDao.updateNativeSharding(compid,TimeUtils.getCurrentYear(),
                     UPDATE_SHOPCART_SQL_EXT, getSkuInv(compid,productList,inventory),
                     unqid);
@@ -215,7 +216,7 @@ public class ShoppingCartModule {
      * @param type 0 购物车购买 1非购物车购买
      * @return 可以购买的数量
      */
-    public static int  getCanbuySkuNum(int compid,long sku,int skuNum,int type){
+    public static int getCanbuySkuNum(int compid,long sku,int skuNum,int type){
         Logger logger = Application.communicator().getLogger();
 
         List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV, sku);
@@ -561,7 +562,8 @@ public class ShoppingCartModule {
         baseDao.convToEntity(queryResult, shoppingCartVOS, ShoppingCartDTO.class,
                 new String[]{"unqid","pdno","compid","cstatus","pnum"});
 
-        List<ShoppingCartVO> shopCart = getShopCart(Arrays.asList(shoppingCartVOS));
+        List<ShoppingCartVO> shopCart = getShopCart(new ArrayList<>(Arrays.asList(shoppingCartVOS)));
+
 
         //TODO 获取活动匹配
         convResult(shopCart,compid);
@@ -621,7 +623,7 @@ public class ShoppingCartModule {
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
                 new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory",
                         "spec","pstatus","spu","limitnum","brand","medpacknum","unit","mp"});
-        return Arrays.asList(returnResults);
+        return new ArrayList<>(Arrays.asList(returnResults));
     }
 
     private List<ShoppingCartVO> getShopCart(List<ShoppingCartDTO> shoppingCartDTOS){
@@ -655,8 +657,6 @@ public class ShoppingCartModule {
         }
         return shoppingCartList;
     }
-
-
 
     private void convResult(List<ShoppingCartVO> shoppingCartList, int compid){
 
@@ -829,8 +829,37 @@ public class ShoppingCartModule {
         List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
         //TODO 获取活动匹配
 
+        // 获取价格变动
+        List<ShoppingCartVO> diffCheck = getDiffPrice(shopCart, shoppingCartDTOS);
+
+        if (!diffCheck.isEmpty()) {
+            StringBuilder sb = new StringBuilder("以下商品价格有异动，请刷新页面！");
+            int index = 1;
+            for (ShoppingCartVO shoppingCartVO : diffCheck) {
+                sb.append(index++).append(".").append(shoppingCartVO.getPtitle());
+            }
+            return new Result().fail(sb.toString());
+        }
+
         convResult(shopCart,shoppingCartDTOS.get(0).getCompid());
+
         return result.success(shopCart);
+    }
+
+    private List<ShoppingCartVO> getDiffPrice(List<ShoppingCartVO> shopCarts, List<ShoppingCartDTO> shoppingCartDTOs) {
+        List<ShoppingCartVO> results = new ArrayList<>();
+
+        for (ShoppingCartVO shoppingCartVO : shopCarts) {
+            for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOs) {
+                if (shoppingCartDTO.getPdno() == shoppingCartVO.getPdno()) {
+                    if (shoppingCartDTO.getPdprice() != shoppingCartVO.getPdprice()) {
+                        results.add(shoppingCartVO);
+                    }
+                }
+            }
+        }
+
+        return results;
     }
 
     /**

@@ -44,14 +44,14 @@ public class ProductAnalysisServiceImpl {
             " group by pc.classid ";
 
     //SKU售罄月年查询
-    private static final String SKU_SOLD_MON_SQL = "select classid cid,classname,count(sku) solds,0 days,0 weeks,mons,years from {{?"+ DSMConst.TD_PRODUCE_CLASS +"}} pc join (" +
+    private static final String SKU_SOLD_MON_SQL = "select classid cid,classname,count(distinct sku) solds,0 days,0 weeks,mons,years from {{?"+ DSMConst.TD_PRODUCE_CLASS +"}} pc join (" +
             " select sku,month(CURRENT_DATE) mons,year(CURRENT_DATE) years from {{?"+DSMConst.TD_PROD_SKU+"}} where store = 0 " +
             " UNION " +
             " select sku,mons,years from {{?"+DSMConst.TP_REPORT_MONSTOCK +"}} where stock = 0) b " +
             " on substring(b.sku, 2) REGEXP CONCAT('^',pc.classid)  group by pc.classid ";
 
     //SKU售罄天查询
-    private static final String SKU_SOLD_DAY_SQL = "select classid cid,classname,count(sku) solds,days,weeks,mons,years from {{?"+ DSMConst.TD_PRODUCE_CLASS +"}} pc join (" +
+    private static final String SKU_SOLD_DAY_SQL = "select classid cid,classname,count(distinct sku) solds,days,weeks,mons,years from {{?"+ DSMConst.TD_PRODUCE_CLASS +"}} pc join (" +
             " select sku,CURRENT_DATE days," +
             "((DAY(CURRENT_DATE) + WEEKDAY(CURRENT_DATE - INTERVAL DAY(CURRENT_DATE) DAY)) DIV 7 + 1 ) weeks,MONTH(CURRENT_DATE) mons,YEAR(CURRENT_DATE) years " +
             " from {{?"+DSMConst.TD_PROD_SKU+"}} where store = 0 " +
@@ -478,6 +478,10 @@ public class ProductAnalysisServiceImpl {
 
                 if(year == START_YEAR){
                     startMon = START_MON;
+                    if(type == 4){
+                        monSize = month;
+                        startMon = month;
+                    }
                 }
                 for(int i = startMon; i <= monSize; i++){
                     for(int j = 0; j <initList.size(); j++ ){
@@ -1009,9 +1013,9 @@ public class ProductAnalysisServiceImpl {
                 if (skuSoldList != null && !skuSoldList.isEmpty()) {
                     for (Object[] objs : skuSoldList) {
                         if (isMatch(type, Integer.parseInt(objs[0].toString()),
-                                subJs, objs[3].toString(), Integer.parseInt(objs[4].toString()),
-                                Integer.parseInt(objs[6].toString()),
-                                Integer.parseInt(objs[5].toString()))) {
+                                subJs, objs[3].toString(), Integer.parseInt(objs[6].toString()),
+                                Integer.parseInt(objs[5].toString()),
+                                Integer.parseInt(objs[4].toString()))) {
                             int soldnum = Integer.parseInt(objs[2].toString());
                             subJs.put(COL_PRODUCT_SOLD, soldnum);
                         }
@@ -1043,14 +1047,6 @@ public class ProductAnalysisServiceImpl {
                                 subJs, objs[22].toString(), Integer.parseInt(objs[20].toString()),
                                 Integer.parseInt(objs[21].toString()),
                                 Integer.parseInt(objs[23].toString()))) {
-
-
-//                            cid,soldsku,maxdxlv,mindxlv,maxcxlv," +
-//                            " avdxlv,avcxlv,maxskunum,minskunum,skunum,maxskuamt,minskuamt,skuamtsum," +
-//                                    "years,mons,days,weeks,mincxlv
-
-
-
                             String maxdxlv = "";
                             if(objs[2] != null){
                                 maxdxlv = objs[2].toString();
@@ -1121,7 +1117,8 @@ public class ProductAnalysisServiceImpl {
                                 subJs.put(COL_SALENUM_SUMH, hskunum);
                                 subJs.put(COL_SALENUM_SUM, hskunum);
                                 subJs.put(COL_SALENUM_SUMC, skunum);
-                                subJs.put(COL_PRODUCT_SALES, hsalesku);
+                              //  subJs.put(COL_PRODUCT_SALES, hsalesku);
+                                subJs.put(COL_PRODUCT_SALES, salesku);
                                 subJs.put(COL_PRODUCT_SALESH, hsalesku);
                                 subJs.put(COL_PRODUCT_SALESC, salesku);
 
@@ -1433,15 +1430,26 @@ public class ProductAnalysisServiceImpl {
                         stockmins = stockmin;
                     }
 
+                    if(pdsold > pdsolds){
+                        pdsolds = pdsold;
+                    }
 
                     stsalespcsums = stsalespcsums + stsalespcsum;
                     saleamts = saleamts + saleamt;
                     salenums = salenums + salenum;
                   //  pdsums = pdsums + pdsum;
-                    addnums = addnums + addnum;
-                    pdsolds = pdsolds + pdsold;
-                    pdsales = pdsales + pdsale;
+                    //addnums = addnums + addnum;
+                   // pdsolds = pdsolds + pdsold;
+                   // pdsales = pdsales + pdsale;
                    // stocksums = stocksums + stocksum;
+
+                    if(pdsale > pdsales){
+                        pdsales = pdsale;
+                    }
+
+                    if(addnum > addnums){
+                        addnums = addnum;
+                    }
 
                     if(stocksums < stocksum){
                         stocksums = stocksum;
@@ -1499,15 +1507,15 @@ public class ProductAnalysisServiceImpl {
             }
         }
 
-        DecimalFormat df=new DecimalFormat("0.0000");
-
+        DecimalFormat fdf=new DecimalFormat("0.0000");
+        DecimalFormat tdf=new DecimalFormat("0.00");
 
         nsJson.put(COL_PRODUCT_SUM,pdsums);
         nsJson.put(COL_PRODUCT_ADD,addnums);
         nsJson.put(COL_PRODUCT_SOLD, pdsolds);
         nsJson.put(COL_PRODUCT_SALES, pdsales);
-        nsJson.put(COL_PRODUCT_SALESPC, df.format(pdsalepcs)+"%");
-        nsJson.put(COL_PRODUCT_SOLDPC,df.format(pdsoldpcs)+"%");
+        nsJson.put(COL_PRODUCT_SALESPC, tdf.format(pdsalepcs)+"%");
+        nsJson.put(COL_PRODUCT_SOLDPC,tdf.format(pdsoldpcs)+"%");
         nsJson.put(COL_STOCK_SUM, stocksums);
         nsJson.put(COL_STOCK_MAX, stockmaxs);
         nsJson.put(COL_STOCK_MIN, stockmins);
@@ -1519,10 +1527,10 @@ public class ProductAnalysisServiceImpl {
         nsJson.put(COL_SALEAMT_MAX, saleamtmaxs);
         nsJson.put(COL_SALEAMT_MIN, saleamtmins);
 
-        nsJson.put(COL_SALESPC_SUM, df.format(salespcsums/countdx)+"%");
+        nsJson.put(COL_SALESPC_SUM, tdf.format(salespcsums/countdx)+"%");
         nsJson.put(COL_SALESPC_MAX, salespcmaxs+"%");
         nsJson.put(COL_SALESPC_MIN,salespcmins+"%");
-        nsJson.put(COL_STOCK_SALESPC_SUM, df.format(stsalespcsums/countcx));
+        nsJson.put(COL_STOCK_SALESPC_SUM, fdf.format(stsalespcsums/countcx));
         nsJson.put(COL_STOCK_SALESPC_MAX, stsalespcmaxs);
         nsJson.put(COL_STOCK_SALESPC_MIN, stsalespcmins);
         resultJson.put("list",jsonList);
