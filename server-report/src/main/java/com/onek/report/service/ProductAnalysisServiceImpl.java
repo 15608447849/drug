@@ -400,7 +400,12 @@ public class ProductAnalysisServiceImpl {
                         subJS.put(COL_DATE, year + "-" + m + "-" + d);
                         subJS.put(COL_FIRST, i == 1 ? 1 : 0);
                         subJS.put(COL_SHOWDATE,  year + "-" + m + "-" + d);
-                        subJS.put("col_size",initList.size() -1);
+                        if(initList.size() > 1){
+                            subJS.put("col_size",initList.size() -1);
+                        }else{
+                            subJS.put("col_size",initList.size());
+                        }
+
                         generateDetailJSON(subJS);
                         subList.add(subJS);
                     }
@@ -411,7 +416,11 @@ public class ProductAnalysisServiceImpl {
                     subJS.put(COL_DATE, year + "-" + m + "-" + d);
                     subJS.put(COL_FIRST, i == 1 ? 1 : 0);
                     subJS.put(COL_SHOWDATE,  "合计");
-                    subJS.put("col_size",initList.size() -1);
+                    if(initList.size() > 1){
+                        subJS.put("col_size",initList.size() -1);
+                    }else{
+                        subJS.put("col_size",initList.size());
+                    }
                     generateDetailJSON(subJS);
                     subList.add(subJS);
                 }
@@ -443,7 +452,11 @@ public class ProductAnalysisServiceImpl {
                         subJS.put(COL_YEAR, year);
                         subJS.put(COL_MONTH, month);
                         subJS.put(COL_SHOWDATE, i + "周");
-                        subJS.put("col_size",initList.size() -1);
+                        if(initList.size() > 1){
+                            subJS.put("col_size",initList.size() -1);
+                        }else{
+                            subJS.put("col_size",initList.size());
+                        }
                         generateDetailJSON(subJS);
                         subList.add(subJS);
                     }
@@ -457,7 +470,11 @@ public class ProductAnalysisServiceImpl {
                     subJS.put(COL_YEAR, year);
                     subJS.put(COL_WEEK, i);
                     subJS.put(COL_MONTH, month);
-                    subJS.put("col_size",initList.size() -1);
+                    if(initList.size() > 1){
+                        subJS.put("col_size",initList.size() -1);
+                    }else{
+                        subJS.put("col_size",initList.size());
+                    }
                     subJS.put(COL_SHOWDATE,  "合计");
                     generateDetailJSON(subJS);
                     subList.add(subJS);
@@ -478,9 +495,11 @@ public class ProductAnalysisServiceImpl {
 
                 if(year == START_YEAR){
                     startMon = START_MON;
-                    if(type == 4){
-                        monSize = month;
-                        startMon = month;
+                    if(type == 4) {
+                        if (month > 0) {
+                            monSize = month;
+                            startMon = month;
+                        }
                     }
                 }
                 for(int i = startMon; i <= monSize; i++){
@@ -497,7 +516,11 @@ public class ProductAnalysisServiceImpl {
                         subJS.put(COL_YEAR, year);
                         subJS.put(COL_MONTH, i);
                         subJS.put(COL_SHOWDATE, i + "月");
-                        subJS.put("col_size",initList.size() -1);
+                        if(initList.size() > 1){
+                            subJS.put("col_size",initList.size() -1);
+                        }else{
+                            subJS.put("col_size",initList.size());
+                        }
                         generateDetailJSON(subJS);
                         subList.add(subJS);
                     }
@@ -509,7 +532,11 @@ public class ProductAnalysisServiceImpl {
                     subJS.put(COL_FIRST, i == 1 ? 1 : 0);
                     subJS.put(COL_YEAR, year);
                     subJS.put(COL_MONTH, i);
-                    subJS.put("col_size",initList.size() -1);
+                    if(initList.size() > 1){
+                        subJS.put("col_size",initList.size() -1);
+                    }else{
+                        subJS.put("col_size",initList.size());
+                    }
                     subJS.put(COL_SHOWDATE,  "合计");
                     generateDetailJSON(subJS);
                     subList.add(subJS);
@@ -530,7 +557,11 @@ public class ProductAnalysisServiceImpl {
                     subJS.put(COL_FIRST, 1);
                     subJS.put(COL_YEAR, year);
                     subJS.put(COL_SHOWDATE, year + "年");
-                    subJS.put("col_size",initList.size() -1);
+                    if(initList.size() > 1){
+                        subJS.put("col_size",initList.size() -1);
+                    }else{
+                        subJS.put("col_size",initList.size());
+                    }
                     generateDetailJSON(subJS);
                     subList.add(subJS);
                 }
@@ -540,7 +571,11 @@ public class ProductAnalysisServiceImpl {
                 subJS.put(COL_PRODUCT_SUM, initList.get(0)[2]);
                 subJS.put(COL_FIRST, 1);
                 subJS.put(COL_YEAR, year);
-                subJS.put("colsize",initList.size() -1);
+                if(initList.size() > 1){
+                    subJS.put("col_size",initList.size() -1);
+                }else{
+                    subJS.put("col_size",initList.size());
+                }
                 subJS.put(COL_SHOWDATE,  "合计");
                 generateDetailJSON(subJS);
                 subList.add(subJS);
@@ -1479,7 +1514,7 @@ public class ProductAnalysisServiceImpl {
                         salespcsum = salespcsum.replaceAll("%", "");
                         if (!StringUtils.isEmpty(salespcsum)) {
                             salespcsums = salespcsums + Double.parseDouble(salespcsum);
-                            countdx++;
+                            //countdx++;
                         }
                     }
 
@@ -1533,7 +1568,7 @@ public class ProductAnalysisServiceImpl {
         nsJson.put(COL_SALESPC_MIN,salespcmins+"%");
         nsJson.put(COL_STOCK_SALESPC_SUM, fdf.format(stsalespcsums/countcx));
         nsJson.put(COL_STOCK_SALESPC_MAX, stsalespcmaxs);
-        nsJson.put(COL_STOCK_SALESPC_MIN, stsalespcmins+"");
+        nsJson.put(COL_STOCK_SALESPC_MIN, fdf.format(stsalespcmins));
         resultJson.put("list",jsonList);
         resultJson.put(COL_SUM_TOTAL,nsJson);
         return resultJson;
