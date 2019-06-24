@@ -495,13 +495,14 @@ public class ProductAnalysisServiceImpl {
 
                 if(year == START_YEAR){
                     startMon = START_MON;
-                    if(type == 4) {
-                        if (month > 0) {
-                            monSize = month;
-                            startMon = month;
-                        }
-                    }
                 }
+
+                if(month > 0){
+                    monSize = month;
+                    startMon = month;
+                }
+
+
                 for(int i = startMon; i <= monSize; i++){
                     for(int j = 0; j <initList.size(); j++ ){
                         if(initList.size() > 1 && j == 0){
@@ -1559,7 +1560,7 @@ public class ProductAnalysisServiceImpl {
         nsJson.put(COL_SALENUM_MAX, salenummaxs);
         nsJson.put(COL_SALENUM_MIN,  salenummins);
 
-        nsJson.put(COL_SALEAMT_SUM, saleamts);
+        nsJson.put(COL_SALEAMT_SUM, tdf.format(saleamts));
         nsJson.put(COL_SALEAMT_MAX, saleamtmaxs);
         nsJson.put(COL_SALEAMT_MIN, saleamtmins);
 
