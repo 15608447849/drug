@@ -1,6 +1,6 @@
 package com.onek.discount;
 
-import Ice.Current;
+import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -8,10 +8,8 @@ import com.onek.context.AppContext;
 import com.onek.discount.entity.PromGiftVO;
 import com.onek.discount.entity.RulesVO;
 import com.onek.entitys.Result;
-import com.onek.server.inf.IRequest;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.ds.AppConfig;
 
 import java.util.HashMap;
 import java.util.List;
@@ -43,12 +41,51 @@ public class CommonModule {
     @UserPermission(ignore = true)
     public Result queryPromGift(AppContext appContext) {
         Result result = new Result();
-        String selectSQL = "select unqid giftno,giftname from {{?" + DSMConst.TD_PROM_GIFT + "}} where cstatus&1=0 ";
+        String selectSQL = "select unqid giftno,giftname, giftdesc from {{?" + DSMConst.TD_PROM_GIFT + "}} where cstatus&1=0 ";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         PromGiftVO[] promGiftVOS = new PromGiftVO[queryResult.size()];
-        baseDao.convToEntity(queryResult, promGiftVOS, PromGiftVO.class, new String[]{"giftno", "giftname"});
+        baseDao.convToEntity(queryResult, promGiftVOS, PromGiftVO.class, new String[]{"giftno", "giftname", "desc"});
         return result.success(promGiftVOS);
     }
+
+    @UserPermission(ignore = true)
+    public Result saveGift(AppContext appContext) {
+        PromGiftVO gift = JSON.parseObject(appContext.param.json, PromGiftVO.class);
+
+        if (gift == null) {
+            return new Result().fail("参数为空");
+        }
+
+        String sql =
+                " SELECT unqid, giftname, giftdesc "
+                + " FROM {{?" + DSMConst.TD_PROM_GIFT + "}} "
+                + " WHERE cstatus&1=0 AND unqid = ? ";
+
+        List<Object[]> queryResult = baseDao.queryNative(sql, gift.getGiftno());
+
+        if (queryResult.isEmpty()) {
+            sql = " INSERT INTO {{?" + DSMConst.TD_PROM_GIFT + "}} "
+                    + " (unqid, giftname, giftdesc, cstatus) "
+                    + " VALUES(?, ?, ?, ?) ";
+
+            baseDao.updateNative(sql,
+                    gift.getGiftno(), gift.getGiftname(),
+                    gift.getDesc(), 0);
+        } else {
+            sql = " UPDATE {{?" + DSMConst.TD_PROM_GIFT + "}} "
+                    + " SET giftname = ?, giftdesc = ? "
+                    + " WHERE cstatus&1 = 0 AND unqid = ? ";
+
+            baseDao.updateNative(sql,
+                    gift.getGiftname(), gift.getDesc(), gift.getGiftno());
+        }
+
+
+
+
+        return new Result().success();
+    }
+
 
     /**
      * @description 查询活动规则
@@ -202,6 +239,5 @@ public class CommonModule {
         }
         return laddnumArray;
     }
-
 
 }

@@ -104,6 +104,16 @@ public class OrderInfoModule {
 //                + " AND CURRENT_DATE <= a.validitye"
                     + " WHERE i.cstatus&1 = 0 AND i.cid = ? ";
 
+    /**
+     * @接口摘要 获取订单详情
+     * @业务场景 获取订单详情
+     * @传参类型 arrays
+     * @参数列表 [compid, orderno]
+     * @返回列表 JSONObject:
+     *              goods 订单详情
+     *              gifts 赠品列表
+     */
+
     public Result getOrderDetail(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -116,9 +126,9 @@ public class OrderInfoModule {
         }
 
         int compid = Integer.parseInt(params[0]);
-
+        String orderno = params[1];
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                compid, TimeUtils.getYearByOrderno(params[1]), QUERY_ORDER_DETAIL, params[1]);
+                compid, TimeUtils.getYearByOrderno(params[1]), QUERY_ORDER_DETAIL, orderno);
 
         TranOrderDetail[] result = new TranOrderDetail[queryResult.size()];
 
@@ -166,7 +176,33 @@ public class OrderInfoModule {
             tranOrder.setTotalNum(totalNum);
         }
 
-        return new Result().success(result);
+
+        List<Gift> gifts =
+                CouponRevModule.getGifts(Long.parseLong(orderno), compid);
+
+        List<TranOrderGoods> giftVOS = new ArrayList<>();
+
+        if (!gifts.isEmpty()) {
+            TranOrderGoods good;
+            for (Gift gift : gifts) {
+                if (gift.getType() != 3) {
+                    continue;
+                }
+
+                good = new TranOrderGoods();
+                good.setPdno(gift.getId());
+                good.setActcode(String.valueOf(gift.getActivityCode()));
+                good.setPnum(gift.getTotalNums());
+                good.setPname(gift.getGiftName());
+                giftVOS.add(good);
+            }
+        }
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("goods", result);
+        jsonObject.put("gifts", giftVOS);
+
+        return new Result().success(jsonObject);
     }
 
     public Result queryOrders(AppContext appContext) {
@@ -332,25 +368,6 @@ public class OrderInfoModule {
         convTranGoods(result);
 
         List<TranOrderGoods> resultList = new ArrayList<>(Arrays.asList(result));
-
-        List<Gift> gifts =
-                CouponRevModule.getGifts(Long.parseLong(orderno), compid);
-
-        if (!gifts.isEmpty()) {
-            TranOrderGoods good;
-            for (Gift gift : gifts) {
-                if (gift.getType() != 3) {
-                    continue;
-                }
-
-                good = new TranOrderGoods();
-                good.setPdno(gift.getId());
-                good.setActcode(String.valueOf(gift.getActivityCode()));
-                good.setPnum(gift.getTotalNums());
-                good.setPname(gift.getGiftName());
-                resultList.add(good);
-            }
-        }
 
         return resultList;
     }

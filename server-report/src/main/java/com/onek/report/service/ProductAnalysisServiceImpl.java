@@ -1345,19 +1345,19 @@ public class ProductAnalysisServiceImpl {
         double pdsoldpcs = 0;
         int stocksums = 0;
         int stockmaxs = 0;
-        int stockmins = 0;
+        int stockmins = Integer.MAX_VALUE;
         int salenums = 0;
         int salenummaxs = 0;
-        int salenummins = 0;
+        int salenummins = Integer.MAX_VALUE;
         double saleamts = 0;
         double saleamtmaxs = 0;
-        double saleamtmins = 0;
+        double saleamtmins = Double.MAX_VALUE;
         double salespcsums = 0;
         double salespcmaxs = 0;
-        double salespcmins = 0;
+        double salespcmins = Double.MAX_VALUE;
         double stsalespcsums = 0;
         double stsalespcmaxs = 0;
-        double stsalespcmins = 0;
+        double stsalespcmins = Double.MAX_VALUE;
         int countdx = 0;
         int countcx = 0;
 
@@ -1533,7 +1533,7 @@ public class ProductAnalysisServiceImpl {
         nsJson.put(COL_SALESPC_MIN,salespcmins+"%");
         nsJson.put(COL_STOCK_SALESPC_SUM, fdf.format(stsalespcsums/countcx));
         nsJson.put(COL_STOCK_SALESPC_MAX, stsalespcmaxs);
-        nsJson.put(COL_STOCK_SALESPC_MIN, stsalespcmins);
+        nsJson.put(COL_STOCK_SALESPC_MIN, stsalespcmins+"");
         resultJson.put("list",jsonList);
         resultJson.put(COL_SUM_TOTAL,nsJson);
         return resultJson;
