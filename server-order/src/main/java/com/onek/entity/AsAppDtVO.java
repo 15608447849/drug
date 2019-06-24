@@ -41,6 +41,15 @@ public class AsAppDtVO {
     private double refbal;//退款余额合计
     private String manuName; //厂商名称
     private double sumRefAmt; //退款总额
+    private int invoicetype; //发票类型
+
+    public int getInvoicetype() {
+        return invoicetype;
+    }
+
+    public void setInvoicetype(int invoicetype) {
+        this.invoicetype = invoicetype;
+    }
 
     public String getManuName() {
         return manuName;
