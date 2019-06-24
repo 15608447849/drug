@@ -27,6 +27,9 @@ public class AppProperties extends ApplicationPropertiesBase {
     @PropertiesName("pay.server.url")
     public String payUrlPrev;
 
+    @PropertiesName("erp.server.url")
+    public String ErpUrlPrev;
+
 
 
 
