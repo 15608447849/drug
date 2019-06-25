@@ -1544,7 +1544,7 @@ public class ProductAnalysisServiceImpl {
             }
         }
 
-        DecimalFormat fdf=new DecimalFormat("0.0000");
+        //DecimalFormat fdf=new DecimalFormat("0.0000");
         DecimalFormat tdf=new DecimalFormat("0.00");
 
         nsJson.put(COL_PRODUCT_SUM,pdsums);
@@ -1567,9 +1567,9 @@ public class ProductAnalysisServiceImpl {
         nsJson.put(COL_SALESPC_SUM, tdf.format(salespcsums/countdx)+"%");
         nsJson.put(COL_SALESPC_MAX, salespcmaxs+"%");
         nsJson.put(COL_SALESPC_MIN,salespcmins+"%");
-        nsJson.put(COL_STOCK_SALESPC_SUM, fdf.format(stsalespcsums/countcx));
+        nsJson.put(COL_STOCK_SALESPC_SUM, tdf.format(stsalespcsums/countcx));
         nsJson.put(COL_STOCK_SALESPC_MAX, stsalespcmaxs);
-        nsJson.put(COL_STOCK_SALESPC_MIN, fdf.format(stsalespcmins));
+        nsJson.put(COL_STOCK_SALESPC_MIN, tdf.format(stsalespcmins));
         resultJson.put("list",jsonList);
         resultJson.put(COL_SUM_TOTAL,nsJson);
         return resultJson;
