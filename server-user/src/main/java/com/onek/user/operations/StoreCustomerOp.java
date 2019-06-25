@@ -26,10 +26,18 @@ public class StoreCustomerOp implements IOperation<AppContext> {
     String name = "";
     int belong; //DB用户归属
     String areac;//门店地区码
+    int storetype;//药店类型  0 医疗单位, 1 批发企业, 2零售连锁门店, 3零售单体门店
+
     @Override
     public Result execute(AppContext context) {
 
         String msg = "";
+        //更新门店类型
+        String updStType = "UPDATE {{?"+TB_COMP+"}} SET storetype=? WHERE ctype=0 AND cid=?";
+        int code = BaseDAO.getBaseDAO().updateNative(updStType,storetype,compid);
+        if (code < 0) {
+            return new Result().fail("门店类型保存失败！");
+        }
         if (type == -1) return new Result().success(queryAllDB(name));
         int cid = 0;
         if (!StringUtils.isEmpty(uphone)) {
@@ -60,6 +68,8 @@ public class StoreCustomerOp implements IOperation<AppContext> {
                 if (i<=0) uid = null;
             }
         }
+
+
         return new Result().success(uid!=null).message(msg);
     }
 

@@ -24,6 +24,15 @@ public class AsAppDtListVO {
     private String address; //收货地址
     private String compn; //门店
     private double refamt; //退款金额
+    private int invoicetype; //退款金额
+
+    public int getInvoicetype() {
+        return invoicetype;
+    }
+
+    public void setInvoicetype(int invoicetype) {
+        this.invoicetype = invoicetype;
+    }
 
     public String getCompn() {
         return compn;

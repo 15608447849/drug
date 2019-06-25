@@ -495,13 +495,14 @@ public class ProductAnalysisServiceImpl {
 
                 if(year == START_YEAR){
                     startMon = START_MON;
-                    if(type == 4) {
-                        if (month > 0) {
-                            monSize = month;
-                            startMon = month;
-                        }
-                    }
                 }
+
+                if(month > 0){
+                    monSize = month;
+                    startMon = month;
+                }
+
+
                 for(int i = startMon; i <= monSize; i++){
                     for(int j = 0; j <initList.size(); j++ ){
                         if(initList.size() > 1 && j == 0){
@@ -1543,7 +1544,7 @@ public class ProductAnalysisServiceImpl {
             }
         }
 
-        DecimalFormat fdf=new DecimalFormat("0.0000");
+        //DecimalFormat fdf=new DecimalFormat("0.0000");
         DecimalFormat tdf=new DecimalFormat("0.00");
 
         nsJson.put(COL_PRODUCT_SUM,pdsums);
@@ -1559,16 +1560,16 @@ public class ProductAnalysisServiceImpl {
         nsJson.put(COL_SALENUM_MAX, salenummaxs);
         nsJson.put(COL_SALENUM_MIN,  salenummins);
 
-        nsJson.put(COL_SALEAMT_SUM, saleamts);
+        nsJson.put(COL_SALEAMT_SUM, tdf.format(saleamts));
         nsJson.put(COL_SALEAMT_MAX, saleamtmaxs);
         nsJson.put(COL_SALEAMT_MIN, saleamtmins);
 
         nsJson.put(COL_SALESPC_SUM, tdf.format(salespcsums/countdx)+"%");
         nsJson.put(COL_SALESPC_MAX, salespcmaxs+"%");
         nsJson.put(COL_SALESPC_MIN,salespcmins+"%");
-        nsJson.put(COL_STOCK_SALESPC_SUM, fdf.format(stsalespcsums/countcx));
+        nsJson.put(COL_STOCK_SALESPC_SUM, tdf.format(stsalespcsums/countcx));
         nsJson.put(COL_STOCK_SALESPC_MAX, stsalespcmaxs);
-        nsJson.put(COL_STOCK_SALESPC_MIN, fdf.format(stsalespcmins));
+        nsJson.put(COL_STOCK_SALESPC_MIN, tdf.format(stsalespcmins));
         resultJson.put("list",jsonList);
         resultJson.put(COL_SUM_TOTAL,nsJson);
         return resultJson;
