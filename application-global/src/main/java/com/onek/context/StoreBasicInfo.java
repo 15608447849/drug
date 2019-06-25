@@ -17,6 +17,7 @@ public class StoreBasicInfo {
     public Long addressCode;//地区码
     public BigDecimal longitude;//营业执照地址纬度
     public BigDecimal latitude;//营业执照地址经度
+    public int storetype;//药店类型  0 医疗单位, 1 批发企业, 2零售连锁门店, 3零售单体门店
     public StoreBasicInfo(int storeId) {
         this.storeId = storeId;
     }
