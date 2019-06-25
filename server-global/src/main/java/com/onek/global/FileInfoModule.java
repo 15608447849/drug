@@ -14,6 +14,7 @@ import static com.onek.util.fs.FileServerUtils.*;
 /**
  * @Author: leeping
  * @Date: 2019/4/2 13:41
+ * @服务名 globalServer
  */
 public class FileInfoModule {
 
@@ -27,8 +28,18 @@ public class FileInfoModule {
     }
 
     /**
-     * 获取文件服务器
+     * 获取
      * 上传列表/下载列表
+     */
+    /**
+     * @接口摘要 文件服务器/路径信息
+     * @业务场景 用于文件的上传下载 / 统一目录
+     * @传参类型 JSON - 可选项, 获取相关路径需要组合使用
+     * @传参列表
+     * {uid-用户码,compid-公司码,orderid-订单号,spu,sku 商品类别/区分的编码,List-{sku,spu} 多个商品标识}
+     * @返回列表
+     * 必带:{upUrl-文件上传服务器的地址,ergodicUrl文件遍历地址,downPrev文件下载地址,home系统资源及轮播图存放路径,notice公告资源存放路径},
+     * 组合产生:{companyFilePath企业相关路径,feedbackPath企业意见反馈路径,orderFilePath订单售后先关路径,userFilePath用户资源相关路径,goodsFilePath商品相关路径}
      */
     @UserPermission (ignore = true)
     public Result fileServerInfo(AppContext appContext){
@@ -46,16 +57,17 @@ public class FileInfoModule {
             QueryParam queryParam = GsonUtils.jsonToJavaBean(json,QueryParam.class);
             assert queryParam != null;
             if (queryParam.compid > 0){
-                map.put("companyFilePath", companyFilePath(queryParam.compid));
+                map.put("companyFilePath", companyFilePath(queryParam.compid));//公司路径
+                map.put("feedbackPath", companyFilePath(queryParam.compid)+"/feedback");//意见反馈路径
                 if (queryParam.orderid > 0) {
-                    map.put("orderFilePath", orderFilePath(queryParam.compid,queryParam.orderid));
+                    map.put("orderFilePath", orderFilePath(queryParam.compid,queryParam.orderid));//售后订单相关路径
                 }
             }
             if (queryParam.uid>0){
-                map.put("userFilePath",userFilePath(queryParam.uid));
+                map.put("userFilePath",userFilePath(queryParam.uid));//用户相关路径
             }
             if (queryParam.spu > 0 && queryParam.sku > 0){
-                map.put("goodsFilePath",goodsFilePath(queryParam.spu,queryParam.sku));
+                map.put("goodsFilePath",goodsFilePath(queryParam.spu,queryParam.sku));//商品相关路径
             }
             //多个spu,sku
             if (queryParam.list!=null && queryParam.list.size()>0){
