@@ -13,9 +13,7 @@ import redis.IRedisCache;
 import redis.proxy.CacheProxyInstance;
 import util.ModelUtil;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author 11842
@@ -49,6 +47,30 @@ public class MyDrugStoreInfoModule {
         ConsigneeVO[] consigneeVOS = new ConsigneeVO[queryResult.size()];
         baseDao.convToEntity(queryResult, consigneeVOS, ConsigneeVO.class);
         return result.success(consigneeVOS);
+    }
+
+    public static ConsigneeVO getDefaultConsignee(int compId) {
+        ConsigneeVO consigneeVO = new ConsigneeVO();
+        String selectSQL = "select shipid,contactname,contactphone,cstatus from {{?"
+                + DSMConst.TB_COMP_SHIP_INFO + "}} where cstatus&1=0 and compid="
+                + compId + " order by shipid desc";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        if (queryResult != null && queryResult.size() > 0) {
+            queryResult.forEach(objects -> {
+               int cstatus = (int) objects[3];
+               if (cstatus == 2) {
+                   consigneeVO.setShipid(Integer.parseInt(String.valueOf(objects[0])));
+                   consigneeVO.setContactname(String.valueOf(objects[1]));
+                   consigneeVO.setContactphone(String.valueOf(objects[2]));
+               }
+            });
+            if (consigneeVO.getContactname()==null || consigneeVO.getContactname().isEmpty()) {
+                consigneeVO.setShipid(Integer.parseInt(String.valueOf(queryResult.get(0)[0])));
+                consigneeVO.setContactname(String.valueOf(queryResult.get(0)[1]));
+                consigneeVO.setContactphone(String.valueOf(queryResult.get(0)[2]));
+            }
+        }
+        return consigneeVO;
     }
 
     /* *
@@ -86,6 +108,9 @@ public class MyDrugStoreInfoModule {
         } else {
             shipId = RedisGlobalKeys.getShipId();
             code = baseDao.updateNative(insertSQL, shipId, compId, contactName, contactPhone);
+        }
+        if (code > 0) {//同步默认收货人到ERP（异步操作）
+            SyncCustomerInfoModule.saveCusConcat(compId);
         }
         myCgProxy.update(null);
         return code > 0 ? result.success("操作成功") : result.fail("操作失败");
@@ -162,7 +187,10 @@ public class MyDrugStoreInfoModule {
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(sqlNative, params));
-        myCgProxy.update(null);
+        if (b) {//同步默认收货人到ERP（异步操作）
+            myCgProxy.update(null);
+            SyncCustomerInfoModule.saveCusConcat(compId);
+        }
         return b ? result.success("操作成功") : result.fail("操作失败");
     }
 
@@ -197,9 +225,15 @@ public class MyDrugStoreInfoModule {
         String updateSQLT = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set cstatus=cstatus|2 "
                 + " where cstatus&1=0 and shipid=?";
         params.add(new Object[]{shipId});
-        int[] arr = baseDao.updateTransNative(new String[]{updateSQL, updateSQLT}, params);
+        String updateSyncSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set cstatus=cstatus&~4096 "
+                + " where cstatus&1=0 and compid=? and cstatus&4096>0";
+        params.add(new Object[]{compId});
+        int[] arr = baseDao.updateTransNative(new String[]{updateSQL, updateSQLT, updateSyncSQL}, params);
         boolean b = !ModelUtil.updateTransEmpty(arr);
-        myCgProxy.update(null);
+        if (b) {//同步默认收货人到ERP（异步操作）
+            myCgProxy.update(null);
+            SyncCustomerInfoModule.saveCusConcat(compId);
+        }
         return b ? result.success("操作成功") : result.fail("操作失败");
     }
 
@@ -220,8 +254,12 @@ public class MyDrugStoreInfoModule {
         int shipId = jsonObject.get("shipid").getAsInt();
         String delSQL = "update {{?" + DSMConst.TB_COMP_SHIP_INFO + "}} set cstatus=cstatus|1 "
                 + " where cstatus&1=0 and shipid=" + shipId;
-        myCgProxy.del(null);
-        return baseDao.updateNative(delSQL) > 0 ? result.success("操作成功") : result.fail("操作失败");
+        boolean b = baseDao.updateNative(delSQL) > 0;
+        if (b) {
+            myCgProxy.del(null);
+            SyncCustomerInfoModule.saveCusConcat(appContext.getUserSession().compId);
+        }
+        return  b ? result.success("操作成功") : result.fail("操作失败");
     }
 
     public Result queryDefaultCg(AppContext appContext) {

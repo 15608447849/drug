@@ -29,12 +29,9 @@ import static com.onek.util.RedisGlobalKeys.getUserCode;
 import static constant.DSMConst.TB_COMP;
 
 /**
- * @author Administrator
- * @version V1.0
- * @ClassName BackGroundProxyMoudule
- * @Description TODO
- * @date 2019-05-28 18:21
+ * @服务名 userServer
  */
+
 public class BackGroundProxyMoudule {
 
     private static final BaseDAO baseDao = BaseDAO.getBaseDAO();
@@ -1535,7 +1532,7 @@ public class BackGroundProxyMoudule {
         String taxpayer = "";//营业执照证件编号（纳税人识别号）
         Result result = new Result();
         String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
+//        JsonParser jsonParser = new JsonParser();
         CompInfoVO compInfoVO = GsonUtils.jsonToJavaBean(json, CompInfoVO.class);
         //药店类型  0 医疗单位, 1 批发企业, 2零售连锁门店, 3零售单体门店
         assert compInfoVO != null;
@@ -1566,7 +1563,15 @@ public class BackGroundProxyMoudule {
             if (!updCompType(storetype, compId,invoice,taxpayer)) {
                 return result.fail("修改失败！");
             }
-            return optAptInfo(compId,frontAptList,aTypeList) ? result.success("保存成功") : result.fail("保存失败");
+            boolean b = optAptInfo(compId,frontAptList,aTypeList);
+            if (b) {//同步信息到ERP
+                compInfoVO.getInvoiceVO().setTaxpayer(taxpayer);
+                compInfoVO.setStoretype(storetype);
+                SyncCustomerInfoModule.addOrUpdateCus(compInfoVO);
+            }
+
+
+            return b ? result.success("保存成功") : result.fail("保存失败");
         } else {
             return result.fail("资质信息未完善！");
         }
@@ -1760,11 +1765,17 @@ public class BackGroundProxyMoudule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int compid = jsonObject.get("compid").getAsInt();
+        CompInfoVO compInfoVO = getCompInfo(compid);
+        if (compInfoVO == null) return result.fail("未找到企业信息!");
+        return result.success(compInfoVO);
+    }
+
+    public CompInfoVO getCompInfo(int compid){
         String sSQL = "select c.cid,cname,caddrcode,caddr,inviter,storetype,u.uphone,c.cstatus from {{?"
                 + DSMConst.TB_COMP + "}} c left join {{?" + DSMConst.TB_SYSTEM_USER + "}} u "
                 + " on c.cid = u.cid where c.cstatus&1=0 and u.cstatus&1=0 and c.cid=" + compid;
         List<Object[]> queryResult = baseDao.queryNative(sSQL);
-        if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
+        if (queryResult == null || queryResult.isEmpty()) return null;
         CompInfoVO[] compInfoVOS = new CompInfoVO[queryResult.size()];
         baseDao.convToEntity(queryResult,compInfoVOS, CompInfoVO.class);
         InvoiceVO invoiceVO = getInvoice(compid);
@@ -1780,16 +1791,17 @@ public class BackGroundProxyMoudule {
             compInfoVOS[0].setBusScopeStr(bsSb.toString().substring(0, bsSb.toString().length() - 1));
         }
         compInfoVOS[0].setCaddrname(IceRemoteUtil.getCompleteName(compInfoVOS[0].getCaddrcode() + ""));
-        return result.success(compInfoVOS[0]);
+        return compInfoVOS[0];
     }
 
     /**
      * 功能: 门店经营范围维护
-     * 参数类型: json
+     * 参数类型: json{}
      * 参数集:
      * 返回值:  code=200(成功) data=结果信息
      * 详情说明: 一块医药erp对接使用
      */
+    @UserPermission(ignore = true)
     public Result optBusScope(AppContext appContext) {
         Result result = new Result();
         String json = appContext.param.json;
@@ -1808,7 +1820,7 @@ public class BackGroundProxyMoudule {
 
     private List<Integer> getBusIdByCompId(int compId) {
         List<Integer> busList = new ArrayList<>();
-        String selectSQL = "select busscope from {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} where "
+        String selectSQL = "select busscope from {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} where "
                 + " cstatus&1=0 and compid=?";
         List<Object[]> qResult = baseDao.queryNative(selectSQL, compId);
         if (qResult == null || qResult.isEmpty()) return busList;
@@ -1822,10 +1834,10 @@ public class BackGroundProxyMoudule {
         List<Object[]> insertParams = new ArrayList<>();
         List<Object[]> delParams = new ArrayList<>();
         List<Integer> oldBusIdList = getBusIdByCompId(compId);
-        String insertSQL = "insert into {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
+        String insertSQL = "insert into {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} "
                 + " (compid,busscope,bscid,cstatus) "
-                + " (?,?,?,?)";
-        String delSql = "update {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} set cstatus=cstatus|1 where "
+                + " values(?,?,?,?)";
+        String delSql = "update {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} set cstatus=cstatus|1 where "
                 + " cstatus&1=0 and compid=? and busscope=?";
         for (int newBusId: newBusIdList) {
             if (!oldBusIdList.contains(newBusId)) {
