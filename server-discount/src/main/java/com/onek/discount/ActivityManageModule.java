@@ -1696,6 +1696,57 @@ public class ActivityManageModule {
 
 
 
+    /**
+     * 停用活动（清空活动库存）
+     * @param appContext {actcode :活动码}
+     * @return {}
+     */
+    @UserPermission(ignore = true)
+    public Result disableAct(AppContext appContext){
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String actcode = jsonObject.get("actcode").getAsString();
 
+        String  assDugSql = " select actcode,gcode,a.cstatus,actstock,limitnum,brulecode" +
+                " from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} a,{{?"+DSMConst.TD_PROM_ACT+"}} b "
+                + "where a.actcode = b.unqid and actcode=? ";
+
+        String updateActSql = " UPDATE {{?" + DSMConst.TD_PROM_ASSDRUG + "}}" +
+                " SET actstock = 0  where actcode = ? ";
+
+
+        List<Object[]> assRet = baseDao.queryNative(assDugSql, actcode);
+
+        if(assRet == null || assRet.isEmpty()){
+            return new Result().fail("该活动没有关联商品，无需停用！");
+        }
+
+        List<GoodsVO> goodsVOList = new ArrayList<>();
+        int brulecode = Integer.parseInt(assRet.get(0)[5].toString());
+        for (Object[] objs : assRet){
+            GoodsVO goodsVO = new GoodsVO();
+            goodsVO.setActcode(objs[0].toString());
+            goodsVO.setGcode(Long.parseLong(objs[1].toString()));
+            goodsVO.setCstatus(Integer.parseInt(objs[2].toString()));
+            goodsVO.setActstock(Integer.parseInt(objs[3].toString()));
+            goodsVO.setLimitnum(Integer.parseInt(objs[4].toString()));
+            goodsVOList.add(goodsVO);
+        }
+
+        long gcode = Long.parseLong(assRet.get(0)[0].toString());
+        int type = 0;
+        if(gcode == 0){
+            type = 1;
+        }
+        try{
+            noticeGoodsUpd(type, goodsVOList, goodsVOList,brulecode, Long.parseLong(actcode));
+            baseDao.updateNative(updateActSql,actcode);
+        }catch (Exception e){
+            LogUtil.getDefaultLogger().debug("停用更新商品活动库存缓存失败");
+            return new Result().fail("操作失败！");
+        }
+        return new Result().success("操作成功");
+    }
 
 }

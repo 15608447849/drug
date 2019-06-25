@@ -331,14 +331,14 @@ public class CouponManageModule {
             " from {{?" + DSMConst.TD_PROM_COUPON + "}} tpcp " +
             " inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr "
             + " on tpcp.brulecode = tpcr.brulecode  where tpcp.brulecode in (2110,2120)" +
-            " and tpcp.cstatus & 256 > 0 and tpcp.cstatus & 1 = 0 " +
+            " and tpcp.cstatus & 256 > 0 and tpcp.cstatus & 33 = 0 and tpcp.cstatus & 2048 > 0" +
             " and  1 = fun_prom_cycle(tpcp.unqid,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) ";
 
     private static final String QUERY_COUP_NEWPERSON = "select unqid,coupname,offer from " +
             " {{?" + DSMConst.TD_PROM_COUPON + "}} cp  inner join (select min(offer) offer,actcode from " +
             " {{?" + DSMConst.TD_PROM_RELA + "}} rela join {{?" + DSMConst.TD_PROM_LADOFF + "}} lad on rela.ladid = lad.unqid and offer > 0 " +
             "  and rela.cstatus & 1 = 0 and lad.cstatus & 1 = 0 group by actcode) a on cp.unqid = a.actcode " +
-            " where cp.qlfno = 1 and cp.glbno = 1 and cp.cstatus & 1 = 0 " +
+            " where cp.qlfno = 1 and cp.glbno = 1 and cp.cstatus & 33 = 0 and cp.cstatus & 2048 > 0 " +
             " and cp.cstatus & 64 > 0 and 1 = fun_prom_cycle(unqid,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) ";
 
     private static final  String QUERY_COURCD_EXT = "select 1 from {{?"+DSMConst.TD_PROM_COURCD+"}} "+
