@@ -108,7 +108,7 @@ public class OrderOptModule {
 
     //查询售后发票列表
     private static final String QUERY_ASAPP_BILL_LIST_SQL = "select distinct asapp.orderno,asapp.compid,asapp.asno,astype,"+
-            "ckstatus,gstatus,apdata,aptime,checkern,contact,address,compn,invoicetype from "+
+            "ckstatus,gstatus,apdata,aptime,checkern,contact,address,compn,asapp.invoicetype from "+
             " {{?"+ DSMConst.TD_TRAN_ASAPP+"}} asapp " +
             " inner join {{?" +DSMConst.TD_BK_TRAN_ORDER+"}} orders" +
             " on asapp.orderno = orders.orderno where asno != 0 and asapp.cstatus & 1 = 0 and asapp.astype in (3,4) ";
