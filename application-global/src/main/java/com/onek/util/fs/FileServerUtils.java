@@ -158,7 +158,7 @@ public class FileServerUtils {
     }
 
     public static Map getAppPayInfo(String type, String subject, double price, String orderNo, String serverName, String callback_clazz, String callback_method, String attr){
-        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, false);
+        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, true);
         assert rmap != null;
         return rmap.get("data") == null ? null : (Map)rmap.get("data");
     }
