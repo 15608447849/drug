@@ -567,10 +567,10 @@ public class MarketAnalysisServiceImpl {
                     jsonObject.put(COL_REP_OTHER_RATE, calcPercentage(REPURCHASE_THREE, AUTH_THREE));
                     jsonObject.put(COL_REP_SUM_RATE, calcPercentage(REPURCHASE_SUM, AUTH_SUM));
 
-                    jsonObject.put(COL_OCC_ETM_RATE,  calcPercentage(REG_ONE, MARK_ONE));
-                    jsonObject.put(COL_OCC_CHAIN_RATE,  calcPercentage(REG_TWO, MARK_TWO));
-                    jsonObject.put(COL_OCC_OTHER_RATE,  calcPercentage(REG_THREE, MARK_THREE));
-                    jsonObject.put(COL_OCC_SUM_RATE,  calcPercentage(REG_SUM, MARK_SUM));
+                    jsonObject.put(COL_OCC_ETM_RATE,  calcPercentage(AUTH_ONE, MARK_ONE));
+                    jsonObject.put(COL_OCC_CHAIN_RATE,  calcPercentage(AUTH_TWO, MARK_TWO));
+                    jsonObject.put(COL_OCC_OTHER_RATE,  calcPercentage(AUTH_THREE, MARK_THREE));
+                    jsonObject.put(COL_OCC_SUM_RATE,  calcPercentage(AUTH_SUM, MARK_SUM));
                     obj.put(COL_TOTAL, jsonObject);
 
                 }
@@ -635,10 +635,10 @@ public class MarketAnalysisServiceImpl {
                 jsonObject.put(COL_REP_OTHER_RATE, calcPercentage(REPURCHASE_THREE_TOTAL, AUTH_THREE_TOTAL));
                 jsonObject.put(COL_REP_SUM_RATE, calcPercentage(REPURCHASE_SUM_TOTAL, AUTH_SUM_TOTAL));
 
-                jsonObject.put(COL_OCC_ETM_RATE,  calcPercentage(REG_ONE_TOTAL, MARK_ONE_TOTAL));
-                jsonObject.put(COL_OCC_CHAIN_RATE,  calcPercentage(REG_TWO_TOTAL, MARK_TWO_TOTAL));
-                jsonObject.put(COL_OCC_OTHER_RATE,  calcPercentage(REG_THREE_TOTAL, MARK_THREE_TOTAL));
-                jsonObject.put(COL_OCC_SUM_RATE,  calcPercentage(REG_SUM_TOTAL, MARK_SUM_TOTAL));
+                jsonObject.put(COL_OCC_ETM_RATE,  calcPercentage(AUTH_ONE_TOTAL, MARK_ONE_TOTAL));
+                jsonObject.put(COL_OCC_CHAIN_RATE,  calcPercentage(AUTH_TWO_TOTAL, MARK_TWO_TOTAL));
+                jsonObject.put(COL_OCC_OTHER_RATE,  calcPercentage(AUTH_THREE_TOTAL, MARK_THREE_TOTAL));
+                jsonObject.put(COL_OCC_SUM_RATE,  calcPercentage(AUTH_SUM_TOTAL, MARK_SUM_TOTAL));
                 resultJson.put(COL_SUM_TOTAL, jsonObject);
             }
 
@@ -862,10 +862,10 @@ public class MarketAnalysisServiceImpl {
                 int rep_sum = subJs.getInteger(COL_REP_SUM);
 
 
-                subJs.put(COL_OCC_ETM_RATE,  calcPercentage(reg_etm, mark_etm));
-                subJs.put(COL_OCC_CHAIN_RATE,  calcPercentage(reg_chain, mark_chain));
-                subJs.put(COL_OCC_OTHER_RATE,  calcPercentage(reg_other, mark_other));
-                subJs.put(COL_OCC_SUM_RATE,  calcPercentage(reg_sum, mark_sum));
+                subJs.put(COL_OCC_ETM_RATE,  calcPercentage(auth_etm, mark_etm));
+                subJs.put(COL_OCC_CHAIN_RATE,  calcPercentage(auth_chain, mark_chain));
+                subJs.put(COL_OCC_OTHER_RATE,  calcPercentage(auth_other, mark_other));
+                subJs.put(COL_OCC_SUM_RATE,  calcPercentage(auth_sum, mark_sum));
 
                 if(type == 1 || type == 3 || type == 5){
 
@@ -899,10 +899,10 @@ public class MarketAnalysisServiceImpl {
                     subJs.put(COL_REP_OTHER_RATE, calcPercentage(REPURCHASE_THREE, AUTH_THREE));
                     subJs.put(COL_REP_SUM_RATE, calcPercentage(REPURCHASE_SUM, AUTH_SUM));
 
-                    subJs.put(COL_OCC_ETM_RATE,  calcPercentage(REG_ONE, mark_etm));
-                    subJs.put(COL_OCC_CHAIN_RATE,  calcPercentage(REG_TWO, mark_chain));
-                    subJs.put(COL_OCC_OTHER_RATE,  calcPercentage(REG_THREE, mark_other));
-                    subJs.put(COL_OCC_SUM_RATE,  calcPercentage(REG_SUM, mark_sum));
+                    subJs.put(COL_OCC_ETM_RATE,  calcPercentage(AUTH_ONE, mark_etm));
+                    subJs.put(COL_OCC_CHAIN_RATE,  calcPercentage(AUTH_TWO, mark_chain));
+                    subJs.put(COL_OCC_OTHER_RATE,  calcPercentage(AUTH_THREE, mark_other));
+                    subJs.put(COL_OCC_SUM_RATE,  calcPercentage(AUTH_SUM, mark_sum));
                 }
 
                 REG_ONE_TOTAL += reg_etm;  REG_TWO_TOTAL += reg_chain; REG_THREE_TOTAL += reg_other;  REG_SUM_TOTAL += reg_sum;
@@ -940,10 +940,10 @@ public class MarketAnalysisServiceImpl {
         subJS.put(COL_REP_CHAIN, REPURCHASE_TWO_TOTAL);
         subJS.put(COL_REP_OTHER, REPURCHASE_THREE_TOTAL);
         subJS.put(COL_REP_SUM, REPURCHASE_SUM_TOTAL);
-        subJS.put(COL_OCC_ETM_RATE,  calcPercentage(REG_ONE_TOTAL, MARK_ONE_TOTAL));
-        subJS.put(COL_OCC_CHAIN_RATE,  calcPercentage(REG_TWO_TOTAL, MARK_TWO_TOTAL));
-        subJS.put(COL_OCC_OTHER_RATE,  calcPercentage(REG_THREE_TOTAL, MARK_THREE_TOTAL));
-        subJS.put(COL_OCC_SUM_RATE,  calcPercentage(REG_SUM_TOTAL, MARK_SUM_TOTAL));
+        subJS.put(COL_OCC_ETM_RATE,  calcPercentage(AUTH_ONE_TOTAL, MARK_ONE_TOTAL));
+        subJS.put(COL_OCC_CHAIN_RATE,  calcPercentage(AUTH_TWO_TOTAL, MARK_TWO_TOTAL));
+        subJS.put(COL_OCC_OTHER_RATE,  calcPercentage(AUTH_THREE_TOTAL, MARK_THREE_TOTAL));
+        subJS.put(COL_OCC_SUM_RATE,  calcPercentage(AUTH_SUM_TOTAL, MARK_SUM_TOTAL));
         subJS.put(COL_ACT_ETM_RATE, calcPercentage(ACTIVE_ONE_TOTAL, AUTH_ONE_TOTAL));
         subJS.put(COL_ACT_CHAIN_RATE, calcPercentage(ACTIVE_TWO_TOTAL, AUTH_TWO_TOTAL));
         subJS.put(COL_ACT_OTHER_RATE, calcPercentage(ACTIVE_THREE_TOTAL, AUTH_THREE_TOTAL));
