@@ -409,6 +409,16 @@ public class BackgroundProdModule {
                 result.getSku(), result.getVatp()));
 
         /*
+         * 是否登陆
+         * 如果登陆成功则存在UserSession 获取其中compid企业码
+         * 反之compid为0
+         */
+        int compid = 0;
+        if(appContext.getUserSession() != null){
+            compid = appContext.getUserSession().compId;
+        }
+        System.out.println("compid = " + compid);
+        /*
          * add 商品是否添加限购
          */
         List<Product> products = new ArrayList<>();
@@ -419,7 +429,7 @@ public class BackgroundProdModule {
                 = new ActivityFilterService(
                 new ActivitiesFilter[] {
                         new CycleFilter(),
-                        new QualFilter(appContext.getUserSession().compId),
+                        new QualFilter(compid),
                         new PriorityFilter(),
                         new StoreFilter(),})
                 .getCurrentActivities(products);
