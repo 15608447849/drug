@@ -39,6 +39,7 @@ import static com.onek.order.TranOrderOptModule.CONFIRM_RECEIPT;
 import static constant.DSMConst.TD_BK_TRAN_GOODS;
 
 /**
+ * @服务名 orderServer
  * @author 11842
  * @version 1.1.1
  * @description 订单其他操作模块
@@ -138,14 +139,12 @@ public class OrderOptModule {
 
 
     /**
-     * @description 订单评价商品接口
-     * @params json {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
-     * @return int code > 0成功 否则失败
-     * @exception
-     * @author 11842
-     * @time  2019/6/11 14:53
-     * @version 1.1.1
-     **/
+     * @接口摘要 订单评价商品接口
+     * @业务场景 订单评价
+     * @传参类型 json
+     * @参数列表 {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = false)
     public Result insertApprise(AppContext appContext) {
         boolean b = false;
@@ -167,15 +166,14 @@ public class OrderOptModule {
     }
 
 
-    /* *
-     * @description 售后申请
-     * @params json {asAppArr:评价数组[AsAppVO.class] orderno: 订单号 asType：售后类型}
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/23 14:29
-     * @version 1.1.1
-     **/
+
+    /**
+     * @接口摘要 订单售后申请接口
+     * @业务场景 申请售后
+     * @传参类型 json
+     * @参数列表 {asAppArr:评价数组[AsAppVO.class] orderno: 订单号 asType：售后类型}
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = false)
     public Result afterSaleApp(AppContext appContext) {
         boolean b;
@@ -355,15 +353,13 @@ public class OrderOptModule {
         }
     }
 
-    /* *
-     * @description 取消售后
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/23 15:41
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 订单取消售后接口
+     * @业务场景 取消售后
+     * @传参类型 json
+     * @参数列表 {sku:商品sku orderno: 订单号 compid：买家企业码}
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = false)
     public Result cancelAfterSale(AppContext appContext) {
         Result result = new Result();
@@ -533,15 +529,13 @@ public class OrderOptModule {
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
     }
 
-    /* *
-     * @description 删除订单
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/24 11:04
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 删除订单接口
+     * @业务场景 已取消或已完成的订单删除
+     * @传参类型 json
+     * @参数列表 {orderno: 订单号 }
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = false)
     public Result deleteOrder(AppContext appContext) {
         Result result = new Result();
@@ -569,15 +563,13 @@ public class OrderOptModule {
         return re > 0 ? result.success("删除成功") : result.fail("删除失败");
     }
 
-    /* *
-     * @description 查询售后订单详情
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/24 11:04
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 查询售后订单详情
+     * @业务场景 售后订单详情
+     * @传参类型 json
+     * @参数列表 {asno: 售后单号 }
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public Result queryAsOrderInfo(AppContext appContext) {
         Result result = new Result();
@@ -643,15 +635,13 @@ public class OrderOptModule {
         return result.success(asAppDtVO);
     }
 
-    /* *
-     * @description 查询售后订单详情[补开发票]
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author jiangwenguang
-     * @time  2019/4/29 17:44
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 查询售后订单详情[补开发票]
+     * @业务场景 补开发票
+     * @传参类型 json
+     * @参数列表 {asno: 售后单号 }
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public Result queryAsOrderInvoiceInfo(AppContext appContext) {
         Result result = new Result();
@@ -721,15 +711,14 @@ public class OrderOptModule {
     }
 
 
-    /* *
-     * @description 查询售后订单列表
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/24 11:04
-     * @version 1.1.1
-     **/
+
+    /**
+     * @接口摘要 查询售后订单列表
+     * @业务场景 查询
+     * @传参类型 json
+     * @参数列表 {pageSize: 每页条数  pageNo 页码 astype 售后类型 sdate 开始时间 edate 结束时间 ckstatus 审核状态}
+     * @返回列表 AsAppDtListVO数组
+     */
     @UserPermission(ignore = true)
     public Result queryAsOrderList(AppContext appContext) {
         String json = appContext.param.json;
@@ -805,16 +794,13 @@ public class OrderOptModule {
     }
 
 
-
-    /* *
-     * @description 查询售后订单发票列表
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/24 11:04
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 查询售后订单发票列表
+     * @业务场景 查询
+     * @传参类型 json
+     * @参数列表 {pageSize: 每页条数  pageNo 页码 astype 售后类型 sdate 开始时间 edate 结束时间 ckstatus 审核状态}
+     * @返回列表 AsAppDtListVO数组
+     */
     @UserPermission(ignore = true)
     public Result queryAsOrderBillList(AppContext appContext) {
         String json = appContext.param.json;
@@ -892,10 +878,13 @@ public class OrderOptModule {
         return result.setQuery(asAppDtListVOS, pageHolder);
     }
 
+
     /**
-     * 根据活动起始时间和结束时间和活动码查询团购订单记录
-     * @param appContext
-     * @return
+     * @接口摘要 根据活动起始时间和结束时间和活动码查询团购订单记录
+     * @业务场景 查询
+     * @传参类型 json
+     * @参数列表 {sdate 开始时间 edate 结束时间 actno 活动码}
+     * @返回列表 JSONArray [{orderno 订单号 payamt 支付金额  compid 企业码 pnum 数量}]
      */
     @UserPermission(ignore = true)
     public Result queryTeamBuyOrder(AppContext appContext) {
@@ -922,15 +911,13 @@ public class OrderOptModule {
     }
 
 
-    /* *
-     * @description 确认签收
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/5/11 16:18
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 确认签收
+     * @业务场景 订单签收后确认签收
+     * @传参类型 json
+     * @参数列表 {orderno 订单号 cusno 企业码 }
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = false)
     public Result confirmReceipt(AppContext appContext) {
         Result result = new Result();
@@ -957,13 +944,13 @@ public class OrderOptModule {
     }
 
 
-    /* *
-     * @description 售后完成更新状态
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 售后完成更新状态
+     * @业务场景 订单签收后确认签收
+     * @传参类型 json
+     * @参数列表 {asno 售后单号}
+     * @返回列表 200 成功 -1 失败
+     */
     public Result afterSaleFinish(AppContext appContext) {
         String json = appContext.param.json;
         Result result = new Result();

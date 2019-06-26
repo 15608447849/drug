@@ -16,6 +16,7 @@ import java.util.List;
 import java.util.Map;
 
 /**
+ * @服务名 discountServer
  * @author Administrator
  * @version V1.0
  * @ClassName CommonModule
@@ -30,14 +31,12 @@ public class CommonModule {
 
 
     /**
-     * @description 查询赠品信息
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/1 11:55
-     * @version 1.1.1
-     **/
+     * @接口摘要 查询赠品信息
+     * @业务场景 下拉查询赠品
+     * @传参类型
+     * @参数列表
+     * @返回列表 PromGiftVO对象数组
+     */
     @UserPermission(ignore = true)
     public Result queryPromGift(AppContext appContext) {
         Result result = new Result();
@@ -88,14 +87,12 @@ public class CommonModule {
 
 
     /**
-     * @description 查询活动规则
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/1 11:55
-     * @version 1.1.1
-     **/
+     * @接口摘要 查询活动规则
+     * @业务场景 下拉查询
+     * @传参类型 json
+     * @参数列表 {type 活动规则码}
+     * @返回列表 RulesVO对象数组
+     */
     @UserPermission(ignore = true)
     public Result queryRules(AppContext appContext) {
         Result result = new Result();
@@ -115,15 +112,14 @@ public class CommonModule {
         return result.success(rulesVOS);
     }
 
+
     /**
-     * @description 查询优惠券规则
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/1 11:55
-     * @version 1.1.1
-     **/
+     * @接口摘要 查询优惠券规则
+     * @业务场景 下拉查询
+     * @传参类型 json
+     * @参数列表 {couptype 优惠券规则码}
+     * @返回列表 RulesVO对象数组
+     */
     @UserPermission(ignore = true)
     public Result queryCoupRules(AppContext appContext) {
         Result result = new Result();
@@ -147,19 +143,17 @@ public class CommonModule {
 
 
     /**
-     * @description 查询活动优惠券规则
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/1 11:55
-     * @version 1.1.1
-     **/
+     * @接口摘要 查询活动优惠券规则
+     * @业务场景 下拉查询
+     * @传参类型
+     * @参数列表
+     * @返回列表 RulesVO对象数组
+     */
     @UserPermission(ignore = true)
     public Result queryCoupAssRules(AppContext appContext) {
         Result result = new Result();
-        String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
+//        String json = appContext.param.json;
+//        JsonParser jsonParser = new JsonParser();
         String selectSQL = "select brulecode,rulename from {{?" + DSMConst.TD_PROM_RULE + "}} a where cstatus&1=0 "
                 + " and brulecode REGEXP '^2' and  NOT EXISTS(select brulecode from {{?"
                 + DSMConst.TD_PROM_COUPON +"}} b where cstatus & 128 >0 and cstatus&1=0 and a.brulecode = b.brulecode and "
@@ -170,15 +164,14 @@ public class CommonModule {
         return result.success(rulesVOS);
     }
 
+
     /**
-     * @description 查询规则
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/1 11:55
-     * @version 1.1.1
-     **/
+     * @接口摘要 查询规则
+     * @业务场景 下拉查询
+     * @传参类型 json
+     * @参数列表 {type 满减还是满赠}
+     * @返回列表 RulesVO对象数组
+     */
     @UserPermission(ignore = true)
     public Result queryRulesByType(AppContext appContext) {
         Result result = new Result();
@@ -194,17 +187,14 @@ public class CommonModule {
         return result.success(rulesVOS);
     }
 
-
-
+    
     /**
-     * @description 参加资格
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/2 21:46
-     * @version 1.1.1
-     **/
+     * @接口摘要 参加资格 已弃用
+     * @业务场景 下拉查询
+     * @传参类型
+     * @参数列表
+     * @返回列表
+     */
     public Result queryQual(AppContext appContext) {
         Result result = new Result();
         Map<Integer, String> map = new HashMap<>();

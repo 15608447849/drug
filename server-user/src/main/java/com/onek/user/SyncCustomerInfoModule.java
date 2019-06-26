@@ -72,7 +72,7 @@ public class SyncCustomerInfoModule {
             Object future = executorService.submit((Callable<Object>) () -> {
                 //客户信息同步开关是否开启
                 if (systemConfigOpen("CUS_SYNC")) {
-                  return postAddOrUpdateCus(compInfoVO, 0);
+                    return postAddOrUpdateCus(compInfoVO, 0);
                 } else {
                     LogUtil.getDefaultLogger().info("客户信息同步开关未开启>>>>>>>>>>>>>>>");
                 }
@@ -154,7 +154,7 @@ public class SyncCustomerInfoModule {
             Object future = executorService.submit((Callable<Object>) () -> {
                 //客户信息同步开关是否开启
                 if (systemConfigOpen("CUS_SYNC")) {
-                  return postSaveCusConcat(compId, 0);
+                    return postSaveCusConcat(compId, 0);
                 } else {
                     LogUtil.getDefaultLogger().info("客户信息同步开关未开启>>>>>>>>>>>>>>>");
                 }
