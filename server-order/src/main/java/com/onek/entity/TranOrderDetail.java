@@ -39,7 +39,7 @@ public class TranOrderDetail {
     private int invoicetype;
 
     /**      trans         **/
-    private int payno;
+    private String payno;
     private double payprice;
 
     private int payway;
@@ -292,11 +292,11 @@ public class TranOrderDetail {
         this.cstatus = cstatus;
     }
 
-    public int getPayno() {
+    public String getPayno() {
         return payno;
     }
 
-    public void setPayno(int payno) {
+    public void setPayno(String payno) {
         this.payno = payno;
     }
 

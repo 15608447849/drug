@@ -51,7 +51,7 @@ import static com.onek.util.IceRemoteUtil.remoteQueryShopCartNumBySku;
 
 /**
  * 商城商品模块
- *
+ * @服务名 goodsServer
  * @author JiangWenGuang
  * @version 1.0
  * @since
@@ -1578,15 +1578,13 @@ public class ProdModule {
         }
     }
 
-    /* *
-     * @description 查询商品评价
-     * @params json {sku: 商品sku}
-     * @return AppriseVO[] 见AppriseVO.class
-     * @exception
-     * @author 11842
-     * @time  2019/4/20 15:07
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 查询商品评价
+     * @业务场景 商品详情页评价查询
+     * @传参类型 json
+     * @参数列表 {sku: 商品sku}
+     * @返回列表 AppriseVO对象数组
+     */
     @UserPermission(ignore = true)
     public Result getGoodsApprise(AppContext appContext) {
         Result result = new Result();
@@ -1621,15 +1619,14 @@ public class ProdModule {
     }
 
 
+
     /**
-     * @return int code > 0成功 否则失败
-     * @throws
-     * @description 订单评价商品接口
-     * @params json {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
-     * @author 11842
-     * @time 2019/6/11 14:53
-     * @version 1.1.1
-     **/
+     * @接口摘要 订单评价商品接口
+     * @业务场景
+     * @传参类型 json
+     * @参数列表 {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
+     * @返回列表 200成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public int insertApprise(AppContext appContext) {
         Gson gson = new Gson();

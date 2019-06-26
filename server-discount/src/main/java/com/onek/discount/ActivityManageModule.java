@@ -42,6 +42,7 @@ import java.util.concurrent.Executors;
 import static com.onek.discount.CommonModule.getLaderNo;
 
 /**
+ * @服务名 discountServer
  * @author 11842
  * @version 1.1.1
  * @description 活动管理
@@ -124,15 +125,14 @@ public class ActivityManageModule {
             " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}"
                     + " SET cstatus = cstatus | 1  WHERE unqid = ? ";
 
-    /* *
-     * @description 活动查询
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/3 10:03
-     * @version 1.1.1
-     **/
+
+    /**
+     * @接口摘要 活动查询
+     * @业务场景 后台管理系统查询活动
+     * @传参类型 json
+     * @参数列表 {pageSize: 每页数量 pageNo：页码 actname: 活动名称 brulecode 活动规则码}
+     * @返回列表 ActivityVO对象数组
+     */
     @UserPermission(ignore = true)
     public Result queryActivities(AppContext appContext) {
         Result result = new Result();
@@ -181,15 +181,14 @@ public class ActivityManageModule {
     }
 
 
+
     /**
-     * @description 活动操作
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/2 14:34
-     * @version 1.1.1
-     **/
+     * @接口摘要 新增修改活动
+     * @业务场景 后台管理活动新增修改
+     * @传参类型 json
+     * @参数列表 ActivityVO对象
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public Result insertActivity(AppContext appContext) {
         Result result = new Result();
@@ -514,6 +513,13 @@ public class ActivityManageModule {
      * @time  2019/4/1 17:44
      * @version 1.1.1
      **/
+    /**
+     * @接口摘要 根据活动组获取组内可用优先级
+     * @业务场景 活动优先级下拉列表调用
+     * @传参类型 json
+     * @参数列表 {incpriority 当前活动组内优先级}
+     * @返回列表 优先级int数组
+     */
     @UserPermission(ignore = true)
     public Result getCPriority(AppContext appContext) {
         Result result = new Result();
@@ -578,14 +584,12 @@ public class ActivityManageModule {
     }
 
     /**
-     * @description 获取活动详情
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/2 19:24
-     * @version 1.1.1
-     **/
+     * @接口摘要 获取活动详情
+     * @业务场景 详情
+     * @传参类型 json
+     * @参数列表 {unqid 活动码}
+     * @返回列表 ActivityVO对象
+     */
     @UserPermission(ignore = true)
     public Result getActDetail(AppContext appContext) {
         Result result = new Result();
@@ -595,7 +599,7 @@ public class ActivityManageModule {
         long actCode = jsonObject.get("unqid").getAsLong();
         String selectSQL = "select a.unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename,ckstatus from {{?" + DSMConst.TD_PROM_ACT + "}} a "
                 + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.brulecode=b.brulecode"
                 + " where a.cstatus&1=0 and a.unqid=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
@@ -604,7 +608,7 @@ public class ActivityManageModule {
                 "unqid","actname","incpriority","cpriority",
                 "qualcode","qualvalue","actdesc","excdiscount",
                 "acttype","actcycle","sdate","edate","brulecode",
-                "cstatus","ruleName"
+                "cstatus","ruleName","ckstatus"
         });
         int rRuleCode = activityVOS[0].getBrulecode();
         String rType = rRuleCode + "";
@@ -790,15 +794,14 @@ public class ActivityManageModule {
         return  (long)queryResult.get(0)[0];
     }
 
+
     /**
-     * @description 关联商品
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @author 11842
-     * @time  2019/4/6 10:09
-     * @version 1.1.1
-     **/
+     * @接口摘要 活动关联商品
+     * @业务场景 活动配置商品
+     * @传参类型 json
+     * @参数列表 {type 1:全部商品  3部分商品  2 部分类别  actCode 活动码 rulecode 活动规则码}
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public Result relationGoods(AppContext appContext) {
         int re = 0;
@@ -1463,9 +1466,11 @@ public class ActivityManageModule {
     }
 
     /**
-     * 更新活动状态
-     * @param appContext 0 启用  32 停用  1 删除
-     * @return
+     * @接口摘要 更新活动状态
+     * @业务场景 启用停用 删除活动
+     * @传参类型 json
+     * @参数列表 {actCode 活动码 cstatus 0 启用  32 停用  1 删除}
+     * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
     public Result updateActStatus(AppContext appContext){
@@ -1624,11 +1629,13 @@ public class ActivityManageModule {
         }
     }
 
+
     /**
-     * 审批活动、优惠券
-     * @param appContext
-     * 审批活动 {actcod：活动码/优惠券码,ctype: 1 活动 2 优惠券，cstatus 1 审核通过 -1 审核不通过}
-     * @return
+     * @接口摘要 审批活动、优惠券
+     * @业务场景 审批活动
+     * @传参类型 json
+     * @参数列表  {actcod：活动码/优惠券码,ctype: 1 活动 2 优惠券，cstatus 1 审核通过 -1 审核不通过}
+     * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
     public Result approvalAct(AppContext appContext){
@@ -1652,11 +1659,15 @@ public class ActivityManageModule {
 
 
         String failActSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}" +
-                " set ckstatus = -1 WHERE unqid = ? ";
+                " set ckstatus = -1 WHERE  unqid = ? ";
 
 
         String failCoupSql = " UPDATE {{?" + DSMConst.TD_PROM_COUPON + "}}" +
                 " set ckstatus = -1 WHERE unqid = ? ";
+
+
+        String  assDugSql = " select 1 " +
+                " from {{?" + DSMConst.TD_PROM_ASSDRUG + "}}  where actcode=? and cstatus & 1 = 0";
 
 
 
@@ -1680,7 +1691,13 @@ public class ActivityManageModule {
             exSqlCoup = failCoupSql;
         }
 
+        List<Object[]> assRet = baseDao.queryNative(assDugSql, actcode);
 
+        if(type == 1){
+            if(assRet == null || assRet.isEmpty()){
+                return new Result().fail("该活动没有关联商品，需关联商品后再提交审批！");
+            }
+        }
         int ret = 0;
         switch (type){
             case 1:
@@ -1696,10 +1713,13 @@ public class ActivityManageModule {
 
 
 
+
     /**
-     * 停用活动（清空活动库存）
-     * @param appContext {actcode :活动码}
-     * @return {}
+     * @接口摘要 停用活动（清空活动库存）
+     * @业务场景 停用活动
+     * @传参类型 json
+     * @参数列表  {actcode :活动码}
+     * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
     public Result disableAct(AppContext appContext){

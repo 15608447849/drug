@@ -5,7 +5,7 @@ public class TranTransVO {
     private String unqid;
     private int compid;
     private String orderno;
-    private int payno;
+    private String payno;
     private int payprice;
 
     private int payway;
@@ -44,11 +44,11 @@ public class TranTransVO {
         this.orderno = orderno;
     }
 
-    public int getPayno() {
+    public String getPayno() {
         return payno;
     }
 
-    public void setPayno(int payno) {
+    public void setPayno(String payno) {
         this.payno = payno;
     }
 

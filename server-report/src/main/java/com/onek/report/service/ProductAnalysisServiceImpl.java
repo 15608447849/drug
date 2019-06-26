@@ -1133,14 +1133,14 @@ public class ProductAnalysisServiceImpl {
                             double hminskuamt = Double.parseDouble(objs[18].toString());
                             int hsalesku = Integer.parseInt(objs[19].toString());
 
-
+                            DecimalFormat tdf=new DecimalFormat("0.00");
                             if (type == 1 || type == 3 || type == 5) {
-                                subJs.put(COL_SALEAMT_MAXH, hmaxskuamt);
-                                subJs.put(COL_SALEAMT_MAX, hmaxskuamt);
-                                subJs.put(COL_SALEAMT_MAXC, maxskuamt);
-                                subJs.put(COL_SALEAMT_MIN, hminskuamt);
-                                subJs.put(COL_SALEAMT_MINH, hminskuamt);
-                                subJs.put(COL_SALEAMT_MINC, minskuamt);
+                                subJs.put(COL_SALEAMT_MAXH, tdf.format(hmaxskuamt));
+                                subJs.put(COL_SALEAMT_MAX, tdf.format(hmaxskuamt));
+                                subJs.put(COL_SALEAMT_MAXC, tdf.format(maxskuamt));
+                                subJs.put(COL_SALEAMT_MIN, tdf.format(hminskuamt));
+                                subJs.put(COL_SALEAMT_MINH, tdf.format(hminskuamt));
+                                subJs.put(COL_SALEAMT_MINC, tdf.format(minskuamt));
                                 subJs.put(COL_SALEAMT_SUM, hskuamt);
                                 subJs.put(COL_SALEAMT_SUMH, hskuamt);
                                 subJs.put(COL_SALEAMT_SUMC, skuamt);
@@ -1157,14 +1157,23 @@ public class ProductAnalysisServiceImpl {
                                 subJs.put(COL_PRODUCT_SALES, salesku);
                                 subJs.put(COL_PRODUCT_SALESH, hsalesku);
                                 subJs.put(COL_PRODUCT_SALESC, salesku);
-
                             } else {
-                                subJs.put(COL_SALEAMT_MAXH, hmaxskuamt);
-                                subJs.put(COL_SALEAMT_MAX, maxskuamt);
-                                subJs.put(COL_SALEAMT_MAXC, maxskuamt);
-                                subJs.put(COL_SALEAMT_MIN, minskuamt);
-                                subJs.put(COL_SALEAMT_MINH, hminskuamt);
-                                subJs.put(COL_SALEAMT_MINC, minskuamt);
+
+
+                                subJs.put(COL_SALEAMT_MAXH, tdf.format(hmaxskuamt));
+                                subJs.put(COL_SALEAMT_MAX, tdf.format(hmaxskuamt));
+                                subJs.put(COL_SALEAMT_MAXC, tdf.format(maxskuamt));
+                                subJs.put(COL_SALEAMT_MIN, tdf.format(hminskuamt));
+                                subJs.put(COL_SALEAMT_MINH, tdf.format(hminskuamt));
+                                subJs.put(COL_SALEAMT_MINC, tdf.format(minskuamt));
+
+
+                                subJs.put(COL_SALEAMT_MAXH, tdf.format(hmaxskuamt));
+                                subJs.put(COL_SALEAMT_MAX, tdf.format(maxskuamt));
+                                subJs.put(COL_SALEAMT_MAXC,tdf.format(maxskuamt));
+                                subJs.put(COL_SALEAMT_MIN, tdf.format(minskuamt));
+                                subJs.put(COL_SALEAMT_MINH, tdf.format(hminskuamt));
+                                subJs.put(COL_SALEAMT_MINC, tdf.format(minskuamt));
                                 subJs.put(COL_SALEAMT_SUM, skuamt);
                                 subJs.put(COL_SALEAMT_SUMH, hskuamt);
                                 subJs.put(COL_SALEAMT_SUMC, skuamt);
@@ -1496,12 +1505,13 @@ public class ProductAnalysisServiceImpl {
                         pdsums = pdsum;
                     }
 
-                    if (pdsalepc.contains("%")) {
-                        pdsalepc = pdsalepc.replaceAll("%", "");
-                        if (!StringUtils.isEmpty(pdsalepc)) {
-                            pdsalepcs = pdsalepcs + Double.parseDouble(pdsalepc);
-                        }
-                    }
+//                    if (pdsalepc.contains("%")) {
+//                        //pdsalepc = pdsalepc.replaceAll("%", "");
+//                        if (!StringUtils.isEmpty(pdsalepc)) {
+//
+//                            //pdsalepcs = pdsalepcs + Double.parseDouble(pdsalepc);
+//                        }
+//                    }
 
                     if (pdsoldpc.contains("%")) {
                         pdsoldpc = pdsoldpc.replaceAll("%", "");
@@ -1551,8 +1561,8 @@ public class ProductAnalysisServiceImpl {
         nsJson.put(COL_PRODUCT_ADD,addnums);
         nsJson.put(COL_PRODUCT_SOLD, pdsolds);
         nsJson.put(COL_PRODUCT_SALES, pdsales);
-        nsJson.put(COL_PRODUCT_SALESPC, tdf.format(pdsalepcs)+"%");
-        nsJson.put(COL_PRODUCT_SOLDPC,tdf.format(pdsoldpcs)+"%");
+        nsJson.put(COL_PRODUCT_SALESPC, calcPercentage(pdsales,pdsums));
+        nsJson.put(COL_PRODUCT_SOLDPC,calcPercentage(pdsolds,pdsums));
         nsJson.put(COL_STOCK_SUM, stocksums);
         nsJson.put(COL_STOCK_MAX, stockmaxs);
         nsJson.put(COL_STOCK_MIN, stockmins);
@@ -1561,14 +1571,14 @@ public class ProductAnalysisServiceImpl {
         nsJson.put(COL_SALENUM_MIN,  salenummins);
 
         nsJson.put(COL_SALEAMT_SUM, tdf.format(saleamts));
-        nsJson.put(COL_SALEAMT_MAX, saleamtmaxs);
-        nsJson.put(COL_SALEAMT_MIN, saleamtmins);
+        nsJson.put(COL_SALEAMT_MAX, tdf.format(saleamtmaxs));
+        nsJson.put(COL_SALEAMT_MIN, tdf.format(saleamtmins));
 
         nsJson.put(COL_SALESPC_SUM, tdf.format(salespcsums/countdx)+"%");
-        nsJson.put(COL_SALESPC_MAX, salespcmaxs+"%");
-        nsJson.put(COL_SALESPC_MIN,salespcmins+"%");
+        nsJson.put(COL_SALESPC_MAX, tdf.format(salespcmaxs)+"%");
+        nsJson.put(COL_SALESPC_MIN,tdf.format(salespcmins)+"%");
         nsJson.put(COL_STOCK_SALESPC_SUM, tdf.format(stsalespcsums/countcx));
-        nsJson.put(COL_STOCK_SALESPC_MAX, stsalespcmaxs);
+        nsJson.put(COL_STOCK_SALESPC_MAX, tdf.format(stsalespcmaxs));
         nsJson.put(COL_STOCK_SALESPC_MIN, tdf.format(stsalespcmins));
         resultJson.put("list",jsonList);
         resultJson.put(COL_SUM_TOTAL,nsJson);
@@ -1671,8 +1681,8 @@ public class ProductAnalysisServiceImpl {
                     createExcelDataRow(style, row, js, subShowdate);
                     if(subShowdate.equals("合计")){
                         createExcelDataRow(style, row, js, subShowdate);
-                        int colsize = js.getIntValue("colSize");
-                        if(subJsonArray.size() > 2){
+                        int colsize = js.getIntValue("col_size");
+                        if(colsize >1){
                             region = new CellRangeAddress(start, k-2, 0, 0);
                             sheet.addMergedRegion(region);
                         }

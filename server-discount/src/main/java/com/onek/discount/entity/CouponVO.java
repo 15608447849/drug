@@ -72,6 +72,8 @@ public class CouponVO implements IDelayedObject {
 
     private int rulecomp;//优惠算法
 
+    private int ckstatus;//审核状态
+
 
 
     //活动场次
@@ -245,5 +247,13 @@ public class CouponVO implements IDelayedObject {
     @Override
     public String getUnqKey() {
         return coupno;
+    }
+
+    public int getCkstatus() {
+        return ckstatus;
+    }
+
+    public void setCkstatus(int ckstatus) {
+        this.ckstatus = ckstatus;
     }
 }

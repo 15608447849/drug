@@ -30,13 +30,13 @@ import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
 import util.*;
 
-import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.util.*;
 
 import static com.onek.order.PayModule.*;
 
 /**
+ * @服务名 orderServer
  * @author 11842
  * @version 1.1.1
  * @description 订单下单
@@ -205,16 +205,17 @@ public class TranOrderOptModule {
         return new Result();
     }
 
-
     /**
-     * @return com.onek.entitys.Result
-     * @throws
-     * @description 下单接口
-     * @params [appContext]
-     * @author 11842
-     * @time 2019/4/16 16:47
-     * @version 1.1.1
-     **/
+     * @接口摘要 下单生成订单接口
+     * @业务场景 前端下单调用
+     * @传参类型 json
+     * @参数列表  {placeType 下单类型(购物车还是直接下单) balway 是否使用余额支付 coupon 优惠券码 unqid 优惠券使用表唯一码
+     *              orderObj: {remarks 备注 cusno 买家企业码 busno 卖家企业码 consignee 收货人姓名
+     *              contact 收货人联系方式 rvaddno 收货地区码 address 详细收货地址 invoicetype 发票类型
+     *              goodsArr:[{pdno 商品sku pnum 商品数量 pdprice 商品原价 actcode [参加的活动数组]}]
+     *              orderType 订单类型 actcode[参加的活动数组]}}
+     * @返回列表 200成功
+     */
     @UserPermission(ignore = true)
     public Result placeOrder(AppContext appContext) {
 //        List<TranOrderGoods> finalGoodsPrice = null;
@@ -692,14 +693,12 @@ public class TranOrderOptModule {
 
 
     /**
-     * @return 200 成功 -1 失败
-     * @throws
-     * @description 取消订单(自动取消或线上支付取消)
-     * @params json {orderno: 订单号 cusno：门店id}
-     * @author 11842
-     * @time 2019/4/17 17:00
-     * @version 1.1.1
-     **/
+     * @接口摘要 取消订单
+     * @业务场景 自动取消或线上支付取消
+     * @传参类型 json
+     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = false)
     public Result cancelOrder(AppContext appContext) {
         Result result = new Result();
@@ -760,14 +759,12 @@ public class TranOrderOptModule {
 
 
     /**
-     * @description 线下即付、线下到付门店30分钟内取消
-     * @params json {orderno: 订单号  cusno: 门店id}
-     * @return  200 成功 -1 失败
-     * @exception
-     * @author 11842
-     * @time  2019/5/10 17:38
-     * @version 1.1.1
-     **/
+     * @接口摘要 取消订单
+     * @业务场景 线下即付、线下到付门店30分钟内取消
+     * @传参类型 json
+     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = false)
     public Result cancelOffLineOrder(AppContext appContext) {
         //此时数据库库存已更新
@@ -817,16 +814,13 @@ public class TranOrderOptModule {
         return result.success("取消成功");
     }
 
-
-    /* *
-     * @description 客服取消订单(待发货时)
-     * @params json {orderno: 订单号  cusno: 门店id}
-     * @return 200 成功 -1 失败
-     * @exception
-     * @author 11842
-     * @time  2019/5/10 16:33
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 取消订单
+     * @业务场景 客服取消订单
+     * @传参类型 json
+     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public Result cancelBackOrder(AppContext appContext) {
         Result result = new Result();
@@ -898,16 +892,13 @@ public class TranOrderOptModule {
         return result.success("订单取消成功，已付款的订单请及时进行退款处理！");
     }
 
-
-    /* *
-     * @description 客服确认退款
-     * @params json {orderno: 订单号  cusno: 门店id}
-     * @return 200 成功 -1 失败
-     * @exception
-     * @author 11842
-     * @time  2019/5/13 10:30
-     * @version 1.1.1
-     **/
+    /**
+     * @接口摘要 确认退款
+     * @业务场景 客服确认退款
+     * @传参类型 json
+     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public Result confirmRefund(AppContext appContext) {
         Result result = new Result();
@@ -1000,12 +991,12 @@ public class TranOrderOptModule {
 
 
     /**
-     * 收货
-     *
-     * @param appContext
-     * @return
+     * @接口摘要 收货
+     * @业务场景 一块物流司机APP签收时调用
+     * @传参类型 arrays
+     * @参数列表 [cusno：门店id, orderno: 订单号 ]
+     * @返回列表 200 成功 -1 失败
      */
-
     @UserPermission(ignore = true)
     public Result takeDelivery(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -1040,10 +1031,11 @@ public class TranOrderOptModule {
     }
 
     /**
-     * 发货
-     *
-     * @param appContext
-     * @return
+     * @接口摘要 发货
+     * @业务场景 一块物流司机APP取货时调用
+     * @传参类型 arrays
+     * @参数列表 [ cusno：门店id, orderno: 订单号]
+     * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
     public Result delivery(AppContext appContext) {
@@ -1065,15 +1057,13 @@ public class TranOrderOptModule {
         return result ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 
-   /* *
-    * @description 客服确认收款（线下订单）
-    * @params arrays [orderno(订单号)]
-    * @return 200 成功 -1 失败
-    * @exception
-    * @author 11842
-    * @time  2019/6/11 15:32
-    * @version 1.1.1
-    **/
+    /**
+     * @接口摘要 客服确认收款
+     * @业务场景 线下转账确认收款
+     * @传参类型 arrays
+     * @参数列表 [ cusno：门店id, orderno: 订单号]
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public Result confirmCash(AppContext appContext) {
         boolean b = false;

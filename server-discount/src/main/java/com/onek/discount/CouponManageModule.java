@@ -134,7 +134,7 @@ public class CouponManageModule {
      */
     private final String QUERY_COUPON_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
-            "cop.brulecode,validday,validflag,rulename,actstock, cop.cstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
+            "cop.brulecode,validday,validflag,rulename,actstock, cop.cstatus,cop.ckstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
             "  {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.brulecode = ru.brulecode  where cop.cstatus&1=0 and unqid = ? ";
 
 
@@ -543,7 +543,7 @@ public class CouponManageModule {
                     new String[]{"coupno", "coupname", "glbno",
                             "qlfno", "qlfval", "desc", "periodtype", "periodday",
                             "startdate", "enddate", "ruleno","validday","validflag",
-                            "rulename","actstock", "cstatus"});
+                            "rulename","actstock", "cstatus","ckstatus"});
 
         couponVOS[0].setTimeVOS(getTimeVOS(actcode));
         couponVOS[0].setLadderVOS(getCoupLadder(couponVOS[0],Long.parseLong(couponVOS[0].getCoupno())));
