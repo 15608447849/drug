@@ -14,6 +14,7 @@ import com.onek.util.IceRemoteUtil;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.RoleCodeCons;
 import com.onek.util.area.AreaEntity;
+import com.onek.util.fs.FileServerUtils;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
@@ -1541,6 +1542,8 @@ public class BackGroundProxyMoudule {
         List<AptitudeVO> frontAptList = compInfoVO.getAptitudeVOS();
         if (frontAptList.size() > 0) {
             Set<Integer> aTypeList = new HashSet<>();
+            String companyFilePath = FileServerUtils.companyFilePath(compId);
+            List<String> list = FileServerUtils.showDirFilesPath(companyFilePath, false);
             for (AptitudeVO aptitudeVO : frontAptList) {
                 assert aptitudeVO != null;
                 aTypeList.add(aptitudeVO.getAtype());
@@ -1549,6 +1552,13 @@ public class BackGroundProxyMoudule {
                 }
                 if (aptitudeVO.getAtype() == 10) {
                     taxpayer = aptitudeVO.getCertificateno();
+                }
+                if(list != null && list.size() >0){ // ERP对接需要文件后缀名
+                    for(String filename : list){
+                        if(filename.contains(aptitudeVO.getAtype()+"")){
+                            aptitudeVO.setFilepath(companyFilePath + filename);
+                        }
+                    }
                 }
             }
             //判断必填资质是否都有
