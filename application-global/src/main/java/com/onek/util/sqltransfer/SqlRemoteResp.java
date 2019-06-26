@@ -1,5 +1,7 @@
 package com.onek.util.sqltransfer;
 
+import org.hyrdpf.util.LogUtil;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,6 +24,7 @@ public class SqlRemoteResp {
     }
 
     public List<Object[]> getLines(){
+        LogUtil.getDefaultLogger().info("远程调用返回,lines: "+ lines.size());
         List<Object[]> objects = new ArrayList<>();
         for (String[] row : lines){
             Object[] arr = new String[row.length];
