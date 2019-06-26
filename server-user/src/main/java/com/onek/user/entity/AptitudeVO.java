@@ -15,6 +15,7 @@ public class AptitudeVO {
     private String validitye;//有效期止
     private int cstatus;
     private String pname;//姓名
+    private String filepath; // 文件路径
 
     public int getAptid() {
         return aptid;
@@ -78,5 +79,13 @@ public class AptitudeVO {
 
     public void setPname(String pname) {
         this.pname = pname;
+    }
+
+    public String getFilepath() {
+        return filepath;
+    }
+
+    public void setFilepath(String filepath) {
+        this.filepath = filepath;
     }
 }
