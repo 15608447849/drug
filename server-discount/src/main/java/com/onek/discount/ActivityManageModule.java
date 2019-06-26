@@ -286,6 +286,8 @@ public class ActivityManageModule {
 
 
 
+
+
     /**
      * @description 活动修改
      * @params [activityVO]
@@ -673,7 +675,7 @@ public class ActivityManageModule {
     }
 
     private List<AssGiftVO> getAssGift(int offercode) {
-        String sql = "select assgiftno,giftnum,giftname from {{?" + DSMConst.TD_PROM_ASSGIFT
+        String sql = "select assgiftno,a.giftnum,giftname from {{?" + DSMConst.TD_PROM_ASSGIFT
                 + "}} a left join {{?" + DSMConst.TD_PROM_GIFT + "}} g on a.assgiftno=g.unqid "
                 + " where a.cstatus&1=0 and offercode=" + offercode;
         List<Object[]> queryResult = baseDao.queryNative(sql);
