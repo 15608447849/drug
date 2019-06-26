@@ -417,7 +417,7 @@ public class BackgroundProdModule {
         if(appContext.getUserSession() != null){
             compid = appContext.getUserSession().compId;
         }
-        System.out.println("compid = " + compid);
+
         /*
          * add 商品是否添加限购
          */
