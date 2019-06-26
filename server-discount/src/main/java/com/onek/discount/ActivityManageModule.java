@@ -595,7 +595,7 @@ public class ActivityManageModule {
         long actCode = jsonObject.get("unqid").getAsLong();
         String selectSQL = "select a.unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename,ckstatus from {{?" + DSMConst.TD_PROM_ACT + "}} a "
                 + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.brulecode=b.brulecode"
                 + " where a.cstatus&1=0 and a.unqid=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
@@ -604,7 +604,7 @@ public class ActivityManageModule {
                 "unqid","actname","incpriority","cpriority",
                 "qualcode","qualvalue","actdesc","excdiscount",
                 "acttype","actcycle","sdate","edate","brulecode",
-                "cstatus","ruleName"
+                "cstatus","ruleName","ckstatus"
         });
         int rRuleCode = activityVOS[0].getBrulecode();
         String rType = rRuleCode + "";
@@ -1652,11 +1652,15 @@ public class ActivityManageModule {
 
 
         String failActSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}" +
-                " set ckstatus = -1 WHERE unqid = ? ";
+                " set ckstatus = -1 WHERE  unqid = ? ";
 
 
         String failCoupSql = " UPDATE {{?" + DSMConst.TD_PROM_COUPON + "}}" +
                 " set ckstatus = -1 WHERE unqid = ? ";
+
+
+        String  assDugSql = " select 1 " +
+                " from {{?" + DSMConst.TD_PROM_ASSDRUG + "}}  where actcode=? and cstatus & 1 = 0";
 
 
 
@@ -1680,7 +1684,13 @@ public class ActivityManageModule {
             exSqlCoup = failCoupSql;
         }
 
+        List<Object[]> assRet = baseDao.queryNative(assDugSql, actcode);
 
+        if(type == 1){
+            if(assRet == null || assRet.isEmpty()){
+                return new Result().fail("该活动没有关联商品，需关联商品后再提交审批！");
+            }
+        }
         int ret = 0;
         switch (type){
             case 1:

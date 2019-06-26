@@ -78,15 +78,16 @@ public class ShoppingCartModule {
 
     //远程调用
     private static final String QUERY_PROD_BASE =
-            " SELECT  spu.prodname ptitle,m.manuname verdor," +
+            " SELECT  ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
-                    "sku.store-sku.freezestore inventory, sku.spec, sku.prodstatus,spu.spu,sku.limits,brandname brand,medpacknum,unit," +
+                    "sku.store-sku.freezestore inventory,ifnull(sku.spec,'') spec, sku.prodstatus,spu.spu,sku.limits,ifnull(brandname,'') brand,medpacknum,unit," +
                     "convert(mp/100,decimal(10,2)) mp  "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b   ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
                     + " WHERE 1=1 ";
+
 
     //远程调用
     private static final String QUERY_ONE_PROD_INV = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice from " +
@@ -98,12 +99,16 @@ public class ShoppingCartModule {
             + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
 
     /**
-     * @description 购物车保存
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @time  2019/4/2 14:34
-     * @version 1.1.1
+     * 接口摘要： 购物车商品新增
+     * 业务场景： 商品加入购物车
+     * 传参类型： JSON
+     * 参数列表：
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     * 返回列表：
+     *  code - 200 成功/ -1 失败
+     *  message - 成功/失败
      **/
     @UserPermission(ignore = true)
     public Result saveShopCart(AppContext appContext) {
@@ -300,13 +305,18 @@ public class ShoppingCartModule {
 
 
 
+
     /**
-     * @description 再次购买（购物车批量保存）
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @time  2019/4/2 14:34
-     * @version 1.1.1
+     * 接口摘要： 再次购买
+     * 业务场景： 订单交易成功后再次购买
+     * 传参类型： JSONARRAY
+     * 参数列表：
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     * 返回列表：
+     *  code - 200 成功/ -1 失败
+     *  message - 成功/失败
      **/
     @UserPermission(ignore = true)
     public Result againShopCart(AppContext appContext) {
@@ -475,12 +485,16 @@ public class ShoppingCartModule {
 
 
     /**
-     * @description 清空购物车
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @time  2019/4/2 14:34
-     * @version 1.1.1
+     * 接口摘要： 清空购物车
+     * 业务场景： 订单交易成功后再次购买
+     * 传参类型： JSONARRAY
+     * 参数列表：
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     * 返回列表：
+     *  code - 200 成功/ -1 失败
+     *  message - 成功/失败
      **/
     @UserPermission(ignore = true)
     public Result clearShopCart(AppContext appContext) {
@@ -504,41 +518,29 @@ public class ShoppingCartModule {
     }
 
 
+
+
+
     /**
-     * @description 移入收藏
-     * @params [appContext]
-     * @return com.onek.entitys.Result
-     * @exception
-     * @time  2019/4/2 14:34
-     * @version 1.1.1
+     * 接口摘要： 查询购物车列表（未选中）
+     * 业务场景： 进入购物车页面
+     * 传参类型： JSON
+     * 参数列表：
+     *  compid - 买家企业码
+     * 返回列表：
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     *  ptitle - 商品标题
+     *  spec - 商品规格
+     *  verdor - 厂商
+     *  vperiod - 有效期
+     *  brand - 品牌
+     *  limitnum - 限购量
+     *  inventory - 库存量
+     *  medpacknum - 中包装
+     *
      **/
-//    @UserPermission(ignore = true)
-//    public Result collectionShopCart(AppContext appContext) {
-//        String json = appContext.param.json;
-//        Result result = new Result();
-//
-//        JsonParser jsonParser = new JsonParser();
-//        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-//        int compid = jsonObject.get("compid").getAsInt();
-//        String ids = jsonObject.get("ids").getAsString();
-//
-//        if(StringUtils.isEmpty(ids)){
-//            return result.fail("操作失败");
-//        }
-//        String [] idArry = ids.split(",");
-//        boolean ret = delShoppingCart(idArry, compid);
-//        if(ret){
-//            return result.success("操作成功");
-//        }
-//        return result.fail("操作失败");
-//    }
-
-
-    /**
-     * 查询未选中购物车列表
-     * @param appContext
-     * @return
-     */
     @UserPermission(ignore = true)
     public Result queryUnCheckShopCartList(AppContext appContext){
         String json = appContext.param.json;
@@ -631,7 +633,7 @@ public class ShoppingCartModule {
         StringBuilder ids = new StringBuilder();
         for (int i = 0; i < shoppingCartDTOS.size(); i++){
             ids.append(shoppingCartDTOS.get(i).getPdno());
-            if (i < shoppingCartDTOS.size() - 1) {
+            if (i < shoppingCartDTOS.size() - 1){
                 ids.append(", ");
             }
         }
