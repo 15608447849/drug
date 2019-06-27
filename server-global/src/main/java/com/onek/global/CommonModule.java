@@ -2,6 +2,8 @@ package com.onek.global;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
@@ -181,6 +183,22 @@ public class CommonModule {
             }
         }
         return j;
+    }
+
+    @UserPermission(ignore = true)
+    public Result getAllErpSkuBySku(AppContext appContext){
+        String selectSQL = "select sku,erpsku from {{?" + DSMConst.TD_PROD_SKU + "}} where cstatus&1=0 "
+                + " and sku in(" +appContext.param.arrays[0] +")";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+        if (queryResult == null || queryResult.isEmpty()) return null;
+        JsonArray erpSkuArr = new JsonArray();
+        queryResult.forEach(qResult -> {
+            JsonObject erpSkuObj = new JsonObject();
+            erpSkuObj.addProperty("sku",Long.parseLong(String.valueOf(qResult[0])));
+            erpSkuObj.addProperty("erpSku",String.valueOf(qResult[1]));
+            erpSkuArr.add(erpSkuObj);
+        });
+        return new Result().success(erpSkuArr);
     }
 
 }
