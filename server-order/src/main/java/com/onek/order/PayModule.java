@@ -11,6 +11,7 @@ import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
+import com.onek.erp.OrderDockedWithERP;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.*;
@@ -351,7 +352,7 @@ public class PayModule {
         if(result){
             //订单生成到ERP(异步执行)
             LogUtil.getDefaultLogger().info("订单开始生成到ERP-------- print by cyq");
-//            OrderDockedWithERP.generationOrder2ERP(orderno, compid);
+            OrderDockedWithERP.generationOrder2ERP(orderno, compid);
 
             return new Result().success(null);
         }else{

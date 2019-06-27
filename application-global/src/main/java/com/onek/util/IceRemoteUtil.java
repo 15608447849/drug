@@ -762,6 +762,25 @@ public class IceRemoteUtil {
     }
 
 
+    public static boolean systemConfigOpen(String name) {
+        return Boolean.parseBoolean(ic.setServerAndRequest("userServer",
+                "SyncCustomerInfoModule","systemConfigIsOpen").setArrayParams(name).execute());
+    }
+
+
+    public static String getErpSkuBySku(String sks){
+        try {
+            return ic.setServerAndRequest("globalServer",
+                    "CommonModule","getAllErpSkuBySku")
+                    .setArrayParams(sks)
+                    .execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+
 
 }
 
