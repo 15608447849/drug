@@ -213,13 +213,12 @@ public class DiscountCalcModule {
     }*/
 
     /**
-     *
-     * 功能: 获取设置规则
-     * 参数类型: json
-     * 参数集: actstock=活动库存 actno=活动码 sku=商品SKU码
-     * 返回值: code=200 data=结果集 构造的购物车数据
-     * 详情说明:商城全文搜索列表时获取活动标记调用
-     * 作者: 蒋文广
+     * @接口摘要 获取设置规则
+     * @业务场景 商城全文搜索列表时获取活动标记调用
+     * @传参类型 JSON
+     * @传参列表 无
+     * @返回列表 code=200 data=结果信息
+     * @作者: 蒋文广
      */
     @UserPermission(ignore = true)
     public Result getEffectiveRule(AppContext appContext) {
