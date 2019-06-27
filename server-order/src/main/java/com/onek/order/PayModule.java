@@ -11,7 +11,6 @@ import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
-import com.onek.erp.OrderDockedWithERP;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.*;
@@ -70,11 +69,13 @@ public class PayModule {
 
     //释放商品冻结库存 远程调用
     private static final String UPD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
-            + "store=store-?, freezestore=freezestore-? where cstatus&1=0 and sku=? ";
+            + " store=store-?, freezestore=freezestore-?  where cstatus&1=0 and sku=?";
 
-    //更新活动库存 远程调用
+    //更新活动库存 远程调用 (case ostatus when 0 then 1 "
+    //                + " else ostatus end)
     private static final String UPD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
-            + "actstock=actstock-? where cstatus&1=0 and gcode=? and actcode=?";
+            + " actstock=(case (actstock-?)>0 when 0 then 0 else actstock-? end) where cstatus&1=0 "
+            + " and gcode=? and actcode=?";
 
 
     //取消时加库存 远程调用
@@ -349,7 +350,8 @@ public class PayModule {
         }
         if(result){
             //订单生成到ERP(异步执行)
-            OrderDockedWithERP.generationOrder2ERP(orderno, compid);
+            LogUtil.getDefaultLogger().info("订单开始生成到ERP-------- print by cyq");
+//            OrderDockedWithERP.generationOrder2ERP(orderno, compid);
 
             return new Result().success(null);
         }else{
@@ -601,7 +603,7 @@ public class PayModule {
             paramsOne.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPnum(), tranOrderGood.getPdno()});
             List<Long> list = JSON.parseArray(tranOrderGood.getActcode()).toJavaList(Long.class);
             for (Long aList : list) {
-                paramsTwo.add(new Object[]{tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
+                paramsTwo.add(new Object[]{tranOrderGood.getPnum(),tranOrderGood.getPnum(), tranOrderGood.getPdno(), aList});
             }
         }
         //远程调用

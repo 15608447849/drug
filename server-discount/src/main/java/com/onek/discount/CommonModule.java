@@ -47,6 +47,13 @@ public class CommonModule {
         return result.success(promGiftVOS);
     }
 
+    /**
+     * @接口摘要 保存赠品
+     * @业务场景 ERP专用
+     * @传参类型 json
+     * @参数列表 com.onek.discount.entity.PromGiftVO
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public Result saveGift(AppContext appContext) {
         PromGiftVO gift = JSON.parseObject(appContext.param.json, PromGiftVO.class);

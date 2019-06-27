@@ -2007,6 +2007,7 @@ public class CouponManageModule {
         return ret;
     }
 
+
     @UserPermission(ignore = true)
     public int queryCompBal(AppContext appContext){
         int compid = Integer.parseInt(appContext.param.arrays[0]);
