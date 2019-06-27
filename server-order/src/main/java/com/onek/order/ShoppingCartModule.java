@@ -1021,10 +1021,16 @@ public class ShoppingCartModule {
     private List<ShoppingCartVO> getDiffPrice(List<ShoppingCartVO> shopCarts, List<ShoppingCartDTO> shoppingCartDTOs) {
         List<ShoppingCartVO> results = new ArrayList<>();
 
+        if (shopCarts == null || shoppingCartDTOs == null) {
+            return results;
+        }
+
         for (ShoppingCartVO shoppingCartVO : shopCarts) {
             for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOs) {
                 if (shoppingCartDTO.getPdno() == shoppingCartVO.getPdno()) {
                     if (shoppingCartDTO.getPdprice() != shoppingCartVO.getPdprice()) {
+                        System.out.println("shoppingCartDTO.getPdprice() " + shoppingCartDTO.getPdprice());
+                        System.out.println("shoppingCartVO.getPdprice() " + shoppingCartVO.getPdprice());
                         results.add(shoppingCartVO);
                     }
                 }

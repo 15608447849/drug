@@ -11,6 +11,7 @@ import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
+import com.onek.erp.OrderDockedWithERP;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.*;
@@ -357,6 +358,9 @@ public class PayModule {
             OrderUtil.updateSales(compid, orderno);
         }
         if(result){
+            //订单生成到ERP(异步执行)
+            OrderDockedWithERP.generationOrder2ERP(orderno, compid);
+
             return new Result().success(null);
         }else{
             return new Result().fail(null);
@@ -803,15 +807,10 @@ public class PayModule {
             }
         }
         if (result > 0 ) {
-            //余额扣减
-//            if (balamt > 0) {
-//                IceRemoteUtil.updateCompBal(compid,-balamt);
-//            }
             //线下即付减数据库库存
-
             LogUtil.getDefaultLogger().info("print by cyq offlinePay -----------线下支付订单减库存库存操作开始");
             reduceGoodsDbStock(orderno, compid);
-//            LogUtil.getDefaultLogger().info("print by cyq offlinePay -----------线下支付订单减库存库存操作结束");
+
             return new Result().success("订单提交成功");
         }
         return new Result().fail("订单提交失败");
