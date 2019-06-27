@@ -29,8 +29,15 @@ public class CommonModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
+    /**
+     * @接口摘要 获取子集
+     * @业务场景 三级联动获取信息
+     * @传参类型 Array
+     * @传参列表 [父级地区码]
+     * @返回列表 code=200 data=结果信息
+     */
+
     @UserPermission(ignore = true)
-    // 获取子类
     public Result getChildren(AppContext appContext) {
         String[] array = appContext.param.arrays;
         if (array == null || array.length == 0) {
@@ -42,6 +49,13 @@ public class CommonModule {
         return new Result().success(AreaStore.getChildren(Long.parseLong(array[0])));
     }
 
+    /**
+     * @接口摘要 获取地区信息
+     * @业务场景 获取地区信息
+     * @传参类型 Array
+     * @传参列表 [地区码]
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public Result getArea(AppContext appContext) {
         String[] array = appContext.param.arrays;
@@ -54,6 +68,13 @@ public class CommonModule {
         return new Result().success(AreaStore.getAreaByAreac(Long.parseLong(array[0])));
     }
 
+    /**
+     * @接口摘要 获取地区名
+     * @业务场景 获取地区名
+     * @传参类型 Array
+     * @传参列表 [地区码]
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public Result getAreaName(AppContext appContext) {
         Result r = getArea(appContext);
@@ -70,6 +91,15 @@ public class CommonModule {
     private AreaEntity getArea(long areac) {
         return AreaStore.getAreaByAreac(areac);
     }
+
+
+    /**
+     * @接口摘要 获取祖先地区
+     * @业务场景 获取祖先地区
+     * @传参类型 Array
+     * @传参列表 [地区码]
+     * @返回列表 code=200 data=结果信息
+     */
 
     @UserPermission(ignore = true)
     public Result getAncestors(AppContext appContext) {
@@ -100,28 +130,56 @@ public class CommonModule {
         return new Result().success(areaEntities);
     }
 
-
     @UserPermission(ignore = true)
     public Result getDicts(AppContext appContext){
         JSONObject j = getAllDict();
         return new Result().success(j.toJSONString());
     }
 
+    /**
+     * @接口摘要 获取类别树
+     * @业务场景 类别展示
+     * @传参类型 -
+     * @传参列表 -
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public Result getProduceClasses(AppContext appContext) {
         return new Result().success(ProduceStore.getTreeJson());
     }
 
+    /**
+     * @接口摘要 获取类别名
+     * @业务场景 获取类别名
+     * @传参类型 Array
+     * @传参列表 [类别码]
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public String getProduceName(AppContext appContext){
         return ProduceStore.getProduceName(appContext.param.arrays[0]);
     }
 
+    /**
+     * @接口摘要 获取产品信息
+     * @业务场景 获取产品信息
+     * @传参类型 Array
+     * @传参列表 [sku]
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public ProdEntity getProdBySku(AppContext appContext){
         ProdEntity entity = ProduceStore.getProdBySku(Long.parseLong(appContext.param.arrays[0]));
         return entity;
     }
+
+    /**
+     * @接口摘要 获取完整名
+     * @业务场景 获取完整名
+     * @传参类型 Array
+     * @传参列表 [地区码]
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public String getCompleteName(AppContext appContext){
         long areaCode = Long.parseLong(appContext.param.arrays[0]);
@@ -133,16 +191,13 @@ public class CommonModule {
         return sb.toString();
     }
 
-
-      /**
-           *
-           * 功能:
-           * 参数集:
-           * 返回值: Result
-           * 详情说明:
-           * 日期: 2019/6/6 13:59
-           * 作者: Helena Rubinstein
-           */
+    /**
+     * @接口摘要 获取城市树
+     * @业务场景 获取城市树
+     * @传参类型 -
+     * @传参列表 -
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public Result getAllCities(AppContext appContext){
         return new Result().success(AreaStore.getAllCities());
