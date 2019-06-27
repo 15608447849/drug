@@ -1009,7 +1009,7 @@ public class TranOrderOptModule {
         String orderNo = params[1];
         int compid = getCompid(orderNo);
 
-        if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
+        if (compid <= 0 || !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
         }
 
@@ -1049,7 +1049,7 @@ public class TranOrderOptModule {
         String orderNo = params[1];
         int compid = getCompid(orderNo);
 
-        if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
+        if (compid <= 0 || !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
         }
 

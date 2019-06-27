@@ -139,6 +139,10 @@ public class SyncCustomerInfoModule {
         baseDao.updateNative(updSQL, compid);
     }
 
+    @UserPermission(ignore = true)
+    public boolean systemConfigIsOpen(AppContext appContext) {
+        return systemConfigOpen(appContext.param.arrays[0]);
+    }
 
     private static boolean systemConfigOpen(String varname) {
         String selectSQL = "select count(*) from {{?" + DSMConst.TB_SYSTEM_CONFIG + "}} where "
