@@ -115,6 +115,14 @@ public class DiscountModule {
      * 详情说明:当活动库存大于库存时调整时触发,并发送短信给运营人员
      * 作者: 蒋文广
      */
+    /**
+     * @接口摘要 调整活动库存
+     * @业务场景 当活动库存大于库存时调整时触发,并发送短信给运营人员
+     * @传参类型 JSON
+     * @传参列表 actstock=活动库存 actno=活动码 sku=商品SKU码
+     * @返回列表 code=200 data=结果信息
+     * @作者: 蒋文广
+     */
     @UserPermission(ignore = true)
     public int adjustActivityStock(AppContext appContext) {
 
