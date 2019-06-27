@@ -105,13 +105,11 @@ public class PayModule {
             + " where cstatus&1>0 and asno=? ";
 
     /**
-     *
-     * 功能: 显示付款信息
-     * 参数类型: json
-     * 参数集: orderno=订单号 compid=企业码
-     * 返回值: code=200 date=结果信息 date.payamt=付款金额 date.odate=订单日期
-     * 详情说明:
-     * 作者: 蒋文广
+     * @接口摘要 显示付款信息
+     * @业务场景
+     * @传参类型 json
+     * @参数列表 orderno=订单号 compid=企业码
+     * @返回列表 code=200 date=结果信息 date.payamt=付款金额 date.odate=订单日期
      */
     @UserPermission(ignore = true)
     public Result showPayInfo(AppContext appContext){
@@ -158,13 +156,11 @@ public class PayModule {
     }
 
     /**
-     *
-     * 功能: 显示运费付款信息
-     * 参数类型: json
-     * 参数集: orderno=订单号 compid=企业码
-     * 返回值: code=200 date=结果信息 date.payamt=运费金额
-     * 详情说明:
-     * 作者: 蒋文广
+     * @接口摘要 显示运费付款信息
+     * @业务场景
+     * @传参类型 json
+     * @参数列表 orderno=订单号 compid=企业码
+     * @返回列表 code=200 date=结果信息 date.payamt=运费金额
      */
     @UserPermission(ignore = true)
     public Result showFeePayInfo(AppContext appContext){
@@ -198,13 +194,11 @@ public class PayModule {
     }
 
     /**
-     *
-     * 功能: 订单预支付
-     * 参数类型: json
-     * 参数集: orderno=订单号 paytype=付款方式 flag 客户端类型
-     * 返回值: code=200 date=付款二维码地址(web),可支付的JSON信息(app)
-     * 详情说明:
-     * 作者: 蒋文广
+     * @接口摘要 订单预支付
+     * @业务场景
+     * @传参类型 json
+     * @参数列表 orderno=订单号 paytype=付款方式 flag 客户端类型
+     * @返回列表 code=200 date=付款二维码地址(web),可支付的JSON信息(app)
      */
     public Result prePay(AppContext appContext){
         int compid = appContext.getUserSession().compId;
@@ -248,13 +242,11 @@ public class PayModule {
     }
 
     /**
-     *
-     * 功能: 运费预支付
-     * 参数类型: json
-     * 参数集: orderno=订单号 afsano=售后单号 paytype=付款方式 flag 客户端类型
-     * 返回值: code=200 date=付款二维码地址(web),可支付的JSON信息(app)
-     * 详情说明:
-     * 作者: 蒋文广
+     * @接口摘要 运费预支付
+     * @业务场景
+     * @传参类型 json
+     * @参数列表 rderno=订单号 afsano=售后单号 paytype=付款方式 flag 客户端类型
+     * @返回列表 ccode=200 date=付款二维码地址(web),可支付的JSON信息(app)
      */
     public Result preFeePay(AppContext appContext){
         int compid = appContext.getUserSession().compId;
@@ -306,14 +298,12 @@ public class PayModule {
     }
 
     /**
-     *
-     * 功能: 订单支付回调
-     * 参数类型: array
-     * 参数集: array[0]=交易流水号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
-     *         array[5]=付款金额 array[6]=企业码
-     * 返回值: code=200
-     * 详情说明: 支付宝、微信支付完后回调此接口
-     * 作者: 蒋文广
+     * @接口摘要 订单支付回调
+     * @业务场景 支付宝、微信支付完后回调此接口
+     * @传参类型 array
+     * @参数列表 array[0]=交易流水号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
+     *            array[5]=付款金额 array[6]=企业码
+     * @返回列表 ccode=200
      */
     @UserPermission(ignore = true)
     public Result payCallBack(AppContext appContext){
@@ -371,14 +361,12 @@ public class PayModule {
     }
 
     /**
-     *
-     * 功能: 运费支付回调
-     * 参数类型: array
-     * 参数集: array[0]=订单号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
-     *         array[5]=付款金额 array[6]=企业码
-     * 返回值: code=200
-     * 详情说明: 支付宝、微信支付完后回调此接口
-     * 作者: 蒋文广
+     * @接口摘要 运费支付回调
+     * @业务场景 支付宝、微信支付完后回调此接口
+     * @传参类型 array
+     * @参数列表 array[0]=交易流水号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
+     *            array[5]=付款金额 array[6]=企业码
+     * @返回列表 ccode=200
      */
     @UserPermission(ignore = true)
     public Result payFeeCallBack(AppContext appContext){
@@ -427,17 +415,15 @@ public class PayModule {
     }
 
     /**
-     *
-     * 功能: 获取支付结果
-     * 参数类型: json
-     * 参数集: orderno=订单号 compid=企业码
-     * 返回值: code=200 date=结果信息 date.payamt=运费金额 date.odate=订单日期
-     *         date.otime=订单时间 date.pdamt=优惠金额 date.freight=运费
-     *         date.coupamt=优惠券金额 date.distamt= date.balamt=余额抵扣
-     *         date.consignee=收货人 date.contact=收货联系方式 date.paystatus=支付状态
-     *         date.address=收款具体地址
-     * 详情说明: 支付宝、微信支付完后回调此接口
-     * 作者: 蒋文广
+     * @接口摘要 获取支付结果
+     * @业务场景 支付宝、微信支付完后回调此接口
+     * @传参类型 json
+     * @参数列表 code=200 date=结果信息 date.payamt=运费金额 date.odate=订单日期
+     *             date.otime=订单时间 date.pdamt=优惠金额 date.freight=运费
+     *             date.coupamt=优惠券金额 date.distamt= date.balamt=余额抵扣
+     *             date.consignee=收货人 date.contact=收货联系方式 date.paystatus=支付状态
+     *             date.address=收款具体地址
+     * @返回列表 ccode=200
      */
     @UserPermission(ignore = true)
     public Result getPayResult(AppContext appContext){
@@ -503,13 +489,11 @@ public class PayModule {
     }
 
     /**
-     *
-     * 功能: 获取运费支付结果
-     * 参数类型: json
-     * 参数集: orderno=订单号 compid=企业码
-     * 返回值: code=200 date=结果信息 date.paystatus=支付状态
-     * 详情说明: 支付宝、微信支付完后回调此接口
-     * 作者: 蒋文广
+     * @接口摘要 获取运费支付结果
+     * @业务场景 支付宝、微信支付完后回调此接口
+     * @传参类型 json
+     * @参数列表 orderno=订单号 compid=企业码
+     * @返回列表 code=200 date=结果信息 date.paystatus=支付状态
      */
     @UserPermission(ignore = true)
     public Result getFeePayResult(AppContext appContext) {

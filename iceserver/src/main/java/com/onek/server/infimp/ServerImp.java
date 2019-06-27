@@ -83,9 +83,8 @@ public class ServerImp extends IcePushMessageServerImps {
 
     //打印参数
     private String printParam(IRequest request, Current __current) {
-
             try {
-                StringBuilder sb = new StringBuilder();
+                StringBuilder sb = new StringBuilder("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n");
                 if (__current != null) {
                     sb.append(__current.con.toString().split("\n")[1]);
                 }else{
@@ -104,12 +103,11 @@ public class ServerImp extends IcePushMessageServerImps {
                 if(request.param.pageIndex > 0 && request.param.pageNumber > 0){
                     sb.append("\npaging:\t"+ request.param.pageIndex +" , " +request.param.pageNumber);
                 }
-                logger.print("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n"+sb.toString());
                 return sb.toString();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        return "";
+        return "调用信息异常";
     }
 
     //检测,查询配置的包路径 - 优先 客户端指定的全路径
@@ -144,6 +142,7 @@ public class ServerImp extends IcePushMessageServerImps {
             if (obj instanceof IceContext) return (IceContext) obj;
         return new IceContext(current,request);
     }
+
     //拦截
     private Result interceptor(IceContext context) throws Exception {
         Result result = null;
@@ -155,30 +154,34 @@ public class ServerImp extends IcePushMessageServerImps {
     }
 
     //打印结果
-    private String printResult(Object result) {
+    private String printResult(Object result,boolean isDebug) {
         String resultString;
         if (result instanceof String){
             resultString = String.valueOf(result);
         }else{
             resultString = GsonUtils.javaBeanToJson(result);
         }
-        logger.print("↓↓↓↓ 返 ↓↓ 回 ↓↓ 值↓↓↓↓\n\t"
+        if (isDebug) logger.print("↓↓↓↓ 返 ↓↓ 回 ↓↓ 值↓↓↓↓\n\t"
                 +resultString );
-        result = null;
+
         //+"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-"
         return resultString;
     }
+
+
 
     //客户端 - 接入服务
     @Override
     public String accessService(IRequest request, Current __current) {
         Object result;
         String callInfo = "没有调用信息";
+        boolean isDebug = false;
         try {
             check(request);
             callInfo = printParam(request,__current);
             //产生context
             IceContext context = generateContext(__current,request);
+            isDebug = context.isDebug;
             //拦截器
             result = interceptor(context);
             //具体业务实现调用 返回值不限制
@@ -192,8 +195,9 @@ public class ServerImp extends IcePushMessageServerImps {
             LogUtil.getDefaultLogger().error(callInfo,targetEx);
             result = new Result().error("错误调用",targetEx);
         }
-        return printResult(result);
+        return printResult(result,isDebug);
     }
+
 
 
 

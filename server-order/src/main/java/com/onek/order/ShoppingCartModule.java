@@ -31,10 +31,11 @@ import java.math.BigDecimal;
 import java.util.*;
 
 /**
- * @author Administrator
+ * @author liuhui
  * @version V1.0
  * @ClassName ShoppingCartModule
- * @Description TODO
+ * @服务名 orderServer
+ * @Description 购物车
  * @date 2019-04-15 20:54
  */
 public class ShoppingCartModule {
@@ -81,7 +82,7 @@ public class ShoppingCartModule {
             " SELECT  ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
                     "sku.store-sku.freezestore inventory,ifnull(sku.spec,'') spec, sku.prodstatus,spu.spu,sku.limits,ifnull(brandname,'') brand,medpacknum,unit," +
-                    "convert(mp/100,decimal(10,2)) mp  "
+                    "convert(mp/100,decimal(10,2)) mp, IFNULL(spu.busscope, 0) "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
@@ -98,15 +99,18 @@ public class ShoppingCartModule {
     private static final String SELECT_SKUNUM_SQL = "select pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
 
+
+
+
     /**
-     * 接口摘要： 购物车商品新增
-     * 业务场景： 商品加入购物车
-     * 传参类型： JSON
-     * 参数列表：
+     * @接口摘要 购物车商品新增
+     * @业务场景 商品加入购物车
+     * @传参类型 JSON
+     * @传参列表
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
-     * 返回列表：
+     * @返回列表
      *  code - 200 成功/ -1 失败
      *  message - 成功/失败
      **/
@@ -307,14 +311,14 @@ public class ShoppingCartModule {
 
 
     /**
-     * 接口摘要： 再次购买
-     * 业务场景： 订单交易成功后再次购买
-     * 传参类型： JSONARRAY
-     * 参数列表：
+     * @接口摘要 再次购买
+     * @业务场景 订单交易成功后再次购买
+     * @传参类型 JSONARRAY
+     * @传参列表
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
-     * 返回列表：
+     * @返回列表
      *  code - 200 成功/ -1 失败
      *  message - 成功/失败
      **/
@@ -485,14 +489,14 @@ public class ShoppingCartModule {
 
 
     /**
-     * 接口摘要： 清空购物车
-     * 业务场景： 订单交易成功后再次购买
-     * 传参类型： JSONARRAY
-     * 参数列表：
+     * @接口摘要 清空购物车
+     * @业务场景 订单交易成功后再次购买
+     * @传参类型 JSONARRAY
+     * @参数列表
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
-     * 返回列表：
+     * @返回列表
      *  code - 200 成功/ -1 失败
      *  message - 成功/失败
      **/
@@ -522,12 +526,12 @@ public class ShoppingCartModule {
 
 
     /**
-     * 接口摘要： 查询购物车列表（未选中）
-     * 业务场景： 进入购物车页面
-     * 传参类型： JSON
-     * 参数列表：
+     * @接口摘要 查询购物车列表（未选中）
+     * @业务场景 进入购物车页面
+     * @传参类型 JSON
+     * @传参列表
      *  compid - 买家企业码
-     * 返回列表：
+     * @返回列表
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
@@ -574,10 +578,28 @@ public class ShoppingCartModule {
     }
 
     /**
-     * 查询选中的购物车列表
-     * @param appContext
-     * @return
-     */
+     * @接口摘要 查询购物车列表（选中）
+     * @业务场景 购物车页面，购物车商品数量增加操作
+     * @传参类型 JSONARRAY
+     * @传参列表
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     *  checked - 是否选中：0 未选中，1 选中
+     *  pdprice - 商品单价
+     * @返回列表
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     *  ptitle - 商品标题
+     *  spec - 商品规格
+     *  verdor - 厂商
+     *  vperiod - 有效期
+     *  brand - 品牌
+     *  limitnum - 限购量
+     *  inventory - 库存量
+     *  medpacknum - 中包装
+     **/
     @UserPermission(ignore = true)
     public Result queryCheckShopCartList(AppContext appContext){
         String json = appContext.param.json;
@@ -625,7 +647,7 @@ public class ShoppingCartModule {
         ShoppingCartVO[] returnResults = new ShoppingCartVO[queryResult.size()];
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
                 new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory",
-                        "spec","pstatus","spu","limitnum","brand","medpacknum","unit","mp"});
+                        "spec","pstatus","spu","limitnum","brand","medpacknum","unit","mp", "busscope"});
         return new ArrayList<>(Arrays.asList(returnResults));
     }
 
@@ -898,11 +920,7 @@ public class ShoppingCartModule {
     }
 
 
-    /**
-     * 清空购物车
-     * @param idList
-     * @param compid
-     */
+
     private boolean delShoppingCart(String[] idList,int compid) {
 
         List<Object[]> shopParm = new ArrayList<>();
@@ -934,13 +952,21 @@ public class ShoppingCartModule {
      * @接口摘要 查询结算购物车列表
      * @业务场景 下单商品列表展示
      * @传参类型 json
-     * @参数列表 JsonArray [com.onek.entity.ShoppingCartDTO]
+     * @参数列表 JsonArray
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     *  checked - 是否选中：0 未选中，1 选中
+     *  pdprice - 商品单价
      * @返回列表 JSONObject:
-     *              goods 商品详情 com.onek.entity.ShoppingCartVO
-     *              gifts 赠品列表 com.onek.entity.ShoppingCartVO
+     *  goods 商品详情 com.onek.entity.ShoppingCartVO
+     *  gifts 赠品列表 com.onek.entity.ShoppingCartVO
      */
     @UserPermission(ignore = true)
     public Result querySettShopCartList(AppContext appContext){
+        int compid = appContext.getUserSession() == null
+                ? 0
+                : appContext.getUserSession().compId;
         String json = appContext.param.json;
         Result result = new Result();
         JsonParser jsonParser = new JsonParser();
@@ -956,16 +982,18 @@ public class ShoppingCartModule {
         List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
         //TODO 获取活动匹配
 
+        // 获取活动范围外
+        List<ShoppingCartVO> outOfScope = getOutOfScope(shopCart, compid);
+
+        if (!outOfScope.isEmpty()) {
+            return new Result().fail("不可购买在经营范围外的商品！");
+        }
+
         // 获取价格变动
         List<ShoppingCartVO> diffCheck = getDiffPrice(shopCart, shoppingCartDTOS);
 
         if (!diffCheck.isEmpty()) {
-            StringBuilder sb = new StringBuilder("以下商品价格有异动，请刷新页面！");
-            int index = 1;
-            for (ShoppingCartVO shoppingCartVO : diffCheck) {
-                sb.append(index++).append(".").append(shoppingCartVO.getPtitle());
-            }
-            return new Result().fail(sb.toString());
+            return new Result().fail("商品价格存在变动，请重新刷新页面！");
         }
 
         List<Gift> giftList =
@@ -1017,10 +1045,64 @@ public class ShoppingCartModule {
         return results;
     }
 
+    private List<ShoppingCartVO> getOutOfScope(List<ShoppingCartVO> shopCarts, int compid) {
+        List<ShoppingCartVO> results = new ArrayList<>();
+
+        if (shopCarts == null || compid <= 0) {
+            return results;
+        }
+
+        String sql = " SELECT busscope "
+                + " FROM {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} "
+                + " WHERE cstatus&1 = 0 AND compid = ? ";
+
+        List<Object[]> queryResult = baseDao.queryNative(sql, compid);
+
+        int[] scopes = new int[queryResult.size()];
+
+        for (int i = 0; i < queryResult.size(); i++) {
+            scopes[i] = Integer.parseInt(queryResult.get(i)[0].toString());
+        }
+
+        OUTTER:
+        for (ShoppingCartVO shoppingCartVO : shopCarts) {
+            if (shoppingCartVO.getBusscope() == 0) {
+                continue;
+            }
+
+            for (int scope : scopes) {
+                if (scope == shoppingCartVO.getBusscope()) {
+                    continue OUTTER;
+                }
+            }
+
+            results.add(shoppingCartVO);
+        }
+
+        return results;
+    }
+
     /**
-     * 获取购物车优惠提示
-     * @param appContext
-     * @return
+     * @接口摘要 获取购物车优惠提示
+     * @业务场景 购物车优惠显示
+     * @传参类型 json
+     * @参数列表 JsonArray
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     *  checked - 是否选中：0 未选中，1 选中
+     *  pdprice - 商品单价
+     * @返回列表 JsonArray:
+     *  ladamt - 阶梯金额
+     *  ladnum - 数量阶梯值
+     *  offercode - 优惠码
+     *  offername - 活动名称
+     *  offer - 优惠值
+     *  nladnum - 下个阶梯数量
+     *  nladamt - 下一个阶梯金额
+     *  noffer - 下个阶梯优惠值
+     *  currladDesc - 当前阶梯描述
+     *  nextladDesc - 下个阶梯描述
      */
     @UserPermission(ignore = true)
     public Result getOfferTip(AppContext appContext){

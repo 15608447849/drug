@@ -23,6 +23,8 @@ public class IceContext {
     public String refCls;
     public String refMed;
     public IParam param;
+    public boolean isDebug;
+
 
     public IceContext(Current current, IRequest request)  {
         if (current!=null){
@@ -54,4 +56,6 @@ public class IceContext {
     public <T extends IceContext> T convert(){
         return (T)this;
     }
+
+
 }
