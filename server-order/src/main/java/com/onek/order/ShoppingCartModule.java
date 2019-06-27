@@ -31,10 +31,11 @@ import java.math.BigDecimal;
 import java.util.*;
 
 /**
- * @author Administrator
+ * @author liuhui
  * @version V1.0
  * @ClassName ShoppingCartModule
- * @Description TODO
+ * @服务名 orderServer
+ * @Description 购物车
  * @date 2019-04-15 20:54
  */
 public class ShoppingCartModule {
@@ -98,15 +99,18 @@ public class ShoppingCartModule {
     private static final String SELECT_SKUNUM_SQL = "select pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
 
+
+
+
     /**
-     * 接口摘要： 购物车商品新增
-     * 业务场景： 商品加入购物车
-     * 传参类型： JSON
-     * 参数列表：
+     * @接口摘要 购物车商品新增
+     * @业务场景 商品加入购物车
+     * @传参类型 JSON
+     * @传参列表
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
-     * 返回列表：
+     * @返回列表
      *  code - 200 成功/ -1 失败
      *  message - 成功/失败
      **/
@@ -307,14 +311,14 @@ public class ShoppingCartModule {
 
 
     /**
-     * 接口摘要： 再次购买
-     * 业务场景： 订单交易成功后再次购买
-     * 传参类型： JSONARRAY
-     * 参数列表：
+     * @接口摘要 再次购买
+     * @业务场景 订单交易成功后再次购买
+     * @传参类型 JSONARRAY
+     * @传参列表
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
-     * 返回列表：
+     * @返回列表
      *  code - 200 成功/ -1 失败
      *  message - 成功/失败
      **/
@@ -485,14 +489,14 @@ public class ShoppingCartModule {
 
 
     /**
-     * 接口摘要： 清空购物车
-     * 业务场景： 订单交易成功后再次购买
-     * 传参类型： JSONARRAY
-     * 参数列表：
+     * @接口摘要 清空购物车
+     * @业务场景 订单交易成功后再次购买
+     * @传参类型 JSONARRAY
+     * @参数列表
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
-     * 返回列表：
+     * @返回列表
      *  code - 200 成功/ -1 失败
      *  message - 成功/失败
      **/
@@ -522,12 +526,12 @@ public class ShoppingCartModule {
 
 
     /**
-     * 接口摘要： 查询购物车列表（未选中）
-     * 业务场景： 进入购物车页面
-     * 传参类型： JSON
-     * 参数列表：
+     * @接口摘要 查询购物车列表（未选中）
+     * @业务场景 进入购物车页面
+     * @传参类型 JSON
+     * @传参列表
      *  compid - 买家企业码
-     * 返回列表：
+     * @返回列表
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
@@ -574,10 +578,28 @@ public class ShoppingCartModule {
     }
 
     /**
-     * 查询选中的购物车列表
-     * @param appContext
-     * @return
-     */
+     * @接口摘要 查询购物车列表（选中）
+     * @业务场景 购物车页面，购物车商品数量增加操作
+     * @传参类型 JSONARRAY
+     * @传参列表
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     *  checked - 是否选中：0 未选中，1 选中
+     *  pdprice - 商品单价
+     * @返回列表
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     *  ptitle - 商品标题
+     *  spec - 商品规格
+     *  verdor - 厂商
+     *  vperiod - 有效期
+     *  brand - 品牌
+     *  limitnum - 限购量
+     *  inventory - 库存量
+     *  medpacknum - 中包装
+     **/
     @UserPermission(ignore = true)
     public Result queryCheckShopCartList(AppContext appContext){
         String json = appContext.param.json;
@@ -898,11 +920,7 @@ public class ShoppingCartModule {
     }
 
 
-    /**
-     * 清空购物车
-     * @param idList
-     * @param compid
-     */
+
     private boolean delShoppingCart(String[] idList,int compid) {
 
         List<Object[]> shopParm = new ArrayList<>();
@@ -934,10 +952,15 @@ public class ShoppingCartModule {
      * @接口摘要 查询结算购物车列表
      * @业务场景 下单商品列表展示
      * @传参类型 json
-     * @参数列表 JsonArray [com.onek.entity.ShoppingCartDTO]
+     * @参数列表 JsonArray
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     *  checked - 是否选中：0 未选中，1 选中
+     *  pdprice - 商品单价
      * @返回列表 JSONObject:
-     *              goods 商品详情 com.onek.entity.ShoppingCartVO
-     *              gifts 赠品列表 com.onek.entity.ShoppingCartVO
+     *  goods 商品详情 com.onek.entity.ShoppingCartVO
+     *  gifts 赠品列表 com.onek.entity.ShoppingCartVO
      */
     @UserPermission(ignore = true)
     public Result querySettShopCartList(AppContext appContext){
@@ -1012,9 +1035,26 @@ public class ShoppingCartModule {
     }
 
     /**
-     * 获取购物车优惠提示
-     * @param appContext
-     * @return
+     * @接口摘要 获取购物车优惠提示
+     * @业务场景 购物车优惠显示
+     * @传参类型 json
+     * @参数列表 JsonArray
+     *  pdno - 商品码
+     *  pnum - 商品数量
+     *  compid - 买家企业码
+     *  checked - 是否选中：0 未选中，1 选中
+     *  pdprice - 商品单价
+     * @返回列表 JsonArray:
+     *  ladamt - 阶梯金额
+     *  ladnum - 数量阶梯值
+     *  offercode - 优惠码
+     *  offername - 活动名称
+     *  offer - 优惠值
+     *  nladnum - 下个阶梯数量
+     *  nladamt - 下一个阶梯金额
+     *  noffer - 下个阶梯优惠值
+     *  currladDesc - 当前阶梯描述
+     *  nextladDesc - 下个阶梯描述
      */
     @UserPermission(ignore = true)
     public Result getOfferTip(AppContext appContext){
