@@ -5,6 +5,7 @@ import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
+import com.onek.server.infimp.IceDebug;
 import com.onek.user.operations.*;
 import dao.BaseDAO;
 import util.GsonUtils;
@@ -44,6 +45,7 @@ public class LoginRegistrationModule {
      * @返回列表
      *  code-200-成功
      */
+    @IceDebug
     @UserPermission (ignore = true)
     public Result register(AppContext appContext){
         String json = appContext.param.json;

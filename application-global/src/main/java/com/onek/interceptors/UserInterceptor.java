@@ -6,6 +6,7 @@ import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.server.infimp.IServerInterceptor;
 import com.onek.server.infimp.IceContext;
+import com.onek.server.infimp.IceDebug;
 
 import java.lang.reflect.Method;
 
@@ -27,6 +28,9 @@ public class UserInterceptor implements IServerInterceptor {
 
             Class<?> clazz = Class.forName(classpath);
             Method m = clazz.getMethod(method, appContext.getClass());
+
+            IceDebug debug = m.getAnnotation(IceDebug.class);
+            if (debug!=null) context.isDebug = true;
             UserPermission up = m.getAnnotation(UserPermission.class);
             
             appContext.initialization();//初始化上下文用户信息
