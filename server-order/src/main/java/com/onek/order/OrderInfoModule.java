@@ -108,7 +108,7 @@ public class OrderInfoModule {
      * @接口摘要 获取订单详情
      * @业务场景 获取订单详情
      * @传参类型 arrays
-     * @参数列表 [compid, orderno]
+     * @传参列表 [compid, orderno]
      * @返回列表 JSONObject:
      *              goods 订单详情
      *              gifts 赠品列表

@@ -210,7 +210,7 @@ public class TranOrderOptModule {
      * @接口摘要 下单生成订单接口
      * @业务场景 前端下单调用
      * @传参类型 json
-     * @参数列表  {placeType 下单类型(购物车还是直接下单) balway 是否使用余额支付 coupon 优惠券码 unqid 优惠券使用表唯一码
+     * @传参列表  {placeType 下单类型(购物车还是直接下单) balway 是否使用余额支付 coupon 优惠券码 unqid 优惠券使用表唯一码
      *              orderObj: {remarks 备注 cusno 买家企业码 busno 卖家企业码 consignee 收货人姓名
      *              contact 收货人联系方式 rvaddno 收货地区码 address 详细收货地址 invoicetype 发票类型
      *              goodsArr:[{pdno 商品sku pnum 商品数量 pdprice 商品原价 actcode [参加的活动数组]}]
@@ -697,7 +697,7 @@ public class TranOrderOptModule {
      * @接口摘要 取消订单
      * @业务场景 自动取消或线上支付取消
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @传参列表 {orderno: 订单号 cusno：门店id}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = false)
@@ -763,7 +763,7 @@ public class TranOrderOptModule {
      * @接口摘要 取消订单
      * @业务场景 线下即付、线下到付门店30分钟内取消
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @传参列表 {orderno: 订单号 cusno：门店id}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = false)
@@ -819,7 +819,7 @@ public class TranOrderOptModule {
      * @接口摘要 取消订单
      * @业务场景 客服取消订单
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @传参列表 {orderno: 订单号 cusno：门店id}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -897,7 +897,7 @@ public class TranOrderOptModule {
      * @接口摘要 确认退款
      * @业务场景 客服确认退款
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @传参列表 {orderno: 订单号 cusno：门店id}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -995,7 +995,7 @@ public class TranOrderOptModule {
      * @接口摘要 收货
      * @业务场景 一块物流司机APP签收时调用
      * @传参类型 arrays
-     * @参数列表 [cusno：门店id, orderno: 订单号 ]
+     * @传参列表 [cusno：门店id, orderno: 订单号 ]
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -1035,7 +1035,7 @@ public class TranOrderOptModule {
      * @接口摘要 发货
      * @业务场景 一块物流司机APP取货时调用
      * @传参类型 arrays
-     * @参数列表 [ cusno：门店id, orderno: 订单号]
+     * @传参列表 [ cusno：门店id, orderno: 订单号]
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -1062,7 +1062,7 @@ public class TranOrderOptModule {
      * @接口摘要 客服确认收款
      * @业务场景 线下转账确认收款
      * @传参类型 arrays
-     * @参数列表 [ cusno：门店id, orderno: 订单号]
+     * @传参列表 [ cusno：门店id, orderno: 订单号]
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)

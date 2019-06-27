@@ -190,7 +190,7 @@ public class OrderDockedWithERP {
      * @接口摘要 同步订单信息异常处理接口
      * @业务场景 同步ERP异常
      * @传参类型
-     * @参数列表
+     * @传参列表
      * @返回列表 200成功
      */
     @UserPermission(ignore = true)

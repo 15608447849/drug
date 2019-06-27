@@ -56,7 +56,7 @@ public class SecKillModule {
      * @接口摘要 秒杀前校验用户是否具有资格
      * @业务场景
      * @传参类型 json
-     * @参数列表 sku=商品SKU码 actno=活动码
+     * @传参列表 sku=商品SKU码 actno=活动码
      * @返回列表 code=200 date=唯一生成码,用来进行身份校验
      */
     @UserPermission(ignore = false, needAuthenticated = true)
@@ -99,7 +99,7 @@ public class SecKillModule {
      * @接口摘要 参与秒杀
      * @业务场景
      * @传参类型 json
-     * @参数列表 sku=商品SKU码 actno=活动码
+     * @传参列表 sku=商品SKU码 actno=活动码
      * @返回列表 code=200 date=结果集 构造的购物车数据
      * @异常场景 1.秒杀参数非法 2:通过非法途径进入此方法 3:重复提交 4:秒杀过多 5:库存不够
      */

@@ -1580,7 +1580,7 @@ public class ProdModule {
      * @接口摘要 查询商品评价
      * @业务场景 商品详情页评价查询
      * @传参类型 json
-     * @参数列表 {sku: 商品sku}
+     * @传参列表 {sku: 商品sku}
      * @返回列表 AppriseVO对象数组
      */
     @UserPermission(ignore = true)
@@ -1622,7 +1622,7 @@ public class ProdModule {
      * @接口摘要 订单评价商品接口
      * @业务场景
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
+     * @传参列表 {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
      * @返回列表 200成功 -1 失败
      */
     @UserPermission(ignore = true)
