@@ -82,7 +82,7 @@ public class ShoppingCartModule {
             " SELECT  ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
                     "sku.store-sku.freezestore inventory,ifnull(sku.spec,'') spec, sku.prodstatus,spu.spu,sku.limits,ifnull(brandname,'') brand,medpacknum,unit," +
-                    "convert(mp/100,decimal(10,2)) mp  "
+                    "convert(mp/100,decimal(10,2)) mp, IFNULL(spu.busscope, 0) "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
@@ -647,7 +647,7 @@ public class ShoppingCartModule {
         ShoppingCartVO[] returnResults = new ShoppingCartVO[queryResult.size()];
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
                 new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory",
-                        "spec","pstatus","spu","limitnum","brand","medpacknum","unit","mp"});
+                        "spec","pstatus","spu","limitnum","brand","medpacknum","unit","mp", "busscope"});
         return new ArrayList<>(Arrays.asList(returnResults));
     }
 
@@ -964,6 +964,9 @@ public class ShoppingCartModule {
      */
     @UserPermission(ignore = true)
     public Result querySettShopCartList(AppContext appContext){
+        int compid = appContext.getUserSession() == null
+                ? 0
+                : appContext.getUserSession().compId;
         String json = appContext.param.json;
         Result result = new Result();
         JsonParser jsonParser = new JsonParser();
@@ -979,16 +982,18 @@ public class ShoppingCartModule {
         List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
         //TODO 获取活动匹配
 
+        // 获取活动范围外
+        List<ShoppingCartVO> outOfScope = getOutOfScope(shopCart, compid);
+
+        if (!outOfScope.isEmpty()) {
+            return new Result().fail("不可购买在经营范围外的商品！");
+        }
+
         // 获取价格变动
         List<ShoppingCartVO> diffCheck = getDiffPrice(shopCart, shoppingCartDTOS);
 
         if (!diffCheck.isEmpty()) {
-            StringBuilder sb = new StringBuilder("以下商品价格有异动，请刷新页面！");
-            int index = 1;
-            for (ShoppingCartVO shoppingCartVO : diffCheck) {
-                sb.append(index++).append(".").append(shoppingCartVO.getPtitle());
-            }
-            return new Result().fail(sb.toString());
+            return new Result().fail("商品价格存在变动，请重新刷新页面！");
         }
 
         List<Gift> giftList =
@@ -1035,6 +1040,43 @@ public class ShoppingCartModule {
                     }
                 }
             }
+        }
+
+        return results;
+    }
+
+    private List<ShoppingCartVO> getOutOfScope(List<ShoppingCartVO> shopCarts, int compid) {
+        List<ShoppingCartVO> results = new ArrayList<>();
+
+        if (shopCarts == null || compid <= 0) {
+            return results;
+        }
+
+        String sql = " SELECT busscope "
+                + " FROM {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} "
+                + " WHERE cstatus&1 = 0 AND compid = ? ";
+
+        List<Object[]> queryResult = baseDao.queryNative(sql, compid);
+
+        int[] scopes = new int[queryResult.size()];
+
+        for (int i = 0; i < queryResult.size(); i++) {
+            scopes[i] = Integer.parseInt(queryResult.get(i)[0].toString());
+        }
+
+        OUTTER:
+        for (ShoppingCartVO shoppingCartVO : shopCarts) {
+            if (shoppingCartVO.getBusscope() == 0) {
+                continue;
+            }
+
+            for (int scope : scopes) {
+                if (scope == shoppingCartVO.getBusscope()) {
+                    continue OUTTER;
+                }
+            }
+
+            results.add(shoppingCartVO);
         }
 
         return results;

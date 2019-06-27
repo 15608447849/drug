@@ -101,6 +101,16 @@ public class ShoppingCartVO {
 
     private double mp;
 
+    private int busscope;
+
+    public int getBusscope() {
+        return busscope;
+    }
+
+    public void setBusscope(int busscope) {
+        this.busscope = busscope;
+    }
+
     public int getUnit() {
         return unit;
     }
