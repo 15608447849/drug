@@ -1052,11 +1052,11 @@ public class ShoppingCartModule {
             return results;
         }
 
-        String sql = " SELECT busscope "
+        String sql = " SELECT IFNULL(busscope, 0) "
                 + " FROM {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} "
                 + " WHERE cstatus&1 = 0 AND compid = ? ";
 
-        List<Object[]> queryResult = baseDao.queryNative(sql, compid);
+        List<Object[]> queryResult = IceRemoteUtil.queryNative(sql, compid);
 
         int[] scopes = new int[queryResult.size()];
 
