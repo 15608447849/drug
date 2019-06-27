@@ -52,6 +52,18 @@ public class ProdESUtil {
                 prodVO.setOffdate(DEFAULT_DATE);
                 prodVO.setOfftime(DEFAULT_TIME);
             }
+            if(StringUtils.isEmpty(prodVO.getVaildsdate())){
+                prodVO.setVaildsdate(DEFAULT_DATE);
+            }
+            if(StringUtils.isEmpty(prodVO.getVaildedate())){
+                prodVO.setVaildedate(DEFAULT_DATE);
+            }
+            if(StringUtils.isEmpty(prodVO.getProdsdate())){
+                prodVO.setProdsdate(DEFAULT_DATE);
+            }
+            if(StringUtils.isEmpty(prodVO.getProdedate())){
+                prodVO.setProdedate(DEFAULT_DATE);
+            }
             long sku = prodVO.getSku();
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
@@ -106,6 +118,18 @@ public class ProdESUtil {
             if(StringUtils.isEmpty(prodVO.getOffdate())){
                 prodVO.setOffdate(DEFAULT_DATE);
                 prodVO.setOfftime(DEFAULT_TIME);
+            }
+            if(StringUtils.isEmpty(prodVO.getVaildsdate())){
+                prodVO.setVaildsdate(DEFAULT_DATE);
+            }
+            if(StringUtils.isEmpty(prodVO.getVaildedate())){
+                prodVO.setVaildedate(DEFAULT_DATE);
+            }
+            if(StringUtils.isEmpty(prodVO.getProdsdate())){
+                prodVO.setProdsdate(DEFAULT_DATE);
+            }
+            if(StringUtils.isEmpty(prodVO.getProdedate())){
+                prodVO.setProdedate(DEFAULT_DATE);
             }
             long sku = prodVO.getSku();
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
