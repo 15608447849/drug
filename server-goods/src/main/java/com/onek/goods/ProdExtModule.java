@@ -22,13 +22,12 @@ public class ProdExtModule {
             "and spu.cstatus&1 = 0 and sku.cstatus&1 = 0 and sku.prodstatus = 1 and b.brandno = spu.brandno and spu.spu = sku.spu group by b.brandno, b.brandname";
 
     /**
-     *
-     * 功能: 根据商品分类码获取相关商品列表
-     * 参数类型: json
-     * 参数集: spu=商品分类码
-     * 返回值: 商品SKU码列表
-     * 详情说明: 运营后台活动管理维护商品触发库存变化时调用
-     * 作者: 蒋文广
+     * @接口摘要 根据商品分类码获取相关商品列表
+     * @业务场景 运营后台活动管理维护商品触发库存变化时调用
+     * @传参类型 JSON
+     * @传参列表 spu=商品分类码
+     * @返回列表 code=200 data=结果信息
+     * @作者: 蒋文广
      */
     @UserPermission(ignore = true)
     public List<Long> getSkuListByCondition(AppContext appContext){
@@ -57,13 +56,12 @@ public class ProdExtModule {
     }
 
     /**
-     *
-     * 功能: 查询品牌信息 销售量高在前
-     * 参数类型: json
-     * 参数集: 无
-     * 返回值: code=200 data=结果信息
-     * 详情说明:
-     * 作者: 蒋文广
+     * @接口摘要 查询品牌信息 销售量高在前
+     * @业务场景 运营后台活动管理维护商品触发库存变化时调用
+     * @传参类型 JSON
+     * @传参列表 无
+     * @返回列表 code=200 data=结果信息
+     * @作者: 蒋文广
      */
     @UserPermission(ignore = true)
     public Result queryBrandInfo(AppContext appContext){
