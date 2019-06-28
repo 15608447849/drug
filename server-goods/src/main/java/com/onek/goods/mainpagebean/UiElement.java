@@ -11,6 +11,7 @@ public class UiElement {
     public long brulecode;//活动复合码
     public String img;//图片链接
     public int index; //位置下标
+    public String route;//页面路由
     public  Object attr;//附加属性
 
 }

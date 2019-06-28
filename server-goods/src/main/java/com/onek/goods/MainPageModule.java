@@ -2,7 +2,6 @@ package com.onek.goods;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.onek.annotation.UserPermission;
@@ -27,6 +26,8 @@ import util.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.*;
+
+import static constant.DSMConst.TB_UI_PAGE;
 
 /**
  * @Author: leeping
@@ -65,42 +66,137 @@ public class MainPageModule {
     /**
      * 通过活动码 获取 活动属性 及 商品信息
      **/
-    private static Attr dataSource(long bRuleCodes, boolean isQuery, int pageIndex, int pageNumber, boolean isAnonymous){
+    private static Attr dataSource(long bRuleCodes, boolean isQuery, int pageIndex, int pageNumber, boolean isAnonymous) {
         Attr attr = new Attr();
-        String ruleCodeStr = getCodeStr(bRuleCodes);
-        if (ruleCodeStr != null){
-            List<Object[]> queryResult = BASE_DAO.queryNative(SELECT_ACT_SQL + " and a.brulecode in(" + ruleCodeStr + ")");
-            if (queryResult == null || queryResult.isEmpty()) return attr;
-            if (!QualJudge.hasPermission(compid, qualcode, qualvalue)) {
-                return attr;
-            }
-            queryResult.forEach(qResult -> {
-                long actCode = Long.parseLong(String.valueOf(qResult[0]));
-                int bRuleCode = Integer.parseInt(String.valueOf(qResult[1]));
-                boolean isEffect = theActInProgress(actCode);
-                JsonObject actObj = new JsonObject();
-                if ((bRuleCode == 1113 || bRuleCode == 1133)  && isEffect) {//秒杀团购进行中
-                    String[] times = getTimesEff(actCode);
-                    actObj.addProperty("actcode", actCode);
-                    actObj.addProperty("sdate", times[0]);
-                    actObj.addProperty("edate", times[1]);
-                    actObj.addProperty("now", TimeUtils.date_yMd_Hms_2String(new Date()));
-                    if (bRuleCode == 1133) {//团购
-                        actObj.addProperty("ladoffArray", ladOffArray);
-                        actObj.addProperty("currNums",getGroupCount(actCode));
+        try {
+            String ruleCodeStr = getCodeStr(bRuleCodes);
+            if (ruleCodeStr != null) {
+                List<Object[]> queryResult = BASE_DAO.queryNative(SELECT_ACT_SQL + " and a.brulecode in(" + ruleCodeStr + ")");
+                if (queryResult == null || queryResult.isEmpty()) return attr;
+//                if (!QualJudge.hasPermission(compid, qualcode, qualvalue)) {
+//                    return attr;
+//                }
+                queryResult.forEach(qResult -> {
+                    long actCode = Long.parseLong(String.valueOf(qResult[0]));
+                    int bRuleCode = Integer.parseInt(String.valueOf(qResult[1]));
+                    boolean isEffect = theActInProgress(actCode);
+                    JsonObject actObj = new JsonObject();
+                    if ((bRuleCode == 1113 || bRuleCode == 1133) && isEffect) {//秒杀团购进行中
+                        String[] times = getTimesEff(actCode);
+                        actObj.addProperty("actcode", actCode);
+                        actObj.addProperty("sdate", times[0]);
+                        actObj.addProperty("edate", times[1]);
+                        actObj.addProperty("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+                        if (bRuleCode == 1133) {//团购
+//                            actObj.addProperty("ladoffArray", ladOffArray);
+                            actObj.addProperty("currNums", getGroupCount(actCode));
+                        }
+                        attr.actObj = actObj;
+                    } else {
+
                     }
-                    attr.actObj = actObj;
-                } else {
-
+                });
+                if (isQuery) {
+                    //获取活动下的商品
+                    getActGoods(attr, pageIndex, pageNumber, isAnonymous);
                 }
-            });
-            if (isQuery) {
-                //获取活动下的商品
-                getActGoods(attr, pageIndex, pageNumber, isAnonymous);
-            }
 
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return attr;
+    }
+
+
+    /* *
+     * @description 判断活动是否正在进行
+     * @params [actCode]
+     * @return boolean
+     * @exception
+     * @author 11842
+     * @time  2019/6/28 15:13
+     * @version 1.1.1
+     **/
+    private static boolean theActInProgress(long actCode) {
+        String selectTypeSQL = "select acttype,actcycle from {{?" + DSMConst.TD_PROM_ACT + "}} "
+                + " where cstatus&1=0 and unqid=" + actCode;
+        List<Object[]> qTResult = BASE_DAO.queryNative(selectTypeSQL);
+        int acttype = (int)qTResult.get(0)[0];
+        long actcycle = (long)qTResult.get(0)[1];
+        String selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                + " left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
+                + " where a.cstatus&1=0 and a.unqid=" + actCode + " and a.sdate<=CURRENT_DATE"
+                + " and a.edate>=CURRENT_DATE and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+        LocalDateTime localDateTime = LocalDateTime.now();
+        if (acttype == 1) {//每周
+            int dayOfWeek = localDateTime.getDayOfWeek().getValue();
+            int valW = BigDecimal.valueOf(Math.pow(2,dayOfWeek-1)).intValue();
+            if (((int)actcycle & valW) == 0) {
+                return false;
+            }
+        } else if (acttype == 2) {//每月
+            int dayOfMouth = localDateTime.getDayOfMonth();
+            int valM = BigDecimal.valueOf(Math.pow(2,dayOfMouth-1)).intValue();
+            if (((int)actcycle & valM) == 0) {
+                return false;
+            }
+        } else if (acttype == 3) {//每年
+            String actcycleStr = String.valueOf(actcycle);
+            String actDate =TimeUtils.getCurrentYear() + "-" + actcycleStr.substring(2,4)
+                    + "-" +  actcycleStr.substring(4,6);
+            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                    + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
+                    + "where a.cstatus&1=0 and a.unqid=" + actCode + " and CURRENT_DATE='" + actDate
+                    + "' and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+        }
+        List<Object[]> queryResult = BASE_DAO.queryNative(selectSQL);
+        return (long)queryResult.get(0)[0] > 0;
+    }
+
+
+    private static String[] getTimesEff(long actCode) {
+        String selectSQL = "select sdate,edate from {{?"+ DSMConst.TD_PROM_TIME +"}} " +
+                "where cstatus&1=0 and actcode = ? and sdate<=CURRENT_TIME and edate>=CURRENT_TIME";
+        List<Object[]> queryResult = BASE_DAO.queryNative(selectSQL, actCode);
+        if (queryResult == null || queryResult.isEmpty()) {
+            return new String[]{"00:00:00", "23:59:59"};
+        }
+        return new String[]{String.valueOf(queryResult.get(0)[0]),String.valueOf(queryResult.get(0)[1])};
+
+    }
+
+    /**
+     * 获取团购最高优惠
+     *
+     * @param actCode     活动码
+     * @param ladOffArray 存放优惠阶梯
+     * @return
+     */
+    private static double getMinOff(long actCode, JsonArray ladOffArray) {
+        String selectSQL = "select ladamt,ladnum,offer from " +
+                "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid " +
+                "and l.offercode like '1133%' and r.actcode = ? and r.cstatus&1=0 ";
+        List<Object[]> ladOffList = BASE_DAO.queryNative(selectSQL, actCode);
+        double minOff = 100;
+        if (ladOffList != null && ladOffList.size() > 0) {
+            int i = 0;
+            for (Object[] objects : ladOffList) {
+                int amt = Integer.parseInt(objects[0].toString());
+                int num = Integer.parseInt(objects[1].toString());
+                double offer = MathUtil.exactDiv(Integer.parseInt( objects[2].toString()), 100.0).doubleValue();
+                if (i == 0) {
+                    minOff = offer;
+                }
+                JsonObject jsonObject = new JsonObject();
+                jsonObject.addProperty("ladamt", amt);
+                jsonObject.addProperty("ladnum", num);
+                jsonObject.addProperty("offer", offer);
+                ladOffArray.add(jsonObject);
+                i++;
+            }
+        }
+        return minOff;
     }
 
 
@@ -109,7 +205,7 @@ public class MainPageModule {
         //拆
         List<Long> codeList = MathUtil.spiltNumToBit(ruleCode);
         codeList.forEach(code -> codeSB.append(code).append(","));
-        if (codeSB.toString().contains(",")){
+        if (codeSB.toString().contains(",")) {
             return codeSB.toString().substring(0, codeSB.toString().length() - 1);
         }
         return null;
@@ -136,7 +232,7 @@ public class MainPageModule {
                 " UNION ALL " + selectAllSQL + ") ua";
         List<Object[]> queryResult = BASE_DAO.queryNative(pageHolder, page, sqlBuilder,
                 attr.actCode, attr.actCode, attr.actCode);
-        if (queryResult == null || queryResult.isEmpty()) return ;
+        if (queryResult == null || queryResult.isEmpty()) return;
         queryResult.forEach(qResult -> skuList.add(Long.valueOf(String.valueOf(qResult[0]))));
         //ES数据组装
         SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
@@ -228,16 +324,17 @@ public class MainPageModule {
      */
     @IceDebug
     @UserPermission(ignore = true)
-    public Result pageInfo(){
+    public Result pageInfo() {
 
         return null;
     }
 
 
-    private static class Param{
+    private static class Param {
         long identity; //活动叠加码
-        int limit= -1;//楼层商品限制数
+        int limit = -1;//楼层商品限制数
     }
+
     /**
      * @接口摘要 客户端首页展示
      * @业务场景
@@ -249,44 +346,48 @@ public class MainPageModule {
      */
     @IceDebug
     @UserPermission(ignore = true)
-    public Result pageInfo(AppContext context){
+    public Result pageInfo(AppContext context) {
         String json = context.param.json;
-        Param param = GsonUtils.jsonToJavaBean(json,Param.class);
-        if (param == null){
+        Param param = GsonUtils.jsonToJavaBean(json, Param.class);
+        if (param == null) {
             Map<String, List<UiElement>> map = allElement();
             //获取全部UI元素数据
-            return map.size() == 0 ? new Result().fail("没有主页元素信息,请配置界面"): new Result().success(map);
+            return map.size() == 0 ? new Result().fail("没有主页元素信息,请配置界面") : new Result().success(map);
         }
-        if (param.identity > 0 && param.limit > 0 ){
+        if (param.identity > 0 && param.limit > 0) {
             //获取指定活动的商品信息
-            return new Result().success(dataSource(param.identity,true,1,param.limit,!context.isAnonymous()));
+            return new Result().success(dataSource(param.identity, true, 1, param.limit, !context.isAnonymous()));
         }
-        if (param.identity > 0 && param.limit == -1){
-            return new Result().success(dataSource(param.identity,true,context.param.pageIndex,context.param.pageNumber,!context.isAnonymous()));
+        if (param.identity > 0 && param.limit == -1) {
+            return new Result().success(dataSource(param.identity, true, context.param.pageIndex, context.param.pageNumber, !context.isAnonymous()));
         }
         return new Result().fail("参数异常");
     }
+
     //获取页面全部元素信息
     private Map<String, List<UiElement>> allElement() {
-        Map<String,List<UiElement>> map = new HashMap<>();
-        String sql = "SELECT uiname,uimodel,tempId,brulecode,imgPath,seq FROM tb_ui_page WHERE cstatus&1 = 0";
-        List<Object[]> lines =  BaseDAO.getBaseDAO().queryNative(sql);
-        if (lines.size() >0){
-            for (Object[] rows : lines){
+        Map<String, List<UiElement>> map = new HashMap<>();
+        String sql = "SELECT uiname,uimodel,tempId,brulecode,imgPath,seq,route FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
+        if (lines.size() > 0) {
+            for (Object[] rows : lines) {
+                String imgPrev = FileServerUtils.fileDownloadPrev();
                 UiElement el = new UiElement();
                 el.name = StringUtils.obj2Str(rows[0]);
                 el.module = StringUtils.obj2Str(rows[1]);
-                el.template = StringUtils.checkObjectNull(rows[2],0);
-                el.brulecode = StringUtils.checkObjectNull(rows[3],0L);
+                el.template = StringUtils.checkObjectNull(rows[2], 0);
+                el.brulecode = StringUtils.checkObjectNull(rows[3], 0L);
                 el.img = StringUtils.obj2Str(rows[4]);
-                el.index = StringUtils.checkObjectNull(rows[5],0);
-                el.attr = dataSource(el.brulecode,false,0,0,false);
-                if (map.containsKey(el.module)){
+                if (!StringUtils.isEmpty(el.img)) el.img = imgPrev + el.img;
+                el.index = StringUtils.checkObjectNull(rows[5], 0);
+                el.route = StringUtils.obj2Str(rows[6]);
+                el.attr = dataSource(el.brulecode, false, 0, 0, false);
+                if (map.containsKey(el.module)) {
                     map.get(el.module).add(el);
-                }else{
+                } else {
                     List<UiElement> list = new LinkedList<>();
                     list.add(el);
-                    map.put(el.module,list);
+                    map.put(el.module, list);
                 }
             }
         }
