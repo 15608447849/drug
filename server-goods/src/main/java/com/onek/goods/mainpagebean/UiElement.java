@@ -1,4 +1,4 @@
-package com.onek.mainpagebean;
+package com.onek.goods.mainpagebean;
 
 /**
  * @Author: leeping
