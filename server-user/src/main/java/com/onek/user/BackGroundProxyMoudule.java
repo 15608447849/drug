@@ -1526,7 +1526,7 @@ public class BackGroundProxyMoudule {
      * @接口摘要 门店管理资质完善
      * @业务场景 BD完善资质信息
      * @传参类型 json
-     * @参数列表 见CompInfoVO.class
+     * @传参列表 见CompInfoVO.class
      * @返回列表 200成功
      */
     public Result storePerfectingInfo(AppContext appContext) {
@@ -1758,7 +1758,7 @@ public class BackGroundProxyMoudule {
      * @接口摘要 门店管理BD资质完善详情
      * @业务场景
      * @传参类型 json
-     * @参数列表 {compid  企业id }
+     * @传参列表 {compid  企业id }
      * @返回列表 code=200(成功) data=结果信息
      */
     public Result getCompInfo(AppContext appContext) {
@@ -1800,7 +1800,7 @@ public class BackGroundProxyMoudule {
      * @接口摘要 门店经营范围维护 一块医药erp对接使用
      * @业务场景 ERP更新经营范围到一块医药
      * @传参类型 json
-     * @参数列表 {compid  企业id   busArr [经营范围码数组]}
+     * @传参列表 {compid  企业id   busArr [经营范围码数组]}
      * @返回列表 code=200(成功) data=结果信息
      */
     @UserPermission(ignore = true)

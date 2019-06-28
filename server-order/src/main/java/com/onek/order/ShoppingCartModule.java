@@ -522,7 +522,7 @@ public class ShoppingCartModule {
      * @接口摘要 清空购物车
      * @业务场景 订单交易成功后再次购买
      * @传参类型 JSONARRAY
-     * @参数列表
+     * @传参列表
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
@@ -982,7 +982,7 @@ public class ShoppingCartModule {
      * @接口摘要 查询结算购物车列表
      * @业务场景 下单商品列表展示
      * @传参类型 json
-     * @参数列表 JsonArray
+     * @传参列表 JsonArray
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
@@ -1116,7 +1116,7 @@ public class ShoppingCartModule {
      * @接口摘要 获取购物车优惠提示
      * @业务场景 购物车优惠显示
      * @传参类型 json
-     * @参数列表 JsonArray
+     * @传参列表 JsonArray
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码

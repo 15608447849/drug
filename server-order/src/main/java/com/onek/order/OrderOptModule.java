@@ -142,7 +142,7 @@ public class OrderOptModule {
      * @接口摘要 订单评价商品接口
      * @业务场景 订单评价
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
+     * @传参列表 {orderno: 订单号 compid: 企业码 appriseArr: 评价数组[见AppriseVO.class]}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = false)
@@ -171,7 +171,7 @@ public class OrderOptModule {
      * @接口摘要 订单售后申请接口
      * @业务场景 申请售后
      * @传参类型 json
-     * @参数列表 {asAppArr:评价数组[AsAppVO.class] orderno: 订单号 asType：售后类型}
+     * @传参列表 {asAppArr:评价数组[AsAppVO.class] orderno: 订单号 asType：售后类型}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = false)
@@ -357,7 +357,7 @@ public class OrderOptModule {
      * @接口摘要 订单取消售后接口
      * @业务场景 取消售后
      * @传参类型 json
-     * @参数列表 {sku:商品sku orderno: 订单号 compid：买家企业码}
+     * @传参列表 {sku:商品sku orderno: 订单号 compid：买家企业码}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = false)
@@ -533,7 +533,7 @@ public class OrderOptModule {
      * @接口摘要 删除订单接口
      * @业务场景 已取消或已完成的订单删除
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 }
+     * @传参列表 {orderno: 订单号 }
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = false)
@@ -567,7 +567,7 @@ public class OrderOptModule {
      * @接口摘要 查询售后订单详情
      * @业务场景 售后订单详情
      * @传参类型 json
-     * @参数列表 {asno: 售后单号 }
+     * @传参列表 {asno: 售后单号 }
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -639,7 +639,7 @@ public class OrderOptModule {
      * @接口摘要 查询售后订单详情[补开发票]
      * @业务场景 补开发票
      * @传参类型 json
-     * @参数列表 {asno: 售后单号 }
+     * @传参列表 {asno: 售后单号 }
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -716,7 +716,7 @@ public class OrderOptModule {
      * @接口摘要 查询售后订单列表
      * @业务场景 查询
      * @传参类型 json
-     * @参数列表 {pageSize: 每页条数  pageNo 页码 astype 售后类型 sdate 开始时间 edate 结束时间 ckstatus 审核状态}
+     * @传参列表 {pageSize: 每页条数  pageNo 页码 astype 售后类型 sdate 开始时间 edate 结束时间 ckstatus 审核状态}
      * @返回列表 AsAppDtListVO数组
      */
     @UserPermission(ignore = true)
@@ -798,7 +798,7 @@ public class OrderOptModule {
      * @接口摘要 查询售后订单发票列表
      * @业务场景 查询
      * @传参类型 json
-     * @参数列表 {pageSize: 每页条数  pageNo 页码 astype 售后类型 sdate 开始时间 edate 结束时间 ckstatus 审核状态}
+     * @传参列表 {pageSize: 每页条数  pageNo 页码 astype 售后类型 sdate 开始时间 edate 结束时间 ckstatus 审核状态}
      * @返回列表 AsAppDtListVO数组
      */
     @UserPermission(ignore = true)
@@ -883,7 +883,7 @@ public class OrderOptModule {
      * @接口摘要 根据活动起始时间和结束时间和活动码查询团购订单记录
      * @业务场景 查询
      * @传参类型 json
-     * @参数列表 {sdate 开始时间 edate 结束时间 actno 活动码}
+     * @传参列表 {sdate 开始时间 edate 结束时间 actno 活动码}
      * @返回列表 JSONArray [{orderno 订单号 payamt 支付金额  compid 企业码 pnum 数量}]
      */
     @UserPermission(ignore = true)
@@ -915,7 +915,7 @@ public class OrderOptModule {
      * @接口摘要 确认签收
      * @业务场景 订单签收后确认签收
      * @传参类型 json
-     * @参数列表 {orderno 订单号 cusno 企业码 }
+     * @传参列表 {orderno 订单号 cusno 企业码 }
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = false)
@@ -948,7 +948,7 @@ public class OrderOptModule {
      * @接口摘要 售后完成更新状态
      * @业务场景 订单签收后确认签收
      * @传参类型 json
-     * @参数列表 {asno 售后单号}
+     * @传参列表 {asno 售后单号}
      * @返回列表 200 成功 -1 失败
      */
     public Result afterSaleFinish(AppContext appContext) {
