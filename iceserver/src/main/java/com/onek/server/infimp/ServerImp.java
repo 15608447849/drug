@@ -179,6 +179,7 @@ public class ServerImp extends IcePushMessageServerImps {
         try {
             check(request);
             callInfo = printParam(request,__current);
+            logger.print(callInfo);
             //产生context
             IceContext context = generateContext(__current,request);
             isDebug = context.isDebug;
