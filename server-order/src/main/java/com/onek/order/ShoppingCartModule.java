@@ -79,7 +79,7 @@ public class ShoppingCartModule {
 
     //远程调用
     private static final String QUERY_PROD_BASE =
-            " SELECT  ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
+            " SELECT ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
                     "sku.store-sku.freezestore inventory,ifnull(sku.spec,'') spec, sku.prodstatus,spu.spu,sku.limits,ifnull(brandname,'') brand,medpacknum,unit," +
                     "convert(mp/100,decimal(10,2)) mp, IFNULL(spu.busscope, 0) "
@@ -93,6 +93,13 @@ public class ShoppingCartModule {
     //远程调用
     private static final String QUERY_ONE_PROD_INV = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice from " +
             " {{?" + DSMConst.TD_PROD_SKU   + "}} where sku =? and cstatus & 1 = 0";
+
+    private static final String QUERY_ONE_PROD_INV_BUSSCOPE =
+            "SELECT store-freezestore inventory, limits, "
+            + " convert(vatp/100,decimal(10,2)) pdprice, IFNULL(spu.busscope, 0) "
+            + " from {{?" + DSMConst.TD_PROD_SKU + "}} sku, {{?" + DSMConst.TD_PROD_SPU + "}} spu "
+            + " where spu.cstatus & 1 = 0 AND sku.spu = spu.spu "
+            + " AND sku.sku =? and sku.cstatus & 1 = 0 ";
 
 
     //查询购物车商品数量
@@ -128,10 +135,33 @@ public class ShoppingCartModule {
         int compid = shopVO.getCompid();
 
         //远程调用
-        List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV, shopVO.getPdno());
+        List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV_BUSSCOPE, shopVO.getPdno());
         if(queryInvRet == null || queryInvRet.isEmpty()){
             return result.fail("查询商品失败");
         }
+
+        int prodScope = Integer.parseInt(queryInvRet.get(0)[3].toString());
+
+        if (prodScope > 0) {
+            String sql = " SELECT IFNULL(busscope, 0) "
+                    + " FROM {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} "
+                    + " WHERE cstatus&1 = 0 AND compid = ? ";
+
+            List<Object[]> queryResult = IceRemoteUtil.queryNative(sql, compid);
+
+            boolean outOfScope = true;
+            for (int i = 0; i < queryResult.size(); i++) {
+                if (prodScope == Integer.parseInt(queryResult.get(i)[0].toString())) {
+                    outOfScope = false;
+                    break;
+                }
+            }
+
+            if (outOfScope) {
+                return new Result().fail("非经营范围内的商品不可加入购物车！");
+            }
+        }
+
 
         int inventory = Integer.parseInt(queryInvRet.get(0)[0].toString());
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
