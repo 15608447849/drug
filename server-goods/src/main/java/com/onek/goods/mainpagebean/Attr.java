@@ -1,5 +1,6 @@
 package com.onek.goods.mainpagebean;
 
+import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.onek.goods.entities.ProdVO;
 
 import java.util.List;
@@ -15,4 +16,7 @@ public class Attr {
     public Object actObj;
     //商品列表
     public List<ProdVO> list;
+    //分页信息
+    public PageHolder page;
+
 }
