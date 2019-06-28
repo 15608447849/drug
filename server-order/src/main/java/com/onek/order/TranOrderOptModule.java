@@ -19,6 +19,7 @@ import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
 import com.onek.erp.OrderDockedWithERP;
+import com.onek.prop.AppProperties;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.*;
@@ -30,9 +31,13 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
 import util.*;
+import util.http.HttpRequestUtil;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.onek.order.PayModule.*;
 
@@ -44,6 +49,7 @@ import static com.onek.order.PayModule.*;
  * @time 2019/4/16 16:01
  **/
 public class TranOrderOptModule {
+    private static AppProperties appProperties = AppProperties.INSTANCE;
 
     public static final DelayedHandler<TranOrder> CANCEL_DELAYED =
             new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
@@ -839,6 +845,28 @@ public class TranOrderOptModule {
             int payamt = (int)list.get(0)[2];//订单支付金额
             int settstatus = (int)list.get(0)[3];//订单支付金额
             int ostatus = (int)list.get(0)[4];//订单状态
+
+            if (ostatus > 0 && settstatus == 1) {
+                // 已结算待发货状态时取消 需要通知ERP。
+                if (IceRemoteUtil.systemConfigOpen("ORDER_SYNC")) {
+                    try {
+                        int erpResult = cancelERPOrder(orderNo, cusno);
+
+                        if (erpResult < 0) {
+                            switch (erpResult) {
+                                case -4:
+                                    return new Result().fail("订单已出库，此单不允许取消！ Code:" + erpResult);
+                                default:
+                                    return new Result().fail("ERP处理异常，此单不允许取消！ Code:" + erpResult);
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return new Result().fail("调用ERP接口异常，此单不允许取消！");
+                    }
+                }
+            }
+
             String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, cstatus=cstatus|? "
                     + " where cstatus&1=0 and orderno=? and ostatus=?";
             if (ostatus == 0 && payway == 4) {//线下转账未付款未结算客服取消订单
@@ -870,7 +898,25 @@ public class TranOrderOptModule {
         }
         return result.fail("订单取消失败");
     }
-    
+
+    private int cancelERPOrder(String orderNo, int compid) throws IOException {
+        String url = appProperties.erpUrlPrev + "/orderCSDCancel";
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("orderno", orderNo);
+        jsonObject.put("compid", compid);
+
+        String result = HttpRequestUtil.postJson(url, jsonObject.toString());
+
+        LogUtil.getDefaultLogger().info("生成订单调用ERP接口结果返回： " + result);
+
+        if (!StringUtils.isEmpty(result)) {
+            return new JsonParser().parse(result).getAsJsonObject().get("code").getAsInt();
+        }
+
+        return -2;
+    }
+
     /* *
      * @description 线下订单相关操作
      * @params [orderNo, cusno, balamt, settstatus, result]
