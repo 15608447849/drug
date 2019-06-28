@@ -620,10 +620,6 @@ public class IceRemoteUtil {
         return  httpRequest.fileUploadUrl(url).getRespondContent();
     }
 
-    public static void main(String[] args) {
-        System.out.println(uploadGoodsImages(new File("C:\\Users\\user\\Desktop\\GOODS"),"http://114.116.149.145:9999/upload","一块医药直采平台"));
-    }
-
 
     /**
      * 记录新人有礼活动领取优惠券记录
@@ -781,6 +777,15 @@ public class IceRemoteUtil {
     }
 
 
+
+    public static String mainPageInfo(){
+        String json = ic.setServerAndRequest("goodsServer","MainPageModule","pageInfo").execute();
+        return json;
+    }
+
+    public static void main(String[] args) {
+        System.out.println(mainPageInfo());
+    }
 
 }
 

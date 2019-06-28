@@ -26,6 +26,8 @@ import util.StringUtils;
 
 import java.util.*;
 
+import static constant.DSMConst.TB_UI_PAGE;
+
 /**
  * @Author: leeping
  * @Date: 2019/6/28 9:40
@@ -51,6 +53,7 @@ public class MainPageModule {
      **/
     private static Attr dataSource(long bRuleCode, boolean isQuery, int pageIndex, int pageNumber, boolean isAnonymous){
         Attr attr = new Attr();
+        try{
         String ruleCodeStr = getCodeStr(bRuleCode);
         if (ruleCodeStr != null){
             List<Object[]> queryResult = BASE_DAO.queryNative(SELECT_ACT_SQL + " and a.brulecode in(" + ruleCodeStr + ")");
@@ -68,6 +71,9 @@ public class MainPageModule {
                     getActGoods(attr, pageIndex, pageNumber, isAnonymous);
                 }
             }
+        }
+        }catch (Exception e){
+            e.printStackTrace();
         }
         return attr;
     }
@@ -258,20 +264,24 @@ public class MainPageModule {
         }
         return new Result().fail("参数异常");
     }
+
     //获取页面全部元素信息
     private Map<String, List<UiElement>> allElement() {
         Map<String,List<UiElement>> map = new HashMap<>();
-        String sql = "SELECT uiname,uimodel,tempId,brulecode,imgPath,seq FROM tb_ui_page WHERE cstatus&1 = 0";
+        String sql = "SELECT uiname,uimodel,tempId,brulecode,imgPath,seq,route FROM {{?"+TB_UI_PAGE+"}} WHERE cstatus&1 = 0";
         List<Object[]> lines =  BaseDAO.getBaseDAO().queryNative(sql);
         if (lines.size() >0){
             for (Object[] rows : lines){
+                String imgPrev = FileServerUtils.fileDownloadPrev();
                 UiElement el = new UiElement();
                 el.name = StringUtils.obj2Str(rows[0]);
                 el.module = StringUtils.obj2Str(rows[1]);
                 el.template = StringUtils.checkObjectNull(rows[2],0);
                 el.brulecode = StringUtils.checkObjectNull(rows[3],0L);
                 el.img = StringUtils.obj2Str(rows[4]);
+                if (!StringUtils.isEmpty(el.img)) el.img = imgPrev + el.img;
                 el.index = StringUtils.checkObjectNull(rows[5],0);
+                el.route = StringUtils.obj2Str(rows[6]);
                 el.attr = dataSource(el.brulecode,false,0,0,false);
                 if (map.containsKey(el.module)){
                     map.get(el.module).add(el);
