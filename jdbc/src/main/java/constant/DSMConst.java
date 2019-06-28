@@ -85,6 +85,7 @@ public interface DSMConst extends UDAConst {
             {"v_sku_new_weeks"}, //67 SKU新增记录周销售统计报表
             {"v_sku_new_years"}, //68 SKU新增记录年销售统计报表
             {"tb_comp_bus_scope"}, //69企业经营范围表
+            {"tb_ui_page"}, //70主界面元素UI绑定表
 
     };
 
@@ -163,6 +164,7 @@ public interface DSMConst extends UDAConst {
     public final static int V_SKU_NEW_WEEKS = 67;
     public final static int V_SKU_NEW_YEARS = 68;
     public final static int TB_COMP_BUS_SCOPE = 69;
+    public final static int TB_UI_PAGE = 70;
 
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
@@ -182,17 +184,9 @@ public interface DSMConst extends UDAConst {
             1, 0, 0, 0, 0,//55-59
             0, 4, 4, 4, 4,//60-64
             0, 0, 0, 0, 0,//65-69
-            0, 0, 0, 0, 0,//70-74
+            2, 0, 0, 0, 0,//70-74
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0};
-
-
-
-    //索引0对应表名，从索引1开始对应这个表的列名，表名与列名必须同数据库一致！
-    public final static String[] TABLES_UNIQUE_KEY = {
-            "uid","0", "roleid","resourceid", "orderno", "0",
-            "0", "shipid", "cid"};
-
 
 }
