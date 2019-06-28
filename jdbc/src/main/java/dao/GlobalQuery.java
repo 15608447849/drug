@@ -31,9 +31,7 @@ public class GlobalQuery implements Callable<List<Object[]>>{
     public List<Object[]> call() throws Exception {
         for(int i = 0; i < BUSConst._MODNUM_EIGHT; i++){
             List<Object[]> results = baseDAO.queryNativeGlobal(year,dbs,i,nativeSQL,params);
-            LogUtil.getDefaultLogger().info("服务器编号："+dbs);
-            LogUtil.getDefaultLogger().info("数据库编号："+i);
-            LogUtil.getDefaultLogger().info("当前数据库记录条数"+results.size());
+            LogUtil.getDefaultLogger().debug("服务器编号："+dbs +" , 数据库编号："+i+" , 当前数据库记录条数"+results.size());
             resultList.addAll(results);
         }
         return resultList;

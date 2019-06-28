@@ -33,8 +33,6 @@ public class UserInterceptor implements IServerInterceptor {
             if (debug!=null) context.isDebug = true;
             UserPermission up = m.getAnnotation(UserPermission.class);
             
-            appContext.initialization();//初始化上下文用户信息
-
             /*判断接口是否对用户权限进行拦截 条件:
             * 1.调用方法没有注解一定拦截权限
             * 2.注解显示不忽略拦截,拦截权限(默认不忽略)

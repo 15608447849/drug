@@ -3,7 +3,6 @@ package com.onek.server.infimp;
 import Ice.Application;
 import Ice.Current;
 import Ice.Logger;
-import com.onek.entitys.Result;
 import com.onek.server.inf.IParam;
 import com.onek.server.inf.IRequest;
 
@@ -12,7 +11,7 @@ import com.onek.server.inf.IRequest;
  * @Author: leeping
  * @Date: 2019/3/8 14:32
  */
-public class IceContext {
+public abstract class IceContext {
 
     public String remoteIp;
     public int remotePoint;
@@ -39,17 +38,12 @@ public class IceContext {
         this.refCls = request.cls;
         this.refMed = request.method;
         this.param = request.param;
+        initialization();
     }
 
     /**初始化*/
-    public void initialization()  {
+    public abstract void initialization()  ;
 
-    }
-
-    //关于长连接 请求前端用户上线
-    protected void isAllowOnline(Result result){
-
-    }
     /**
      * 返回this
      */

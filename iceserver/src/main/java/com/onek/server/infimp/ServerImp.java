@@ -140,7 +140,7 @@ public class ServerImp extends IcePushMessageServerImps {
                     current,request
                     );
             if (obj instanceof IceContext) return (IceContext) obj;
-        return new IceContext(current,request);
+            throw new RuntimeException("当前系统没有实现全局Context");
     }
 
     //拦截
@@ -174,8 +174,8 @@ public class ServerImp extends IcePushMessageServerImps {
     @Override
     public String accessService(IRequest request, Current __current) {
         Object result;
-        String callInfo = "没有调用信息";
         boolean isDebug = false;
+        String callInfo = null;
         try {
             check(request);
             callInfo = printParam(request,__current);
@@ -187,7 +187,6 @@ public class ServerImp extends IcePushMessageServerImps {
             result = interceptor(context);
             //具体业务实现调用 返回值不限制
             if (result == null) result = callObjectMethod(context.refPkg,context.refCls,context.refMed,context);
-            if (result instanceof Result) context.isAllowOnline((Result) result);
         } catch (Exception e) {
             Throwable targetEx = e;
             if (e instanceof InvocationTargetException) {
