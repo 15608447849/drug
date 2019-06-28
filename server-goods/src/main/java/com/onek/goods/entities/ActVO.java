@@ -1,11 +1,6 @@
 package com.onek.goods.entities;
 
 
-import com.onek.comentities.LadderVO;
-import com.onek.comentities.TimeVO;
-
-import java.util.List;
-
 /**
  * @author 11842
  * @version 1.1.1
@@ -30,10 +25,6 @@ public class ActVO {
     private int brulecode;//活动规则码
 
     private String ruleName;//规则名称
-
-    private List<TimeVO> timeVOS;//活动场次
-
-    private List<LadderVO> ladderVOS;//活动阶梯
 
 
     public String getUnqid() {
@@ -148,19 +139,4 @@ public class ActVO {
         this.ruleName = ruleName;
     }
 
-    public List<TimeVO> getTimeVOS() {
-        return timeVOS;
-    }
-
-    public void setTimeVOS(List<TimeVO> timeVOS) {
-        this.timeVOS = timeVOS;
-    }
-
-    public List<LadderVO> getLadderVOS() {
-        return ladderVOS;
-    }
-
-    public void setLadderVOS(List<LadderVO> ladderVOS) {
-        this.ladderVOS = ladderVOS;
-    }
 }
