@@ -26,7 +26,7 @@ public class BackgroundProdManuModule {
             + " WHERE NOT EXISTS ("
                  + " SELECT *"
                  + " FROM {{?" + DSMConst.TD_PROD_MANU + "}} "
-                 + " WHERE manunameh = CRC32(?) AND manuname = ? ) ";
+                 + " WHERE (manunameh = CRC32(?) AND manuname = ? or manuno = ?) ) ";
 
     private static final String QUERY_PRODMANU_BASE =
             " SELECT oid, manuno, manuname, areac, address,"
@@ -68,7 +68,7 @@ public class BackgroundProdManuModule {
         int result = BASE_DAO.updateNative(INSERT_PRODMANU_BASE,
                         manuId, prodManuVO.getManuname(), prodManuVO.getManuname(),
                         prodManuVO.getAreac(), prodManuVO.getAddress(),
-                        prodManuVO.getManuname(), prodManuVO.getManuname());
+                        prodManuVO.getManuname(), prodManuVO.getManuname(), manuId);
 
         return new Result().success(result > 0 ? manuId : 0);
     }
