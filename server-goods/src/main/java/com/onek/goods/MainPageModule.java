@@ -2,10 +2,13 @@ package com.onek.goods;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.onek.annotation.UserPermission;
+import com.onek.calculate.auth.QualJudge;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
-import com.onek.goods.entities.ActVO;
 import com.onek.goods.entities.ProdVO;
 import com.onek.goods.mainpagebean.Attr;
 import com.onek.goods.mainpagebean.UiElement;
@@ -19,11 +22,10 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
-import util.GsonUtils;
-import util.MathUtil;
-import util.NumUtil;
-import util.StringUtils;
+import util.*;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.*;
 
 /**
@@ -35,42 +37,72 @@ public class MainPageModule {
 
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
 
-    private static final String SELECT_ACT_SQL = "select a.unqid,actname,incpriority,cpriority," +
-            "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-            "actcycle,sdate,edate,a.brulecode,rulename from {{?" + DSMConst.TD_PROM_ACT + "}} a "
-            + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.brulecode=b.brulecode"
-            + " where a.cstatus&1=0 and a.cstatus&2048>0 ";
+    private static final String SELECT_ACT_SQL = "select unqid,brulecode,qualcode,qualvalue from {{?"
+            + DSMConst.TD_PROM_ACT + "}}  where a.cstatus&1=0 and a.cstatus&2048>0 ";
+
+    private final static String COUNT_GROUP_NUM =
+            " SELECT COUNT(DISTINCT compid) "
+                    + " FROM {{?" + DSMConst.TD_PROM_GROUP + "}} g, "
+                    + " {{?" + DSMConst.TD_PROM_ACT + "}} a, "
+                    + " {{?" + DSMConst.TD_PROM_TIME + "}} t "
+                    + " WHERE g.cstatus&1 = 0 AND a.cstatus&1 = 0 AND t.cstatus&1 = 0 "
+                    + " AND g.actcode = a.unqid AND a.unqid = t.actcode "
+                    + " AND g.joindate BETWEEN a.sdate AND a.edate "
+                    + " AND g.jointime BETWEEN t.sdate AND t.edate "
+                    + " AND g.actcode = ?";
+
 
     @UserPermission(ignore = true)
     public void getDataSource(AppContext appContext) {
         dataSource(1, true, 1, 5, true);
     }
 
+    private static long getGroupCount(long actCode) {
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(COUNT_GROUP_NUM, actCode);
+        return Long.parseLong(String.valueOf(queryResult.get(0)[0]));
+    }
+
     /**
      * 通过活动码 获取 活动属性 及 商品信息
      **/
-    private static Attr dataSource(long bRuleCode, boolean isQuery, int pageIndex, int pageNumber, boolean isAnonymous){
+    private static Attr dataSource(long bRuleCodes, boolean isQuery, int pageIndex, int pageNumber, boolean isAnonymous){
         Attr attr = new Attr();
-        String ruleCodeStr = getCodeStr(bRuleCode);
+        String ruleCodeStr = getCodeStr(bRuleCodes);
         if (ruleCodeStr != null){
             List<Object[]> queryResult = BASE_DAO.queryNative(SELECT_ACT_SQL + " and a.brulecode in(" + ruleCodeStr + ")");
             if (queryResult == null || queryResult.isEmpty()) return attr;
-            ActVO[] activityVOS = new ActVO[queryResult.size()];
-            BASE_DAO.convToEntity(queryResult, activityVOS, ActVO.class);
-            for (ActVO actVO: activityVOS) {
-                long actCode = Long.parseLong(actVO.getUnqid());
-//                actVO.setTimeVOS(getTimes(actCode));
-//                actVO.setLadderVOS(getLadder(actCode));
-//                attr.actCode = actVO.getUnqid();
-                attr.actObj = actVO;
-                if (isQuery) {
-                    //获取活动下的商品
-                    getActGoods(attr, pageIndex, pageNumber, isAnonymous);
-                }
+            if (!QualJudge.hasPermission(compid, qualcode, qualvalue)) {
+                return attr;
             }
+            queryResult.forEach(qResult -> {
+                long actCode = Long.parseLong(String.valueOf(qResult[0]));
+                int bRuleCode = Integer.parseInt(String.valueOf(qResult[1]));
+                boolean isEffect = theActInProgress(actCode);
+                JsonObject actObj = new JsonObject();
+                if ((bRuleCode == 1113 || bRuleCode == 1133)  && isEffect) {//秒杀团购进行中
+                    String[] times = getTimesEff(actCode);
+                    actObj.addProperty("actcode", actCode);
+                    actObj.addProperty("sdate", times[0]);
+                    actObj.addProperty("edate", times[1]);
+                    actObj.addProperty("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+                    if (bRuleCode == 1133) {//团购
+                        actObj.addProperty("ladoffArray", ladOffArray);
+                        actObj.addProperty("currNums",getGroupCount(actCode));
+                    }
+                    attr.actObj = actObj;
+                } else {
+
+                }
+            });
+            if (isQuery) {
+                //获取活动下的商品
+                getActGoods(attr, pageIndex, pageNumber, isAnonymous);
+            }
+
         }
         return attr;
     }
+
 
     private static String getCodeStr(long ruleCode) {
         StringBuilder codeSB = new StringBuilder();
@@ -81,30 +113,6 @@ public class MainPageModule {
             return codeSB.toString().substring(0, codeSB.toString().length() - 1);
         }
         return null;
-    }
-
-    private static void getTimes(long actCode) {
-//        String sql = "select unqid,actcode,sdate,edate,cstatus from {{?" + DSMConst.TD_PROM_TIME
-//                + "}} where cstatus&1=0 and actcode=" + actCode;
-//        List<Object[]> queryResult = BASE_DAO.queryNative(sql);
-//        TimeVO[] timeVOS = new TimeVO[queryResult.size()];
-//        BASE_DAO.convToEntity(queryResult, timeVOS, TimeVO.class);
-//        return Arrays.asList(timeVOS);
-    }
-
-    private static void getLadder(long actCode) {
-//        String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer,a.cstatus from {{?" + DSMConst.TD_PROM_RELA
-//                + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid "
-//                + " where a.cstatus&1=0 and a.actcode=" + actCode;
-//        List<Object[]> queryResult = BASE_DAO.queryNative(selectSQL);
-//        LadderVO[] ladderVOS = new LadderVO[queryResult.size()];
-//        BASE_DAO.convToEntity(queryResult, ladderVOS, LadderVO.class);
-//        for (LadderVO ladderVO:ladderVOS) {
-//            ladderVO.setLadamt(ladderVO.getLadamt()/100);
-//            ladderVO.setOffer(ladderVO.getOffer()/100);
-//            ladderVO.setAssGiftVOS(getAssGift(ladderVO.getOffercode()));
-//        }
-//        return Arrays.asList(ladderVOS);
     }
 
 
