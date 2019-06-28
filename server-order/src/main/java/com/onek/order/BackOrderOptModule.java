@@ -24,7 +24,13 @@ public class BackOrderOptModule {
             + " apdesc, checker, refamt, asnum, checkern, compn, invoicetype "
             + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
             + " WHERE cstatus&1 = 0 ";
-
+    /**
+     * @接口摘要 查询售后列表
+     * @业务场景 查询售后列表
+     * @传参类型 arrays
+     * @传参列表 [订单号, sku, 售后单号, 企业码, 售后类型, 货物状态, 原因, 审核状态, 审核时间起, 审核时间止, 申请时间起, 申请时间止]
+     * @返回列表 code=200 data=结果信息
+     */
     public Result queryAsapp(AppContext appContext) {
         String[] params = appContext.param.arrays;
 

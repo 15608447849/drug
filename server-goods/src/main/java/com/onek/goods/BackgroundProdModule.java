@@ -141,18 +141,13 @@ public class BackgroundProdModule {
             " SELECT code, codename "
                     + " FROM {{?" + DSMConst.TB_SYSTEM_BUS_SCOPE + "}} "
                     + " WHERE cstatus&1 = 0 ";
-
     /**
-     * 功能: 商品上架
-     * 参数类型: arrays
-     * 参数集: [sku]
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 商品上架
+     * @业务场景 商品上架
+     * @传参类型 array
+     * @传参列表 [sku]
+     * @返回列表 code=200 data=结果信息
      */
-
-
     public Result onProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -195,15 +190,12 @@ public class BackgroundProdModule {
     }
 
     /**
-     * 功能: 商品下架
-     * 参数类型: arrays
-     * 参数集: [sku]
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 商品下架
+     * @业务场景 商品下架
+     * @传参类型 array
+     * @传参列表 [sku]
+     * @返回列表 code=200 data=结果信息
      */
-
     public Result offProd(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -253,15 +245,12 @@ public class BackgroundProdModule {
     }
 
     /**
-     * 功能: 商品更新
-     * 参数类型: json
-     * 参数集: BgProdVO的json
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 商品更新
+     * @业务场景 商品更新
+     * @传参类型 json
+     * @传参列表 com.onek.goods.entities.BgProdVO
+     * @返回列表 code=200 data=结果信息
      */
-
     public Result updateProd(AppContext appContext) {
         BgProdVO bgProdVO;
         try {
@@ -372,15 +361,12 @@ public class BackgroundProdModule {
         return new Result().success(returnResults);
     }
 
-
     /**
-     * 功能: 商品详情
-     * 参数类型: arrays
-     * 参数集: [sku]
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 商品详情
+     * @业务场景 商品详情
+     * @传参类型 arrays
+     * @传参列表 [sku]
+     * @返回列表 code=200 data=结果信息
      */
     @UserPermission(ignore = true)
     public Result getProd(AppContext appContext) {
@@ -465,13 +451,11 @@ public class BackgroundProdModule {
     }
 
     /**
-     * 功能: 获取SPU信息
-     * 参数类型: arrays
-     * 参数集: [spu]
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 获取SPU信息
+     * @业务场景 获取SPU信息
+     * @传参类型 arrays
+     * @传参列表 [spu]
+     * @返回列表 code=200 data=结果信息
      */
     public Result getSPUInfo(AppContext appContext) {
         String[] params = appContext.param.arrays;
@@ -501,14 +485,13 @@ public class BackgroundProdModule {
 
 
     /**
-     * 功能: 获取商品列表
-     * 参数类型: arrays
-     * 参数集: [商品名，厂家码，规格，准号，有效期，是否上架，spu，通用名]
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 获取商品列表
+     * @业务场景 获取商品列表
+     * @传参类型 arrays
+     * @传参列表 [商品名，厂家码，规格，准号，有效期，是否上架，spu，通用名]
+     * @返回列表 code=200 data=结果信息
      */
+
     public Result queryProds(AppContext appContext) {
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
@@ -696,14 +679,13 @@ public class BackgroundProdModule {
         return bgProdVO;
     }
 
+
     /**
-     * 功能: 商品新增
-     * 参数类型: json
-     * 参数集: BgProdVO的json
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 商品新增
+     * @业务场景 商品新增
+     * @传参类型 json
+     * @传参列表 com.onek.goods.entities.BgProdVO
+     * @返回列表 code=200 data=结果信息
      */
 
     public Result addProd(AppContext appContext) {
@@ -749,17 +731,14 @@ public class BackgroundProdModule {
         }
     }
 
+
     /**
-     * 功能: 获取经营范围
-     * 参数类型:
-     * 参数集:
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 获取经营范围
+     * @业务场景 获取经营范围
+     * @传参类型 -
+     * @传参列表 -
+     * @返回列表 code=200 data=结果信息
      */
-
-
     public Result getBusScopes(AppContext appContext) {
         List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_BUS_SCOPE_BASE);
 
@@ -770,6 +749,14 @@ public class BackgroundProdModule {
         return new Result().success(returnResults);
     }
 
+
+    /**
+     * @接口摘要 保存经营范围 (ERP专用)
+     * @业务场景 ERP保存经营范围
+     * @传参类型 json
+     * @传参列表 com.onek.goods.entities.BusScopeVo
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public Result saveBusScopeFromERP(AppContext appContext) {
         BusScopeVo busJson = JSON.parseObject(appContext.param.json, BusScopeVo.class);
@@ -1001,6 +988,13 @@ public class BackgroundProdModule {
         }
     }
 
+    /**
+     * @接口摘要 更新库存 (ERP专用)
+     * @业务场景 ERP更新库存
+     * @传参类型 json
+     * @传参列表 {erpcode:erp码, store:库存}
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public Result updateStoreFromERP(AppContext appContext) {
         JSONObject erpProd =
@@ -1050,7 +1044,13 @@ public class BackgroundProdModule {
         return new Result().success();
     }
 
-
+    /**
+     * @接口摘要 导入商品 (ERP专用)
+     * @业务场景 ERP导入商品
+     * @传参类型 json
+     * @传参列表 {erpcode:erp码, rx:处方码, unitName:单位名}
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public Result importProdFromERP(AppContext appContext) {
         JSONObject erpProd =
