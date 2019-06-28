@@ -2,7 +2,10 @@ package util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * 与数学运算有关的工具类。
@@ -169,4 +172,31 @@ public class MathUtil {
 
         return a1.divide(b1, 2, BigDecimal.ROUND_HALF_UP);
     }
+
+    /**
+     * 将一个数分隔成2的幂次之和
+     * @param num
+     * @return
+     */
+
+    public static List<Long> spiltNumToBit(long num) {
+        if (num <= 0) {
+            return Collections.emptyList();
+        }
+
+        List<Long> result = new ArrayList<>();
+
+        int power = 0;
+        while (num > 0) {
+            if ((num & 1) > 0) {
+                result.add(1L << power);
+            }
+
+            num >>= 1;
+            power++;
+        }
+
+        return result;
+    }
+
 }
