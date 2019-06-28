@@ -6,7 +6,6 @@ import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.server.infimp.IServerInterceptor;
 import com.onek.server.infimp.IceContext;
-import com.onek.server.infimp.IceDebug;
 
 import java.lang.reflect.Method;
 
@@ -20,19 +19,9 @@ public class UserInterceptor implements IServerInterceptor {
     //缓存列表
     @Override
     public Result interceptor( IceContext context) throws Exception {
-
             AppContext appContext =  context.convert();
-            String classpath = context.refPkg + "." +context.refCls;
-            String method = context.refMed;
-            String key = classpath + method;
-
-            Class<?> clazz = Class.forName(classpath);
-            Method m = clazz.getMethod(method, appContext.getClass());
-
-            IceDebug debug = m.getAnnotation(IceDebug.class);
-            if (debug!=null) context.isDebug = true;
+            Method m = context.method;
             UserPermission up = m.getAnnotation(UserPermission.class);
-            
             /*判断接口是否对用户权限进行拦截 条件:
             * 1.调用方法没有注解一定拦截权限
             * 2.注解显示不忽略拦截,拦截权限(默认不忽略)

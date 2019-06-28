@@ -17,7 +17,7 @@ public class AppContext extends IceContext {
 
     private UserSession userSession;
 
-    public AppContext(Current current, IRequest request)  {
+    public AppContext(Current current, IRequest request) throws Exception {
         super(current, request);
     }
 
