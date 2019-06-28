@@ -280,10 +280,10 @@ public class PayModule {
                 Object r;
                 if(flag == 0){
                     r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, afsano,
-                            "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+                            "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
                 }else{
                     r = FileServerUtils.getAppPayInfo(paytype, "一块医药", payamt, afsano,
-                            "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+                            "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
                 }
                 return new Result().success(r);
             }catch (Exception e){
