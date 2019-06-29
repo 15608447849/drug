@@ -1107,7 +1107,7 @@ public class BackgroundProdModule {
                 bgProd = JSON.toJavaObject(erpProd, BgProdVO.class);
                 bgProd.setRx(rx);
                 bgProd.setUnit(unit);
-                bgProd.setDetail("[{\"name\": \"功能主治\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"主要成分\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"用法用量\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"不良反应\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"id\": 50, \"name\": \"注意事项\", \"isShow\": true, \"content\": \"\", \"required\": false}, {\"name\": \"禁忌\", \"isShow\": true, \"content\": \"\", \"required\": false}]");
+                bgProd.setDetail("[{\"name\": \"功能主治\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"主要成分\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"用法用量\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"不良反应\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"id\": 50, \"name\": \"注意事项\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"禁忌\", \"isShow\": true, \"content\": \"/\", \"required\": false}]");
                 if (StringUtils.isEmpty(bgProd.getProdname())) {
                     bgProd.setProdname(bgProd.getPopname());
                 }
