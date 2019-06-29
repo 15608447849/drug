@@ -18,7 +18,6 @@ import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
-import com.onek.erp.OrderDockedWithERP;
 import com.onek.prop.AppProperties;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
@@ -1203,7 +1202,7 @@ public class TranOrderOptModule {
         }
         if (b) {
             //订单生成到ERP(异步执行)
-            OrderDockedWithERP.generationOrder2ERP(orderNo, compid);
+            OrderDockedWithERPModule.generationOrder2ERP(orderNo, compid);
         }
 
         return b ? new Result().success("操作成功") : new Result().fail("操作失败");

@@ -1,4 +1,4 @@
-package com.onek.erp;
+package com.onek.order;
 
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
@@ -24,7 +24,7 @@ import java.util.concurrent.*;
  * @description ERP订单对接处理(异步执行)
  * @time 2019/6/26 10:40
  **/
-public class OrderDockedWithERP {
+public class OrderDockedWithERPModule {
 
     private static AppProperties appProperties = AppProperties.INSTANCE;
 
