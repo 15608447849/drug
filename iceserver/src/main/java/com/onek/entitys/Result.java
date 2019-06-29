@@ -22,9 +22,6 @@ public class Result {
    public int code = CODE.FAIL;
    public String message = MESSAGE.FAIL;
 
-   //允许长连接
-   private boolean allowLc = false;
-
    public Object data ;
 
    private HashMap<String,Object> map;
@@ -108,11 +105,6 @@ public class Result {
          this.pageSize = page.pageSize;
          this.total = page.totalItems;
       }
-      return this;
-   }
-
-   public Result isAllowLongConnection(boolean flag){
-      this.allowLc = flag;
       return this;
    }
 }

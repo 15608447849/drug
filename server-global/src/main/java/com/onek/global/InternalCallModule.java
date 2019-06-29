@@ -37,7 +37,6 @@ public class InternalCallModule {
             SqlRemoteReq req = GsonUtils.jsonToJavaBean(json,SqlRemoteReq.class);
             assert req != null;
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(req.sql,req.objects);
-            context.logger.print("收到远程调用请求,queryNative结果: "+ lines.size());
             resp.setLines(lines);
         } catch (Exception e) {
             e.printStackTrace();

@@ -5,7 +5,6 @@ import Ice.Current;
 import Ice.Logger;
 import com.onek.entitys.Result;
 import com.onek.server.inf.IRequest;
-import objectref.ObjectPoolManager;
 import objectref.ObjectRefUtil;
 import org.hyrdpf.util.LogUtil;
 import util.GsonUtils;
@@ -84,7 +83,7 @@ public class ServerImp extends IcePushMessageServerImps {
     //打印参数
     private String printParam(IRequest request, Current __current) {
             try {
-                StringBuilder sb = new StringBuilder("->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n");
+                StringBuilder sb = new StringBuilder("->->->->->->->->->->->->->->->->->->->->->->->->->->-客户端接入信息>->->->->->->->->->->->->->->->->->->->->->->->->->->->->-\n");
                 if (__current != null) {
                     sb.append(__current.con.toString().split("\n")[1]);
                 }else{
@@ -123,14 +122,7 @@ public class ServerImp extends IcePushMessageServerImps {
         }
     }
 
-    //调用方法
-    private Object callObjectMethod(String packagePath, String classPath, String method, IceContext iApplicationContext) throws Exception{
-        Object obj = ObjectPoolManager.get().getObject(classPath); //对象池中获取对象
-        if (obj == null)  obj = ObjectRefUtil.createObject(packagePath+"."+classPath);//创建
-        Object methodResultValue =  ObjectRefUtil.callMethod(obj,method,new Class[]{contextCls},iApplicationContext);
-        ObjectPoolManager.get().putObject(classPath,obj);//使用完毕之后再放入池中,缓存对象
-        return methodResultValue;
-    }
+
 
     //产生平台上下文对象
     private IceContext generateContext(Current current, IRequest request) throws Exception {
@@ -140,7 +132,7 @@ public class ServerImp extends IcePushMessageServerImps {
                     current,request
                     );
             if (obj instanceof IceContext) return (IceContext) obj;
-        return new IceContext(current,request);
+            throw new RuntimeException("当前系统没有实现全局Context");
     }
 
     //拦截
@@ -161,8 +153,7 @@ public class ServerImp extends IcePushMessageServerImps {
         }else{
             resultString = GsonUtils.javaBeanToJson(result);
         }
-        if (isDebug) logger.print("↓↓↓↓ 返 ↓↓ 回 ↓↓ 值↓↓↓↓\n\t"
-                +resultString );
+        if (isDebug) logger.print("返  回  信  息 :\t " +resultString );
 
         //+"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-"
         return resultString;
@@ -174,20 +165,18 @@ public class ServerImp extends IcePushMessageServerImps {
     @Override
     public String accessService(IRequest request, Current __current) {
         Object result;
-        String callInfo = "没有调用信息";
         boolean isDebug = false;
+        String callInfo = null;
         try {
             check(request);
+            IceContext context = generateContext(__current,request);//产生context
             callInfo = printParam(request,__current);
-            logger.print(callInfo);
-            //产生context
-            IceContext context = generateContext(__current,request);
             isDebug = context.isDebug;
-            //拦截器
-            result = interceptor(context);
+            logger.print(callInfo);
+            context.initialization(); //初始化context
+            result = interceptor(context);//拦截器
             //具体业务实现调用 返回值不限制
-            if (result == null) result = callObjectMethod(context.refPkg,context.refCls,context.refMed,context);
-            if (result instanceof Result) context.isAllowOnline((Result) result);
+            if (result == null) result = context.call();
         } catch (Exception e) {
             Throwable targetEx = e;
             if (e instanceof InvocationTargetException) {
