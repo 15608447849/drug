@@ -21,10 +21,10 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.SearchHits;
 import util.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
 import java.util.*;
 
 import static constant.DSMConst.TB_UI_PAGE;
@@ -34,12 +34,14 @@ import static constant.DSMConst.TB_UI_PAGE;
  * @Date: 2019/6/28 9:40
  * @服务名 goodsServer
  */
+@SuppressWarnings({"unchecked"})
 public class MainPageModule {
 
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
 
-    private static final String SELECT_ACT_SQL = "select unqid,brulecode,qualcode,qualvalue from {{?"
-            + DSMConst.TD_PROM_ACT + "}}  where a.cstatus&1=0 and a.cstatus&2048>0 ";
+    private static final String SELECT_ACT_SQL = "select unqid,brulecode,qualcode,qualvalue,cpriority from {{?"
+            + DSMConst.TD_PROM_ACT + "}}  where cstatus&1=0 and cstatus&2048>0 "
+            + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
 
     private final static String COUNT_GROUP_NUM =
             " SELECT COUNT(DISTINCT compid) "
@@ -55,7 +57,12 @@ public class MainPageModule {
 
     @UserPermission(ignore = true)
     public void getDataSource(AppContext appContext) {
-        dataSource(1, true, 1, 5, true);
+        long sss = System.currentTimeMillis();
+        System.out.println();
+        long br = Long.parseLong(appContext.param.arrays[0]);
+        Attr attr = dataSource(br, true, appContext.param.pageIndex, 6, appContext);
+        System.out.println("213123bfkfbkjfajd------------" + GsonUtils.javaBeanToJson(attr));
+        System.out.println("times------------" + (System.currentTimeMillis() - sss));
     }
 
     private static long getGroupCount(long actCode) {
@@ -66,41 +73,31 @@ public class MainPageModule {
     /**
      * 通过活动码 获取 活动属性 及 商品信息
      **/
-    private static Attr dataSource(long bRuleCodes, boolean isQuery, int pageIndex, int pageNumber, boolean isAnonymous) {
+    private static Attr dataSource(long bRuleCodes, boolean isQuery, int pageIndex, int pageNumber, AppContext context) {
         Attr attr = new Attr();
+        Page page = new Page();
+        page.pageIndex = pageIndex <= 0 ? 1 : pageIndex;
+        page.pageSize = pageNumber <= 0 ? 100 : pageNumber;
         try {
-            String ruleCodeStr = getCodeStr(bRuleCodes);
-            if (ruleCodeStr != null) {
-                List<Object[]> queryResult = BASE_DAO.queryNative(SELECT_ACT_SQL + " and a.brulecode in(" + ruleCodeStr + ")");
-                if (queryResult == null || queryResult.isEmpty()) return attr;
-//                if (!QualJudge.hasPermission(compid, qualcode, qualvalue)) {
-//                    return attr;
-//                }
-                queryResult.forEach(qResult -> {
-                    long actCode = Long.parseLong(String.valueOf(qResult[0]));
-                    int bRuleCode = Integer.parseInt(String.valueOf(qResult[1]));
-                    boolean isEffect = theActInProgress(actCode);
-                    JsonObject actObj = new JsonObject();
-                    if ((bRuleCode == 1113 || bRuleCode == 1133) && isEffect) {//秒杀团购进行中
-                        String[] times = getTimesEff(actCode);
-                        actObj.addProperty("actcode", actCode);
-                        actObj.addProperty("sdate", times[0]);
-                        actObj.addProperty("edate", times[1]);
-                        actObj.addProperty("now", TimeUtils.date_yMd_Hms_2String(new Date()));
-                        if (bRuleCode == 1133) {//团购
-//                            actObj.addProperty("ladoffArray", ladOffArray);
-                            actObj.addProperty("currNums", getGroupCount(actCode));
-                        }
-                        attr.actObj = actObj;
-                    } else {
-
-                    }
-                });
+            if (bRuleCodes <= 0) {//非活动专区
                 if (isQuery) {
-                    //获取活动下的商品
-                    getActGoods(attr, pageIndex, pageNumber, isAnonymous);
+                    attr.list = getFloorByState(bRuleCodes, context.isAnonymous(), page);
+                    page.totalItems = attr.list != null ? attr.list.size() : 0;
+//                    PageHolder pageHolder = new PageHolder(page);
+//                    pageHolder.value = page;
+                    attr.page = new PageHolder(page);
                 }
-
+                return attr;
+            } else {//活动专区
+                String ruleCodeStr = getCodeStr(bRuleCodes);
+                String mmdd = TimeUtils.date_Md_2String(new Date());
+                if (ruleCodeStr != null) {
+                    String SQL = SELECT_ACT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE
+                            + "}} where cstatus&1=0 and rulecode in(" + ruleCodeStr + ")) ";
+                    List<Object[]> queryResult = BASE_DAO.queryNative(SQL, mmdd);
+                    if (queryResult == null || queryResult.isEmpty()) return null;
+                    combatActData(attr,queryResult,isQuery,context, page);
+                }
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -108,61 +105,67 @@ public class MainPageModule {
         return attr;
     }
 
-
     /* *
-     * @description 判断活动是否正在进行
-     * @params [actCode]
-     * @return boolean
+     * @description 活动数据组装
+     * @params [attr, queryResult, isQuery, context, page]
+     * @return void
      * @exception
      * @author 11842
-     * @time  2019/6/28 15:13
+     * @time  2019/6/29 14:40
      * @version 1.1.1
      **/
-    private static boolean theActInProgress(long actCode) {
-        String selectTypeSQL = "select acttype,actcycle from {{?" + DSMConst.TD_PROM_ACT + "}} "
-                + " where cstatus&1=0 and unqid=" + actCode;
-        List<Object[]> qTResult = BASE_DAO.queryNative(selectTypeSQL);
-        int acttype = (int)qTResult.get(0)[0];
-        long actcycle = (long)qTResult.get(0)[1];
-        String selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
-                + " left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
-                + " where a.cstatus&1=0 and a.unqid=" + actCode + " and a.sdate<=CURRENT_DATE"
-                + " and a.edate>=CURRENT_DATE and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
-        LocalDateTime localDateTime = LocalDateTime.now();
-        if (acttype == 1) {//每周
-            int dayOfWeek = localDateTime.getDayOfWeek().getValue();
-            int valW = BigDecimal.valueOf(Math.pow(2,dayOfWeek-1)).intValue();
-            if (((int)actcycle & valW) == 0) {
-                return false;
+    private static void combatActData(Attr attr, List<Object[]> queryResult, boolean isQuery, AppContext context,Page page){
+        String actCodeStr = null;
+        StringBuilder actCodeSB = new StringBuilder();
+        String[] otherArr = {String.valueOf(queryResult.get(0)[1]), "0"};
+        for (Object[] qResult : queryResult) {
+            int qualcode = Integer.parseInt(String.valueOf(qResult[2]));
+            long qualvalue = Integer.parseInt(String.valueOf(qResult[3]));
+            if (QualJudge.hasPermission(context.getUserSession().compId, qualcode, qualvalue)) {
+                long actCode = Long.parseLong(String.valueOf(qResult[0]));
+                int bRuleCode = Integer.parseInt(String.valueOf(qResult[1]));
+                actCodeSB.append(actCode).append(",");
+                JsonObject actObj = new JsonObject();
+                if (bRuleCode == 1113 || bRuleCode == 1133) {//秒杀团购进行中
+                    attr.actCode = actCode;
+                    String[] times = getTimesEff(actCode);
+                    actObj.addProperty("actcode", actCode);
+                    actObj.addProperty("sdate", times[0]);
+                    actObj.addProperty("edate", times[1]);
+                    actObj.addProperty("now", TimeUtils.date_yMd_Hms_2String(new Date()));
+                    if (bRuleCode == 1133) {//团购
+                        JsonArray ladOffArray = new JsonArray();
+                        double minOff = getMinOff(actCode, ladOffArray);
+                        otherArr = new String[]{String.valueOf(queryResult.get(0)[1]), minOff + ""};
+                        actObj.add("ladoffArray", ladOffArray);
+                        actObj.addProperty("currNums", getGroupCount(actCode));
+                    }
+                    attr.actObj = actObj;
+                } else {
+                    attr.actCode = 0;
+                }
             }
-        } else if (acttype == 2) {//每月
-            int dayOfMouth = localDateTime.getDayOfMonth();
-            int valM = BigDecimal.valueOf(Math.pow(2,dayOfMouth-1)).intValue();
-            if (((int)actcycle & valM) == 0) {
-                return false;
-            }
-        } else if (acttype == 3) {//每年
-            String actcycleStr = String.valueOf(actcycle);
-            String actDate =TimeUtils.getCurrentYear() + "-" + actcycleStr.substring(2,4)
-                    + "-" +  actcycleStr.substring(4,6);
-            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
-                    + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
-                    + "where a.cstatus&1=0 and a.unqid=" + actCode + " and CURRENT_DATE='" + actDate
-                    + "' and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
+
         }
-        List<Object[]> queryResult = BASE_DAO.queryNative(selectSQL);
-        return (long)queryResult.get(0)[0] > 0;
+        if (isQuery) {
+            PageHolder pageHolder = new PageHolder(page);
+            if (actCodeSB.toString().contains(",")) {
+                actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
+            }
+            //获取活动下的商品
+            getActGoods(attr, pageHolder, false, actCodeStr, otherArr);
+        }
     }
 
 
     private static String[] getTimesEff(long actCode) {
-        String selectSQL = "select sdate,edate from {{?"+ DSMConst.TD_PROM_TIME +"}} " +
+        String selectSQL = "select sdate,edate from {{?" + DSMConst.TD_PROM_TIME + "}} " +
                 "where cstatus&1=0 and actcode = ? and sdate<=CURRENT_TIME and edate>=CURRENT_TIME";
         List<Object[]> queryResult = BASE_DAO.queryNative(selectSQL, actCode);
         if (queryResult == null || queryResult.isEmpty()) {
             return new String[]{"00:00:00", "23:59:59"};
         }
-        return new String[]{String.valueOf(queryResult.get(0)[0]),String.valueOf(queryResult.get(0)[1])};
+        return new String[]{String.valueOf(queryResult.get(0)[0]), String.valueOf(queryResult.get(0)[1])};
 
     }
 
@@ -184,7 +187,7 @@ public class MainPageModule {
             for (Object[] objects : ladOffList) {
                 int amt = Integer.parseInt(objects[0].toString());
                 int num = Integer.parseInt(objects[1].toString());
-                double offer = MathUtil.exactDiv(Integer.parseInt( objects[2].toString()), 100.0).doubleValue();
+                double offer = MathUtil.exactDiv(Integer.parseInt(objects[2].toString()), 100.0).doubleValue();
                 if (i == 0) {
                     minOff = offer;
                 }
@@ -199,12 +202,13 @@ public class MainPageModule {
         return minOff;
     }
 
-
     private static String getCodeStr(long ruleCode) {
         StringBuilder codeSB = new StringBuilder();
         //拆
         List<Long> codeList = MathUtil.spiltNumToBit(ruleCode);
-        codeList.forEach(code -> codeSB.append(code).append(","));
+        codeList.forEach(code -> {
+            codeSB.append(code).append(",");
+        });
         if (codeSB.toString().contains(",")) {
             return codeSB.toString().substring(0, codeSB.toString().length() - 1);
         }
@@ -212,38 +216,45 @@ public class MainPageModule {
     }
 
 
-    private static void getActGoods(Attr attr, int pageIndex, int pageNumber, boolean isAnonymous) {
-        Page page = new Page();
-        page.pageIndex = pageIndex;
-        page.pageSize = pageNumber;
-        PageHolder pageHolder = new PageHolder(page);
+    private static void getActGoods(Attr attr, PageHolder pageHolder, boolean isAnonymous,
+                                    String actCodeStr, String[] otherArr) {
         List<ProdVO> prodVOList = new ArrayList<>();
         List<Long> skuList = new ArrayList<>();
-        String selectClassSQL = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
+        Map<Long, String[]> dataMap = new HashMap<>();
+        String selectClassSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode from {{?"
+                + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                 + DSMConst.TD_PROD_SKU + "}} s on s.sku LIKE CONCAT( '_', a.gcode, '%' ) where a.cstatus&1=0 "
-                + " and length( gcode ) < 14 AND gcode > 0 and actcode=? ";
-        String selectGoodsSQL = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
+                + " and length( gcode ) < 14 AND gcode > 0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+        String selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode from {{?"
+                + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                 + DSMConst.TD_PROD_SKU + "}} s on s.sku = gcode where a.cstatus&1=0 "
-                + " and length(gcode) = 14 and actcode=? ";
-        String selectAllSQL = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} a ,{{?"
-                + DSMConst.TD_PROD_SKU + "}} s where cstatus&1=0 "
-                + " and gcode=0 and actcode=? ";
-        String sqlBuilder = "SELECT sku FROM (" + selectClassSQL + " UNION ALL " + selectGoodsSQL +
-                " UNION ALL " + selectAllSQL + ") ua";
-        List<Object[]> queryResult = BASE_DAO.queryNative(pageHolder, page, sqlBuilder,
-                attr.actCode, attr.actCode, attr.actCode);
+                + " and length(gcode) = 14 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+        String selectAllSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode from {{?"
+                + DSMConst.TD_PROM_ASSDRUG + "}} a ,{{?"
+                + DSMConst.TD_PROD_SKU + "}} s where a.cstatus&1=0 "
+                + " and gcode=0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+        String sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode FROM ("
+                + selectClassSQL + " UNION ALL " + selectGoodsSQL +
+                " UNION ALL " + selectAllSQL + ") ua group by sku";
+        List<Object[]> queryResult = BASE_DAO.queryNativeC(pageHolder, pageHolder.value, sqlBuilder);
         if (queryResult == null || queryResult.isEmpty()) return;
-        queryResult.forEach(qResult -> skuList.add(Long.valueOf(String.valueOf(qResult[0]))));
+        queryResult.forEach(qResult -> {
+            skuList.add(Long.valueOf(String.valueOf(qResult[0])));
+            dataMap.put(Long.valueOf(String.valueOf(qResult[0])),
+                    new String[]{String.valueOf(qResult[1]), String.valueOf(qResult[2]),
+                            String.valueOf(qResult[3]), String.valueOf(qResult[4]), String.valueOf(qResult[5])});
+        });
         //ES数据组装
         SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
         if (response != null && response.getHits().totalHits > 0) {
-            assembleData(isAnonymous, response, prodVOList);
+            assembleData(isAnonymous, response, prodVOList, dataMap, otherArr);
         }
         attr.list = prodVOList;
         attr.page = pageHolder;
     }
 
-    private static void assembleData(boolean isAnonymous, SearchResponse response, List<ProdVO> prodList) {
+    private static void assembleData(boolean isAnonymous, SearchResponse response, List<ProdVO> prodList,
+                                     Map<Long, String[]> dataMap, String[] otherArr) {
         if (response == null || response.getHits().totalHits <= 0) {
             return;
         }
@@ -252,13 +263,13 @@ public class MainPageModule {
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
 
             HashMap detail = (HashMap) sourceMap.get("detail");
-            assembleObjectFromEs(prodVO, sourceMap, detail);
+            assembleObjectFromEs(prodVO, sourceMap, detail, dataMap, otherArr);
 
             prodList.add(prodVO);
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
             int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(ruleStatus);
-            if (isAnonymous) { // 有权限
+            if (!isAnonymous) { // 有权限
                 prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
                 prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
                 prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
@@ -276,9 +287,11 @@ public class MainPageModule {
         }
     }
 
-    private static void assembleObjectFromEs(ProdVO prodVO, Map<String, Object> sourceMap, HashMap detail) {
+    private static void assembleObjectFromEs(ProdVO prodVO, Map<String, Object> sourceMap, HashMap detail,
+                                             Map<Long, String[]> dataMap, String[] otherArr) {
         try {
             if (detail != null) {
+                long sku = detail.get("sku") != null ? Long.parseLong(detail.get("sku").toString()) : 0;
                 prodVO.setSpu(detail.get("spu") != null ? Long.parseLong(detail.get("spu").toString()) : 0);
                 prodVO.setPopname(detail.get("popname") != null ? detail.get("popname").toString() : "");
                 prodVO.setProdname(detail.get("prodname") != null ? detail.get("prodname").toString() : "");
@@ -288,7 +301,7 @@ public class MainPageModule {
                 prodVO.setManuNo(detail.get("manuNo") != null ? detail.get("manuNo").toString() : "");
                 prodVO.setManuName(detail.get("manuName") != null ? detail.get("manuName").toString() : "");
 
-                prodVO.setSku(detail.get("sku") != null ? Long.parseLong(detail.get("sku").toString()) : 0);
+                prodVO.setSku(sku);
                 prodVO.setVatp(detail.get("vatp") != null ? Double.parseDouble(detail.get("vatp").toString()) : 0);
                 prodVO.setMp(detail.get("mp") != null ? Double.parseDouble(detail.get("mp").toString()) : 0);
                 prodVO.setRrp(detail.get("rrp") != null ? Double.parseDouble(detail.get("rrp").toString()) : 0);
@@ -308,10 +321,102 @@ public class MainPageModule {
 
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
 
+
+                if (dataMap != null && otherArr != null) {
+                    int ruleCode = Integer.parseInt(otherArr[0]);
+                    double minOff = Double.parseDouble(otherArr[1]);
+                    //                int actstock =  dataMap.get(sku) != null ? Integer.parseInt(dataMap.get(sku)[0]): 0;
+                    int limitNum = dataMap.get(sku) != null ? Integer.parseInt(dataMap.get(sku)[1]) : 0;
+                    double price = dataMap.get(sku) != null ? Double.parseDouble(dataMap.get(sku)[2]) : 0;
+                    int cstatus = dataMap.get(sku) != null ? Integer.parseInt(dataMap.get(sku)[3]) : 0;
+                    long actCode = dataMap.get(sku) != null ? Long.parseLong(dataMap.get(sku)[4]) : 0;
+                    int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), actCode);
+                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), actCode);
+                    prodVO.setBuynum(initStock - surplusStock);
+                    prodVO.setStartnum(prodVO.getMedpacknum());
+                    prodVO.setActlimit(dataMap.containsKey(prodVO.getSku()) ? limitNum : 0);
+                    prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
+                    prodVO.setActinitstock(initStock);
+                    prodVO.setSurplusstock(surplusStock);
+                    if (ruleCode == 1113) {
+                        if ((cstatus & 512) > 0) {
+                            double rate = MathUtil.exactDiv(price, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                            double actprice = MathUtil.exactMul(prodVO.getVatp(), rate).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                            prodVO.setActprize(actprice);
+                        } else {
+                            prodVO.setActprize(NumUtil.div(price, 100));
+                        }
+                    } else if (ruleCode == 1133) {
+                        prodVO.setActprize(NumUtil.roundup(NumUtil.div(prodVO.getVatp() * minOff, 100)));
+                    } else {
+                        prodVO.setActprize(NumUtil.div(prodVO.getVatp(), 100));
+                    }
+                }
+
+                if (prodVO.getRulestatus() > 0) prodVO.setActprod(true);
+
             }
         } catch (Exception e) {
-//             e.printStackTrace();
+            e.printStackTrace();
         }
+    }
+
+
+    /* *
+     * @description 非活动专区数据组装
+     * @params [state, isAnonymous, page]
+     * @return java.util.List<com.onek.goods.entities.ProdVO>
+     * @exception
+     * @author 11842
+     * @time  2019/6/29 14:41
+     * @version 1.1.1
+     **/
+    public static List<ProdVO> getFloorByState(long state, boolean isAnonymous, Page page) {
+
+        Set<Integer> result = new HashSet<>();
+        if (state == -1) { // 新品
+            List<Integer> bb = new ArrayList() {{
+                add(128);
+                add(512);
+                add(1024);
+            }};
+            NumUtil.perComAdd(256, bb, result);
+            result.add(256);
+        } else if (state == -2) { // 为你精选
+            List<Integer> bb1 = new ArrayList() {{
+                add(218);
+                add(256);
+                add(1024);
+            }};
+            NumUtil.perComAdd(512, bb1, result);
+            result.add(512);
+        } else if (state == -3) { // 名方
+            List<Integer> bb1 = new ArrayList() {{
+                add(218);
+                add(256);
+                add(512);
+            }};
+            NumUtil.perComAdd(1024, bb1, result);
+            result.add(1024);
+        }
+
+        Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, result, "", 1, page);
+        return (List<ProdVO>) resultMap.get("prodList");
+    }
+
+    private static Map<String, Object> getFilterProdsCommon(boolean isAnonymous, Set<Integer> result, String keyword, int sort, Page page) {
+        Map<String, Object> resultMap = new HashMap<>();
+        SearchResponse response = ProdESUtil.searchProdWithStatusList(result, keyword, sort, page.pageIndex, page.pageSize);
+        List<ProdVO> prodList = new ArrayList<>();
+        if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
+            SearchHits hits = response.getHits();
+            if (hits.totalHits > 0) {
+                assembleData(isAnonymous, response, prodList, null, null);
+            }
+        }
+        resultMap.put("response", response);
+        resultMap.put("prodList", prodList);
+        return resultMap;
     }
 
 
@@ -350,22 +455,22 @@ public class MainPageModule {
         String json = context.param.json;
         Param param = GsonUtils.jsonToJavaBean(json, Param.class);
         if (param == null) {
-            Map<String, List<UiElement>> map = allElement();
+            Map<String, List<UiElement>> map = allElement(context);
             //获取全部UI元素数据
             return map.size() == 0 ? new Result().fail("没有主页元素信息,请配置界面") : new Result().success(map);
         }
         if (param.identity > 0 && param.limit > 0) {
             //获取指定活动的商品信息
-            return new Result().success(dataSource(param.identity, true, 1, param.limit, !context.isAnonymous()));
+            return new Result().success(dataSource(param.identity, true, 1, param.limit, context));
         }
         if (param.identity > 0 && param.limit == -1) {
-            return new Result().success(dataSource(param.identity, true, context.param.pageIndex, context.param.pageNumber, !context.isAnonymous()));
+            return new Result().success(dataSource(param.identity, true, context.param.pageIndex, context.param.pageNumber, context));
         }
         return new Result().fail("参数异常");
     }
 
     //获取页面全部元素信息
-    private Map<String, List<UiElement>> allElement() {
+    private Map<String, List<UiElement>> allElement(AppContext context) {
         Map<String, List<UiElement>> map = new HashMap<>();
         String sql = "SELECT uiname,uimodel,tempId,brulecode,imgPath,seq,route FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
@@ -381,7 +486,7 @@ public class MainPageModule {
                 if (!StringUtils.isEmpty(el.img)) el.img = imgPrev + el.img;
                 el.index = StringUtils.checkObjectNull(rows[5], 0);
                 el.route = StringUtils.obj2Str(rows[6]);
-                el.attr = dataSource(el.brulecode, false, 0, 0, false);
+                el.attr = dataSource(el.brulecode, false, 0, 0, context);
                 if (map.containsKey(el.module)) {
                     map.get(el.module).add(el);
                 } else {
