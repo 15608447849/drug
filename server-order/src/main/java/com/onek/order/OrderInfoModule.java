@@ -4,10 +4,12 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonParser;
 import com.onek.calculate.entity.Gift;
 import com.onek.context.AppContext;
 import com.onek.entity.*;
 import com.onek.entitys.Result;
+import com.onek.prop.AppProperties;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.member.MemberStore;
@@ -15,9 +17,12 @@ import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.*;
+import util.http.HttpRequestUtil;
 
+import java.io.IOException;
 import java.util.*;
 
 public class OrderInfoModule {
@@ -605,5 +610,73 @@ public class OrderInfoModule {
         return countCompInfo(appContext);
     }
 
+    /**
+     * @接口摘要 获取药监报告地址
+     * @业务场景 订单内查看药监报告
+     * @传参类型 json
+     * @传参列表 {sku:sku, compid:购买方企业码, orderno:订单号}
+     * @返回列表 code=200 data=结果信息
+     */
+    public Result getSOAPath(AppContext appContext) {
+        String url = AppProperties.INSTANCE.erpUrlPrev + "/getSOAPath";
+        String result;
+        JSONObject params = JSONObject.parseObject(appContext.param.json);
+        try {
+            if (params.getIntValue("compid") <= 0) {
+                return new Result().fail("参数错误");
+            }
+
+            String erpSKU = IceRemoteUtil.getErpSKU(params.getString("sku"));
+
+            if (erpSKU == null || "null".equalsIgnoreCase(erpSKU)) {
+                return new Result().fail("获取失败");
+            }
+
+            params.put("erpsku", erpSKU);
+
+            result = HttpRequestUtil.postJson(url, params.toJSONString());
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Result().fail("接口调用失败");
+        }
+
+        if (result != null && !result.isEmpty()) {
+            JSONObject jo = JSON.parseObject(result);
+
+            if (jo.getIntValue("code") == 200) {//同步失败处理
+                return new Result().success(jo.getString("path"));
+            }
+        }
+
+        return new Result().fail("获取失败");
+    }
+
+    /**
+     * @接口摘要 获取发票下载链接
+     * @业务场景 订单内查看发票
+     * @传参类型 json
+     * @传参列表 {compid:购买方企业码, orderno:订单号}
+     * @返回列表 code=200 data=结果信息
+     */
+    public Result getINVPath(AppContext appContext) {
+        String url = AppProperties.INSTANCE.erpUrlPrev + "/getINVPath";
+        String result;
+        try {
+            result = HttpRequestUtil.postJson(url, appContext.param.json);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return new Result().fail("获取失败");
+        }
+
+        if (result != null && !result.isEmpty()) {
+            JSONObject jo = JSON.parseObject(result);
+
+            if (jo.getIntValue("code") == 200) {//同步失败处理
+                return new Result().success(jo.getString("path"));
+            }
+        }
+
+        return new Result().fail("获取失败");
+    }
 
 }

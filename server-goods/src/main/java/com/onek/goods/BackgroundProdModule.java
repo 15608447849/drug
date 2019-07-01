@@ -1223,6 +1223,60 @@ public class BackgroundProdModule {
         return returnResults[0];
     }
 
+    /**
+     * @接口摘要 上架商品 (ERP专用)
+     * @业务场景 ERP上架商品
+     * @传参类型 json
+     * @传参列表 {erpcode:erp码}
+     * @返回列表 code=200 data=结果信息
+     */
+    @UserPermission(ignore = true)
+    public Result onProdFromERP(AppContext appContext) {
+        JSONObject params = JSONObject.parseObject(appContext.param.json);
+        String erpSKU = params.getString("erpsku");
+
+        if (StringUtils.isEmpty(erpSKU)) {
+            return new Result().fail("参数为空");
+        }
+
+        BgProdVO prod = getProdByERPCode(erpSKU);
+
+        if (prod == null) {
+            return new Result().fail("无此商品");
+        }
+
+        appContext.param.arrays = new String[] { String.valueOf(prod.getSku()) };
+
+        return onProd(appContext);
+    }
+
+    /**
+     * @接口摘要 下架商品 (ERP专用)
+     * @业务场景 ERP下架商品
+     * @传参类型 json
+     * @传参列表 {erpcode:erp码}
+     * @返回列表 code=200 data=结果信息
+     */
+    @UserPermission(ignore = true)
+    public Result offProdFromERP(AppContext appContext) {
+        JSONObject params = JSONObject.parseObject(appContext.param.json);
+        String erpSKU = params.getString("erpsku");
+
+        if (StringUtils.isEmpty(erpSKU)) {
+            return new Result().fail("参数为空");
+        }
+
+        BgProdVO prod = getProdByERPCode(erpSKU);
+
+        if (prod == null) {
+            return new Result().fail("无此商品");
+        }
+
+        appContext.param.arrays = new String[] { String.valueOf(prod.getSku()) };
+
+        return offProd(appContext);
+    }
+
 
     /**
      * 药品减价通知
