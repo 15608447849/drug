@@ -88,7 +88,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
             //忘记密码
             if (!StringUtils.isEmpty(oldPhone,smsCode,newPassword)){
                 String code = RedisUtil.getStringProvide().get("SMS"+oldPhone);
-                if (code.equals(smsCode)){
+                if (smsCode.equals(code)){
                     //检查密码正确性
                     if (validPassword(newPassword)){
                         flag = changUserByUid("upw='"+ EncryptUtils.encryption(newPassword)+"'","uphone='"+ oldPhone+"'");
