@@ -440,35 +440,6 @@ public class MainPageModule {
         int limit = -1;//楼层商品限制数
     }
 
-    /**
-     * @接口摘要 客户端首页展示
-     * @业务场景
-     * @传参类型 json
-     * @传参列表 {不带参数-获取首页楼层元素,
-     * identity=活动叠加码 + limit=楼层商品限制数 -> 根据指定活动码返回指定数量商品,
-     * identity + 分页信息 -根据指定活动码/分页信息 查询商品/活动属性 ;}
-     * @返回列表 MainPage/UiElement 对象
-     */
-    @IceDebug
-    @UserPermission(ignore = true)
-    public Result pageInfo(AppContext context) {
-        String json = context.param.json;
-        Param param = GsonUtils.jsonToJavaBean(json, Param.class);
-        if (param == null) {
-            Map<String, List<UiElement>> map = allElement(context);
-            //获取全部UI元素数据
-            return map.size() == 0 ? new Result().fail("没有主页元素信息,请配置界面") : new Result().success(map);
-        }
-        if (param.identity > 0 && param.limit > 0) {
-            //获取指定活动的商品信息
-            return new Result().success(dataSource(param.identity, true, 1, param.limit, context));
-        }
-        if (param.identity > 0 && param.limit == -1) {
-            return new Result().success(dataSource(param.identity, true, context.param.pageIndex, context.param.pageNumber, context));
-        }
-        return new Result().fail("参数异常");
-    }
-
     //获取页面全部元素信息
     private Map<String, List<UiElement>> allElement(AppContext context) {
         Map<String, List<UiElement>> map = new HashMap<>();
@@ -499,5 +470,35 @@ public class MainPageModule {
         return map;
     }
 
+
+    /**
+     * @接口摘要 客户端首页展示
+     * @业务场景
+     * @传参类型 json
+     * @传参列表 {不带参数-获取首页楼层元素,
+     * identity=活动叠加码 + limit=楼层商品限制数 -> 根据指定活动码返回指定数量商品,
+     * identity + 分页信息 -根据指定活动码/分页信息 查询商品/活动属性 ;}
+     * @返回列表 MainPage/UiElement 对象
+     */
+    @IceDebug
+    @UserPermission(ignore = true)
+    public Result pageInfo(AppContext context) {
+        String json = context.param.json;
+        Param param = GsonUtils.jsonToJavaBean(json, Param.class);
+        if (param == null || param.identity==0 && param.limit == -1) {
+            Map<String, List<UiElement>> map = allElement(context);
+            //获取全部UI元素数据
+            return map.size() == 0 ? new Result().fail("没有主页元素信息,请配置界面") : new Result().success(map);
+        }else{
+            if (param.limit > 0) {
+                //获取指定活动的商品信息
+                return new Result().success(dataSource(param.identity, true, 1, param.limit, context));
+            }
+            if (param.limit == -1) {
+                return new Result().success(dataSource(param.identity, true, context.param.pageIndex, context.param.pageNumber, context));
+            }
+        }
+        return new Result().fail("参数异常");
+    }
 
 }
