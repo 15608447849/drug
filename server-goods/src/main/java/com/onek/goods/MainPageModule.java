@@ -60,7 +60,7 @@ public class MainPageModule {
         long sss = System.currentTimeMillis();
         System.out.println();
         long br = Long.parseLong(appContext.param.arrays[0]);
-        Attr attr = dataSource(br, true, appContext.param.pageIndex, 6, appContext);
+        Attr attr = dataSource(br, false, appContext.param.pageIndex, 6, appContext);
         System.out.println("213123bfkfbkjfajd------------" + GsonUtils.javaBeanToJson(attr));
         System.out.println("times------------" + (System.currentTimeMillis() - sss));
     }
@@ -153,7 +153,7 @@ public class MainPageModule {
                 actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
             }
             //获取活动下的商品
-            getActGoods(attr, pageHolder, false, actCodeStr, otherArr);
+            getActGoods(attr, pageHolder, context.isAnonymous(), actCodeStr, otherArr);
         }
     }
 
