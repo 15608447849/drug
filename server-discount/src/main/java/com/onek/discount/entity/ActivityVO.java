@@ -30,8 +30,17 @@ public class ActivityVO implements IDelayedObject {
     private int preWay; // 活动优惠方式
     private int rulecomp;//优惠算法
     private int ckstatus;//审核状态
+    private int actstatus;//活动状态
 
-//    private List<AssDrugVO> assDrugVOS;//活动关联商品集合
+    public int getActstatus() {
+        return actstatus;
+    }
+
+    public void setActstatus(int actstatus) {
+        this.actstatus = actstatus;
+    }
+
+    //    private List<AssDrugVO> assDrugVOS;//活动关联商品集合
 
     private List<TimeVO> timeVOS;//活动场次
 

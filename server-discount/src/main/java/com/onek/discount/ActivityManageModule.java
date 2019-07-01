@@ -147,20 +147,26 @@ public class ActivityManageModule {
         page.pageIndex = pageIndex;
         PageHolder pageHolder = new PageHolder(page);
         StringBuilder sqlBuilder = new StringBuilder();
+
         String selectSQL = "select a.unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename,ckstatus from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename,(ckstatus & ~32) ckstatus," +
+                "case when fun_prom_cycle(unqid,acttype,actcycle,?,1) = 1 and " +
+                " a.cstatus & 2048 > 0 and a.cstatus & 1 = 0 and ckstatus & 32 = 0  then 1 " +
+                " when ckstatus & 32 > 0 then -1 else 0 end actstatus "+
+                " from {{?" + DSMConst.TD_PROM_ACT + "}} a "
                 + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.brulecode=b.brulecode"
                 + " where a.cstatus&1=0 ";
         sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject).append(" group by unqid desc");
-        List<Object[]> queryList = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
+        String day = TimeUtils.date_Md_2String(new Date());
+        List<Object[]> queryList = baseDao.queryNative(pageHolder, page, sqlBuilder.toString(),new Object[]{day});
         ActivityVO[] activityVOS = new ActivityVO[queryList.size()];
         baseDao.convToEntity(queryList, activityVOS, ActivityVO.class,new String[]{
                 "unqid","actname","incpriority","cpriority",
                 "qualcode","qualvalue","actdesc","excdiscount",
                 "acttype","actcycle","sdate","edate","brulecode",
-                "cstatus","ruleName","ckstatus"});
+                "cstatus","ruleName","ckstatus","actstatus"});
         return result.setQuery(activityVOS, pageHolder);
     }
 
@@ -601,7 +607,7 @@ public class ActivityManageModule {
         long actCode = jsonObject.get("unqid").getAsLong();
         String selectSQL = "select a.unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename,ckstatus from {{?" + DSMConst.TD_PROM_ACT + "}} a "
+                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename,(ckstatus & ~32) ckstatus from {{?" + DSMConst.TD_PROM_ACT + "}} a "
                 + " left join {{?" + DSMConst.TD_PROM_RULE +"}} b on a.brulecode=b.brulecode"
                 + " where a.cstatus&1=0 and a.unqid=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
@@ -1729,46 +1735,66 @@ public class ActivityManageModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         String actcode = jsonObject.get("actcode").getAsString();
+        //int ctype = jsonObject.get("ctype").getAsInt();
 
-        String  assDugSql = " select actcode,gcode,a.cstatus,actstock,limitnum,brulecode" +
+        String assDugSql = " select actcode,gcode,a.cstatus,actstock,limitnum,brulecode" +
                 " from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} a,{{?"+DSMConst.TD_PROM_ACT+"}} b "
                 + "where a.actcode = b.unqid and actcode=? ";
 
         String updateActSql = " UPDATE {{?" + DSMConst.TD_PROM_ASSDRUG + "}}" +
                 " SET actstock = 0  where actcode = ? ";
 
+        String updateActStatusSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}" +
+                " SET ckstatus = ckstatus | 32  where unqid = ? ";
 
-        List<Object[]> assRet = baseDao.queryNative(assDugSql, actcode);
 
-        if(assRet == null || assRet.isEmpty()){
-            return new Result().fail("该活动没有关联商品，无需停用！");
-        }
+        //更新审批状态
+//        String updateCkSql =
+//                " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}"
+//                        + " SET cstatus = cstatus & " + ~2080
+//                        + " ckstatus = 0 WHERE unqid = ? ";
 
-        List<GoodsVO> goodsVOList = new ArrayList<>();
-        int brulecode = Integer.parseInt(assRet.get(0)[5].toString());
-        for (Object[] objs : assRet){
-            GoodsVO goodsVO = new GoodsVO();
-            goodsVO.setActcode(objs[0].toString());
-            goodsVO.setGcode(Long.parseLong(objs[1].toString()));
-            goodsVO.setCstatus(Integer.parseInt(objs[2].toString()));
-            goodsVO.setActstock(Integer.parseInt(objs[3].toString()));
-            goodsVO.setLimitnum(Integer.parseInt(objs[4].toString()));
-            goodsVOList.add(goodsVO);
-        }
+      //  if(ctype == 0){
+            List<Object[]> assRet = baseDao.queryNative(assDugSql, actcode);
+            if(assRet == null || assRet.isEmpty()){
+                return new Result().fail("该活动没有关联商品，无需停用！");
+            }
 
-        long gcode = Long.parseLong(assRet.get(0)[0].toString());
-        int type = 0;
-        if(gcode == 0){
-            type = 1;
-        }
-        try{
-            noticeGoodsUpd(type, goodsVOList, goodsVOList,brulecode, Long.parseLong(actcode));
-            baseDao.updateNative(updateActSql,actcode);
-        }catch (Exception e){
-            LogUtil.getDefaultLogger().debug("停用更新商品活动库存缓存失败");
-            return new Result().fail("操作失败！");
-        }
-        return new Result().success("操作成功");
+            List<GoodsVO> goodsVOList = new ArrayList<>();
+            int brulecode = Integer.parseInt(assRet.get(0)[5].toString());
+            for (Object[] objs : assRet){
+                GoodsVO goodsVO = new GoodsVO();
+                goodsVO.setActcode(objs[0].toString());
+                goodsVO.setGcode(Long.parseLong(objs[1].toString()));
+                goodsVO.setCstatus(Integer.parseInt(objs[2].toString()));
+                goodsVO.setActstock(Integer.parseInt(objs[3].toString()));
+                goodsVO.setLimitnum(Integer.parseInt(objs[4].toString()));
+                goodsVOList.add(goodsVO);
+            }
+
+            long gcode = Long.parseLong(assRet.get(0)[0].toString());
+            int type = 0;
+            if(gcode == 0){
+                type = 1;
+            }
+            try{
+                noticeGoodsUpd(type, goodsVOList, goodsVOList,brulecode, Long.parseLong(actcode));
+                List<Object[]> parm = new ArrayList<>();
+                parm.add(new Object[]{actcode});
+                parm.add(new Object[]{actcode});
+                baseDao.updateTransNative(new String[]{updateActSql,updateActStatusSql},parm);
+               // baseDao.updateNative(updateActSql,actcode);
+            }catch (Exception e){
+                LogUtil.getDefaultLogger().debug("停用更新商品活动库存缓存失败");
+                return new Result().fail("操作失败！");
+            }
+            return new Result().success("操作成功");
+//        }else{
+//            int ret = baseDao.updateNative(updateCkSql, actcode);
+//            if(ret > 0){
+//                return new Result().success("操作成功");
+//            }
+//            return new Result().fail("操作失败！");
+//        }
     }
-
 }

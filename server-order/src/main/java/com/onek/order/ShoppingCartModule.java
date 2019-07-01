@@ -493,8 +493,7 @@ public class ShoppingCartModule {
      * @业务场景 订单交易成功后再次购买
      * @传参类型 JSONARRAY
      * @参数列表
-     *  pdno - 商品码
-     *  pnum - 商品数量
+     *  ids - 购物车ID（多个以逗号分割）
      *  compid - 买家企业码
      * @返回列表
      *  code - 200 成功/ -1 失败
