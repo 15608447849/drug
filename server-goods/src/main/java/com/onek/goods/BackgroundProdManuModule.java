@@ -26,7 +26,7 @@ public class BackgroundProdManuModule {
             + " WHERE NOT EXISTS ("
                  + " SELECT *"
                  + " FROM {{?" + DSMConst.TD_PROD_MANU + "}} "
-                 + " WHERE manunameh = CRC32(?) AND manuname = ? ) ";
+                 + " WHERE (manunameh = CRC32(?) AND manuname = ? or manuno = ?) ) ";
 
     private static final String QUERY_PRODMANU_BASE =
             " SELECT oid, manuno, manuname, areac, address,"
@@ -35,14 +35,11 @@ public class BackgroundProdManuModule {
             + " WHERE cstatus&1 = 0 ";
 
     /**
-     *
-     * 功能: 增加商品厂商
-     * 参数类型: json
-     * 参数集: ProdManuVO的json
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 增加商品厂商
+     * @业务场景 增加商品厂商
+     * @传参类型 json
+     * @传参列表 com.onek.goods.entities.ProdManuVO
+     * @返回列表 code=200 data=结果信息
      */
     @UserPermission(ignore = true)
     public Result addProdManu(AppContext appContext) {
@@ -68,7 +65,7 @@ public class BackgroundProdManuModule {
         int result = BASE_DAO.updateNative(INSERT_PRODMANU_BASE,
                         manuId, prodManuVO.getManuname(), prodManuVO.getManuname(),
                         prodManuVO.getAreac(), prodManuVO.getAddress(),
-                        prodManuVO.getManuname(), prodManuVO.getManuname());
+                        prodManuVO.getManuname(), prodManuVO.getManuname(), manuId);
 
         return new Result().success(result > 0 ? manuId : 0);
     }
@@ -86,16 +83,12 @@ public class BackgroundProdManuModule {
     }
 
     /**
-     *
-     * 功能: 查询产品厂商
-     * 参数类型: arrays
-     * 参数集: [厂商名]
-     * 返回值: Result
-     * 详情说明:
-     * 日期: 2019/6/11 14:12
-     * 作者: Helena Rubinstein
+     * @接口摘要 查询产品厂商
+     * @业务场景 查询产品厂商
+     * @传参类型 arrays
+     * @传参列表 [厂商名]
+     * @返回列表 code=200 data=结果信息
      */
-
     public Result queryProdManu(AppContext appContext) {
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;

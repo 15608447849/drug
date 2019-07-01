@@ -108,7 +108,7 @@ public class PayModule {
      * @接口摘要 显示付款信息
      * @业务场景
      * @传参类型 json
-     * @参数列表 orderno=订单号 compid=企业码
+     * @传参列表 orderno=订单号 compid=企业码
      * @返回列表 code=200 date=结果信息 date.payamt=付款金额 date.odate=订单日期
      */
     @UserPermission(ignore = true)
@@ -159,7 +159,7 @@ public class PayModule {
      * @接口摘要 显示运费付款信息
      * @业务场景
      * @传参类型 json
-     * @参数列表 orderno=订单号 compid=企业码
+     * @传参列表 orderno=订单号 compid=企业码
      * @返回列表 code=200 date=结果信息 date.payamt=运费金额
      */
     @UserPermission(ignore = true)
@@ -197,7 +197,7 @@ public class PayModule {
      * @接口摘要 订单预支付
      * @业务场景
      * @传参类型 json
-     * @参数列表 orderno=订单号 paytype=付款方式 flag 客户端类型
+     * @传参列表 orderno=订单号 paytype=付款方式 flag 客户端类型
      * @返回列表 code=200 date=付款二维码地址(web),可支付的JSON信息(app)
      */
     public Result prePay(AppContext appContext){
@@ -245,7 +245,7 @@ public class PayModule {
      * @接口摘要 运费预支付
      * @业务场景
      * @传参类型 json
-     * @参数列表 rderno=订单号 afsano=售后单号 paytype=付款方式 flag 客户端类型
+     * @传参列表 rderno=订单号 afsano=售后单号 paytype=付款方式 flag 客户端类型
      * @返回列表 ccode=200 date=付款二维码地址(web),可支付的JSON信息(app)
      */
     public Result preFeePay(AppContext appContext){
@@ -279,10 +279,10 @@ public class PayModule {
                 Object r;
                 if(flag == 0){
                     r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, afsano,
-                            "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+                            "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
                 }else{
                     r = FileServerUtils.getAppPayInfo(paytype, "一块医药", payamt, afsano,
-                            "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
+                            "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
                 }
                 return new Result().success(r);
             }catch (Exception e){
@@ -301,7 +301,7 @@ public class PayModule {
      * @接口摘要 订单支付回调
      * @业务场景 支付宝、微信支付完后回调此接口
      * @传参类型 array
-     * @参数列表 array[0]=交易流水号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
+     * @传参列表 array[0]=交易流水号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
      *            array[5]=付款金额 array[6]=企业码
      * @返回列表 ccode=200
      */
@@ -351,7 +351,7 @@ public class PayModule {
         if(result){
             //订单生成到ERP(异步执行)
             LogUtil.getDefaultLogger().info("订单开始生成到ERP-------- print by cyq");
-//            OrderDockedWithERP.generationOrder2ERP(orderno, compid);
+            OrderDockedWithERPModule.generationOrder2ERP(orderno, compid);
 
             return new Result().success(null);
         }else{
@@ -364,7 +364,7 @@ public class PayModule {
      * @接口摘要 运费支付回调
      * @业务场景 支付宝、微信支付完后回调此接口
      * @传参类型 array
-     * @参数列表 array[0]=交易流水号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
+     * @传参列表 array[0]=交易流水号 array[1]=支付方式  array[3]=第三方支付流水号 array[4]=交易状态
      *            array[5]=付款金额 array[6]=企业码
      * @返回列表 ccode=200
      */
@@ -418,7 +418,7 @@ public class PayModule {
      * @接口摘要 获取支付结果
      * @业务场景 支付宝、微信支付完后回调此接口
      * @传参类型 json
-     * @参数列表 code=200 date=结果信息 date.payamt=运费金额 date.odate=订单日期
+     * @传参列表 code=200 date=结果信息 date.payamt=运费金额 date.odate=订单日期
      *             date.otime=订单时间 date.pdamt=优惠金额 date.freight=运费
      *             date.coupamt=优惠券金额 date.distamt= date.balamt=余额抵扣
      *             date.consignee=收货人 date.contact=收货联系方式 date.paystatus=支付状态
@@ -492,7 +492,7 @@ public class PayModule {
      * @接口摘要 获取运费支付结果
      * @业务场景 支付宝、微信支付完后回调此接口
      * @传参类型 json
-     * @参数列表 orderno=订单号 compid=企业码
+     * @传参列表 orderno=订单号 compid=企业码
      * @返回列表 code=200 date=结果信息 date.paystatus=支付状态
      */
     @UserPermission(ignore = true)

@@ -1,7 +1,6 @@
 package com.onek.context;
 
 import Ice.Current;
-import com.onek.entitys.Result;
 import com.onek.server.inf.IRequest;
 import com.onek.server.infimp.IceContext;
 import com.onek.util.IceRemoteUtil;
@@ -18,7 +17,7 @@ public class AppContext extends IceContext {
 
     private UserSession userSession;
 
-    public AppContext(Current current, IRequest request)  {
+    public AppContext(Current current, IRequest request) throws Exception {
         super(current, request);
     }
 
@@ -28,14 +27,14 @@ public class AppContext extends IceContext {
 
             //加载用户信息
             if (StringUtils.isEmpty(param.token)) {
-                logger.print("没有token信息,不加载用户信息,匿名访问");
+//                logger.print("没有token信息,不加载用户信息,匿名访问");
                 return;
             }
             String key = genUKey();
             String json = RedisUtil.getStringProvide().get(key); //获取用户信息
             userSession = GsonUtils.jsonToJavaBean(json, UserSession.class);
             if (userSession == null) {
-                logger.print("KEY : "+ key +" 找不到缓存的用户信息 ");
+//                logger.print("KEY : "+ key +" 找不到缓存的用户信息 ");
                 return;
             };
             if (userSession.compId > 0) {
@@ -127,12 +126,6 @@ public class AppContext extends IceContext {
         return userSession.comp.authenticationStatus != 256;//认证成功
     }
 
-    @Override
-    protected void isAllowOnline( Result result) {
-        if (userSession!=null && userSession.compId > 0 ){
-            result.isAllowLongConnection(true);
-        }
-    }
 
 
 }

@@ -3,16 +3,19 @@ package com.onek.server.infimp;
 import Ice.Application;
 import Ice.Current;
 import Ice.Logger;
-import com.onek.entitys.Result;
 import com.onek.server.inf.IParam;
 import com.onek.server.inf.IRequest;
+import objectref.ObjectPoolManager;
+import objectref.ObjectRefUtil;
+
+import java.lang.reflect.Method;
 
 
 /**
  * @Author: leeping
  * @Date: 2019/3/8 14:32
  */
-public class IceContext {
+public abstract class IceContext {
 
     public String remoteIp;
     public int remotePoint;
@@ -23,10 +26,11 @@ public class IceContext {
     public String refCls;
     public String refMed;
     public IParam param;
+    public Class callerCls;
+    public Method method;
     public boolean isDebug;
 
-
-    public IceContext(Current current, IRequest request)  {
+    public IceContext(Current current, IRequest request) throws Exception  {
         if (current!=null){
             this.serverName = current.id.name;
             this.current = current;
@@ -39,23 +43,55 @@ public class IceContext {
         this.refCls = request.cls;
         this.refMed = request.method;
         this.param = request.param;
+        String classPath = this.refPkg + "."+this.refCls;
+        this.callerCls = Class.forName(classPath);
+        this.method = callerCls.getMethod(refMed,this.getClass());
+        IceDebug debug = method.getAnnotation(IceDebug.class);
+        if (debug!=null) this.isDebug = true;
     }
+
+    private static Object getCaller(Class cls) throws Exception {
+        Object obj = ObjectPoolManager.get().getObject(cls.getName()); //对象池中获取对象
+        if (obj == null)  obj = ObjectRefUtil.createObject(cls,null);//创建
+        return obj;
+    }
+
+    private static void putCaller(Object obj){
+        ObjectPoolManager.get().putObject(obj.getClass().getName(),obj);//使用完毕之后再放入池中,缓存对象
+    }
+
+
+////    //    //调用方法
+////    private Object getCallClass(String packagePath, String classPath) throws Exception{
+////        Object obj = ObjectPoolManager.get().getObject(classPath); //对象池中获取对象
+////        if (obj == null)  obj = ObjectRefUtil.createObject(packagePath+"."+classPath);//创建
+//        Object methodResultValue =  ObjectRefUtil.callMethod(obj,method,new Class[]{contextCls},iApplicationContext);
+////        ObjectPoolManager.get().putObject(classPath,obj);//使用完毕之后再放入池中,缓存对象
+////        return methodResultValue;
+////    }
 
     /**初始化*/
-    public void initialization()  {
+    public abstract void initialization()  ;
 
+    /**调用具体方法*/
+    public Object call() throws Exception{
+        Object value = null;
+        Object caller = getCaller(callerCls);
+        try{
+            value = ObjectRefUtil.callMethod(caller,method,new Class[]{this.getClass()},this);
+        }catch (Exception e){
+            throw e;
+        }finally {
+            putCaller(caller);
+        }
+        return value;
     }
 
-    //关于长连接 请求前端用户上线
-    protected void isAllowOnline(Result result){
-
-    }
     /**
      * 返回this
      */
     public <T extends IceContext> T convert(){
         return (T)this;
     }
-
 
 }

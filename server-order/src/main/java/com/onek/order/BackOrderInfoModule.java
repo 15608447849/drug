@@ -32,6 +32,13 @@ public class BackOrderInfoModule {
                     + " FROM " + FROM_BK_ORDER
                     + " WHERE 1=1 ";
 
+    /**
+     * @接口摘要 查询后台订单列表
+     * @业务场景 查询后台订单列表
+     * @传参类型 arrays
+     * @传参列表 [卖家码，买家码，订单状态，订单号，订单时间起，订单时间止]
+     * @返回列表 code=200 data=结果信息
+     */
     public Result queryOrders(AppContext appContext) {
         String[] params = appContext.param.arrays;
 

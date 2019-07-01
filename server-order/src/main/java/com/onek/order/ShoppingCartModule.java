@@ -79,7 +79,7 @@ public class ShoppingCartModule {
 
     //远程调用
     private static final String QUERY_PROD_BASE =
-            " SELECT  ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
+            " SELECT ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
                     "sku.store-sku.freezestore inventory,ifnull(sku.spec,'') spec, sku.prodstatus,spu.spu,sku.limits,ifnull(brandname,'') brand,medpacknum,unit," +
                     "convert(mp/100,decimal(10,2)) mp, IFNULL(spu.busscope, 0) "
@@ -93,6 +93,13 @@ public class ShoppingCartModule {
     //远程调用
     private static final String QUERY_ONE_PROD_INV = "SELECT store-freezestore inventory,limits,convert(vatp/100,decimal(10,2)) pdprice from " +
             " {{?" + DSMConst.TD_PROD_SKU   + "}} where sku =? and cstatus & 1 = 0";
+
+    private static final String QUERY_ONE_PROD_INV_BUSSCOPE =
+            "SELECT store-freezestore inventory, limits, "
+            + " convert(vatp/100,decimal(10,2)) pdprice, IFNULL(spu.busscope, 0) "
+            + " from {{?" + DSMConst.TD_PROD_SKU + "}} sku, {{?" + DSMConst.TD_PROD_SPU + "}} spu "
+            + " where spu.cstatus & 1 = 0 AND sku.spu = spu.spu "
+            + " AND sku.sku =? and sku.cstatus & 1 = 0 ";
 
 
     //查询购物车商品数量
@@ -128,10 +135,33 @@ public class ShoppingCartModule {
         int compid = shopVO.getCompid();
 
         //远程调用
-        List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV, shopVO.getPdno());
+        List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV_BUSSCOPE, shopVO.getPdno());
         if(queryInvRet == null || queryInvRet.isEmpty()){
             return result.fail("查询商品失败");
         }
+
+        int prodScope = Integer.parseInt(queryInvRet.get(0)[3].toString());
+
+        if (prodScope > 0) {
+            String sql = " SELECT IFNULL(busscope, 0) "
+                    + " FROM {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} "
+                    + " WHERE cstatus&1 = 0 AND compid = ? ";
+
+            List<Object[]> queryResult = IceRemoteUtil.queryNative(sql, compid);
+
+            boolean outOfScope = true;
+            for (int i = 0; i < queryResult.size(); i++) {
+                if (prodScope == Integer.parseInt(queryResult.get(i)[0].toString())) {
+                    outOfScope = false;
+                    break;
+                }
+            }
+
+            if (outOfScope) {
+                return new Result().fail("非经营范围内的商品不可加入购物车！");
+            }
+        }
+
 
         int inventory = Integer.parseInt(queryInvRet.get(0)[0].toString());
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
@@ -492,8 +522,9 @@ public class ShoppingCartModule {
      * @接口摘要 清空购物车
      * @业务场景 订单交易成功后再次购买
      * @传参类型 JSONARRAY
-     * @参数列表
-     *  ids - 购物车ID（多个以逗号分割）
+     * @传参列表
+     *  pdno - 商品码
+     *  pnum - 商品数量
      *  compid - 买家企业码
      * @返回列表
      *  code - 200 成功/ -1 失败
@@ -951,7 +982,7 @@ public class ShoppingCartModule {
      * @接口摘要 查询结算购物车列表
      * @业务场景 下单商品列表展示
      * @传参类型 json
-     * @参数列表 JsonArray
+     * @传参列表 JsonArray
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码
@@ -1051,11 +1082,11 @@ public class ShoppingCartModule {
             return results;
         }
 
-        String sql = " SELECT busscope "
+        String sql = " SELECT IFNULL(busscope, 0) "
                 + " FROM {{?" + DSMConst.TB_COMP_BUS_SCOPE + "}} "
                 + " WHERE cstatus&1 = 0 AND compid = ? ";
 
-        List<Object[]> queryResult = baseDao.queryNative(sql, compid);
+        List<Object[]> queryResult = IceRemoteUtil.queryNative(sql, compid);
 
         int[] scopes = new int[queryResult.size()];
 
@@ -1085,7 +1116,7 @@ public class ShoppingCartModule {
      * @接口摘要 获取购物车优惠提示
      * @业务场景 购物车优惠显示
      * @传参类型 json
-     * @参数列表 JsonArray
+     * @传参列表 JsonArray
      *  pdno - 商品码
      *  pnum - 商品数量
      *  compid - 买家企业码

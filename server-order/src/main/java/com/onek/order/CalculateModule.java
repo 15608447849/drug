@@ -21,6 +21,14 @@ import java.util.Date;
 import java.util.List;
 
 public class CalculateModule {
+
+    /**
+     * @接口摘要 获取商品参与活动
+     * @业务场景 获取商品参与活动
+     * @传参类型 arrays
+     * @传参列表 [sku]
+     * @返回列表 code=200 data=结果信息
+     */
     public Result getActivitiesBySKU(AppContext appContext) {
         String[] arrays = appContext.param.arrays;
 
@@ -67,6 +75,14 @@ public class CalculateModule {
         return new Result().success(jsonObject);
     }
 
+
+    /**
+     * @接口摘要 获取活动商品具体详情
+     * @业务场景 获取活动商品具体详情
+     * @传参类型 arrays
+     * @传参列表 [sku, 活动码]
+     * @返回列表 code=200 data=结果信息
+     */
     public Result getGoodsActInfo(AppContext appContext) {
         String[] arrays = appContext.param.arrays;
 
@@ -143,6 +159,13 @@ public class CalculateModule {
         return new Result().success(jsonObject);
     }
 
+    /**
+     * @接口摘要 获取商品参与活动阶梯
+     * @业务场景 获取商品参与活动阶梯
+     * @传参类型 arrays
+     * @传参列表 [sku]
+     * @返回列表 code=200 data=结果信息
+     */
     public Result getLadoff(AppContext appContext) {
         int compid = appContext.getUserSession().compId;
 

@@ -34,7 +34,7 @@ public class CommonModule {
      * @接口摘要 查询赠品信息
      * @业务场景 下拉查询赠品
      * @传参类型
-     * @参数列表
+     * @传参列表
      * @返回列表 PromGiftVO对象数组
      */
     @UserPermission(ignore = true)
@@ -47,6 +47,13 @@ public class CommonModule {
         return result.success(promGiftVOS);
     }
 
+    /**
+     * @接口摘要 保存赠品
+     * @业务场景 ERP专用
+     * @传参类型 json
+     * @传参列表 com.onek.discount.entity.PromGiftVO
+     * @返回列表 200 成功 -1 失败
+     */
     @UserPermission(ignore = true)
     public Result saveGift(AppContext appContext) {
         PromGiftVO gift = JSON.parseObject(appContext.param.json, PromGiftVO.class);
@@ -90,7 +97,7 @@ public class CommonModule {
      * @接口摘要 查询活动规则
      * @业务场景 下拉查询
      * @传参类型 json
-     * @参数列表 {type 活动规则码}
+     * @传参列表 {type 活动规则码}
      * @返回列表 RulesVO对象数组
      */
     @UserPermission(ignore = true)
@@ -117,7 +124,7 @@ public class CommonModule {
      * @接口摘要 查询优惠券规则
      * @业务场景 下拉查询
      * @传参类型 json
-     * @参数列表 {couptype 优惠券规则码}
+     * @传参列表 {couptype 优惠券规则码}
      * @返回列表 RulesVO对象数组
      */
     @UserPermission(ignore = true)
@@ -146,7 +153,7 @@ public class CommonModule {
      * @接口摘要 查询活动优惠券规则
      * @业务场景 下拉查询
      * @传参类型
-     * @参数列表
+     * @传参列表
      * @返回列表 RulesVO对象数组
      */
     @UserPermission(ignore = true)
@@ -169,7 +176,7 @@ public class CommonModule {
      * @接口摘要 查询规则
      * @业务场景 下拉查询
      * @传参类型 json
-     * @参数列表 {type 满减还是满赠}
+     * @传参列表 {type 满减还是满赠}
      * @返回列表 RulesVO对象数组
      */
     @UserPermission(ignore = true)
@@ -192,7 +199,7 @@ public class CommonModule {
      * @接口摘要 参加资格 已弃用
      * @业务场景 下拉查询
      * @传参类型
-     * @参数列表
+     * @传参列表
      * @返回列表
      */
     public Result queryQual(AppContext appContext) {

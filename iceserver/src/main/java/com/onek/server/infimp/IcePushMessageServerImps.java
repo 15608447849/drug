@@ -178,10 +178,6 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
         return false;
     }
 
-
-
-
-
     @Override
     public long storeMessageToDb(IPMessage message) {
         if (iPushMessageStore!=null){
@@ -226,7 +222,6 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                 try {
                     IPMessage message = messageQueue.poll();
                     if (message == null){
-                        communicator.getLogger().print("当前没有可发送消息,进入等待状态...");
                         synchronized (messageQueue){
                             try {
                                 messageQueue.wait();
@@ -236,7 +231,6 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
                         }
                         continue;
                     }
-                    communicator.getLogger().print("发送消息>>"+message);
                     sendMessage(message);
                 } catch (Exception ignored) {
                 }
@@ -259,7 +253,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     }
 
 
-
+    //检测连接
     private void checkConnect() {
 
         Iterator<Map.Entry<String,HashMap<String, ArrayList<PushMessageClientPrx>>>> it = onlineClientMaps.entrySet().iterator();

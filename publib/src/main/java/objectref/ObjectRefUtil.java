@@ -55,8 +55,14 @@ public class ObjectRefUtil {
            //getDeclaredMethod*()获取的是类自身声明的所有方法,包含public、protected和private方法
            // getMethod*()获取的是类的所有共有方法,这就包括自身的所有public方法,和从基类继承的、从接口实现的所有public方法
            Method method = holder.getClass().getMethod(methodName,parameterTypes);
-       return method.invoke(holder,parameters);//调用对象的方法
+       return callMethod(holder,method,parameterTypes,parameters);//调用对象的方法
    }
+
+    public static Object callMethod(Object holder,Method method,Class[] parameterTypes,Object... parameters) throws Exception{
+        //getDeclaredMethod*()获取的是类自身声明的所有方法,包含public、protected和private方法
+        // getMethod*()获取的是类的所有共有方法,这就包括自身的所有public方法,和从基类继承的、从接口实现的所有public方法
+        return method.invoke(holder,parameters);//调用对象的方法
+    }
 
    public interface IClassScan{
        void callback(String classPath);

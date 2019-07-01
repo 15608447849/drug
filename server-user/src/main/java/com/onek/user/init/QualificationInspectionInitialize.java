@@ -76,14 +76,14 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
                     lines = BaseDAO.getBaseDAO().queryNative(presql,atype,compid);
 
                   //  select 1 from tb_comp tbcp join tb_comp_aptitude tbca on tbcp.cid = tbca.compid where validitye<=CURRENT_DATE AND tbcp.cstatus & 128 = 0
-                    String cksql = "SELECT 1 FROM {{?"+ TB_COMP +"}} tbcp join {{?"+TB_COMP_APTITUDE+"}} tbca on tbcp.cid = tbca.compid " +
-                            " where validitye<=CURRENT_DATE AND tbcp.cstatus & 128 = 0 ";
+//                    String cksql = "SELECT 1 FROM {{?"+ TB_COMP +"}} tbcp join {{?"+TB_COMP_APTITUDE+"}} tbca on tbcp.cid = tbca.compid " +
+//                            " where validitye<=CURRENT_DATE AND tbcp.cstatus & 128 = 0 and cid = ? ";
 
-                    List<Object[]> certRet = BaseDAO.getBaseDAO().queryNative(cksql,compid);
-                    if(certRet != null && !certRet.isEmpty()){
-                        String updateSql = "update {{?"+TB_COMP+"}} set cstatus = 128 where cid = ? ";
-                        BaseDAO.getBaseDAO().updateNative(updateSql,compid);
-                    }
+  //                  List<Object[]> certRet = BaseDAO.getBaseDAO().queryNative(cksql,compid);
+//                    if(certRet != null && !certRet.isEmpty()){
+//                        String updateSql = "update {{?"+TB_COMP+"}} set cstatus = 128 where cid = ? ";
+//                        //BaseDAO.getBaseDAO().updateNative(updateSql,compid);
+//                    }
                 }else{
                     lines = BaseDAO.getBaseDAO().queryNative(sql,atype,compid);
                 }
@@ -112,7 +112,7 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
                    // 128:审核中; 256:认证成功 512:认证失败;
                     lines = BaseDAO.getBaseDAO().queryNative(presql,atype,compid);
                     String cksql = "SELECT 1 FROM {{?"+ TB_COMP +"}} tbcp join {{?"+TB_COMP_APTITUDE+"}} tbca on tbcp.cid = tbca.compid " +
-                            " where validitye<=CURRENT_DATE AND tbcp.cstatus & 128 = 0 ";
+                            " where validitye<=CURRENT_DATE AND tbcp.cstatus & 128 = 0 and cid = ?";
                    // String cksql = "SELECT 1 FROM {{?"+ TB_COMP_APTITUDE +"}} WHERE atype = ? AND compid = ? AND validitye <= CURRENT_DATE AND cstatus & 128 = 0 ";
                     List<Object[]> certRet = BaseDAO.getBaseDAO().queryNative(cksql,compid);
                     if(certRet != null && !certRet.isEmpty()){

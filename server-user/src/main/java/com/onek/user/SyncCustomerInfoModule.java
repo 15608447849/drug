@@ -139,6 +139,10 @@ public class SyncCustomerInfoModule {
         baseDao.updateNative(updSQL, compid);
     }
 
+    @UserPermission(ignore = true)
+    public boolean systemConfigIsOpen(AppContext appContext) {
+        return systemConfigOpen(appContext.param.arrays[0]);
+    }
 
     private static boolean systemConfigOpen(String varname) {
         String selectSQL = "select count(*) from {{?" + DSMConst.TB_SYSTEM_CONFIG + "}} where "
@@ -226,7 +230,7 @@ public class SyncCustomerInfoModule {
      * @接口摘要 ERP对接返回审核结果
      * @业务场景 ERP调用
      * @传参类型 json
-     * @参数列表 {compid 企业码 state 审核结果}
+     * @传参列表 {compid 企业码 state 审核结果}
      * @返回列表 200 成功
      */
     @UserPermission(ignore = true)
@@ -252,7 +256,7 @@ public class SyncCustomerInfoModule {
      * @接口摘要 同步企业相关信息异常处理接口
      * @业务场景 同步信息到ERP异常
      * @传参类型
-     * @参数列表
+     * @传参列表
      * @返回列表 200成功
      */
     @UserPermission(ignore = true)

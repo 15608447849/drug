@@ -18,7 +18,7 @@ import com.onek.entity.DelayedBase;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
-import com.onek.erp.OrderDockedWithERP;
+import com.onek.prop.AppProperties;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.*;
@@ -30,9 +30,13 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
 import util.*;
+import util.http.HttpRequestUtil;
 
+import java.io.IOException;
 import java.math.BigDecimal;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 import static com.onek.order.PayModule.*;
 
@@ -44,6 +48,7 @@ import static com.onek.order.PayModule.*;
  * @time 2019/4/16 16:01
  **/
 public class TranOrderOptModule {
+    private static AppProperties appProperties = AppProperties.INSTANCE;
 
     public static final DelayedHandler<TranOrder> CANCEL_DELAYED =
             new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
@@ -210,7 +215,7 @@ public class TranOrderOptModule {
      * @接口摘要 下单生成订单接口
      * @业务场景 前端下单调用
      * @传参类型 json
-     * @参数列表  {placeType 下单类型(购物车还是直接下单) balway 是否使用余额支付 coupon 优惠券码 unqid 优惠券使用表唯一码
+     * @传参列表  {placeType 下单类型(购物车还是直接下单) balway 是否使用余额支付 coupon 优惠券码 unqid 优惠券使用表唯一码
      *              orderObj: {remarks 备注 cusno 买家企业码 busno 卖家企业码 consignee 收货人姓名
      *              contact 收货人联系方式 rvaddno 收货地区码 address 详细收货地址 invoicetype 发票类型
      *              goodsArr:[{pdno 商品sku pnum 商品数量 pdprice 商品原价 actcode [参加的活动数组]}]
@@ -697,7 +702,7 @@ public class TranOrderOptModule {
      * @接口摘要 取消订单
      * @业务场景 自动取消或线上支付取消
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @传参列表 {orderno: 订单号 cusno：门店id}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = false)
@@ -763,7 +768,7 @@ public class TranOrderOptModule {
      * @接口摘要 取消订单
      * @业务场景 线下即付、线下到付门店30分钟内取消
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @传参列表 {orderno: 订单号 cusno：门店id}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = false)
@@ -819,7 +824,7 @@ public class TranOrderOptModule {
      * @接口摘要 取消订单
      * @业务场景 客服取消订单
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @传参列表 {orderno: 订单号 cusno：门店id}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -839,6 +844,28 @@ public class TranOrderOptModule {
             int payamt = (int)list.get(0)[2];//订单支付金额
             int settstatus = (int)list.get(0)[3];//订单支付金额
             int ostatus = (int)list.get(0)[4];//订单状态
+
+            if (ostatus > 0 && settstatus == 1) {
+                // 已结算待发货状态时取消 需要通知ERP。
+                if (IceRemoteUtil.systemConfigOpen("ORDER_SYNC")) {
+                    try {
+                        int erpResult = cancelERPOrder(orderNo, cusno);
+
+                        if (erpResult < 0) {
+                            switch (erpResult) {
+                                case -4:
+                                    return new Result().fail("订单已出库，此单不允许取消！ Code:" + erpResult);
+                                default:
+                                    return new Result().fail("ERP处理异常，此单不允许取消！ Code:" + erpResult);
+                            }
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        return new Result().fail("调用ERP接口异常，此单不允许取消！");
+                    }
+                }
+            }
+
             String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, cstatus=cstatus|? "
                     + " where cstatus&1=0 and orderno=? and ostatus=?";
             if (ostatus == 0 && payway == 4) {//线下转账未付款未结算客服取消订单
@@ -870,7 +897,25 @@ public class TranOrderOptModule {
         }
         return result.fail("订单取消失败");
     }
-    
+
+    private int cancelERPOrder(String orderNo, int compid) throws IOException {
+        String url = appProperties.erpUrlPrev + "/orderCSDCancel";
+
+        JSONObject jsonObject = new JSONObject();
+        jsonObject.put("orderno", orderNo);
+        jsonObject.put("compid", compid);
+
+        String result = HttpRequestUtil.postJson(url, jsonObject.toString());
+
+        LogUtil.getDefaultLogger().info("生成订单调用ERP接口结果返回： " + result);
+
+        if (!StringUtils.isEmpty(result)) {
+            return new JsonParser().parse(result).getAsJsonObject().get("code").getAsInt();
+        }
+
+        return -2;
+    }
+
     /* *
      * @description 线下订单相关操作
      * @params [orderNo, cusno, balamt, settstatus, result]
@@ -897,7 +942,7 @@ public class TranOrderOptModule {
      * @接口摘要 确认退款
      * @业务场景 客服确认退款
      * @传参类型 json
-     * @参数列表 {orderno: 订单号 cusno：门店id}
+     * @传参列表 {orderno: 订单号 cusno：门店id}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -995,7 +1040,7 @@ public class TranOrderOptModule {
      * @接口摘要 收货
      * @业务场景 一块物流司机APP签收时调用
      * @传参类型 arrays
-     * @参数列表 [cusno：门店id, orderno: 订单号 ]
+     * @传参列表 [cusno：门店id, orderno: 订单号 ]
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -1009,7 +1054,7 @@ public class TranOrderOptModule {
         String orderNo = params[1];
         int compid = getCompid(orderNo);
 
-        if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
+        if (compid <= 0 || !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
         }
 
@@ -1035,7 +1080,7 @@ public class TranOrderOptModule {
      * @接口摘要 发货
      * @业务场景 一块物流司机APP取货时调用
      * @传参类型 arrays
-     * @参数列表 [ cusno：门店id, orderno: 订单号]
+     * @传参列表 [ cusno：门店id, orderno: 订单号]
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -1049,7 +1094,7 @@ public class TranOrderOptModule {
         String orderNo = params[1];
         int compid = getCompid(orderNo);
 
-        if (compid <= 0 && !StringUtils.isBiggerZero(orderNo)) {
+        if (compid <= 0 || !StringUtils.isBiggerZero(orderNo)) {
             return new Result().fail("非法参数");
         }
 
@@ -1062,7 +1107,7 @@ public class TranOrderOptModule {
      * @接口摘要 客服确认收款
      * @业务场景 线下转账确认收款
      * @传参类型 arrays
-     * @参数列表 [ cusno：门店id, orderno: 订单号]
+     * @传参列表 [ cusno：门店id, orderno: 订单号]
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -1157,7 +1202,7 @@ public class TranOrderOptModule {
         }
         if (b) {
             //订单生成到ERP(异步执行)
-            OrderDockedWithERP.generationOrder2ERP(orderNo, compid);
+            OrderDockedWithERPModule.generationOrder2ERP(orderNo, compid);
         }
 
         return b ? new Result().success("操作成功") : new Result().fail("操作失败");

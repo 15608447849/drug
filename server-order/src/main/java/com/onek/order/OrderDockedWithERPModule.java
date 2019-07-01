@@ -1,9 +1,6 @@
-package com.onek.erp;
+package com.onek.order;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
@@ -17,10 +14,7 @@ import org.hyrdpf.util.LogUtil;
 import util.TimeUtils;
 import util.http.HttpRequestUtil;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 
 /**
@@ -30,7 +24,7 @@ import java.util.concurrent.*;
  * @description ERP订单对接处理(异步执行)
  * @time 2019/6/26 10:40
  **/
-public class OrderDockedWithERP {
+public class OrderDockedWithERPModule {
 
     private static AppProperties appProperties = AppProperties.INSTANCE;
 
@@ -41,7 +35,7 @@ public class OrderDockedWithERP {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
             Object future = executorService.submit((Callable<Object>) () -> {
-                if (systemConfigOpen("ORDER_SYNC")) {
+                if (IceRemoteUtil.systemConfigOpen("ORDER_SYNC")) {
                     return generateOrder(orderNo, compId, 0);
                 } else {
                     LogUtil.getDefaultLogger().info("订单order信息同步开关未开启>>>>>>>>>>>>>>>");
@@ -59,17 +53,10 @@ public class OrderDockedWithERP {
         }
     }
 
-    private static boolean systemConfigOpen(String name) {
-        String selectSQL = "select count(*) from {{?" + DSMConst.TB_SYSTEM_CONFIG + "}} where "
-                + " cstatus&1=0 and value=1 and varname=?";
-        List<Object[]> queryResult = baseDao.queryNative(selectSQL, name);
-        return Long.valueOf(String.valueOf(queryResult.get(0)[0])) > 0;
-    }
-
     private static int generateOrder(String orderNo, int compId, int type) {
         JsonObject orderObj = new JsonObject();
         String selectOrderSQL = "select orderno,cusno,payamt,remarks,invoicetype,rvaddno,address,"
-                + " consignee,contact from {{?" + DSMConst.TD_TRAN_ORDER + "}} where cstatsu&1=0 and "
+                + " consignee,contact from {{?" + DSMConst.TD_TRAN_ORDER + "}} where cstatus&1=0 and "
                 + " orderno=?";
         int year = TimeUtils.getYearByOrderno(orderNo + "");
         List<Object[]> queryResult = baseDao.queryNativeSharding(compId, year, selectOrderSQL, orderNo);
@@ -99,8 +86,9 @@ public class OrderDockedWithERP {
     private static int postOrder2ERP(JsonObject jsonObject, int type, String orderNo, int compId) {
         try {
             String url = appProperties.erpUrlPrev + "/produceSalesOrder";
+            LogUtil.getDefaultLogger().info("生成订单调用ERP接口参数： " + jsonObject.toString());
             String result = HttpRequestUtil.postJson(url, jsonObject.toString());
-            LogUtil.getDefaultLogger().info("调用ERP接口结果返回： " + result);
+            LogUtil.getDefaultLogger().info("生成订单调用ERP接口结果返回： " + result);
             if (result != null && !result.isEmpty()) {
                 int code = new JsonParser().parse(result).getAsJsonObject().get("code").getAsInt();
                 if (code != 200 && type == 0) {//同步失败处理
@@ -110,7 +98,10 @@ public class OrderDockedWithERP {
                 }
                 return code;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
+            if (type == 0) {
+                updateOrderState(orderNo, compId);
+            }
             e.printStackTrace();
         }
         return -1;
@@ -172,14 +163,34 @@ public class OrderDockedWithERP {
         baseDao.convToEntity(queryResult, erpGoodsVOS, ERPGoodsVO.class, new String[]{
                 "unqid", "erpsku", "num", "pdprice", "payamt"
         });
-        return Arrays.asList(erpGoodsVOS);
+        List<ERPGoodsVO> erpGoodsVOList = Arrays.asList(erpGoodsVOS);
+        StringBuilder skuBuilder = new StringBuilder();
+        erpGoodsVOList.forEach(erpGoodsVO -> {
+            skuBuilder.append(erpGoodsVO.getErpsku()).append(",");
+        });
+        String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
+        String result = IceRemoteUtil.getErpSkuBySku(skuStr);
+        if (result != null) {
+            Map<String, String> erpSkuMap = new HashMap<>();
+            JsonArray dataArr = new JsonParser().parse(result).getAsJsonObject().get("data").getAsJsonArray();
+            for (JsonElement data : dataArr) {
+                erpSkuMap.put(data.getAsJsonObject().get("sku").getAsString(), data.getAsJsonObject().get("erpSku").getAsString());
+            }
+            erpGoodsVOList.forEach(erpGoodsVO -> {
+                if (erpSkuMap.containsKey(erpGoodsVO.getErpsku())) {
+                    erpGoodsVO.setErpsku(erpSkuMap.get(erpGoodsVO.getErpsku()));
+                }
+            });
+        }
+
+        return erpGoodsVOList;
     }
 
     /**
      * @接口摘要 同步订单信息异常处理接口
      * @业务场景 同步ERP异常
      * @传参类型
-     * @参数列表
+     * @传参列表
      * @返回列表 200成功
      */
     @UserPermission(ignore = true)

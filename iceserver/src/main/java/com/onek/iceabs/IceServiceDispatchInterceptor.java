@@ -61,8 +61,8 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
             Identity identity = request.getCurrent().id;
             Object object = map.get(identity);
             DispatchStatus status = object.ice_dispatch(request);
-            if (current.operation .equals("accessService")) communicator().getLogger()
-                    .print("调用状态: "+ statusString(status) + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms\n");
+//            if (current.operation .equals("accessService")) communicator().getLogger()
+//                    .print("调用状态: "+ statusString(status) + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms\n");
             return status;
     }
 
