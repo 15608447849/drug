@@ -776,6 +776,18 @@ public class IceRemoteUtil {
         return null;
     }
 
+    public static String getErpSKU(String sku){
+        try {
+            return ic.setServerAndRequest("globalServer",
+                    "CommonModule", "getErpSKU")
+                    .setArrayParams(sku)
+                    .execute();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
 
 
     public static String mainPageInfo(){

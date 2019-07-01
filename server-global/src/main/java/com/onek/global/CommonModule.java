@@ -256,4 +256,25 @@ public class CommonModule {
         return new Result().success(erpSkuArr);
     }
 
+    @UserPermission(ignore = true)
+    public String getErpSKU(AppContext appContext) {
+        String sku = appContext.param.arrays[0];
+
+        if (!StringUtils.isBiggerZero(sku)) {
+            return null;
+        }
+
+        String sql = " SELECT IFNULL(erpsku, 0) "
+                + " FROM {{?" + DSMConst.TD_PROD_SKU + "}} "
+                + " WHERE cstatus&1 = 0 AND sku = ? ";
+
+        List<Object[]> queryResult = baseDao.queryNative(sql, sku);
+
+        if (queryResult.isEmpty()) {
+            return null;
+        }
+
+        return queryResult.get(0)[0].toString();
+    }
+
 }
