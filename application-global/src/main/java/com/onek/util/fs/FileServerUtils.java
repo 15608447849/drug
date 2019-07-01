@@ -26,20 +26,20 @@ public class FileServerUtils {
     //文件上传地址
     public static String fileUploadAddress(){
         //分布式映射动态获取前缀
-        return "http://" + fsp.fileServerAddress +"/upload";
+        return fsp.fileServerAddress +"/upload";
     }
 
     public static String fileErgodicAddress() {
-        return "http://" + fsp.fileServerAddress +"/ergodic";
+        return fsp.fileServerAddress +"/ergodic";
     }
 
     public static String fileDeleteAddress() {
-        return "http://" + fsp.fileServerAddress +"/delete";
+        return fsp.fileServerAddress +"/delete";
     }
 
     // 文件下载地址 前缀 ,例如 下载文件 /目录/文件.png -> 下载前缀/目录/文件.png
     public static String fileDownloadPrev(){
-        return "http://" + fsp.fileServerAddress ;
+        return fsp.fileServerAddress ;
     }
 
     //excel

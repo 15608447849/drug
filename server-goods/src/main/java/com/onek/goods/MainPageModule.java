@@ -443,29 +443,35 @@ public class MainPageModule {
     //获取页面全部元素信息
     private Map<String, List<UiElement>> allElement(AppContext context) {
         Map<String, List<UiElement>> map = new HashMap<>();
-        String sql = "SELECT uiname,uimodel,tempId,brulecode,imgPath,seq,route FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
-        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
-        if (lines.size() > 0) {
-            for (Object[] rows : lines) {
-                String imgPrev = FileServerUtils.fileDownloadPrev();
-                UiElement el = new UiElement();
-                el.name = StringUtils.obj2Str(rows[0]);
-                el.module = StringUtils.obj2Str(rows[1]);
-                el.template = StringUtils.checkObjectNull(rows[2], 0);
-                el.brulecode = StringUtils.checkObjectNull(rows[3], 0L);
-                el.img = StringUtils.obj2Str(rows[4]);
-                if (!StringUtils.isEmpty(el.img)) el.img = imgPrev + el.img;
-                el.index = StringUtils.checkObjectNull(rows[5], 0);
-                el.route = StringUtils.obj2Str(rows[6]);
-                el.attr = dataSource(el.brulecode, false, 0, 0, context);
-                if (map.containsKey(el.module)) {
-                    map.get(el.module).add(el);
-                } else {
-                    List<UiElement> list = new LinkedList<>();
-                    list.add(el);
-                    map.put(el.module, list);
+        try {
+            String sql = "SELECT uiname,uimodel,uioption,codes,img,seq,route,temp FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
+            if (lines.size() > 0) {
+                for (Object[] rows : lines) {
+                    String imgPrev = FileServerUtils.fileDownloadPrev();
+                    UiElement el = new UiElement();
+                    el.name = StringUtils.obj2Str(rows[0]);
+                    el.module = StringUtils.obj2Str(rows[1]);
+                    el.option = StringUtils.checkObjectNull(rows[2], 0);
+                    el.code = StringUtils.checkObjectNull(rows[3], 0L);
+                    el.img = StringUtils.obj2Str(rows[4]);
+                    if (!StringUtils.isEmpty(el.img)) el.img = imgPrev + el.img;
+                    el.index = StringUtils.checkObjectNull(rows[5], 0);
+                    el.route = StringUtils.obj2Str(rows[6]);
+                    el.template = StringUtils.checkObjectNull(rows[7],0);
+                    //获取属性
+                    el.attr = dataSource(el.code, false, 0, 0, context);
+                    if (map.containsKey(el.module)) {
+                        map.get(el.module).add(el);
+                    } else {
+                        List<UiElement> list = new LinkedList<>();
+                        list.add(el);
+                        map.put(el.module, list);
+                    }
                 }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
         return map;
     }
