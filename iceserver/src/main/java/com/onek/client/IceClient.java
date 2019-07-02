@@ -27,8 +27,7 @@ public class IceClient {
         String[] infos = serverAdds.split(";");
         for (String info : infos){
             String[] host_port = info.split(":");
-
-            sb.append(String.format(Locale.CHINA,str, host_port));
+            sb.append(String.format(Locale.CHINA,str, host_port[0],host_port[1]));
         }
         args = new String[]{sb.toString()};
     }
