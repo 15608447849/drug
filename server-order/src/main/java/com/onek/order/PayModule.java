@@ -123,8 +123,8 @@ public class PayModule {
                 orderno, compid, 0);
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate",
-                    "otime","pdamt","freight","coupamt","distamt","rvaddno","balamt","invoicetype","payway"});
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class,
+                    "payamt","odate", "otime","pdamt","freight","coupamt","distamt","rvaddno","balamt","invoicetype","payway");
             double bal = MathUtil.exactDiv(result[0].getBalamt(), 100)
                     .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).
@@ -193,62 +193,15 @@ public class PayModule {
 
     }
 
-    /**
-     * @接口摘要 订单预支付
-     * @业务场景
-     * @传参类型 json
-     * @传参列表 orderno=订单号 paytype=付款方式 flag 客户端类型
-     * @返回列表 code=200 date=付款二维码地址(web),可支付的JSON信息(app)
-     */
-    public Result prePay(AppContext appContext){
-        int compid = appContext.getUserSession().compId;
-        if (compid == 0)  return new Result().fail("异常用户,拒绝服务");
-        String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        String orderno = jsonObject.get("orderno").getAsString();
-        String paytype = jsonObject.get("paytype").getAsString();
-        int flag = jsonObject.has("flag") ? jsonObject.get("flag").getAsInt() : 0;
-        if(StringUtils.isEmpty(orderno) || compid <=0){
-            return new Result().fail("获取订单号或企业码失败!");
-        }
-        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL,  orderno, compid);
-        if(list != null && list.size() > 0) {
-            TranOrder[] result = new TranOrder[list.size()];
-            baseDao.convToEntity(list, result, TranOrder.class, "payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt");
-            double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
-            if(payamt <= 0){
-                return new Result().fail("支付金额不能小于0!");
-            }
-            String payno = RedisGlobalKeys.getNextPayNo(orderno);
-
-            try{
-                Object r;
-                if(flag == 0){
-                    r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, payno,
-                            "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
-                }else{
-                    r = FileServerUtils.getAppPayInfo(paytype, "一块医药", payamt, payno,
-                            "orderServer" + getOrderServerNo(compid), "PayModule", "payCallBack", compid + "");
-                }
-                return new Result().success(r);
-            }catch (Exception e){
-                e.printStackTrace();
-                return new Result().fail("预付款失败!");
-            }
-        }else{
-            return new Result().fail("未查到【"+orderno+"】支付的订单!");
-        }
-    }
 
     /**
-     * @接口摘要 运费预支付
+     * @接口摘要 预支付
      * @业务场景
      * @传参类型 json
-     * @传参列表 rderno=订单号 afsano=售后单号 paytype=付款方式 flag 客户端类型
+     * @传参列表 rderno=订单号 afsano=售后单号(售后需要填写) paytype=付款方式 flag 客户端类型
      * @返回列表 ccode=200 date=付款二维码地址(web),可支付的JSON信息(app)
      */
-    public Result preFeePay(AppContext appContext){
+    public Result prePay(AppContext appContext){
         int compid = appContext.getUserSession().compId;
         if (compid == 0)  return new Result().fail("异常用户,拒绝服务");
 
@@ -258,44 +211,52 @@ public class PayModule {
         String orderno = jsonObject.get("orderno").getAsString();
         String afsano = jsonObject.get("afsano").getAsString();
         String paytype = jsonObject.get("paytype").getAsString();
-
         int flag = jsonObject.has("flag") ? jsonObject.get("flag").getAsInt() : 0;
-        if(StringUtils.isEmpty(afsano) || compid <=0){
-            return new Result().fail("获取售后单号或企业码失败!");
+
+        boolean isOrderPayOp = StringUtils.isEmpty(afsano);
+
+        if(StringUtils.isEmpty(orderno)){
+            return new Result().fail("预支付失败");
         }
-        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
-        if(list != null && list.size() > 0){
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
+                GET_PAY_SQL, orderno, compid);
+        if(list.size() == 0)  return new Result().fail("未查到【"+orderno+"】的订单信息!");
             TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate", "otime","pdamt","freight","coupamt","distamt","rvaddno","balamt"});
-
-//            double payamt = MathUtil.exactDiv(result[0].getFreight(), 100).doubleValue();
-
-            double payamt = AreaFeeUtil.getFee(result[0].getRvaddno());
-            if(payamt <= 0){
-                return new Result().fail("该地区暂不支持在线开票，请联系客服");
-            }
-            try{
-
-                String payno = RedisGlobalKeys.getNextPayNo(afsano);
-                Object r;
-                if(flag == 0){
-                    r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, payno,
-                            "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
-                }else{
-                    r = FileServerUtils.getAppPayInfo(paytype, "一块医药", payamt, payno,
-                            "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
+            baseDao.convToEntity(list, result, TranOrder.class,
+                    "payamt","odate", "otime","pdamt","freight","coupamt","distamt","rvaddno","balamt");
+            double payamt;
+            if (isOrderPayOp){
+                //订单付款
+                payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
+                if(payamt <= 0){
+                    return new Result().fail("支付金额不能小于0");
                 }
-                return new Result().success(r);
+            }else{
+                //售后条件检测
+                payamt = AreaFeeUtil.getFee(result[0].getRvaddno());
+                if(payamt <= 0){
+                    return new Result().fail("该地区暂不支持在线开票，请联系客服");
+                }
+            }
+
+            try{
+                String payno = RedisGlobalKeys.getNextPayNo(isOrderPayOp ? orderno : afsano);
+                String callbackFunName = isOrderPayOp ? "payCallBack" : "payFeeCallBack" ;
+                Object res;
+                if(flag == 0){
+                    //web
+                    res = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, payno,
+                            "orderServer" + getOrderServerNo(compid), "PayModule", callbackFunName, compid + "");
+                }else{
+                    //app
+                    res = FileServerUtils.getAppPayInfo(paytype, "一块医药", payamt, payno,
+                            "orderServer" + getOrderServerNo(compid), "PayModule", callbackFunName, compid + "");
+                }
+                return new Result().success(res);
             }catch (Exception e){
                 e.printStackTrace();
                 return new Result().fail("预付款失败!");
             }
-
-
-        }else{
-            return new Result().fail("未查到【"+orderno+"】支付运费的订单!");
-        }
-
     }
 
     /**
@@ -440,13 +401,12 @@ public class PayModule {
         int compid = jsonObject.get("compid").getAsInt();
 
         JSONObject jsonResult = new JSONObject();
-        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, orderno, compid);
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
 //            "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,balamt,orderno," +
 //                    "IFNULL(address,'') address,pdnum,IFNULL(consignee,'') consignee,IFNULL(contact,'') contact
-            baseDao.convToEntity(list, result, TranOrder.class, new String[]{
-                    "payamt","odate","otime","pdamt","freight", "coupamt","distamt","rvaddno","balamt"});
+            baseDao.convToEntity(list, result, TranOrder.class, "payamt","odate","otime","pdamt","freight", "coupamt","distamt","rvaddno","balamt");
 
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
             double pdamt = MathUtil.exactDiv(result[0].getPdamt(), 100).doubleValue();
@@ -511,11 +471,11 @@ public class PayModule {
 
         JSONObject jsonResult = new JSONObject();
 
-        List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, new Object[]{orderno, compid});
+        List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, orderno, compid);
         if (trans != null && trans.size() > 0) {
             TranTransVO[] tranTransVOS = new TranTransVO[trans.size()];
             baseDao.convToEntity(trans, tranTransVOS, TranTransVO.class,
-                    new String[]{"payprice", "payway", "payno", "orderno", "paysource", "paystatus", "paydate", "paytime", "completedate", "completetime"});
+                    "payprice", "payway", "payno", "orderno", "paysource", "paystatus", "paydate", "paytime", "completedate", "completetime");
             jsonResult.put("paystatus", tranTransVOS[0].getPaystatus());
         } else {
             jsonResult.put("paystatus", 0);
@@ -599,7 +559,7 @@ public class PayModule {
                 e.printStackTrace();
             }
         }
-        return b == true ?1 : -1;
+        return b ?1 : -1;
     }
 
     /* *
@@ -746,7 +706,7 @@ public class PayModule {
         if(b){
             baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_SQL, afsano);
         }
-        return b == true ? 1 : 0;
+        return b? 1 : 0;
     }
 
     /* *
@@ -855,11 +815,11 @@ public class PayModule {
         }
 
         List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TO_PAY_SQL,
-                new Object[]{ orderno, compid, 0});
+                orderno, compid, 0);
 
         if(!list.isEmpty()) {
             TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt"});
+            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class,"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt");
             double bal = MathUtil.exactDiv(result[0].getBalamt(), 100)
                     .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
 

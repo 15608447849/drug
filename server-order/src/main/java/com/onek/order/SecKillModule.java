@@ -59,7 +59,7 @@ public class SecKillModule {
      * @传参列表 sku=商品SKU码 actno=活动码
      * @返回列表 code=200 date=唯一生成码,用来进行身份校验
      */
-    @UserPermission(ignore = false, needAuthenticated = true)
+    @UserPermission( needAuthenticated = true)
     public Result beforeSecKill(AppContext appContext) {
         UserSession userSession = appContext.getUserSession();
         int compid = userSession != null ? userSession.compId : 0;

@@ -29,9 +29,9 @@ import java.util.*;
  */
 public class IceRemoteUtil {
     private final static IceClient ic = new IceClient(
-            AppProperties.INSTANCE.masterName,
-            AppProperties.INSTANCE.masterHost,
-            AppProperties.INSTANCE.masterPort)
+            AppProperties.INSTANCE.iceInstance,
+            AppProperties.INSTANCE.iceServers)
+            .setTimeout(AppProperties.INSTANCE.iceTimeOut)
             .startCommunication();
 
     /**
@@ -791,7 +791,7 @@ public class IceRemoteUtil {
 
 
     public static String mainPageInfo(){
-        String json = ic.setServerAndRequest("goodsServer","MainPageModule","pageInfo").execute();
+        String json = ic.setServerAndRequest("globalServer","MessageModule","convertMessage").setArrayParams(14, 190628000002L).execute();
         return json;
     }
 

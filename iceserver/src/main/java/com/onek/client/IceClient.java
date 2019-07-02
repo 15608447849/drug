@@ -6,7 +6,7 @@ import com.onek.server.inf.InterfacesPrxHelper;
 import com.onek.server.infimp.ServerIceBoxImp;
 import util.GsonUtils;
 
-import java.util.HashMap;
+import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -18,14 +18,23 @@ public class IceClient {
 
     private  Ice.Communicator ic = null;
 
-    private final HashMap<String,InterfacesPrx> prxMaps;
-
     private final String[] args ;
 
-    public IceClient(String tag, String host, int port) {
-        String str = "--Ice.Default.Locator=%s/Locator:tcp -h %s -p %d";
-        args = new String[]{String.format(Locale.CHINA,str,tag,host,port)};
-        prxMaps = new HashMap<>();
+    private int timeout = 30000;
+
+    public IceClient(String tag,String serverAdds) {
+       StringBuffer sb = new StringBuffer("--Ice.Default.Locator="+tag+"/Locator");
+        String str = ":tcp -h %s -p %d";
+        String[] infos = serverAdds.split(";");
+        for (String info : infos){
+            sb.append(String.format(Locale.CHINA,str,tag, Arrays.toString(info.split(":"))));
+        }
+        args = new String[]{sb.toString()};
+    }
+
+    public IceClient setTimeout(int timeout) {
+        this.timeout = timeout;
+        return this;
     }
 
     synchronized
@@ -50,13 +59,8 @@ public class IceClient {
             curPrx = null;
             isLocal = true;
         }else{
-            InterfacesPrx prx = prxMaps.get(serverName);
-            if (prx == null){
-                Ice.ObjectPrx base = ic.stringToProxy(serverName).ice_invocationTimeout(1000);
-                prx =  InterfacesPrxHelper.checkedCast(base);
-                if (prx!=null) prxMaps.put(serverName,prx);
-            }
-            curPrx = prx;
+            Ice.ObjectPrx base = ic.stringToProxy(serverName).ice_invocationTimeout(timeout);
+            curPrx =  InterfacesPrxHelper.checkedCast(base);
             isLocal = false;
         }
         return this;
@@ -129,6 +133,7 @@ public class IceClient {
         }else if (curPrx!=null && request!=null){
             return curPrx.accessService(request);
         }
+        curPrx = null;
         throw new RuntimeException("ICE 未开始连接或找不到远程代理或请求参数异常");
     }
 

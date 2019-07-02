@@ -128,9 +128,11 @@ public class FileServerUtils {
 
     private static HashMap<String,Object> accessPayServer(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr,boolean isApp){
         List<String> list = new ArrayList<>();
-        list.add(AppProperties.INSTANCE.masterName);
-        list.add(AppProperties.INSTANCE.masterHost);
-        list.add(AppProperties.INSTANCE.masterPort+"");
+        String[] arr = AppProperties.INSTANCE.iceServers.split(";");
+        String[] iceAddr = arr[0].split(":");
+
+        list.add(AppProperties.INSTANCE.iceInstance);
+        list.add(AppProperties.INSTANCE.iceServers);
         list.add(serverName);
         list.add(callback_clazz);
         list.add(callback_method);

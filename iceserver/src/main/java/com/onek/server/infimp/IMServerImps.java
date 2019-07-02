@@ -20,7 +20,7 @@ import java.util.concurrent.locks.ReentrantLock;
  * @Date: 2019/4/9 17:57
  * 消息推送 服务端实现
  */
-public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMessageStore {
+public class IMServerImps extends _InterfacesDisp implements IPushMessageStore {
 
 
     //超时时间毫秒数
@@ -41,7 +41,7 @@ public class IcePushMessageServerImps extends _InterfacesDisp implements IPushMe
     //待发送消息存储的队列
     private ConcurrentLinkedQueue<IPMessage> messageQueue;
 
-    IcePushMessageServerImps(Communicator communicator,String serverName) {
+    IMServerImps(Communicator communicator, String serverName) {
         this.communicator = communicator;
         startPushMessageServer(serverName);
     }

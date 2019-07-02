@@ -18,7 +18,7 @@ import java.util.Arrays;
  * ice bind type = ::inf::Interfaces
  * 接口实现
  */
-public class ServerImp extends IcePushMessageServerImps {
+public class ServerImp extends IMServerImps {
 
 
 

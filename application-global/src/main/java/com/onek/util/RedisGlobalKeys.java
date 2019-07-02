@@ -4,8 +4,6 @@ import redis.util.RedisUtil;
 
 import java.text.DecimalFormat;
 import java.text.Format;
-import java.util.Date;
-import java.util.Random;
 
 import static util.TimeUtils.getCurrentDate_Md;
 import static util.TimeUtils.getCurrentYear;

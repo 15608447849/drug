@@ -15,14 +15,14 @@ public class AppProperties extends ApplicationPropertiesBase {
     @PropertiesName("file.server.address")
     public String fileServerAddress;
 
-    @PropertiesName("ice.master.host")
-    public String masterHost;
-
-    @PropertiesName("ice.master.port")
-    public int masterPort;
-
     @PropertiesName("ice.grid.name")
-    public String masterName;
+    public String iceInstance;
+
+    @PropertiesName("ice.master.info")
+    public String iceServers;
+
+    @PropertiesName("ice.call.timeout")
+    public int iceTimeOut;
 
     @PropertiesName("pay.server.url")
     public String payUrlPrev;
