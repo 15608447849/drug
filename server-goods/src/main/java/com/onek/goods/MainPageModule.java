@@ -3,7 +3,6 @@ package com.onek.goods;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -510,8 +509,6 @@ public class MainPageModule {
                     el.index = StringUtils.checkObjectNull(rows[5], 0);
                     el.route = StringUtils.obj2Str(rows[6]);
                     el.template = StringUtils.checkObjectNull(rows[7],0);
-                    //获取属性
-                    el.attr = dataSource(el.code, false, 0, 0, context);
                     if (map.containsKey(el.module)) {
                         map.get(el.module).add(el);
                     } else {
