@@ -57,7 +57,7 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
     }
 
     public static String PASSWORD_VALID_MESSAGE = "不符合密码安全性要求:\n" +
-            "至少6位字符,包含1个大写字母,1个小写字母";
+            "至少6位字符,包含1个小写字母";
 
     //正则匹配密码规则
     public static boolean validPassword(String psd){
@@ -72,7 +72,7 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
         LogUtil.getDefaultLogger().info("验证密码规则:" + psd);
         //
 //        String pattern = "^.*(?=.{6,})(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[!@#$%^&*?]).*$";
-        String pattern = "^.*(?=.{6,})(?=.*\\d)(?=.*[A-Z])(?=.*[a-z])().*$";
+        String pattern = "^.*(?=.{6,})(?=.*\\d)(?=.*[a-z])().*$";
 
         return Pattern.matches(pattern, psd);
     }
