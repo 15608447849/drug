@@ -314,7 +314,10 @@ public class MainPageModule {
             assembleObjectFromEs(prodVO, sourceMap, detail, dataMap, otherArr);
 
             prodList.add(prodVO);
-            prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
+            prodVO.setImageUrl(
+                    FileServerUtils.fileDownloadPrev()
+                    + FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku())
+                    +"/"+ prodVO.getSku()+"-200x200.jpg");
             int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(ruleStatus);
             if (!isAnonymous) { // 有权限
