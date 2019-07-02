@@ -22,14 +22,14 @@ public class IceClient {
     private int timeout = 30000;
 
     public IceClient(String tag,String serverAdds) {
-       StringBuffer sb = new StringBuffer("--Ice.Default.Locator="+tag+"/Locator");
+        StringBuffer sb = new StringBuffer("--Ice.Default.Locator="+tag+"/Locator");
         String str = ":tcp -h %s -p %s";
         String[] infos = serverAdds.split(";");
         for (String info : infos){
             String[] host_port = info.split(":");
             sb.append(String.format(Locale.CHINA,str, host_port[0],host_port[1]));
         }
-        args = new String[]{sb.toString()};
+        args = new String[]{sb.toString(),"idleTimeOutSeconds=300","--Ice.MessageSizeMax=4096"};
     }
 
     public IceClient setTimeout(int timeout) {
