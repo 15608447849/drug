@@ -169,10 +169,11 @@ public class ServerImp extends IMServerImps {
         try {
             check(request);
             IceContext context = generateContext(__current,request);//产生context
-            inPrint = context.inPrint;
-            outPrint = context.outPrint;
-            timePrint = context.timePrint;
-
+            if (context.debug != null){
+                inPrint = context.debug.inPrint();
+                outPrint = context.debug.outPrint();
+                timePrint = context.debug.timePrint();
+            }
             callInfo = printParam(request,__current);
             if (inPrint) logger.print(callInfo);
             context.initialization(); //初始化context
