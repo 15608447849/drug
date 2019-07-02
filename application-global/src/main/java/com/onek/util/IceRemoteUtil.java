@@ -757,6 +757,16 @@ public class IceRemoteUtil {
                 "remoteQueryShopCartNumBySku").setArrayParams(compid,sku).execute());
     }
 
+    /**
+     * 获取购物车数量
+     */
+    public static String queryShopCartNumBySkus(int compid, String sku){
+        return ic.setServerAndRequest("orderServer" + getOrderServerNo(compid),
+                "ShoppingCartModule",
+                "queryShopCartNumBySkus").setArrayParams(compid,sku).execute();
+    }
+
+
 
     public static boolean systemConfigOpen(String name) {
         return Boolean.parseBoolean(ic.setServerAndRequest("userServer",

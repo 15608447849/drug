@@ -1223,6 +1223,35 @@ public class ShoppingCartModule {
     }
 
     @UserPermission(ignore = true)
+    public String queryShopCartNumBySkus(AppContext context){
+        try{
+            return queryShopCartNumBySkus(Integer.parseInt(context.param.arrays[0]),context.param.arrays[1]);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
+    /**
+     * 根据SKU查询购物车现有数量
+     */
+    public static String queryShopCartNumBySkus(int compid ,String skus){
+        String sql = "select pdno,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+                + " where orderno = 0 and compid = ? and cstatus&1=0 and  pdno in(" +skus+ ") ";
+        List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), sql, compid);
+        if(queryRet == null || queryRet.isEmpty()) return null;
+        JsonArray jsonArray = new JsonArray();
+        queryRet.forEach(qr -> {
+            JsonObject object = new JsonObject();
+            object.addProperty("sku",Long.parseLong(qr[0].toString()));
+            object.addProperty("pnum",Integer.parseInt(qr[1].toString()));
+            jsonArray.add(object);
+        });
+        return jsonArray.toString();
+    }
+
+
+    @UserPermission(ignore = true)
     public int remoteQueryShopCartNumBySku(AppContext context){
         try{
             return queryShopCartNumBySku(Integer.parseInt(context.param.arrays[0]),Long.parseLong(context.param.arrays[1]));
