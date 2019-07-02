@@ -3,7 +3,9 @@ package com.onek.goods;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
 import com.onek.context.AppContext;
@@ -14,6 +16,7 @@ import com.onek.goods.mainpagebean.UiElement;
 import com.onek.goods.util.ProdActPriceUtil;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.server.infimp.IceDebug;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
 import com.onek.util.fs.FileServerUtils;
 import com.onek.util.stock.RedisStockUtil;
@@ -78,16 +81,19 @@ public class MainPageModule {
         Page page = new Page();
         page.pageIndex = pageIndex <= 0 ? 1 : pageIndex;
         page.pageSize = pageNumber <= 0 ? 100 : pageNumber;
+        int compId = context.getUserSession() != null ? context.getUserSession().compId : 0;
         try {
             if (bRuleCodes <= 0) {//非活动专区
                 if (isQuery) {
-                    attr.list = getFloorByState(bRuleCodes, context.isAnonymous(), page);
-                    page.totalItems = attr.list != null ? attr.list.size() : 0;
-//                    PageHolder pageHolder = new PageHolder(page);
-//                    pageHolder.value = page;
-                    attr.page = new PageHolder(page);
+                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), page);
+                    if (prodVOS.size() > 0) {
+                        remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
+                        attr.list = prodVOS;
+                        page.totalItems = attr.list.size();
+                        attr.page = new PageHolder(page);
+                        return attr;
+                    }
                 }
-                return attr;
             } else {//活动专区
                 String ruleCodeStr = getCodeStr(bRuleCodes);
                 String mmdd = TimeUtils.date_Md_2String(new Date());
@@ -96,13 +102,50 @@ public class MainPageModule {
                             + "}} where cstatus&1=0 and rulecode in(" + ruleCodeStr + ")) ";
                     List<Object[]> queryResult = BASE_DAO.queryNative(SQL, mmdd);
                     if (queryResult == null || queryResult.isEmpty()) return null;
-                    combatActData(attr,queryResult,isQuery,context, page);
+                    if (isQuery) {
+                        combatActData(attr,queryResult,context, page, compId);
+                        return attr;
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return attr;
+        return null;
+    }
+
+    /* *
+     * @description 获取购物车数量
+     * @params [prodVOS]
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/7/2 17:33
+     * @version 1.1.1
+     **/
+    private static void remoteQueryShopCartNumBySku(int compId, List<ProdVO> prodVOS, boolean isAnonymous) {
+        if (compId <= 0 || isAnonymous) return;
+        StringBuilder skuSB = new StringBuilder();
+        for (ProdVO prodVO : prodVOS) {
+            skuSB.append(prodVO.getSku()).append(",");
+        }
+        if (skuSB.toString().contains(",")) {
+            String skuStr = skuSB.toString().substring(0, skuSB.toString().length() - 1);
+            String numArr = IceRemoteUtil.queryShopCartNumBySkus(compId, skuStr);
+            if (numArr != null) {
+                Map<Long, Integer> shopCartNum = new HashMap<>();
+                JsonArray goodsArr = new JsonParser().parse(numArr).getAsJsonArray();
+                goodsArr.forEach(goods -> {
+                    shopCartNum.put(goods.getAsJsonObject().get("sku").getAsLong()
+                            ,goods.getAsJsonObject().get("pnum").getAsInt());
+                });
+               prodVOS.forEach(prod -> {
+                   if (shopCartNum.containsKey(prod.getSku())) {
+                       prod.cart = shopCartNum.get(prod.getSku());
+                   }
+               });
+            }
+        }
     }
 
     /* *
@@ -114,14 +157,15 @@ public class MainPageModule {
      * @time  2019/6/29 14:40
      * @version 1.1.1
      **/
-    private static void combatActData(Attr attr, List<Object[]> queryResult, boolean isQuery, AppContext context,Page page){
+    private static void combatActData(Attr attr, List<Object[]> queryResult,
+                                      AppContext context,Page page, int compId){
         String actCodeStr = null;
         StringBuilder actCodeSB = new StringBuilder();
-        String[] otherArr = {String.valueOf(queryResult.get(0)[1]), "0"};
+        String[] otherArr = {String.valueOf(queryResult.get(0)[1]), "0", compId + ""};
         for (Object[] qResult : queryResult) {
             int qualcode = Integer.parseInt(String.valueOf(qResult[2]));
             long qualvalue = Integer.parseInt(String.valueOf(qResult[3]));
-            if (QualJudge.hasPermission(context.getUserSession().compId, qualcode, qualvalue)) {
+            if (QualJudge.hasPermission(compId, qualcode, qualvalue)) {
                 long actCode = Long.parseLong(String.valueOf(qResult[0]));
                 int bRuleCode = Integer.parseInt(String.valueOf(qResult[1]));
                 actCodeSB.append(actCode).append(",");
@@ -136,25 +180,24 @@ public class MainPageModule {
                     if (bRuleCode == 1133) {//团购
                         JsonArray ladOffArray = new JsonArray();
                         double minOff = getMinOff(actCode, ladOffArray);
-                        otherArr = new String[]{String.valueOf(queryResult.get(0)[1]), minOff + ""};
+                        otherArr = new String[]{String.valueOf(queryResult.get(0)[1]), minOff + "",  compId + ""};
                         actObj.add("ladoffArray", ladOffArray);
                         actObj.addProperty("currNums", getGroupCount(actCode));
                     }
                     attr.actObj = actObj;
-                } else {
-                    attr.actCode = 0;
                 }
             }
 
         }
-        if (isQuery) {
-            PageHolder pageHolder = new PageHolder(page);
-            if (actCodeSB.toString().contains(",")) {
-                actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
-            }
-            //获取活动下的商品
-            getActGoods(attr, pageHolder, context.isAnonymous(), actCodeStr, otherArr);
+        PageHolder pageHolder = new PageHolder(page);
+        if (actCodeSB.toString().contains(",")) {
+            actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
         }
+        //获取活动下的商品
+        getActGoods(attr, pageHolder, context.isAnonymous(), actCodeStr, otherArr);
+//        if (isQuery) {
+//
+//        }
     }
 
 
@@ -237,7 +280,9 @@ public class MainPageModule {
                 + selectClassSQL + " UNION ALL " + selectGoodsSQL +
                 " UNION ALL " + selectAllSQL + ") ua group by sku";
         List<Object[]> queryResult = BASE_DAO.queryNativeC(pageHolder, pageHolder.value, sqlBuilder);
-        if (queryResult == null || queryResult.isEmpty()) return;
+        if (queryResult == null || queryResult.isEmpty()) {
+            return;
+        }
         queryResult.forEach(qResult -> {
             skuList.add(Long.valueOf(String.valueOf(qResult[0])));
             dataMap.put(Long.valueOf(String.valueOf(qResult[0])),
@@ -249,8 +294,11 @@ public class MainPageModule {
         if (response != null && response.getHits().totalHits > 0) {
             assembleData(isAnonymous, response, prodVOList, dataMap, otherArr);
         }
-        attr.list = prodVOList;
-        attr.page = pageHolder;
+        if (prodVOList.size() > 0) {
+            remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, isAnonymous);
+            attr.list = prodVOList;
+            attr.page = pageHolder;
+        }
     }
 
     private static void assembleData(boolean isAnonymous, SearchResponse response, List<ProdVO> prodList,
@@ -505,6 +553,14 @@ public class MainPageModule {
             }
         }
         return new Result().fail("参数异常");
+    }
+
+    @UserPermission(ignore = true)
+    public int insert(AppContext appContext) {
+        String sql = "insert into {{?" + DSMConst.TD_PROM_RULE +"}}1 "
+                + " (`rulecode`, `brulecode`, `rulename`, `desc`, `cstatus`)"
+                + " values(?,?,?,?,?)";
+        return BaseDAO.getBaseDAO().updateNative(sql,1,1,"哈哈呵呵","dasdad",0);
     }
 
 }
