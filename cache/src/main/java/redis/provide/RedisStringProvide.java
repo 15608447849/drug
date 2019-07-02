@@ -89,6 +89,7 @@ public class RedisStringProvide extends RedisProvide{
 	 * @return OK:代表设置成功
 	 */
 	public String set(String key, Object obj) {
+		jedisCluster.del(key);
 	    return jedisCluster.set(key, obj.toString());
 	}
 
