@@ -19,8 +19,8 @@ public class MessageTemplateUtil {
         String msg = getTmpByTno(tempNo);
         if (msg == null) return "";
         int count = targetStrCount(msg,"%s");
-        if (args!=null && args.length>=count) msg = String.format(Locale.CHINA,msg,args);
-        return msg;
+        if (args!=null &&  args.length >= count)  return String.format(Locale.CHINA,msg,args);
+        return "";
     }
     //数据库获取模板
     private static String getTmpByTno(int tno) {

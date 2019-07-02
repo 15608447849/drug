@@ -6,7 +6,6 @@ import com.onek.server.inf.InterfacesPrxHelper;
 import com.onek.server.infimp.ServerIceBoxImp;
 import util.GsonUtils;
 
-import java.util.Arrays;
 import java.util.Locale;
 
 /**
@@ -24,10 +23,12 @@ public class IceClient {
 
     public IceClient(String tag,String serverAdds) {
        StringBuffer sb = new StringBuffer("--Ice.Default.Locator="+tag+"/Locator");
-        String str = ":tcp -h %s -p %d";
+        String str = ":tcp -h %s -p %s";
         String[] infos = serverAdds.split(";");
         for (String info : infos){
-            sb.append(String.format(Locale.CHINA,str,tag, Arrays.toString(info.split(":"))));
+            String[] host_port = info.split(":");
+
+            sb.append(String.format(Locale.CHINA,str, host_port));
         }
         args = new String[]{sb.toString()};
     }
