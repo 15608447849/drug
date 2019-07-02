@@ -81,13 +81,14 @@ public class MainPageModule {
         try {
             if (bRuleCodes <= 0) {//非活动专区
                 if (isQuery) {
-                    attr.list = getFloorByState(bRuleCodes, context.isAnonymous(), page);
-                    page.totalItems = attr.list != null ? attr.list.size() : 0;
-//                    PageHolder pageHolder = new PageHolder(page);
-//                    pageHolder.value = page;
-                    attr.page = new PageHolder(page);
+                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), page);
+                    if (prodVOS.size() > 0) {
+                        attr.list = prodVOS;
+                        page.totalItems = attr.list.size();
+                        attr.page = new PageHolder(page);
+                        return attr;
+                    }
                 }
-                return attr;
             } else {//活动专区
                 String ruleCodeStr = getCodeStr(bRuleCodes);
                 String mmdd = TimeUtils.date_Md_2String(new Date());
@@ -96,13 +97,16 @@ public class MainPageModule {
                             + "}} where cstatus&1=0 and rulecode in(" + ruleCodeStr + ")) ";
                     List<Object[]> queryResult = BASE_DAO.queryNative(SQL, mmdd);
                     if (queryResult == null || queryResult.isEmpty()) return null;
-                    combatActData(attr,queryResult,isQuery,context, page);
+                    if (isQuery) {
+                        combatActData(attr,queryResult, true,context, page);
+                        return attr;
+                    }
                 }
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return attr;
+        return null;
     }
 
     /* *
@@ -141,8 +145,6 @@ public class MainPageModule {
                         actObj.addProperty("currNums", getGroupCount(actCode));
                     }
                     attr.actObj = actObj;
-                } else {
-                    attr.actCode = 0;
                 }
             }
 
@@ -237,7 +239,9 @@ public class MainPageModule {
                 + selectClassSQL + " UNION ALL " + selectGoodsSQL +
                 " UNION ALL " + selectAllSQL + ") ua group by sku";
         List<Object[]> queryResult = BASE_DAO.queryNativeC(pageHolder, pageHolder.value, sqlBuilder);
-        if (queryResult == null || queryResult.isEmpty()) return;
+        if (queryResult == null || queryResult.isEmpty()) {
+            return;
+        }
         queryResult.forEach(qResult -> {
             skuList.add(Long.valueOf(String.valueOf(qResult[0])));
             dataMap.put(Long.valueOf(String.valueOf(qResult[0])),
@@ -249,8 +253,10 @@ public class MainPageModule {
         if (response != null && response.getHits().totalHits > 0) {
             assembleData(isAnonymous, response, prodVOList, dataMap, otherArr);
         }
-        attr.list = prodVOList;
-        attr.page = pageHolder;
+        if (prodVOList.size() > 0) {
+            attr.list = prodVOList;
+            attr.page = pageHolder;
+        }
     }
 
     private static void assembleData(boolean isAnonymous, SearchResponse response, List<ProdVO> prodList,
@@ -505,6 +511,14 @@ public class MainPageModule {
             }
         }
         return new Result().fail("参数异常");
+    }
+
+    @UserPermission(ignore = true)
+    public int insert(AppContext appContext) {
+        String sql = "insert into {{?" + DSMConst.TD_PROM_RULE +"}}1 "
+                + " (`rulecode`, `brulecode`, `rulename`, `desc`, `cstatus`)"
+                + " values(?,?,?,?,?)";
+        return BaseDAO.getBaseDAO().updateNative(sql,1,1,"哈哈呵呵","dasdad",0);
     }
 
 }
