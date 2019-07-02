@@ -65,7 +65,7 @@ public class PayModule {
 
     //支付回调更新订单状态
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,settstatus=?,"
-            + "settdate=?,setttime=?, payway=? where cstatus&1=0 and orderno=? and ostatus=? ";
+            + "settdate=?,setttime=?, payway=?, tradeno = ? where cstatus&1=0 and orderno=? and ostatus=? ";
 
     //释放商品冻结库存 远程调用
     private static final String UPD_GOODS_STORE = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
@@ -333,7 +333,7 @@ public class PayModule {
         }
 
         Date date = TimeUtils.str_yMd_Hms_2Date(tradeDate);
-        boolean result = false;
+        int result = 0;
         if("1".equals(tradeStatus)){
             String tdate = TimeUtils.date_yMd_2String(date);
             String time = TimeUtils.date_Hms_2String(date);
@@ -349,13 +349,15 @@ public class PayModule {
             OrderUtil.generateLccOrder(compid, orderno);
             OrderUtil.updateSales(compid, orderno);
         }
-        if(result){
+        if (result == 1) {
             //订单生成到ERP(异步执行)
             LogUtil.getDefaultLogger().info("订单开始生成到ERP-------- print by cyq");
             OrderDockedWithERPModule.generationOrder2ERP(orderno, compid);
 
             return new Result().success(null);
-        }else{
+        } else if (result == 2) {
+            return new Result().success("已支付", null);
+        } else {
             return new Result().fail(null);
         }
 
@@ -390,7 +392,7 @@ public class PayModule {
                 paychannel = 1;
             }
             Date date = TimeUtils.str_yMd_Hms_2Date(tradeDate);
-            boolean result = false;
+            int result = 0;
             if("1".equals(tradeStatus)){
                 String tdate = TimeUtils.date_yMd_2String(date);
                 String time = TimeUtils.date_Hms_2String(date);
@@ -404,8 +406,10 @@ public class PayModule {
 
             OrderUtil.sendMsg(afsano, tradeStatus ,money, compid, tradeDate);
 
-            if(result){
+            if(result ==1){
                 return new Result().success(null);
+            }else if(result == 2){
+                return new Result().success("已支付",null);
             }else{
                 return new Result().fail(null);
             }
@@ -530,18 +534,29 @@ public class PayModule {
      * @time  2019/4/18 20:56
      * @version 1.1.1
      **/
-    private boolean successOpt(String orderno, String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
+    private int successOpt(String orderno, String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
         int paysource = 0;
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
 
+        List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, orderno, compid);
+        if(trans != null && trans.size() > 0) {
+            TranTransVO[] tranTransVOS = new TranTransVO[trans.size()];
+            baseDao.convToEntity(trans, tranTransVOS, TranTransVO.class,
+                    "payprice", "payway", "payno", "orderno", "paysource", "paystatus", "paydate", "paytime", "completedate", "completetime");
+            if (tranTransVOS.length > 0) {
+                if(tranTransVOS[0].getPaystatus() == 1){
+                    return 2;
+                }
+            }
+        }
         int paySpreadBal = getPaySpreadBal(compid,orderno);
 
         sqlList.add(UPD_ORDER_STATUS);//更新订单状态
         params.add(new Object[]{1,1,
                 tradeDate,tradeTime,
-                paytype,
+                paytype, payno,
                 orderno,0});
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
@@ -584,7 +599,7 @@ public class PayModule {
                 e.printStackTrace();
             }
         }
-        return b;
+        return b == true ?1 : -1;
     }
 
     /* *
@@ -654,7 +669,7 @@ public class PayModule {
      * @time  2019/4/18 20:37
      * @version 1.1.1
      **/
-    private boolean failOpt(String orderno, String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
+    private int failOpt(String orderno, String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
 
         int paysource = 0;
 
@@ -678,7 +693,7 @@ public class PayModule {
             IceRemoteUtil.updateCompBal(compid,paySpreadBal);
         }
 
-        return !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
+        return !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params)) ? 1 : 0;
     }
 
     /* *
@@ -690,8 +705,20 @@ public class PayModule {
      * @time  2019/4/25 15:56
      * @version 1.1.1
      **/
-    private boolean successFeeOpt(String afsano,String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
+    private int successFeeOpt(String afsano,String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
         int paysource = 0;
+
+        List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, afsano, compid);
+        if(trans != null && trans.size() > 0) {
+            TranTransVO[] tranTransVOS = new TranTransVO[trans.size()];
+            baseDao.convToEntity(trans, tranTransVOS, TranTransVO.class,
+                    "payprice", "payway", "payno", "orderno", "paysource", "paystatus", "paydate", "paytime", "completedate", "completetime");
+            if (tranTransVOS.length > 0) {
+                if(tranTransVOS[0].getPaystatus() == 1){
+                    return 2;
+                }
+            }
+        }
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
@@ -719,7 +746,7 @@ public class PayModule {
         if(b){
             baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_SQL, afsano);
         }
-        return b;
+        return b == true ? 1 : 0;
     }
 
     /* *
