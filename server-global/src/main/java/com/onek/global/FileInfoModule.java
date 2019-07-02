@@ -3,6 +3,7 @@ package com.onek.global;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.server.infimp.IceDebug;
 import util.GsonUtils;
 import util.StringUtils;
 
@@ -41,6 +42,7 @@ public class FileInfoModule {
      * 必带:{upUrl-文件上传服务器的地址,ergodicUrl文件遍历地址,downPrev文件下载地址,home系统资源及轮播图存放路径,notice公告资源存放路径},
      * 组合产生:{companyFilePath企业相关路径,feedbackPath企业意见反馈路径,orderFilePath订单售后先关路径,userFilePath用户资源相关路径,goodsFilePath商品相关路径}
      */
+    @IceDebug(inPrint = false)
     @UserPermission (ignore = true)
     public Result fileServerInfo(AppContext appContext){
         String json = appContext.param.json;

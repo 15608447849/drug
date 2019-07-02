@@ -12,5 +12,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface IceDebug {
-
+    boolean inPrint() default true;
+    boolean outPrint() default false;
+    boolean timePrint() default false;
 }

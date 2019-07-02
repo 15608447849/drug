@@ -56,10 +56,12 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
     @Override
     public DispatchStatus dispatch(Request request) {
         if (!systemRunning)  return DispatchStatus.DispatchUserException;
-            long time = System.currentTimeMillis();
-            Current current = request.getCurrent();
+//            long time = System.currentTimeMillis();
+//            Current current = request.getCurrent();
             Identity identity = request.getCurrent().id;
             Object object = map.get(identity);
+//        communicator().getLogger()
+//                .print("\n\t\t- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - \t\t");
             DispatchStatus status = object.ice_dispatch(request);
 //            if (current.operation .equals("accessService")) communicator().getLogger()
 //                    .print("调用状态: "+ statusString(status) + " , 调用耗时: " + (System.currentTimeMillis() - time) +" ms\n");
@@ -67,9 +69,9 @@ public class IceServiceDispatchInterceptor extends DispatchInterceptor {
     }
 
     private String statusString(DispatchStatus status){
-        if (status == DispatchStatus.DispatchOK) return "调用成功";
+        if (status == DispatchStatus.DispatchOK) return "成功";
         if (status == DispatchStatus.DispatchAsync) return "异步派发";
-         if (status == DispatchStatus.DispatchUserException) return "调用错误";
-         return "未知状态";
+         if (status == DispatchStatus.DispatchUserException) return "错误";
+         return "未知";
     }
 }

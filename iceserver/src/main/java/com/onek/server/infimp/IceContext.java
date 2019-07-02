@@ -28,7 +28,9 @@ public abstract class IceContext {
     public IParam param;
     public Class callerCls;
     public Method method;
-    public boolean isDebug;
+    public boolean inPrint;
+    public boolean outPrint;
+    public boolean timePrint;
 
     public IceContext(Current current, IRequest request) throws Exception  {
         if (current!=null){
@@ -47,7 +49,11 @@ public abstract class IceContext {
         this.callerCls = Class.forName(classPath);
         this.method = callerCls.getMethod(refMed,this.getClass());
         IceDebug debug = method.getAnnotation(IceDebug.class);
-        if (debug!=null) this.isDebug = true;
+        if (debug!=null) {
+            this.inPrint = debug.inPrint();
+            this.outPrint = debug.outPrint();
+            this.timePrint = debug.timePrint();
+        }
     }
 
     private static Object getCaller(Class cls) throws Exception {
@@ -75,8 +81,8 @@ public abstract class IceContext {
 
     /**调用具体方法*/
     public Object call() throws Exception{
-        Object value = null;
         Object caller = getCaller(callerCls);
+        Object value;
         try{
             value = ObjectRefUtil.callMethod(caller,method,new Class[]{this.getClass()},this);
         }catch (Exception e){

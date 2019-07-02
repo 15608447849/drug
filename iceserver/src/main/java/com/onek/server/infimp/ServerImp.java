@@ -146,16 +146,13 @@ public class ServerImp extends IcePushMessageServerImps {
     }
 
     //打印结果
-    private String printResult(Object result,boolean isDebug) {
+    private String printResult(Object result) {
         String resultString;
         if (result instanceof String){
             resultString = String.valueOf(result);
         }else{
             resultString = GsonUtils.javaBeanToJson(result);
         }
-        if (isDebug) logger.print("返  回  信  息 :\t " +resultString );
-
-        //+"\n-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-<-"
         return resultString;
     }
 
@@ -165,18 +162,27 @@ public class ServerImp extends IcePushMessageServerImps {
     @Override
     public String accessService(IRequest request, Current __current) {
         Object result;
-        boolean isDebug = false;
+        boolean inPrint = true;
+        boolean timePrint = false;
+        boolean outPrint = false;
         String callInfo = null;
         try {
             check(request);
             IceContext context = generateContext(__current,request);//产生context
+            inPrint = context.inPrint;
+            outPrint = context.outPrint;
+            timePrint = context.timePrint;
+
             callInfo = printParam(request,__current);
-            isDebug = context.isDebug;
-            logger.print(callInfo);
+            if (inPrint) logger.print(callInfo);
             context.initialization(); //初始化context
             result = interceptor(context);//拦截器
             //具体业务实现调用 返回值不限制
-            if (result == null) result = context.call();
+            if (result == null){
+                long time = System.currentTimeMillis();
+                result = context.call();
+                if (timePrint) logger.print("调用耗时: " + (System.currentTimeMillis() - time) +" ms\n");
+            }
         } catch (Exception e) {
             Throwable targetEx = e;
             if (e instanceof InvocationTargetException) {
@@ -185,7 +191,9 @@ public class ServerImp extends IcePushMessageServerImps {
             LogUtil.getDefaultLogger().error(callInfo,targetEx);
             result = new Result().error("错误调用",targetEx);
         }
-        return printResult(result,isDebug);
+        String resultString =  printResult(result);
+        if (outPrint) logger.print("返  回  信  息 :\t " +resultString );
+        return resultString;
     }
 
 

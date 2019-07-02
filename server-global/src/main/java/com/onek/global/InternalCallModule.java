@@ -2,6 +2,7 @@ package com.onek.global;
 
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
+import com.onek.server.infimp.IceDebug;
 import com.onek.util.sqltransfer.SqlRemoteReq;
 import com.onek.util.sqltransfer.SqlRemoteResp;
 import dao.BaseDAO;
@@ -15,6 +16,7 @@ import java.util.List;
  */
 public class InternalCallModule {
 
+    @IceDebug(outPrint = true, timePrint = true)
     @UserPermission(ignore = true)
     public SqlRemoteResp updateBatchNative(AppContext context){
         SqlRemoteResp resp = new SqlRemoteResp();
@@ -29,6 +31,7 @@ public class InternalCallModule {
         return resp;
     }
 
+    @IceDebug(outPrint = true, timePrint = true)
     @UserPermission(ignore = true)
     public SqlRemoteResp queryNative(AppContext context){
         SqlRemoteResp resp = new SqlRemoteResp();
@@ -44,6 +47,7 @@ public class InternalCallModule {
         return resp;
     }
 
+    @IceDebug(outPrint = true, timePrint = true)
     @UserPermission(ignore = true)
     public SqlRemoteResp updateNative(AppContext context){
         SqlRemoteResp resp = new SqlRemoteResp();
@@ -58,6 +62,7 @@ public class InternalCallModule {
         return resp;
     }
 
+    @IceDebug(outPrint = true, timePrint = true)
     @UserPermission(ignore = true)
     public SqlRemoteResp updateTransNative(AppContext context){
         SqlRemoteResp resp = new SqlRemoteResp();
