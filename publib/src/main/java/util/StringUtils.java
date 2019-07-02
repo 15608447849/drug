@@ -126,5 +126,15 @@ public class StringUtils {
         }
         return pinyinFirstKey.toUpperCase();
     }
+    /** 获取指定字符在字符串中的个数 */
+    public static int targetStrCount(String str, String tag) {
+        int index = 0;
+        int count = 0;
+        while ((index = str.indexOf(tag)) != -1 ) {
+            str = str.substring(index + tag.length());
+            count++;
+        }
+        return count;
+    }
 
 }

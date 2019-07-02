@@ -212,10 +212,10 @@ public class PayModule {
         if(StringUtils.isEmpty(orderno) || compid <=0){
             return new Result().fail("获取订单号或企业码失败!");
         }
-        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
+        List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL,  orderno, compid);
         if(list != null && list.size() > 0) {
             TranOrder[] result = new TranOrder[list.size()];
-            BaseDAO.getBaseDAO().convToEntity(list, result, TranOrder.class, new String[]{"payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt"});
+            baseDao.convToEntity(list, result, TranOrder.class, "payamt","odate","otime","pdamt","freight","coupamt","distamt","rvaddno","balamt");
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).doubleValue();
             if(payamt <= 0){
                 return new Result().fail("支付金额不能小于0!");
@@ -258,6 +258,7 @@ public class PayModule {
         String orderno = jsonObject.get("orderno").getAsString();
         String afsano = jsonObject.get("afsano").getAsString();
         String paytype = jsonObject.get("paytype").getAsString();
+
         int flag = jsonObject.has("flag") ? jsonObject.get("flag").getAsInt() : 0;
         if(StringUtils.isEmpty(afsano) || compid <=0){
             return new Result().fail("获取售后单号或企业码失败!");
@@ -275,13 +276,13 @@ public class PayModule {
             }
             try{
 
-
+                String payno = RedisGlobalKeys.getNextPayNo(afsano);
                 Object r;
                 if(flag == 0){
-                    r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, afsano,
+                    r = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, payno,
                             "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
                 }else{
-                    r = FileServerUtils.getAppPayInfo(paytype, "一块医药", payamt, afsano,
+                    r = FileServerUtils.getAppPayInfo(paytype, "一块医药", payamt, payno,
                             "orderServer" + getOrderServerNo(compid), "PayModule", "payFeeCallBack", compid + "");
                 }
                 return new Result().success(r);
@@ -373,7 +374,8 @@ public class PayModule {
 
         try {
             String[] arrays = appContext.param.arrays;
-            String afsano = arrays[0];
+            String payno = arrays[0];
+            String afsano = arrays[0].substring(0, 12);
             String paytype = arrays[1];
             String thirdPayNo = arrays[2];
             String tradeStatus = arrays[3];
@@ -392,7 +394,7 @@ public class PayModule {
             if("1".equals(tradeStatus)){
                 String tdate = TimeUtils.date_yMd_2String(date);
                 String time = TimeUtils.date_Hms_2String(date);
-                result = successFeeOpt(afsano, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+                result = successFeeOpt(afsano,payno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
 
             }else if("2".equals(tradeStatus)){
                 String tdate = TimeUtils.date_yMd_2String(date);
@@ -461,12 +463,12 @@ public class PayModule {
             jsonResult.put("consignee", String.valueOf(list.get(0)[12]));
             jsonResult.put("contact", String.valueOf(list.get(0)[13]));
 
-            List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, new Object[]{ orderno, compid});
+            List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, orderno, compid);
             if(trans != null && trans.size() > 0){
                 TranTransVO[] tranTransVOS = new TranTransVO[trans.size()];
                 baseDao.convToEntity(trans, tranTransVOS, TranTransVO.class,
-                        new String[]{"payprice", "payway", "payno", "orderno", "paysource", "paystatus", "paydate", "paytime", "completedate", "completetime"});
-                if(tranTransVOS != null && tranTransVOS.length > 0){
+                        "payprice", "payway", "payno", "orderno", "paysource", "paystatus", "paydate", "paytime", "completedate", "completetime");
+                if(tranTransVOS.length > 0){
                     jsonResult.put("paystatus", tranTransVOS[0].getPaystatus());
                 }else{
                     jsonResult.put("paystatus", 0);
@@ -567,7 +569,6 @@ public class PayModule {
 //            if(paySpreadBal > 0 && paytype != 0){
 //                IceRemoteUtil.updateCompBal(compid,-paySpreadBal);
 //            }
-//
 //            if(paytype == 0){
 //                IceRemoteUtil.updateCompBal(compid,-(MathUtil.exactMul(price, 100).intValue()));
 //            }
@@ -689,7 +690,7 @@ public class PayModule {
      * @time  2019/4/25 15:56
      * @version 1.1.1
      **/
-    private boolean successFeeOpt(String afsano, int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
+    private boolean successFeeOpt(String afsano,String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
         int paysource = 0;
 
         List<String> sqlList = new ArrayList<>();
@@ -704,7 +705,7 @@ public class PayModule {
                 + " where cstatus&1=0 and orderno=? and ostatus in(3,4)";
 
         sqlList.add(INSERT_TRAN_TRANS);//新增交易记录
-        params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, 0,  MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
+        params.add(new Object[]{GenIdUtil.getUnqId(), compid, afsano, payno,  MathUtil.exactMul(price, 100), paytype, paysource, tradeStatus, GenIdUtil.getUnqId(),
                 thirdPayNo,tradeDate,tradeTime,tradeDate,tradeTime,0});
 //        + "(unqid,compid,payno,eventdesc,resultdesc,"
 //                + "completedate,completetime,cstatus)"

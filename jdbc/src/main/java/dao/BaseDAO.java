@@ -1242,7 +1242,7 @@ public class BaseDAO {
      *            通过泛型传进来的对象需要赋值的属性名数组。当传进null时，代表通过泛型传进来的对象的属性与查询出来的数据的列是一一对应的。
      */
     public <T> void convToEntity(List<Object[]> srcLst, T[] tArray,
-            Class<T> clszz, String[] proName) {
+            Class<T> clszz, String... proName) {
         if (proName == null) {
             convToEntityMatch(srcLst, tArray, clszz);
         } else {

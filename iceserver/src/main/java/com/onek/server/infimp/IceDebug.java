@@ -12,7 +12,7 @@ import java.lang.annotation.Target;
 @Target({ElementType.METHOD})
 @Retention(RetentionPolicy.RUNTIME)
 public @interface IceDebug {
-    boolean inPrint() default true;
-    boolean outPrint() default false;
-    boolean timePrint() default false;
+    boolean inPrint() default true; // 是否输入调用时的传参信息
+    boolean outPrint() default false;// 是否输出调用后的结果
+    boolean timePrint() default false;//是否打印调用时间
 }

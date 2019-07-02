@@ -6,17 +6,20 @@ import java.util.List;
 import java.util.Locale;
 
 import static constant.DSMConst.TB_SMS_TEMPLATE;
+import static util.StringUtils.targetStrCount;
 
 /**
  * lzp
  * 消息模板处理工具
  **/
 public class MessageTemplateUtil {
+
     //模板编号+参数 -> 内容
     public static String templateConvertMessage(int tempNo,Object... args){
         String msg = getTmpByTno(tempNo);
         if (msg == null) return "";
-        if (args!=null && args.length>0) msg = String.format(Locale.CHINA,msg,args);
+        int count = targetStrCount(msg,"%s");
+        if (args!=null && args.length>=count) msg = String.format(Locale.CHINA,msg,args);
         return msg;
     }
     //数据库获取模板
