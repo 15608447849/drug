@@ -17,10 +17,10 @@ public class UiElement {
 
     public String route;//页面路由 ,
 
-    public String img;//图片链接
+    public String img;//首页图片链接
 
     public long code;//活动复合码,数据表示码
 
-    public  Object attr;//附加属性
+    public  String dtlImg;//详情页图片
 
 }

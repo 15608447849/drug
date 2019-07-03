@@ -493,21 +493,22 @@ public class MainPageModule {
     private Map<String, List<UiElement>> allElement(AppContext context) {
         Map<String, List<UiElement>> map = new HashMap<>();
         try {
-            String sql = "SELECT uiname,uimodel,uioption,codes,img,seq,route,temp FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
+            String sql = "SELECT uiname,uimodel,uioption,codes,seq,route,temp FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
             if (lines.size() > 0) {
                 for (Object[] rows : lines) {
-                    String imgPrev = FileServerUtils.fileDownloadPrev();
+
                     UiElement el = new UiElement();
                     el.name = StringUtils.obj2Str(rows[0]);
                     el.module = StringUtils.obj2Str(rows[1]);
                     el.option = StringUtils.checkObjectNull(rows[2], 0);
                     el.code = StringUtils.checkObjectNull(rows[3], 0L);
-                    el.img = StringUtils.obj2Str(rows[4]);
-                    if (!StringUtils.isEmpty(el.img)) el.img = imgPrev + el.img;
-                    el.index = StringUtils.checkObjectNull(rows[5], 0);
-                    el.route = StringUtils.obj2Str(rows[6]);
-                    el.template = StringUtils.checkObjectNull(rows[7],0);
+
+                    el.index = StringUtils.checkObjectNull(rows[4], 0);
+                    el.route = StringUtils.obj2Str(rows[5]);
+                    el.template = StringUtils.checkObjectNull(rows[6],0);
+
+                    genElementAttr(el);
                     if (map.containsKey(el.module)) {
                         map.get(el.module).add(el);
                     } else {
@@ -523,6 +524,13 @@ public class MainPageModule {
         return map;
     }
 
+    private void genElementAttr(UiElement el) {
+        String imgPrev = FileServerUtils.fileDownloadPrev();
+        //图片路径规则     首页对应图片 : 主目录 /image / 模块名_序号.png
+        el.img = imgPrev + FileServerUtils.defaultHome()+"/image/"+el.module+"_"+el.index+".png";
+        //详情页图片路径:       主目录/image/活动名.png
+        el.dtlImg = imgPrev + FileServerUtils.defaultHome()+"/image/"+el.code+".png";
+    }
 
     /**
      * @接口摘要 客户端首页展示
@@ -530,7 +538,7 @@ public class MainPageModule {
      * @传参类型 json
      * @传参列表 {不带参数-获取首页楼层元素,
      * identity=活动叠加码 + limit=楼层商品限制数 -> 根据指定活动码返回指定数量商品,
-     * identity + 分页信息 -根据指定活动码/分页信息 查询商品/活动属性 ;}
+     * identity + 分页信息 -根据指定活动码/分页信息 查询商品/活动属性}
      * @返回列表 MainPage/UiElement 对象
      */
     @IceDebug
