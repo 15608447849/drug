@@ -487,6 +487,7 @@ public class MainPageModule {
     private static class Param {
         long identity; //活动叠加码
         int limit = -1;//楼层商品限制数
+        String jsonStr;//其他附加参数
     }
 
     //获取页面全部元素信息
