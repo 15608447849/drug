@@ -427,7 +427,7 @@ public class MainPageModule {
      * @time  2019/6/29 14:41
      * @version 1.1.1
      **/
-    public static List<ProdVO> getFloorByState(long state, boolean isAnonymous, Page page, String jsonStr) {
+    private static List<ProdVO> getFloorByState(long state, boolean isAnonymous, Page page, String jsonStr) {
 
         Set<Integer> result = new HashSet<>();
         if (state == -1) { // 新品
@@ -454,35 +454,25 @@ public class MainPageModule {
             }};
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
-        } else if (state == -4) {//品牌专区
-            return getBrandMallFloor(page, isAnonymous, jsonStr);
-        } else if (state == -5){//热销
-            return searchHotProd(page, isAnonymous, jsonStr);
+        } else {//品牌专区-4 //热销专区 -5
+            return getOtherMallFloor(page, isAnonymous, jsonStr, state);
         }
-
         Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, result, "", 1, page);
         return (List<ProdVO>) resultMap.get("prodList");
     }
 
 
-    //品牌
-    private static List<ProdVO> getBrandMallFloor(Page page, boolean isAnonymous,String jsonStr) {
+    //品牌-4 热销 -5
+    private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous,String jsonStr, long state) {
         JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         String brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
-
-        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, brandno, page.pageIndex, page.pageSize);
-        List<ProdVO> prodList = new ArrayList<>();
-        assembleData(isAnonymous, response, prodList, null, null);
-        return prodList;
-    }
-
-    //热销
-    private static List<ProdVO> searchHotProd(Page page, boolean isAnonymous,String jsonStr) {
-        JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
-        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
-
-        SearchResponse response = ProdESUtil.searchHotProd(keyword, page.pageIndex, page.pageSize);
+        SearchResponse response;
+        if (state == -4) {
+            response = ProdESUtil.searchProdHasBrand(keyword, brandno, page.pageIndex, page.pageSize);
+        } else {
+            response = ProdESUtil.searchHotProd(keyword, page.pageIndex, page.pageSize);
+        }
         List<ProdVO> prodList = new ArrayList<>();
         assembleData(isAnonymous, response, prodList, null, null);
         return prodList;
@@ -588,10 +578,10 @@ public class MainPageModule {
         }else{
             if (param.limit > 0) {
                 //获取指定活动的商品信息
-                return new Result().success(dataSource(param.identity, true, 1, param.limit, context));
+                return new Result().success(dataSource(param.identity, true, 1, param.limit, context, param.jsonStr));
             }
             if (param.limit == -1) {
-                return new Result().success(dataSource(param.identity, true, context.param.pageIndex, context.param.pageNumber, context));
+                return new Result().success(dataSource(param.identity, true, context.param.pageIndex, context.param.pageNumber, context, param.jsonStr));
             }
         }
         return new Result().fail("参数异常");
