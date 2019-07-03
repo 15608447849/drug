@@ -143,7 +143,7 @@ public class MainPageModule {
         if (skuSB.toString().contains(",")) {
             String skuStr = skuSB.toString().substring(0, skuSB.toString().length() - 1);
             String numArr = IceRemoteUtil.queryShopCartNumBySkus(compId, skuStr);
-            if (numArr != null && !numArr.isEmpty() && "null".equalsIgnoreCase(numArr)) {
+            if (numArr != null && !numArr.isEmpty() && !"null".equalsIgnoreCase(numArr)) {
                 Map<Long, Integer> shopCartNum = new HashMap<>();
                 JsonArray goodsArr = new JsonParser().parse(numArr).getAsJsonArray();
                 goodsArr.forEach(goods -> {
