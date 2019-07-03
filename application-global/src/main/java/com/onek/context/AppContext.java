@@ -60,7 +60,7 @@ public class AppContext extends IceContext {
 
     //创建用户会话KRY lzp
     private String genUKey() {
-        return EncryptUtils.encryption(param.token);
+        return EncryptUtils.encryption(param.token + ( param.token.endsWith("PC") ? remoteIp : ""));
     }
 
     //创建多端检测key

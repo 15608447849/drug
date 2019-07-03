@@ -484,7 +484,6 @@ public class MainPageModule {
         return null;
     }
 
-
     private static class Param {
         long identity; //活动叠加码
         int limit = -1;//楼层商品限制数
