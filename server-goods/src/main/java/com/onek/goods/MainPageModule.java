@@ -9,6 +9,7 @@ import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.goods.entities.ProdBrandVO;
 import com.onek.goods.entities.ProdVO;
 import com.onek.goods.mainpagebean.Attr;
 import com.onek.goods.mainpagebean.UiElement;
@@ -56,6 +57,9 @@ public class MainPageModule {
                     + " AND g.jointime BETWEEN t.sdate AND t.edate "
                     + " AND g.actcode = ?";
 
+    private static final String QUERY_PROD_BRAND = "  SELECT b.brandno, b.brandname  FROM {{?" + DSMConst.TD_PROD_BRAND +"}} b, {{?" + DSMConst.TD_PROD_SPU +"}} spu, {{?" + DSMConst.TD_PROD_SKU +"}} sku WHERE b.cstatus&1 = 0 " +
+            "and spu.cstatus&1 = 0 and sku.cstatus&1 = 0 and sku.prodstatus = 1 and b.brandno = spu.brandno and spu.spu = sku.spu group by b.brandno, b.brandname";
+
 
     @UserPermission(ignore = true)
     public void getDataSource(AppContext appContext) {
@@ -85,7 +89,7 @@ public class MainPageModule {
         try {
             if (bRuleCodes < 0 && bRuleCodes >= -10) {//非活动专区
                 if (isQuery) {
-                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), page, json);
+                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), page, json, attr);
                     if (prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
@@ -427,7 +431,8 @@ public class MainPageModule {
      * @time  2019/6/29 14:41
      * @version 1.1.1
      **/
-    private static List<ProdVO> getFloorByState(long state, boolean isAnonymous, Page page, String jsonStr) {
+    private static List<ProdVO> getFloorByState(long state, boolean isAnonymous, Page page,
+                                                String jsonStr, Attr attr) {
 
         Set<Integer> result = new HashSet<>();
         if (state == -1) { // 新品
@@ -455,7 +460,7 @@ public class MainPageModule {
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
         } else {//品牌专区-4 //热销专区 -5
-            return getOtherMallFloor(page, isAnonymous, jsonStr, state);
+            return getOtherMallFloor(page, isAnonymous, jsonStr, state, attr);
         }
         Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, result, "", 1, page);
         return (List<ProdVO>) resultMap.get("prodList");
@@ -463,12 +468,14 @@ public class MainPageModule {
 
 
     //品牌-4 热销 -5
-    private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous,String jsonStr, long state) {
+    private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous,String jsonStr,
+                                                  long state, Attr attr) {
         JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         String brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
         SearchResponse response;
-        if (state == -4) {
+        if (state == -4) {//品牌
+            attr.actObj = getBrandInfo();
             response = ProdESUtil.searchProdHasBrand(keyword, brandno, page.pageIndex, page.pageSize);
         } else {
             response = ProdESUtil.searchHotProd(keyword, page.pageIndex, page.pageSize);
@@ -477,6 +484,16 @@ public class MainPageModule {
         assembleData(isAnonymous, response, prodList, null, null);
         return prodList;
     }
+
+    private static List<ProdBrandVO> getBrandInfo() {
+        List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_PROD_BRAND + " sku.sales desc");
+        if (queryResult == null || queryResult.isEmpty()) return null;
+        ProdBrandVO[] result = new ProdBrandVO[queryResult.size()];
+        BASE_DAO.convToEntity(queryResult, result, ProdBrandVO.class, "brandno", "brandname");
+        return Arrays.asList(result);
+    }
+
+
 
     private static Map<String, Object> getFilterProdsCommon(boolean isAnonymous, Set<Integer> result, String keyword, int sort, Page page) {
         Map<String, Object> resultMap = new HashMap<>();
