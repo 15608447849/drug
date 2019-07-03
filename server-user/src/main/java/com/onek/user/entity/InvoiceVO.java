@@ -3,9 +3,9 @@ package com.onek.user.entity;
 public class InvoiceVO {
     private int oid;
     private int cid;
-    private String taxpayer;
-    private String bankers;
-    private String account;
+    private String taxpayer = "";
+    private String bankers = "";
+    private String account = "";
     private String tel;
     private int cstatus;
     private String email;
