@@ -3,7 +3,6 @@ package com.onek.goods;
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -63,7 +62,7 @@ public class MainPageModule {
         long sss = System.currentTimeMillis();
         System.out.println();
         long br = Long.parseLong(appContext.param.arrays[0]);
-        Attr attr = dataSource(br, false, appContext.param.pageIndex, 6, appContext);
+        Attr attr = dataSource(br, false, appContext.param.pageIndex, 6, appContext, "");
         System.out.println("213123bfkfbkjfajd------------" + GsonUtils.javaBeanToJson(attr));
         System.out.println("times------------" + (System.currentTimeMillis() - sss));
     }
@@ -76,16 +75,17 @@ public class MainPageModule {
     /**
      * 通过活动码 获取 活动属性 及 商品信息
      **/
-    private static Attr dataSource(long bRuleCodes, boolean isQuery, int pageIndex, int pageNumber, AppContext context) {
+    private static Attr dataSource(long bRuleCodes, boolean isQuery, int pageIndex, int pageNumber,
+                                   AppContext context, String json) {
         Attr attr = new Attr();
         Page page = new Page();
         page.pageIndex = pageIndex <= 0 ? 1 : pageIndex;
         page.pageSize = pageNumber <= 0 ? 100 : pageNumber;
         int compId = context.getUserSession() != null ? context.getUserSession().compId : 0;
         try {
-            if (bRuleCodes <= 0) {//非活动专区
+            if (bRuleCodes < 0 && bRuleCodes >= -10) {//非活动专区
                 if (isQuery) {
-                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), page);
+                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), page, json);
                     if (prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
@@ -95,17 +95,22 @@ public class MainPageModule {
                     }
                 }
             } else {//活动专区
-                String ruleCodeStr = getCodeStr(bRuleCodes);
+                String ruleCodeStr;
+                String SQL = SELECT_ACT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE
+                        + "}} where cstatus&1=0 ";
+                if (bRuleCodes == -11) {//新人专享
+                    SQL = SQL + " and qualcode = 1 and qualvalue = 0";
+                } else {
+                    ruleCodeStr = getCodeStr(bRuleCodes);
+                    if (ruleCodeStr == null) return null;
+                    SQL = SQL + " and rulecode in(" + ruleCodeStr + ")) ";
+                }
                 String mmdd = TimeUtils.date_Md_2String(new Date());
-                if (ruleCodeStr != null) {
-                    String SQL = SELECT_ACT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE
-                            + "}} where cstatus&1=0 and rulecode in(" + ruleCodeStr + ")) ";
-                    List<Object[]> queryResult = BASE_DAO.queryNative(SQL, mmdd);
-                    if (queryResult == null || queryResult.isEmpty()) return null;
-                    if (isQuery) {
-                        combatActData(attr,queryResult,context, page, compId);
-                        return attr;
-                    }
+                List<Object[]> queryResult = BASE_DAO.queryNative(SQL, mmdd);
+                if (queryResult == null || queryResult.isEmpty()) return null;
+                if (isQuery) {
+                    combatActData(attr,queryResult,context, page, compId);
+                    return attr;
                 }
             }
         } catch (Exception e) {
@@ -422,7 +427,7 @@ public class MainPageModule {
      * @time  2019/6/29 14:41
      * @version 1.1.1
      **/
-    public static List<ProdVO> getFloorByState(long state, boolean isAnonymous, Page page) {
+    public static List<ProdVO> getFloorByState(long state, boolean isAnonymous, Page page, String jsonStr) {
 
         Set<Integer> result = new HashSet<>();
         if (state == -1) { // 新品
@@ -449,10 +454,38 @@ public class MainPageModule {
             }};
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
+        } else if (state == -4) {//品牌专区
+            return getBrandMallFloor(page, isAnonymous, jsonStr);
+        } else if (state == -5){//热销
+            return searchHotProd(page, isAnonymous, jsonStr);
         }
 
         Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, result, "", 1, page);
         return (List<ProdVO>) resultMap.get("prodList");
+    }
+
+
+    //品牌
+    private static List<ProdVO> getBrandMallFloor(Page page, boolean isAnonymous,String jsonStr) {
+        JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
+        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+        String brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
+
+        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, brandno, page.pageIndex, page.pageSize);
+        List<ProdVO> prodList = new ArrayList<>();
+        assembleData(isAnonymous, response, prodList, null, null);
+        return prodList;
+    }
+
+    //热销
+    private static List<ProdVO> searchHotProd(Page page, boolean isAnonymous,String jsonStr) {
+        JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
+        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+
+        SearchResponse response = ProdESUtil.searchHotProd(keyword, page.pageIndex, page.pageSize);
+        List<ProdVO> prodList = new ArrayList<>();
+        assembleData(isAnonymous, response, prodList, null, null);
+        return prodList;
     }
 
     private static Map<String, Object> getFilterProdsCommon(boolean isAnonymous, Set<Integer> result, String keyword, int sort, Page page) {
