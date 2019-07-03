@@ -143,7 +143,7 @@ public class MainPageModule {
         if (skuSB.toString().contains(",")) {
             String skuStr = skuSB.toString().substring(0, skuSB.toString().length() - 1);
             String numArr = IceRemoteUtil.queryShopCartNumBySkus(compId, skuStr);
-            if (numArr != null) {
+            if (numArr != null && !numArr.isEmpty() && "null".equalsIgnoreCase(numArr)) {
                 Map<Long, Integer> shopCartNum = new HashMap<>();
                 JsonArray goodsArr = new JsonParser().parse(numArr).getAsJsonArray();
                 goodsArr.forEach(goods -> {
@@ -473,9 +473,13 @@ public class MainPageModule {
     //品牌-4 热销 -5
     private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous,String jsonStr,
                                                   long state, Attr attr) {
-        JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
-        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
-        String brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
+        String keyword = "", brandno = "";
+        if (jsonStr != null && !jsonStr.isEmpty()) {
+            JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
+            keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+            brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
+        }
+
         SearchResponse response;
         if (state == -4) {//品牌
             attr.actObj = getBrandInfo();
