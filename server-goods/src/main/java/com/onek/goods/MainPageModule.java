@@ -489,7 +489,7 @@ public class MainPageModule {
     }
 
     private static List<ProdBrandVO> getBrandInfo() {
-        List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_PROD_BRAND + " sku.sales desc");
+        List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_PROD_BRAND + " order by sku.sales desc");
         if (queryResult == null || queryResult.isEmpty()) return null;
         ProdBrandVO[] result = new ProdBrandVO[queryResult.size()];
         BASE_DAO.convToEntity(queryResult, result, ProdBrandVO.class, "brandno", "brandname");
