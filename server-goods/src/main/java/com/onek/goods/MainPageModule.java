@@ -94,6 +94,8 @@ public class MainPageModule {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
                         page.totalItems = attr.list.size();
+                        page.totalPageCount = page.totalItems%page.pageSize > 0 ?
+                                page.totalItems/page.pageSize+1 :page.totalItems/page.pageSize;
                         attr.page = new PageHolder(page);
                         return attr;
                     }
@@ -289,6 +291,7 @@ public class MainPageModule {
                 + selectClassSQL + " UNION ALL " + selectGoodsSQL +
                 " UNION ALL " + selectAllSQL + ") ua group by sku";
         List<Object[]> queryResult = BASE_DAO.queryNativeC(pageHolder, pageHolder.value, sqlBuilder);
+
         if (queryResult == null || queryResult.isEmpty()) {
             return;
         }
