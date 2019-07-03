@@ -209,10 +209,12 @@ public class PayModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         String orderno = jsonObject.get("orderno").getAsString();
-        String afsano = jsonObject.get("afsano").getAsString();
+
         String paytype = jsonObject.get("paytype").getAsString();
         int flag = jsonObject.has("flag") ? jsonObject.get("flag").getAsInt() : 0;
 
+        String afsano = null;
+        try{ afsano  = jsonObject.get("afsano").getAsString(); }catch (Exception ignored){}
         boolean isOrderPayOp = StringUtils.isEmpty(afsano);
 
         if(StringUtils.isEmpty(orderno)){
@@ -305,8 +307,8 @@ public class PayModule {
             result = failOpt(orderno, payno,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
 
-        OrderUtil.sendMsg(orderno, tradeStatus ,money, compid, tradeDate);
-        if("1".equals(tradeStatus)) {
+        if(result != 2)  OrderUtil.sendMsg(orderno, tradeStatus ,money, compid, tradeDate);
+        if(result ==1 && "1".equals(tradeStatus)) {
             OrderUtil.generateLccOrder(compid, orderno);
             OrderUtil.updateSales(compid, orderno);
         }
@@ -365,7 +367,7 @@ public class PayModule {
                 result = failOpt(afsano, afsano,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
             }
 
-            OrderUtil.sendMsg(afsano, tradeStatus ,money, compid, tradeDate);
+            if(result != 2) OrderUtil.sendMsg(afsano, tradeStatus ,money, compid, tradeDate);
 
             if(result ==1){
                 return new Result().success(null);

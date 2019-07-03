@@ -60,7 +60,7 @@ public class AppContext extends IceContext {
 
     //创建用户会话KRY lzp
     private String genUKey() {
-        return EncryptUtils.encryption(param.token + "@" + remoteIp);
+        return EncryptUtils.encryption(param.token);
     }
 
     //创建多端检测key
@@ -97,7 +97,6 @@ public class AppContext extends IceContext {
 
     //检测是存在多端登陆的情况
     private void checkMorePointLogin() {
-
         String token = RedisUtil.getStringProvide().get(genUKeyByMore());
         logger.print(genUKeyByMore()+" - 检测是否存在多点登陆,上一个用户信息token = "+token+", 当前用户信息token = "+ genUKey());
         if (StringUtils.isEmpty(token)) return;
@@ -106,7 +105,6 @@ public class AppContext extends IceContext {
             RedisUtil.getStringProvide().delete(token);
             logger.print(genUKeyByMore()+" - 检测多点登陆,删除上一个用户token缓存信息 = "+token);
         }
-
     }
 
     //清理用户会话
