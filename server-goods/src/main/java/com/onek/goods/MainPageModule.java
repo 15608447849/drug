@@ -544,8 +544,6 @@ public class MainPageModule {
 
     //获取页面全部元素信息
     private Map<String, List<UiElement>> allElement() {
-
-
         Map<String, List<UiElement>> map;
         String json = RedisUtil.getStringProvide().get(MAIN_PAGE_JSON);
         if (StringUtils.isEmpty(json)){
