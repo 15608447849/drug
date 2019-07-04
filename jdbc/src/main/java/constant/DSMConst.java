@@ -86,6 +86,7 @@ public interface DSMConst extends UDAConst {
             {"v_sku_new_years"}, //68 SKU新增记录年销售统计报表
             {"tb_comp_bus_scope"}, //69企业经营范围表
             {"tb_ui_page"}, //70主界面元素UI绑定表
+            {"td_sync_error"},//71同步异常表
 
     };
 
@@ -165,6 +166,7 @@ public interface DSMConst extends UDAConst {
     public final static int V_SKU_NEW_YEARS = 68;
     public final static int TB_COMP_BUS_SCOPE = 69;
     public final static int TB_UI_PAGE = 70;
+    public final static int TD_SYNC_ERROR = 71;
 
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
