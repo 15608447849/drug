@@ -94,7 +94,6 @@ public class MainPageModule {
                     if (prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
-                        page.totalItems = attr.list.size();
                         page.totalPageCount = page.totalItems%page.pageSize > 0 ?
                                 page.totalItems/page.pageSize+1 :page.totalItems/page.pageSize;
                         attr.page = new PageHolder(page);
@@ -201,12 +200,11 @@ public class MainPageModule {
             }
 
         }
-        PageHolder pageHolder = new PageHolder(page);
         if (actCodeSB.toString().contains(",")) {
             actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
         }
         //获取活动下的商品
-        getActGoods(attr, pageHolder, context.isAnonymous(), actCodeStr, otherArr);
+        getActGoods(attr, page, context.isAnonymous(), actCodeStr, otherArr);
 //        if (isQuery) {
 //
 //        }
@@ -271,8 +269,9 @@ public class MainPageModule {
     }
 
 
-    private static void getActGoods(Attr attr, PageHolder pageHolder, boolean isAnonymous,
+    private static void getActGoods(Attr attr, Page page, boolean isAnonymous,
                                     String actCodeStr, String[] otherArr) {
+        PageHolder pageHolder = new PageHolder(page);
         List<ProdVO> prodVOList = new ArrayList<>();
         List<Long> skuList = new ArrayList<>();
         Map<Long, String[]> dataMap = new HashMap<>();
@@ -291,8 +290,7 @@ public class MainPageModule {
         String sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode FROM ("
                 + selectClassSQL + " UNION ALL " + selectGoodsSQL +
                 " UNION ALL " + selectAllSQL + ") ua group by sku";
-        List<Object[]> queryResult = BASE_DAO.queryNativeC(pageHolder, pageHolder.value, sqlBuilder);
-
+        List<Object[]> queryResult = BASE_DAO.queryNativeC(pageHolder, page, sqlBuilder);
         if (queryResult == null || queryResult.isEmpty()) {
             return;
         }
@@ -306,6 +304,7 @@ public class MainPageModule {
         SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
         if (response != null && response.getHits().totalHits > 0) {
             assembleData(isAnonymous, response, prodVOList, dataMap, otherArr);
+            page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
         }
         if (prodVOList.size() > 0) {
             remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, isAnonymous);
@@ -488,6 +487,7 @@ public class MainPageModule {
         } else {
             response = ProdESUtil.searchHotProd(keyword, page.pageIndex, page.pageSize);
         }
+        page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
         List<ProdVO> prodList = new ArrayList<>();
         assembleData(isAnonymous, response, prodList, null, null);
         return prodList;
@@ -512,6 +512,7 @@ public class MainPageModule {
             if (hits.totalHits > 0) {
                 assembleData(isAnonymous, response, prodList, null, null);
             }
+            page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
         }
         resultMap.put("response", response);
         resultMap.put("prodList", prodList);
