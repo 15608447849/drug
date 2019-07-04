@@ -207,7 +207,7 @@ public class FileServerUtils {
             HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
             ArrayList<LinkedTreeMap<String,Object>> list = (ArrayList<LinkedTreeMap<String, Object>>) maps.get("data");
             assert list != null;
-            return list.get(0).get("httpUrl").toString();
+            return FileServerUtils.fileDownloadPrev()+list.get(0).get("relativePath").toString();
         } catch (Exception e) {
             e.printStackTrace();
         }
