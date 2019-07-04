@@ -13,6 +13,35 @@ public class SyncErrVO {
     private int synctimes;
     private int syncway;
 
+    private static final String[] TYPE = { "其他", "门店", "订单", "商品" };
+
+    private static final String[] FROM = {
+            "其他", "电商平台->中间库", "中间库->电商平台", "中间库->自有ERP",
+            "自有ERP->中间库", "自有ERP->上游ERP", "上游ERP->自有ERP",
+            "电商平台->自有ERP", "自有ERP->电商平台" };
+
+    private static final String[] WAY = { "其他", "实时", "非实时" };
+
+    private static final String[] REASON = {
+            "其他", "网络异常", "数据异常", "数据库操作异常",
+            "服务异常", "参数异常", "业务规则异常" };
+
+    public String getSynctypen() {
+        return TYPE[this.synctype];
+    }
+
+    public String getSyncfromn() {
+        return FROM[this.syncfrom];
+    }
+
+    public String getSyncwayn() {
+        return WAY[this.syncway];
+    }
+
+    public String getSyncreasonn() {
+        return REASON[this.syncreason];
+    }
+
     public String getUnqid() {
         return unqid;
     }
