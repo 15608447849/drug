@@ -97,7 +97,7 @@ public class MainPageModule {
                         page.totalPageCount = page.totalItems%page.pageSize > 0 ?
                                 page.totalItems/page.pageSize+1 :page.totalItems/page.pageSize;
                         attr.page = new PageHolder(page);
-                        return attr;
+                        return attr.list.size() > 0 ? attr : null;
                     }
                 }
             } else {//活动专区
@@ -116,7 +116,7 @@ public class MainPageModule {
                 if (queryResult == null || queryResult.isEmpty()) return null;
                 if (isQuery) {
                     combatActData(attr,queryResult,context, page, compId);
-                    return attr;
+                    return attr.list.size() > 0 ? attr : null;
                 }
             }
         } catch (Exception e) {
@@ -170,7 +170,7 @@ public class MainPageModule {
      **/
     private static void combatActData(Attr attr, List<Object[]> queryResult,
                                       AppContext context,Page page, int compId){
-        String actCodeStr = null;
+        String actCodeStr;
         StringBuilder actCodeSB = new StringBuilder();
         String[] otherArr = {String.valueOf(queryResult.get(0)[1]), "0", compId + ""};
         for (Object[] qResult : queryResult) {
@@ -202,9 +202,9 @@ public class MainPageModule {
         }
         if (actCodeSB.toString().contains(",")) {
             actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
+            //获取活动下的商品
+            getActGoods(attr, page, context.isAnonymous(), actCodeStr, otherArr);
         }
-        //获取活动下的商品
-        getActGoods(attr, page, context.isAnonymous(), actCodeStr, otherArr);
 //        if (isQuery) {
 //
 //        }
