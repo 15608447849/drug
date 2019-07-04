@@ -105,7 +105,7 @@ public class MainPageModule {
                 String SQL = SELECT_ACT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE
                         + "}} where cstatus&1=0 ";
                 if (bRuleCodes == -11) {//新人专享
-                    SQL = SQL + " and qualcode = 1 and qualvalue = 0";
+                    SQL = SQL + " ) and qualcode = 1 and qualvalue = 0";
                 } else {
                     ruleCodeStr = getCodeStr(bRuleCodes);
                     if (ruleCodeStr == null) return null;
