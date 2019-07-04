@@ -383,6 +383,10 @@ public class BackgroundProdModule {
 
         BgProdVO result = getProd(params[0]);
 
+        if (result == null) {
+            return new Result().fail("无此商品");
+        }
+
         if (appContext.isAnonymous()) {
             result.setRrp(-1);
             result.setMp(-1);

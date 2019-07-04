@@ -25,6 +25,7 @@ import dao.BaseDAO;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import redis.util.RedisUtil;
 import util.*;
 
 import java.math.BigDecimal;
@@ -93,11 +94,10 @@ public class MainPageModule {
                     if (prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
-                        page.totalItems = attr.list.size();
                         page.totalPageCount = page.totalItems%page.pageSize > 0 ?
                                 page.totalItems/page.pageSize+1 :page.totalItems/page.pageSize;
                         attr.page = new PageHolder(page);
-                        return attr;
+                        return attr.list.size() > 0 ? attr : null;
                     }
                 }
             } else {//活动专区
@@ -116,7 +116,7 @@ public class MainPageModule {
                 if (queryResult == null || queryResult.isEmpty()) return null;
                 if (isQuery) {
                     combatActData(attr,queryResult,context, page, compId);
-                    return attr;
+                    return attr.list.size() > 0 ? attr : null;
                 }
             }
         } catch (Exception e) {
@@ -143,7 +143,7 @@ public class MainPageModule {
         if (skuSB.toString().contains(",")) {
             String skuStr = skuSB.toString().substring(0, skuSB.toString().length() - 1);
             String numArr = IceRemoteUtil.queryShopCartNumBySkus(compId, skuStr);
-            if (numArr != null) {
+            if (numArr != null && !numArr.isEmpty() && !"null".equalsIgnoreCase(numArr)) {
                 Map<Long, Integer> shopCartNum = new HashMap<>();
                 JsonArray goodsArr = new JsonParser().parse(numArr).getAsJsonArray();
                 goodsArr.forEach(goods -> {
@@ -170,7 +170,7 @@ public class MainPageModule {
      **/
     private static void combatActData(Attr attr, List<Object[]> queryResult,
                                       AppContext context,Page page, int compId){
-        String actCodeStr = null;
+        String actCodeStr;
         StringBuilder actCodeSB = new StringBuilder();
         String[] otherArr = {String.valueOf(queryResult.get(0)[1]), "0", compId + ""};
         for (Object[] qResult : queryResult) {
@@ -200,12 +200,11 @@ public class MainPageModule {
             }
 
         }
-        PageHolder pageHolder = new PageHolder(page);
         if (actCodeSB.toString().contains(",")) {
             actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
+            //获取活动下的商品
+            getActGoods(attr, page, context.isAnonymous(), actCodeStr, otherArr);
         }
-        //获取活动下的商品
-        getActGoods(attr, pageHolder, context.isAnonymous(), actCodeStr, otherArr);
 //        if (isQuery) {
 //
 //        }
@@ -270,8 +269,9 @@ public class MainPageModule {
     }
 
 
-    private static void getActGoods(Attr attr, PageHolder pageHolder, boolean isAnonymous,
+    private static void getActGoods(Attr attr, Page page, boolean isAnonymous,
                                     String actCodeStr, String[] otherArr) {
+        PageHolder pageHolder = new PageHolder(page);
         List<ProdVO> prodVOList = new ArrayList<>();
         List<Long> skuList = new ArrayList<>();
         Map<Long, String[]> dataMap = new HashMap<>();
@@ -290,8 +290,7 @@ public class MainPageModule {
         String sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode FROM ("
                 + selectClassSQL + " UNION ALL " + selectGoodsSQL +
                 " UNION ALL " + selectAllSQL + ") ua group by sku";
-        List<Object[]> queryResult = BASE_DAO.queryNativeC(pageHolder, pageHolder.value, sqlBuilder);
-
+        List<Object[]> queryResult = BASE_DAO.queryNativeC(pageHolder, page, sqlBuilder);
         if (queryResult == null || queryResult.isEmpty()) {
             return;
         }
@@ -305,6 +304,7 @@ public class MainPageModule {
         SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
         if (response != null && response.getHits().totalHits > 0) {
             assembleData(isAnonymous, response, prodVOList, dataMap, otherArr);
+            page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
         }
         if (prodVOList.size() > 0) {
             remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, isAnonymous);
@@ -473,9 +473,13 @@ public class MainPageModule {
     //品牌-4 热销 -5
     private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous,String jsonStr,
                                                   long state, Attr attr) {
-        JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
-        String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
-        String brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
+        String keyword = "", brandno = "";
+        if (jsonStr != null && !jsonStr.isEmpty()) {
+            JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
+            keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+            brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
+        }
+
         SearchResponse response;
         if (state == -4) {//品牌
             attr.actObj = getBrandInfo();
@@ -483,6 +487,7 @@ public class MainPageModule {
         } else {
             response = ProdESUtil.searchHotProd(keyword, page.pageIndex, page.pageSize);
         }
+        page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
         List<ProdVO> prodList = new ArrayList<>();
         assembleData(isAnonymous, response, prodList, null, null);
         return prodList;
@@ -507,6 +512,7 @@ public class MainPageModule {
             if (hits.totalHits > 0) {
                 assembleData(isAnonymous, response, prodList, null, null);
             }
+            page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
         }
         resultMap.put("response", response);
         resultMap.put("prodList", prodList);
@@ -534,37 +540,49 @@ public class MainPageModule {
         String jsonStr;//其他附加参数
     }
 
+    private static final String MAIN_PAGE_JSON = "MAIN_PAGE_JSON";
+
     //获取页面全部元素信息
-    private Map<String, List<UiElement>> allElement(AppContext context) {
-        Map<String, List<UiElement>> map = new HashMap<>();
-        try {
-            String sql = "SELECT uiname,uimodel,uioption,codes,seq,route,temp FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
-            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
-            if (lines.size() > 0) {
-                for (Object[] rows : lines) {
+    private Map<String, List<UiElement>> allElement() {
+        Map<String, List<UiElement>> map;
+        String json = RedisUtil.getStringProvide().get(MAIN_PAGE_JSON);
+        if (StringUtils.isEmpty(json)){
+            map = new HashMap<>();
+            try {
+                String sql = "SELECT uiname,uimodel,uioption,codes,seq,route,temp FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
+                List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
+                if (lines.size() > 0) {
+                    for (Object[] rows : lines) {
 
-                    UiElement el = new UiElement();
-                    el.name = StringUtils.obj2Str(rows[0]);
-                    el.module = StringUtils.obj2Str(rows[1]);
-                    el.option = StringUtils.checkObjectNull(rows[2], 0);
-                    el.code = StringUtils.checkObjectNull(rows[3], 0L);
+                        UiElement el = new UiElement();
+                        el.name = StringUtils.obj2Str(rows[0]);
+                        el.module = StringUtils.obj2Str(rows[1]);
+                        el.option = StringUtils.checkObjectNull(rows[2], 0);
+                        el.code = StringUtils.checkObjectNull(rows[3], 0L);
 
-                    el.index = StringUtils.checkObjectNull(rows[4], 0);
-                    el.route = StringUtils.obj2Str(rows[5]);
-                    el.template = StringUtils.checkObjectNull(rows[6],0);
+                        el.index = StringUtils.checkObjectNull(rows[4], 0);
+                        el.route = StringUtils.obj2Str(rows[5]);
+                        el.template = StringUtils.checkObjectNull(rows[6],0);
 
-                    genElementAttr(el);
-                    if (map.containsKey(el.module)) {
-                        map.get(el.module).add(el);
-                    } else {
-                        List<UiElement> list = new LinkedList<>();
-                        list.add(el);
-                        map.put(el.module, list);
+                        genElementAttr(el);
+                        if (map.containsKey(el.module)) {
+                            map.get(el.module).add(el);
+                        } else {
+                            List<UiElement> list = new LinkedList<>();
+                            list.add(el);
+                            map.put(el.module, list);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            if (map.size() > 0) {
+                RedisUtil.getStringProvide().set(MAIN_PAGE_JSON,GsonUtils.javaBeanToJson(map));
+                RedisUtil.getStringProvide().expire(MAIN_PAGE_JSON, 5 * 60 * 1000);
+            }
+        }else{
+            map = GsonUtils.string2Map(json);
         }
         return map;
     }
@@ -592,7 +610,7 @@ public class MainPageModule {
         String json = context.param.json;
         Param param = GsonUtils.jsonToJavaBean(json, Param.class);
         if (param == null || param.identity==0 && param.limit == -1) {
-            Map<String, List<UiElement>> map = allElement(context);
+            Map<String, List<UiElement>> map = allElement();
             //获取全部UI元素数据
             return map.size() == 0 ? new Result().fail("没有主页元素信息,请配置界面") : new Result().success(map);
         }else{
