@@ -26,19 +26,17 @@ public class WebAppModule {
             this.fragment = fragment;
             this.name = name;
         }
-
         String container;
         String fragment;
         String name;
         HashMap<String,String> map;
-
     }
-
 
     @UserPermission(ignore = true)
-    public String pageInfo(AppContext context){
-        return new HttpRequest().accessUrl(FileServerUtils.fileDownloadPrev()+"/page.json").getRespondContent();
+    public String config(AppContext context){
+        return new HttpRequest().accessUrl(FileServerUtils.fileDownloadPrev()+"/config.json").getRespondContent();
     }
+
 
     /** APP 地区数据对象*/
     private static class AreaEntityByApp {
