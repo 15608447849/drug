@@ -129,14 +129,11 @@ public class PayModule {
                     .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
             double payamt = MathUtil.exactDiv(result[0].getPayamt(), 100).
                     setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-            if(bal == 0 && payamt <= 0 ){
+            if(payamt < 0 ){
                 return new Result().fail("支付金额不能小于0!");
             }
 
-            int bflag = 0;
-            if(bal > 0 && payamt == 0){
-                bflag = 1;
-            }
+            int bflag = payamt == 0 ? 1 : 0;
 
             JSONObject r = new JSONObject();
             r.put("balflag",bflag);
