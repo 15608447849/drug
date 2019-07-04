@@ -1,4 +1,4 @@
-package com.onek.user.entity;
+package com.onek.entity;
 
 public class SyncErrVO {
     private String unqid;
