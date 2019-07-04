@@ -25,6 +25,7 @@ import dao.BaseDAO;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import redis.util.RedisUtil;
 import util.*;
 
 import java.math.BigDecimal;
@@ -538,37 +539,51 @@ public class MainPageModule {
         String jsonStr;//其他附加参数
     }
 
+    private static final String MAIN_PAGE_JSON = "MAIN_PAGE_JSON";
+
     //获取页面全部元素信息
-    private Map<String, List<UiElement>> allElement(AppContext context) {
-        Map<String, List<UiElement>> map = new HashMap<>();
-        try {
-            String sql = "SELECT uiname,uimodel,uioption,codes,seq,route,temp FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
-            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
-            if (lines.size() > 0) {
-                for (Object[] rows : lines) {
+    private Map<String, List<UiElement>> allElement() {
 
-                    UiElement el = new UiElement();
-                    el.name = StringUtils.obj2Str(rows[0]);
-                    el.module = StringUtils.obj2Str(rows[1]);
-                    el.option = StringUtils.checkObjectNull(rows[2], 0);
-                    el.code = StringUtils.checkObjectNull(rows[3], 0L);
 
-                    el.index = StringUtils.checkObjectNull(rows[4], 0);
-                    el.route = StringUtils.obj2Str(rows[5]);
-                    el.template = StringUtils.checkObjectNull(rows[6],0);
+        Map<String, List<UiElement>> map;
+        String json = RedisUtil.getStringProvide().get(MAIN_PAGE_JSON);
+        if (StringUtils.isEmpty(json)){
+            map = new HashMap<>();
+            try {
+                String sql = "SELECT uiname,uimodel,uioption,codes,seq,route,temp FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
+                List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
+                if (lines.size() > 0) {
+                    for (Object[] rows : lines) {
 
-                    genElementAttr(el);
-                    if (map.containsKey(el.module)) {
-                        map.get(el.module).add(el);
-                    } else {
-                        List<UiElement> list = new LinkedList<>();
-                        list.add(el);
-                        map.put(el.module, list);
+                        UiElement el = new UiElement();
+                        el.name = StringUtils.obj2Str(rows[0]);
+                        el.module = StringUtils.obj2Str(rows[1]);
+                        el.option = StringUtils.checkObjectNull(rows[2], 0);
+                        el.code = StringUtils.checkObjectNull(rows[3], 0L);
+
+                        el.index = StringUtils.checkObjectNull(rows[4], 0);
+                        el.route = StringUtils.obj2Str(rows[5]);
+                        el.template = StringUtils.checkObjectNull(rows[6],0);
+
+                        genElementAttr(el);
+                        if (map.containsKey(el.module)) {
+                            map.get(el.module).add(el);
+                        } else {
+                            List<UiElement> list = new LinkedList<>();
+                            list.add(el);
+                            map.put(el.module, list);
+                        }
                     }
                 }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
+            if (map.size() > 0) {
+                RedisUtil.getStringProvide().set(MAIN_PAGE_JSON,GsonUtils.javaBeanToJson(map));
+                RedisUtil.getStringProvide().expire(MAIN_PAGE_JSON, 5 * 60 * 1000);
+            }
+        }else{
+            map = GsonUtils.string2Map(json);
         }
         return map;
     }
@@ -596,7 +611,7 @@ public class MainPageModule {
         String json = context.param.json;
         Param param = GsonUtils.jsonToJavaBean(json, Param.class);
         if (param == null || param.identity==0 && param.limit == -1) {
-            Map<String, List<UiElement>> map = allElement(context);
+            Map<String, List<UiElement>> map = allElement();
             //获取全部UI元素数据
             return map.size() == 0 ? new Result().fail("没有主页元素信息,请配置界面") : new Result().success(map);
         }else{
