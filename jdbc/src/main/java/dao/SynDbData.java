@@ -177,7 +177,7 @@ public class SynDbData implements Callable<Object> {
             int dbs = (master == 0 ? 1 : 0);
             List<Object[]> paramList = new ArrayList<>();
             paramList.add(getParam());
-            SynDbLog.updateTransNative(getNativeSQL(),paramList,0,0,dbs,false);
+            SynDbLog.updateTransNative(getNativeSQL(),paramList,sharding,tbSharding,dbs,false);
         }
         return result;
     }
@@ -214,7 +214,6 @@ public class SynDbData implements Callable<Object> {
 
 
     public int[] updateTransNative(){
-
         int[] result = new int[nativeSQL.length];
         AbstractJdbcSessionMgr sessionMgr = baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false);
         try {
@@ -254,7 +253,9 @@ public class SynDbData implements Callable<Object> {
         for (int i = 0; i < nativeSQL.length; i++){
             String[] resultSQL = baseDao.getNativeReplaceSQL(nativeSQL[i],tbSharding);
             int tabInx = Integer.parseInt(resultSQL[0]);
-            if(tabInx == DSMConst.TD_TRAN_ORDER || tabInx == DSMConst.TD_TRAN_GOODS){
+            if(tabInx == DSMConst.TD_TRAN_ORDER
+                    || tabInx == DSMConst.TD_TRAN_GOODS
+                    || tabInx == DSMConst.TD_TRAN_REBATE){
                 bkResultSql.add(resultSQL);
                 bkParm.add(params.get(i));
             }

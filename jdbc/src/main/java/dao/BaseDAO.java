@@ -190,6 +190,10 @@ public class BaseDAO {
             table = DSMConst.TD_BK_TRAN_GOODS;
         }
 
+		if(table == DSMConst.TD_TRAN_REBATE){
+			table = DSMConst.TD_BK_TRAN_REBATE;
+		}
+
         StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
         //按公司模型切分表
         if(tbSharding != 0){
@@ -209,7 +213,7 @@ public class BaseDAO {
 	* @parameter  输入参数：带固定格式"{{?d}}"的原生态查询SQL语句。
 	* @return  返回值：索引为0的返回值代表要使用的数据源id，索引为1的返回值代表是原生态查询SQL语句字符串，
 	 */
-	private String[] getNativeSQL(String nativeSQL){
+	protected String[] getNativeSQL(String nativeSQL){
 		String[] result = new String[2];
 		//默认从第一个字符串开始查询指定的子字符串
 		int startIndex = 0;
@@ -811,7 +815,8 @@ public class BaseDAO {
 
         //异步同步到订单运营后台
         if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
-                || Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS){
+                || Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS
+				|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_BK_TRAN_REBATE){
 
             synDbData = new SynDbData(resultSQL,null,master.get(),6);
             synDbData.setNativeSQL(nativeSQL);
@@ -1110,7 +1115,8 @@ public class BaseDAO {
 
 		//异步同步到订单运营后台
 		if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
-				|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS){
+				|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS
+				|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_BK_TRAN_REBATE){
 			synDbData = new SynDbData(resultSQL,null,master.get(),7);
 			synDbData.setNativeSQL(new String[]{nativeSQL});
 			synDbData.setBatchSize(batchSize);
