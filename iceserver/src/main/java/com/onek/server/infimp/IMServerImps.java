@@ -268,7 +268,7 @@ public class IMServerImps extends _InterfacesDisp implements IPushMessageStore {
                     try {
                         long t = System.currentTimeMillis();
                         clientPrx.ice_invocationTimeout(PING_TIMEOUT_MAX).ice_ping();
-                        communicator.getLogger().print("检测存活: " + clientPrx.ice_getIdentity() +" , 耗时: " + (System.currentTimeMillis() - t)+" 毫秒");
+//                        communicator.getLogger().print("检测存活: " + clientPrx.ice_getIdentity() +" , 耗时: " + (System.currentTimeMillis() - t)+" 毫秒");
                     } catch (Exception e) {
                         it3.remove();
                         e.printStackTrace();

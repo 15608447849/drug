@@ -6,9 +6,9 @@ public class InvoiceVO {
     private String taxpayer = "";
     private String bankers = "";
     private String account = "";
-    private String tel;
+    private String tel = "";
     private int cstatus;
-    private String email;
+    private String email = "";
 
     public String getEmail() {
         return email;
