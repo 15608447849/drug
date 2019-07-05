@@ -159,7 +159,7 @@ public class OrderInfoModule {
                         IceRemoteUtil.getCompleteName(compJson.getString("addressCode")));
             }
 
-            if (result.length > 0) {
+            if (results.length > 0) {
                 tranOrder.setInvoice(results[0]);
             }
 
