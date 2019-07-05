@@ -145,6 +145,7 @@ public class OrderInfoModule {
 
         BaseDAO.getBaseDAO().convToEntity(invoiceResult, results, InvoiceVO.class);
 
+        InvoiceVO invoice = results.length == 0 ? null : results[0];
         JSONObject compJson;
         List<TranOrderGoods> goods;
         for (TranOrderDetail tranOrder : result) {
@@ -159,10 +160,7 @@ public class OrderInfoModule {
                         IceRemoteUtil.getCompleteName(compJson.getString("addressCode")));
             }
 
-            if (results.length > 0) {
-                tranOrder.setInvoice(results[0]);
-            }
-
+            tranOrder.setInvoice(invoice);
             tranOrder.setPayprice(
                     MathUtil.exactDiv(tranOrder.getPayprice(), 100).doubleValue());
             tranOrder.setGoods(goods = getOrderGoods(tranOrder.getOrderno(), compid));
