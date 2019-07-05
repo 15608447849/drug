@@ -87,6 +87,7 @@ public interface DSMConst extends UDAConst {
             {"tb_comp_bus_scope"}, //69企业经营范围表
             {"tb_ui_page"}, //70主界面元素UI绑定表
             {"td_sync_error"},//71同步异常表
+            {"td_bk_tran_rebate"},//72同步运营平台返利记录表
 
     };
 
