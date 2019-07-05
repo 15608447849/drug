@@ -81,16 +81,22 @@ public class MainPageModule {
      * 通过活动码 获取 活动属性 及 商品信息
      **/
     private static Attr dataSource(long bRuleCodes, boolean isQuery, int pageIndex, int pageNumber,
-                                   AppContext context, String json) {
+                                   AppContext context, String jsonStr) {
         Attr attr = new Attr();
         Page page = new Page();
         page.pageIndex = pageIndex <= 0 ? 1 : pageIndex;
         page.pageSize = pageNumber <= 0 ? 100 : pageNumber;
         int compId = context.getUserSession() != null ? context.getUserSession().compId : 0;
+        String keyword = "", brandno = "";
+        if (jsonStr != null && !jsonStr.isEmpty()) {
+            JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
+            keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
+            brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
+        }
         try {
             if (bRuleCodes < 0 && bRuleCodes >= -10) {//非活动专区
                 if (isQuery) {
-                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), page, json, attr);
+                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), page, attr, keyword, brandno);
                     if (prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
@@ -115,8 +121,8 @@ public class MainPageModule {
                 List<Object[]> queryResult = BASE_DAO.queryNative(SQL, mmdd);
                 if (queryResult == null || queryResult.isEmpty()) return null;
                 if (isQuery) {
-                    combatActData(attr,queryResult,context, page, compId);
-                    return attr.list.size() > 0 ? attr : null;
+                    combatActData(attr,queryResult,context, page, compId, keyword);
+                    return attr.list != null && attr.list.size() > 0 ? attr : null;
                 }
             }
         } catch (Exception e) {
@@ -169,7 +175,7 @@ public class MainPageModule {
      * @version 1.1.1
      **/
     private static void combatActData(Attr attr, List<Object[]> queryResult,
-                                      AppContext context,Page page, int compId){
+                                      AppContext context,Page page, int compId, String keyword){
         String actCodeStr;
         StringBuilder actCodeSB = new StringBuilder();
         String[] otherArr = {String.valueOf(queryResult.get(0)[1]), "0", compId + ""};
@@ -203,7 +209,7 @@ public class MainPageModule {
         if (actCodeSB.toString().contains(",")) {
             actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
             //获取活动下的商品
-            getActGoods(attr, page, context.isAnonymous(), actCodeStr, otherArr);
+            getActGoods(attr, page, context.isAnonymous(), actCodeStr, otherArr, keyword);
         }
 //        if (isQuery) {
 //
@@ -270,7 +276,7 @@ public class MainPageModule {
 
 
     private static void getActGoods(Attr attr, Page page, boolean isAnonymous,
-                                    String actCodeStr, String[] otherArr) {
+                                    String actCodeStr, String[] otherArr, String keyword) {
         PageHolder pageHolder = new PageHolder(page);
         List<ProdVO> prodVOList = new ArrayList<>();
         List<Long> skuList = new ArrayList<>();
@@ -301,7 +307,7 @@ public class MainPageModule {
                             String.valueOf(qResult[3]), String.valueOf(qResult[4]), String.valueOf(qResult[5])});
         });
         //ES数据组装
-        SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, "", 1, 100);
+        SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, keyword, 1, 100);
         if (response != null && response.getHits().totalHits > 0) {
             assembleData(isAnonymous, response, prodVOList, dataMap, otherArr);
             page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
@@ -435,7 +441,7 @@ public class MainPageModule {
      * @version 1.1.1
      **/
     private static List<ProdVO> getFloorByState(long state, boolean isAnonymous, Page page,
-                                                String jsonStr, Attr attr) {
+                                                 Attr attr,String keyword, String brandno) {
 
         Set<Integer> result = new HashSet<>();
         if (state == -1) { // 新品
@@ -463,23 +469,16 @@ public class MainPageModule {
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
         } else {//品牌专区-4 //热销专区 -5
-            return getOtherMallFloor(page, isAnonymous, jsonStr, state, attr);
+            return getOtherMallFloor(page, isAnonymous, state, attr, keyword, brandno);
         }
-        Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, result, "", 1, page);
+        Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, result, keyword, 1, page);
         return (List<ProdVO>) resultMap.get("prodList");
     }
 
 
     //品牌-4 热销 -5
-    private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous,String jsonStr,
-                                                  long state, Attr attr) {
-        String keyword = "", brandno = "";
-        if (jsonStr != null && !jsonStr.isEmpty()) {
-            JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
-            keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
-            brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
-        }
-
+    private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous,
+                                                  long state, Attr attr, String keyword, String brandno) {
         SearchResponse response;
         if (state == -4) {//品牌
             attr.actObj = getBrandInfo();
