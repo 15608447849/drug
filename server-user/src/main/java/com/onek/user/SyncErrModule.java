@@ -22,6 +22,14 @@ public class SyncErrModule {
             + " FROM {{?" + DSMConst.TD_SYNC_ERROR + "}} "
             + " WHERE cstatus&1 = 0 ";
 
+
+    /**
+     * @接口摘要 查询同步异常记录
+     * @业务场景 异常监控模块查询
+     * @传参类型 array
+     * @传参列表 [异常类型，异常原因，异常发生日期起，异常发生日期止]
+     * @返回列表 code=200 data=结果信息
+     */
     @UserPermission(ignore = true)
     public Result querySyncErr(AppContext appContext) {
         String[] params = appContext.param.arrays;
