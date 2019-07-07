@@ -17,6 +17,12 @@ public class CompInfoVO {
     private int storetype;
     private long uphone;
     private int cstatus;
+    private String taxpayer;
+    private String bankers;
+    private String account;
+    private String email;
+    private String contactname;
+    private String contactphone;//联系人电话
     private InvoiceVO invoiceVO;//发票信息
     private List<AptitudeVO> aptitudeVOS;//资质信息
     private List<BusScopeVO> busScopeVOS;//企业经营范围
@@ -126,5 +132,53 @@ public class CompInfoVO {
 
     public void setBusScopeStr(String busScopeStr) {
         this.busScopeStr = busScopeStr;
+    }
+
+    public String getTaxpayer() {
+        return taxpayer;
+    }
+
+    public void setTaxpayer(String taxpayer) {
+        this.taxpayer = taxpayer;
+    }
+
+    public String getBankers() {
+        return bankers;
+    }
+
+    public void setBankers(String bankers) {
+        this.bankers = bankers;
+    }
+
+    public String getAccount() {
+        return account;
+    }
+
+    public void setAccount(String account) {
+        this.account = account;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
+    }
+
+    public String getContactname() {
+        return contactname;
+    }
+
+    public void setContactname(String contactname) {
+        this.contactname = contactname;
+    }
+
+    public String getContactphone() {
+        return contactphone;
+    }
+
+    public void setContactphone(String contactphone) {
+        this.contactphone = contactphone;
     }
 }

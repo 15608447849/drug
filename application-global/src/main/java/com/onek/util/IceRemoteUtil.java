@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
 import com.onek.client.IceClient;
+import com.onek.entity.SyncErrVO;
 import com.onek.entitys.Result;
 import com.onek.prop.AppProperties;
 import com.onek.util.area.AreaEntity;
@@ -773,6 +774,16 @@ public class IceRemoteUtil {
                 "SyncCustomerInfoModule","systemConfigIsOpen").setArrayParams(name).execute());
     }
 
+    public static int insertOrUpdSyncErr(SyncErrVO errVO) {
+        return Integer.parseInt(ic.setServerAndRequest("userServer",
+                "SyncCustomerInfoModule","insertOrUpdSyncErr").setJsonParams(errVO).execute());
+    }
+
+    public static int updSyncCState(long syncid) {
+        return Integer.parseInt(ic.setServerAndRequest("userServer",
+                "SyncCustomerInfoModule","updSyncCState").setArrayParams(syncid).execute());
+    }
+
 
     public static String getErpSkuBySku(String sks){
         try {
@@ -798,6 +809,14 @@ public class IceRemoteUtil {
         return null;
     }
 
+    /**
+     * 获取购物车数量
+     */
+    public static String batchProduceSalesOrder(String orderNoStr, int compId){
+        return ic.setServerAndRequest("orderServer" + getOrderServerNo(compId),
+                "OrderDockedWithERPModule",
+                "batchProduceSalesOrder").setArrayParams(orderNoStr).execute();
+    }
 
 
     public static String mainPageInfo(){
