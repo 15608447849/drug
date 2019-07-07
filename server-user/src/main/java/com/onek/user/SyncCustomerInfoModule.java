@@ -85,7 +85,7 @@ public class SyncCustomerInfoModule {
             Object future = executorService.submit((Callable<Object>) () -> {
                 //客户信息同步开关是否开启
                 if (systemConfigOpen("CUS_SYNC")) {
-                    return postAddOrUpdateCus(compInfoVO, 0);
+                    return postAddOrUpdateCus(compInfoVO);
                 } else {
                     LogUtil.getDefaultLogger().info("客户信息同步开关未开启>>>>>>>>>>>>>>>");
                 }
@@ -103,7 +103,7 @@ public class SyncCustomerInfoModule {
 
     }
 
-    private static long postAddOrUpdateCus(CompInfoVO compInfoVO, int type) {
+    private static long postAddOrUpdateCus(CompInfoVO compInfoVO) {
         try {
             ConsigneeVO consigneeVO = MyDrugStoreInfoModule.getDefaultConsignee(compInfoVO.getCid());
             compInfoVO.setContactname(consigneeVO.getContactname());
@@ -121,19 +121,17 @@ public class SyncCustomerInfoModule {
                 if (result != null && !result.isEmpty()) {
                     JsonObject object = new JsonParser().parse(result).getAsJsonObject();
                     int code = object.get("code").getAsInt();
-                    int errorCode = object.get("errorcode").getAsInt();
-                    if (code != 200 && type == 0) {//失败处理
+                    if (code != 200) {//失败处理
+                        int errorCode = object.get("errorcode").getAsInt();
                         optSyncErrComp(errorCode, compInfoVO.getCid());
-                    } else if (code == 200 && type == 1) {
+                    } else if (code == 200) {
                         updSyncCState(compInfoVO.getCid());
                     }
                     return code;
                 }
             }
         } catch (Exception e) {
-            if (type == 0) {
-                optSyncErrComp(1, compInfoVO.getCid());
-            }
+            optSyncErrComp(1, compInfoVO.getCid());
             e.printStackTrace();
         }
         return -1L;
