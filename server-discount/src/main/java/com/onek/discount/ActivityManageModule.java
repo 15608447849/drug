@@ -1488,9 +1488,9 @@ public class ActivityManageModule {
         Result result = new Result();
         long actcode = jsonObject.get("actcode").getAsLong();
         int cstatus = jsonObject.get("cstatus").getAsInt();
-//        if (theActInProgress(actcode)) {
-//            return result.fail("活动正在进行中，无法删除！");
-//        }
+        if (theActInProgress(actcode)) {
+            return result.fail("活动正在进行中，无法删除！");
+        }
         int ret = 0;
         switch (cstatus){
             case 0:
