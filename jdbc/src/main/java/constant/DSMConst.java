@@ -170,7 +170,7 @@ public interface DSMConst extends UDAConst {
     public final static int TD_SYNC_ERROR = 71;
     public final static int TD_BK_TRAN_REBATE = 72;
 
-    // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步
+    // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步,4 同步到运营平台
     // 索引必须同_DB_TABLES里的索引对应
     public final static int[] SEG_TABLE_RULE = {
             2, 0, 0, 0, 3,// 0-4

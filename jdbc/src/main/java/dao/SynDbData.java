@@ -177,6 +177,11 @@ public class SynDbData implements Callable<Object> {
             int dbs = (master == 0 ? 1 : 0);
             List<Object[]> paramList = new ArrayList<>();
             paramList.add(getParam());
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
             SynDbLog.updateTransNative(getNativeSQL(),paramList,sharding,tbSharding,dbs,false);
         }
         return result;
@@ -205,6 +210,11 @@ public class SynDbData implements Callable<Object> {
             int dbs = (master == 0 ? 1 : 0);
             List<Object[]> paramList = new ArrayList<>();
             paramList.add(getParam());
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
             SynDbLog.updateTransNative(getNativeSQL(),paramList,getSharding(),getTbSharding(),dbs,false);
         }
         return keys;
@@ -237,6 +247,11 @@ public class SynDbData implements Callable<Object> {
                 return null;
             }
             int dbs = (master == 0 ? 1 : 0);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
             SynDbLog.updateTransNative(getNativeSQL(),getParams(),getSharding(),getTbSharding(),dbs,false);
         }
         return result;
@@ -274,6 +289,11 @@ public class SynDbData implements Callable<Object> {
             LogUtil.getDefaultLogger().error("异步线程同步异常",e);
             e.printStackTrace();
             int dbs = master;
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
             SynDbLog.updateTransNative(getNativeSQL(),getParams(),
                     getSharding(),getTbSharding(),dbs,false);
         }
@@ -296,7 +316,12 @@ public class SynDbData implements Callable<Object> {
             int dbs = master;
             List<Object[]> paramList = new ArrayList<>();
             paramList.add(getParam());
-            SynDbLog.updateTransNative(getNativeSQL(),paramList,0,0,dbs,false);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
+            SynDbLog.updateTransNative(getNativeSQL(),paramList,sharding,tbSharding,dbs,false);
         }
         return result;
     }
@@ -317,7 +342,12 @@ public class SynDbData implements Callable<Object> {
             int dbs = master;
             List<Object[]> paramList = new ArrayList<>();
             paramList.add(getParam());
-            SynDbLog.updateTransNative(getNativeSQL(),paramList,0,0,dbs,true);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
+            SynDbLog.updateTransNative(getNativeSQL(),paramList,sharding,tbSharding,dbs,true);
         }
         return result;
     }
@@ -364,6 +394,11 @@ public class SynDbData implements Callable<Object> {
                 return null;
             }
             int dbs = (master == 0 ? 1 : 0);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
             SynDbLog.updateTransNative(getNativeSQL(),getParams(),getSharding(),getTbSharding(),dbs,false);
         }
         return result;
@@ -386,6 +421,11 @@ public class SynDbData implements Callable<Object> {
                 return null;
             }
             int dbs = (master == 0 ? 1 : 0);
+            try {
+                Thread.sleep(1000);
+            } catch (InterruptedException e1) {
+                e1.printStackTrace();
+            }
             SynDbLog.updateTransNative(getNativeSQL(),getParams(),getSharding(),getTbSharding(),dbs,true);
         }
         return result;

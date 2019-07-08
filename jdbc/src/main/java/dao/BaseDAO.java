@@ -46,10 +46,11 @@ public class BaseDAO {
 
 	private static final ExecutorService ASYN_THREAD = Executors.newCachedThreadPool();
 
-
 	public static volatile AtomicInteger master = new AtomicInteger(LoadDbConfig.getDbConfigValue("master"));
 
 	private static final int SHARDING_FLAG = LoadDbConfig.getDbConfigValue("sharding");
+
+	private static final int BK_SWICH_FLAG = LoadDbConfig.getDbConfigValue("bkswich");
 
 	private static final BaseDAO BASEDAO = new BaseDAO();
 	/**私有化其构造函数，防止随便乱创建此对象。*/
@@ -1515,7 +1516,7 @@ public class BaseDAO {
 				int[] results = SynDbLog.updateTransNative
 						(nativeSQL,params,sharding,tbSharding,masterval,isbatch);
 				//切换数据库
-				if(results != null && results.length > 0 && results[0] > 0){
+				if(BK_SWICH_FLAG == 1 && results != null && results.length > 0 && results[0] > 0){
 					master.set(master.get() == 0 ? 1: 0);
 					LoadDbConfig.setDbMasterNum(master.get());
 					log.debug("准备切换数据库成功，"+master.get());
