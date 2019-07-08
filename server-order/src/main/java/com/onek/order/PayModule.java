@@ -312,7 +312,7 @@ public class PayModule {
         if (result == 1) {
             //订单生成到ERP(异步执行)
             LogUtil.getDefaultLogger().info("订单开始生成到ERP-------- print by cyq");
-            OrderDockedWithERPModule.generationOrder2ERP(orderno, compid);
+            OrderDockedWithERPModule.generationOrder2ERP(orderno);
 
             return new Result().success(null);
         } else if (result == 2) {

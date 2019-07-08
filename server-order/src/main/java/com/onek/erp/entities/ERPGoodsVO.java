@@ -7,6 +7,7 @@ package com.onek.erp.entities;
  * @time 2019/6/26 11:40
  **/
 public class ERPGoodsVO {
+    private String orderno;
     private String erpsku;//sku
     private String unqid;//详情唯一码
     private String num;//开票数量
@@ -52,5 +53,13 @@ public class ERPGoodsVO {
 
     public void setPayamt(String payamt) {
         this.payamt = payamt;
+    }
+
+    public String getOrderno() {
+        return orderno;
+    }
+
+    public void setOrderno(String orderno) {
+        this.orderno = orderno;
     }
 }

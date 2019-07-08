@@ -1,5 +1,6 @@
 package com.onek.entity;
 
+import com.onek.erp.entities.ERPGoodsVO;
 import com.onek.queue.delay.IDelayedObject;
 
 import java.util.List;
@@ -44,6 +45,8 @@ public class TranOrder implements IDelayedObject {
     private List<TranOrderGoods> goods;
 
     private String cusname;
+
+    private List<ERPGoodsVO> erpGoodsVOS;
 
     public int getInvoicetype() {
         return invoicetype;
@@ -298,5 +301,11 @@ public class TranOrder implements IDelayedObject {
         this.balamt = balamt;
     }
 
+    public List<ERPGoodsVO> getErpGoodsVOS() {
+        return erpGoodsVOS;
+    }
 
+    public void setErpGoodsVOS(List<ERPGoodsVO> erpGoodsVOS) {
+        this.erpGoodsVOS = erpGoodsVOS;
+    }
 }
