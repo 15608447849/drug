@@ -1041,7 +1041,7 @@ public class BackgroundProdModule {
 
         String updateSQL = " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
                 + " SET store = ?, cstatus = ? "
-                + " WHERE cstatus&1 = 0 AND erpcode = ? ";
+                + " WHERE cstatus&1 = 0 AND erpsku = ? ";
 
         BASE_DAO.updateNative(updateSQL, bgProd.getStore(), bgProd.getSkuCstatus(), erpcode);
 
