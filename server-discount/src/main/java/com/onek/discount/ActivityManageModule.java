@@ -1642,7 +1642,7 @@ public class ActivityManageModule {
      * @接口摘要 审批活动、优惠券
      * @业务场景 审批活动
      * @传参类型 json
-     * @传参列表  {actcod：活动码/优惠券码,ctype: 1 活动 2 优惠券，cstatus 1 审核通过 -1 审核不通过}
+     * @传参列表  {actcod：活动码/优惠券码,ctype: 1 活动 2 优惠券，cstatus 1 审核通过 3 审核不通过}
      * @返回列表 200 成功 -1 失败
      */
     @UserPermission(ignore = true)
@@ -1667,11 +1667,11 @@ public class ActivityManageModule {
 
 
         String failActSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}" +
-                " set ckstatus = -1 WHERE  unqid = ? ";
+                " set ckstatus = 3 WHERE  unqid = ? ";
 
 
         String failCoupSql = " UPDATE {{?" + DSMConst.TD_PROM_COUPON + "}}" +
-                " set ckstatus = -1 WHERE unqid = ? ";
+                " set ckstatus = 3 WHERE unqid = ? ";
 
 
         String  assDugSql = " select 1 " +
