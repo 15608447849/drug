@@ -205,42 +205,4 @@ public class MyCollectModule {
                 delSql,
                 sku, compid);
     }
-
-
-
-
-
-
-    /**
-     * app调用添加个人收藏
-     * add by liaoz 2019年6月10日
-     * @param appContext
-     * @return
-     */
-    public Result appAddCollection(AppContext appContext){
-        return add(appContext);
-    }
-
-    /**
-     * app调用删除个人收藏
-     * add by liaoz 2019年6月10日
-     * @param appContext
-     * @return
-     */
-    public Result appUpdCollection(AppContext appContext){
-        return del(appContext);
-    }
-
-
-    /**
-     * app调用查询个人收藏
-     * add by liaoz 2019年6月10日
-     * @param appContext
-     * @return
-     */
-    public Result appQueryCollection(AppContext appContext){
-        return query(appContext);
-    }
-
-
 }
