@@ -578,7 +578,7 @@ public class MainPageModule {
             }
             if (map.size() > 0) {
                 RedisUtil.getStringProvide().set(MAIN_PAGE_JSON,GsonUtils.javaBeanToJson(map));
-                RedisUtil.getStringProvide().expire(MAIN_PAGE_JSON, 5 * 60 * 1000);
+                RedisUtil.getStringProvide().expire(MAIN_PAGE_JSON, 5 * 60);
             }
         }else{
             map = GsonUtils.string2Map(json);
