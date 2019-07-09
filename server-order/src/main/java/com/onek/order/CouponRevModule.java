@@ -646,42 +646,6 @@ public class CouponRevModule {
     }
 
 
-    /**
-     * 满赠赠优惠券
-     * @param appContext
-     * @return
-     *//*
-    @UserPermission(ignore = true)
-    public Result revGiftCoupon(AppContext appContext){
-        long orderno = Long.parseLong(appContext.param.arrays[0]);
-        int compid = Integer.parseInt(appContext.param.arrays[1]);
-        Result result = new Result();
-        if(compid <= 0){
-            return result.fail("操作失败！");
-        }
-
-        List<Object[]> queryResult = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
-                QUERY_ORDER_PRODUCT,orderno);
-
-        if(queryResult == null || queryResult.isEmpty()){
-            return result.fail("操作失败！");
-        }
-
-        Product[] productArray = new Product[queryResult.size()];
-        baseDao.convToEntity(queryResult, productArray, Product.class,
-                new String[]{"sku","nums","originalPrice"});
-
-        for(Product product: productArray){
-            product.autoSetCurrentPrice(product.getOriginalPrice(),product.getNums());
-        }
-        List<Product> productList = Arrays.asList(productArray);
-        DiscountResult discountResult = CalculateUtil.calculate(compid, productList, 0);
-        List<IDiscount> activityList = discountResult.getActivityList();
-
-        boolean b = insertGiftCoupon(compid,activityList);
-
-        return  b ? result.success("操作成功"):result.fail("操作失败！");
-    }*/
 
 
     /**
@@ -691,9 +655,6 @@ public class CouponRevModule {
      * @return
      */
     public static boolean insertGiftCoupon(int compid , List<Gift> giftList){
-        System.out.println("~~~~~~~~~~~~~~~~~~~ ");
-        System.out.println(JSON.toJSONString(giftList));
-
         List<Object[]> coupParams = new ArrayList<>();
         List<Object[]> stockParams = new ArrayList<>();
         List<String> sqlList = new ArrayList<>();
@@ -916,9 +877,16 @@ public class CouponRevModule {
     }
 
 
+    /**
+     * 验证优惠券
+     * @param productList
+     * @param excoupon
+     * @param coupid
+     * @param compid
+     * @return
+     */
     public Map<String,String> verifyCoupon(List<Product> productList,boolean excoupon,
                                            long coupid,int compid){
-
         Map<String,String> map = new HashMap<>();
         map.put("code","0");
         map.put("msg","");
@@ -979,21 +947,4 @@ public class CouponRevModule {
         map.put("msg","操作成功！");
         return map;
     }
-
-
-
-
-
-
-//    public static void main(String[] args) {
-//                double[] dprice = new double[2];
-//                dprice[0] = 20;13.33
-//                dprice[1] = 10;6.67
-//
-//                double[] pprice = DiscountUtil.shareDiscount(dprice, 20);
-//                System.out.println(pprice[0]);
-//                System.out.println(pprice[1]);
-//    }
-
-
 }
