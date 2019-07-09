@@ -124,7 +124,7 @@ public class BaseDAO {
 			}
 		}
 
-		if(SHARDING_FLAG == 1 && sharding == 0){
+		if(SHARDING_FLAG == 1 && sharding == 0 && !isLog){
 			db = BUSConst._MODNUM_EIGHT;
 		}
 
