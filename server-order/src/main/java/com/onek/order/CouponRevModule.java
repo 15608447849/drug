@@ -9,6 +9,7 @@ import com.onek.calculate.CouponListFilterService;
 import com.onek.calculate.entity.*;
 import com.onek.calculate.util.DiscountUtil;
 import com.onek.consts.CSTATUS;
+import com.onek.consts.IntegralConstant;
 import com.onek.context.AppContext;
 import com.onek.entity.CouponPubLadderVO;
 import com.onek.entity.CouponPubVO;
@@ -17,12 +18,15 @@ import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.member.MemberStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
 import java.util.*;
 
 /**
@@ -141,6 +145,11 @@ public class CouponRevModule {
             + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
             + "rulename,goods,ladder,glbno,cstatus,ctype,excoupno) "
             + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+    //新增积分详情
+    private final static String INSERT_INTEGRAL_SQL = "insert into {{?"+ DSMConst.TD_INTEGRAL_DETAIL + "}} " +
+            "(unqid,compid,istatus,integral,busid,createdate,createtime,cstatus)" +
+            " values(?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";
 
 
 
@@ -947,4 +956,59 @@ public class CouponRevModule {
         map.put("msg","操作成功！");
         return map;
     }
+
+    /**
+     * 领取积分兑换券
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = false)
+    public Result revExcgCoupon(AppContext appContext){
+        Result result = new Result();
+        String json = appContext.param.json;
+        CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
+        if(couponVO == null){
+            return result.fail("兑换失败");
+        }
+        if(couponVO.getLadderVOS() == null || couponVO.getLadderVOS().isEmpty()){
+            return result.fail("兑换失败");
+        }
+        long rcdid = GenIdUtil.getUnqId();
+        CouponPubLadderVO  CouponPubLadderVO = couponVO.getLadderVOS().get(0);
+        try{
+            double integralByCompid
+                    = MathUtil.exactDiv(MemberStore.
+                    getIntegralByCompid(couponVO.getCompid()), 1000).doubleValue();
+
+            LogUtil.getDefaultLogger().debug("获取积分/1000："+integralByCompid);
+
+            if(integralByCompid < CouponPubLadderVO.getOffer()){
+                return result.fail("积分不够,兑换失败！");
+            }
+            List<Object[]> params = new ArrayList<>();
+            Double offer = CouponPubLadderVO.getOffer();
+            int reducePoint = offer.intValue() * 1000;
+            String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
+            int pret = MemberStore.reducePoint(couponVO.getCompid(), reducePoint);
+            boolean b = false;
+            if (pret > 0) {//积分扣减成功
+                params.add(new Object[]{rcdid,couponVO.getCoupno(),
+                        couponVO.getCompid(),LocalDate.now().toString(),"00:00:00","2099-01-01","00:00:00",couponVO.getBrulecode(),
+                        couponVO.getRulename(),couponVO.getGoods(),ladderJson,couponVO.getGlbno(),0,3,"0"});
+                params.add(new Object[]{ GenIdUtil.getUnqId(), couponVO.getCompid(),
+                        IntegralConstant.SOURCE_EXCHANGE_COUPON, reducePoint, rcdid, 0});
+                b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(couponVO.getCompid(),TimeUtils.getCurrentYear(),
+                        new String[]{INSERT_COUPON_EXCG_REV_SQL,INSERT_INTEGRAL_SQL},params));
+            }
+            if (!b){
+                MemberStore.addPoint(couponVO.getCompid(), reducePoint);
+                return result.fail("领取失败");
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+            return result.fail("领取失败");
+        }
+        return result.success("领取成功");
+    }
+
 }
