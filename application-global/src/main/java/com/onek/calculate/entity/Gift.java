@@ -1,5 +1,9 @@
 package com.onek.calculate.entity;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
+import util.StringUtils;
+
 public class Gift {
     private interface TYPE {
         int FREESHIPPING = 0;
@@ -49,12 +53,24 @@ public class Gift {
         return gift;
     }
 
-    public long getId() {
-        return id;
+    public String getId() {
+        try {
+            if (!StringUtils.isEmpty(this.giftDesc)) {
+                JSONObject desc = JSON.parseObject(this.giftDesc);
+                String erpsku = desc.getString("erpsku");
+                return erpsku == null ? "" : erpsku;
+            }
+        } catch (Exception e) { e.printStackTrace(); }
+
+        return "";
     }
 
     public void setId(long id) {
         this.id = id;
+    }
+
+    public long getTurlyId() {
+        return id;
     }
 
     public String getGiftName() {

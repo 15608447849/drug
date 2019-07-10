@@ -26,26 +26,12 @@ public class CalculateUtil {
         }
     };
 
-    public static double getProdMinPrice(long sku, double price) {
+    public static double getProdMinPrice(long sku, double price, List<IDiscount> discounts) {
         if (sku <= 0 || price <= 0) {
             return .0;
         }
 
-        List<Product> products = new ArrayList<>(1);
-        Product p = new Product();
-        p.setSku(sku);
-        p.autoSetCurrentPrice(price, 1);
-        products.add(p);
-
-        List<IDiscount> discounts =
-                new ActivityFilterService(
-                        new ActivitiesFilter[] {
-                                new CycleFilter(),
-                                new PriorityFilter(),
-                                new StoreFilter(), }
-                ).getCurrentActivities(products);
-
-        if (!discounts.isEmpty()) {
+        if (discounts != null && !discounts.isEmpty()) {
             TreeMap<Integer, List<IDiscount>> pri_act = new TreeMap<>(DESC_COMPARATOR);
 
             int priority;

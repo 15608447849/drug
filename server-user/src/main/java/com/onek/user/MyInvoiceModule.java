@@ -200,11 +200,11 @@ public class MyInvoiceModule {
             return new Result().fail("参数错误！");
         }
 
-        if (!MathUtil.isBetween(0, frontVO.getAccount().length(), 24)) {
+        if (!MathUtil.isBetween(9, frontVO.getAccount().length(), 30)) {
             return new Result().fail("银行账号过长！");
         }
-        if (!MathUtil.isBetween(0, frontVO.getTel().length(), 14)) {
-            return new Result().fail("电话号码过长！");
+        if (!StringUtils.isBiggerZero(frontVO.getTel()) || frontVO.getTel().length() != 11) {
+            return new Result().fail("电话号码不正确！");
         }
         if (!MathUtil.isBetween(0, frontVO.getBankers().length(), 20)) {
             return new Result().fail("开户行过长！");

@@ -7,7 +7,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.CSTATUS;
-import com.onek.consts.IntegralConstant;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.discount.entity.*;
@@ -318,7 +317,8 @@ public class CouponManageModule {
 
 
     private static final String UPDATE_COMP_BAL = "update {{?" + DSMConst.TB_COMP + "}} "
-            + "set balance = balance + ? where cid = ? ";
+            + "set balance = IF((balance + ?) <=0,0,(balance + ?)) where cid = ? ";
+
 
 
     private static final String QUERY_COMP_BAL = " select balance from {{?" + DSMConst.TB_COMP + "}} "
@@ -618,7 +618,7 @@ public class CouponManageModule {
 
 
     /**
-     * 查询商品
+     * 查询优惠券关联商品
      * @param actcode
      * @return
      */
@@ -672,6 +672,12 @@ public class CouponManageModule {
         return re ? result.success("关联商品成功") : result.fail("操作失败");
     }
 
+    /**
+     * 更新活动商品状态
+     * @param type
+     * @param actCode
+     * @return
+     */
     private int updateAssByActcode(int type, long actCode) {
         String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
                 + " where cstatus&1=0 and actcode=? ";
@@ -1676,10 +1682,12 @@ public class CouponManageModule {
     }
 
 
-
-
-
-
+    /**
+     * 过滤优惠券资格
+     * @param couponPubVOS
+     * @param compid
+     * @return
+     */
     public List<CouponPubVO> filterCoupon(List<CouponPubVO> couponPubVOS,int compid){
         Iterator<CouponPubVO> couentIterator = couponPubVOS.iterator();
         while(couentIterator.hasNext()){
@@ -1721,6 +1729,11 @@ public class CouponManageModule {
         return couponPubVOS;
     }
 
+    /**
+     * 获取当前区域
+     * @param compid
+     * @return
+     */
     private long getCurrentArea(int compid) {
         String compStr = RedisUtil.getStringProvide()
                 .get(String.valueOf(compid));
@@ -1733,6 +1746,11 @@ public class CouponManageModule {
     }
 
 
+    /**
+     * 判断企业是否认证
+     * @param compid
+     * @return
+     */
     private boolean compIsVerify(int compid) {
         String compStr = RedisUtil.getStringProvide()
                 .get(String.valueOf(compid));
@@ -1749,6 +1767,11 @@ public class CouponManageModule {
     }
 
 
+    /**
+     * 获取订单数
+     * @param compid
+     * @return
+     */
     private boolean getOrderCnt(int compid) {
         try{
             if(compid > 0){
@@ -1762,68 +1785,12 @@ public class CouponManageModule {
     }
 
 
-    @UserPermission(ignore = true)
-    public Result revExcgCoupon(AppContext appContext){
-        Result result = new Result();
-        String json = appContext.param.json;
-        CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
-        if(couponVO == null){
-            return result.fail("兑换失败");
-        }
-        if(couponVO.getLadderVOS() == null || couponVO.getLadderVOS().isEmpty()){
-            return result.fail("兑换失败");
-        }
-        long rcdid = GenIdUtil.getUnqId();
-        CouponPubLadderVO  CouponPubLadderVO = couponVO.getLadderVOS().get(0);
-        int oret = 0;
-        try{
-            double integralByCompid
-                    = MathUtil.exactDiv(MemberStore.
-                    getIntegralByCompid(couponVO.getCompid()), 1000).doubleValue();
-
-            LogUtil.getDefaultLogger().debug("获取积分/1000："+integralByCompid);
-
-//            if(couponVO.getBrulecode() == 2120){
-//                long area =  getCurrentArea(couponVO.getCompid());
-//                if(area <= 0){
-//                    return result.fail("积分不够,兑换失败！");
-//                }
-//                double fee = AreaFeeUtil.getFee(area);
-//                if(integralByCompid < fee){
-//                    return result.fail("积分不够,兑换失败！");
-//                }
-//            }
-           if(integralByCompid < CouponPubLadderVO.getOffer()){
-               return result.fail("积分不够,兑换失败！");
-           }
-
-           oret = IceRemoteUtil.collectExcgCoupons(couponVO.getCompid(),json);
-        }catch (Exception e){
-            e.printStackTrace();
-           return result.fail("领取失败");
-        }
-
-        if(oret > 0){
-            Double offer = CouponPubLadderVO.getOffer();
-            int reducePoint = offer.intValue() * 1000;
-
-            try{
-                int pret = MemberStore.reducePoint(couponVO.getCompid(), reducePoint);
-                if(pret > 0){
-                    IceRemoteUtil.addIntegralDetail(couponVO.getCompid(),
-                            IntegralConstant.SOURCE_EXCHANGE_COUPON, reducePoint, rcdid);
-                }
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            return result.success("领取成功");
-
-        }
-        return result.success("领取失败");
-    }
-
-
-    @UserPermission(ignore = true)
+    /**
+     * 领取线下优惠券
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = false)
     public Result revOfflineExcgCoupon(AppContext appContext){
         Result result = new Result();
         String json = appContext.param.json;
@@ -1947,7 +1914,12 @@ public class CouponManageModule {
     }
 
 
-    @UserPermission(ignore = true)
+    /**
+     * 新人专享券领取（新人有礼）
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = false)
     public Result revNewComerCoupon(AppContext appContext){
         Result result = new Result();
         int compid = Integer.parseInt(appContext.param.arrays[0]);
@@ -1977,7 +1949,7 @@ public class CouponManageModule {
             parmList.add(map);
         }
         long rcdid = GenIdUtil.getUnqId();
-        parm.add(new Object[]{bal,compid});
+        parm.add(new Object[]{bal,bal,compid});
 
         parm.add(new Object[]{rcdid,coupRet.get(0)[0],
                 compid,0,128});
@@ -2003,7 +1975,7 @@ public class CouponManageModule {
         int compid = Integer.parseInt(appContext.param.arrays[0]);
         int amt = Integer.parseInt(appContext.param.arrays[1]);
         int ret = baseDao.updateNative(UPDATE_COMP_BAL,
-                new Object[]{amt,compid});
+                new Object[]{amt,amt,compid});
         return ret;
     }
 
@@ -2043,7 +2015,13 @@ public class CouponManageModule {
         return  result.success(map);
     }
 
-    @UserPermission(ignore = true)
+
+    /**
+     * 生成线下优惠券
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = false)
     public Result prdOfflineExcgCoupon(AppContext appContext){
         Result result = new Result();
         String json = appContext.param.json;
@@ -2072,8 +2050,12 @@ public class CouponManageModule {
     }
 
 
+    /**
+     * 获取线下优惠券码
+     * @param num
+     * @return
+     */
     public String [] getCoupNos(int num){
-
         List<Object[]> queryResult = baseDao.queryNative(QUERY_MAX_OFFLCOUP, new Object[]{});
         String chars = "";
         int pcoupo =0;
@@ -2100,9 +2082,7 @@ public class CouponManageModule {
                 }
             }
         }
-
         return getCoupIds(num,pcoupo,chars);
-
     }
 
 

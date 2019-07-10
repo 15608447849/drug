@@ -36,6 +36,9 @@ public class SynDbLog {
 
     public static  HashMap<Integer,String> map = new HashMap<Integer,String>();
 
+    public static  HashMap<Integer,String> sqlFieldMap = new HashMap<Integer,String>();
+
+
     static{
             map.put(DSMConst.TD_TRAN_ORDER,"orderno");
             map.put(DSMConst.TB_AREA_PCA, "areac");
@@ -54,6 +57,13 @@ public class SynDbLog {
             map.put(DSMConst.TD_PROD_SPU, "spu");
             map.put(DSMConst.TD_PRODUCE_CLASS, "classid");
 
+        sqlFieldMap.put(DSMConst.TD_TRAN_ORDER,"orderno,tradeno,cusno,busno,ostatus," +
+                "asstatus,pdnum,pdamt,freight,payamt,coupamt,distamt,rvaddno,shipdate," +
+                "shiptime,settstatus,settdate,setttime,otype,odate,otime,"+
+                "consignee,contact,address,cstatus,payway,balamt,remarks,invoicetype");
+
+        sqlFieldMap.put(DSMConst.TD_TRAN_GOODS,"unqid,orderno,compid,pdno,pdprice,distprice,payamt," +
+                "coupamt,promtype,pkgno,asstatus,createdate,createtime,pnum,actcode,balamt");
     }
 
 
@@ -68,8 +78,11 @@ public class SynDbLog {
     private static final String INSERT_SYNLOG = "insert into {{?"+ DSMConst.TD_SYN_LOG +"}} (tbid,sdbid,unqval," +
             "opttime,sharding,tbsharding,cstatus) values (?,?,?,now(),?,?,0) ";
 
-    private static final String QUERY_SYNLOG = "select tbid,sdbid,unqval,opttime,sharding,tbsharding,cstatus from {{?"+ DSMConst.TD_SYN_LOG +"}} " +
+    private static final String QUERY_SYNLOG = "select tbid,sdbid,unqval,opttime,sharding,tbsharding,cstatus,oid from {{?"+ DSMConst.TD_SYN_LOG +"}} " +
             " where cstatus & 1 = 0 ";
+
+    private static final String UPDATE_SYNLOG_STATUS = "update {{?"+ DSMConst.TD_SYN_LOG +"}} set syntimes = syntimes +1," +
+            "syntime = now(),cstatus = cstatus | ?  where oid = ? ";
 
 
 
@@ -79,7 +92,8 @@ public class SynDbLog {
             LogUtil.getDefaultLogger().debug("SQL异常编号："+sqlException.getSQLState());
             LogUtil.getDefaultLogger().error("SQL异常信息：",e);
             if(sqlException.getSQLState() != null
-                    && ((sqlException.getSQLState()).startsWith("S0")
+                    && ((sqlException.getSQLState()).startsWith("07001")
+                    ||(sqlException.getSQLState()).startsWith("S0")
                     || (sqlException.getSQLState()).startsWith("S1")
                     ||(sqlException.getSQLState()).startsWith("22")
                     || (sqlException.getSQLState()).startsWith("23")
@@ -142,7 +156,7 @@ public class SynDbLog {
                 unqId = unqidList.get(0)[0].toString();
             }
 
-             List<Object[]> queryResult = queryNative(QUERY_SYNLOG_EXIST,
+             List<Object[]> queryResult = queryNative(Integer.parseInt(resultSQL[0]),QUERY_SYNLOG_EXIST,
                     new Object[]{resultSQL[0],dbs,unqId,sharding,tbSharding});
 
             if(queryResult == null || queryResult.isEmpty()){
@@ -159,14 +173,24 @@ public class SynDbLog {
     }
 
 
-    public static List<Object[]> queryNative(String nativeSQL,final Object... params){
+    public static List<Object[]> queryNative(int tbidx,String nativeSQL,final Object... params){
         List<Object[]> resultList = null;
         String[] result = baseDao.getNativeSQL(nativeSQL,0);
         LogUtil.getDefaultLogger().debug("【Debug】LOG SQL：" + result[1]);
         JdbcBaseDao jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-        jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(0,Integer.parseInt(result[0]),true));
+        jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(0,tbidx,true));
         resultList = jdbcBaseDao.query(result[1], params);
         return resultList;
+    }
+
+    public static int updateNative(int tbidx,String nativeSQL,final Object... params){
+        int ret = 0;
+        String[] result = baseDao.getNativeSQL(nativeSQL,0);
+        LogUtil.getDefaultLogger().debug("【Debug】LOG SQL：" + result[1]);
+        JdbcBaseDao jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
+        jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(0,tbidx,true));
+        ret = jdbcBaseDao.update(result[1], params);
+        return ret;
     }
 
 
@@ -319,6 +343,150 @@ public class SynDbLog {
         jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(0,shardingFlag,true));
         resultList = jdbcBaseDao.query(result[1]);
         return resultList;
+    }
+
+    private String getInsertSql(int tabidx){
+        StringBuilder insertSqlSb = new StringBuilder();
+        String fieldStr = sqlFieldMap.get(tabidx);
+        int fieldSize = fieldStr.split(",").length;
+        insertSqlSb.append("INSERT INTO {{?");
+        insertSqlSb.append(tabidx);
+        insertSqlSb.append("}} (");
+        insertSqlSb.append(fieldStr);
+        insertSqlSb.append(")");
+        insertSqlSb.append(" VALUES (");
+        for (int i = 0; i < fieldSize; i++){
+            if(i == (fieldSize-1)){
+                insertSqlSb.append("?");
+            }else{
+                insertSqlSb.append("?").append(",");
+            }
+        }
+        insertSqlSb.append(")");
+        return insertSqlSb.toString();
+    }
+
+    private String getSelectSql(int tabidx){
+        StringBuilder selectSqlSb = new StringBuilder();
+        selectSqlSb.append("SELECT ");
+        selectSqlSb.append(sqlFieldMap.get(tabidx));
+        selectSqlSb.append("FROM {{?");
+        selectSqlSb.append(tabidx);
+        selectSqlSb.append("}} where ");
+        if(map.containsKey(tabidx)){
+            selectSqlSb.append(map.get(tabidx));
+        }else{
+            selectSqlSb.append("unqid");
+        }
+        selectSqlSb.append(" = ?");
+        return selectSqlSb.toString();
+    }
+
+
+    private String getSelectExtSql(int tabidx){
+        StringBuilder selectSqlSb = new StringBuilder();
+        selectSqlSb.append("SELECT ");
+        selectSqlSb.append(" 1 FROM {{?");
+        selectSqlSb.append(tabidx);
+        selectSqlSb.append("}} where ");
+        if(map.containsKey(tabidx)){
+            selectSqlSb.append(map.get(tabidx));
+        }else{
+            selectSqlSb.append("unqid");
+        }
+        selectSqlSb.append(" = ?");
+        return selectSqlSb.toString();
+    }
+
+
+    private String getDeleteExtSql(int tabidx){
+        StringBuilder selectSqlSb = new StringBuilder();
+        selectSqlSb.append("DELETE ");
+        selectSqlSb.append(" FROM {{?");
+        selectSqlSb.append(tabidx);
+        selectSqlSb.append("}} where ");
+        if(map.containsKey(tabidx)){
+            selectSqlSb.append(map.get(tabidx));
+        }else{
+            selectSqlSb.append("unqid");
+        }
+        selectSqlSb.append(" = ?");
+        return selectSqlSb.toString();
+    }
+
+    /**
+     * 执行同步异常数据
+     * @param isSharding
+     */
+    public void excuteSynExcptRecord(boolean isSharding){
+        List<Object[]> logRecords = getLogRecords(isSharding);
+
+        for(Object[] objs : logRecords){
+            String unqval = objs[2].toString();
+            int tbid = Integer.parseInt(objs[0].toString());
+            int sharding = Integer.parseInt(objs[4].toString());
+            int tbsharding = Integer.parseInt(objs[5].toString());
+            int oid = Integer.parseInt(objs[7].toString());
+
+            String selectSql = getSelectSql(tbid);
+            List<Object[]> queryRet = null;
+            if(isSharding){
+                queryRet = baseDao.queryNativeSharding(sharding,tbsharding,selectSql,unqval);
+            }else{
+                queryRet = baseDao.queryNative(selectSql,unqval);
+            }
+
+            if(queryRet == null || queryRet.isEmpty()){
+                return;
+            }
+            try{
+                List<Object[]> extId = queryNativeSource(sharding, tbsharding, getSelectExtSql(tbid), unqval);
+                if(extId != null && !extId.isEmpty()){
+                    updateNativeSource(sharding,tbsharding,getDeleteExtSql(tbid),unqval) ;
+                }
+                int ret = updateNativeSource(sharding, tbsharding, getInsertSql(tbid), queryRet.get(0));
+                if(ret > 0){
+                    updateNative(tbid,UPDATE_SYNLOG_STATUS,1,oid);
+                }else{
+                    updateNative(tbid,UPDATE_SYNLOG_STATUS,0,oid);
+                }
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        }
+    }
+
+
+    /**
+     * 查询来源库数据（需要同步到备份库）
+     * @param sharding
+     * @param tbSharding
+     * @param nativeSQL
+     * @param params
+     * @return
+     */
+    public static List<Object[]> queryNativeSource(int sharding,int tbSharding,
+                                                   String nativeSQL,final Object... params){
+        List<Object[]> resultList = null;
+        String[] result = baseDao.getNativeSQL(nativeSQL,tbSharding);
+        LogUtil.getDefaultLogger().debug("【Debug】LOG SQL：" + result[1]);
+        JdbcBaseDao jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
+        jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(result[0]),false));
+        resultList = jdbcBaseDao.query(result[1], params);
+        return resultList;
+    }
+
+
+    public static int updateNativeSource(int sharding,int tbSharding,
+                                                   String nativeSQL,final Object... params){
+        int ret = 0;
+        String[] result = baseDao.getNativeSQL(nativeSQL,tbSharding);
+        LogUtil.getDefaultLogger().debug("【Debug】LOG SQL：" + result[1]);
+        JdbcBaseDao jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
+        jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(result[0]),
+                false));
+        ret = jdbcBaseDao.update(result[1], params);
+        return ret;
     }
 
 

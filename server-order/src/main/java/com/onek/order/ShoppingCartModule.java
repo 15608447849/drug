@@ -359,6 +359,11 @@ public class ShoppingCartModule {
 
         JsonParser jsonParser = new JsonParser();
         JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+
+        if (jsonArray.size() == 0) {
+            return new Result().fail("商品为空！");
+        }
+
         List<ShoppingCartDTO> shoppingCartDTOS = new ArrayList<>();
         Gson gson = new Gson();
         List<Object[]> updateParm = new ArrayList<>();
@@ -1041,7 +1046,7 @@ public class ShoppingCartModule {
 
             giftVO.setPtitle(gift.getGiftName());
             giftVO.setNum(gift.getTotalNums());
-            giftVO.setPdno(gift.getId());
+            giftVO.setPdno(gift.getTurlyId());
 
             giftVOS.add(giftVO);
         }
