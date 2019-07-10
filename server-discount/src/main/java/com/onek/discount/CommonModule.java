@@ -58,14 +58,16 @@ public class CommonModule {
     private static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
                     + " spu.brandno, b.brandname, spu.manuno, m.manuname, "
-                    + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.spec, sku.wp "
+                    + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.spec, sku.wp, "
+                    + " sku.erpsku "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU
                     + "}} m ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND
                     + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
-                    + " WHERE sku.cstatus&1 = 0 AND spu.rx <> 2 ";
+                    + " WHERE sku.cstatus&1 = 0 AND spu.rx <> 2 "
+                    + " AND sku.erpsku IS NOT NULL AND LENGTH(sku.erpsku) > 0 ";
 
     /**
      * @接口摘要 查询可作为赠品的药品信息

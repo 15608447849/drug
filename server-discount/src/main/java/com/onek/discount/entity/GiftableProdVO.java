@@ -21,6 +21,15 @@ public class GiftableProdVO {
     private double rrp; // 零售价
     private String spec; // 规格
     private double wp; // 批发价
+    private String erpsku; // 批发价
+
+    public String getErpsku() {
+        return erpsku;
+    }
+
+    public void setErpsku(String erpsku) {
+        this.erpsku = erpsku;
+    }
 
     public long getSpu() {
         return spu;

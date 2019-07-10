@@ -1046,7 +1046,7 @@ public class ShoppingCartModule {
 
             giftVO.setPtitle(gift.getGiftName());
             giftVO.setNum(gift.getTotalNums());
-            giftVO.setPdno(gift.getId());
+            giftVO.setPdno(gift.getTurlyId());
 
             giftVOS.add(giftVO);
         }
