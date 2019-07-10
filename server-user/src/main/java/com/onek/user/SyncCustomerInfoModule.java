@@ -15,6 +15,7 @@ import com.onek.util.SmsUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
+import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.ModelUtil;
 import util.http.HttpRequestUtil;
@@ -268,6 +269,7 @@ public class SyncCustomerInfoModule {
         int state = jsonObject.get("state").getAsInt();
         String updSQL = "update {{?" + DSMConst.TB_COMP + "}} set cstatus=? where "
                 + " cstatus&1=0 and cid=?";
+        RedisUtil.getStringProvide().delete(""+compid);
 //        if (state == 256) {
 //            code = baseDao.updateNative(updSQL, 512, state, compid);
 //        } else {
