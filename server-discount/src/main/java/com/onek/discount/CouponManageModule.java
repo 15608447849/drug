@@ -7,7 +7,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.consts.CSTATUS;
-import com.onek.consts.IntegralConstant;
 import com.onek.context.AppContext;
 import com.onek.context.StoreBasicInfo;
 import com.onek.discount.entity.*;
@@ -1783,72 +1782,6 @@ public class CouponManageModule {
             return false;
         }
         return  false;
-    }
-
-
-    /**
-     * 领取积分兑换券
-     * @param appContext
-     * @return
-     */
-    @UserPermission(ignore = false)
-    public Result revExcgCoupon(AppContext appContext){
-        Result result = new Result();
-        String json = appContext.param.json;
-        CouponPubVO couponVO = GsonUtils.jsonToJavaBean(json, CouponPubVO.class);
-        if(couponVO == null){
-            return result.fail("兑换失败");
-        }
-        if(couponVO.getLadderVOS() == null || couponVO.getLadderVOS().isEmpty()){
-            return result.fail("兑换失败");
-        }
-        long rcdid = GenIdUtil.getUnqId();
-        CouponPubLadderVO  CouponPubLadderVO = couponVO.getLadderVOS().get(0);
-        int oret = 0;
-        try{
-            double integralByCompid
-                    = MathUtil.exactDiv(MemberStore.
-                    getIntegralByCompid(couponVO.getCompid()), 1000).doubleValue();
-
-            LogUtil.getDefaultLogger().debug("获取积分/1000："+integralByCompid);
-
-//            if(couponVO.getBrulecode() == 2120){
-//                long area =  getCurrentArea(couponVO.getCompid());
-//                if(area <= 0){
-//                    return result.fail("积分不够,兑换失败！");
-//                }
-//                double fee = AreaFeeUtil.getFee(area);
-//                if(integralByCompid < fee){
-//                    return result.fail("积分不够,兑换失败！");
-//                }
-//            }
-           if(integralByCompid < CouponPubLadderVO.getOffer()){
-               return result.fail("积分不够,兑换失败！");
-           }
-
-           oret = IceRemoteUtil.collectExcgCoupons(couponVO.getCompid(),json);
-        }catch (Exception e){
-            e.printStackTrace();
-           return result.fail("领取失败");
-        }
-
-        if(oret > 0){
-            Double offer = CouponPubLadderVO.getOffer();
-            int reducePoint = offer.intValue() * 1000;
-
-            try{
-                int pret = MemberStore.reducePoint(couponVO.getCompid(), reducePoint);
-                if(pret > 0){
-                    IceRemoteUtil.addIntegralDetail(couponVO.getCompid(),
-                            IntegralConstant.SOURCE_EXCHANGE_COUPON, reducePoint, rcdid);
-                }
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-            return result.success("领取成功");
-
-        }
-        return result.success("领取失败");
     }
 
 
