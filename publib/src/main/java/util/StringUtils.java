@@ -1,11 +1,9 @@
 package util;
 
 import com.google.gson.JsonParser;
-import net.sourceforge.pinyin4j.PinyinHelper;
 import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
 import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
 import net.sourceforge.pinyin4j.format.HanyuPinyinToneType;
-import net.sourceforge.pinyin4j.format.exception.BadHanyuPinyinOutputFormatCombination;
 
 import java.lang.reflect.Method;
 import java.text.SimpleDateFormat;
@@ -104,8 +102,13 @@ public class StringUtils {
         return true;
     }
 
+
+
+
+
     /* 文字转拼音大写字母 */
     public static String converterToFirstSpell(String chines) {
+
         String pinyinFirstKey = "";
         char[] nameChar = chines.toCharArray();
         HanyuPinyinOutputFormat defaultFormat = new HanyuPinyinOutputFormat();
@@ -115,9 +118,9 @@ public class StringUtils {
             String s = String.valueOf(nameChar[i]);
             if (s.matches("[\\u4e00-\\u9fa5]")) {
                 try {
-                    String[] mPinyinArray = PinyinHelper.toHanyuPinyinStringArray(nameChar[i], defaultFormat);
-                    pinyinFirstKey += mPinyinArray[0].charAt(0);
-                } catch (BadHanyuPinyinOutputFormatCombination e) {
+                    char[] mPinyinArray = Py4jUtils.getPinyin(s).toCharArray();
+                    pinyinFirstKey += mPinyinArray[0];
+                } catch (Exception e) {
                     e.printStackTrace();
                 }
             } else {
