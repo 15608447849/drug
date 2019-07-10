@@ -5,7 +5,6 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.annotation.UserPermission;
-import com.onek.calculate.entity.Gift;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Product;
 import com.onek.calculate.filter.*;
@@ -395,9 +394,6 @@ public class BackgroundProdModule {
 
         JSONObject jo = JSON.parseObject(JSON.toJSONString(result));
 
-        jo.put("minPrice", CalculateUtil.getProdMinPrice(
-                result.getSku(), result.getVatp()));
-
         /*
          * 是否登陆
          * 如果登陆成功则存在UserSession 获取其中compid企业码
@@ -408,13 +404,15 @@ public class BackgroundProdModule {
             compid = appContext.getUserSession().compId;
         }
 
-        /*
-         * add 商品是否添加限购
-         */
         List<Product> products = new ArrayList<>();
         Product p = new Product();
         p.setSku(Long.parseLong(params[0]));
+        p.autoSetCurrentPrice(result.getVatp(), 1);
         products.add(p);
+
+        /*
+         * add 商品是否添加限购
+         */
         List<IDiscount> discounts
                 = new ActivityFilterService(
                 new ActivitiesFilter[] {
@@ -423,14 +421,20 @@ public class BackgroundProdModule {
                         new PriorityFilter(),
                         new StoreFilter(),})
                 .getCurrentActivities(products);
+
         if(discounts == null || discounts.size()<=0){
             jo.put("appLimitnum",0);
         }else{
             jo.put("appLimitnum",discounts.get(0).getLimits(Long.parseLong(params[0])));
         }
         //add end
+
+        jo.put("minPrice", CalculateUtil.getProdMinPrice(
+                result.getSku(), result.getVatp(), discounts));
+
         return new Result().success(jo);
     }
+
 
     private BgProdVO getProd(String sku) {
         if (!StringUtils.isBiggerZero(sku)) {
