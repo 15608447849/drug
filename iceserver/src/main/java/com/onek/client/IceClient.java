@@ -160,7 +160,6 @@ public class IceClient {
 
     public void sendMessageToClient(String identity,String message){
         ReqStore store = getStore();
-        IRequest request = store.request;
         InterfacesPrx curPrx = store.curPrx;
         if (isLocal){
             ServerIceBoxImp.INSTANCE.sendMessageToClient(identity,message);
