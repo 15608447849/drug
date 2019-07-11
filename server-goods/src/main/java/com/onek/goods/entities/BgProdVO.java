@@ -304,7 +304,7 @@ public class BgProdVO implements Cloneable{
     }
 
     public int getMedpacknum() {
-        return medpacknum;
+        return Math.max(medpacknum, 1);
     }
 
     public void setMedpacknum(int medpacknum) {
