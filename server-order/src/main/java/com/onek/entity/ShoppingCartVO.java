@@ -103,6 +103,16 @@ public class ShoppingCartVO {
 
     private int busscope;
 
+    private double skprice;
+
+    public double getSkprice() {
+        return skprice;
+    }
+
+    public void setSkprice(double skprice) {
+        this.skprice = skprice;
+    }
+
     public int getBusscope() {
         return busscope;
     }

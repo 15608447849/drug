@@ -824,6 +824,22 @@ public class IceRemoteUtil {
         return json;
     }
 
+
+    /**
+     * 领取优惠券记录
+     * @param compid
+     * @param amt
+     * @return
+     */
+    public static int couponRevRecord(int compid,long coupno,int qlfno){
+        String result = ic.setServerAndRequest("discountServer",
+                "CouponManageModule","couponRevRecord")
+                .setArrayParams(compid,coupno,qlfno)
+                .execute();
+        return Integer.parseInt(result);
+    }
+
+
     public static void main(String[] args) {
         System.out.println(mainPageInfo());
     }

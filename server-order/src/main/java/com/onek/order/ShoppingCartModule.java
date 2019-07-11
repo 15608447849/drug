@@ -716,6 +716,8 @@ public class ShoppingCartModule {
                 }
             }
         }
+
+
         return shoppingCartList;
     }
 
@@ -882,6 +884,7 @@ public class ShoppingCartModule {
                         }
                         //判断秒杀
                         if(brule == 1113){
+                            shoppingCartVO.setSkprice(product.getOriginalPrice());
                             shoppingCartVO.setStatus(1);
                         }
                         ruleList.add(discountRule);
@@ -1017,6 +1020,8 @@ public class ShoppingCartModule {
        // baseDao.updateBatchNativeSharding(shoppingCartDTOS.get(0).getCompid(),TimeUtils.getCurrentYear(),UPDATE_SHOPCART_SQL_NUM, updateParm, updateParm.size());
         List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
         //TODO 获取活动匹配
+
+        convResult(shopCart,compid);
 
         // 获取活动范围外
         List<ShoppingCartVO> outOfScope = getOutOfScope(shopCart, compid);

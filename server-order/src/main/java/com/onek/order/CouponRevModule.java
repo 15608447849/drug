@@ -151,6 +151,10 @@ public class CouponRevModule {
             "(unqid,compid,istatus,integral,busid,createdate,createtime,cstatus)" +
             " values(?,?,?,?,?,CURRENT_DATE,CURRENT_TIME,?)";
 
+    //删除优惠券
+    private final static String DEL_COUPON_SQL = "update {{?"+ DSMConst.TD_PROM_COUENT + "}} set cstatus = cstatus | 1 " +
+            " where unqid = ? ";
+
 
 
     /**
@@ -341,42 +345,70 @@ public class CouponRevModule {
                 return result.success("已领取过该优惠券！");
             }
         }
-        //远程调用
-        List<Object[]> crdResult = IceRemoteUtil.queryNative(QUERY_COURCD_EXT, couponVO.getCompid(), couponVO.getCoupno());
-        int ret = 0;
-        long rcdid = 0L;
-        if(crdResult == null || crdResult.isEmpty()){
-            rcdid = GenIdUtil.getUnqId();
-            int cstatus = 0;
-            if(couponVO.getQlfno() == 1){
-                cstatus = 64;
-            }
-            //远程调用
-            ret = IceRemoteUtil.updateNative(INSERT_COURCD,
-                    rcdid,couponVO.getCoupno(),
-                            couponVO.getCompid(),0,cstatus);
-        }else{
-            rcdid = Long.parseLong(crdResult.get(0)[0].toString());
-            //远程调用
-            ret = IceRemoteUtil.updateNative(UPDATE_COURCD, rcdid);
-        }
+        long unqid = GenIdUtil.getUnqId();
+        couponVO.setUnqid(unqid+"");
+        int insertRet = insertCoupon(couponVO);
 
-        if(ret > 0){
+        if(insertRet > 0){
             try{
-                if(insertCoupon(couponVO) > 0){
-                    //远程调用
-                    IceRemoteUtil.updateNative(UPDATE_COUPON_STOCK, couponVO.getCoupno());
+                int ret = IceRemoteUtil.couponRevRecord(couponVO.getCompid(),
+                        Long.parseLong(couponVO.getCoupno()),couponVO.getQlfno());
+                if(ret > 0){
                     return result.success("领取成功");
-                }else{
-                    //远程调用,删除优惠记录
-                    IceRemoteUtil.updateNative(DEL_COURCD,rcdid);
                 }
+                baseDao.updateNativeSharding(couponVO.getCompid(),
+                        TimeUtils.getCurrentYear(),DEL_COUPON_SQL,unqid);
+
             }catch (Exception e){
-                IceRemoteUtil.updateNative(DEL_COURCD,rcdid);
                 e.printStackTrace();
+                baseDao.updateNativeSharding(couponVO.getCompid(),TimeUtils.
+                        getCurrentYear(),DEL_COUPON_SQL,unqid);
             }
         }
-        return result.fail("领取失败");
+        return result.success("领取失败");
+
+
+//        ret = IceRemoteUtil.updateNative(INSERT_COURCD,
+//                rcdid,couponVO.getCoupno(),
+//                couponVO.getCompid(),0,cstatus);
+
+
+        //远程调用
+//        List<Object[]> crdResult = IceRemoteUtil.queryNative(QUERY_COURCD_EXT, couponVO.getCompid(), couponVO.getCoupno());
+//        int ret = 0;
+//        long rcdid = 0L;
+//        if(crdResult == null || crdResult.isEmpty()){
+//            rcdid = GenIdUtil.getUnqId();
+//            int cstatus = 0;
+//            if(couponVO.getQlfno() == 1){
+//                cstatus = 64;
+//            }
+//            //远程调用
+//            ret = IceRemoteUtil.updateNative(INSERT_COURCD,
+//                    rcdid,couponVO.getCoupno(),
+//                            couponVO.getCompid(),0,cstatus);
+//        }else{
+//            rcdid = Long.parseLong(crdResult.get(0)[0].toString());
+//            //远程调用
+//            ret = IceRemoteUtil.updateNative(UPDATE_COURCD, rcdid);
+//        }
+//
+//        if(ret > 0){
+//            try{
+//                if(insertCoupon(couponVO) > 0){
+//                    //远程调用
+//                    IceRemoteUtil.updateNative(UPDATE_COUPON_STOCK, couponVO.getCoupno());
+//                    return result.success("领取成功");
+//                }else{
+//                    //远程调用,删除优惠记录
+//                    IceRemoteUtil.updateNative(DEL_COURCD,rcdid);
+//                }
+//            }catch (Exception e){
+//                IceRemoteUtil.updateNative(DEL_COURCD,rcdid);
+//                e.printStackTrace();
+//            }
+//        }
+       // return result.fail("领取失败");
     }
 
 
@@ -421,7 +453,7 @@ public class CouponRevModule {
         String ladderJson =  GsonUtils.javaBeanToJson(couponVO.getLadderVOS());
         return  baseDao.updateNativeSharding(couponVO.getCompid(),
                 TimeUtils.getCurrentYear(),INSERT_COUPONREV_SQL,
-                new Object[]{GenIdUtil.getUnqId(),couponVO.getCoupno(),
+                new Object[]{couponVO.getUnqid(),couponVO.getCoupno(),
                 couponVO.getCompid(),startDate,"00:00:00",
                         endDate,"00:00:00",couponVO.getBrulecode(),
                 couponVO.getRulename(),couponVO.getGoods(),
@@ -495,7 +527,12 @@ public class CouponRevModule {
                 couponUseDTOS.add(couponUseDTO);
                 Product product = new Product();
                 product.setSku(couponUseDTO.getPdno());
-                product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+               // product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                if(couponUseDTO.getSkprice() > 0){
+                    product.autoSetCurrentPrice(couponUseDTO.getSkprice(),couponUseDTO.getPnum());
+                }else{
+                    product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                }
                 subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
                 productList.add(product);
             }
@@ -566,7 +603,11 @@ public class CouponRevModule {
                 couponUseDTOS.add(couponUseDTO);
                 Product product = new Product();
                 product.setSku(couponUseDTO.getPdno());
-                product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                if(couponUseDTO.getSkprice() > 0){
+                    product.autoSetCurrentPrice(couponUseDTO.getSkprice(),couponUseDTO.getPnum());
+                }else{
+                    product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                }
                 subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
                 productList.add(product);
             }
@@ -588,6 +629,7 @@ public class CouponRevModule {
 
         DiscountResult calculate = CalculateUtil.calculate(compid,
                 productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
+
 
         resultMap.put("tprice",subCalRet.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
         resultMap.put("tdiscount",calculate.getTotalDiscount());
