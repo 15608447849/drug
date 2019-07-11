@@ -8,6 +8,7 @@ import com.onek.user.interactive.AptitudeInfo
 import com.onek.user.operations.StoreBasicInfoOp.updateCompInfoToCacheById
 import com.onek.user.service.MemberImpl
 import com.onek.util.IceRemoteUtil
+import com.onek.util.IceRemoteUtil.sendMessageToClient
 import com.onek.util.SmsTempNo.AUTHENTICATION_FAILURE
 import com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS
 import com.onek.util.SmsUtil
@@ -57,6 +58,7 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
             if(auditStatus == 256) {
                 SmsUtil.sendSmsBySystemTemp(phone,AUTHENTICATION_SUCCESS)
                 IceRemoteUtil.sendTempMessageToClient(companyId!!.toInt(),AUTHENTICATION_SUCCESS)
+
                 try {
                     giftPoints(companyId!!.toInt())
                     IceRemoteUtil.revNewComerCoupon(companyId!!.toInt(), context!!.userSession.phone.toLong())
@@ -72,28 +74,31 @@ class UpdateAuditOp :AptitudeInfo(), IOperation<AppContext> {
         }
         return Result().fail("审核操作失败")   }
 
-    //赠送积分
-    private fun giftPoints(companyId: Int) {
-        try {
-            val memProxy = CacheProxyInstance.createPartInstance(MemberImpl()) as IRedisPartCache
-            val point = 1000;
-            val memberVO = memProxy.getId(companyId) as MemberEntity
-            val accupoints = memberVO.accupoints
-            val balpoints = memberVO.balpoints
+    companion object {
+        //赠送积分
+         fun giftPoints(companyId: Int) {
+            try {
+                val memProxy = CacheProxyInstance.createPartInstance(MemberImpl()) as IRedisPartCache
+                val point = 1000;
+                val memberVO = memProxy.getId(companyId) as MemberEntity
+                val accupoints = memberVO.accupoints
+                val balpoints = memberVO.balpoints
 
-            if(balpoints <= 0){ // 积分余额为0代表第一次注册
-                val updateMemberVO = MemberEntity()
-                updateMemberVO.compid = companyId
-                updateMemberVO.accupoints = accupoints + point
-                updateMemberVO.balpoints = balpoints + point
-                val r = memProxy.update(companyId, updateMemberVO)
-                if(r > 0){
-                    IceRemoteUtil.addIntegralDetail(companyId, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
+                if(balpoints <= 0){ // 积分余额为0代表第一次注册
+                    val updateMemberVO = MemberEntity()
+                    updateMemberVO.compid = companyId
+                    updateMemberVO.accupoints = accupoints + point
+                    updateMemberVO.balpoints = balpoints + point
+                    val r = memProxy.update(companyId, updateMemberVO)
+                    if(r > 0){
+                        IceRemoteUtil.addIntegralDetail(companyId, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
+                    }
                 }
+            } catch (e: Exception) {
             }
-        } catch (e: Exception) {
         }
     }
+
     //更新企业资质
     private fun updateIds(companyId: String, id: String, idStartTime: String, idEndTime: String, type:Int) :Boolean{
         try {
