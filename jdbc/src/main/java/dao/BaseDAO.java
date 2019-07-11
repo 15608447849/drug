@@ -44,7 +44,7 @@ public class BaseDAO {
 	private static final StringBuffer PREFIX_REGEX_SB = new StringBuffer("\\{\\{\\?");
 	private static final StringBuffer SUFFIX_REGEX_SB = new StringBuffer("\\}\\}");
 
-	private static final ExecutorService ASYN_THREAD = Executors.newCachedThreadPool();
+	private static final ExecutorService ASYN_THREAD = Executors.newFixedThreadPool(Runtime.getRuntime().availableProcessors() * 2);
 
 	public static volatile AtomicInteger master = new AtomicInteger(LoadDbConfig.getDbConfigValue("master"));
 
@@ -747,7 +747,6 @@ public class BaseDAO {
 	public int[] updateTransNative(String[] nativeSQL,final List<Object[]> params){
 		int[] result = new int[nativeSQL.length];
 		String[] resultSQL = getNativeSQL(nativeSQL[0]);
-		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(Integer.parseInt(resultSQL[0]));
 
 		//异步同步到备份库
 		Future<Object> future = null;
@@ -758,6 +757,7 @@ public class BaseDAO {
 			synDbData.setSharding(0);
 			future = ASYN_THREAD.submit(synDbData);
 		}
+		AbstractJdbcSessionMgr sessionMgr = getSessionMgr(Integer.parseInt(resultSQL[0]));
 
 		try {
 			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
