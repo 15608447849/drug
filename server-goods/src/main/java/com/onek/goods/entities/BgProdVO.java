@@ -2,6 +2,7 @@ package com.onek.goods.entities;
 
 import redis.annation.DictCacheField;
 import redis.annation.GetDictWay;
+import util.StringUtils;
 
 public class BgProdVO implements Cloneable{
     /* ----------- 商品SPU表 ------------- */
@@ -296,7 +297,7 @@ public class BgProdVO implements Cloneable{
     }
 
     public int getWholenum() {
-        return wholenum;
+        return Math.max(wholenum, 1);
     }
 
     public void setWholenum(int wholenum) {
@@ -360,7 +361,7 @@ public class BgProdVO implements Cloneable{
     }
 
     public String getSpec() {
-        return spec;
+        return spec == null ? "" : spec;
     }
 
     public void setSpec(String spec) {
