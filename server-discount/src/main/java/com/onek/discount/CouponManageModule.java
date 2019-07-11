@@ -303,6 +303,7 @@ public class CouponManageModule {
     private static final String INSERT_COURCD =  "insert into {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " (unqid,coupno,compid,offercode,gettime) values (?,?,?,?,now())";
 
+
     private static final String DEL_COURCD =  "update {{?" + DSMConst.TD_PROM_COURCD + "}}" +
             " SET cstatus = cstatus | " + CSTATUS.DELETE +" WHERE unqid = ? ";
 
@@ -311,6 +312,7 @@ public class CouponManageModule {
     private static final String UPDATE_COUPON_STOCK = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
                     + " set actstock = actstock - 1 " +
             "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
+
 
     private static final String INSERT_RELA_SQL = "insert into {{?" + DSMConst.TD_PROM_RELA + "}} "
             + "(unqid,actcode,ladid) values(?,?,?)";
@@ -374,6 +376,21 @@ public class CouponManageModule {
     " and cop.unqid = rela.actcode where ofc.exno = ? and ofc.cstatus & 33 = 0 and  CURRENT_DATE <= enddate " +
             "and lad.cstatus & 1 = 0 and rela.cstatus & 1 = 0 ";
 
+    //远程调用
+    private static final String QUERY_ONLINE_COURCD_EXT =  "select unqid from  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
+            " where compid = ? and coupno = ?  ";
+
+    //远程调用
+    private static final String UPDATE_COURCD =  "update  {{?" + DSMConst.TD_PROM_COURCD + "}}" +
+            " set cstatus = 0,gettime = now() where unqid = ? ";
+
+
+    private static final String UPDATE_ONLINE_COUPON_STOCK = " update {{?" + DSMConst.TD_PROM_COUPON + "}}"
+            + " set actstock = actstock - 1 " +
+            "where unqid = ? and actstock > 0 and cstatus & 1 = 0";
+
+    private static final String INSERT_ONLINE_COURCD =  "insert into {{?" + DSMConst.TD_PROM_COURCD + "}}" +
+            " (unqid,coupno,compid,offercode,gettime,cstatus) values (?,?,?,?,now(),?)";
 
     /**
      * @description 优惠券新增
@@ -2152,6 +2169,42 @@ public class CouponManageModule {
             default :
                 return -1;
         }
+    }
+
+
+
+    @UserPermission(ignore = true)
+    public int couponRevRecord(AppContext appContext){
+        int compid = Integer.parseInt(appContext.param.arrays[0]);
+        long coupno = Long.parseLong(appContext.param.arrays[1]);
+        int qlfno = Integer.parseInt(appContext.param.arrays[2]);
+
+        List<Object[]> crdResult = baseDao.queryNative(QUERY_ONLINE_COURCD_EXT, compid, coupno);
+        List<Object[]> parmList = new ArrayList<>();
+        List<String> sqlList = new ArrayList<>();
+        if(crdResult == null || crdResult.isEmpty()){
+            int cstatus = 0;
+            if(qlfno == 1){
+                cstatus = 64;
+            }
+            sqlList.add(INSERT_ONLINE_COURCD);
+            parmList.add(new Object[]{GenIdUtil.getUnqId(),coupno,compid,0,cstatus});
+        }else{
+            sqlList.add(UPDATE_COURCD);
+            parmList.add(new Object[]{Long.parseLong(crdResult.get(0)[0].toString())});
+        }
+
+        sqlList.add(UPDATE_COUPON_STOCK);
+        parmList.add(new Object[]{coupno});
+        String [] sqlArray = new String[sqlList.size()];
+        sqlArray = sqlList.toArray(sqlArray);
+
+        int[] ret = baseDao.updateTransNative(sqlArray, parmList);
+        boolean b = !ModelUtil.updateTransEmpty(ret);
+        if(b){
+            return 1;
+        }
+        return 0;
     }
 
 

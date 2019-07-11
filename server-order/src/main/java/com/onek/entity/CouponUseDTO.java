@@ -25,6 +25,16 @@ public class CouponUseDTO {
 
     private double shipfee;
 
+    private double skprice;
+
+    public double getSkprice() {
+        return skprice;
+    }
+
+    public void setSkprice(double skprice) {
+        this.skprice = skprice;
+    }
+
     public double getShipfee() {
         return shipfee;
     }
