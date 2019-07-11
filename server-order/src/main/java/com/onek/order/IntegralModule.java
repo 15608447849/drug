@@ -47,7 +47,7 @@ public class IntegralModule {
      * 详情说明:
      * 作者: 蒋文广
      */
-    @UserPermission(ignore = false, needAuthenticated = true)
+    @UserPermission(ignore = false)
     public Result signIn(AppContext appContext){
 
 //        int compid = 536862720;
