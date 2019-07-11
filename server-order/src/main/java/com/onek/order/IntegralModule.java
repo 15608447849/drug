@@ -47,7 +47,7 @@ public class IntegralModule {
      * 详情说明:
      * 作者: 蒋文广
      */
-    @UserPermission(ignore = false, needAuthenticated = true)
+    @UserPermission(ignore = false)
     public Result signIn(AppContext appContext){
 
 //        int compid = 536862720;
@@ -103,7 +103,7 @@ public class IntegralModule {
      * 详情说明:
      * 作者: 蒋文广
      */
-    @UserPermission(ignore = false, needAuthenticated = true)
+    @UserPermission(ignore = false)
     public Result getHisSignIn(AppContext appContext){
 
         UserSession userSession = appContext.getUserSession();
@@ -217,6 +217,7 @@ public class IntegralModule {
      * @param appContext 入参[开始时间，结束时间]（当前时间月份开始，当前时间月份结束）
      * @return {code==200，data:[{积分来源（此处为签到来源）,生成时间（签到时间）}]}
      */
+    @UserPermission(ignore = false)
     public Result queryIntegralDetailBySign(AppContext appContext){
 
         //return param

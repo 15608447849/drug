@@ -3,6 +3,7 @@ package com.onek.user;
 import com.alibaba.fastjson.JSONArray;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
+import com.onek.consts.IntegralConstant;
 import com.onek.context.AppContext;
 import com.onek.entity.SyncErrVO;
 import com.onek.entitys.Result;
@@ -10,12 +11,18 @@ import com.onek.prop.AppProperties;
 import com.onek.user.entity.AptitudeVO;
 import com.onek.user.entity.CompInfoVO;
 import com.onek.user.entity.ConsigneeVO;
+import com.onek.user.entity.MemberVO;
+import com.onek.user.operations.UpdateAuditOp;
+import com.onek.user.service.MemberImpl;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsUtil;
+import com.onek.util.member.MemberEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
+import redis.IRedisPartCache;
+import redis.proxy.CacheProxyInstance;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.ModelUtil;
@@ -24,6 +31,10 @@ import util.http.HttpRequestUtil;
 import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
+
+import static com.onek.util.IceRemoteUtil.sendMessageToClient;
+import static com.onek.util.SmsTempNo.AUTHENTICATION_FAILURE;
+import static com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS;
 
 /* *
  * @服务名 userServer
@@ -129,7 +140,7 @@ public class SyncCustomerInfoModule {
                     if (code != 200) {//失败处理
                         int errorCode = object.get("errorcode").getAsInt();
                         optSyncErrComp(errorCode, compInfoVO.getCid());
-                    } else if (code == 200) {
+                    } else{
                         updSyncCState(compInfoVO.getCid());
                     }
                     return code;
@@ -201,8 +212,8 @@ public class SyncCustomerInfoModule {
             if (result != null && !result.isEmpty()) {
                 JsonObject object = new JsonParser().parse(result).getAsJsonObject();
                 code = object.get("code").getAsInt();
-                int errorCode = object.get("errorcode").getAsInt();
                 if (code != 200 && code != -2 && type == 0) {//失败处理
+                    int errorCode = object.get("errorcode").getAsInt();
                     optSyncErrComp(errorCode, compId);
 //                    updConsigneeState(compId, consigneeVO.getShipid());
                 } else if ((code == 200 || code == -2) && type == 1) {
@@ -265,22 +276,43 @@ public class SyncCustomerInfoModule {
      */
     @UserPermission(ignore = true)
     public Result syncCompState(AppContext appContext) {
-        int code = -1;
         Result result = new Result();
         String json = appContext.param.json;
         JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
         int compid = jsonObject.get("compid").getAsInt();
         int state = jsonObject.get("state").getAsInt();
-        String updSQL = "update {{?" + DSMConst.TB_COMP + "}} set cstatus=? where "
-                + " cstatus&1=0 and cid=?";
+        String updSQL = "update {{?" + DSMConst.TB_COMP + "}} set cstatus=?,auditdate=CURRENT_DATE, "
+                + " audittime=CURRENT_TIME where cstatus&1=0 and cid=?";
         RedisUtil.getStringProvide().delete(""+compid);
-//        if (state == 256) {
-//            code = baseDao.updateNative(updSQL, 512, state, compid);
-//        } else {
-//            code = baseDao.updateNative(updSQL, 256, state, compid);
-//        }
-        return baseDao.updateNative(updSQL, state, compid) >= 0
-                ? result.success("操作成功") : result.fail("操作失败");
+        int code =  baseDao.updateNative(updSQL, state, compid);
+        if (code > 0) {
+            otherOpt(compid, state);
+        }
+        return code > 0 ? result.success("操作成功") : result.fail("操作失败");
+    }
+
+    private void otherOpt(int compId, int state) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        int tempNo = state==256 ? AUTHENTICATION_SUCCESS : AUTHENTICATION_FAILURE;
+        executorService.execute(() -> {
+            String message = "";
+            String uphoneSQL = "select uphone from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and cid=?";
+            List<Object[]> rList = baseDao.queryNative(uphoneSQL, compId);
+            long phone = 0;
+            if (rList != null && rList.size() > 0) {
+                phone = Long.parseLong(String.valueOf(rList.get(0)[0]));
+            }
+            if (state == 256) {
+                UpdateAuditOp.Companion.giftPoints(compId);
+                IceRemoteUtil.revNewComerCoupon(compId, phone);
+            } else {
+                message = "信息有误";
+            }
+            sendMessageToClient(compId,"aud:刷新用户信息");
+            IceRemoteUtil.sendTempMessageToClient(compId, tempNo);
+
+            SmsUtil.sendSmsBySystemTemp(phone + "",tempNo, message);
+        });
     }
 
 
@@ -300,17 +332,17 @@ public class SyncCustomerInfoModule {
         boolean b = true;
         if(jsonArray != null && jsonArray.size() > 0){
 
-            List<String> sqlList = new ArrayList<>();
+//            List<String> sqlList = new ArrayList<>();
             List<Object[]> params = new ArrayList<>();
             for (int i = 0; i < jsonArray.size(); i++) {
                 JsonObject aptJson = jsonArray.get(i).getAsJsonObject();
-                sqlList.add(UPDATE_APT_SQL);
+//                sqlList.add(UPDATE_APT_SQL);
                 params.add(new Object[]{ aptJson.get("certificateno").getAsString(), aptJson.get("validitys").getAsString(), aptJson.get("validitye").getAsString(),
                         aptJson.get("pname").getAsString(), aptJson.get("compid").getAsString(), aptJson.get("atype").getAsString()});
             }
-            String[] sqlNative = new String[sqlList.size()];
-            sqlNative = sqlList.toArray(sqlNative);
-            b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(sqlNative, params));
+//            String[] sqlNative = new String[sqlList.size()];
+//            sqlNative = sqlList.toArray(sqlNative);
+            b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(UPDATE_APT_SQL, params, params.size()));
         }
 
         return b  ? result.success("操作成功") : result.fail("操作失败");

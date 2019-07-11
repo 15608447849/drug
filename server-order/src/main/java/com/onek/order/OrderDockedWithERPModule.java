@@ -77,12 +77,12 @@ public class OrderDockedWithERPModule {
             String url = appProperties.erpUrlPrev + "/produceSalesOrder";
             LogUtil.getDefaultLogger().info("生成订单调用ERP接口参数： " + jsonObject.toString());
             String result = HttpRequestUtil.postJson(url, jsonObject.toString());
-            System.out.println("生成订单调用ERP接口结果返回： " + result);
+            LogUtil.getDefaultLogger().info("生成订单调用ERP接口结果返回： " + result);
             if (result != null && !result.isEmpty()) {
                 JsonObject object = new JsonParser().parse(result).getAsJsonObject();
                 int code = object.get("code").getAsInt();
-                int errorCode = object.get("errorcode").getAsInt();
                 if (code != 200 && type == 0) {//同步失败处理
+                    int errorCode = object.get("errorcode").getAsInt();
                     updateOrderState(orderNo, errorCode);
                 } else if (code == 200 && type == 1) {
                     updateOState(orderNo);

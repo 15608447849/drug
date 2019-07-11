@@ -432,7 +432,6 @@ public class OrderOptModule {
             return result.fail("当前用户没有该权限");
         }
 
-
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long asno = jsonObject.get("asno").getAsLong();
         String ckdesc = jsonObject.get("ckdesc").getAsString();
@@ -454,15 +453,12 @@ public class OrderOptModule {
 
         if (ret > 0){
             //退货失败
-            int ostatus = 3;
+            int ostatus;
             int gstatus = 4;
             int asstatus = 0;
 
             int compid = Integer.parseInt(queryRet.get(0)[1].toString());
-            String specifyStorePhone = IceRemoteUtil.getSpecifyStorePhone(compid);
 
-
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
             if(ckstatus == 1){
                 //1退款退货 2 仅退款
                 if(astype == 1 || astype == 2){
@@ -488,15 +484,13 @@ public class OrderOptModule {
                         IceRemoteUtil.updateCompBal(Integer.parseInt(queryRet.get(0)[1].toString()),
                                 MathUtil.exactMul(subbal,100).intValue());
                     }
-                    executorService.execute(() ->SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                                    SmsTempNo.AFTER_SALE_AUDIT_PASSED,asno+""));
+                    sendMessageToSpecify(SmsTempNo.AFTER_SALE_AUDIT_PASSED,compid,asno, "");
                 }
                 ostatus = -2;
                 gstatus = 3;
 
                 if(astype == 3 || astype == 4){
-                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                            SmsTempNo.AFTER_SALE_BILL_AUDIT_PASSED,asno+"");
+                    sendMessageToSpecify(SmsTempNo.AFTER_SALE_BILL_AUDIT_PASSED,compid,asno, "");
                 }
 
 
@@ -504,13 +498,11 @@ public class OrderOptModule {
                 ostatus = 4;
                 asstatus = 200;
                 if(astype == 1 || astype == 2){
-                    executorService.execute(() -> SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                            SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc));
+                    sendMessageToSpecify(SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,compid,asno, ckdesc);
                 }
 
                 if(astype == 3 || astype == 4){
-                    executorService.execute(() ->   SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
-                            SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc));
+                    sendMessageToSpecify(SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,compid,asno, ckdesc);
                 }
 
             }
@@ -527,6 +519,15 @@ public class OrderOptModule {
         }
 
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
+    }
+
+    private void sendMessageToSpecify(int tempId, int compid, long asno, String ckdesc) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() ->   {
+            String specifyStorePhone = IceRemoteUtil.getSpecifyStorePhone(compid);
+            SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                    tempId,asno+"",ckdesc);
+        });
     }
 
     /**
