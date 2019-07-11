@@ -1441,7 +1441,7 @@ public class BackGroundProxyMoudule {
             }else{
                 sqlList.add(insertSql);
 
-                parmList.add(new Object[]{proxyQualificationCert.getCompid()+proxyQualificationCert.getAtype(),
+                parmList.add(new Object[]{getAptID(),
                         proxyQualificationCert.getCompid(),
                         proxyQualificationCert.getAtype(),
                         proxyQualificationCert.getCertificateno(),
