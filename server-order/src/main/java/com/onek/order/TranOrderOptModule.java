@@ -29,6 +29,7 @@ import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
+import redis.util.RedisUtil;
 import util.*;
 import util.http.HttpRequestUtil;
 
@@ -466,8 +467,15 @@ public class TranOrderOptModule {
         tranOrder.setDistamt((discountResult.getTotalDiscount() * 100));
 
         List<IDiscount> iDiscountList = discountResult.getActivityList();
+
         for (IDiscount iDiscount : iDiscountList) {
             for (int i = 0; i < iDiscount.getProductList().size(); i++) {
+//                if (iDiscount.getLimits(iDiscount.getProductList().get(i).getSKU())
+//                        - RedisOrderUtil.getActBuyNum(tranOrder.getCusno(), iDiscount.getProductList().get(i).getSKU(), iDiscount.getDiscountNo())
+//                        < iDiscount.getProductList().get(i).getNums()) {
+//                    throw new IllegalArgumentException("超过活动限购数！");
+//                }
+
                 TranOrderGoods tranOrderGoods = new TranOrderGoods();
                 tranOrderGoods.setCompid(tranOrder.getCusno());
                 tranOrderGoods.setPdno(iDiscount.getProductList().get(i).getSKU());
@@ -484,6 +492,7 @@ public class TranOrderOptModule {
                 }
             }
         }
+
         for (TranOrderGoods goodsPrice : tranOrderGoodsList) {//传进来的
             for (TranOrderGoods finalGoods : finalTranOrderGoods) {
                 if (goodsPrice.getPdno() == finalGoods.getPdno()) {
@@ -1289,5 +1298,7 @@ public class TranOrderOptModule {
         }
     }
 
-    public static void main(String[] args) {}
+    public static void main(String[] args) {
+
+    }
 }
