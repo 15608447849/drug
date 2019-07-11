@@ -121,18 +121,17 @@ public class ShoppingCartModule {
      *  code - 200 成功/ -1 失败
      *  message - 成功/失败
      **/
-    @UserPermission(ignore = true)
     public Result saveShopCart(AppContext appContext) {
         String json = appContext.param.json;
         Result result = new Result();
         ShoppingCartDTO shopVO = GsonUtils.jsonToJavaBean(json, ShoppingCartDTO.class);
 
-        if (shopVO == null){
+        if (shopVO == null || shopVO.getPdno() <= 0 || shopVO.getPnum() <= 0){
             LogUtil.getDefaultLogger().debug("参数有误");
             return result.fail("参数有误");
         }
 
-        int compid = shopVO.getCompid();
+        int compid = appContext.getUserSession().compId;
 
         //远程调用
         List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV_BUSSCOPE, shopVO.getPdno());
@@ -241,9 +240,11 @@ public class ShoppingCartModule {
         if(subStock < minStock){
             minStock = subStock;
         }
+
         if(minStock < pnum){
            return minStock;
         }
+
         return pnum;
     }
 
@@ -1046,7 +1047,7 @@ public class ShoppingCartModule {
 
             giftVO.setPtitle(gift.getGiftName());
             giftVO.setNum(gift.getTotalNums());
-            giftVO.setPdno(gift.getId());
+            giftVO.setPdno(gift.getTurlyId());
 
             giftVOS.add(giftVO);
         }

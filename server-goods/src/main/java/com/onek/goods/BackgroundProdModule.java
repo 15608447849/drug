@@ -658,13 +658,14 @@ public class BackgroundProdModule {
                     bgProdVO.getWp(), bgProdVO.getErpcode(),
             });
 
-            RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
             int esResult = ProdESUtil.addProdDocument(bgProdVO);
 
             if (esResult != 0) {
                 RedisUtil.getStringProvide().decrease(spu);
                 throw new IllegalArgumentException("操作失败");
             }
+
+            RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
 
             try {
                 BASE_DAO.updateTransNative(

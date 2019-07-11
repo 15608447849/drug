@@ -1,5 +1,6 @@
 package com.onek.user;
 
+import com.alibaba.fastjson.JSONArray;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
@@ -15,6 +16,7 @@ import com.onek.util.SmsUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
+import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.ModelUtil;
 import util.http.HttpRequestUtil;
@@ -42,6 +44,9 @@ public class SyncCustomerInfoModule {
     private static final String UPDATE_SYNC_SQL = "update {{?" + DSMConst.TD_SYNC_ERROR + "}} set syncdate=CURRENT_DATE,"
             + " synctime=CURRENT_TIME,syncreason=?,synctimes=synctimes+1 where cstatus&1=0 and "
             + " unqid=? ";
+    private static final String UPDATE_APT_SQL = "update {{?" + DSMConst.TB_COMP_APTITUDE + "}} set certificateno=?,"
+            + " validitys=?,validitye=?,pname=? where cstatus&1=0 and "
+            + " compid=? and atype=?";
 
     private static JsonObject combatData(CompInfoVO compInfoVO) {
         int compId = compInfoVO.getCid();
@@ -268,6 +273,7 @@ public class SyncCustomerInfoModule {
         int state = jsonObject.get("state").getAsInt();
         String updSQL = "update {{?" + DSMConst.TB_COMP + "}} set cstatus=? where "
                 + " cstatus&1=0 and cid=?";
+        RedisUtil.getStringProvide().delete(""+compid);
 //        if (state == 256) {
 //            code = baseDao.updateNative(updSQL, 512, state, compid);
 //        } else {
@@ -275,6 +281,39 @@ public class SyncCustomerInfoModule {
 //        }
         return baseDao.updateNative(updSQL, state, compid) >= 0
                 ? result.success("操作成功") : result.fail("操作失败");
+    }
+
+
+    /**
+     * @接口摘要 ERP对接返回修改的资质信息
+     * @业务场景 ERP调用
+     * @传参类型 json
+     * @传参列表 {list:erp资质信息}
+     * @返回列表 200 成功
+     */
+    @UserPermission(ignore = true)
+    public Result syncCompAptitude(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
+        JsonArray jsonArray = jsonObject.getAsJsonArray("list");
+        boolean b = true;
+        if(jsonArray != null && jsonArray.size() > 0){
+
+            List<String> sqlList = new ArrayList<>();
+            List<Object[]> params = new ArrayList<>();
+            for (int i = 0; i < jsonArray.size(); i++) {
+                JsonObject aptJson = jsonArray.get(i).getAsJsonObject();
+                sqlList.add(UPDATE_APT_SQL);
+                params.add(new Object[]{ aptJson.get("certificateno").getAsString(), aptJson.get("validitys").getAsString(), aptJson.get("validitye").getAsString(),
+                        aptJson.get("pname").getAsString(), aptJson.get("compid").getAsString(), aptJson.get("atype").getAsString()});
+            }
+            String[] sqlNative = new String[sqlList.size()];
+            sqlNative = sqlList.toArray(sqlNative);
+            b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(sqlNative, params));
+        }
+
+        return b  ? result.success("操作成功") : result.fail("操作失败");
     }
 
 

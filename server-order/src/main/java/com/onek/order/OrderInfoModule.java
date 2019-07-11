@@ -193,7 +193,7 @@ public class OrderInfoModule {
                 }
 
                 good = new TranOrderGoods();
-                good.setPdno(gift.getId());
+                good.setPdno(gift.getTurlyId());
                 good.setActcode(String.valueOf(gift.getActivityCode()));
                 good.setPnum(gift.getTotalNums());
                 good.setPname(gift.getGiftName());

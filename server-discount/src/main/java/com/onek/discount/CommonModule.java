@@ -48,24 +48,60 @@ public class CommonModule {
     @UserPermission(ignore = true)
     public Result queryPromGift(AppContext appContext) {
         Result result = new Result();
+        String[] params = appContext.param.arrays;
+        Page page = new Page();
+        page.pageIndex = appContext.param.pageIndex;
+        page.pageSize = appContext.param.pageNumber;
+        PageHolder pageHolder = new PageHolder(page);
         String selectSQL = "select unqid giftno,giftname, giftdesc, cstatus, createdate, createtime, updatedate, updatetime from {{?" + DSMConst.TD_PROM_GIFT + "}} where cstatus&1=0 ";
-        List<Object[]> queryResult = baseDao.queryNative(selectSQL);
+
+        StringBuilder sql = new StringBuilder(selectSQL);
+
+        List<Object> paramList = new ArrayList<>();
+        String param;
+        for (int i = 0; i < params.length; i++) {
+            param = params[i];
+
+            if (StringUtils.isEmpty(param)) {
+                continue;
+            }
+
+            try {
+                switch (i) {
+                    case 0:
+                        sql.append(" AND giftname LIKE ? ");
+                        param = "%" + param + "%";
+                        break;
+                    case 1:
+                        sql.append(" AND cstatus&? > 0 ");
+                        break;
+                }
+            } catch (Exception e) {
+                continue;
+            }
+
+            paramList.add(param);
+        }
+
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sql.toString(), paramList.toArray());
         PromGiftVO[] promGiftVOS = new PromGiftVO[queryResult.size()];
         baseDao.convToEntity(queryResult, promGiftVOS, PromGiftVO.class, new String[]{"giftno", "giftname", "desc", "cstatus", "createdate", "createtime", "updatedate", "updatetime"});
-        return result.success(promGiftVOS);
+        return result.setQuery(promGiftVOS, pageHolder);
     }
 
     private static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
                     + " spu.brandno, b.brandname, spu.manuno, m.manuname, "
-                    + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.spec, sku.wp "
+                    + " sku.sku, sku.vatp, sku.mp, sku.rrp, sku.spec, sku.wp, "
+                    + " sku.erpsku "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU
                     + "}} m ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND
                     + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
-                    + " WHERE sku.cstatus&1 = 0 AND spu.rx <> 2 ";
+                    + " WHERE sku.cstatus&1 = 0 AND spu.rx <> 2 "
+                    + " AND sku.erpsku IS NOT NULL AND LENGTH(sku.erpsku) > 0 ";
 
     /**
      * @接口摘要 查询可作为赠品的药品信息

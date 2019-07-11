@@ -16,5 +16,6 @@ dependencies {
     compile 'org.apache.httpcomponents:httpclient:4.5.3'
     compile 'org.apache.httpcomponents:httpcore:4.4.8'
     compile 'org.apache.httpcomponents:httpmime:4.3'
+    compile 'com.google.guava:guava:10.0.1'
 }
 
