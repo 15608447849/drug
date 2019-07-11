@@ -129,7 +129,7 @@ public class SyncCustomerInfoModule {
                     if (code != 200) {//失败处理
                         int errorCode = object.get("errorcode").getAsInt();
                         optSyncErrComp(errorCode, compInfoVO.getCid());
-                    } else if (code == 200) {
+                    } else{
                         updSyncCState(compInfoVO.getCid());
                     }
                     return code;
@@ -201,8 +201,8 @@ public class SyncCustomerInfoModule {
             if (result != null && !result.isEmpty()) {
                 JsonObject object = new JsonParser().parse(result).getAsJsonObject();
                 code = object.get("code").getAsInt();
-                int errorCode = object.get("errorcode").getAsInt();
                 if (code != 200 && code != -2 && type == 0) {//失败处理
+                    int errorCode = object.get("errorcode").getAsInt();
                     optSyncErrComp(errorCode, compId);
 //                    updConsigneeState(compId, consigneeVO.getShipid());
                 } else if ((code == 200 || code == -2) && type == 1) {
@@ -265,7 +265,7 @@ public class SyncCustomerInfoModule {
      */
     @UserPermission(ignore = true)
     public Result syncCompState(AppContext appContext) {
-        int code = -1;
+//        int code = -1;
         Result result = new Result();
         String json = appContext.param.json;
         JsonObject jsonObject = new JsonParser().parse(json).getAsJsonObject();
@@ -300,17 +300,17 @@ public class SyncCustomerInfoModule {
         boolean b = true;
         if(jsonArray != null && jsonArray.size() > 0){
 
-            List<String> sqlList = new ArrayList<>();
+//            List<String> sqlList = new ArrayList<>();
             List<Object[]> params = new ArrayList<>();
             for (int i = 0; i < jsonArray.size(); i++) {
                 JsonObject aptJson = jsonArray.get(i).getAsJsonObject();
-                sqlList.add(UPDATE_APT_SQL);
+//                sqlList.add(UPDATE_APT_SQL);
                 params.add(new Object[]{ aptJson.get("certificateno").getAsString(), aptJson.get("validitys").getAsString(), aptJson.get("validitye").getAsString(),
                         aptJson.get("pname").getAsString(), aptJson.get("compid").getAsString(), aptJson.get("atype").getAsString()});
             }
-            String[] sqlNative = new String[sqlList.size()];
-            sqlNative = sqlList.toArray(sqlNative);
-            b = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(sqlNative, params));
+//            String[] sqlNative = new String[sqlList.size()];
+//            sqlNative = sqlList.toArray(sqlNative);
+            b = !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(UPDATE_APT_SQL, params, params.size()));
         }
 
         return b  ? result.success("操作成功") : result.fail("操作失败");
