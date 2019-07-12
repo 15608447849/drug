@@ -2,7 +2,6 @@ package com.onek.order;
 
 import Ice.Application;
 import Ice.Logger;
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
@@ -126,7 +125,7 @@ public class ShoppingCartModule {
         Result result = new Result();
         ShoppingCartDTO shopVO = GsonUtils.jsonToJavaBean(json, ShoppingCartDTO.class);
 
-        if (shopVO == null || shopVO.getPdno() <= 0 || shopVO.getPnum() <= 0){
+        if (shopVO == null || shopVO.getPdno() <= 0){
             LogUtil.getDefaultLogger().debug("参数有误");
             return result.fail("参数有误");
         }
@@ -182,11 +181,11 @@ public class ShoppingCartModule {
         }else{
             long unqid = Long.parseLong(queryRet.get(0)[0].toString());
             int pnum = Integer.parseInt(queryRet.get(0)[1].toString());
-
-            product.setNums(shopVO.getPnum()+pnum);
+            int current = shopVO.getPnum()+pnum;
+            appContext.logger.print("存入数量: " + current);
+            product.setNums( current < 0 ? 0 : current);
             product.autoSetCurrentPrice(pdprice,shopVO.getPnum()+pnum);
             productList.add(product);
-            System.out.println("---- " + JSON.toJSONString(productList));
             ret = baseDao.updateNativeSharding(compid,TimeUtils.getCurrentYear(),
                     UPDATE_SHOPCART_SQL_EXT, getSkuInv(compid,productList,inventory),
                     unqid);
