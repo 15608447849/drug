@@ -199,4 +199,68 @@ public class MathUtil {
         return result;
     }
 
+    public long getMax(long... nums) {
+        if (ArrayUtil.isEmpty(nums)) {
+            throw new IllegalArgumentException("ur compared parms is empty!");
+        }
+
+        if (nums.length == 1) {
+            return nums[0];
+        }
+
+        if (nums.length == 2) {
+            return Math.max(nums[1], nums[0]);
+        }
+
+        return Arrays.stream(nums).max().getAsLong();
+    }
+
+    public double getMax(double... nums) {
+        if (ArrayUtil.isEmpty(nums)) {
+            throw new IllegalArgumentException("ur compared parms is empty!");
+        }
+
+        if (nums.length == 1) {
+            return nums[0];
+        }
+
+        if (nums.length == 2) {
+            return Math.max(nums[1], nums[0]);
+        }
+
+        return Arrays.stream(nums).max().getAsDouble();
+    }
+
+    public long getMin(long... nums) {
+        if (ArrayUtil.isEmpty(nums)) {
+            throw new IllegalArgumentException("ur compared parms is empty!");
+        }
+
+        if (nums.length == 1) {
+            return nums[0];
+        }
+
+        if (nums.length == 2) {
+            return Math.min(nums[1], nums[0]);
+        }
+
+        return Arrays.stream(nums).min().getAsLong();
+    }
+
+    public double getMin(double... nums) {
+        if (ArrayUtil.isEmpty(nums)) {
+            throw new IllegalArgumentException("ur compared parms is empty!");
+        }
+
+        if (nums.length == 1) {
+            return nums[0];
+        }
+
+        if (nums.length == 2) {
+            return Math.min(nums[1], nums[0]);
+        }
+
+        return Arrays.stream(nums).min().getAsDouble();
+    }
+
 }
