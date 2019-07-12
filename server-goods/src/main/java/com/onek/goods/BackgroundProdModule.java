@@ -610,8 +610,11 @@ public class BackgroundProdModule {
         synchronized (BackgroundProdModule.class) {
             long spu_crease = RedisUtil.getStringProvide().increase(spu);
 
+            LogUtil.getDefaultLogger().info("The current SPU is " + spu);
+            LogUtil.getDefaultLogger().info("The spu_crease is " + spu_crease);
+
             if (spu_crease > 99) {
-                throw new IllegalArgumentException("SKU满了");
+                throw new IllegalArgumentException("SKU满了 " + spu + "|" + spu_crease);
             }
 
             String sku = spu + String.format("%02d", spu_crease);
@@ -950,7 +953,7 @@ public class BackgroundProdModule {
         }
 
         if (count == 999) {
-            throw new Exception("超过上限");
+            throw new Exception("SPU超过上限");
         }
 
         count = Integer.parseInt(queryResult.get(0)[0].toString());
