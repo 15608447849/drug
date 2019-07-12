@@ -1,5 +1,6 @@
 package util;
 
+import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonParser;
 import net.sourceforge.pinyin4j.format.HanyuPinyinCaseType;
 import net.sourceforge.pinyin4j.format.HanyuPinyinOutputFormat;
@@ -95,8 +96,9 @@ public class StringUtils {
 
     public static boolean isJsonFormatter(String str) {
         try {
-            new JsonParser().parse(str);
+            JSON.parse(str);
         } catch (Exception e) {
+            e.printStackTrace();
             return false;
         }
         return true;
