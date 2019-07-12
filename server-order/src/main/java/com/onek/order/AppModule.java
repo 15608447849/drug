@@ -78,6 +78,9 @@ public class AppModule {
         //获取商品的购物车数量
         current = queryShopCartNumBySku(compid,beanGop.sku);
 
+
+        context.logger.print("最终结果数量: " + temp);
+
         return flag ? new Result().success("已加入购物车",current) : new Result().fail("无法加入购物车",current);
     }
 

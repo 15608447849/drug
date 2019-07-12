@@ -32,6 +32,7 @@ public class UserInterceptor implements IServerInterceptor {
                     return new Result().intercept(-2,"用户未登录");
                 }
                 if (up != null){
+
                     //判断是否需要认证企业
                     if(up.needAuthenticated()){
                         if(userSession.comp == null ||  (userSession.comp.authenticationStatus & 256) == 0){

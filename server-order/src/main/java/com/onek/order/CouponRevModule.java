@@ -19,6 +19,7 @@ import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.member.MemberStore;
+import com.onek.util.order.RedisOrderUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
@@ -540,6 +541,18 @@ public class CouponRevModule {
         int compid = couponUseDTOS.get(0).getCompid();
         DiscountResult calculate = CalculateUtil.calculate(compid,
                 productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
+        List<IDiscount> activityList = calculate.getActivityList();
+        long sku;
+        for(IDiscount discount :activityList){
+            for(CouponUseDTO couponUseDTO: couponUseDTOS){
+                sku = couponUseDTO.getPdno();
+                int limits = discount.getLimits(sku);
+                int buyed = RedisOrderUtil.getActBuyNum(compid,sku,discount.getDiscountNo());
+                if(limits > 0 && (limits - buyed < couponUseDTO.getPnum())){
+                    return new Result().fail("当前购买量大于可购量，请重新下单！");
+                }
+            }
+        }
 
         resultMap.put("tprice",subCalRet.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
         resultMap.put("tdiscount",calculate.getTotalDiscount());
@@ -629,6 +642,19 @@ public class CouponRevModule {
 
         DiscountResult calculate = CalculateUtil.calculate(compid,
                 productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
+
+        List<IDiscount> activityList = calculate.getActivityList();
+        long sku;
+        for(IDiscount discount :activityList){
+            for(CouponUseDTO couponUseDTO: couponUseDTOS){
+                sku = couponUseDTO.getPdno();
+                int limits = discount.getLimits(sku);
+                int buyed = RedisOrderUtil.getActBuyNum(compid,sku,discount.getDiscountNo());
+                if(limits > 0 && (limits - buyed < couponUseDTO.getPnum())){
+                    return new Result().fail("当前购买量大于可购量，请重新下单！");
+                }
+            }
+        }
 
 
         resultMap.put("tprice",subCalRet.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
