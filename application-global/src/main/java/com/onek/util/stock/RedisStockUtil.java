@@ -92,6 +92,9 @@ public class RedisStockUtil {
 //    }
 
     public static boolean deductionActStock(long sku, int stock, List<Long> actCodes) {
+        if(stock < 0){
+            return false;
+        }
         if(actCodes != null && actCodes.size() > 0){
             for(long actCode : actCodes){
                 String key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
@@ -223,6 +226,9 @@ public class RedisStockUtil {
      * @return
      */
     public static int deductionStock(long sku, int stock) {
+        if(stock < 0){
+            return 1;
+        }
         String currentStock = RedisUtil.getHashProvide().getValByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX);
         if (StringUtils.isEmpty(currentStock)) {
             return 0;
