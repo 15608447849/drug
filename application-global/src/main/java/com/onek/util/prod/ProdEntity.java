@@ -56,6 +56,9 @@ public class ProdEntity {
     private int prodstatus;
     private int imagestatus;
     private int skuCstatus;
+    private int consell;
+
+    // ----- 自定义位置 ------- //
 
     private long classNo;
     private String className;
@@ -418,5 +421,13 @@ public class ProdEntity {
 
     public void setUnitName(String unitName) {
         this.unitName = unitName;
+    }
+
+    public int getConsell() {
+        return consell;
+    }
+
+    public void setConsell(int consell) {
+        this.consell = consell;
     }
 }

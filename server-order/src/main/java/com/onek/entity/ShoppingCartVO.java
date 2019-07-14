@@ -105,6 +105,16 @@ public class ShoppingCartVO {
 
     private double skprice;
 
+    private int consell;
+
+    public int getConsell() {
+        return consell;
+    }
+
+    public void setConsell(int consell) {
+        this.consell = consell;
+    }
+
     public double getSkprice() {
         return skprice;
     }

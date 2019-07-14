@@ -38,6 +38,8 @@ import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import static com.onek.order.PayModule.*;
 
@@ -154,6 +156,10 @@ public class TranOrderOptModule {
 
     private static final  String QUERY_ORDER_BAL = "SELECT balamt from {{?"+DSMConst.TD_TRAN_ORDER+"}} where balamt > 0 and orderno = ? and ostatus = ? ";
 
+    private static final String UPDATE_COMP_BAL = "update {{?" + DSMConst.TB_COMP + "}} "
+            + "set balance = IF((balance + ?) <=0,0,(balance + ?)) where cid = ? ";
+
+
     @UserPermission(ignore = false)
     public Result placeOrderOne(AppContext appContext) {
         long coupon = 0;//优惠券码
@@ -225,7 +231,6 @@ public class TranOrderOptModule {
      */
     @UserPermission(ignore = true)
     public Result placeOrder(AppContext appContext) {
-//        List<TranOrderGoods> finalGoodsPrice = null;
         long unqid = 0, coupon = 0;//优惠券码
         Result result = new Result();
         Gson gson = new Gson();
@@ -256,11 +261,9 @@ public class TranOrderOptModule {
         int pdnum = 0;
         for (int i = 0; i < goodsArr.size(); i++) {
             TranOrderGoods goodsVO = gson.fromJson(goodsArr.get(i).toString(), TranOrderGoods.class);
-
             if (goodsVO.isGift() || goodsVO.getPdprice() <= .0) {
                 continue;
             }
-
             pdnum += goodsVO.getPnum();
             goodsVO.setCompid(tranOrder.getCusno());
             goodsVO.setActcode(String.valueOf(goodsVO.getActcode()));
@@ -271,18 +274,17 @@ public class TranOrderOptModule {
         List<GoodsStock> goodsStockList = new ArrayList<>();
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
         tranOrder.setOrderno(orderNo);
+        //订单费用计算（费用分摊以及总费用计算）
+        try {
+            LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格开始");
+            calculatePrice(tranOrderGoods, tranOrder, unqid, sqlList, params);
+            LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格结束");
+        } catch (Exception e) {
+            e.printStackTrace();
+            LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格失败");
+            return result.fail("下单失败");
+        }
         if (orderType == 0) {
-            //订单费用计算（费用分摊以及总费用计算）
-            try {
-                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格开始");
-                calculatePrice(tranOrderGoods, tranOrder, unqid, sqlList, params);
-                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格结束");
-            } catch (Exception e) {
-                e.printStackTrace();
-//                stockRecovery(goodsStockList);
-                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格失败");
-                return result.fail("下单失败");
-            }
             //库存判断
             boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
             if (b) {
@@ -295,17 +297,6 @@ public class TranOrderOptModule {
             long actcode = 0;
             if (jsonObject.containsKey("actcode") && !jsonObject.getString("actcode").isEmpty()) {
                 actcode = jsonObject.getLong("actcode");
-            }
-            //订单费用计算（费用分摊以及总费用计算）
-            try {
-                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格开始");
-                calculatePrice(tranOrderGoods, tranOrder, unqid, sqlList, params);
-                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格结束");
-            } catch (Exception e) {
-                e.printStackTrace();
-//                stockRecovery(goodsStockList);
-                LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------秒杀下单操作计算价格失败");
-                return result.fail("下单失败");
             }
             List<TranOrderGoods> goodsList = secKillStockIsEnough(actcode, tranOrderGoods);
             if (goodsList.size() != tranOrderGoods.size()) {
@@ -327,7 +318,6 @@ public class TranOrderOptModule {
             if (jsonObject.containsKey("balway") && !jsonObject.getString("balway").isEmpty()) {
                 balway = jsonObject.getInteger("balway");
             }
-
             if(balway > 0){
                 bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
                 if(bal >= payamt){
@@ -337,64 +327,39 @@ public class TranOrderOptModule {
                     payamt = MathUtil.exactSub(payamt,bal).
                             setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
                 }
-
                 bal = Math.max(bal, 0);
             }
         }catch (Exception e){
             e.printStackTrace();
         }
-
         sqlList.addFirst(INSERT_TRAN_ORDER);
         params.addFirst(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
                 tranOrder.getPdamt(), tranOrder.getFreight(), payamt, tranOrder.getCoupamt(), tranOrder.getDistamt(),
                 tranOrder.getRvaddno(), 0, 0, tranOrder.getConsignee(), tranOrder.getContact(), tranOrder.getAddress(),
                 bal, tranOrder.getRemarks(), tranOrder.getInvoicetype()});
-
         if (unqid > 0) {
             //使用优惠券
             sqlList.add(UPD_COUENT_SQL);
             params.add(new Object[]{unqid});
         }
         //分摊余额
-        if(bal > 0 && balway > 0){
+        if(bal > 0){
             apportionBal(tranOrderGoods,bal,payamt,tranOrder.getFreight());
         }
-
         if (placeType == 1) {
             getInsertSqlList(sqlList, params, tranOrderGoods, orderNo);
         } else {
             getUpdSqlList(sqlList, params, tranOrderGoods, orderNo);
         }
-
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(tranOrder.getCusno(), year, sqlNative, params));
         if (b) {
-            updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
-            if (coupon > 0) {
-                //远程调用
-                LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作开始");
-                int code = IceRemoteUtil.updateNative(UPDATE_PROM_COURCD, coupon, tranOrder.getCusno());
-                LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作结果code>>>> " + (code>0));
-            }
-
+            //下单成功后续操作
+            otherPlaceOrderOpt(tranOrder, coupon, orderNo, tranOrderGoods, bal);
             CANCEL_DELAYED.add(tranOrder);
-
             JsonObject object = new JsonObject();
-
-            addActBuyNum(tranOrder.getCusno(), tranOrderGoods);
-
-            try{
-                RedisOrderUtil.addOrderNumByCompid(tranOrder.getCusno());
-            }catch (Exception e){}
-
-            try{
-                deductionBal(tranOrder.getCusno(),bal);
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-
             object.addProperty("orderno", orderNo);
             object.addProperty("message", "下单成功");
             return result.success(object);
@@ -405,6 +370,32 @@ public class TranOrderOptModule {
         }
     }
 
+    private void otherPlaceOrderOpt(TranOrder tranOrder, long coupon, String orderNo, List<TranOrderGoods> tranOrderGoods, double bal) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(()->{
+            try{
+                List<String> sqlList = new ArrayList<>();
+                List<Object[]> params = new ArrayList<>();
+                sqlList.add(UPDATE_COMP_BAL);
+                params.add(new Object[]{-new Double(bal).intValue(),-new Double(bal).intValue(),tranOrder.getCusno()});
+                updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
+                if (coupon > 0) {
+                    sqlList.add(UPDATE_PROM_COURCD);
+                    params.add(new Object[]{coupon, tranOrder.getCusno()});
+                }
+                addActBuyNum(tranOrder.getCusno(), tranOrderGoods);
+                RedisOrderUtil.addOrderNumByCompid(tranOrder.getCusno());
+                String[] sqlNative = new String[sqlList.size()];
+                sqlNative = sqlList.toArray(sqlNative);
+                //远程调用
+                LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作开始");
+                boolean b = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateTransNative(sqlNative,params));
+                LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作结果code>>>> " + b);
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+        });
+    }
 
 
 
@@ -441,8 +432,8 @@ public class TranOrderOptModule {
         });
         DiscountResult discountResult = CalculateUtil.calculate(tranOrder.getCusno(), tempProds, coupon);
 
-        System.out.println("___________________________ ");
-        System.out.println(JSON.toJSONString(discountResult.getGiftList()));
+/*        System.out.println("___________________________ ");
+        System.out.println(JSON.toJSONString(discountResult.getGiftList()));*/
 
         // 保存返利信息
         if (!discountResult.getGiftList().isEmpty()) {

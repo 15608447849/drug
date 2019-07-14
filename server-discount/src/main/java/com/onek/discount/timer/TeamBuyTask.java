@@ -91,14 +91,14 @@ public class TeamBuyTask extends TimerTask {
                             double f2 = new BigDecimal((float)(offer) /10).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             double f1 = new BigDecimal((float)(10 -offer) /10).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                             int money = (int)(Integer.parseInt(payamt) * f2);
-                            int minusmoney = (int)(Integer.parseInt(payamt) * f1);
+                            int minusmoney = (int)(Integer.parseInt(payamt) * f1 * Integer.parseInt(pnum));
                             msgBodyList.add(new TeamBuyMsgBody(orderno, compid, pnum, money, minusmoney));
-                            int result = BaseDAO.getBaseDAO().updateNative(UPDATE_COMP_BAL, money, compid);
-                            LogUtil.getDefaultLogger().info("++++++ TeamBuyTask compid:["+ compid+"]; money:["+ money+"] result:["+ result+"] +++++++");
+                            int result = BaseDAO.getBaseDAO().updateNative(UPDATE_COMP_BAL, minusmoney, compid);
+                            LogUtil.getDefaultLogger().info("++++++ TeamBuyTask compid:["+ compid+"]; money:["+ money+"]; minusmoney:["+minusmoney+"] result:["+ result+"] +++++++");
                             if(dataMap.containsKey(Integer.parseInt(compid))){
-                                money += dataMap.get(Integer.parseInt(compid));
+                                minusmoney += dataMap.get(Integer.parseInt(compid));
                             }
-                            dataMap.put(Integer.parseInt(compid), (int)money);
+                            dataMap.put(Integer.parseInt(compid), (int)minusmoney);
                         }
 
                         for(Integer compid : dataMap.keySet()){

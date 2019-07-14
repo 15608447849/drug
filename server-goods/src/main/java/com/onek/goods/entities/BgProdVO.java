@@ -2,6 +2,7 @@ package com.onek.goods.entities;
 
 import redis.annation.DictCacheField;
 import redis.annation.GetDictWay;
+import util.StringUtils;
 
 public class BgProdVO implements Cloneable{
     /* ----------- 商品SPU表 ------------- */
@@ -58,6 +59,7 @@ public class BgProdVO implements Cloneable{
     private int skuCstatus;
     private int expmonth; // 有效期月数
     private double wp; // 批发价
+    private int consell; //
 
 
     private long classNo;  // 类别码
@@ -70,6 +72,14 @@ public class BgProdVO implements Cloneable{
     private String insuranceName;
     private String unitName;
     private String erpcode; // erp唯一码
+
+    public int getConsell() {
+        return consell;
+    }
+
+    public void setConsell(int consell) {
+        this.consell = consell;
+    }
 
     public String getErpcode() {
         return erpcode;
@@ -296,7 +306,7 @@ public class BgProdVO implements Cloneable{
     }
 
     public int getWholenum() {
-        return wholenum;
+        return Math.max(wholenum, 1);
     }
 
     public void setWholenum(int wholenum) {
@@ -360,7 +370,7 @@ public class BgProdVO implements Cloneable{
     }
 
     public String getSpec() {
-        return spec;
+        return spec == null ? "" : spec;
     }
 
     public void setSpec(String spec) {

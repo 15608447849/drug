@@ -136,7 +136,7 @@ public class OrderDockedWithERPModule {
                 ERPGoodsVO erpGoodsVO = new ERPGoodsVO();
                 erpGoodsVO.setUnqid(String.valueOf(qResult[0]));
                 erpGoodsVO.setErpsku(jsonObject.get("id").getAsString());
-                erpGoodsVO.setNum(jsonObject.get("nums").getAsString());
+                erpGoodsVO.setNum(jsonObject.get("totalNums").getAsString());
                 erpGoodsVO.setPayamt("0");
                 erpGoodsVO.setPdprice("0");
                 erpGoodsVO.setOrderno(String.valueOf(qResult[2]));

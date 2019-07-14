@@ -83,13 +83,13 @@ public class BackgroundProdModule {
                     + " prodsdate, prodedate, store, "
                     + " limits, wholenum, medpacknum, unit,"
                     + " ondate, ontime, spec, cstatus, expmonth, "
-                    + " wp, erpsku,creatdate,creattime) "
+                    + " wp, erpsku, consell, creatdate,creattime) "
                     + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, "
                     + " CURRENT_DATE, CURRENT_TIME, ?, ?, ?,"
-                    + " ?, ?,CURRENT_DATE, CURRENT_TIME) ";
+                    + " ?, ?, ?, CURRENT_DATE, CURRENT_TIME) ";
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -109,7 +109,7 @@ public class BackgroundProdModule {
                     + " sku.prodsdate, sku.prodedate, sku.store, "
                     + " sku.limits, sku.sales, sku.wholenum, sku.medpacknum, sku.unit, "
                     + " sku.ondate, sku.ontime, sku.offdate, sku.offtime, sku.spec, sku.prodstatus, "
-                    + " sku.imagestatus, sku.cstatus, sku.expmonth, sku.wp "
+                    + " sku.imagestatus, sku.cstatus, sku.expmonth, sku.wp, sku.consell "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU
@@ -130,7 +130,7 @@ public class BackgroundProdModule {
                     + " sku.prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), "
                     + " sku.prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
                     + " sku.store = ?, sku.limits = ?, sku.wholenum = ?, "
-                    + " sku.medpacknum = ?, sku.cstatus = ?,"
+                    + " sku.medpacknum = ?, sku.cstatus = ?, sku.consell = ?, "
                     + " spu.rx = ?, spu.insurance = ?, spu.gspgms = ?, "
                     + " spu.brandno = ?, spu.detail = ?, spu.gspsc = ?, "
                     + " sku.expmonth = ?, spu.busscope = ? "
@@ -299,7 +299,7 @@ public class BackgroundProdModule {
                 bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
                 bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                 bgProdVO.getStore(), bgProdVO.getLimits(),
-                bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getSkuCstatus(),
+                bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getSkuCstatus(), bgProdVO.getConsell(),
                 bgProdVO.getRx(), bgProdVO.getInsurance(), bgProdVO.getGspGMS(),
                 bgProdVO.getBrandNo(), bgProdVO.getDetail(), bgProdVO.getGspSC(),
                 bgProdVO.getExpmonth(), bgProdVO.getBusscope(),
@@ -355,6 +355,14 @@ public class BackgroundProdModule {
                 returnResult.setMp(-1);
                 returnResult.setVatp(-1);
             }
+        } else if (!appContext.isSignControlAgree()) {
+            for (BgProdVO returnResult : returnResults) {
+                if ((returnResult.getConsell() & 1) > 0) {
+                    returnResult.setRrp(-2);
+                    returnResult.setMp(-2);
+                    returnResult.setVatp(-2);
+                }
+            }
         }
 
         return new Result().success(returnResults);
@@ -390,6 +398,12 @@ public class BackgroundProdModule {
             result.setRrp(-1);
             result.setMp(-1);
             result.setVatp(-1);
+        } else if (!appContext.isSignControlAgree()) {
+            if ((result.getConsell() & 1) > 0) {
+                result.setRrp(-2);
+                result.setMp(-2);
+                result.setVatp(-2);
+            }
         }
 
         JSONObject jo = JSON.parseObject(JSON.toJSONString(result));
@@ -610,8 +624,11 @@ public class BackgroundProdModule {
         synchronized (BackgroundProdModule.class) {
             long spu_crease = RedisUtil.getStringProvide().increase(spu);
 
+            LogUtil.getDefaultLogger().info("The current SPU is " + spu);
+            LogUtil.getDefaultLogger().info("The spu_crease is " + spu_crease);
+
             if (spu_crease > 99) {
-                throw new IllegalArgumentException("SKU满了");
+                throw new IllegalArgumentException("SKU满了 " + spu + "|" + spu_crease);
             }
 
             String sku = spu + String.format("%02d", spu_crease);
@@ -655,7 +672,7 @@ public class BackgroundProdModule {
                     bgProdVO.getStore(), bgProdVO.getLimits(),
                     bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getUnit(),
                     bgProdVO.getSpec(), bgProdVO.getSkuCstatus(), bgProdVO.getExpmonth(),
-                    bgProdVO.getWp(), bgProdVO.getErpcode(),
+                    bgProdVO.getWp(), bgProdVO.getErpcode(), bgProdVO.getConsell()
             });
 
             int esResult = ProdESUtil.addProdDocument(bgProdVO);
@@ -950,7 +967,7 @@ public class BackgroundProdModule {
         }
 
         if (count == 999) {
-            throw new Exception("超过上限");
+            throw new Exception("SPU超过上限");
         }
 
         count = Integer.parseInt(queryResult.get(0)[0].toString());
@@ -1118,7 +1135,7 @@ public class BackgroundProdModule {
                 bgProd = JSON.toJavaObject(erpProd, BgProdVO.class);
                 bgProd.setRx(rx);
                 bgProd.setUnit(unit);
-                bgProd.setDetail("[{\"name\"m: \"功能主治\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"主要成分\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"用法用量\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"不良反应\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"id\": 50, \"name\": \"注意事项\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"禁忌\", \"isShow\": true, \"content\": \"/\", \"required\": false}]");
+                bgProd.setDetail("[{\"name\": \"功能主治\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"主要成分\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"用法用量\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"不良反应\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"id\": 50, \"name\": \"注意事项\", \"isShow\": true, \"content\": \"/\", \"required\": false}, {\"name\": \"禁忌\", \"isShow\": true, \"content\": \"/\", \"required\": false}]");
                 if (StringUtils.isEmpty(bgProd.getProdname())) {
                     bgProd.setProdname(bgProd.getPopname());
                 }

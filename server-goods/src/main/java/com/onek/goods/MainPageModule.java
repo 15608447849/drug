@@ -96,7 +96,8 @@ public class MainPageModule {
         try {
             if (bRuleCodes < 0 && bRuleCodes >= -10) {//非活动专区
                 if (isQuery) {
-                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), page, attr, keyword, brandno);
+                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), context.isSignControlAgree(),
+                            page, attr, keyword, brandno);
                     if (prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
@@ -209,7 +210,7 @@ public class MainPageModule {
         if (actCodeSB.toString().contains(",")) {
             actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
             //获取活动下的商品
-            getActGoods(attr, page, context.isAnonymous(), actCodeStr, otherArr, keyword);
+            getActGoods(attr, page, context.isAnonymous(), context.isSignControlAgree(),actCodeStr, otherArr, keyword);
         }
 //        if (isQuery) {
 //
@@ -275,7 +276,7 @@ public class MainPageModule {
     }
 
 
-    private static void getActGoods(Attr attr, Page page, boolean isAnonymous,
+    private static void getActGoods(Attr attr, Page page, boolean isAnonymous,boolean isSign,
                                     String actCodeStr, String[] otherArr, String keyword) {
         PageHolder pageHolder = new PageHolder(page);
         List<ProdVO> prodVOList = new ArrayList<>();
@@ -309,7 +310,7 @@ public class MainPageModule {
         //ES数据组装
         SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, keyword, 1, 100);
         if (response != null && response.getHits().totalHits > 0) {
-            assembleData(isAnonymous, response, prodVOList, dataMap, otherArr);
+            assembleData(isAnonymous, isSign, response, prodVOList, dataMap, otherArr);
             page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
         }
         if (prodVOList.size() > 0) {
@@ -319,7 +320,7 @@ public class MainPageModule {
         }
     }
 
-    private static void assembleData(boolean isAnonymous, SearchResponse response, List<ProdVO> prodList,
+    private static void assembleData(boolean isAnonymous, boolean isSign, SearchResponse response, List<ProdVO> prodList,
                                      Map<Long, String[]> dataMap, String[] otherArr) {
         if (response == null || response.getHits().totalHits <= 0) {
             return;
@@ -338,14 +339,21 @@ public class MainPageModule {
                     +"/"+ prodVO.getSku()+"-200x200.jpg");
             int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(ruleStatus);
-            if (!isAnonymous) { // 有权限
-                prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
-                prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
-                prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
-            } else {
+
+            if (isAnonymous) {//无权限价格不可见
                 prodVO.setVatp(-1);
                 prodVO.setMp(-1);
                 prodVO.setRrp(-1);
+            } else {
+                if (prodVO.getConsell() > 0 && !isSign) {//控销商品未签约价格不可见
+                    prodVO.setVatp(-2);
+                    prodVO.setMp(-2);
+                    prodVO.setRrp(-2);
+                } else {
+                    prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+                    prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+                    prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+                }
             }
             prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
             try {
@@ -389,7 +397,7 @@ public class MainPageModule {
                 prodVO.setSpec(detail.get("spec") != null ? detail.get("spec").toString() : "");
 
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
-
+                prodVO.setConsell(sourceMap.get("consell") != null ?  Integer.parseInt(detail.get("consell").toString()) : 0);
 
                 if (dataMap != null && otherArr != null) {
                     int ruleCode = Integer.parseInt(otherArr[0]);
@@ -440,7 +448,7 @@ public class MainPageModule {
      * @time  2019/6/29 14:41
      * @version 1.1.1
      **/
-    private static List<ProdVO> getFloorByState(long state, boolean isAnonymous, Page page,
+    private static List<ProdVO> getFloorByState(long state, boolean isAnonymous, boolean isSign, Page page,
                                                  Attr attr,String keyword, String brandno) {
 
         Set<Integer> result = new HashSet<>();
@@ -454,7 +462,7 @@ public class MainPageModule {
             result.add(256);
         } else if (state == -2) { // 为你精选
             List<Integer> bb1 = new ArrayList() {{
-                add(218);
+                add(128);
                 add(256);
                 add(1024);
             }};
@@ -462,33 +470,35 @@ public class MainPageModule {
             result.add(512);
         } else if (state == -3) { // 名方
             List<Integer> bb1 = new ArrayList() {{
-                add(218);
+                add(128);
                 add(256);
                 add(512);
             }};
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
-        } else {//品牌专区-4 //热销专区 -5
-            return getOtherMallFloor(page, isAnonymous, state, attr, keyword, brandno);
+        } else {//品牌专区-4 //热销专区 -5 //控销专区 -6
+            return getOtherMallFloor(page, isAnonymous, isSign, state, attr, keyword, brandno);
         }
-        Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, result, keyword, 1, page);
+        Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, isSign, result, keyword, 1, page);
         return (List<ProdVO>) resultMap.get("prodList");
     }
 
 
     //品牌-4 热销 -5
-    private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous,
+    private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous, boolean isSign,
                                                   long state, Attr attr, String keyword, String brandno) {
         SearchResponse response;
         if (state == -4) {//品牌
             attr.actObj = getBrandInfo();
             response = ProdESUtil.searchProdHasBrand(keyword, brandno, page.pageIndex, page.pageSize);
-        } else {
-            response = ProdESUtil.searchHotProd(keyword, page.pageIndex, page.pageSize);
+        } else if (state == -5) { //热销
+            response = ProdESUtil.searchHotProd(0, keyword, page.pageIndex, page.pageSize);
+        } else {//控销专区
+            response = ProdESUtil.searchHotProd(1, keyword, page.pageIndex, page.pageSize);
         }
         page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
         List<ProdVO> prodList = new ArrayList<>();
-        assembleData(isAnonymous, response, prodList, null, null);
+        assembleData(isAnonymous, isSign, response, prodList, null, null);
         return prodList;
     }
 
@@ -502,14 +512,15 @@ public class MainPageModule {
 
 
 
-    private static Map<String, Object> getFilterProdsCommon(boolean isAnonymous, Set<Integer> result, String keyword, int sort, Page page) {
+    private static Map<String, Object> getFilterProdsCommon(boolean isAnonymous, boolean isSign, Set<Integer> result,
+                                                            String keyword, int sort, Page page) {
         Map<String, Object> resultMap = new HashMap<>();
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, keyword, sort, page.pageIndex, page.pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
             SearchHits hits = response.getHits();
             if (hits.totalHits > 0) {
-                assembleData(isAnonymous, response, prodList, null, null);
+                assembleData(isAnonymous, isSign,response, prodList, null, null);
             }
             page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
         }

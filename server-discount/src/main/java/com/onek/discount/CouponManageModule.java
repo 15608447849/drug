@@ -1756,7 +1756,6 @@ public class CouponManageModule {
                 .get(String.valueOf(compid));
         if(!StringUtils.isEmpty(compStr)){
             JSONObject compJson = JSON.parseObject(compStr);
-            System.out.println("企业信息缓存："+compJson);
             return compJson.getLongValue("addressCode");
         }
         return 0;
@@ -1769,9 +1768,7 @@ public class CouponManageModule {
      * @return
      */
     private boolean compIsVerify(int compid) {
-        String compStr = RedisUtil.getStringProvide()
-                .get(String.valueOf(compid));
-        System.out.println("企业信息："+compStr);
+        String compStr = RedisUtil.getStringProvide().get(String.valueOf(compid));
         if(!StringUtils.isEmpty()){
             StoreBasicInfo storeBasicInfo
                     = GsonUtils.jsonToJavaBean(compStr, StoreBasicInfo.class);

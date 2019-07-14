@@ -9,6 +9,7 @@ import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.user.entity.*;
+import com.onek.user.operations.StoreBasicInfoOp;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.RedisGlobalKeys;
@@ -1165,7 +1166,7 @@ public class BackGroundProxyMoudule {
 
         String selectSQL = "select distinct cp.cid companyId,tu.uphone phone,tu.uid,cname company,caddrcode addressCode, "
                 + "caddr address,createdate,createtime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName," +
-                " stu.uphone cursorPhone,IFNULL(sstu.uid,bdu.uid) bdmid,IFNULL(sstu.urealname,bdu.urealname) bdmn from {{?"
+                " stu.uphone cursorPhone,IFNULL(sstu.uid,bdu.uid) bdmid,IFNULL(sstu.urealname,bdu.urealname) bdmn,control from {{?"
                 + DSMConst.TB_COMP + "}} cp  join {{?" + DSMConst.TB_SYSTEM_USER + "}} tu  on cp.cid = tu.cid "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} stu on stu.uid = cp.inviter "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} sstu on sstu.uid = stu.belong "
@@ -1265,7 +1266,7 @@ public class BackGroundProxyMoudule {
 
         baseDao.convToEntity(queryResult, proxyStoreVOS, ProxyStoreVO.class,
                 new String[]{"companyId","phone","uid","company","addressCode","address","createdate",
-                        "createtime","status","cursorId","cursorName","cursorPhone","bdmid","bdmn"});
+                        "createtime","status","cursorId","cursorName","cursorPhone","bdmid","bdmn","control"});
 
         for (ProxyStoreVO proxyStoreVO : proxyStoreVOS){
             AreaEntity[] ancestors = IceRemoteUtil.getAncestors(Long.parseLong(proxyStoreVO.getAddressCode()));
@@ -1566,9 +1567,10 @@ public class BackGroundProxyMoudule {
             if (checkStr != null) {
                 return result.fail(checkStr);
             }
-            if (!updCompType(storetype, compId,invoice,taxpayer)) {
+            if (!updCompType(storetype, compInfoVO.getControl(), compId,invoice,taxpayer)) {
                 return result.fail("修改失败！");
             }
+            StoreBasicInfoOp.updateCompInfoToCacheById(compId);
             boolean b = optAptInfo(compId,frontAptList,aTypeList);
             if (b) {//同步信息到ERP
                 compInfoVO.getInvoiceVO().setTaxpayer(taxpayer);
@@ -1592,7 +1594,7 @@ public class BackGroundProxyMoudule {
      * @time  2019/6/20 15:51
      * @version 1.1.1
      **/
-    private boolean updCompType(int storetype, int compId, InvoiceVO invoiceVO, String taxpayer) {
+    private boolean updCompType(int storetype, int control, int compId, InvoiceVO invoiceVO, String taxpayer) {
         List<Object[]> params = new ArrayList<>();
         String optInvSQL;
         if (getInvoice(compId) == null) {
@@ -1608,9 +1610,9 @@ public class BackGroundProxyMoudule {
                     invoiceVO.getTel(),invoiceVO.getEmail(), compId});
         }
         //修改门店类型
-        String updCompSQL = "update {{?" + DSMConst.TB_COMP + "}} set storetype=? "
+        String updCompSQL = "update {{?" + DSMConst.TB_COMP + "}} set storetype=?,control=? "
                 + " where cstatus&1=0 and cid=?";
-        params.add(new Object[]{storetype, compId});
+        params.add(new Object[]{storetype, control, compId});
         return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{optInvSQL, updCompSQL}, params));
     }
 
@@ -1620,9 +1622,7 @@ public class BackGroundProxyMoudule {
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         if (queryResult == null || queryResult.isEmpty()) return null;
         InvoiceVO[] invoiceVOS = new InvoiceVO[queryResult.size()];
-        baseDao.convToEntity(queryResult, invoiceVOS, InvoiceVO.class, new String[]{
-                "taxpayer","bankers","account", "tel","email"
-        });
+        baseDao.convToEntity(queryResult, invoiceVOS, InvoiceVO.class, "taxpayer","bankers","account", "tel","email");
         return invoiceVOS[0];
     }
 
@@ -1773,7 +1773,7 @@ public class BackGroundProxyMoudule {
     }
 
     public CompInfoVO getCompInfo(int compid){
-        String sSQL = "select c.cid,cname,caddrcode,caddr,inviter,storetype,u.uphone,c.cstatus from {{?"
+        String sSQL = "select c.cid,cname,caddrcode,caddr,inviter,storetype,u.uphone,c.cstatus,control from {{?"
                 + DSMConst.TB_COMP + "}} c left join {{?" + DSMConst.TB_SYSTEM_USER + "}} u "
                 + " on c.cid = u.cid where c.cstatus&1=0 and u.cstatus&1=0 and c.cid=" + compid;
         List<Object[]> queryResult = baseDao.queryNative(sSQL);

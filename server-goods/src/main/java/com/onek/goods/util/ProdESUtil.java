@@ -92,8 +92,10 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
             data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
+            data.put(ESConstant.PROD_COLUMN_CONSELL, prodVO.getConsell());
             data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
             data.put(ESConstant.PROD_COLUMN_TIME, TimeUtils.date_yMd_Hms_2String(new Date()));
+            data.put(ESConstant.PROD_COLUMN_UPDATETIME, TimeUtils.date_yMd_Hms_2String(new Date()));
             ElasticSearchProvider.deleteDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             IndexResponse response = ElasticSearchProvider.addDocument(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             if(response == null || RestStatus.CREATED != response.status()) {
@@ -163,8 +165,10 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_SALES, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_SALES));
             data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
+            data.put(ESConstant.PROD_COLUMN_CONSELL, prodVO.getConsell());
             data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
             data.put(ESConstant.PROD_COLUMN_TIME, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_TIME).toString());
+            data.put(ESConstant.PROD_COLUMN_UPDATETIME, TimeUtils.date_yMd_Hms_2String(new Date()));
             UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             if(response == null || RestStatus.OK != response.status()) {
                 return -1;
@@ -223,6 +227,7 @@ public class ProdESUtil {
                     Map<String, Object> sourceMap = searchHit.getSourceAsMap();
                     long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
                     sourceMap.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodstatus);
+                    sourceMap.put(ESConstant.PROD_COLUMN_UPDATETIME, TimeUtils.date_yMd_Hms_2String(new Date()));
                     bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
 
                 }
@@ -441,22 +446,28 @@ public class ProdESUtil {
     /**
      * 根据条件全文检索热销商品
      *
-     * @param keyword
+     * @param keyword type 0 热销  1 控销
      * @param pagenum
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchHotProd(String keyword,int pagenum, int pagesize){
+    public static SearchResponse searchHotProd(int type, String keyword,int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-            RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SALES);
-            rangeQuery.gt(0);
-            boolQuery.must(rangeQuery);
+            if (type == 0) {//热销
+                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SALES);
+                rangeQuery.gt(0);
+                boolQuery.must(rangeQuery);
+            } else {//控销
+                MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONSELL, "0");
+                boolQuery.mustNot(builder);
+            }
             if(!StringUtils.isEmpty(keyword)){
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
+
             MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
             boolQuery.must(builder);
 

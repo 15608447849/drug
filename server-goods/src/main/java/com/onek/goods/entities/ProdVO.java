@@ -56,6 +56,8 @@ public class ProdVO {
     /** 动态属性 */
     //当前商品购物车数量 - 针对不同企业数值不同
     public int cart;
+    private int consell;
+
 
 
     public long getSpu() {
@@ -384,5 +386,14 @@ public class ProdVO {
 
     public int getSurplusstock() {
         return surplusstock;
+    }
+
+
+    public int getConsell() {
+        return consell;
+    }
+
+    public void setConsell(int consell) {
+        this.consell = consell;
     }
 }
