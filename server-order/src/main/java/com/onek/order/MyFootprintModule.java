@@ -13,6 +13,7 @@ import util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.onek.order.MyCollectModule.setPrice;
 import static com.onek.util.GenIdUtil.getUnqId;
 import static constant.DSMConst.TD_FOOTPRINT;
 import static util.TimeUtils.getCurrentYear;
@@ -192,11 +193,7 @@ public class MyFootprintModule {
                      * 判断查看我的足迹时登陆账号是否已认证，认证显示价格，反之显示未认证
                      */
                     ProdEntity prod =  IceRemoteUtil.getProdBySku(Long.parseLong(it.sku));
-                    if(appContext.isAnonymous()){
-                        prod.setMp(-1);
-                        prod.setRrp(-1);
-                        prod.setVatp(-1);
-                    }
+                    setPrice(appContext, prod);
                     /*add end */
                     rit.list.add(prod);
                 } catch (Exception e) {

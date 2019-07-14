@@ -1235,14 +1235,20 @@ public class ProdModule {
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
             int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(ruleStatus);
-            if (!context.isAnonymous()) { // 有权限
-                prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
-                prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
-                prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
-            } else {
+            if (context.isAnonymous()) {//无权限价格不可见
                 prodVO.setVatp(-1);
                 prodVO.setMp(-1);
                 prodVO.setRrp(-1);
+            } else {
+                if (prodVO.getConsell() > 0 && !context.isSignControlAgree()) {//控销商品未签约价格不可见
+                    prodVO.setVatp(-2);
+                    prodVO.setMp(-2);
+                    prodVO.setRrp(-2);
+                } else {
+                    prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+                    prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+                    prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+                }
             }
             prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
             try {
