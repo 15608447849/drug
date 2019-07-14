@@ -118,12 +118,15 @@ public class AppContext extends IceContext {
         return false;
     }
 
-    //是否匿名访问
+    //是否匿名访问 ture-无效的匿名用户
     public boolean isAnonymous(){
         if (userSession == null || userSession.compId == 0 || userSession.comp == null) return true;
         return userSession.comp.authenticationStatus != 256;//认证成功
     }
-
+    //判断是否是签约用户 true-签约
+    public boolean isSignControlAgree(){
+        return !isAnonymous() && (userSession.comp.controlCode & 2) > 0;
+    }
 
 
 }
