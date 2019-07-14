@@ -56,6 +56,9 @@ public class ProdEntity {
     private int prodstatus;
     private int imagestatus;
     private int skuCstatus;
+    private int consell;
+
+    // ----- 自定义位置 ------- //
 
     private long classNo;
     private String className;
@@ -67,7 +70,6 @@ public class ProdEntity {
     private String insuranceName;
     private String unitName;
     private String erpcode;
-    private int consell;
 
     public String getErpcode() {
         return erpcode;
