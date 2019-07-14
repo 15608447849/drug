@@ -27,7 +27,7 @@ public class ProduceStore {
                     + " sku.prodsdate, sku.prodedate, sku.store, "
                     + " sku.limits, sku.sales, sku.wholenum, sku.medpacknum, sku.unit, "
                     + " sku.ondate, sku.ontime, sku.offdate, sku.offtime, sku.spec, sku.prodstatus, "
-                    + " sku.imagestatus, sku.cstatus "
+                    + " sku.imagestatus, sku.cstatus, sku.consell "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
