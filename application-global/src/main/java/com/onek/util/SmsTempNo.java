@@ -43,8 +43,12 @@ public class SmsTempNo {
 
     //发送推送消息的权限值
     public static final int PUSH_MESSAGE_POWER =  2;
+
     //发送短信消息的权限值
     public static final int POWER_SMS =  4;
+
+    //发送营销短信的权限值
+    public static final int POWER_SMS_MARKET = 8;
 
     //生成系统消息
     public static String genPushMessageBySystemTemp(int tempNo,String... params){
@@ -59,7 +63,13 @@ public class SmsTempNo {
     public static boolean isSmsAllow(int tempNo){
         return (IceRemoteUtil.getMessagePower(tempNo) & SmsTempNo.POWER_SMS) != 0;
     }
-    //判断短信是否可发送
+
+    //判断短信营销
+    public static boolean isSmsMarketAllow(int tempNo){
+        return (IceRemoteUtil.getMessagePower(tempNo) & SmsTempNo.POWER_SMS_MARKET) != 0;
+    }
+
+    //判断栈内消息是否可发送
     public static boolean isPmAllow(int tempNo){
         return (IceRemoteUtil.getMessagePower(tempNo) & SmsTempNo.PUSH_MESSAGE_POWER) != 0;
     }
