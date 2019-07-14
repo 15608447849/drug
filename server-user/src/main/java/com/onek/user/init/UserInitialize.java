@@ -9,7 +9,6 @@ public class UserInitialize implements IIceInitialize {
     public void startUp(String serverName) {
         //启动线程更新企业信息
         new Thread(()->{
-
             while (true){
                 try {
                     Thread.sleep(5 * 1000);
@@ -23,11 +22,6 @@ public class UserInitialize implements IIceInitialize {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-//                try {
-//                    Thread.sleep(15 * 60 * 1000);
-//                } catch (InterruptedException e) {
-//                    e.printStackTrace();
-//                }
             }
         }).start();
     }

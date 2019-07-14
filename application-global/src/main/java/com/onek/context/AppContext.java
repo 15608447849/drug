@@ -129,11 +129,9 @@ public class AppContext extends IceContext {
         return userSession!=null && (userSession.comp.authenticationStatus & 256 )> 0;
     }
 
-
     //判断是否是签约用户 true-签约
     public boolean isSignControlAgree(){
         return !isAnonymous() && (userSession.comp.controlCode & 2) > 0;
     }
-
 
 }
