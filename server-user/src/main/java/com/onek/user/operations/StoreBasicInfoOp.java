@@ -28,10 +28,11 @@ public class StoreBasicInfoOp {
     }
 
     //企业码更新企业信息到缓存
-    private static void updateCompInfoToCacheById(int cid){
+    public static StoreBasicInfo updateCompInfoToCacheById(int cid){
        StoreBasicInfo info = new StoreBasicInfo(cid);
        getStoreInfoById(info);
        infoToCache(info);
+       return info;
     }
 
     //企业信息 json保存到缓存 -> 企业码 = 企业信息json
@@ -42,7 +43,7 @@ public class StoreBasicInfoOp {
     }
 
     //获取企业信息
-    private static boolean getStoreInfoById(StoreBasicInfo info) {
+    public static boolean getStoreInfoById(StoreBasicInfo info) {
         //通过企业码获取企业信息
         String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,storetype,control " +
                 " FROM {{?"+ TB_COMP +"}}"+

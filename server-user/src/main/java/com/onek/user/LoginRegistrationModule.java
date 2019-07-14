@@ -10,8 +10,7 @@ import com.onek.user.operations.*;
 import dao.BaseDAO;
 import util.GsonUtils;
 
-import static com.onek.user.operations.StoreBasicInfoOp.getStoreInfoById;
-import static com.onek.user.operations.StoreBasicInfoOp.infoToCache;
+import static com.onek.user.operations.StoreBasicInfoOp.*;
 import static constant.DSMConst.TB_SYSTEM_USER;
 
 /**
@@ -195,10 +194,7 @@ public class LoginRegistrationModule {
     @UserPermission(ignore = true)
     public StoreBasicInfo getStoreInfo(AppContext appContext){
         int compid = Integer.parseInt(appContext.param.arrays[0]);
-        StoreBasicInfo info = new StoreBasicInfo(compid);
-        getStoreInfoById(info);
-        infoToCache(info); //保存信息到缓存
-        return info;
+        return updateCompInfoToCacheById(compid);
     }
 
     /**
