@@ -92,6 +92,7 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
             data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
+            data.put(ESConstant.PROD_COLUMN_CONSELL, prodVO.getConsell());
             data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
             data.put(ESConstant.PROD_COLUMN_TIME, TimeUtils.date_yMd_Hms_2String(new Date()));
             ElasticSearchProvider.deleteDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
@@ -163,6 +164,7 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_SALES, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_SALES));
             data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
             data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
+            data.put(ESConstant.PROD_COLUMN_CONSELL, prodVO.getConsell());
             data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
             data.put(ESConstant.PROD_COLUMN_TIME, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_TIME).toString());
             UpdateResponse response = ElasticSearchProvider.updateDocumentById(data, ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
