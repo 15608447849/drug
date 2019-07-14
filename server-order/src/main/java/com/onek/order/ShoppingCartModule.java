@@ -81,7 +81,7 @@ public class ShoppingCartModule {
             " SELECT ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
                     "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
                     "sku.store-sku.freezestore inventory,ifnull(sku.spec,'') spec, sku.prodstatus,spu.spu,sku.limits,ifnull(brandname,'') brand,medpacknum,unit," +
-                    "convert(mp/100,decimal(10,2)) mp, IFNULL(spu.busscope, 0) "
+                    "convert(mp/100,decimal(10,2)) mp, IFNULL(spu.busscope, 0), IFNULL(sku.consell, 0) "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU   + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU  + "}} m   ON m.cstatus&1 = 0 AND m.manuno  = spu.manuno "
@@ -95,7 +95,7 @@ public class ShoppingCartModule {
 
     private static final String QUERY_ONE_PROD_INV_BUSSCOPE =
             "SELECT store-freezestore inventory, limits, "
-            + " convert(vatp/100,decimal(10,2)) pdprice, IFNULL(spu.busscope, 0) "
+            + " convert(vatp/100,decimal(10,2)) pdprice, IFNULL(spu.busscope, 0), IFNULL(sku.consell, 0) "
             + " from {{?" + DSMConst.TD_PROD_SKU + "}} sku, {{?" + DSMConst.TD_PROD_SPU + "}} spu "
             + " where spu.cstatus & 1 = 0 AND sku.spu = spu.spu "
             + " AND sku.sku =? and sku.cstatus & 1 = 0 ";
@@ -136,6 +136,14 @@ public class ShoppingCartModule {
         List<Object[]> queryInvRet = IceRemoteUtil.queryNative(QUERY_ONE_PROD_INV_BUSSCOPE, shopVO.getPdno());
         if(queryInvRet == null || queryInvRet.isEmpty()){
             return result.fail("查询商品失败");
+        }
+
+        if (!appContext.isSignControlAgree()) {
+            int consell = Integer.parseInt(queryInvRet.get(0)[4].toString());
+
+            if ((consell&1) > 0) {
+                return result.fail("此为控销商品，您无权加入购物车！");
+            }
         }
 
         int prodScope = Integer.parseInt(queryInvRet.get(0)[3].toString());
@@ -682,7 +690,7 @@ public class ShoppingCartModule {
         ShoppingCartVO[] returnResults = new ShoppingCartVO[queryResult.size()];
         baseDao.convToEntity(queryResult, returnResults, ShoppingCartVO.class,
                 new String[]{"ptitle","verdor","pdno","pdprice","vperiod","inventory",
-                        "spec","pstatus","spu","limitnum","brand","medpacknum","unit","mp", "busscope"});
+                        "spec","pstatus","spu","limitnum","brand","medpacknum","unit","mp", "busscope", "consell"});
         return new ArrayList<>(Arrays.asList(returnResults));
     }
 
@@ -1019,6 +1027,14 @@ public class ShoppingCartModule {
        // baseDao.updateBatchNativeSharding(shoppingCartDTOS.get(0).getCompid(),TimeUtils.getCurrentYear(),UPDATE_SHOPCART_SQL_NUM, updateParm, updateParm.size());
         List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
         //TODO 获取活动匹配
+
+        if (!appContext.isSignControlAgree()) {
+            for (ShoppingCartVO shoppingCartVO : shopCart) {
+                if ((shoppingCartVO.getConsell()&1) > 0) {
+                    return new Result().fail("存在控销商品，您无权购买！");
+                }
+            }
+        }
 
         convResult(shopCart,compid);
 
