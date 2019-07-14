@@ -199,9 +199,9 @@ public class MathUtil {
         return result;
     }
 
-    public long getMax(long... nums) {
+    public static long getMax(long... nums) {
         if (ArrayUtil.isEmpty(nums)) {
-            throw new IllegalArgumentException("ur compared parms is empty!");
+            throw new IllegalArgumentException("ur compared params is empty!");
         }
 
         if (nums.length == 1) {
@@ -215,9 +215,9 @@ public class MathUtil {
         return Arrays.stream(nums).max().getAsLong();
     }
 
-    public double getMax(double... nums) {
+    public static double getMax(double... nums) {
         if (ArrayUtil.isEmpty(nums)) {
-            throw new IllegalArgumentException("ur compared parms is empty!");
+            throw new IllegalArgumentException("ur compared params is empty!");
         }
 
         if (nums.length == 1) {
@@ -231,9 +231,9 @@ public class MathUtil {
         return Arrays.stream(nums).max().getAsDouble();
     }
 
-    public long getMin(long... nums) {
+    public static long getMin(long... nums) {
         if (ArrayUtil.isEmpty(nums)) {
-            throw new IllegalArgumentException("ur compared parms is empty!");
+            throw new IllegalArgumentException("ur compared params is empty!");
         }
 
         if (nums.length == 1) {
@@ -247,9 +247,9 @@ public class MathUtil {
         return Arrays.stream(nums).min().getAsLong();
     }
 
-    public double getMin(double... nums) {
+    public static double getMin(double... nums) {
         if (ArrayUtil.isEmpty(nums)) {
-            throw new IllegalArgumentException("ur compared parms is empty!");
+            throw new IllegalArgumentException("ur compared params is empty!");
         }
 
         if (nums.length == 1) {
