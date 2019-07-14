@@ -1190,7 +1190,7 @@ public class ProdModule {
 
     private static Map<String, Object> getFilterHotProds(AppContext appContext, String keyword, int pageNum, int pageSize) {
         Map<String, Object> resultMap = new HashMap<>();
-        SearchResponse response = ProdESUtil.searchHotProd(keyword, pageNum, pageSize);
+        SearchResponse response = ProdESUtil.searchHotProd(0, keyword, pageNum, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
             SearchHits hits = response.getHits();
@@ -1402,7 +1402,7 @@ public class ProdModule {
 
     /**
      * 组装搜索的数据
-     *
+     *fullTextsearchProdMall
      * @param prodList
      * @param searchHit
      */
@@ -1421,14 +1421,20 @@ public class ProdModule {
 
         prodVO.setRulestatus(ruleStatus);
 
-        if (!context.isAnonymous()) { // 有权限
-            prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
-            prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
-            prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
-        } else {
+        if (context.isAnonymous()) {//无权限价格不可见
             prodVO.setVatp(-1);
             prodVO.setMp(-1);
             prodVO.setRrp(-1);
+        } else {
+            if (prodVO.getConsell() > 0 && !context.isSignControlAgree()) {//控销商品未签约价格不可见
+                prodVO.setVatp(-2);
+                prodVO.setMp(-2);
+                prodVO.setRrp(-2);
+            } else {
+                prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+                prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+                prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+            }
         }
 
         // 表示存在活动
