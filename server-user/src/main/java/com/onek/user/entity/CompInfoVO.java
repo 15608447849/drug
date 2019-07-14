@@ -17,6 +17,7 @@ public class CompInfoVO {
     private int storetype;
     private long uphone;
     private int cstatus;
+    private int control;//控销
     private String taxpayer;
     private String bankers;
     private String account;
@@ -180,5 +181,13 @@ public class CompInfoVO {
 
     public void setContactphone(String contactphone) {
         this.contactphone = contactphone;
+    }
+
+    public int getControl() {
+        return control;
+    }
+
+    public void setControl(int control) {
+        this.control = control;
     }
 }
