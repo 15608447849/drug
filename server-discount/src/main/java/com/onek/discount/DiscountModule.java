@@ -4,9 +4,9 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
-import com.onek.entitys.Result;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.RoleCodeCons;
+import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
@@ -140,7 +140,7 @@ public class DiscountModule {
                         ProdEntity prodEntity = ProdInfoStore.getProdBySku(sku);
                         if(prodEntity != null){
                             for(String key : userMap.keySet()){
-                                SmsUtil.sendMsg(key, "【一块医药】尊敬的用户"+userMap.get(key)+":商品:["+prodEntity.getProdname()+"]的活动库存系统已经自动调整,请关注!");
+                                SmsUtil.sendSmsBySystemTemp(key, SmsTempNo.ACTIVE_INVENTORY,userMap.get(key),prodEntity.getProdname());
                             }
                         }
                     }
