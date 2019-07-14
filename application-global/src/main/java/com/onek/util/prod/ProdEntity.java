@@ -67,6 +67,7 @@ public class ProdEntity {
     private String insuranceName;
     private String unitName;
     private String erpcode;
+    private int consell;
 
     public String getErpcode() {
         return erpcode;
@@ -418,5 +419,13 @@ public class ProdEntity {
 
     public void setUnitName(String unitName) {
         this.unitName = unitName;
+    }
+
+    public int getConsell() {
+        return consell;
+    }
+
+    public void setConsell(int consell) {
+        this.consell = consell;
     }
 }
