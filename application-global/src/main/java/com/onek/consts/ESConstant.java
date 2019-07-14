@@ -20,8 +20,10 @@ public interface ESConstant {
     String PROD_COLUMN_SALES = "sales";
     String PROD_COLUMN_RULESTATUS = "rulestatus";
     String PROD_COLUMN_STORESTATUS = "storestatus";
+    String PROD_COLUMN_CONSELL = "consell";
     String PROD_COLUMN_DETAIL = "detail";
     String PROD_COLUMN_TIME = "time";
+    String PROD_COLUMN_UPDATETIME = "updatetime";
     // 产品 ###########
 
     // 收藏 ###########

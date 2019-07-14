@@ -83,13 +83,13 @@ public class BackgroundProdModule {
                     + " prodsdate, prodedate, store, "
                     + " limits, wholenum, medpacknum, unit,"
                     + " ondate, ontime, spec, cstatus, expmonth, "
-                    + " wp, erpsku,creatdate,creattime) "
+                    + " wp, erpsku, consell, creatdate,creattime) "
                     + " VALUES (?, ?, ?, ?, ?, "
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'),"
                     + " STR_TO_DATE(?, '%Y-%m-%d'), STR_TO_DATE(?, '%Y-%m-%d'), ?, "
                     + " ?, ?, ?, ?, "
                     + " CURRENT_DATE, CURRENT_TIME, ?, ?, ?,"
-                    + " ?, ?,CURRENT_DATE, CURRENT_TIME) ";
+                    + " ?, ?, ?, CURRENT_DATE, CURRENT_TIME) ";
 
     private static final String QUERY_SPU_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -109,7 +109,7 @@ public class BackgroundProdModule {
                     + " sku.prodsdate, sku.prodedate, sku.store, "
                     + " sku.limits, sku.sales, sku.wholenum, sku.medpacknum, sku.unit, "
                     + " sku.ondate, sku.ontime, sku.offdate, sku.offtime, sku.spec, sku.prodstatus, "
-                    + " sku.imagestatus, sku.cstatus, sku.expmonth, sku.wp "
+                    + " sku.imagestatus, sku.cstatus, sku.expmonth, sku.wp, sku.consell "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "
                     + " INNER JOIN {{?" + DSMConst.TD_PROD_SKU + "}} sku ON spu.spu = sku.spu ) "
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_MANU
@@ -130,7 +130,7 @@ public class BackgroundProdModule {
                     + " sku.prodsdate = STR_TO_DATE(?, '%Y-%m-%d'), "
                     + " sku.prodedate = STR_TO_DATE(?, '%Y-%m-%d'), "
                     + " sku.store = ?, sku.limits = ?, sku.wholenum = ?, "
-                    + " sku.medpacknum = ?, sku.cstatus = ?,"
+                    + " sku.medpacknum = ?, sku.cstatus = ?, sku.consell = ?, "
                     + " spu.rx = ?, spu.insurance = ?, spu.gspgms = ?, "
                     + " spu.brandno = ?, spu.detail = ?, spu.gspsc = ?, "
                     + " sku.expmonth = ?, spu.busscope = ? "
@@ -299,7 +299,7 @@ public class BackgroundProdModule {
                 bgProdVO.getVaildsdate(), bgProdVO.getVaildedate(),
                 bgProdVO.getProdsdate(), bgProdVO.getProdedate(),
                 bgProdVO.getStore(), bgProdVO.getLimits(),
-                bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getSkuCstatus(),
+                bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getSkuCstatus(), bgProdVO.getConsell(),
                 bgProdVO.getRx(), bgProdVO.getInsurance(), bgProdVO.getGspGMS(),
                 bgProdVO.getBrandNo(), bgProdVO.getDetail(), bgProdVO.getGspSC(),
                 bgProdVO.getExpmonth(), bgProdVO.getBusscope(),
@@ -658,7 +658,7 @@ public class BackgroundProdModule {
                     bgProdVO.getStore(), bgProdVO.getLimits(),
                     bgProdVO.getWholenum(), bgProdVO.getMedpacknum(), bgProdVO.getUnit(),
                     bgProdVO.getSpec(), bgProdVO.getSkuCstatus(), bgProdVO.getExpmonth(),
-                    bgProdVO.getWp(), bgProdVO.getErpcode(),
+                    bgProdVO.getWp(), bgProdVO.getErpcode(), bgProdVO.getConsell()
             });
 
             int esResult = ProdESUtil.addProdDocument(bgProdVO);
