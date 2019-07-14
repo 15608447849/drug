@@ -1284,7 +1284,7 @@ public class ProdModule {
                 prodVO.setSpec(detail.get("spec") != null ? detail.get("spec").toString() : "");
 
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
-
+                prodVO.setConsell(sourceMap.get("consell") != null ?  Integer.parseInt(detail.get("consell").toString()) : 0);
             }
         } catch (Exception e) {
             // e.printStackTrace();
@@ -1406,7 +1406,7 @@ public class ProdModule {
      * @param prodList
      * @param searchHit
      */
-    private static void convertSearchData(AppContext context, List<ProdVO> prodList, SearchHit searchHit) {
+    private static void    convertSearchData(AppContext context, List<ProdVO> prodList, SearchHit searchHit) {
         Map<String, Object> sourceMap = searchHit.getSourceAsMap();
         ProdVO prodVO = new ProdVO();
         HashMap detail = (HashMap) sourceMap.get("detail");

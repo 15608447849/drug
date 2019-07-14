@@ -26,6 +26,7 @@ public class ProxyStoreVO {
     private String region; //区域
     private int bdmid; //bdm id
     private String bdmn; //bdm 名称
+    private int control;//控销协议
 
     public int getBdmid() {
         return bdmid;
@@ -161,5 +162,13 @@ public class ProxyStoreVO {
 
     public void setCursorPhone(String cursorPhone) {
         this.cursorPhone = cursorPhone;
+    }
+
+    public int getControl() {
+        return control;
+    }
+
+    public void setControl(int control) {
+        this.control = control;
     }
 }
