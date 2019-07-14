@@ -29,15 +29,19 @@ public class HigherProfitsTask extends TimerTask {
     private static final String SELECT_OLD_HIGHPROFIT_SQL = "select sku from {{?"+ DSMConst.TD_PROD_SKU+"}} sku " +
             "where cstatus&512 > 0";
 
+
     private static final String SELECT_HIGHPROFIT_SQL = "select sku,rate from ( " +
-            "select sku,(sku.mp-sku.vatp)/sku.vatp as rate from {{?"+ DSMConst.TD_PROD_SKU+"}} sku " +
-            ") t where t.rate > 0 order by t.rate desc limit 30";
+            "select sku,(sku.mp-sku.vatp)/sku.mp as rate from {{?"+ DSMConst.TD_PROD_SKU+"}} sku " +
+            ") t where t.rate >= ? order by t.rate desc ";
 
     private static final String UPDATE_CLEAR_HIGHPROFIT_SQL = "update {{?"+ DSMConst.TD_PROD_SKU+"}} set cstatus = cstatus&~512 where cstatus&512 > 0";
     private static final String UPDATE_ADD_HIGHPROFIT_SQL = "update {{?"+ DSMConst.TD_PROD_SKU+"}} set cstatus = cstatus|512 where 1=1";
+    private static final String SELECT_CONFIG_VALUE = "select `value`/100 from {{?" + DSMConst.TB_SYSTEM_CONFIG + "}} where "
+            + " cstatus&1=0 and varname=?";
 
     @Override
     public void run() {
+        double value = 0.3D;
         List<Object[]> results = BaseDAO.getBaseDAO().queryNative(SELECT_OLD_HIGHPROFIT_SQL);
         if(results != null && results.size() > 0) {
             List<Long> skuList = new ArrayList<>();
@@ -48,11 +52,14 @@ public class HigherProfitsTask extends TimerTask {
 
             if(skuList.size() > 0){
                 int result = batchDelHighProfitNewFlag(skuList);
-                if(result > 0) BaseDAO.getBaseDAO().updateNative(UPDATE_CLEAR_HIGHPROFIT_SQL,new Object[]{});
+                if(result > 0) BaseDAO.getBaseDAO().updateNative(UPDATE_CLEAR_HIGHPROFIT_SQL);
             }
         }
-
-        results = BaseDAO.getBaseDAO().queryNative(SELECT_HIGHPROFIT_SQL);
+        List<Object[]> values = BaseDAO.getBaseDAO().queryNative(SELECT_CONFIG_VALUE, "HIGH_PROFIT");
+        if (values != null && values.size() > 0) {
+            value = Double.parseDouble(String.valueOf(values.get(0)[0]));
+        }
+        results = BaseDAO.getBaseDAO().queryNative(SELECT_HIGHPROFIT_SQL, value);
         if(results != null && results.size() > 0) {
             List<Long> skuList = new ArrayList<>();
             for (Object[] result : results) {
@@ -76,7 +83,7 @@ public class HigherProfitsTask extends TimerTask {
 
                     sql.append(") ");
 
-                    BaseDAO.getBaseDAO().updateNative(sql.toString(), new Object[]{});
+                    BaseDAO.getBaseDAO().updateNative(sql.toString());
                 }
             }
         }

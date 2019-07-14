@@ -446,22 +446,28 @@ public class ProdESUtil {
     /**
      * 根据条件全文检索热销商品
      *
-     * @param keyword
+     * @param keyword type 0 热销  1 控销
      * @param pagenum
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchHotProd(String keyword,int pagenum, int pagesize){
+    public static SearchResponse searchHotProd(int type, String keyword,int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-            RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SALES);
-            rangeQuery.gt(0);
-            boolQuery.must(rangeQuery);
+            if (type == 0) {//热销
+                RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SALES);
+                rangeQuery.gt(0);
+                boolQuery.must(rangeQuery);
+            } else {//控销
+                MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONSELL, "0");
+                boolQuery.mustNot(builder);
+            }
             if(!StringUtils.isEmpty(keyword)){
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
             }
+
             MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
             boolQuery.must(builder);
 

@@ -355,6 +355,14 @@ public class BackgroundProdModule {
                 returnResult.setMp(-1);
                 returnResult.setVatp(-1);
             }
+        } else if (!appContext.isSignControlAgree()) {
+            for (BgProdVO returnResult : returnResults) {
+                if ((returnResult.getConsell() & 1) > 0) {
+                    returnResult.setRrp(-2);
+                    returnResult.setMp(-2);
+                    returnResult.setVatp(-2);
+                }
+            }
         }
 
         return new Result().success(returnResults);
