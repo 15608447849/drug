@@ -2,6 +2,7 @@ package com.onek.goods.init;
 
 import com.onek.goods.timer.HigherProfitsTimer;
 import com.onek.goods.timer.RemoveNewFlagTimer;
+import com.onek.goods.util.RecreateProdDataUtil;
 import com.onek.server.infimp.IIceInitialize;
 import elasticsearch.ElasticSearchClientFactory;
 
@@ -13,6 +14,7 @@ public class GoodsInitialize implements IIceInitialize {
             Thread.sleep(2000);
             new RemoveNewFlagTimer();
             new HigherProfitsTimer();
+            RecreateProdDataUtil.execute();
         }catch (Exception e){
             e.printStackTrace();
         }

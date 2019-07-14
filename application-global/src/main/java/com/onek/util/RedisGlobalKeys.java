@@ -86,6 +86,9 @@ public class RedisGlobalKeys {
     // 收货人id
     public static final String SHIP_ID = "SHIP_ID";
 
+    // 重建es开关
+    public static final String RECREATE_ES_SWITCH = "RECREATE_ES_SWITCH";
+
     /**
      * 获取用户ID
      */
