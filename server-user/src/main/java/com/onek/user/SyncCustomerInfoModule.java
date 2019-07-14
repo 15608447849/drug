@@ -1,9 +1,7 @@
 package com.onek.user;
 
-import com.alibaba.fastjson.JSONArray;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
-import com.onek.consts.IntegralConstant;
 import com.onek.context.AppContext;
 import com.onek.entity.SyncErrVO;
 import com.onek.entitys.Result;
@@ -11,18 +9,14 @@ import com.onek.prop.AppProperties;
 import com.onek.user.entity.AptitudeVO;
 import com.onek.user.entity.CompInfoVO;
 import com.onek.user.entity.ConsigneeVO;
-import com.onek.user.entity.MemberVO;
 import com.onek.user.operations.UpdateAuditOp;
-import com.onek.user.service.MemberImpl;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
-import com.onek.util.member.MemberEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
-import redis.IRedisPartCache;
-import redis.proxy.CacheProxyInstance;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.ModelUtil;
@@ -441,7 +435,6 @@ public class SyncCustomerInfoModule {
             sendMsg2AdminPhone("订单数据同步到ERP失败，请相关人员及时处理");
             e.printStackTrace();
         }
-
     }
 
     private void batchAddOrUpdateCus(String compIdStr, List<Long> syncids) {
@@ -475,7 +468,7 @@ public class SyncCustomerInfoModule {
                 + " and roleid&1>0 ";
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         for (Object[] qResult : queryResult) {
-            SmsUtil.sendMsg(String.valueOf(qResult[0]), msg);
+            SmsUtil.sendSmsBySystemTemp(String.valueOf(qResult[0]), SmsTempNo.ERP_WARN,msg);
         }
     }
 

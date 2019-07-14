@@ -17,36 +17,34 @@ import static util.StringUtils.checkObjectNull;
  * 企业信息
  */
 public class StoreBasicInfoOp {
-    //更新企业信息到缓存
+    //系统启动时,更新企业信息到缓存
     public static void updateCompInfoToCache() {
-        final String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,cid FROM {{?"+ TB_COMP +"}} WHERE ctype=0";
+        final String selectSql = "SELECT cid FROM {{?"+ TB_COMP +"}} WHERE ctype=0";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
         if (lines == null) return;
         for (Object[] rows : lines){
-            StoreBasicInfo info = new StoreBasicInfo(checkObjectNull(rows[7],0));
-            objArrToStoreInfo(rows,info);
-            infoToCache(info);
+            updateCompInfoToCacheById(checkObjectNull(rows[0],0));
         }
     }
 
     //企业码更新企业信息到缓存
-    public static void updateCompInfoToCacheById(int cid){
+    private static void updateCompInfoToCacheById(int cid){
        StoreBasicInfo info = new StoreBasicInfo(cid);
        getStoreInfoById(info);
        infoToCache(info);
     }
 
-    //企业信息json保存到缓存 -> 企业码 = 企业信息json
-    public static void infoToCache(StoreBasicInfo info) {
+    //企业信息 json保存到缓存 -> 企业码 = 企业信息json
+    private static void infoToCache(StoreBasicInfo info) {
         if (info.storeId>0){
             RedisUtil.getStringProvide().set(""+info.storeId, GsonUtils.javaBeanToJson(info) );
         }
     }
 
     //获取企业信息
-    public static boolean getStoreInfoById(StoreBasicInfo info) {
+    private static boolean getStoreInfoById(StoreBasicInfo info) {
         //通过企业码获取企业信息
-        String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,storetype " +
+        String selectSql = "SELECT cstatus,examine,cname,caddr,caddrcode,lat,lng,storetype,control " +
                 " FROM {{?"+ TB_COMP +"}}"+
                 " WHERE ctype=0 AND cid=?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql, info.storeId);
@@ -81,6 +79,7 @@ public class StoreBasicInfoOp {
         info.latitude = new BigDecimal(checkObjectNull(rows[5],"0.00")); //纬度
         info.longitude = new BigDecimal(checkObjectNull(rows[6],"0.00")); //精度
         info.storetype = checkObjectNull(rows[7],0);
+        info.controlCode = checkObjectNull(rows[8],0);
 
     }
 

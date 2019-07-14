@@ -45,7 +45,8 @@ public class SmsUtil  extends ApplicationPropertiesBase {
 
 
     private static Base64.Encoder encoder = Base64.getEncoder();
-    public static String sendMsg(String phone, String content,boolean isMarket) {
+
+    private static String sendMsg(String phone, String content,boolean isMarket) {
         try {
             if (StringUtils.isEmpty(phone,content)) return null;
             String username = INSTANCE.username;

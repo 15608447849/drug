@@ -123,10 +123,15 @@ public class AppContext extends IceContext {
         if (userSession == null || userSession.compId == 0 || userSession.comp == null) return true;
         return userSession.comp.authenticationStatus != 256;//认证成功
     }
+
+    //判断是否认证
+    public boolean isVerify(){
+        return userSession!=null && (userSession.comp.authenticationStatus & 256 )> 0;
+    }
+
     //判断是否是签约用户 true-签约
     public boolean isSignControlAgree(){
         return !isAnonymous() && (userSession.comp.controlCode & 2) > 0;
     }
-
 
 }
