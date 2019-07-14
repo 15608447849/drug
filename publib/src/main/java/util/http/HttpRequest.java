@@ -38,7 +38,6 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
 //    }
 
     public HttpRequest accessUrl(String url){
-        System.out.println(url);
         new HttpUtil.Request(url,this)
                 .setReadTimeout(1000)
                 .setConnectTimeout(1000)

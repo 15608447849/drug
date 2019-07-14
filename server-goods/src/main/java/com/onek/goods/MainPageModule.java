@@ -614,7 +614,6 @@ public class MainPageModule {
      * identity + 分页信息 -根据指定活动码/分页信息 查询商品/活动属性}
      * @返回列表 MainPage/UiElement 对象
      */
-    @IceDebug
     @UserPermission(ignore = true)
     public Result pageInfo(AppContext context) {
         String json = context.param.json;

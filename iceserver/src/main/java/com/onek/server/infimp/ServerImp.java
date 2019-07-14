@@ -162,7 +162,7 @@ public class ServerImp extends IMServerImps {
     @Override
     public String accessService(IRequest request, Current __current) {
         Object result;
-        boolean inPrint = true;
+        boolean inPrint = false;
         boolean timePrint = false;
         boolean outPrint = false;
         String callInfo = null;
@@ -175,6 +175,7 @@ public class ServerImp extends IMServerImps {
                 timePrint = context.debug.timePrint();
             }
             callInfo = printParam(request,__current);
+
             if (inPrint) logger.print(callInfo);
             context.initialization(); //初始化context
             result = interceptor(context);//拦截器
