@@ -2,11 +2,15 @@ package com.onek.util;
 
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
+import com.hsf.framework.api.driver.DriverServicePrx;
+import com.hsf.framework.api.myOrder.MyOrderServerPrx;
 import com.onek.consts.ESConstant;
 import com.onek.consts.IntegralConstant;
 import com.onek.consts.MessageEvent;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranTransVO;
+import com.onek.order.OrderOptModule;
+import com.onek.property.LccProperties;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.member.MemberStore;
 import constant.DSMConst;
@@ -25,6 +29,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class OrderUtil {
 
@@ -202,7 +208,12 @@ public class OrderUtil {
 
 
         public void run(){
-
+            //生成节点信息一
+            try {
+                OrderOptModule.generateNode(orderno + "", compid, OrderOptModule.generateNodeObj(1));
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
             System.out.println("## 541 line "+compid+ ";"+orderno+" ####");
             List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
             if(list != null && list.size() > 0) {
@@ -318,5 +329,22 @@ public class OrderUtil {
             }
 
         }
+    }
+
+    public static void changeYKWLOrderState(String orderNo, int state, int compid) {
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            if (state == 3) {//发货
+                OrderOptModule.generateNode(orderNo , compid, OrderOptModule.generateNodeObj(2));
+                OrderOptModule.generateNode(orderNo , compid, OrderOptModule.generateNodeObj(3));
+            } else {//收货
+                OrderOptModule.generateNode(orderNo , compid, OrderOptModule.generateNodeObj(4));
+            }
+            int pubCompId = LccProperties.INSTANCE.pubercompid;
+            MyOrderServerPrx myOrderServer =(MyOrderServerPrx) RpcClientUtil.getServicePrx(MyOrderServerPrx.class);
+            String billno = myOrderServer.getOrderNoByCompId(orderNo, pubCompId);
+            DriverServicePrx driverServicePrx = (DriverServicePrx)RpcClientUtil.getServicePrx(DriverServicePrx.class);
+            driverServicePrx.updateOrderStateYKYY(288, pubCompId, Long.parseLong(billno), state);
+        });
     }
 }

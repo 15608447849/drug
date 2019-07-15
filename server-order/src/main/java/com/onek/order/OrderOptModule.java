@@ -22,11 +22,13 @@ import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
+import org.joda.time.LocalDate;
 import redis.util.RedisUtil;
 import util.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -1106,5 +1108,73 @@ public class OrderOptModule {
                 new String[] { UPD_ORDER_CK_SQL, UPD_ORDER_GOODS_CK_SQL }, params));
 
         return b ? result.success("操作成功") : result.fail("操作失败");
+    }
+
+
+    /* *
+     * @description 物流节点信息生成
+     * @params [orderNo, compId, jsonNode]
+     * @return void
+     * @exception
+     * @author 11842
+     * @time  2019/7/15 11:31
+     * @version 1.1.1
+     **/
+    public static void generateNode(String orderNo, int compId, JSONObject jsonObject) {
+        String optSQL, node;
+        Object[] params;
+        String selectSQL = "select unqid,node from {{?" +DSMConst.TD_TRAN_AFTERSALES +"}} "
+                + " where cstatus&1=0 and orderno=? and afsatype=3 and afsano=0 ";
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compId, TimeUtils.getYearByOrderno(orderNo),selectSQL, orderNo);
+        if (queryResult == null || queryResult.isEmpty()) {//新增
+            node = combatNodeInfo(jsonObject, null);
+            optSQL = "insert into {{?" + DSMConst.TD_TRAN_AFTERSALES + "}} "
+                    + "(unqid,compid,orderno,afsano,logisno,afsatype,lstatus,logistype,node)"
+                    + " values(?,?,?,?,?,?,?,?,?)";
+            params = new Object[]{GenIdUtil.getUnqId(), compId, orderNo,0,0,3,0, 1,node};
+        } else {//修改
+            node = String.valueOf(queryResult.get(0)[1]);
+            long unqid = Long.parseLong(String.valueOf(queryResult.get(0)[0]));
+            node = combatNodeInfo(jsonObject, node);
+            optSQL = "update {{?" + DSMConst.TD_TRAN_AFTERSALES + "}} set node=? "
+                    + " where cstatus&1=0 and unqid=?";
+            params = new Object[]{node, unqid};
+        }
+        baseDao.updateNativeSharding(compId,TimeUtils.getYearByOrderno(orderNo), optSQL, params);
+    }
+
+    private static String combatNodeInfo(JSONObject jsonObject, String node) {
+        JSONArray nodeArr = new JSONArray();
+        if (node != null) {
+            nodeArr = JSON.parseArray(node);
+        }
+        nodeArr.add(jsonObject);
+        return nodeArr.toString();
+    }
+
+
+    public static JSONObject generateNodeObj(int type) {
+        JSONObject jsonObject = new JSONObject();
+        switch (type) {
+            case 1://准备出库
+                jsonObject.put("des", "您的订单已提交，进入仓库准备出库");
+                jsonObject.put("status",  "已下单");
+                break;
+            case 2://出库
+                jsonObject.put("des", "您的订单在仓库发货完成，准备运输");
+                jsonObject.put("date",  "已发货");
+                break;
+            case 3://在途
+                jsonObject.put("des", "您的订单正在运输中，请耐心等待收货");;
+                jsonObject.put("date",  "运输中");
+                break;
+            default://签收
+                jsonObject.put("des", "您的订单已签收，感谢您本次采购，欢迎再次购买");
+                jsonObject.put("date",  "已签收");
+                break;
+        }
+        jsonObject.put("date",  LocalDate.now().toString());
+        jsonObject.put("time", LocalTime.now().toString());
+        return jsonObject;
     }
 }

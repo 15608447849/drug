@@ -580,6 +580,16 @@ module myOrder{
         * 根据订单号查询最后承运商名称（一块医药专用）
         */
         string getCarrierName(long orderno, int pubcompid);
+        
+        /**
+        * 根据运单号删除订单（一块医药专用）
+        */
+        string deleteOrderFromDrug(string billno, int pubcompid);
+
+        /**
+        * 根据运单号查询一块物流订单号（一块医药专用）
+        */
+        string getOrderNoByCompId(string billno, int pubcompid);
     };
 
 };
