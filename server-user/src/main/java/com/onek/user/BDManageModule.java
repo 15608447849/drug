@@ -9,21 +9,17 @@ import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.user.entity.ProxyAreaTreeVO;
 import com.onek.user.entity.ProxyPartnerVO;
 import com.onek.user.entity.UserInfoVo;
 import com.onek.user.service.USProperties;
-import com.onek.util.GenIdUtil;
-import com.onek.util.RoleCodeCons;
-import com.onek.util.SmsTempNo;
-import com.onek.util.SmsUtil;
+import com.onek.util.*;
+import com.onek.util.area.AreaEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
-import util.EncryptUtils;
-import util.GsonUtils;
-import util.ModelUtil;
-import util.StringUtils;
+import util.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -609,6 +605,7 @@ public class BDManageModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int uid = jsonObject.get("uid").getAsInt();
+        int type = jsonObject.get("type").getAsInt();
         //删除之前的
         String updSQL = "update {{?" + DSMConst.TB_PROXY_UAREA + "}} set cstatus=cstatus|1 where cstatus&1=0 "
                 + " and uid=" + uid;
@@ -621,10 +618,21 @@ public class BDManageModule {
             List<Object[]> params  = new ArrayList<>();
             JsonArray areaArr = jsonObject.get("areaArr").getAsJsonArray();
             for (int i = 0; i < areaArr.size(); i++) {
+                String arearng;
                 JsonElement areaObj = areaArr.get(i);
                 long areac =areaObj.getAsJsonObject().get("areac").getAsLong();
-                String arearng = areaObj.getAsJsonObject().get("arearng").getAsString();
-                params.add(new Object[]{GenIdUtil.getUnqId(), uid, areac, 0, arearng});
+                if (type == 1) {
+                    String arean = IceRemoteUtil.getCompleteName(areac+"");
+//                    System.out.println("arean00000000000000000000---------- " +  arean);
+                    List<List<GaoDeMapUtil.Point>> lists =  GaoDeMapUtil.areaPolyline(arean);
+                    for (List<GaoDeMapUtil.Point> plist : lists){
+                        String jwp = GsonUtils.javaBeanToJson(plist);
+                        params.add(new Object[]{GenIdUtil.getUnqId(), uid, areac, 128, jwp});
+                    }
+                } else {
+                    arearng = areaObj.getAsJsonObject().get("arearng").getAsString();
+                    params.add(new Object[]{GenIdUtil.getUnqId(), uid, areac, 0, arearng});
+                }
             }
             String optSQL = "insert into {{?" + DSMConst.TB_PROXY_UAREA + "}} (unqid,uid,areac,cstatus,arearng) "
                     + " values(?,?,?,?,?)";
@@ -654,6 +662,47 @@ public class BDManageModule {
         return count > 0 ? result.success(true) : result.success(false);
     }
 
+    @UserPermission(ignore = true)
+    public Result getAreaByUid(AppContext context) {
+        String json = context.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+        int puid = jsonObject.get("puid").getAsInt();
+        String selectSQL = "select distinct ura.areac,arean from {{?"+DSMConst.TB_PROXY_UAREA +"}} ura," +
+                "{{?"+ DSMConst.TB_AREA_PCA+"}} pca where ura.areac = pca.areac" +
+                " and uid = ? and ura.cstatus & 1 = 0 and ura.cstatus&128=0";
+        List<Object[]> queryRet = baseDao.queryNative(selectSQL, puid);
+        if(queryRet == null || queryRet.isEmpty()){
+            return result.success(null);
+        }
+        JsonArray array = new JsonArray();
+        queryRet.forEach(qr -> {
+            JsonObject object = new JsonObject();
+            object.addProperty("areac", String.valueOf(qr[0]));
+            object.addProperty("arean", String.valueOf(qr[1]));
+            array.add(object);
+        });
+        return result.success(array);
+    }
 
+
+    @UserPermission(ignore = true)
+    public Result getAreas(AppContext context) {
+        String json = context.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+        int uid = jsonObject.get("uid").getAsInt();
+        String selectSQL = "select distinct areac from {{?"+DSMConst.TB_PROXY_UAREA +"}} " +
+                " where uid = ? and cstatus&1 = 0 ";
+        List<Object[]> queryRet = baseDao.queryNative(selectSQL, uid);
+        if(queryRet == null || queryRet.isEmpty()){
+            return result.success(null);
+        }
+        List<String> areaCL = new ArrayList<>();
+        queryRet.forEach(qr -> areaCL.add(String.valueOf(qr[0])));
+        return result.success(areaCL);
+    }
 
 }

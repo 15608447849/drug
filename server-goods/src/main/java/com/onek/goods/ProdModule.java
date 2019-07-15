@@ -29,7 +29,7 @@ import com.onek.goods.util.ProdESUtil;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
-import com.onek.util.fs.FileServerUtils;
+import com.onek.util.FileServerUtils;
 import com.onek.util.prod.ProdPriceEntity;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
@@ -1235,14 +1235,20 @@ public class ProdModule {
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
             int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(ruleStatus);
-            if (!context.isAnonymous()) { // 有权限
-                prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
-                prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
-                prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
-            } else {
+            if (context.isAnonymous()) {//无权限价格不可见
                 prodVO.setVatp(-1);
                 prodVO.setMp(-1);
                 prodVO.setRrp(-1);
+            } else {
+                if (prodVO.getConsell() > 0 && !context.isSignControlAgree()) {//控销商品未签约价格不可见
+                    prodVO.setVatp(-2);
+                    prodVO.setMp(-2);
+                    prodVO.setRrp(-2);
+                } else {
+                    prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+                    prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+                    prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+                }
             }
             prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
             try {
@@ -1285,6 +1291,9 @@ public class ProdModule {
 
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
                 prodVO.setConsell(sourceMap.get("consell") != null ?  Integer.parseInt(detail.get("consell").toString()) : 0);
+
+                //设置毛利润
+                prodVO.setGrossProfit(prodVO.getRrp(),prodVO.getVatp());
             }
         } catch (Exception e) {
             // e.printStackTrace();

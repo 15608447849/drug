@@ -7,6 +7,7 @@ import com.onek.util.IceRemoteUtil;
 import com.onek.util.prod.ProdEntity;
 import dao.BaseDAO;
 import util.GsonUtils;
+import util.NumUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
@@ -172,6 +173,9 @@ public class MyCollectModule {
            data.time = StringUtils.checkObjectNull(arr[5],"");
            try {
                data.info = IceRemoteUtil.getProdBySku(data.sku);
+               if (data.info != null) {
+                   setPrice(appContext, data.info);
+               }
            } catch (Exception e) {
 //               e.printStackTrace();
            }
@@ -180,6 +184,20 @@ public class MyCollectModule {
         return new Result().success(list);
     }
 
+
+    public static void setPrice(AppContext appContext, ProdEntity prodEntity) {
+        if (appContext.isAnonymous()) {//无权限价格不可见
+            prodEntity.setVatp(-1);
+            prodEntity.setMp(-1);
+            prodEntity.setRrp(-1);
+        } else {
+            if (prodEntity.getConsell() > 0 && !appContext.isSignControlAgree()) {//控销商品未签约价格不可见
+                prodEntity.setVatp(-2);
+                prodEntity.setMp(-2);
+                prodEntity.setRrp(-2);
+            }
+        }
+    }
 
     /**
      * 删除收藏

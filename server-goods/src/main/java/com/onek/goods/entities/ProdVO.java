@@ -2,6 +2,8 @@ package com.onek.goods.entities;
 
 import redis.annation.DictCacheField;
 
+import java.math.BigDecimal;
+
 public class ProdVO {
     /* ----------- 商品SPU表 ------------- */
     private long spu;
@@ -59,6 +61,24 @@ public class ProdVO {
     private int consell;
 
 
+    private int grossProfit;//毛利润
+
+    public int getGrossProfit() {
+        return grossProfit;
+    }
+
+    public void setGrossProfit(double rrprice,double vatprice) {
+        //计算毛利润
+        //（零售-含税）/零售
+        if(rrprice>0 && vatprice>0) {
+            BigDecimal rrp = new BigDecimal(rrprice); //零售价格
+            BigDecimal vatp = new BigDecimal(vatprice); //含税价格
+            BigDecimal groPro = rrp.subtract(vatp).divide(rrp,2,BigDecimal.ROUND_HALF_UP).multiply(new BigDecimal(100));
+            this.grossProfit = groPro.intValue();
+        }else {
+            this.grossProfit = 0;
+        }
+    }
 
     public long getSpu() {
         return spu;

@@ -390,6 +390,9 @@ public class BackgroundProdModule {
 
         BgProdVO result = getProd(params[0]);
 
+        //设置毛利润
+        result.setGrossProfit(result.getRrp(),result.getVatp());
+
         if (result == null) {
             return new Result().fail("无此商品");
         }

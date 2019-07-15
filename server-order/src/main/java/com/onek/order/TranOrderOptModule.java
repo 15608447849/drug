@@ -160,64 +160,6 @@ public class TranOrderOptModule {
             + "set balance = IF((balance + ?) <=0,0,(balance + ?)) where cid = ? ";
 
 
-    @UserPermission(ignore = false)
-    public Result placeOrderOne(AppContext appContext) {
-        long coupon = 0;//优惠券码
-        Result result = new Result();
-        Gson gson = new Gson();
-        List<TranOrderGoods> tranOrderGoods = new ArrayList<>();
-        String json = appContext.param.json;
-        JsonParser jsonParser = new JsonParser();
-        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
-        int placeType = jsonObject.get("placeType").getAsInt();//1、直接下单 2、购物车下单
-        JsonObject orderObj = jsonObject.get("orderObj").getAsJsonObject();
-        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
-        TranOrder tranOrder = gson.fromJson(orderObj, TranOrder.class);
-        if (tranOrder == null) return result.fail("订单信息有误");
-        if (!jsonObject.get("coupon").isJsonNull()) {
-            coupon = jsonObject.get("coupon").getAsLong();
-        }
-        int pdnum = 0;
-        for (int i = 0; i < goodsArr.size(); i++) {
-            TranOrderGoods goodsVO = gson.fromJson(goodsArr.get(i).toString(), TranOrderGoods.class);
-            pdnum += goodsVO.getPnum();
-            goodsVO.setCompid(tranOrder.getCusno());
-            tranOrderGoods.add(goodsVO);
-        }
-        tranOrder.setPdnum(pdnum);
-
-//        OrderEvent orderEvent = new OrderEvent();
-//        orderEvent.setPlaceType(placeType);
-//        orderEvent.setCoupon(coupon);
-//        orderEvent.setTranOrder(tranOrder);
-//        orderEvent.setAllTranOrderGoods(tranOrderGoods);
-//        System.out.println("-------------- coming............");
-
-//        ExecutorService es1 = Executors.newFixedThreadPool(1);
-//        ExecutorService es2 = Executors.newFixedThreadPool(5);
-//        int bufferSize = 1024*1024;//环形队列长度，必须是2的N次方
-//        Disruptor<OrderEvent> disruptor = new Disruptor<>(new OrderEventFactory(orderEvent), bufferSize, es2,
-//                ProducerType.SINGLE, new YieldingWaitStrategy());
-//
-//        disruptor.handleEventsWith(new DeStockEventConsumer())
-//                .handleEventsWith(new DbOptConsumer());
-//
-//        disruptor.start();
-//
-//        OrderEventProducer ep = new OrderEventProducer().setDisruptor(disruptor, orderEvent);
-//        CountDownLatch countDownLatch = ep.getLatch();
-//        es1.submit(ep);
-//        try {
-//            countDownLatch.await();
-//        } catch (InterruptedException e) {
-//            e.printStackTrace();
-//        }
-//        disruptor.shutdown();
-//
-//        LogUtil.getDefaultLogger().info("result = " + orderEvent.getResult());
-        return new Result();
-    }
-
     /**
      * @接口摘要 下单生成订单接口
      * @业务场景 前端下单调用
@@ -229,7 +171,7 @@ public class TranOrderOptModule {
      *              orderType 订单类型 actcode[参加的活动数组]}}
      * @返回列表 200成功
      */
-    @UserPermission(ignore = true)
+    @UserPermission(ignore = false)
     public Result placeOrder(AppContext appContext) {
         long unqid = 0, coupon = 0;//优惠券码
         Result result = new Result();
@@ -1059,7 +1001,8 @@ public class TranOrderOptModule {
         }
 
         boolean result = takeDelivery(orderNo, compid);
-
+        //生成节点信息四同步一块物流状态
+        OrderUtil.changeYKWLOrderState(orderNo,4, compid);
         return result ? new Result().success("已签收") : new Result().fail("操作失败");
     }
 
@@ -1099,7 +1042,8 @@ public class TranOrderOptModule {
         }
 
         boolean result = delivery(orderNo, compid);
-
+        //生成节点信息二三 修改一块物流状态
+        OrderUtil.changeYKWLOrderState(orderNo,3, compid);
         return result ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 

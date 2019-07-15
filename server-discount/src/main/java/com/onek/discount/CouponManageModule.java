@@ -43,7 +43,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.onek.discount.CommonModule.getLaderNo;
-import static com.onek.util.fs.FileServerUtils.getExcelDownPath;
+import static com.onek.util.FileServerUtils.getExcelDownPath;
 
 /**
  * @author Administrator

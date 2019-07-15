@@ -15,7 +15,7 @@ import com.onek.util.IceRemoteUtil;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.RoleCodeCons;
 import com.onek.util.area.AreaEntity;
-import com.onek.util.fs.FileServerUtils;
+import com.onek.util.FileServerUtils;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
@@ -853,8 +853,8 @@ public class BackGroundProxyMoudule {
         }
 
         baseDao.convToEntity(queryResult, userInfoVos, UserInfoVo.class,
-                new String[]{"uid","uphone","urealname","roleid","adddate","addtime","offdate",
-                        "offtime","ip","logindate","logintime","cstatus","arean","buid","buname"});
+                "uid","uphone","urealname","roleid","adddate","addtime","offdate",
+                "offtime","ip","logindate","logintime","cstatus","arean","buid","buname");
 
         return result.setQuery(userInfoVos,pageHolder);
     }
@@ -1265,8 +1265,8 @@ public class BackGroundProxyMoudule {
         if (queryResult == null || queryResult.isEmpty()) return result.setQuery(proxyStoreVOS,pageHolder);
 
         baseDao.convToEntity(queryResult, proxyStoreVOS, ProxyStoreVO.class,
-                new String[]{"companyId","phone","uid","company","addressCode","address","createdate",
-                        "createtime","status","cursorId","cursorName","cursorPhone","bdmid","bdmn","control"});
+                "companyId","phone","uid","company","addressCode","address","createdate",
+                "createtime","status","cursorId","cursorName","cursorPhone","bdmid","bdmn","control");
 
         for (ProxyStoreVO proxyStoreVO : proxyStoreVOS){
             AreaEntity[] ancestors = IceRemoteUtil.getAncestors(Long.parseLong(proxyStoreVO.getAddressCode()));
@@ -1563,10 +1563,10 @@ public class BackGroundProxyMoudule {
                 }
             }
             //判断必填资质是否都有
-            String checkStr = checkAptInfo(storetype, aTypeList);
-            if (checkStr != null) {
-                return result.fail(checkStr);
-            }
+//            String checkStr = checkAptInfo(storetype, aTypeList);
+//            if (checkStr != null) {
+//                return result.fail(checkStr);
+//            }
             if (!updCompType(storetype, compInfoVO.getControl(), compId,invoice,taxpayer)) {
                 return result.fail("修改失败！");
             }

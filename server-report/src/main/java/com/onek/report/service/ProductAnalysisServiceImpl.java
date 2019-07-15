@@ -2,16 +2,12 @@ package com.onek.report.service;
 
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
-import com.onek.report.data.MarketStoreData;
-import com.onek.report.data.SystemConfigData;
 import constant.DSMConst;
 import dao.BaseDAO;
 
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.hssf.util.HSSFColor;
 import org.apache.poi.ss.util.CellRangeAddress;
-import org.hyrdpf.util.LogUtil;
-import util.MathUtil;
 import util.NumUtil;
 import util.StringUtils;
 
@@ -22,9 +18,8 @@ import java.text.DecimalFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.regex.Pattern;
 
-import static com.onek.util.fs.FileServerUtils.getExcelDownPath;
+import static com.onek.util.FileServerUtils.getExcelDownPath;
 
 /**
  * 商品分析报表实现

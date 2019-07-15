@@ -3,7 +3,7 @@ package com.onek.global;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
-import com.onek.util.fs.FileServerUtils;
+import com.onek.util.FileServerUtils;
 import dao.BaseDAO;
 import util.GsonUtils;
 import util.StringUtils;
@@ -11,7 +11,7 @@ import util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.onek.util.fs.FileServerUtils.isFileExist;
+import static com.onek.util.FileServerUtils.isFileExist;
 import static constant.DSMConst.TD_NOTICE;
 
 /**

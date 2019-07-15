@@ -18,7 +18,7 @@ import com.onek.goods.util.ProdESUtil;
 import com.onek.server.infimp.IceDebug;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
-import com.onek.util.fs.FileServerUtils;
+import com.onek.util.FileServerUtils;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -399,6 +399,9 @@ public class MainPageModule {
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
                 prodVO.setConsell(sourceMap.get("consell") != null ?  Integer.parseInt(detail.get("consell").toString()) : 0);
 
+                //设置毛利润
+                prodVO.setGrossProfit(prodVO.getRrp(),prodVO.getVatp());
+
                 if (dataMap != null && otherArr != null) {
                     int ruleCode = Integer.parseInt(otherArr[0]);
                     double minOff = Double.parseDouble(otherArr[1]);
@@ -614,7 +617,6 @@ public class MainPageModule {
      * identity + 分页信息 -根据指定活动码/分页信息 查询商品/活动属性}
      * @返回列表 MainPage/UiElement 对象
      */
-    @IceDebug
     @UserPermission(ignore = true)
     public Result pageInfo(AppContext context) {
         String json = context.param.json;

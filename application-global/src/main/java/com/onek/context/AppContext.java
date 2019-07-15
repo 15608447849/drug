@@ -60,7 +60,7 @@ public class AppContext extends IceContext {
 
     //创建用户会话KRY lzp
     private String genUKey() {
-        return EncryptUtils.encryption(param.token + ( param.token.endsWith("PC") ? remoteIp : ""));
+        return EncryptUtils.encryption(param.token);
     }
 
     //创建多端检测key
@@ -131,7 +131,7 @@ public class AppContext extends IceContext {
 
     //判断是否是签约用户 true-签约
     public boolean isSignControlAgree(){
-        return !isAnonymous() && (userSession.comp.controlCode & 2) > 0;
+        return !isAnonymous() && (userSession.comp.controlCode & 1) > 0;
     }
 
 }

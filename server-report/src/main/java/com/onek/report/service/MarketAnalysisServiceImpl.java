@@ -1,6 +1,5 @@
 package com.onek.report.service;
 
-import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.onek.report.data.MarketStoreData;
@@ -20,7 +19,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.regex.Pattern;
 
-import static com.onek.util.fs.FileServerUtils.getExcelDownPath;
+import static com.onek.util.FileServerUtils.getExcelDownPath;
 
 /**
  * 市场分析报表实现
