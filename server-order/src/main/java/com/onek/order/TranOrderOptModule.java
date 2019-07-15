@@ -1043,7 +1043,6 @@ public class TranOrderOptModule {
 
         boolean result = delivery(orderNo, compid);
         //生成节点信息二三 修改一块物流状态
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
         OrderUtil.changeYKWLOrderState(orderNo,3, compid);
         return result ? new Result().success("已发货") : new Result().fail("操作失败");
     }
