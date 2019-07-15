@@ -617,7 +617,7 @@ public class BDManageModule {
                     List<List<GaoDeMapUtil.Point>> lists =  GaoDeMapUtil.areaPolyline(arean);
                     for (List<GaoDeMapUtil.Point> plist : lists){
                         String jwp = GsonUtils.javaBeanToJson(plist);
-                        params.add(new Object[]{GenIdUtil.getUnqId(), uid, areac, 0, jwp});
+                        params.add(new Object[]{GenIdUtil.getUnqId(), uid, areac, 128, jwp});
                     }
                 } else {
                     arearng = areaObj.getAsJsonObject().get("arearng").getAsString();
@@ -661,7 +661,7 @@ public class BDManageModule {
         int puid = jsonObject.get("puid").getAsInt();
         String selectSQL = "select distinct ura.areac,arean from {{?"+DSMConst.TB_PROXY_UAREA +"}} ura," +
                 "{{?"+ DSMConst.TB_AREA_PCA+"}} pca where ura.areac = pca.areac" +
-                " and uid = ? and ura.cstatus & 1 = 0 ";
+                " and uid = ? and ura.cstatus & 1 = 0 and ura.cstatus&128=0";
         List<Object[]> queryRet = baseDao.queryNative(selectSQL, puid);
         if(queryRet == null || queryRet.isEmpty()){
             return result.success(null);
