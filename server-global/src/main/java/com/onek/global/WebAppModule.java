@@ -4,7 +4,7 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.global.area.AreaStore;
 import com.onek.util.area.AreaEntity;
-import com.onek.util.fs.FileServerUtils;
+import com.onek.util.FileServerUtils;
 import util.http.HttpRequest;
 
 import java.util.ArrayList;

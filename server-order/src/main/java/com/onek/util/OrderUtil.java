@@ -8,7 +8,6 @@ import com.onek.consts.MessageEvent;
 import com.onek.entity.TranOrder;
 import com.onek.entity.TranTransVO;
 import com.onek.util.area.AreaEntity;
-import com.onek.util.fs.FileServerUtils;
 import com.onek.util.member.MemberStore;
 import constant.DSMConst;
 import dao.BaseDAO;

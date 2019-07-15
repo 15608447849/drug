@@ -1,4 +1,4 @@
-package com.onek.util.fs;
+package com.onek.util;
 
 import com.google.gson.internal.LinkedTreeMap;
 import com.google.gson.reflect.TypeToken;
@@ -168,10 +168,11 @@ public class FileServerUtils {
      * 查询一个订单支付状态
      * @return 0-待支付 1已支付 -2异常
      */
-    public static String getPayCurrentState(String type,String orderNo){
+    public static String getPayCurrentState(String type,String orderNo,boolean isApp){
         HashMap<String,String> map = new HashMap<>();
         map.put("type",type);
         map.put("orderNo",orderNo);
+        map.put("app",String.valueOf(isApp));
         String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/query","POST",map);
         HashMap<String,Object> rmap = GsonUtils.string2Map(json);
         assert rmap != null;
@@ -182,12 +183,13 @@ public class FileServerUtils {
      * 退款
      * @return 退款申请信息
      */
-    public static HashMap<String,Object> refund(String type, String refundNo,String tradeNo,double price){
+    public static HashMap<String,Object> refund(String type, String refundNo,String tradeNo,double price,boolean isApp){
         HashMap<String,String> map = new HashMap<>();
         map.put("type",type);
         map.put("refundNo",refundNo);
         map.put("price",String.valueOf(price));
         map.put("tradeNo",tradeNo);
+        map.put("app",String.valueOf(isApp));
         String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/refund","POST",map);
         return GsonUtils.string2Map(json);
     }

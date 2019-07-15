@@ -18,7 +18,7 @@ import com.onek.goods.util.ProdESUtil;
 import com.onek.server.infimp.IceDebug;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
-import com.onek.util.fs.FileServerUtils;
+import com.onek.util.FileServerUtils;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;

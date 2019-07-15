@@ -15,7 +15,7 @@ import com.onek.util.IceRemoteUtil;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.RoleCodeCons;
 import com.onek.util.area.AreaEntity;
-import com.onek.util.fs.FileServerUtils;
+import com.onek.util.FileServerUtils;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;

@@ -15,7 +15,7 @@ import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.*;
 import com.onek.util.area.AreaFeeUtil;
-import com.onek.util.fs.FileServerUtils;
+import com.onek.util.FileServerUtils;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;

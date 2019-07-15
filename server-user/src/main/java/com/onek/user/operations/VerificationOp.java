@@ -8,7 +8,7 @@ import com.onek.entitys.Result;
 import com.onek.user.service.USProperties;
 import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
-import com.onek.util.fs.FileServerUtils;
+import com.onek.util.FileServerUtils;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
