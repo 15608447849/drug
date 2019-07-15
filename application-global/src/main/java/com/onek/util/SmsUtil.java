@@ -83,7 +83,7 @@ public class SmsUtil  extends ApplicationPropertiesBase {
             sb.append("&ts=").append(timestamp);//加密时间戳
             String request = sb.toString();
             // 以GET方式发起请求
-            System.out.println(request);
+            System.out.println(username+" "+request);
             return Request.Get(request).execute().returnContent().asString();
         } catch (Exception e) {
             e.printStackTrace();
