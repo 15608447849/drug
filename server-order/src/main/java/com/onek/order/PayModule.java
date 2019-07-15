@@ -61,7 +61,9 @@ public class PayModule {
     private static final String QUERY_ORDER_GOODS = "select g.pdno,g.pnum,g.promtype,g.actcode from {{?" + DSMConst.TD_TRAN_ORDER + "}} o,{{?" + DSMConst.TD_TRAN_GOODS + "}} g" +
             " where g.orderno = o.orderno and o.orderno = ? and o.cusno = ?";
 
-    private static final String GET_TRAN_TRANS_SQL = "select payprice,payway,payno,orderno,paysource,paystatus,paydate,paytime,completedate,completetime from {{?" + DSMConst.TD_TRAN_TRANS + "}} where orderno=? and compid = ? order by completedate desc,completetime desc limit 1";
+    private static final String GET_TRAN_TRANS_SQL = "select payprice,payway,payno,orderno,paysource,paystatus,paydate,paytime,completedate,completetime "
+            + " from {{?" + DSMConst.TD_TRAN_TRANS + "}} "
+            + " where orderno=? and compid = ? order by completedate desc,completetime desc limit 1";
 
     //支付回调更新订单状态
     private static final String UPD_ORDER_STATUS = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?,settstatus=?,"
