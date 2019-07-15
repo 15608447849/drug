@@ -1051,4 +1051,22 @@ public class OrderOptModule {
         jsonObject.put("time", LocalTime.now().toString());
         return jsonObject;
     }
+
+    @UserPermission(ignore = false)
+    public Result queryNodes(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String orderNo = jsonObject.get("orderno").getAsString();//订单号
+        int compId = appContext.getUserSession().compId;
+        if (compId == 0) {
+            compId = jsonObject.get("compid").getAsInt();
+        }
+        String selectSQL = "select node from {{?" +DSMConst.TD_TRAN_AFTERSALES +"}} "
+                + " where cstatus&1=0 and orderno=? and afsatype=3 and afsano=0 ";
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compId, TimeUtils.getYearByOrderno(orderNo), selectSQL, orderNo);
+        if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+        return result.success(String.valueOf(queryResult.get(0)[0]));
+    }
 }
