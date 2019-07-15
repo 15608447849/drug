@@ -183,14 +183,16 @@ public class FileServerUtils {
      * 退款
      * @return 退款申请信息
      */
-    public static HashMap<String,Object> refund(String type, String refundNo,String tradeNo,double price,boolean isApp){
+    public static HashMap<String,Object> refund(String type, String refundNo,String tradeNo,double price, double priceTotal, boolean isApp){
         HashMap<String,String> map = new HashMap<>();
         map.put("type",type);
         map.put("refundNo",refundNo);
         map.put("price",String.valueOf(price));
+        map.put("priceTotal",String.valueOf(priceTotal));
         map.put("tradeNo",tradeNo);
         map.put("app",String.valueOf(isApp));
         String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/refund","POST",map);
+//        String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/refund","POST",map);
         return GsonUtils.string2Map(json);
     }
 
@@ -215,4 +217,11 @@ public class FileServerUtils {
         }
         return null;
     }
+
+    public static void main(String[] args) {
+        HashMap<String, Object> result = refund("wxpay", "1907 0400 0006 9000 0010 3", "4200000312201907047399367466", 0, .02, true);
+        System.out.println(result);
+        System.out.println();
+    }
+
 }

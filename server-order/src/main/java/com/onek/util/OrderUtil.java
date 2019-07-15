@@ -119,7 +119,7 @@ public class OrderUtil {
             long refundno = GenIdUtil.getUnqId();
             if(payWay == 1 || payWay == 2){ // 支付宝、微信
                 String type = payWay == 1 ? PAY_TYPE_WX : PAY_TYPE_ALI;
-                HashMap<String,Object> resultMap = FileServerUtils.refund(type, refundno + "", tppno, prize);
+                HashMap<String,Object> resultMap = FileServerUtils.refund(type, refundno + "", tppno, prize, prize, false);
                 Double code = (Double) resultMap.get("code");
                 String tradeStatus = (code.intValue())+"";
 //                if(code == 10000){
