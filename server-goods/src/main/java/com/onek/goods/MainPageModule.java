@@ -399,6 +399,9 @@ public class MainPageModule {
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
                 prodVO.setConsell(sourceMap.get("consell") != null ?  Integer.parseInt(detail.get("consell").toString()) : 0);
 
+                //设置毛利润
+                prodVO.setGrossProfit(prodVO.getRrp(),prodVO.getVatp());
+
                 if (dataMap != null && otherArr != null) {
                     int ruleCode = Integer.parseInt(otherArr[0]);
                     double minOff = Double.parseDouble(otherArr[1]);
