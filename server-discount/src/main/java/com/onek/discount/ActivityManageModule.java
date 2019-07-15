@@ -131,7 +131,7 @@ public class ActivityManageModule {
      * @业务场景 后台管理系统查询活动
      * @传参类型 json
      * @传参列表 {pageSize: 每页数量 pageNo：页码 actname: 活动名称 brulecode 活动规则码}
-     * @返回列表 ActivityVO对象数组
+     * @返回列表 {@link ActivityVO}对象数组
      */
     @UserPermission(ignore = true)
     public Result queryActivities(AppContext appContext) {
@@ -1047,8 +1047,8 @@ public class ActivityManageModule {
             " min(notused) as minnotused*/
             if (query2Result != null && query2Result.size()>0) {
                 query2Result.forEach(obj -> {
-                    int minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[5]))).intValue();
-                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[3],(int)obj[4], minunused);
+                    long minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[5]))).longValue();
+                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[3],(long)obj[4], minunused);
                     stock2Map.put(Long.parseLong(String.valueOf(obj[2])), allAvailableStock);
                 });
 
@@ -1057,7 +1057,7 @@ public class ActivityManageModule {
                     if ((class2Map.get(classno).getCstatus() & 256) > 0) {
                         actStock = (int) Math.ceil(stock2Map.get(classno).getStore() * 0.01 * actStock);
                     }
-                    int stock = stock2Map.get(classno).getAvailable() - actStock;
+                    long stock = stock2Map.get(classno).getAvailable() - actStock;
 
                     if (stock < 0) {
                         return  "【" + ProdInfoStore.getProdBySku(stock2Map.get(classno).getSku()).getProdname()+ "】库存不够，请重新设置活动库存！";
@@ -1078,7 +1078,7 @@ public class ActivityManageModule {
             if (query4Result != null && query4Result.size()>0) {
                 query4Result.forEach(obj -> {
                     int minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[5]))).intValue();
-                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[3],(int)obj[4], minunused);
+                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[3],(long)obj[4], minunused);
                     stock4Map.put(Long.parseLong(String.valueOf(obj[1])), allAvailableStock);
                 });
 
@@ -1087,7 +1087,7 @@ public class ActivityManageModule {
                     if ((class2Map.get(classno).getCstatus() & 256) > 0) {
                         actStock = (int) Math.ceil(stock4Map.get(classno).getStore() * 0.01 * actStock);
                     }
-                    int stock = stock4Map.get(classno).getAvailable() - actStock;
+                    long stock = stock4Map.get(classno).getAvailable() - actStock;
 
                     if (stock < 0) {
                         return "【" + ProdInfoStore.getProdBySku(stock4Map.get(classno).getSku()).getProdname()+ "】库存不够，请重新设置活动库存！";
@@ -1108,7 +1108,7 @@ public class ActivityManageModule {
             if (query6Result != null && query6Result.size()>0) {
                 query6Result.forEach(obj -> {
                     int minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[5]))).intValue();
-                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[3],(int)obj[4], minunused);
+                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[3],(long)obj[4], minunused);
                     stock6Map.put(Long.parseLong(String.valueOf(obj[0])), allAvailableStock);
                 });
 
@@ -1117,7 +1117,7 @@ public class ActivityManageModule {
                     if ((class2Map.get(classno).getCstatus() & 256) > 0) {
                         actStock = (int) Math.ceil(stock6Map.get(classno).getStore() * 0.01 * actStock);
                     }
-                    int stock = stock6Map.get(classno).getAvailable() - actStock;
+                    long stock = stock6Map.get(classno).getAvailable() - actStock;
 
                     if (stock < 0) {
                         return "【" + ProdInfoStore.getProdBySku(stock6Map.get(classno).getSku()).getProdname()+ "】库存不够，请重新设置活动库存！";
@@ -1178,7 +1178,7 @@ public class ActivityManageModule {
             if (queryResult != null && queryResult.size()>0) {
                 queryResult.forEach(obj -> {
                     int minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[2]))).intValue();
-                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[0], (int)obj[1], minunused);
+                    AllAvailableStock allAvailableStock = new AllAvailableStock((long)obj[0], (long)obj[1], minunused);
                     stockMap.put((long)obj[0], allAvailableStock);
                 });
             }
@@ -1187,7 +1187,7 @@ public class ActivityManageModule {
                 if ((goodsVO.getCstatus() & 256) > 0) {
                     actStock = (int) Math.ceil(stockMap.get(goodsVO.getGcode()).getStore() * 0.01 * actStock);
                 }
-                int stock = stockMap.get(goodsVO.getGcode()).getAvailable() - actStock;
+                long stock = stockMap.get(goodsVO.getGcode()).getAvailable() - actStock;
 
                 if (stock < 0) {
                     return ProdInfoStore.getProdBySku(goodsVO.getGcode()).getProdname();
@@ -1576,28 +1576,12 @@ public class ActivityManageModule {
 
     class AllAvailableStock {
         private long sku;
-        private int store;
-        private int available;
+        private long store;
+        private long available;
 
-        public AllAvailableStock(long sku, int store, int available) {
+        public AllAvailableStock(long sku, long store, long available) {
             this.sku = sku;
             this.store = store;
-            this.available = available;
-        }
-
-        public int getStore() {
-            return store;
-        }
-
-        public void setStore(int store) {
-            this.store = store;
-        }
-
-        public int getAvailable() {
-            return available;
-        }
-
-        public void setAvailable(int available) {
             this.available = available;
         }
 
@@ -1607,6 +1591,22 @@ public class ActivityManageModule {
 
         public void setSku(long sku) {
             this.sku = sku;
+        }
+
+        public long getStore() {
+            return store;
+        }
+
+        public void setStore(long store) {
+            this.store = store;
+        }
+
+        public long getAvailable() {
+            return available;
+        }
+
+        public void setAvailable(long available) {
+            this.available = available;
         }
     }
 
