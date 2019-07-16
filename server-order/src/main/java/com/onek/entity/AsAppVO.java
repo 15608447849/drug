@@ -24,6 +24,7 @@ public class AsAppVO {
     private String aptime;//申请时间
     private String apdesc;//退款描述
     private double refamt;//退款金额
+    private double realrefamt;//实际退款金额
     private int asnum;//退款数量
     private String checkern; //审核人
     private String compn; //公司名
@@ -46,6 +47,14 @@ public class AsAppVO {
     private String spec;
     private String spu;
     private String reasonName;
+
+    public double getRealrefamt() {
+        return realrefamt;
+    }
+
+    public void setRealrefamt(double realrefamt) {
+        this.realrefamt = realrefamt;
+    }
 
     public double getPdprice() {
         return pdprice;
