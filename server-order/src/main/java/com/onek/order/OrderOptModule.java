@@ -82,7 +82,7 @@ public class OrderOptModule {
     //查询售后详情
     private static final String QUERY_ASAPP_INFO_SQL = " select asapp.orderno,asapp.compid,asapp.asno,asapp.pdno," +
             "asapp.asnum,goods.pdprice/100 spdprice," +
-            "goods.payamt/100 spayamt,distprice/100 sdistprice,goods.pnum,astype,reason,apdesc,refamt/100 refamt,realrefamt/100 realrefamt" +
+            "goods.payamt/100 spayamt,distprice/100 sdistprice,goods.pnum,astype,reason,apdesc,refamt/100 refamt,realrefamt/100 realrefamt," +
             "ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,goods.balamt/100 balamt " +
             " from {{?" + DSMConst.TD_TRAN_ASAPP + "}} asapp inner join {{?" +
             TD_BK_TRAN_GOODS + "}} goods on asapp.orderno = goods.orderno and " +
@@ -1221,9 +1221,15 @@ public class OrderOptModule {
         //售后订单
         long asno = jsonObject.get("asno").getAsLong();
         //实际退款金额
+        double refamt = jsonObject.get("refamt").getAsDouble();
+        //实际退款金额
         double realrefamt = jsonObject.get("realrefamt").getAsDouble();
         //售后类型
         int astype = jsonObject.get("astype").getAsInt();
+
+        if(realrefamt>refamt){
+            return new Result().fail("实际退款金额不能大于退款金额");
+        }
 
         if (realrefamt <= 0) {
             return new Result().fail("实际退款金额不能为空");
