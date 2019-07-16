@@ -117,7 +117,6 @@ public class SmsUtil  extends ApplicationPropertiesBase {
                 for (String phone : list){
                     SmsUtil.sendMsg(phone,message,isMarket);
                 }
-
             }
         });
     }
