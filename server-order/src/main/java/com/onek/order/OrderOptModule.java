@@ -417,9 +417,13 @@ public class OrderOptModule {
         JsonParser jsonParser = new JsonParser();
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         String orderNo = jsonObject.has("orderno") ? jsonObject.get("orderno").getAsString() : "";
-//        int compid = jsonObject.has("compid") ?  jsonObject.get("compid").getAsInt() : 0;
+        JSONObject result;
+        if (IceRemoteUtil.systemConfigOpen("SYNC_YKWL")){//不同步到ykwl
+            result = LccOrderUtil.queryTraceByOrderno(orderNo);
+        } else {
+            return queryNodes(appContext);
+        }
 
-        JSONObject result = LccOrderUtil.queryTraceByOrderno(orderNo);
         return new Result().success(result);
     }
 
