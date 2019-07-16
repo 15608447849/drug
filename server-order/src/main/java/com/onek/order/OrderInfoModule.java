@@ -70,7 +70,7 @@ public class OrderInfoModule {
                     + ", " + QUERY_TRAN_APPRAISE_PARAMS
             + " FROM " + FROM_ORDER
                     + " LEFT JOIN " + FROM_TRANS
-                    + " ON trans.paystatus = 1 AND trans.orderno = ord.orderno "
+                    + " ON trans.paystatus = 1 AND trans.orderno = ord.orderno AND trans.cstatus&1024=0 "
                     + " LEFT JOIN " + FROM_APPRAISE
                     + " ON  app.cstatus&1 = 0 "
                     + " AND app.orderno = ord.orderno "
