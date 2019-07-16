@@ -2,6 +2,7 @@ package com.onek.global;
 
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
+import com.onek.entitys.Result;
 import com.onek.global.area.AreaStore;
 import com.onek.util.area.AreaEntity;
 import com.onek.util.FileServerUtils;
@@ -89,7 +90,17 @@ public class WebAppModule {
     }
 
 
-
+    /***
+     * @接口摘要 客服人员qq号码
+     * @业务场景
+     * @传参类型 JSON/ARRAY
+     * @传参列表
+     * @返回列表
+     */
+    @UserPermission(ignore = true)
+    public Result customerInfo(AppContext context){
+        return new Result().success( new HttpRequest().accessUrl(FileServerUtils.fileDownloadPrev()+"/customer.json").getRespondContent());
+    }
 
 
 

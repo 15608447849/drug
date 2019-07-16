@@ -46,6 +46,7 @@ public class UserSession implements Serializable{
         userSession.phone = phone;
         userSession.compId = compId;
         userSession.comp = info;
+        info.storetype = info.storetype == 0 ? 0 : 1;
         return userSession;
     }
 
