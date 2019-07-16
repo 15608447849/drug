@@ -43,6 +43,16 @@ public class AsAppDtVO {
     private double sumRefAmt; //退款总额
     private int invoicetype; //发票类型
 
+    private double realrefamt;//实际退款金额
+
+    public double getRealrefamt() {
+        return realrefamt;
+    }
+
+    public void setRealrefamt(double realrefamt) {
+        this.realrefamt = realrefamt;
+    }
+
     public int getInvoicetype() {
         return invoicetype;
     }

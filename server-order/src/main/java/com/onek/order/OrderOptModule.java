@@ -82,7 +82,7 @@ public class OrderOptModule {
     //查询售后详情
     private static final String QUERY_ASAPP_INFO_SQL = " select asapp.orderno,asapp.compid,asapp.asno,asapp.pdno," +
             "asapp.asnum,goods.pdprice/100 spdprice," +
-            "goods.payamt/100 spayamt,distprice/100 sdistprice,goods.pnum,astype,reason,apdesc,refamt/100 refamt," +
+            "goods.payamt/100 spayamt,distprice/100 sdistprice,goods.pnum,astype,reason,apdesc,refamt/100 refamt,realrefamt/100 realrefamt" +
             "ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,goods.balamt/100 balamt " +
             " from {{?" + DSMConst.TD_TRAN_ASAPP + "}} asapp inner join {{?" +
             TD_BK_TRAN_GOODS + "}} goods on asapp.orderno = goods.orderno and " +
@@ -729,7 +729,7 @@ public class OrderOptModule {
         baseDao.convToEntity(queryResult, asAppDtVOs, AsAppDtVO.class,
                 new String[]{"orderno", "compid", "asno", "pdno", "asnum",
                         "spdprice", "spayamt", "sdistprice", "pnum",
-                        "astype", "reason", "apdesc", "refamt", "ckstatus", "ckdesc", "gstatus",
+                        "astype", "reason", "apdesc", "refamt","realrefamt", "ckstatus", "ckdesc", "gstatus",
                         "ckdate", "cktime", "apdata", "aptime", "cstatus", "balamt"});
 
         AsAppDtVO asAppDtVO = asAppDtVOs[0];
