@@ -742,7 +742,7 @@ public class BDManageModule {
         Result result = new Result();
         int uid = jsonObject.get("uid").getAsInt();
         String selectSQL = "select distinct areac from {{?"+DSMConst.TB_PROXY_UAREA +"}} " +
-                " where uid = ? and cstatus&1 = 0 ";
+                " where uid = ? and cstatus&1 = 0 and cstatus&128>0";
         List<Object[]> queryRet = baseDao.queryNative(selectSQL, uid);
         if(queryRet == null || queryRet.isEmpty()){
             return result.success(null);
