@@ -944,7 +944,7 @@ public class TranOrderOptModule {
 
                         HashMap<String, Object> refundResult = FileServerUtils.refund(
                                 "1".equals(payWay) ? "wxpay" : "alipay", refundno,
-                                tppno, payPrice, payPrice, "1".equals(paySource));
+                                tppno, MathUtil.exactDiv(payPrice, 100.0).doubleValue(), MathUtil.exactDiv(payPrice, 100.0).doubleValue(), "1".equals(paySource));
 
                         try {
                             boolean r = refundResult.containsKey("code")
