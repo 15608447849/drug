@@ -695,7 +695,7 @@ public class BDManageModule {
         long roleId = context.getUserSession().roleCode;
         String selectSQL;
         List<Object[]> queryRet;
-        if ((roleId & 1024) > 0) {//渠道经理
+        if ((roleId & RoleCodeCons._PROXY_MGR) > 0) {//渠道经理
             String sSQL = "select distinct areac from {{?" + DSMConst.TB_PROXY_UAREA +"}} where uid=? "
                     + " and cstatus&1=0 and cstatus&128=0 ";
             List<Object[]> queryResult = baseDao.queryNative(sSQL, puid);
