@@ -988,10 +988,13 @@ public class BackGroundProxyMoudule {
         long areac = jsonObject.get("areac").getAsLong();
         int cid = appContext.getUserSession().compId;
         long roleCode = appContext.getUserSession().roleCode;
+        if((appContext.getUserSession().roleCode & RoleCodeCons._PROXY_MGR) > 0){
+            cid = BDManageModule.OWNERCOMP;
+        }
 
         List<Object[]> queryResult = null;
 
-        if((roleCode & RoleCodeCons._PROXY_PARTNER) > 0){
+        if((roleCode & (RoleCodeCons._PROXY_PARTNER +RoleCodeCons._PROXY_MGR)) > 0){
             String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? " +
                     "and uid in (select distinct uid from {{?" +DSMConst.TB_PROXY_UAREA+"}} where areac = ? and cstatus & 1 = 0)";
             queryResult = baseDao.queryNative(selectSQL,roleid,cid,areac);
