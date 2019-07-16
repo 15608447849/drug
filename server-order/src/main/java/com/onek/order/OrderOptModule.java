@@ -1223,7 +1223,8 @@ public class OrderOptModule {
         //实际退款金额
         double refamt = jsonObject.get("refamt").getAsDouble();
         //实际退款金额
-        double realrefamt = jsonObject.get("realrefamt").getAsDouble();
+        double realrefamt = jsonObject.get("realrefamt").getAsString().isEmpty() ? 0 : jsonObject.get("realrefamt").getAsDouble();
+        ;
         //售后类型
         int astype = jsonObject.get("astype").getAsInt();
 
@@ -1232,7 +1233,7 @@ public class OrderOptModule {
         }
 
         if (realrefamt <= 0) {
-            return new Result().fail("实际退款金额不能为空");
+            return new Result().fail("实际退款金额不能为0！");
         }
         String queryOrderno = "select orderno,compid,pdno,ckstatus from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
 
