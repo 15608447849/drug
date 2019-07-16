@@ -15,6 +15,7 @@ import com.onek.user.entity.UserInfoVo;
 import com.onek.user.service.USProperties;
 import com.onek.util.*;
 import com.onek.util.area.AreaEntity;
+import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
@@ -669,10 +670,31 @@ public class BDManageModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         Result result = new Result();
         int puid = jsonObject.get("puid").getAsInt();
-        String selectSQL = "select distinct ura.areac,arean from {{?"+DSMConst.TB_PROXY_UAREA +"}} ura," +
-                "{{?"+ DSMConst.TB_AREA_PCA+"}} pca where ura.areac = pca.areac" +
-                " and uid = ? and ura.cstatus & 1 = 0 and ura.cstatus&128=0";
-        List<Object[]> queryRet = baseDao.queryNative(selectSQL, puid);
+        long roleId = context.getUserSession().roleCode;
+        String selectSQL;
+        List<Object[]> queryRet;
+        if ((roleId & 1024) > 0) {//渠道经理
+            String sSQL = "select distinct areac from {{?" + DSMConst.TB_PROXY_UAREA +"}} where uid=? "
+                    + " and cstatus&1=0 and cstatus&128=0 ";
+            List<Object[]> queryResult = baseDao.queryNative(sSQL, puid);
+            if (queryResult == null || queryResult.isEmpty()) return result.success(null);
+            StringBuilder areaStrSB = new StringBuilder("^(");
+            StringBuilder areaCSB = new StringBuilder();
+            queryResult.forEach(areaC -> {
+                areaStrSB.append(String.valueOf(areaC[0]), 0, 4).append("|");
+                areaCSB.append(String.valueOf(areaC[0])).append(",");
+            });
+            String areaStr = areaStrSB.toString().substring(0, areaStrSB.toString().length() - 1) + ")[0-9]+";
+            String areaCStr = areaCSB.toString().substring(0, areaCSB.toString().length() - 1);
+            selectSQL = "select areac,arean from {{?"+DSMConst.TB_AREA_PCA +"}} where cstatus&1=0 "
+                    + " and areac REGEXP ? and areac not in(" + areaCStr +")";
+            queryRet = baseDao.queryNative(selectSQL, areaStr);
+        } else {//合伙人
+            selectSQL = "select distinct ura.areac,arean from {{?"+DSMConst.TB_PROXY_UAREA +"}} ura," +
+                    "{{?"+ DSMConst.TB_AREA_PCA+"}} pca where ura.areac = pca.areac" +
+                    " and uid = ? and ura.cstatus & 1 = 0 and ura.cstatus&128=0";
+            queryRet = baseDao.queryNative(selectSQL, puid);
+        }
         if(queryRet == null || queryRet.isEmpty()){
             return result.success(null);
         }
