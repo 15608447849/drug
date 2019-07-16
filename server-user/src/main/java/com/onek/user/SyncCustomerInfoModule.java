@@ -1,5 +1,7 @@
 package com.onek.user;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
@@ -540,7 +542,7 @@ public class SyncCustomerInfoModule {
             if (aptMap.containsKey(aptitudeVO.getCompid())) {
                 aptMap.get(aptitudeVO.getCompid()).add(aptitudeVO);
             } else {
-                aptMap.put(aptitudeVO.getCompid(), Collections.singletonList(aptitudeVO));
+                aptMap.put(aptitudeVO.getCompid(), new ArrayList<>(Collections.singletonList(aptitudeVO)));
             }
         }
         for (CompInfoVO compInfoVO : compInfoVOS) {
@@ -551,6 +553,8 @@ public class SyncCustomerInfoModule {
         }
         return list;
     }
+
+
 
     @UserPermission(ignore = true)
     public Result erpBatch2SyncErr(AppContext appContext) {
