@@ -1221,9 +1221,6 @@ public class OrderOptModule {
         //售后类型
         int astype = jsonObject.get("astype").getAsInt();
 
-        if (appContext.getUserSession() == null || (appContext.getUserSession().roleCode & (256 + 1)) == 0) {
-            return new Result().fail("当前用户没有该权限");
-        }
         if (realrefamt <= 0) {
             return new Result().fail("实际退款金额不能为空");
         }
