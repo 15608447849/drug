@@ -451,7 +451,7 @@ public class SyncCustomerInfoModule {
             LogUtil.getDefaultLogger().info("调用ERP接口结果返回： " + result);
             if (result != null && !result.isEmpty()) {
                 JsonObject object = new JsonParser().parse(result).getAsJsonObject();
-                String dataStr = object.get("data").getAsString();
+                String dataStr = object.get("data").toString();
                 List<Object[]> params = new ArrayList<>();
                 batchUpdSyncResult(dataStr, syncids, params);
                 if (params.size() > 0) {
@@ -474,6 +474,7 @@ public class SyncCustomerInfoModule {
         }
     }
 
+
     private boolean batchUpdSyncResult(String dataStr, List<Long> syncids, List<Object[]> params) {
         String updateSyncSQL = "update {{?" + DSMConst.TD_SYNC_ERROR + "}} set syncdate=CURRENT_DATE,"
                 + " synctime=CURRENT_TIME,syncreason=?,synctimes=synctimes+1 where cstatus&1=0 and "
@@ -490,6 +491,8 @@ public class SyncCustomerInfoModule {
         batchUpdSyncCState(syncids);
         return !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(updateSyncSQL, params, params.size()));
     }
+
+
 
 
     private boolean batchUpdSyncErr(List<Long> unqids) {
