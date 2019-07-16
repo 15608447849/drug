@@ -1304,7 +1304,7 @@ public class OrderOptModule {
                 if (balamt > 0) {
                     List<Object[]> qresult = baseDao.queryNativeSharding(compid,
                             TimeUtils.getYearByOrderno(queryRet.get(0)[0].toString()),
-                            " SELECT paysource, payway, payprice, payno, tppno "
+                            " SELECT paysource, payway, payprice/100, payno, tppno "
                                     + " FROM {{?" + DSMConst.TD_TRAN_TRANS + "}} "
                                     + " WHERE cstatus&1 = 0 AND orderno = ? AND payway = 0 ",
                             queryRet.get(0)[0].toString());
@@ -1345,7 +1345,7 @@ public class OrderOptModule {
                                     + " WHERE cstatus&1 = 0 AND orderno = ? AND payway IN (1, 2) ", queryRet.get(0)[0].toString());
 
                     if (!qresult.isEmpty()) {
-                        p2 = qresult.get(0)[2].toString();
+                        p2 = String.valueOf(MathUtil.exactDiv(Long.parseLong(qresult.get(0)[2].toString()), 100.0).doubleValue());
 
                         if (pnum == asnum) {
                             subpay = payamt;
