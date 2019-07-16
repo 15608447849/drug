@@ -219,7 +219,7 @@ public class FileServerUtils {
     }
 
     public static void main(String[] args) {
-        HashMap<String, Object> result = refund("wxpay", "1907 0400 0006 9000 0010 3", "4200000312201907047399367466", 0, .02, true);
+        HashMap<String, Object> result = refund("wxpay", "39500107418174464", "4200000321201907152352432515", 0.01, .01, false);
         System.out.println(result);
         System.out.println();
     }
