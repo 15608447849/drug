@@ -641,6 +641,9 @@ public class BDManageModule {
         if(code) {
             List<Object[]> params  = new ArrayList<>();
             JsonArray areaArr = jsonObject.get("areaArr").getAsJsonArray();
+            if (areaArr == null || areaArr.size() == 0) {
+                return result.success("设置成功");
+            }
             for (int i = 0; i < areaArr.size(); i++) {
                 String arearng;
                 JsonElement areaObj = areaArr.get(i);
