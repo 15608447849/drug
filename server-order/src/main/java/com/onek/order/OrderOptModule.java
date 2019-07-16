@@ -16,6 +16,7 @@ import com.onek.entity.AsAppDtVO;
 import com.onek.entity.AsAppVO;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
+import com.onek.server.infimp.IceDebug;
 import com.onek.util.*;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
@@ -430,6 +431,7 @@ public class OrderOptModule {
      * @exception
      * @version 1.1.1
      **/
+    @IceDebug(outPrint = true)
     public Result afterSaleReview(AppContext appContext) {
         String json = appContext.param.json;
         Result result = new Result();
@@ -447,6 +449,7 @@ public class OrderOptModule {
         double refamt = jsonObject.get("refamt").getAsDouble();
 
         String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+
 
         List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
 
@@ -534,7 +537,7 @@ public class OrderOptModule {
                         }
 
                     }
-
+                    LogUtil.getDefaultLogger().debug("审核通过获取shifu：" + payamt);
                     if (payamt > 0) {
                         List<Object[]> qresult = baseDao.queryNativeSharding(compid,
                                 TimeUtils.getYearByOrderno(queryRet.get(0)[0].toString()),
@@ -543,12 +546,12 @@ public class OrderOptModule {
                                         + " WHERE cstatus&1 = 0 AND orderno = ? AND payway IN (1, 2) ", queryRet.get(0)[0].toString());
 
                         if (!qresult.isEmpty()) {
-                            p2 = qresult.get(0)[2].toString();
+                            p2 = String.valueOf(MathUtil.exactDiv(Long.parseLong(qresult.get(0)[2].toString()), 100.0).doubleValue());
 
                             if (pnum == asnum) {
                                 subpay = payamt;
                             } else {
-                                double apamt = MathUtil.exactDiv(subpay, pnum).
+                                double apamt = MathUtil.exactDiv(payamt, pnum).
                                         setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                                 LogUtil.getDefaultLogger().debug("审核通过单个商品分摊实付：" + apamt + " 商品数量：" + pnum);
 
@@ -563,9 +566,9 @@ public class OrderOptModule {
                                 type = "wxpay";
                             }
 
-                            refundno = qresult.get(0)[3].toString()
-                                    + String.format("%02d", RedisUtil.getStringProvide().increase(qresult.get(0)[3].toString()));
-
+//                            refundno = qresult.get(0)[3].toString()
+//                                    + String.format("%02d", RedisUtil.getStringProvide().increase(qresult.get(0)[3].toString()));
+                            refundno = String.valueOf(GenIdUtil.getUnqId());
                             sqls.add(" INSERT INTO {{?" + DSMConst.TD_TRAN_TRANS + "}} "
                                     + " (unqid, compid, orderno, payno, payprice, "
                                     + " payway, paysource, paystatus, payorderno, tppno, "
@@ -643,7 +646,7 @@ public class OrderOptModule {
             }
 
             if (!pss.isEmpty()) {
-                baseDao.updateBatchNativeSharding(year, compid, update, pss, pss.size());
+                baseDao.updateBatchNativeSharding(compid, year, update, pss, pss.size());
             }
 
         }  // 退货成功

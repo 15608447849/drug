@@ -377,7 +377,7 @@ public class BackGroundProxyMoudule {
                 + " left join (select uid,GROUP_CONCAT(distinct pca.arean) as arean "
                 + " from {{?"+DSMConst.TB_PROXY_UAREA+"}} uarea,{{?"+DSMConst.TB_AREA_PCA +"}} pca "
                 + "  where pca.areac = uarea.areac and uarea.cstatus&1 = 0 group by uid) a on a.uid = tu.uid "
-                + " where tu.cstatus&1=0 and ctype in (2,3) ";
+                + " where tu.cstatus&1=0 and ctype in (2,3) and  tu.roleid & 2048 > 0 ";
 
         sqlBuilder.append(selectSQL);
         sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by tu.uid desc ");

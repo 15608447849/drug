@@ -41,6 +41,7 @@ public class BDManageModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
+    public static final int OWNERCOMP = 100000001;
 
     /* *
      * @description 查询合伙人下所有BDM
@@ -64,11 +65,22 @@ public class BDManageModule {
         if (jsonObject.get("ruid") != null && !jsonObject.get("ruid").getAsString().isEmpty()) {
             ruid = jsonObject.get("ruid").getAsInt();
         }
+
         int cid = appContext.getUserSession().compId;
+        if((appContext.getUserSession().roleCode & RoleCodeCons._PROXY_MGR) > 0){
+            cid = OWNERCOMP;
+        }
+
         int uid = appContext.getUserSession().userId;
         String selectSQL = "select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 "
-                + " and (cid=? and roleid&4096>0 and belong=? and uid<>" + uid + " and uid<>" + ruid+") or uid = ?";
-        List<Object[]> objects = baseDao.queryNative(selectSQL, cid, belong,uid);
+                + " and (cid=? and roleid&4096>0 and belong=? and uid<>" + uid + " and uid<>" + ruid+") ";
+        List<Object[]> objects = null;
+        if(cid != OWNERCOMP){
+            selectSQL = selectSQL + "or uid = ?";
+            objects = baseDao.queryNative(selectSQL, cid, belong,uid);
+        }else{
+            objects = baseDao.queryNative(selectSQL, cid, belong);
+        }
         if (objects == null || objects.isEmpty()) return result.success(resArr);
         for (Object[] obj : objects) {
             JsonObject uObj = new JsonObject();
@@ -93,6 +105,10 @@ public class BDManageModule {
     public Result optBDMByPartner(AppContext appContext) {
         String json = appContext.param.json;
         int cid = appContext.getUserSession().compId;
+        if((appContext.getUserSession().roleCode & RoleCodeCons._PROXY_MGR) > 0){
+            cid = OWNERCOMP;
+        }
+        //int cid = appContext.getUserSession().compId;
         int uid = appContext.getUserSession().userId;
         UserInfoVo userInfoVo = GsonUtils.jsonToJavaBean(json, UserInfoVo.class);
         if (userInfoVo != null) {
@@ -111,13 +127,13 @@ public class BDManageModule {
                 String updateCompBd = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                         + "set cid = ?,upw = ?,urealname = ?,belong = ?,roleid = ?,cstatus = ? where uphone = ? ";
                 String pwd = EncryptUtils.encryption(String.valueOf(userInfoVo.getUphone()).substring(5));
-                if(isNeedSmsVerify(userInfoVo.getUphone()+"")){
-                    if ((userInfoVo.getRoleid() & 4096) > 0) {
-                        return new Result().fail("该BDM已存在！");
-                    } else {
-                        return new Result().fail("该BD已存在！");
-                    }
-                }
+//                if(isNeedSmsVerify(userInfoVo.getUphone()+"")){
+//                    if ((userInfoVo.getRoleid() & 4096) > 0) {
+//                        return new Result().fail("该BDM已存在！");
+//                    } else {
+//                        return new Result().fail("该BD已存在！");
+//                    }
+//                }
 //                    String queryRole = "select roleid,uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uphone = ? ";
 //                    List<Object[]> roleRet = baseDao.queryNative(queryRole,userInfoVo.getUphone());
 //                    List<Object[]> hasDb = baseDao.queryNative(queryIsHasDb,roleRet.get(0)[1]);
@@ -142,7 +158,7 @@ public class BDManageModule {
                     sqlSb.append(DSMConst.TB_SYSTEM_USER);
                     sqlSb.append("}} where uphone = ? and cstatus & 1 = 0)");
                     baseDao.updateNative(sqlSb.toString(),userInfoVo.getUphone());
-                    if(uid == userInfoVo.getBelong()){
+                    if(uid == userInfoVo.getBelong() && cid != OWNERCOMP){
                         baseDao.updateNative(updateRole,uid);
                     }
                     return new Result().success("操作成功！");
@@ -201,7 +217,7 @@ public class BDManageModule {
                 }
             }
             if (code) {
-                if(uid == userInfoVo.getBelong()){
+                if(uid == userInfoVo.getBelong() && cid != OWNERCOMP){
                     baseDao.updateNative(updateRole,uid);
                 }
                 return new Result().success(userInfoVo);
@@ -310,6 +326,9 @@ public class BDManageModule {
         int belong = jsonObject.get("belong").getAsInt();
         long roleId = appContext.getUserSession().roleCode;
         int cid = appContext.getUserSession().compId;
+        if((appContext.getUserSession().roleCode & RoleCodeCons._PROXY_MGR) > 0){
+            cid = OWNERCOMP;
+        }
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
@@ -363,6 +382,10 @@ public class BDManageModule {
         int belong = jsonObject.get("belong").getAsInt();
         long roleId = appContext.getUserSession().roleCode;
         int cid = appContext.getUserSession().compId;
+        if((appContext.getUserSession().roleCode & RoleCodeCons._PROXY_MGR) > 0){
+            cid = OWNERCOMP;
+        }
+
         Page page = new Page();
         page.pageSize = appContext.param.pageNumber;
         page.pageIndex = appContext.param.pageIndex;
@@ -624,7 +647,6 @@ public class BDManageModule {
                 long areac =areaObj.getAsJsonObject().get("areac").getAsLong();
                 if (type == 1) {
                     String arean = IceRemoteUtil.getCompleteName(areac+"");
-//                    System.out.println("arean00000000000000000000---------- " +  arean);
                     List<List<GaoDeMapUtil.Point>> lists =  GaoDeMapUtil.areaPolyline(arean);
                     for (List<GaoDeMapUtil.Point> plist : lists){
                         String jwp = GsonUtils.javaBeanToJson(plist);
@@ -725,6 +747,10 @@ public class BDManageModule {
         List<String> areaCL = new ArrayList<>();
         queryRet.forEach(qr -> areaCL.add(String.valueOf(qr[0])));
         return result.success(areaCL);
+    }
+
+    public static void main(String[] args) {
+
     }
 
 }

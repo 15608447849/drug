@@ -271,10 +271,11 @@ public class IMServerImps extends _InterfacesDisp implements IPushMessageStore {
 //                        communicator.getLogger().print("检测存活: " + clientPrx.ice_getIdentity() +" , 耗时: " + (System.currentTimeMillis() - t)+" 毫秒");
                     } catch (Exception e) {
                         it3.remove();
-                        e.printStackTrace();
-                        communicator.getLogger().print(
+ /*                         e.printStackTrace();
+                      communicator.getLogger().print(
                                 Thread.currentThread()+" , "+"在线监测失败, 移除客户端:" +
                                 " "+ communicator.identityToString(clientPrx.ice_getIdentity())+" 原因:"+  e);
+                                */
                     }
                 }
                 if (list.size() == 0) it2.remove();
