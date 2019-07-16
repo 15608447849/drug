@@ -1280,11 +1280,11 @@ public class OrderOptModule {
                 // 退货数量
                 int asnum = Integer.parseInt(queryResult.get(0)[4].toString());
                 // 余额抵扣
-                double balamt = Double.parseDouble(queryResult.get(0)[21].toString());
+                double balamt = Double.parseDouble(queryResult.get(0)[22].toString());
                 // 总数量
                 int pnum = Integer.parseInt(queryResult.get(0)[8].toString());
                 double payamt = Double.parseDouble(queryResult.get(0)[6].toString());
-
+                LogUtil.getDefaultLogger().debug("余额抵扣=" + balamt + "  个人支付金额：=" + payamt);
 
                 BigDecimal balDe = new BigDecimal(balamt);//余额
                 BigDecimal payDe = new BigDecimal(payamt);//支付金额
