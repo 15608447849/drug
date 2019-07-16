@@ -714,10 +714,15 @@ public class BDManageModule {
             selectSQL = "select areac,arean from {{?"+DSMConst.TB_AREA_PCA +"}} where cstatus&1=0 "
                     + " and areac REGEXP ? and areac not in(" + areaCStr +")";
             queryRet = baseDao.queryNative(selectSQL, areaStr);
-        } else {//合伙人
+        } else {//其他
             selectSQL = "select distinct ura.areac,arean from {{?"+DSMConst.TB_PROXY_UAREA +"}} ura," +
                     "{{?"+ DSMConst.TB_AREA_PCA+"}} pca where ura.areac = pca.areac" +
-                    " and uid = ? and ura.cstatus & 1 = 0 and ura.cstatus&128>0";
+                    " and uid = ? and ura.cstatus & 1 = 0 ";
+            if ((roleId & RoleCodeCons._PROXY_PARTNER) > 0) {//合伙人登录
+                selectSQL = selectSQL + " and ura.cstatus&128=0";
+            } else {//BDM登录
+                selectSQL = selectSQL + " and ura.cstatus&128>0";
+            }
             queryRet = baseDao.queryNative(selectSQL, puid);
         }
         if(queryRet == null || queryRet.isEmpty()){
