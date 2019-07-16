@@ -4,7 +4,6 @@ import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
-import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -29,13 +28,13 @@ import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
-import redis.util.RedisUtil;
 import util.*;
 import util.http.HttpRequestUtil;
 
 import java.io.IOException;
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
@@ -901,9 +900,9 @@ public class TranOrderOptModule {
         String selectSQL = "select payway, balamt,payamt from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=?";
         List<Object[]> list = baseDao.queryNativeSharding(cusno, year, selectSQL, orderNo);
         if(list != null && list.size() > 0) {
-//            int payway = (int) list.get(0)[0];//支付方式
+            int payway = (int) list.get(0)[0];//支付方式
             int balamt = (int) list.get(0)[1];//订单使用的余额
-//            int payamt = (int) list.get(0)[2];//订单支付金额
+            int payamt = (int) list.get(0)[2];//订单支付金额
             int res = baseDao.updateNativeSharding(cusno, year, updSQL, -1, orderNo, -4, 1);
             if (res > 0) {
                 if (balamt > 0) {//退回余额
@@ -914,6 +913,69 @@ public class TranOrderOptModule {
                         return result.fail("确认退款失败");
                     }
                 }
+
+                if (payamt > 0 && payway <= 3) {
+                    List<Object[]> transResult =
+                            baseDao.queryNativeSharding(cusno, year,
+                                " SELECT payprice, payway, paysource, tppno "
+                                + " FROM {{?" + DSMConst.TD_TRAN_TRANS + "}} "
+                                + " WHERE cstatus&(1+1024) = 0 AND orderno = ? AND payPrice > 0 "
+                                + " AND paystatus = 1 AND payway IN (1, 2) ", orderNo);
+
+                    if (transResult.isEmpty()) {
+                        return result.success("请确认线下支付退款");
+                    }
+
+                    double payPrice = Double.parseDouble(transResult.get(0)[0].toString());
+                    String payWay = transResult.get(0)[1].toString();
+                    String paySource = transResult.get(0)[2].toString();
+                    String tppno = transResult.get(0)[3].toString();
+                    String refundno = String.valueOf(GenIdUtil.getUnqId());
+                    long payUnq = GenIdUtil.getUnqId();
+
+                    try {
+                        baseDao.updateNativeSharding(cusno, year, " INSERT INTO {{?" + DSMConst.TD_TRAN_TRANS + "}} "
+                                + " (unqid, compid, orderno, payno, payprice, "
+                                + " payway, paysource, paystatus, payorderno, tppno, "
+                                + " paydate, paytime, completedate, completetime, cstatus) VALUES "
+                                + " (?,?,?,?,?, ?,?,?,?,?, CURRENT_DATE,CURRENT_TIME,NULL,NULL,?) ",
+                                payUnq, cusno, orderNo, refundno, payPrice,
+                                payWay, paySource, 0, 0, tppno, 1024);
+
+                        HashMap<String, Object> refundResult = FileServerUtils.refund(
+                                "1".equals(payWay) ? "wxpay" : "alipay", refundno,
+                                tppno, payPrice, payPrice, "1".equals(paySource));
+
+                        try {
+                            boolean r = refundResult.containsKey("code")
+                                    && 2.0 == Double.parseDouble(refundResult.get("code").toString());
+
+                            baseDao.updateNativeSharding(cusno, year, " UPDATE {{?" + DSMConst.TD_TRAN_TRANS + "}} "
+                                    + " SET paystatus = ?, completedate = CURRENT_DATE, completetime = CURRENT_TIME "
+                                    + " WHERE unqid = ? ", r ? 1 : -2, payUnq);
+
+                            if (!r) {
+                                throw new Exception(refundResult.getOrDefault("message", "").toString());
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            return result.success("确认退款成功, 但退款状态未改变！");
+                        }
+                    } catch (Exception e) {
+                        baseDao.updateNativeSharding(cusno, year, updSQL, 1, orderNo, -4, -1);
+
+                        if (balamt > 0) {
+                            int r = IceRemoteUtil.updateCompBal(cusno, -balamt);
+
+                            if (r <= 0) {
+                                return result.fail("确认退款失败, 余额扣减失败");
+                            }
+                        }
+
+                        return result.fail("确认退款失败," + e.getMessage());
+                    }
+                }
+
                 return result.success("确认退款成功");
             }
         }
@@ -1231,9 +1293,5 @@ public class TranOrderOptModule {
         public void setActCode(long actCode) {
             this.actCode = actCode;
         }
-    }
-
-    public static void main(String[] args) {
-
     }
 }
