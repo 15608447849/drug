@@ -66,8 +66,8 @@ public class BDManageModule {
         int cid = appContext.getUserSession().compId;
         int uid = appContext.getUserSession().userId;
         String selectSQL = "select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 "
-                + " and cid=? and roleid&4096>0 and belong=? and uid<>" + uid + " and uid<>" + ruid;
-        List<Object[]> objects = baseDao.queryNative(selectSQL, cid, belong);
+                + " and (cid=? and roleid&4096>0 and belong=? and uid<>" + uid + " and uid<>" + ruid+") or uid = ?";
+        List<Object[]> objects = baseDao.queryNative(selectSQL, cid, belong,uid);
         if (objects == null || objects.isEmpty()) return result.success(resArr);
         for (Object[] obj : objects) {
             JsonObject uObj = new JsonObject();
@@ -103,6 +103,8 @@ public class BDManageModule {
 
             String queryIsHasDb = "select 1 from {{?"+DSMConst.TB_SYSTEM_USER+"}} where belong = ? and roleid & 8192 > 0 ";
 
+            String updateRole = "update {{?"+DSMConst.TB_SYSTEM_USER+"}}  set roleid = roleid | 4096 where roleid & 4096 = 0 and uid = ? ";
+
             boolean code;
             if (userInfoVo.getUid() <= 0 && checkBDM(userInfoVo)) {
                 String updateCompBd = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} "
@@ -128,6 +130,8 @@ public class BDManageModule {
 //                       // return new Result().fail("验证码验证错误！");
 //                    }
 //                }
+
+
                 code = baseDao.updateNative(updateCompBd,new Object[]{cid,pwd,userInfoVo.getUrealname(),
                         userInfoVo.getBelong(),userInfoVo.getRoleid(),0,userInfoVo.getUphone()}) > 0;
 
@@ -136,7 +140,10 @@ public class BDManageModule {
                     sqlSb.append("and uid in (select uid from {{?");
                     sqlSb.append(DSMConst.TB_SYSTEM_USER);
                     sqlSb.append("}} where uphone = ? and cstatus & 1 = 0)");
-                    baseDao.updateNative(deleteArea,sqlSb.toString(),userInfoVo.getUphone());
+                    baseDao.updateNative(sqlSb.toString(),userInfoVo.getUphone());
+                    if(uid == userInfoVo.getBelong()){
+                        baseDao.updateNative(updateRole,uid);
+                    }
                     return new Result().success("操作成功！");
                 }
 //                if ((userInfoVo.getRoleid() & 4096) > 0) {
@@ -193,6 +200,9 @@ public class BDManageModule {
                 }
             }
             if (code) {
+                if(uid == userInfoVo.getBelong()){
+                    baseDao.updateNative(updateRole,uid);
+                }
                 return new Result().success(userInfoVo);
             }
         }

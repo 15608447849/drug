@@ -512,7 +512,7 @@ public class SyncCustomerInfoModule {
     }
 
     public JsonArray getCompInfo(String compidStr) {
-        String sSQL = "select c.cid,cname,caddrcode,caddr,inviter,storetype,u.uphone,c.cstatus,iv.taxpayer,"
+        String sSQL = "select c.cid,cname,caddrcode,caddr,inviter,storetype,u.uphone,c.cstatus,c.control,iv.taxpayer,"
                 + " iv.bankers,iv.account,iv.email, si.contactname,si.contactphone from {{?"
                 + DSMConst.TB_COMP + "}} c left join {{?" + DSMConst.TB_SYSTEM_USER + "}} u "
                 + " on c.cid = u.cid left join {{?" + DSMConst.TB_COMP_INVOICE + "}} iv on "
