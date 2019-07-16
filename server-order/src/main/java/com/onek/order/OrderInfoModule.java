@@ -89,7 +89,7 @@ public class OrderInfoModule {
             " SELECT ap.orderno, ap.pdno, ap.asno, ap.compid, ap.astype, "
                     + " ap.gstatus, ap.reason, ap.ckstatus, ap.ckdate, ap.cktime, "
                     + " ap.ckdesc, ap.invoice, ap.cstatus, ap.apdata, ap.aptime, "
-                    + " ap.apdesc, ap.refamt, ap.asnum, ap.checkern, ap.compn, ap.invoicetype, "
+                    + " ap.apdesc, ap.refamt,ap.realrefamt, ap.asnum, ap.checkern, ap.compn, ap.invoicetype, "
                     + " goods.pdprice, goods.distprice, goods.payamt, goods.coupamt, "
                     + " goods.asstatus, goods.createdate, goods.createtime, goods.pnum, "
                     + " goods.balamt "
@@ -563,6 +563,7 @@ public class OrderInfoModule {
         ProdEntity prod;
         for (AsAppVO asAppVO : result) {
             asAppVO.setRefamt(MathUtil.exactDiv(asAppVO.getRefamt(), 100.0).doubleValue());
+            asAppVO.setRealrefamt(MathUtil.exactDiv(asAppVO.getRealrefamt(), 100.0).doubleValue());
             asAppVO.setPdprice(MathUtil.exactDiv(asAppVO.getPdprice(), 100.0).doubleValue());
             asAppVO.setDistprice(MathUtil.exactDiv(asAppVO.getDistprice(), 100.0).doubleValue());
             asAppVO.setPayamt(MathUtil.exactDiv(asAppVO.getPayamt(), 100.0).doubleValue());
