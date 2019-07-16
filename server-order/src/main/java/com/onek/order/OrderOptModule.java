@@ -1432,16 +1432,14 @@ public class OrderOptModule {
 
             pss.add(new Object[]{r ? 1 : -2, payUnq});
         }
-        int result =0 ;
+
         if (!pss.isEmpty()) {
             baseDao.updateBatchNativeSharding(year, compid, update, pss, pss.size());
-
-            //更新实际退款金额
-            String saleUpdSucces = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set realrefamt = ? where and asno=?  ";
-            result = baseDao.updateNativeSharding(0,TimeUtils.getCurrentYear(),saleUpdSucces,asno);
         }
-
-        return result>0 ? new Result().success("退款成功") : new Result().success("退款失败");
+        //更新实际退款金额订单状态至为300为退款成功
+        String saleUpdSucces = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set ckstatus = ?, realrefamt = ? where asno=?  ";
+        int result = baseDao.updateNativeSharding(0,TimeUtils.getCurrentYear(),saleUpdSucces,300,realrefamt * 100,asno);
+        return result>0 ? new Result().success("退款成功") : new Result().fail("退款失败");
     }
 
     /**
