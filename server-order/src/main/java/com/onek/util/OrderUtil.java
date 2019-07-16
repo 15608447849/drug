@@ -214,6 +214,9 @@ public class OrderUtil {
             } catch (Exception e) {
                 e.printStackTrace();
             }
+            if (!IceRemoteUtil.systemConfigOpen("SYNC_YKWL")){//不同步到ykwl
+                return;
+            }
             System.out.println("## 541 line "+compid+ ";"+orderno+" ####");
             List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
             if(list != null && list.size() > 0) {
@@ -339,6 +342,9 @@ public class OrderUtil {
                 OrderOptModule.generateNode(orderNo , compid, OrderOptModule.generateNodeObj(3));
             } else {//收货
                 OrderOptModule.generateNode(orderNo , compid, OrderOptModule.generateNodeObj(4));
+            }
+            if (!IceRemoteUtil.systemConfigOpen("SYNC_YKWL")){//不同步到ykwl
+                return;
             }
             int pubCompId = LccProperties.INSTANCE.pubercompid;
             MyOrderServerPrx myOrderServer =(MyOrderServerPrx) RpcClientUtil.getServicePrx(MyOrderServerPrx.class);
