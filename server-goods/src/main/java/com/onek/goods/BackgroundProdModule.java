@@ -516,7 +516,7 @@ public class BackgroundProdModule {
      * @传参列表 [商品名，厂家码，规格，准号，有效期，是否上架，spu，通用名]
      * @返回列表 code=200 data=结果信息
      */
-
+    @UserPermission(ignore = true)
     public Result queryProds(AppContext appContext) {
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
