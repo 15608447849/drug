@@ -39,6 +39,7 @@ import java.util.concurrent.Executors;
 
 import static com.onek.order.TranOrderOptModule.CONFIRM_RECEIPT;
 import static constant.DSMConst.TD_BK_TRAN_GOODS;
+import static constant.DSMConst.TD_BK_TRAN_ORDER;
 
 /**
  * @author 11842
@@ -123,9 +124,9 @@ public class OrderOptModule {
 
 
     //查询团购订单记录
-    private static final String QUERY_TEAM_BUY_ORDER_SQL = "select orderno,pdprice as payamt,compid,pnum from " +
-            " {{?" + TD_BK_TRAN_GOODS + "}} g " +
-            " where g.createdate >= ? and g.createdate <= ? and g.promtype& 4096 > 0 and actcode like concat('%',?,'%')";
+    private static final String QUERY_TEAM_BUY_ORDER_SQL = "select g.orderno,g.pdprice as payamt,g.compid,g.pnum from " +
+            " {{?" + TD_BK_TRAN_GOODS + "}} g , {{? "+ TD_BK_TRAN_ORDER+"}} o " +
+            " where g.orderno = o.orderno and o.settstatus = 1 and g.createdate >= ? and g.createdate <= ? and g.promtype& 4096 > 0  and g.actcode like concat('%',?,'%')";
 
     //更新订单售后状态
     private static final String UPD_ORDER_CK_SQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
