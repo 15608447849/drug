@@ -25,11 +25,11 @@ public class BackgroundAuditModule {
 
     /**
      * 管理后台审核操作
-     */
+
     public Result updateAudit(AppContext appContext){
         String json = appContext.param.json;
         UpdateAuditOp op =  GsonUtils.jsonToJavaBean(json, UpdateAuditOp.class);
         assert op!=null;
         return op.execute(appContext);
-    }
+    }  */
 }
