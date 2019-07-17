@@ -56,12 +56,12 @@ public class TranOrderOptModule {
     private static int cancelOrderMinute;
 
     static {
-        LccProperties lccProperties = LccProperties.INSTANCE;
-
         try {
+            LccProperties lccProperties = LccProperties.INSTANCE;
+
             cancelOrderMinute = Integer.parseInt(lccProperties.cancelOrderMinute);
         } catch (Exception e) {
-            cancelOrderMinute = 15;
+            cancelOrderMinute = 30;
         }
     }
 
