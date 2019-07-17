@@ -20,6 +20,9 @@ public class LccProperties extends ApplicationPropertiesBase {
 
     @PropertiesName("order.startaddr")
     public String startaddr;
+
+    @PropertiesName("cancel.order.time")
+    public String cancelOrderMinute;
 //
 //    @PropertiesName("order.robbid")
 //    public int robbid;

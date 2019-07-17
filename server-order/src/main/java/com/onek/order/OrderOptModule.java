@@ -451,7 +451,7 @@ public class OrderOptModule {
         int ckstatus = jsonObject.get("ckstatus").getAsInt();
         int astype = jsonObject.get("astype").getAsInt();
         double refamt = jsonObject.get("refamt").getAsDouble();
-        double realrefamt = jsonObject.get("realrefamt").getAsDouble();
+        //double realrefamt = jsonObject.get("realrefamt").getAsDouble();
 
         String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
 
@@ -464,7 +464,7 @@ public class OrderOptModule {
 
         int ret = baseDao.updateNativeSharding(0,
                 TimeUtils.getCurrentYear(), UPD_ASAPP_CK_SQL,
-                ckstatus, userSession.userId, userSession.userName, astype, ckdesc, refamt * 100, realrefamt * 100, asno);
+                ckstatus, userSession.userId, userSession.userName, astype, ckdesc, refamt * 100, 0, asno);
         //此处仅进行审核申请
         if (ret > 0) {
             //退货失败
@@ -1224,7 +1224,7 @@ public class OrderOptModule {
         double refamt = jsonObject.get("refamt").getAsDouble();
         //实际退款金额
         double realrefamt = jsonObject.get("realrefamt").getAsString().isEmpty() ? 0 : jsonObject.get("realrefamt").getAsDouble();
-        ;
+
         //售后类型
         int astype = jsonObject.get("astype").getAsInt();
 
@@ -1285,26 +1285,36 @@ public class OrderOptModule {
                 // 总数量
                 int pnum = Integer.parseInt(queryResult.get(0)[8].toString());
                 double payamt = Double.parseDouble(queryResult.get(0)[6].toString());
-                LogUtil.getDefaultLogger().debug("余额抵扣=" + balamt + "  个人支付金额：=" + payamt);
+                LogUtil.getDefaultLogger().debug("实际退款金额："+ realrefamt +"   余额抵扣=" + balamt + "  个人支付金额：=" + payamt);
 
-                BigDecimal balDe = new BigDecimal(balamt);//余额
-                BigDecimal payDe = new BigDecimal(payamt);//支付金额
+                BigDecimal balDe = new BigDecimal(String.valueOf(balamt));//余额
+                BigDecimal payDe = new BigDecimal(String.valueOf(payamt));//支付金额
+                BigDecimal realrefamtDe = new BigDecimal(String.valueOf(realrefamt));//退款金额
                 double sumamt = balDe.add(payDe).doubleValue();
-                if (balamt > 0) {
-                    balamt = MathUtil.exactDiv(balamt, sumamt).multiply(new BigDecimal(realrefamt)).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                }
-                if (payamt > 0) {
-                    payamt = MathUtil.exactDiv(payamt, sumamt).multiply(new BigDecimal(realrefamt)).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                if (payamt > 0 && balamt>0) { //移动支付和余额支付同时存在
+                    if(realrefamt>payamt){ //退款金额大于余额支付时，移动支付金额不变，余额退款金额=退款金额-移动支付金额
+                        balamt = realrefamtDe.subtract(payDe).doubleValue();
+                    }else{ //退款金额小于移动支付时，优先退移动支付，退款金额为实际退款金额，余额不予退款
+                        payamt = realrefamt;
+                        balamt = 0;
+                    }
+                }else{//移动支付与余额支付只取一个
+                    if(payamt>0){//支付为线上支付
+                        payamt = realrefamt;
+                    }
+                    if(balamt>0){
+                        balamt = realrefamt;
+                    }
                 }
                 //退款分摊余额金额
 
-                LogUtil.getDefaultLogger().debug("审核通过获取退款总余额：" + realrefamt + "其中余额抵扣占比=" + balamt + "  个人支付金额占比：=" + payamt);
+                LogUtil.getDefaultLogger().debug("审核通过获取退款总余额：" + realrefamt + "其中余额抵扣=" + balamt + "  个人支付金额：=" + payamt);
 
                 //获取余额抵扣退货金额
                 if (balamt > 0) {
                     List<Object[]> qresult = baseDao.queryNativeSharding(compid,
                             TimeUtils.getYearByOrderno(queryRet.get(0)[0].toString()),
-                            " SELECT paysource, payway, payprice, payno, tppno "
+                            " SELECT paysource, payway, payprice/100, payno, tppno "
                                     + " FROM {{?" + DSMConst.TD_TRAN_TRANS + "}} "
                                     + " WHERE cstatus&1 = 0 AND orderno = ? AND payway = 0 ",
                             queryRet.get(0)[0].toString());
@@ -1345,7 +1355,7 @@ public class OrderOptModule {
                                     + " WHERE cstatus&1 = 0 AND orderno = ? AND payway IN (1, 2) ", queryRet.get(0)[0].toString());
 
                     if (!qresult.isEmpty()) {
-                        p2 = qresult.get(0)[2].toString();
+                        p2 = String.valueOf(MathUtil.exactDiv(Long.parseLong(qresult.get(0)[2].toString()), 100.0).doubleValue());
 
                         if (pnum == asnum) {
                             subpay = payamt;

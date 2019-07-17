@@ -18,6 +18,7 @@ import com.onek.entity.TranOrder;
 import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
 import com.onek.prop.AppProperties;
+import com.onek.property.LccProperties;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
 import com.onek.util.*;
@@ -50,10 +51,22 @@ import static com.onek.order.PayModule.*;
  * @time 2019/4/16 16:01
  **/
 public class TranOrderOptModule {
+
     private static AppProperties appProperties = AppProperties.INSTANCE;
+    private static int cancelOrderMinute;
+
+    static {
+        try {
+            LccProperties lccProperties = LccProperties.INSTANCE;
+
+            cancelOrderMinute = Integer.parseInt(lccProperties.cancelOrderMinute);
+        } catch (Exception e) {
+            cancelOrderMinute = 30;
+        }
+    }
 
     public static final DelayedHandler<TranOrder> CANCEL_DELAYED =
-            new RedisDelayedHandler<>("_CANEL_ORDERS", 15,
+            new RedisDelayedHandler<>("_CANEL_ORDERS", cancelOrderMinute,
                     (d) -> new TranOrderOptModule().cancelOrder(d.getOrderno(), d.getCusno()),
                     DelayedHandler.TIME_TYPE.MINUTES);
 

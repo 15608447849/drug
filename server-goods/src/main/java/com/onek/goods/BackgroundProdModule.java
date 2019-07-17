@@ -390,9 +390,6 @@ public class BackgroundProdModule {
 
         BgProdVO result = getProd(params[0]);
 
-        //设置毛利润
-        result.setGrossProfit(result.getRrp(),result.getVatp());
-
         if (result == null) {
             return new Result().fail("无此商品");
         }
@@ -408,6 +405,9 @@ public class BackgroundProdModule {
                 result.setVatp(-2);
             }
         }
+
+        //设置毛利润
+        result.setGrossProfit(result.getRrp(),result.getVatp());
 
         JSONObject jo = JSON.parseObject(JSON.toJSONString(result));
 
@@ -516,7 +516,7 @@ public class BackgroundProdModule {
      * @传参列表 [商品名，厂家码，规格，准号，有效期，是否上架，spu，通用名]
      * @返回列表 code=200 data=结果信息
      */
-
+    @UserPermission(ignore = true)
     public Result queryProds(AppContext appContext) {
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
