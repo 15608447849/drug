@@ -451,7 +451,7 @@ public class OrderOptModule {
         int ckstatus = jsonObject.get("ckstatus").getAsInt();
         int astype = jsonObject.get("astype").getAsInt();
         double refamt = jsonObject.get("refamt").getAsDouble();
-        double realrefamt = jsonObject.get("realrefamt").getAsDouble();
+        //double realrefamt = jsonObject.get("realrefamt").getAsDouble();
 
         String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
 
@@ -464,7 +464,7 @@ public class OrderOptModule {
 
         int ret = baseDao.updateNativeSharding(0,
                 TimeUtils.getCurrentYear(), UPD_ASAPP_CK_SQL,
-                ckstatus, userSession.userId, userSession.userName, astype, ckdesc, refamt * 100, realrefamt * 100, asno);
+                ckstatus, userSession.userId, userSession.userName, astype, ckdesc, refamt * 100, 0, asno);
         //此处仅进行审核申请
         if (ret > 0) {
             //退货失败
