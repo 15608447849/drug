@@ -994,7 +994,8 @@ public class BackGroundProxyMoudule {
 
         List<Object[]> queryResult = null;
 
-        if((roleCode & (RoleCodeCons._PROXY_PARTNER +RoleCodeCons._PROXY_MGR)) > 0){
+        if((roleCode & (RoleCodeCons._PROXY_PARTNER +RoleCodeCons._PROXY_MGR)) > 0
+                && (roleid & RoleCodeCons._DBM) > 0){
             String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? " +
                     "and uid in (select distinct uid from {{?" +DSMConst.TB_PROXY_UAREA+"}} where areac = ? and cstatus & 1 = 0)";
             queryResult = baseDao.queryNative(selectSQL,roleid,cid,areac);
@@ -1002,7 +1003,7 @@ public class BackGroundProxyMoudule {
             return  result.success(convBdList(queryResult));
         }
 
-        if((roleCode & RoleCodeCons._DBM) > 0){
+        if((roleCode & RoleCodeCons._DBM) > 0 &&  (roleid & RoleCodeCons._DB) > 0){
             String selectSQL =  " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0" +
                     " and cstatus & 1 = 0 and belong = ? or uid = ? "+
             "and uid in (select distinct uid from {{?" +DSMConst.TB_PROXY_UAREA+"}} where areac = ? and cstatus & 1 = 0)";
@@ -1169,7 +1170,9 @@ public class BackGroundProxyMoudule {
 
         String selectSQL = "select distinct cp.cid companyId,tu.uphone phone,tu.uid,cname company,caddrcode addressCode, "
                 + "caddr address,createdate,createtime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName," +
-                " stu.uphone cursorPhone,IFNULL(sstu.uid,bdu.uid) bdmid,IFNULL(sstu.urealname,bdu.urealname) bdmn,control from {{?"
+                " stu.uphone cursorPhone,if(sstu.uid is not null and sstu.roleid & 4096 > 0," +
+                "sstu.uid,bdu.uid) bdmid,if(sstu.uid is not null and sstu.roleid & 4096 > 0," +
+                "sstu.urealname,bdu.urealname) bdmn,control from {{?"
                 + DSMConst.TB_COMP + "}} cp  join {{?" + DSMConst.TB_SYSTEM_USER + "}} tu  on cp.cid = tu.cid "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} stu on stu.uid = cp.inviter "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} sstu on sstu.uid = stu.belong "
