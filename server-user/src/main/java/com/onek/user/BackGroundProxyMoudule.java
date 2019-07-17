@@ -1583,8 +1583,6 @@ public class BackGroundProxyMoudule {
                 compInfoVO.setStoretype(storetype);
                 SyncCustomerInfoModule.addOrUpdateCus(compInfoVO);
             }
-
-
             return b ? result.success("保存成功") : result.fail("保存失败");
         } else {
             return result.fail("资质信息未完善！");

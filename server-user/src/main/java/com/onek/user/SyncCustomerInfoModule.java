@@ -12,6 +12,7 @@ import com.onek.user.entity.AptitudeVO;
 import com.onek.user.entity.CompInfoVO;
 import com.onek.user.entity.ConsigneeVO;
 import com.onek.user.operations.UpdateAuditOp;
+import com.onek.user.operations.UpdateStoreOp;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
@@ -28,7 +29,7 @@ import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.*;
 
-import static com.onek.util.IceRemoteUtil.sendMessageToClient;
+import static com.onek.user.operations.StoreBasicInfoOp.updateCompInfoToCacheById;
 import static com.onek.util.SmsTempNo.AUTHENTICATION_FAILURE;
 import static com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS;
 
@@ -279,7 +280,7 @@ public class SyncCustomerInfoModule {
         int state = jsonObject.get("state").getAsInt();
         String updSQL = "update {{?" + DSMConst.TB_COMP + "}} set cstatus=?,auditdate=CURRENT_DATE, "
                 + " audittime=CURRENT_TIME where cstatus&1=0 and cid=?";
-        RedisUtil.getStringProvide().delete(""+compid);
+
         int code =  baseDao.updateNative(updSQL, state, compid);
         if (code > 0) {
             otherOpt(compid, state);
@@ -304,9 +305,8 @@ public class SyncCustomerInfoModule {
             } else {
                 message = "信息有误";
             }
-            sendMessageToClient(compId,"aud:刷新用户信息");
+            updateCompInfoToCacheById(compId);
             IceRemoteUtil.sendTempMessageToClient(compId, tempNo);
-
             SmsUtil.sendSmsBySystemTemp(phone + "",tempNo, message);
         });
     }

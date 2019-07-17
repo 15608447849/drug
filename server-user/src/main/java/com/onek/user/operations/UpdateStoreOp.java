@@ -91,9 +91,9 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 return new Result().fail("此用户无法关联门店信息");
             }
         }
-        //修改门店信息
+        //修改门店信息 移除: cstatus=128,  #由原来的修改变成审核->不改变门店现有状态
         String updateSql = "UPDATE {{?" + TB_COMP + "}} " +
-                "SET cname=?,cnamehash=crc32(?),caddr=?,caddrcode=?,lat=?,lng=?,cstatus=?,submitdate=CURRENT_DATE,submittime=CURRENT_TIME," +
+                "SET cname=?,cnamehash=crc32(?),caddr=?,caddrcode=?,lat=?,lng=?,submitdate=CURRENT_DATE,submittime=CURRENT_TIME," +
                 " storetype=? WHERE ctype=0 AND cstatus&1=0 AND cid=?";
         int i = BaseDAO.getBaseDAO().updateNative(updateSql,
                 storeName,
@@ -102,7 +102,6 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 addressCode,
                 latitude,
                 longitude,
-                128, //审核中
                 storetype,
                 session.compId
         );

@@ -1,6 +1,7 @@
 package com.onek.user.operations;
 
 import com.onek.context.StoreBasicInfo;
+import com.onek.util.IceRemoteUtil;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
 import util.GsonUtils;
@@ -38,7 +39,10 @@ public class StoreBasicInfoOp {
     //企业信息 json保存到缓存 -> 企业码 = 企业信息json
     private static void infoToCache(StoreBasicInfo info) {
         if (info.storeId>0){
+            RedisUtil.getStringProvide().delete(""+info.storeId);
             RedisUtil.getStringProvide().set(""+info.storeId, GsonUtils.javaBeanToJson(info) );
+            //通知客户端刷新
+            IceRemoteUtil.sendMessageToClient(info.storeId,"ref:刷新用户信息");
         }
     }
 
