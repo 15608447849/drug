@@ -1287,9 +1287,9 @@ public class OrderOptModule {
                 double payamt = Double.parseDouble(queryResult.get(0)[6].toString());
                 LogUtil.getDefaultLogger().debug("实际退款金额："+ realrefamt +"   余额抵扣=" + balamt + "  个人支付金额：=" + payamt);
 
-                BigDecimal balDe = new BigDecimal(balamt);//余额
-                BigDecimal payDe = new BigDecimal(payamt);//支付金额
-                BigDecimal realrefamtDe = new BigDecimal(realrefamt);//退款金额
+                BigDecimal balDe = new BigDecimal(String.valueOf(balamt));//余额
+                BigDecimal payDe = new BigDecimal(String.valueOf(payamt));//支付金额
+                BigDecimal realrefamtDe = new BigDecimal(String.valueOf(realrefamt));//退款金额
                 double sumamt = balDe.add(payDe).doubleValue();
                 if (payamt > 0 && balamt>0) { //移动支付和余额支付同时存在
                     if(realrefamt>payamt){ //退款金额大于余额支付时，移动支付金额不变，余额退款金额=退款金额-移动支付金额
