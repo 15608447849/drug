@@ -1298,6 +1298,13 @@ public class OrderOptModule {
                         payamt = realrefamt;
                         balamt = 0;
                     }
+                }else{//移动支付与余额支付只取一个
+                    if(payamt>0){//支付为线上支付
+                        payamt = realrefamt;
+                    }
+                    if(balamt>0){
+                        balamt = realrefamt;
+                    }
                 }
                 //退款分摊余额金额
 
