@@ -441,9 +441,9 @@ public class OrderOptModule {
         Result result = new Result();
         JsonParser jsonParser = new JsonParser();
         UserSession userSession = appContext.getUserSession();
-        if (userSession == null || (userSession.roleCode & (128 + 1)) == 0) {
-            return result.fail("当前用户没有该权限");
-        }
+//        if (userSession == null || (userSession.roleCode & (128 + 1)) == 0) {
+//            return result.fail("当前用户没有该权限");
+//        }
 
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long asno = jsonObject.get("asno").getAsLong();
