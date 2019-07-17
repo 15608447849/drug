@@ -1224,7 +1224,7 @@ public class OrderOptModule {
         double refamt = jsonObject.get("refamt").getAsDouble();
         //实际退款金额
         double realrefamt = jsonObject.get("realrefamt").getAsString().isEmpty() ? 0 : jsonObject.get("realrefamt").getAsDouble();
-        ;
+
         //售后类型
         int astype = jsonObject.get("astype").getAsInt();
 
@@ -1285,20 +1285,23 @@ public class OrderOptModule {
                 // 总数量
                 int pnum = Integer.parseInt(queryResult.get(0)[8].toString());
                 double payamt = Double.parseDouble(queryResult.get(0)[6].toString());
-                LogUtil.getDefaultLogger().debug("余额抵扣=" + balamt + "  个人支付金额：=" + payamt);
+                LogUtil.getDefaultLogger().debug("实际退款金额："+ realrefamt +"   余额抵扣=" + balamt + "  个人支付金额：=" + payamt);
 
                 BigDecimal balDe = new BigDecimal(balamt);//余额
                 BigDecimal payDe = new BigDecimal(payamt);//支付金额
+                BigDecimal realrefamtDe = new BigDecimal(realrefamt);//退款金额
                 double sumamt = balDe.add(payDe).doubleValue();
-                if (balamt > 0) {
-                    balamt = MathUtil.exactDiv(balamt, sumamt).multiply(new BigDecimal(realrefamt)).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-                }
-                if (payamt > 0) {
-                    payamt = MathUtil.exactDiv(payamt, sumamt).multiply(new BigDecimal(realrefamt)).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+                if (payamt > 0 && balamt>0) { //移动支付和余额支付同时存在
+                    if(realrefamt>payamt){ //退款金额大于余额支付时，移动支付金额不变，余额退款金额=退款金额-移动支付金额
+                        balamt = realrefamtDe.subtract(payDe).doubleValue();
+                    }else{ //退款金额小于移动支付时，优先退移动支付，退款金额为实际退款金额，余额不予退款
+                        payamt = realrefamt;
+                        balamt = 0;
+                    }
                 }
                 //退款分摊余额金额
 
-                LogUtil.getDefaultLogger().debug("审核通过获取退款总余额：" + realrefamt + "其中余额抵扣占比=" + balamt + "  个人支付金额占比：=" + payamt);
+                LogUtil.getDefaultLogger().debug("审核通过获取退款总余额：" + realrefamt + "其中余额抵扣=" + balamt + "  个人支付金额：=" + payamt);
 
                 //获取余额抵扣退货金额
                 if (balamt > 0) {
