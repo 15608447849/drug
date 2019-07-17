@@ -2,6 +2,7 @@ package com.onek.order;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entitys.Result;
@@ -39,6 +40,7 @@ public class BackOrderInfoModule {
      * @传参列表 [卖家码，买家码，订单状态，订单号，订单时间起，订单时间止]
      * @返回列表 code=200 data=结果信息
      */
+    @UserPermission(ignore = true)
     public Result queryOrders(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
