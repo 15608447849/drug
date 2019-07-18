@@ -81,4 +81,8 @@ public class Ladoff {
     public void setGiftList(List<Gift> giftList) {
         this.giftList = giftList;
     }
+
+    public boolean isPercentage() {
+        return (this.cstatus & 256) > 0;
+    }
 }

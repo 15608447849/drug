@@ -4,6 +4,7 @@ import com.onek.calculate.entity.Gift;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.util.DiscountUtil;
+import util.MathUtil;
 
 import java.util.List;
 
@@ -64,14 +65,24 @@ public final class RuleParser {
     }
 
     private ValueAndTimes getValueAndTimes(IDiscount discount, Ladoff ladoff) {
+        double currentPrice = DiscountUtil.getCurrentPriceTotal(discount.getProductList());
+        int totalNum = DiscountUtil.getNumTotal(discount.getProductList());
+
         int times = CALTIMES_STRATEGY[getCalStrategy() - 1]
                 .getTimes(
                         ladoff.getLadnum(),
-                        DiscountUtil.getNumTotal(discount.getProductList()),
+                        totalNum,
                         ladoff.getLadamt(),
-                        DiscountUtil.getCurrentPriceTotal(discount.getProductList()));
+                        currentPrice);
 
-        return new ValueAndTimes(ladoff.getOffer(), times);
+        double value = ladoff.getOffer();
+
+        if (ladoff.isPercentage()) {
+            value = MathUtil.exactMul(
+                    currentPrice, ladoff.getOffer()).setScale(2).doubleValue();
+        }
+
+        return new ValueAndTimes(value, times);
     }
 
     private static class ValueAndTimes {
