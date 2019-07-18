@@ -1198,6 +1198,7 @@ public class BackgroundProdModule {
 
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return new Result().fail(e.getMessage());
         }
 
