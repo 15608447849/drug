@@ -6,6 +6,7 @@ package com.onek.goods.mainpagebean;
  */
 public class UiElement {
     public String name;//元素页面显示名 - 如: 为你精选
+
     public int index; //位置下标
 
     public String module; // 模块类型, 1.bar 2.楼层 3.专区
@@ -22,5 +23,7 @@ public class UiElement {
     public long code;//活动复合码,数据表示码
 
     public  String dtlImg;//详情页图片
+
+    public String extLink; //品牌外链等信息
 
 }
