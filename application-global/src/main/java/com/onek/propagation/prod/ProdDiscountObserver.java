@@ -84,7 +84,7 @@ public class ProdDiscountObserver implements ProdObserver {
                     if (jsonObject.containsKey("limitnum")) {
                         limitnum = Integer.parseInt(jsonObject.get("limitnum").toString());
                     }
-                    LogUtil.getDefaultLogger().info("++++++@@@@@@@@@@ actcode:[" + actcode + "]; spu:[" + gcode + "]; stock:[" + stock + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
+                    LogUtil.getDefaultLogger().info("All or CLASS ++++++@@@@@@@@@@ actcode:[" + actcode + "]; spu:[" + gcode + "]; stock:[" + stock + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
                     if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 256) > 0) { // 库存比例
                         if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 1) > 0) { // 删除
                             List<Long> skuList = IceRemoteUtil.querySkuListByCondition(Long.parseLong(gcode));
@@ -130,9 +130,10 @@ public class ProdDiscountObserver implements ProdObserver {
                                     }
                                 }
                             }else{
+                                LogUtil.getDefaultLogger().info("100%   ++++++@@@@@@@@@@ actcode:[" + actcode + "]; spu:[" + gcode + "]; stock:[" + stock + "]; cstatus:[" + jsonObject.get("cstatus") + "]  @@@@@@@@@@+++++++");
                                 List<Long> skuList = IceRemoteUtil.querySkuListByCondition(Long.parseLong(gcode));
                                 for (Long sku : skuList) {
-                                    RedisStockUtil.setSpecActStock(Long.parseLong(gcode), actcode, limitnum);
+                                    RedisStockUtil.setSpecActStock(sku, actcode, limitnum);
                                     actStockMap.put(sku+"", "ALL");
                                 }
                             }

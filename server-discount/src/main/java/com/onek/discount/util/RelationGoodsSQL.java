@@ -16,7 +16,7 @@ public class RelationGoodsSQL {
             " SUBSTR(sku,2,2) as classno2,sku,systore, sum(used) as uused, (systore-sum(used)) as notused from ( " +
             " select sku,systore, used  from ( " +
             " SELECT sku,gcode,(store-freezestore) as systore, " +
-            " ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
+            " ceil(IF( ua.cstatus & 256 > 0 and actstock <100, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
             " ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM  " +
             " (SELECT " +
             " spu,sku,gcode,store,freezestore,actstock,a.cstatus  " +
