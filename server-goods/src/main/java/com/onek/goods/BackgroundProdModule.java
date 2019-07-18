@@ -225,7 +225,7 @@ public class BackgroundProdModule {
     }
 
     private boolean checkStore(long sku, int store) {
-        boolean result = sku > 0 && store > 0;
+        boolean result = sku > 0 && store >= 0;
 
         if (result) {
             String sql = " SELECT s.freezestore "
