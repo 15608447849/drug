@@ -34,6 +34,7 @@ import org.elasticsearch.search.SearchHit;
 import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
+import util.ModelUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
@@ -688,14 +689,19 @@ public class BackgroundProdModule {
             RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
 
             try {
-                BASE_DAO.updateTransNative(
-                        new String[] { INSERT_PROD_SPU, INSERT_PROD_SKU },
-                        params);
+                int[] result = BASE_DAO.updateTransNative(
+                    new String[] { INSERT_PROD_SPU, INSERT_PROD_SKU },
+                    params);
+
+                if (ModelUtil.updateTransEmpty(result)) {
+                    throw new Exception("商品增加失败！");
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 ProdESUtil.deleteProdDocument(Long.parseLong(sku));
                 RedisUtil.getStringProvide().decrease(spu);
-                throw new IllegalArgumentException("SQL异常");
+                throw new IllegalArgumentException(e);
             }
         }
 
