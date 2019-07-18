@@ -648,7 +648,7 @@ public class IceRemoteUtil {
      */
     public static int revNewComerCoupon(int compid,long pho){
         try {
-            String result = ic.setServerAndRequest("discountServer","CouponManageModule","revNewComerCoupon")
+            String result = ic.setServerAndRequest("discountServer","CouponManageModule","revNewComerCoupons")
                     .setArrayParams(compid,pho)
                     .execute();
             Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
@@ -838,6 +838,25 @@ public class IceRemoteUtil {
         return Integer.parseInt(result);
     }
 
+    /**
+     * 记录新人有礼活动领取优惠券记录
+     * @param compid
+     * @param content
+     * @return
+     */
+    public static int insertNewComerCoups(int compid,String content){
+        try {
+            String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"CouponRevModule","revNewCoupons")
+                    .settingParam(content)
+                    .execute();
+            Result ret = GsonUtils.jsonToJavaBean(result,Result.class);
+            assert ret != null;
+            return ret.code;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
 
     public static void main(String[] args) {
         System.out.println(mainPageInfo());
