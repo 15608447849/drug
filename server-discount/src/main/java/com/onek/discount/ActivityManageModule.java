@@ -1194,15 +1194,20 @@ public class ActivityManageModule {
                 });
             }
             for (GoodsVO goodsVO : goodsVOList) {
-                int actStock = goodsVO.getActstock();
-                if ((goodsVO.getCstatus() & 256) > 0) {
-                    actStock = (int) Math.ceil(stockMap.get(goodsVO.getGcode()).getStore() * 0.01 * actStock);
-                }
-                long stock = stockMap.get(goodsVO.getGcode()).getAvailable() - actStock;
+                if ((goodsVO.getCstatus() & 256) > 0 && goodsVO.getActstock() == 100 ) {
+                    LogUtil.getDefaultLogger().info("库存占比100%，不进行校验!");
+                } else {
+                    int actStock = goodsVO.getActstock();
+                    if ((goodsVO.getCstatus() & 256) > 0) {
+                        actStock = (int) Math.ceil(stockMap.get(goodsVO.getGcode()).getStore() * 0.01 * actStock);
+                    }
+                    long stock = stockMap.get(goodsVO.getGcode()).getAvailable() - actStock;
 
-                if (stock < 0) {
-                    return ProdInfoStore.getProdBySku(goodsVO.getGcode()).getProdname();
+                    if (stock < 0) {
+                        return ProdInfoStore.getProdBySku(goodsVO.getGcode()).getProdname();
+                    }
                 }
+
             }
         }
         return null;
