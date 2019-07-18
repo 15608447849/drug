@@ -562,7 +562,7 @@ public class MainPageModule {
         if (StringUtils.isEmpty(json)){
             map = new HashMap<>();
             try {
-                String sql = "SELECT uiname,uimodel,uioption,codes,seq,route,temp FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
+                String sql = "SELECT uiname,uimodel,uioption,codes,seq,attr,temp,extlink FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
                 List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
                 if (lines.size() > 0) {
                     for (Object[] rows : lines) {
@@ -576,7 +576,7 @@ public class MainPageModule {
                         el.index = StringUtils.checkObjectNull(rows[4], 0);
                         el.route = StringUtils.obj2Str(rows[5]);
                         el.template = StringUtils.checkObjectNull(rows[6],0);
-
+                        el.extLink = StringUtils.obj2Str(rows[7]);
                         genElementAttr(el);
                         if (map.containsKey(el.module)) {
                             map.get(el.module).add(el);
