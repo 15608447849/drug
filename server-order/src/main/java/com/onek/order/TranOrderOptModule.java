@@ -325,30 +325,30 @@ public class TranOrderOptModule {
     }
 
     private void otherPlaceOrderOpt(TranOrder tranOrder, long coupon, String orderNo, List<TranOrderGoods> tranOrderGoods, double bal) {
-        ExecutorService executorService = Executors.newSingleThreadExecutor();
-        executorService.execute(()->{
-            try{
-                List<String> sqlList = new ArrayList<>();
-                List<Object[]> params = new ArrayList<>();
-                sqlList.add(UPDATE_COMP_BAL);
-                params.add(new Object[]{-new Double(bal).intValue(),-new Double(bal).intValue(),tranOrder.getCusno()});
-                updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
-                if (coupon > 0) {
-                    sqlList.add(UPDATE_PROM_COURCD);
-                    params.add(new Object[]{coupon, tranOrder.getCusno()});
-                }
-                addActBuyNum(tranOrder.getCusno(), tranOrderGoods);
-                RedisOrderUtil.addOrderNumByCompid(tranOrder.getCusno());
-                String[] sqlNative = new String[sqlList.size()];
-                sqlNative = sqlList.toArray(sqlNative);
-                //远程调用
-                LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作开始");
-                boolean b = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateTransNative(sqlNative,params));
-                LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作结果code>>>> " + b);
-            }catch (Exception e){
-                e.printStackTrace();
-            }
-        });
+        updateSku(tranOrderGoods);//若失败则需要处理（保证一致性）
+        List<String> sqlList = new ArrayList<>();
+        List<Object[]> params = new ArrayList<>();
+        sqlList.add(UPDATE_COMP_BAL);
+        params.add(new Object[]{-new Double(bal).intValue(),-new Double(bal).intValue(),tranOrder.getCusno()});
+        if (coupon > 0) {
+            sqlList.add(UPDATE_PROM_COURCD);
+            params.add(new Object[]{coupon, tranOrder.getCusno()});
+        }
+        String[] sqlNative = new String[sqlList.size()];
+        sqlNative = sqlList.toArray(sqlNative);
+        //远程调用
+        LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作开始");
+        boolean b = !ModelUtil.updateTransEmpty(IceRemoteUtil.updateTransNative(sqlNative,params));
+        LogUtil.getDefaultLogger().info("订单号：【" + orderNo + "】-->>>print by cyq ---- 下单优惠券使用操作结果code>>>> " + b);
+        addActBuyNum(tranOrder.getCusno(), tranOrderGoods);
+        RedisOrderUtil.addOrderNumByCompid(tranOrder.getCusno());
+//        ExecutorService executorService = Executors.newSingleThreadExecutor();
+//        executorService.execute(()->{
+//            try{
+//            }catch (Exception e){
+//                e.printStackTrace();
+//            }
+//        });
     }
 
 
