@@ -150,7 +150,8 @@ public class StaffImportModule {
 
 
         for (StaffImpVO staffImpVO: staffImpVOList){
-            if(staffImpVO.getRoleName().equals("合伙人")){
+
+            if(staffImpVO.getRoleName().startsWith("合伙人")){
                 partnerList.add(staffImpVO);
             }else if(staffImpVO.getRoleName().equals("BDM")){
                 bdmList.add(staffImpVO);
@@ -229,10 +230,16 @@ public class StaffImportModule {
         List<String> sqlList = new ArrayList<>();
         List<Object[]> parmList = new ArrayList<>();
 
+
+
         String updateUserSql = "update {{?" + DSMConst.TB_SYSTEM_USER + "}} "
                 + " set urealname = ?,roleid = ?,adddate = CURRENT_DATE,addtime = CURRENT_TIME,belong = ?," +
                 "cstatus = ? where uphone = ? ";
         for (StaffImpVO staffImpVO: partnerList){
+            int roleid = 2048;
+            if(staffImpVO.getRoleName().contains("BDM")){
+                roleid = 2048 | 4096;
+            }
             List<Object[]> userExt = baseDao.queryNative(SELECT_USER_BYUPHONE, staffImpVO.getUphone());
             List<Object[]> belongExt = baseDao.queryNative(SELECT_USER_BYUPHONE, staffImpVO.getBmanager());
             int belong = 0;
@@ -243,7 +250,7 @@ public class StaffImportModule {
             if(userExt != null && !userExt.isEmpty()){
                 uid = Integer.parseInt(userExt.get(0)[0].toString());
                 parmList.add(new Object[]{staffImpVO.getUname(),
-                        roleMap.get(staffImpVO.getRoleName()),
+                        roleid,
                         belong,0,staffImpVO.getUphone()
                 });
 
@@ -258,7 +265,7 @@ public class StaffImportModule {
                 long compid = RedisGlobalKeys.getProxyCompanyCode();
 
                 parmList.add(new Object[]{uid,staffImpVO.getUphone(),staffImpVO.getUname(),pwd,
-                        roleMap.get(staffImpVO.getRoleName()),belong,0,compid});
+                        roleid,belong,0,compid});
 
                 parmList.add(new Object[]{2,compid,staffImpVO.getPartnerName(),
                         staffImpVO.getPartnerName(),0});
@@ -331,7 +338,7 @@ public class StaffImportModule {
         for (StaffImpVO staffImpVO: bdmList){
             List<Object[]> userExt = baseDao.queryNative(SELECT_USER_BYUPHONE, staffImpVO.getUphone());
             List<Object[]> belongExt = baseDao.queryNative(SELECT_USER_BYUPHONE, staffImpVO.getBpartner());
-            List<Object[]> belongCidExt = baseDao.queryNative(SELECT_COMP_BYUPHONE, staffImpVO.getBpartner());
+
             int belong = 0;
             int belongCid = 0;
             int uid = 0;
@@ -339,9 +346,15 @@ public class StaffImportModule {
                 belong = Integer.parseInt(belongExt.get(0)[0].toString());
             }
 
-            if(belongCidExt != null && !belongCidExt.isEmpty()){
-                belongCid = Integer.parseInt(belongCidExt.get(0)[0].toString());
+            if(staffImpVO.getPartnerName().equals("直营")){
+                belongCid = 100000001;
+            }else{
+                List<Object[]> belongCidExt = baseDao.queryNative(SELECT_COMP_BYUPHONE, staffImpVO.getBpartner());
+                if(belongCidExt != null && !belongCidExt.isEmpty()){
+                    belongCid = Integer.parseInt(belongCidExt.get(0)[0].toString());
+                }
             }
+
             if(userExt != null && !userExt.isEmpty()){
                 uid = Integer.parseInt(userExt.get(0)[0].toString());
                 parmList.add(new Object[]{staffImpVO.getUname(),
@@ -383,7 +396,7 @@ public class StaffImportModule {
         for (StaffImpVO staffImpVO: bdmList){
             List<Object[]> userExt = baseDao.queryNative(SELECT_USER_BYUPHONE, staffImpVO.getUphone());
             List<Object[]> belongExt = baseDao.queryNative(SELECT_USER_BYUPHONE, staffImpVO.getBbdm());
-            List<Object[]> belongCidExt = baseDao.queryNative(SELECT_COMP_BYUPHONE, staffImpVO.getBpartner());
+           // List<Object[]> belongCidExt = baseDao.queryNative(SELECT_COMP_BYUPHONE, staffImpVO.getBpartner());
             int belong = 0;
             int belongCid = 0;
             int uid = 0;
@@ -391,8 +404,13 @@ public class StaffImportModule {
                 belong = Integer.parseInt(belongExt.get(0)[0].toString());
             }
 
-            if(belongCidExt != null && !belongCidExt.isEmpty()){
-                belongCid = Integer.parseInt(belongCidExt.get(0)[0].toString());
+            if(staffImpVO.getPartnerName().equals("直营")){
+                belongCid = 100000001;
+            }else{
+                List<Object[]> belongCidExt = baseDao.queryNative(SELECT_COMP_BYUPHONE, staffImpVO.getBpartner());
+                if(belongCidExt != null && !belongCidExt.isEmpty()){
+                    belongCid = Integer.parseInt(belongCidExt.get(0)[0].toString());
+                }
             }
             if(userExt != null && !userExt.isEmpty()){
                 uid = Integer.parseInt(userExt.get(0)[0].toString());
