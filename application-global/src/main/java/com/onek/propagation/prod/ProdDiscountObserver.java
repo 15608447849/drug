@@ -130,8 +130,11 @@ public class ProdDiscountObserver implements ProdObserver {
                                     }
                                 }
                             }else{
-                                RedisStockUtil.setSpecActStock(Long.parseLong(gcode), actcode, limitnum);
-                                actStockMap.put(gcode+"", "ALL");
+                                List<Long> skuList = IceRemoteUtil.querySkuListByCondition(Long.parseLong(gcode));
+                                for (Long sku : skuList) {
+                                    RedisStockUtil.setSpecActStock(Long.parseLong(gcode), actcode, limitnum);
+                                    actStockMap.put(sku+"", "ALL");
+                                }
                             }
                         }
 
