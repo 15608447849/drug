@@ -1537,6 +1537,7 @@ public class BackGroundProxyMoudule {
      * @返回列表 200成功
      */
     public Result storePerfectingInfo(AppContext appContext) {
+        boolean b = true;
         String taxpayer = "";//营业执照证件编号（纳税人识别号）
         Result result = new Result();
         String json = appContext.param.json;
@@ -1577,16 +1578,14 @@ public class BackGroundProxyMoudule {
                 return result.fail("修改失败！");
             }
             StoreBasicInfoOp.updateCompInfoToCacheById(compId);
-            boolean b = optAptInfo(compId,frontAptList,aTypeList);
-            if (b) {//同步信息到ERP
-                compInfoVO.getInvoiceVO().setTaxpayer(taxpayer);
-                compInfoVO.setStoretype(storetype);
-                SyncCustomerInfoModule.addOrUpdateCus(compInfoVO);
-            }
-            return b ? result.success("保存成功") : result.fail("保存失败");
-        } else {
-            return result.fail("资质信息未完善！");
+            b = optAptInfo(compId,frontAptList,aTypeList);
         }
+        if (b) {//同步信息到ERP
+            compInfoVO.getInvoiceVO().setTaxpayer(taxpayer);
+            compInfoVO.setStoretype(storetype);
+            SyncCustomerInfoModule.addOrUpdateCus(compInfoVO);
+        }
+        return b ? result.success("保存成功") : result.fail("保存失败");
     }
 
     /* *
@@ -1695,7 +1694,9 @@ public class BackGroundProxyMoudule {
         if (aptitudeVOList.size() == 0) {//第一次完善资质信息
             for (AptitudeVO aptitudeVO :frontAptList) {
                 params.add(new Object[]{getAptID(), compId, aptitudeVO.getAtype(), aptitudeVO.getCertificateno(),
-                        aptitudeVO.getValiditys(),aptitudeVO.getValiditye(), 0, aptitudeVO.getPname()});
+                        (aptitudeVO.getValiditys() == null || aptitudeVO.getValiditys().isEmpty()) ? null : aptitudeVO.getValiditys(),
+                        (aptitudeVO.getValiditye() == null || aptitudeVO.getValiditye().isEmpty()) ? null : aptitudeVO.getValiditye(),
+                        0, aptitudeVO.getPname()});
             }
             return !ModelUtil.updateTransEmpty(baseDao.updateBatchNative(insertAptSql, params, params.size()));
         } else {//之前完善过资质
@@ -1710,12 +1711,16 @@ public class BackGroundProxyMoudule {
             for (AptitudeVO aptitudeFrontVO :frontAptList) {//遍历前台传过来的资质
                 if (oTypeList.contains(aptitudeFrontVO.getAtype())) {//若存在更新资质
                     sqlList.add(updAptSql);
-                    params.add(new Object[]{aptitudeFrontVO.getCertificateno(), aptitudeFrontVO.getValiditys(),
-                            aptitudeFrontVO.getValiditye(), aptitudeFrontVO.getPname(), compId, aptitudeFrontVO.getAtype()});
+                    params.add(new Object[]{aptitudeFrontVO.getCertificateno(),
+                            (aptitudeFrontVO.getValiditys() == null || aptitudeFrontVO.getValiditys().isEmpty()) ? null : aptitudeFrontVO.getValiditys(),
+                            (aptitudeFrontVO.getValiditye() == null || aptitudeFrontVO.getValiditye().isEmpty()) ? null : aptitudeFrontVO.getValiditye(),
+                            aptitudeFrontVO.getPname(), compId, aptitudeFrontVO.getAtype()});
                 } else {//否则新增资质
                     sqlList.add(insertAptSql);
                     params.add(new Object[]{getAptID(), compId, aptitudeFrontVO.getAtype(), aptitudeFrontVO.getCertificateno(),
-                            aptitudeFrontVO.getValiditys(),aptitudeFrontVO.getValiditye(), 0, aptitudeFrontVO.getPname()});
+                            (aptitudeFrontVO.getValiditys() == null || aptitudeFrontVO.getValiditys().isEmpty()) ? null : aptitudeFrontVO.getValiditys(),
+                            (aptitudeFrontVO.getValiditye() == null || aptitudeFrontVO.getValiditye().isEmpty()) ? null : aptitudeFrontVO.getValiditye(),
+                            0, aptitudeFrontVO.getPname()});
                 }
             }
             String[] sqlNative = new String[sqlList.size()];

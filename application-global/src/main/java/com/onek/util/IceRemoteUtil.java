@@ -610,7 +610,7 @@ public class IceRemoteUtil {
                     long spu = Long.parseLong(arr[0]);
                     long sku = Long.parseLong(arr[1]);
                     String rpath = FileServerUtils.goodsFilePath(spu,sku);
-                            httpRequest.addFile(image, rpath, sku+".jpg").addImageSize("200x200,400x400,600x600");
+                    httpRequest.addFile(image, rpath, sku+".jpg").addImageSize("200x200,400x400,600x600");
                 }
             } catch (NumberFormatException e) {
                 e.printStackTrace();
@@ -619,6 +619,8 @@ public class IceRemoteUtil {
         httpRequest.setLogoText(logo);
         return  httpRequest.fileUploadUrl(url).getRespondContent();
     }
+
+
 
 
     /**
