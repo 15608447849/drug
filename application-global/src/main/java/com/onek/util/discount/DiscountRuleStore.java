@@ -43,9 +43,9 @@ public class DiscountRuleStore {
 
     private static String[] FOUR = {"", "每满", "满"};
     private static String[][] ONE_TWO = {
-            {"", "$元", "包邮", "$折", "#" },
+            {"", "$", "包邮", "$折", "#" },
             {"", "减&", "&", "打&" },
-            {"", "赠&券", "赠&券", "赠&券", "赠&"}};
+            {"", "返利&", "赠&券", "赠&券", "赠&"}};
 
     public static int getRuleByBRule(int brule){
         return map.get(brule);
@@ -62,7 +62,12 @@ public class DiscountRuleStore {
             int four = Character.digit(codeStr.charAt(4), 10);
             int one = Character.digit(codeStr.charAt(1), 10);
             int two = Character.digit(codeStr.charAt(2), 10);
-            String offer = String.valueOf(ladoff.getOffer());
+            double offerValue = ladoff.getOffer();
+            String offer = offerValue + "元";
+
+            if (ladoff.isPercentage()) {
+                offer = (offerValue * 100) + "%";
+            }
 
             StringBuilder giftName = new StringBuilder();
 
@@ -94,7 +99,13 @@ public class DiscountRuleStore {
             StringBuilder value = new StringBuilder();
             int one = Character.digit(codeStr.charAt(1), 10);
             int two = Character.digit(codeStr.charAt(2), 10);
-            String offer = String.valueOf(nextLadoff.getOffer());
+
+            double offerValue = nextLadoff.getOffer();
+            String offer = offerValue + "元";
+
+            if (nextLadoff.isPercentage()) {
+                offer = (offerCode * 100) + "%";
+            }
 
             StringBuilder giftName = new StringBuilder();
 
@@ -106,7 +117,7 @@ public class DiscountRuleStore {
                 }
             }
 
-            value.append("差");
+            value.append("还需");
             value.append(gap + "元");
             value.append(
                     ONE_TWO[one][two]
