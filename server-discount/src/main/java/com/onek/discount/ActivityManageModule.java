@@ -83,8 +83,8 @@ public class ActivityManageModule {
 
     //优惠阶梯
     private static final String INSERT_LAD_OFF_SQL = "insert into {{?" + DSMConst.TD_PROM_LADOFF + "}} "
-            + "(unqid,ladamt,ladnum,offercode,offer) "
-            + " values(?,?,?,?,?)";
+            + "(unqid,ladamt,ladnum,offercode,offer, cstatus) "
+            + " values(?,?,?,?,?,?)";
 
     private static final String DEL_LAD_OFF_SQL = "update {{?" + DSMConst.TD_PROM_LADOFF + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 ";
@@ -383,6 +383,7 @@ public class ActivityManageModule {
         String sql = "select brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} where cstatus&1=0 "
                 + " and unqid=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(sql);
+
         return Integer.parseInt(String.valueOf(queryResult.get(0)[0]));
     }
 
@@ -431,8 +432,12 @@ public class ActivityManageModule {
         for (int i = 0; i < ladderVOS.size(); i++) {
             if (offerCode != null) {
                 long ladderId = GenIdUtil.getUnqId();
+                double offer = ladderVOS.get(i).getOffer() * 100;
+                if ((ladderVOS.get(i).getCstatus() & 256) > 0) {
+                    offer = ladderVOS.get(i).getOffer();
+                }
                 ladOffParams.add(new Object[]{ladderId, ladderVOS.get(i).getLadamt()*100,
-                        ladderVOS.get(i).getLadnum(),offerCode[i],ladderVOS.get(i).getOffer()*100});
+                        ladderVOS.get(i).getLadnum(), offerCode[i], offer, ladderVOS.get(i).getCstatus()});
                 relaParams.add(new Object[]{GenIdUtil.getUnqId(),actCode,ladderId});
                 //新增优惠赠换商品
                 if (stype.startsWith("124")) {
@@ -612,12 +617,10 @@ public class ActivityManageModule {
                 + " where a.cstatus&1=0 and a.unqid=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
         ActivityVO[] activityVOS = new ActivityVO[queryResult.size()];
-        baseDao.convToEntity(queryResult, activityVOS, ActivityVO.class, new String[]{
-                "unqid","actname","incpriority","cpriority",
+        baseDao.convToEntity(queryResult, activityVOS, ActivityVO.class, "unqid","actname","incpriority","cpriority",
                 "qualcode","qualvalue","actdesc","excdiscount",
                 "acttype","actcycle","sdate","edate","brulecode",
-                "cstatus","ruleName","ckstatus"
-        });
+                "cstatus","ruleName","ckstatus");
         int rRuleCode = activityVOS[0].getBrulecode();
         String rType = rRuleCode + "";
         activityVOS[0].setRuletype(Integer.parseInt(rType.substring(1,2)));
@@ -650,7 +653,7 @@ public class ActivityManageModule {
 
 
     private List<LadderVO> getLadder(ActivityVO activityVO, long actCode) {
-        String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer,a.cstatus from {{?" + DSMConst.TD_PROM_RELA
+        String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer,b.cstatus from {{?" + DSMConst.TD_PROM_RELA
                 + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid "
                 + " where a.cstatus&1=0 and a.actcode=" + actCode;
         List<Object[]> queryResult = baseDao.queryNative(selectSQL);
@@ -658,7 +661,11 @@ public class ActivityManageModule {
         baseDao.convToEntity(queryResult, ladderVOS, LadderVO.class);
         for (LadderVO ladderVO:ladderVOS) {
             ladderVO.setLadamt(ladderVO.getLadamt()/100);
-            ladderVO.setOffer(ladderVO.getOffer()/100);
+            if((ladderVO.getCstatus() & 256) > 0) {
+                ladderVO.setOffer(ladderVO.getOffer());
+            } else {
+                ladderVO.setOffer(ladderVO.getOffer()/100);
+            }
             ladderVO.setAssGiftVOS(getAssGift(ladderVO.getOffercode()));
         }
         String offerCode = ladderVOS[0].getOffercode() + "";
@@ -769,7 +776,7 @@ public class ActivityManageModule {
         String selectSQL = "select sku, systore,notused as minunused from (select sku,systore, sum(used) as uused, " +
                 " (systore-sum(used)) as notused from ( select sku,systore, used  from ( " +
                 "SELECT sku,gcode,(store-freezestore) as systore, " +
-                "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
+                "  ceil(IF( ua.cstatus & 256 > 0 and actstock <100, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
                 "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
                 "  (SELECT " +
                 "  spu,sku,gcode,store,freezestore,actstock,a.cstatus  " +
@@ -793,7 +800,7 @@ public class ActivityManageModule {
                 "select sku,store, 0 from td_prod_sku where cstatus&1=0) uc GROUP BY sku) ud  ";
         if ((cstatus & 256) > 0) {//库存百分比
             double percent = actStock * 0.01;
-            selectSQL = selectSQL +  " HAVING minunused < ceil(store*"+percent+")  LIMIT 0,1";
+            selectSQL = selectSQL +  " HAVING minunused < ceil(notused*"+percent+")  LIMIT 0,1";
         } else {//库存量
             selectSQL = selectSQL +  " HAVING minunused < "+ actStock + " LIMIT 0,1";
         }
@@ -1019,20 +1026,24 @@ public class ActivityManageModule {
         StringBuilder class6No = new StringBuilder();
 
         for (GoodsVO goodsVO : goodsVOS) {
-            long classno = goodsVO.getGcode();
-            ClassStock classStock = new ClassStock(goodsVO.getActstock(), goodsVO.getCstatus());
-            if ((classno + "").length() == 2) {
-                class2Map.put(classno, classStock);
-                class2No.append(classno).append(",");
-            }
-            if ((classno + "").length() == 4) {
-                class4Map.put(classno, classStock);
-                class4No.append(classno).append(",");
-            }
+            if ((goodsVO.getCstatus() & 256) > 0 && goodsVO.getActstock() == 100 ) {
+                LogUtil.getDefaultLogger().info("库存占比100%，不进行校验!");
+            } else {
+                long classno = goodsVO.getGcode();
+                ClassStock classStock = new ClassStock(goodsVO.getActstock(), goodsVO.getCstatus());
+                if ((classno + "").length() == 2) {
+                    class2Map.put(classno, classStock);
+                    class2No.append(classno).append(",");
+                }
+                if ((classno + "").length() == 4) {
+                    class4Map.put(classno, classStock);
+                    class4No.append(classno).append(",");
+                }
 
-            if ((classno + "").length() == 6) {
-                class6Map.put(classno, classStock);
-                class6No.append(classno).append(",");
+                if ((classno + "").length() == 6) {
+                    class6Map.put(classno, classStock);
+                    class6No.append(classno).append(",");
+                }
             }
         }
         //判断最大类
@@ -1043,8 +1054,8 @@ public class ActivityManageModule {
             classStr = class2No.toString().substring(0, class2No.toString().length() - 1);
             sql2Builder.append(" GROUP BY classno2 HAVING classno2 in(").append(classStr).append(")");
             List<Object[]> query2Result = baseDao.queryNative(sql2Builder.toString(), actCode, actCode, actCode);
-       /*     classno6,classno4,classno2,sku, store, " +
-            " min(notused) as minnotused*/
+            /* classno6,classno4,classno2,sku, store, " +
+            " min(notused) as minnotused */
             if (query2Result != null && query2Result.size()>0) {
                 query2Result.forEach(obj -> {
                     long minunused = BigDecimal.valueOf(Double.parseDouble(String.valueOf(obj[5]))).longValue();
@@ -1151,7 +1162,7 @@ public class ActivityManageModule {
             String selectSQL = "select sku, systore,notused as minunused from (select sku,systore, sum(used) as uused, (systore-sum(used)) as notused from ( " +
                     "select sku,systore, used  from ( " +
                     "SELECT sku,gcode,(store-freezestore) as systore, " +
-                    "  ceil(IF( ua.cstatus & 256 > 0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
+                    "  ceil(IF( ua.cstatus & 256 > 0 and actstock <100, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
                     "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
                     "  (SELECT " +
                     "  spu,sku,gcode,store,freezestore,actstock,a.cstatus  " +
