@@ -52,6 +52,9 @@ public class ProdDiscountObserver implements ProdObserver {
                             int ns = MathUtil.exactMul(s, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue();
                             result = RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, ns, limitnum);
                             actStockMap.put(gcode+"", ns+"");
+                        }else{
+                            RedisStockUtil.setSpecActStock(Long.parseLong(gcode), actcode, limitnum);
+                            actStockMap.put(gcode+"", "ALL");
                         }
                     } else {
                         if ((Integer.parseInt(jsonObject.get("cstatus").toString()) & 1) > 0) {
@@ -126,6 +129,9 @@ public class ProdDiscountObserver implements ProdObserver {
                                         }
                                     }
                                 }
+                            }else{
+                                RedisStockUtil.setSpecActStock(Long.parseLong(gcode), actcode, limitnum);
+                                actStockMap.put(gcode+"", "ALL");
                             }
                         }
 

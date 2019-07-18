@@ -1,9 +1,7 @@
 package com.onek.util.stock;
 
-import IceInternal.Ex;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.RedisGlobalKeys;
-import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
@@ -17,6 +15,7 @@ import java.util.concurrent.Executors;
 public class RedisStockUtil {
 
     private static String SUCCESS = "OK";
+    private static String ALL = "ALL";
 
     /**
      * 设置库存 1:设置成功 0:设置失败
@@ -28,9 +27,6 @@ public class RedisStockUtil {
     public static int setStock(long sku, int initStock) {
         if(initStock > 0){
             Long result = RedisUtil.getHashProvide().putElement(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, initStock);
-            if(result > 0 ){
-                calcAvailStock(sku);
-            }
             return result.intValue();
         }
         return 0;
@@ -50,9 +46,22 @@ public class RedisStockUtil {
         stockMap.put(RedisGlobalKeys.ACTSTOCK_PREFIX + actCode, initStock+"");
         stockMap.put(RedisGlobalKeys.ACT_LIMIT_NUM_PREFIX + actCode, limit + "");
         String result = RedisUtil.getHashProvide().putHashMap(RedisGlobalKeys.STOCK_PREFIX + sku, stockMap);
-        if(SUCCESS.equals(result)){
-            calcAvailStock(sku);
-        }
+        return SUCCESS.equals(result) ? 1 : 0;
+    }
+
+    /**
+     * 特殊设活动置库存 1:设置成功 0:设置失败 设置ALL
+     *
+     * @param sku
+     * @param actCode
+     * @return
+     */
+    public static int setSpecActStock(long sku, long actCode, int limit) {
+        HashMap<String, String> stockMap = new HashMap<>();
+        stockMap.put(RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + actCode, getStock(sku) +"");
+        stockMap.put(RedisGlobalKeys.ACTSTOCK_PREFIX + actCode, ALL);
+        stockMap.put(RedisGlobalKeys.ACT_LIMIT_NUM_PREFIX + actCode, limit + "");
+        String result = RedisUtil.getHashProvide().putHashMap(RedisGlobalKeys.STOCK_PREFIX + sku, stockMap);
         return SUCCESS.equals(result) ? 1 : 0;
     }
 
@@ -70,9 +79,6 @@ public class RedisStockUtil {
         String limit_key = RedisGlobalKeys.ACT_LIMIT_NUM_PREFIX + actCode;
         if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.STOCK_PREFIX + sku, init_key)){
             Long result = RedisUtil.getHashProvide().delByKeys(RedisGlobalKeys.STOCK_PREFIX + sku, init_key, act_key, limit_key);
-            if(result > 0){
-                calcAvailStock(sku);
-            }
             return result;
         }else{
             return 1L;
@@ -99,6 +105,9 @@ public class RedisStockUtil {
             for(long actCode : actCodes){
                 String key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
                 String currentStock = RedisUtil.getHashProvide().getValByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key);
+                if(ALL.equals(currentStock)){ // 活动库存为ALL,不需要判断活动库存
+                    continue;
+                }
                 if (StringUtils.isEmpty(currentStock) && Integer.parseInt(currentStock) <= 0) {
                     return false;
                 }
@@ -108,6 +117,10 @@ public class RedisStockUtil {
             }
             for(long actCode : actCodes){
                 String key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
+                String currentStock = RedisUtil.getHashProvide().getValByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key);
+                if(ALL.equals(currentStock)){ // 活动库存为ALL,不需要判断活动库存
+                    continue;
+                }
                 Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key, -stock);
                 if (num < 0) {
                     RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key, stock);
@@ -115,33 +128,9 @@ public class RedisStockUtil {
                 }
             }
             RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, -stock);
-            calcAvailStock(sku);
             return true;
         }
         return false;
-    }
-
-    /**
-     * 异步计算可用活动库存
-     *
-     * @param sku
-     */
-    public static void calcAvailStock(long sku){
-//        ExecutorService executors = Executors.newSingleThreadExecutor();
-//        executors.execute(() -> {
-//                    int stock = getStock(sku);
-//                    if(stock <= 0){
-//                        LogUtil.getDefaultLogger().info("++++++ calcAvailStock stock not enough sku:["+sku+"] avaidStock:[0] +++++++");
-//                        RedisUtil.getHashProvide().putElement(RedisGlobalKeys.AVAILSTOCK_PREFIX, sku + "", "0");
-//                    }
-//                    int sumActStock = getSumActStock(sku);
-//                    int availStock = stock - sumActStock;
-//                    LogUtil.getDefaultLogger().info("++++++ calcAvailStock sku:["+sku+"] avaidStock:["+availStock+"] +++++++");
-//                    Long result = RedisUtil.getHashProvide().putElement(RedisGlobalKeys.AVAILSTOCK_PREFIX, sku + "", availStock);
-//                    LogUtil.getDefaultLogger().info("++++++ calcAvailStock sku:["+sku+"] avaidStock:["+availStock+"] result:["+ result+"] +++++++");
-//                }
-//
-//        );
     }
 
     public static int getStock(long sku) {
@@ -156,19 +145,31 @@ public class RedisStockUtil {
         Map<String,String> hashMap = RedisUtil.getHashProvide().getAllHash(RedisGlobalKeys.STOCK_PREFIX + sku);
         String key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
         String currentStock = hashMap.get(key);
+        if(ALL.equals(currentStock)){ // 如果活动库存设置的是ALL取商品库存
+            return getStock(sku);
+        }
         if (StringUtils.isEmpty(currentStock)) {
             return 0;
         }
+        currentStock = adjustActStock(sku, hashMap, key, currentStock, actCode);
+        return Integer.parseInt(currentStock);
+
+    }
+
+    private static String adjustActStock(long sku, Map<String, String> hashMap, String key, String currentStock, long actCode) {
         String init_key = RedisGlobalKeys.ACTSTOCK_INIT_PREFIX + actCode;
         String initStock = hashMap.get(init_key);
         LogUtil.getDefaultLogger().info("++++++ check actcode initStock:["+initStock+"];currentStock:["+currentStock+"] +++++++");
-        if(!StringUtils.isEmpty(initStock) && initStock.equals(currentStock)){ // 起始活动库存等于活动库存代表活动未开始
+        if(!StringUtils.isEmpty(initStock) && initStock.equals(currentStock) && !ALL.equals(currentStock)){ // 起始活动库存等于活动库存代表活动未开始
             LogUtil.getDefaultLogger().info("++++++ check actcode start +++++++");
             Map<String, Integer> stockMap = new HashMap<>();
             double sumStock = 0;
             for(String k : hashMap.keySet()){
                 if(k.contains(RedisGlobalKeys.ACTSTOCK_PREFIX)){
                     String stock = hashMap.get(k);
+                    if(ALL.equals(stock)){ // 活动库存为ALL,b不计算到活动库存之和
+                        continue;
+                    }
                     LogUtil.getDefaultLogger().info("++++++ check actcode key:["+ k+"] stock:["+ stock +"] +++++++");
                     sumStock  += Integer.parseInt(stock);
                     stockMap.put(k, Integer.parseInt(stock));
@@ -198,8 +199,7 @@ public class RedisStockUtil {
             }
             currentStock = RedisUtil.getHashProvide().getValByKey(RedisGlobalKeys.STOCK_PREFIX + sku, key);
         }
-        return Integer.parseInt(currentStock);
-
+        return currentStock;
     }
 
     /**
@@ -244,7 +244,6 @@ public class RedisStockUtil {
             RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, stock);
             return 1;
         }
-        calcAvailStock(sku);
         return 2;
     }
 
@@ -257,10 +256,7 @@ public class RedisStockUtil {
      */
     public static long addStock(long sku, int stock) {
         Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.STOCK_PREFIX, stock);
-        if(num > 0){
-            calcAvailStock(sku);
-        }
-        return 0;
+        return num;
     }
 
     /**
@@ -273,7 +269,6 @@ public class RedisStockUtil {
     public static long addActStock(long sku, long actCode, int stock) {
         if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.ACTSTOCK_PREFIX + actCode)){
             Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.ACTSTOCK_PREFIX + actCode, stock);
-            calcAvailStock(sku);
             return num;
         }
         return 0;
@@ -312,6 +307,9 @@ public class RedisStockUtil {
             for(String key : map.keySet()){
                 if(key.contains(RedisGlobalKeys.ACTSTOCK_PREFIX)){
                     String stock = map.get(key);
+                    if(ALL.equals(stock)){ // 活动库存为ALL,b不计算到活动库存之和里
+                        continue;
+                    }
                     sumStock  += Integer.parseInt(stock);
                 }
             }
