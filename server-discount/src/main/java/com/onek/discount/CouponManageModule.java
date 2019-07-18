@@ -346,7 +346,7 @@ public class CouponManageModule {
     private static final  String QUERY_COURCD_EXT = "select 1 from {{?"+DSMConst.TD_PROM_COURCD+"}} "+
             " where compid = ? and cstatus & 128 > 0 ";
 
-    private static final String QUERY_COUP_NEWPERSONS = "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag,periodtype,periodday,tpcp.actstock," +
+    private static final String QUERY_COUP_NEWPERSONS = "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag," +
             "glbno,0 goods,qlfno,qlfval from {{?"+DSMConst.TD_PROM_COUPON+"}} tpcp inner join " +
             "{{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode inner join " +
             "{{?" + DSMConst.TD_PROM_ASSDRUG+ "}} assd on assd.actcode = tpcp.unqid "+
@@ -2014,6 +2014,8 @@ public class CouponManageModule {
             return result.fail("没有开启新人专享活动！");
         }
         CouponPubVO[] couponPubVOS = new CouponPubVO[coupRet.size()];
+
+
         baseDao.convToEntity(coupRet, couponPubVOS, CouponPubVO.class,
                 new String[]{"coupno","brulecode","rulename",
                         "validday","validflag","glbno","goods","qlfno","qlfval"});
