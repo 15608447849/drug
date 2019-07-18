@@ -45,7 +45,7 @@ public class DiscountRuleStore {
     private static String[][] ONE_TWO = {
             {"", "$", "包邮", "$折", "#" },
             {"", "减&", "&", "打&" },
-            {"", "返利&", "赠&券", "赠&券", "赠&"}};
+            {"", "返现&", "赠&券", "赠&券", "赠&"}};
 
     public static int getRuleByBRule(int brule){
         return map.get(brule);
@@ -80,7 +80,7 @@ public class DiscountRuleStore {
             }
 
             value.append(FOUR[four]);
-            value.append(ladoff.getLadamt() + "元");
+            value.append(ladoff.getLadamt() + "元，");
             value.append(
                     ONE_TWO[one][two]
                             .replace("&",
