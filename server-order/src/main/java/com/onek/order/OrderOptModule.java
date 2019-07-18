@@ -483,8 +483,8 @@ public class OrderOptModule {
             if (ckstatus == 1) {
                 //1退款退货 2 仅退款
                 if (astype == 1 || astype == 2) {
-                    List<Object[]> queryResult = baseDao.queryNativeSharding(0,
-                            TimeUtils.getCurrentYear(), QUERY_ASAPP_INFO_SQL, asno);
+                        List<Object[]> queryResult = baseDao.queryNativeSharding(0,
+                                TimeUtils.getCurrentYear(), QUERY_ASAPP_INFO_SQL, asno);
                     // asapp.orderno, asapp.compid, asapp.asno, asapp.pdno, asapp.asnum,
                     // goods.pdprice/100 spdprice, goods.payamt/100 spayamt,
                     // distprice/100 sdistprice, goods.pnum, asstype,
@@ -1465,9 +1465,9 @@ public class OrderOptModule {
         Result result = new Result();
         JsonParser jsonParser = new JsonParser();
         UserSession userSession = appContext.getUserSession();
-        if (userSession == null || (userSession.roleCode & (128 + 1)) == 0) {
-            return result.fail("当前用户没有该权限");
-        }
+//        if (userSession == null || (userSession.roleCode & (128 + 1)) == 0) {
+//            return result.fail("当前用户没有该权限");
+//        }
 
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long asno = jsonObject.get("asno").getAsLong();
@@ -1489,7 +1489,52 @@ public class OrderOptModule {
                 TimeUtils.getCurrentYear(), UPD_ASAPP_CK_SQL,
                 ckstatus, userSession.userId, userSession.userName, astype, ckdesc, refamt * 100, realrefamt * 100, asno);
 
+        if(ret > 0){
+            int ostatus = 3;
+            int gstatus = 4;
+            int asstatus = 0;
 
+            int compid = Integer.parseInt(queryRet.get(0)[1].toString());
+            String specifyStorePhone = IceRemoteUtil.getSpecifyStorePhone(compid);
+            ExecutorService executorService = Executors.newSingleThreadExecutor();
+            if(ckstatus == 1){
+                //1退款退货 2 仅退款
+                if(astype == 1 || astype == 2){
+                    executorService.execute(() ->SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_AUDIT_PASSED,asno+""));
+                }
+                ostatus = -2;
+                gstatus = 3;
+
+                if(astype == 3 || astype == 4){
+                    SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_BILL_AUDIT_PASSED,asno+"");
+                }
+            }else{
+                ostatus = 4;
+                asstatus = 200;
+                if(astype == 1 || astype == 2){
+                    executorService.execute(() -> SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc));
+                }
+
+                if(astype == 3 || astype == 4){
+                    executorService.execute(() ->   SmsTempNo.sendMessageToSpecify(compid,specifyStorePhone,
+                            SmsTempNo.AFTER_SALE_BILL_AUDIT_FAILED_TO_PASSED,asno+"",ckdesc));
+                }
+
+            }
+
+            String updateOrderNew = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=?, asstatus = ? "
+                    + " where cstatus&1=0 and orderno=? and ostatus = ? ";
+
+            int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
+            List<Object[]> params = new ArrayList<>();
+            params.add(new Object[]{ostatus, asstatus, queryRet.get(0)[0],-1});
+            params.add(new Object[]{gstatus, queryRet.get(0)[2],1,queryRet.get(0)[0],queryRet.get(0)[1]});
+            baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()),year,
+                    new String[]{updateOrderNew,UPD_ORDER_GOODS_CK_SQL},params);
+        }
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
     }
 }
