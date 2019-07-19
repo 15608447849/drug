@@ -157,6 +157,13 @@ public class CouponRevModule {
             " where unqid = ? ";
 
 
+    //新增领取优惠券
+    private final String INSERT_COUPONREV_CSQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
+            + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
+            + "rulename,goods,ladder,glbno,cstatus,ctype) "
+            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+
 
     /**
      * @description 优惠券新增
@@ -485,10 +492,10 @@ public class CouponRevModule {
                     couponPubVO.getCompid(),startDate,"00:00:00",
                     endDate,"00:00:00",couponPubVO.getBrulecode(),
                     couponPubVO.getRulename(),couponPubVO.getGoods(),
-                    ladderJson,couponPubVO.getGlbno(),0});
+                    ladderJson,couponPubVO.getGlbno(),0,couponPubVO.getCtype()});
         }
         int result[] = baseDao.updateBatchNativeSharding(couponPubVOS.get(0).getCompid(),
-                TimeUtils.getCurrentYear(),INSERT_COUPONREV_SQL,parmList,parmList.size());
+                TimeUtils.getCurrentYear(),INSERT_COUPONREV_CSQL,parmList,parmList.size());
 
        // IceRemoteUtil.updateTransNative()
 
@@ -1135,6 +1142,9 @@ public class CouponRevModule {
         for (JsonElement coupn : jsonArray) {
             CouponPubVO couponPubVO = gson.fromJson(coupn, CouponPubVO.class);
             if (couponPubVO != null) {
+                if(couponPubVO.getQlfno() == 1){
+                    couponPubVO.setCtype(4);
+                }
                 couponPubVOList.add(couponPubVO);
             }
         }
