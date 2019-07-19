@@ -6,11 +6,15 @@ import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import constant.DSMConst;
 import dao.BaseDAO;
 import util.MathUtil;
+import util.ModelUtil;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -25,12 +29,25 @@ import static constant.DSMConst.TD_TRAN_TRANS;
  * 后台运营退款金额
  */
 public class RefundOp implements IOperation<AppContext> {
+    private static final String UPD_ASAPP_CK_FINISH_SQL =
+            "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set ckstatus = ? " +
+                    " where cstatus&1=0 and asno = ?  ";
+
+    //更新订单售后状态
+    private static final String UPD_ORDER_CK_SQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
+            + " where cstatus&1=0 and orderno=? and ostatus = ? ";
+
+    //更新订单相关商品售后状态
+    private static final String UPD_ORDER_GOODS_CK_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
+            + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=? and compid  = ? ";
+    
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
     long asno; //售后单号
     double refamt;//客户输入的退款金额
     double realrefamt; //财务实际输入的退款金额
     int astype;//售后类型
     Logger log;
+
     @Override
     public Result execute(AppContext context) {
         log = context.logger;
@@ -51,6 +68,7 @@ public class RefundOp implements IOperation<AppContext> {
         }else{
             r.fail("售后类型不匹配");
         }
+
         return r;
     }
 
@@ -186,6 +204,35 @@ public class RefundOp implements IOperation<AppContext> {
            baseDao.updateBatchNativeSharding(compid, year,insertSql, params, params.size());
        }
 
-        return isOk ? new Result().success("退款成功") : new Result().fail("退款失败");
+       isOk = isOk && afterSaleFinish(asno);
+
+       return isOk ? new Result().success("退款成功") : new Result().fail("退款失败");
+    }
+
+    /**
+     * @接口摘要 售后完成更新状态
+     * @业务场景 订单签收后确认签收
+     * @传参类型 json
+     * @传参列表 {asno 售后单号}
+     * @返回列表 200 成功 -1 失败
+     */
+    public boolean afterSaleFinish(long asno) {
+        String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+        List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
+        if (queryRet == null || queryRet.isEmpty()) {
+            return false;
+        }
+
+        int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
+        List<Object[]> params = new ArrayList<>();
+        params.add(new Object[]{-3, queryRet.get(0)[0], -2});
+        params.add(new Object[]{200, queryRet.get(0)[2], 3, queryRet.get(0)[0], queryRet.get(0)[1]});
+
+
+        baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_CK_FINISH_SQL, new Object[]{200, asno});
+        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()), year,
+                new String[]{UPD_ORDER_CK_SQL, UPD_ORDER_GOODS_CK_SQL}, params));
+
+        return b;
     }
 }
