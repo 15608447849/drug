@@ -20,7 +20,10 @@ import util.StringUtils;
 import util.http.HttpRequest;
 
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @Author: leeping
@@ -595,30 +598,7 @@ public class IceRemoteUtil {
         return null;
     }
 
-    /**
-     * 读取目录/上传商品图片
-     */
-    public static String uploadGoodsImages(File dirs,String url,String logo){
-        //文件名: spu_sku
-        File[] files = dirs.listFiles();
-        HttpRequest httpRequest = new HttpRequest();
-        for (File image : files){
-            try {
-                if (image.isFile()){
-                    String suffix = image.getName().substring(image.getName().lastIndexOf("."));
-                    String[] arr = image.getName().replace(suffix,"").split("_");
-                    long spu = Long.parseLong(arr[0]);
-                    long sku = Long.parseLong(arr[1]);
-                    String rpath = FileServerUtils.goodsFilePath(spu,sku);
-                    httpRequest.addFile(image, rpath, sku+".jpg").addImageSize("200x200,400x400,600x600");
-                }
-            } catch (NumberFormatException e) {
-                e.printStackTrace();
-            }
-        }
-        httpRequest.setLogoText(logo);
-        return  httpRequest.fileUploadUrl(url).getRespondContent();
-    }
+
 
 
 
@@ -819,17 +799,9 @@ public class IceRemoteUtil {
                 "batchProduceSalesOrder").setArrayParams(orderNoStr).execute();
     }
 
-
-    public static String mainPageInfo(){
-        String json = ic.setServerAndRequest("globalServer","MessageModule","convertMessage").setArrayParams(14, 190628000002L,"ddd").execute();
-        return json;
-    }
-
-
     /**
      * 领取优惠券记录
      * @param compid
-     * @param amt
      * @return
      */
     public static int couponRevRecord(int compid,long coupno,int qlfno){
@@ -861,7 +833,20 @@ public class IceRemoteUtil {
     }
 
     public static void main(String[] args) {
-        System.out.println(mainPageInfo());
+
+        HashMap map = new HashMap();
+            map.put("identity",-4);
+
+            HashMap map2 = new HashMap();
+                map2.put("manuname","华润三九医药股份有限公司委托惠州市九惠制药股份有限公司");
+
+            map.put("jsonStr",GsonUtils.javaBeanToJson(map2));
+        String json =
+                ic.setServerAndRequest("goodsServer","MainPageModule","pageInfo")
+                .settingParam(GsonUtils.javaBeanToJson(map),1,10)
+                .execute();
+        ic.stopCommunication();
+        System.out.println(json);
     }
 
 }

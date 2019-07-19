@@ -85,7 +85,7 @@ public class BackgroundProdBrandModule {
 
         List<Object> paramList = new ArrayList<>();
         String[] params =  appContext.param.arrays;
-        String param = null;
+        String param;
 
         for (int i = 0; i < params.length; i++) {
             param = params[i];
