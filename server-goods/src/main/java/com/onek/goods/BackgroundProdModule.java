@@ -39,10 +39,9 @@ import util.StringUtils;
 import util.TimeUtils;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.regex.Pattern;
 
 public class BackgroundProdModule {
@@ -186,7 +185,60 @@ public class BackgroundProdModule {
             BASE_DAO.updateBatchNative(sql, p, params.length);
         }
 
+        ExecutorService executorService = Executors.newSingleThreadExecutor();
+        executorService.execute(() -> {
+            //异步更新商品活动库存
+            updateActStockOn(skuList);
+        });
+
         return new Result().success(null);
+    }
+
+
+    //上架
+    private void updateActStockOn(List<Long> skuList) {
+        String[] classArr = getClassBySku(skuList);
+        String classStr = String.join(",", classArr);
+        String selectSQL = "select gcode,cstatus,limitnum,0,actstock,actcode from {{?" + DSMConst.TD_PROM_ASSDRUG
+                + "}} where cstatus&1=0 and (length( gcode )=0 or gcode in(" + classStr + ")) ";
+        List<Object[]> queryResult = BASE_DAO.queryNative(selectSQL);
+        if (queryResult == null || queryResult.isEmpty()) {
+            LogUtil.getDefaultLogger().info("上架商品未参加活动！");
+        } else {
+            //redis活动库存相关操作
+
+        }
+    }
+
+    //下架
+    private void updateActStockOff(List<Long> skuList) {
+        String[] classArr = getClassBySku(skuList);
+        String classStr = String.join(",", classArr);
+        String selectSQL = "select gcode, actcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
+                + " and length( gcode )>=14 ";
+        List<Object[]> queryResult = BASE_DAO.queryNative(selectSQL);
+        if (queryResult == null || queryResult.isEmpty()) {
+            return;
+        }
+        //redis活动库存相关操作
+    }
+
+    private static String[] getClassBySku(List<Long> skuList) {
+        if (skuList == null || skuList.isEmpty()) {
+            return new String[] {};
+        }
+
+        Set<String> result = new HashSet<>();
+
+        skuList.forEach(sku -> {
+            String classNo = String.valueOf(sku).substring(1, 7);
+            result.addAll(Arrays.asList(new String[] {
+                    classNo.substring(0, 2),
+                    classNo.substring(0, 4),
+                    classNo.substring(0, 6) }));
+        });
+
+        return result.toArray(new String[] {});
     }
 
     /**
