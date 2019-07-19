@@ -342,14 +342,14 @@ public class ProdESUtil {
             if(spu > 0){
                 String spuStr = String.valueOf(spu);
 
-                String start = "1"+addZeroForNum(spuStr, 6 - spuStr.length(), '0') +"00000";
-                String end   = "1"+addZeroForNum(spuStr, 6 - spuStr.length(), '9') +"99999";
+                String start = "1"+addZeroForNum(spuStr, 6, '0') +"00000";
+                String end   = "1"+addZeroForNum(spuStr, 6, '9') +"99999";
                 RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("spu");
                 rangeQuery.gt(start);
                 rangeQuery.lt(end);
 
-                String start1 = "2"+addZeroForNum(spuStr, 6 - spuStr.length(), '0') +"00000";
-                String end1   = "2"+addZeroForNum(spuStr, 6 - spuStr.length(), '9') +"99999";
+                String start1 = "2"+addZeroForNum(spuStr, 6, '0') +"00000";
+                String end1   = "2"+addZeroForNum(spuStr, 6, '9') +"99999";
                 RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery("spu");
                 rangeQuery1.gt(start1);
                 rangeQuery1.lt(end1);
@@ -553,14 +553,15 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(spu > 0){
-                String start = "1"+addZeroForNum(spu+"", 6) +"00000";
-                String end = "1"+addZeroForNum(spu+"", 6) +"99999";
+                String spuStr = String.valueOf(spu);
+                String start = "1"+addZeroForNum(spuStr, 6, '0') +"00000";
+                String end = "1"+addZeroForNum(spuStr, 6, '9') +"99999";
                 RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("spu");
                 rangeQuery.gt(start);
                 rangeQuery.lt(end);
 
-                String start1 = "2"+addZeroForNum(spu+"", 6) +"00000";
-                String end1 = "2"+addZeroForNum(spu+"", 6) +"99999";
+                String start1 = "2"+addZeroForNum(spuStr, 6, '0') +"00000";
+                String end1 = "2"+addZeroForNum(spuStr, 6, '9') +"99999";
                 RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SPU);
                 rangeQuery1.gt(start1);
                 rangeQuery1.lt(end1);
@@ -598,14 +599,15 @@ public class ProdESUtil {
 
         if(spu > 0){
             //110000000101
-            String start = "1"+addZeroForNum(spu+"", 6) +"00000";
-            String end = "1"+addZeroForNum(spu+"", 6) +"99999";
+            String spuStr = String.valueOf(spu);
+            String start = "1"+addZeroForNum(spuStr, 6, '0') +"00000";
+            String end = "1"+addZeroForNum(spuStr, 6, '9') +"99999";
             RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("spu");
             rangeQuery.gt(start);
             rangeQuery.lt(end);
 
-            String start1 = "2"+addZeroForNum(spu+"", 6) +"00000";
-            String end1 = "2"+addZeroForNum(spu+"", 6) +"99999";
+            String start1 = "2"+addZeroForNum(spuStr, 6, '0') +"00000";
+            String end1 = "2"+addZeroForNum(spuStr, 6, '9') +"99999";
             RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SPU);
             rangeQuery1.gt(start1);
             rangeQuery1.lt(end1);
@@ -714,10 +716,6 @@ public class ProdESUtil {
         int strLen = str.length();
         StringBuffer sb = null;
 
-        if (strLen <= 0) {
-            return str;
-        }
-
         while (strLen < strLength) {
             sb = new StringBuffer();
             sb.append(str).append(c);// 右补0
@@ -728,9 +726,13 @@ public class ProdESUtil {
     }
 
     public static void main(String[] args) {
+        String s = "10";
+        System.out.println(addZeroForNum(s, 6, '9'));
+
+
 //        getConditions("", 10, "manuname");
-        Set<Integer> statusList = new HashSet<>();
-        statusList.add(0);
+//        Set<Integer> statusList = new HashSet<>();
+//        statusList.add(0);
 //        statusList.add(256);
 //        SearchResponse response = searchProdWithStatusList(statusList,1, 1,100);
 //        System.out.println(response.getHits().totalHits);
