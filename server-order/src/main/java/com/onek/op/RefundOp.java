@@ -91,7 +91,7 @@ public class RefundOp implements IOperation<AppContext> {
         //4 售后状态
         String selectSql = "SELECT payway, payprice, tppno, paysource,cstatus"
                 + " FROM {{?" + TD_TRAN_TRANS + "}} "
-                + " WHERE cstatus&1 = 0 AND orderno = ? AND payway IN (0, 1, 2) AND paystatus = 1";
+                + " WHERE cstatus&1 = 0 AND orderno = ? AND paystatus = 1";
 
         lines = baseDao.queryNativeSharding(compid,
                 year,
@@ -142,6 +142,11 @@ public class RefundOp implements IOperation<AppContext> {
 
       if (_bal<0 || _pay<0 ) return new Result().fail("订单异常");
 
+        if (onilePayType > 3) {
+            // 非线上则线上可退实付为0；
+            _pay = .0;
+        }
+
       if ((_bal + _pay) < realrefamt) return new Result().fail("超过可退款的金额, 当前可退款金额: "+ (_bal + _pay));
 
         String typeStr = onilePayType ==  1 ? "wxpay" : "alipay";
@@ -149,10 +154,10 @@ public class RefundOp implements IOperation<AppContext> {
 
        double retpay  =  _pay - realrefamt;
 
-
         List<Object[]> params = new LinkedList<>();
 
-        boolean isOk = false;
+        boolean isOk;
+
        if (retpay >= 0) {
            //只需要退款线上支付
            long refundno = GenIdUtil.getUnqId();
@@ -204,7 +209,7 @@ public class RefundOp implements IOperation<AppContext> {
            baseDao.updateBatchNativeSharding(compid, year,insertSql, params, params.size());
        }
 
-       isOk = isOk && afterSaleFinish(asno);
+       isOk = isOk && onilePayType <= 3 && afterSaleFinish(asno);
 
        return isOk ? new Result().success("退款成功") : new Result().fail("退款失败");
     }
