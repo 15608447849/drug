@@ -215,7 +215,7 @@ public class BackgroundProdModule {
             activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
             List<String> proList = new ArrayList<>();
             for(Object [] arr :queryResult){
-                int a = Integer.parseInt(arr[0].toString());
+                int gcode = Integer.parseInt(arr[0].toString());
                 int cstatus = Integer.parseInt(arr[1].toString());
                 int limitnum = Integer.parseInt(arr[2].toString());
                 int rulecode = Integer.parseInt(arr[3].toString());
@@ -223,7 +223,7 @@ public class BackgroundProdModule {
                 String actcode = arr[5].toString();
                 String val = arr[0].toString();
                 List<Long> filterList = new ArrayList<>();
-                if(a == 0){ // 全部商品
+                if(gcode == 0){ // 全部商品
                     filterList = skuList;
                 }else{ // 指定分类
                     StringBuilder regexp =
