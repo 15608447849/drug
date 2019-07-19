@@ -990,7 +990,6 @@ public class TranOrderOptModule {
                                 return result.fail("确认退款失败, 余额扣减失败");
                             }
                         }
-
                         return result.fail("确认退款失败," + e.getMessage());
                     }
                 }
@@ -1192,12 +1191,12 @@ public class TranOrderOptModule {
                 sqlList.add(insertPayerSQL);
                 paramsObj.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, "{}", "{}"});
                 sqlList.add(insertTransSQL);
-                paramsObj.add(new Object[]{GenIdUtil.getUnqId(), compid, orderNo, 0,  MathUtil.exactMul(bal, 100), 0,
+                paramsObj.add(new Object[]{GenIdUtil.getUnqId(), compid, orderNo, 0,  tranOrders[0].getBalamt(), 0,
                         0, 1, GenIdUtil.getUnqId(), 0, 0});
             }
             if (payamt > 0) {
                 sqlList.add(insertTransSQL);
-                paramsObj.add(new Object[]{GenIdUtil.getUnqId(), compid, orderNo, 0,  MathUtil.exactMul(payamt, 100), paytype,
+                paramsObj.add(new Object[]{GenIdUtil.getUnqId(), compid, orderNo, 0, tranOrders[0].getPayamt(), paytype,
                         0, 1, GenIdUtil.getUnqId(), 0, 0});
             }
             String[] sqlNative = new String[sqlList.size()];
