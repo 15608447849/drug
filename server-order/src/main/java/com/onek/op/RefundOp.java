@@ -209,7 +209,11 @@ public class RefundOp implements IOperation<AppContext> {
            baseDao.updateBatchNativeSharding(compid, year,insertSql, params, params.size());
        }
 
-       isOk = isOk && onilePayType <= 3 && afterSaleFinish(asno);
+       if (isOk) {
+           if (onilePayType <= 3) {
+               isOk = afterSaleFinish(asno);
+           }
+       }
 
        return isOk ? new Result().success("退款成功") : new Result().fail("退款失败");
     }
