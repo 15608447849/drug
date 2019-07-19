@@ -16,6 +16,9 @@ import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.entities.BusScopeVo;
 import com.onek.goods.util.CalculateUtil;
 import com.onek.goods.util.ProdESUtil;
+import com.onek.propagation.prod.ActivityManageServer;
+import com.onek.propagation.prod.ProdCurrentActPriceObserver;
+import com.onek.propagation.prod.ProdDiscountObserver;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
@@ -42,6 +45,7 @@ import java.math.BigDecimal;
 import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class BackgroundProdModule {
@@ -206,7 +210,66 @@ public class BackgroundProdModule {
             LogUtil.getDefaultLogger().info("上架商品未参加活动！");
         } else {
             //redis活动库存相关操作
+            ActivityManageServer activityManageServer = new ActivityManageServer();
+            activityManageServer.registerObserver(new ProdDiscountObserver());
+            activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
+            List<String> proList = new ArrayList<>();
+            for(Object [] arr :queryResult){
+                int a = Integer.parseInt(arr[0].toString());
+                int cstatus = Integer.parseInt(arr[1].toString());
+                int limitnum = Integer.parseInt(arr[2].toString());
+                int rulecode = Integer.parseInt(arr[3].toString());
+                int actstock = Integer.parseInt(arr[4].toString());
+                String actcode = arr[5].toString();
+                String val = arr[0].toString();
+                List<Long> filterList = new ArrayList<>();
+                if(a == 0){ // 全部商品
+                    filterList = skuList;
+                }else{ // 指定分类
+                    StringBuilder regexp =
+                            new StringBuilder("^")
+                                    .append("[0-9]{1}");
 
+                    if (val.length() == 2) { // 第一级商品分类
+                        regexp.append(val)
+                                .append("[0-9]{11}")
+                                .append("$");
+                    } else if (val.length() == 4) { // 第二级商品分类
+                        regexp.append(val)
+                                .append("[0-9]{9}")
+                                .append("$");
+                    } else if (val.length() == 6) { // 第三级商品分类
+                        regexp.append(val)
+                                .append("[0-9]{7}")
+                                .append("$");
+                    }
+
+                    // 根据商品分类正则匹配sku
+                    Pattern p = Pattern.compile(regexp.toString());
+                    for(Long sku :skuList){
+                        Matcher m = p.matcher(String.valueOf(sku));
+                        if(m.matches()){
+                            filterList.add(sku);
+                        }
+                    }
+                }
+
+                // 构建活动库存数据
+                for(Long sku :filterList){
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("discount", 1);
+                    jsonObject.put("gcode", sku);
+                    jsonObject.put("cstatus", cstatus);
+                    jsonObject.put("rulecode", rulecode);
+                    jsonObject.put("actcode", actcode);
+                    jsonObject.put("stock", actstock);
+                    jsonObject.put("limitnum", limitnum);
+                    proList.add(jsonObject.toJSONString());
+                }
+
+            }
+
+            activityManageServer.setProd(proList);
         }
     }
 
