@@ -1089,6 +1089,7 @@ public class BackgroundProdModule {
      * @传参列表 {erpcode:erp码, store:库存，四大日期}
      * @返回列表 code=200 data=结果信息
      */
+    @UserPermission(ignore = true)
     public Result updateStoreDateFromERP(AppContext appContext) {
         JSONObject erpProd =
                 JSON.parseObject(appContext.param.json);
