@@ -173,7 +173,7 @@ public class TranOrderOptModule {
 
     //更新优惠券领取表
     private static final String UPD_COUENT_BACK_SQL = "update {{?" + DSMConst.TD_PROM_COUENT + "}} set orderno = 0, "
-            + "cstatus=cstatus~64 where cstatus & 64 > 0 and cstatus & 1 = 0 and orderno = ? and ctype = ? ";
+            + "cstatus=cstatus & ~64 where cstatus & 64 > 0 and cstatus & 1 = 0 and orderno = ? and ctype = ? ";
 
 
     /**
