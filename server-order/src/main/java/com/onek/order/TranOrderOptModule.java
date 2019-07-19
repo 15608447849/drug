@@ -134,7 +134,7 @@ public class TranOrderOptModule {
             + "freezestore=freezestore-? where cstatus&1=0 and sku=? ";
 
     //更新优惠券领取表
-    private static final String UPD_COUENT_SQL = "update {{?" + DSMConst.TD_PROM_COUENT + "}} set "
+    private static final String UPD_COUENT_SQL = "update {{?" + DSMConst.TD_PROM_COUENT + "}} set orderno = ?, "
             + "cstatus=cstatus|64 where cstatus&1=0 and unqid=? ";
 
     // 确认发货
@@ -170,6 +170,10 @@ public class TranOrderOptModule {
 
     private static final String UPDATE_COMP_BAL = "update {{?" + DSMConst.TB_COMP + "}} "
             + "set balance = IF((balance + ?) <=0,0,(balance + ?)) where cid = ? ";
+
+    //更新优惠券领取表
+    private static final String UPD_COUENT_BACK_SQL = "update {{?" + DSMConst.TD_PROM_COUENT + "}} set orderno = 0, "
+            + "cstatus=cstatus & ~64 where cstatus & 64 > 0 and cstatus & 1 = 0 and orderno = ? and ctype = ? ";
 
 
     /**
@@ -294,7 +298,7 @@ public class TranOrderOptModule {
         if (unqid > 0) {
             //使用优惠券
             sqlList.add(UPD_COUENT_SQL);
-            params.add(new Object[]{unqid});
+            params.add(new Object[]{orderNo,unqid});
         }
         //分摊余额
         if(bal > 0){
@@ -686,6 +690,8 @@ public class TranOrderOptModule {
                 int rrrr = IceRemoteUtil.updateCompBal(cusno,bal);
                 LogUtil.getDefaultLogger().debug("订单号【" + orderNo +"】---->>>订单取消退回余额结果：" + (rrrr>0));
             }
+            baseDao.updateNativeSharding(cusno,year,UPD_COUENT_BACK_SQL,
+                    new Object[]{orderNo,4});
         }
         return res > 0;
     }

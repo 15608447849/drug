@@ -24,6 +24,7 @@ import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.GsonUtils;
@@ -55,7 +56,6 @@ import static com.onek.util.FileServerUtils.getExcelDownPath;
 public class CouponManageModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
-
 
     private final static char[] letter = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J',
             'K', 'L', 'M', 'N', 'P','Q', 'R', 'S', 'T', 'U', 'V',
@@ -345,6 +345,15 @@ public class CouponManageModule {
 
     private static final  String QUERY_COURCD_EXT = "select 1 from {{?"+DSMConst.TD_PROM_COURCD+"}} "+
             " where compid = ? and cstatus & 128 > 0 ";
+
+    private static final String QUERY_COUP_NEWPERSONS = "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag," +
+            "glbno,0 goods,qlfno,qlfval from {{?"+DSMConst.TD_PROM_COUPON+"}} tpcp inner join " +
+            "{{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode inner join " +
+            "{{?" + DSMConst.TD_PROM_ASSDRUG+ "}} assd on assd.actcode = tpcp.unqid "+
+            " where assd.gcode = 0  and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and  tpcp.qlfno = 1 and tpcp.glbno = 1 "+
+    " and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 and tpcp.cstatus & 2048 > 0 and " +
+            " 1 = fun_prom_cycle(tpcp.unqid,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) ";
+
 
     //查询库存版本号
 //    private static final String SELECT_COUPON_VER_ = " select ver from {{?" + DSMConst.TD_PROM_COUPON + "}}"
@@ -1984,6 +1993,76 @@ public class CouponManageModule {
         return result.success("领取失败");
     }
 
+
+    /**
+     * 新人专享券领取（新人有礼）
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result revNewComerCoupons(AppContext appContext){
+        Result result = new Result();
+        int compid = Integer.parseInt(appContext.param.arrays[0]);
+        long uph = Long.parseLong(appContext.param.arrays[1]);
+        List<Object[]> crdRet = baseDao.queryNative(QUERY_COURCD_EXT, compid);
+        if(crdRet != null && !crdRet.isEmpty()){
+            return result.fail("已领取过新人专享！");
+        }
+        List<Object[]> coupRet = baseDao.queryNative(QUERY_COUP_NEWPERSONS,new Object[]{});
+
+        if(coupRet == null || coupRet.isEmpty()){
+            return result.fail("没有开启新人专享活动！");
+        }
+        CouponPubVO[] couponPubVOS = new CouponPubVO[coupRet.size()];
+
+
+        baseDao.convToEntity(coupRet, couponPubVOS, CouponPubVO.class,
+                new String[]{"coupno","brulecode","rulename",
+                        "validday","validflag","glbno","goods","qlfno","qlfval"});
+        List<CouponPubVO> couponPubVOList = new ArrayList(Arrays.asList(couponPubVOS));
+        for (CouponPubVO couponPubVO:couponPubVOList){
+            String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer from {{?" + DSMConst.TD_PROM_RELA
+                    + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
+                    + " and a.actcode=" + couponPubVO.getCoupno() + " order by ladamt desc ";
+            List<Object[]> queryRet = baseDao.queryNative(selectSQL);
+            CouponPubLadderVO[] ladderVOS = new CouponPubLadderVO[queryRet.size()];
+            baseDao.convToEntity(queryRet, ladderVOS, CouponPubLadderVO.class,
+                    new String[]{"unqid","ladamt","ladnum","offercode","offer"});
+            for (CouponPubLadderVO ladderVO:ladderVOS) {
+                ladderVO.setLadamt(MathUtil.exactDiv(ladderVO.getLadamt(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                ladderVO.setOffer(MathUtil.exactDiv(ladderVO.getOffer(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            }
+            couponPubVO.setLadderVOS(Arrays.asList(ladderVOS));
+            couponPubVO.setCompid(compid);
+        }
+        List<Object[]> parm = new ArrayList<>();
+        String courdSql = "insert into {{?" + DSMConst.TD_PROM_COURCD + "}}" +
+                " (unqid,coupno,compid,offercode,gettime,cstatus) values (?,?,?,?,now(),?)";
+
+        for (Object[] objects : coupRet){
+            long rcdid = GenIdUtil.getUnqId();
+            parm.add(new Object[]{rcdid,objects[0],
+                compid,0,128});
+
+        }
+        int ret [] = baseDao.updateBatchNative(courdSql,parm,parm.size());
+        if(!ModelUtil.updateTransEmpty(ret)){
+            try{
+                IceRemoteUtil.insertNewComerCoups(compid,
+                        GsonUtils.javaBeanToJson(couponPubVOList));
+            }catch (Exception e){
+                e.printStackTrace();
+            }
+            //TODO  短信发送 ！bal
+            //  SmsUtil.sendSmsBySystemTemp(uph+"",0,new String[]{});
+            return result.success("领取成功");
+        }
+        return result.success("领取失败");
+    }
+
+
     @UserPermission(ignore = true)
     public int updateCompBal(AppContext appContext){
         int compid = Integer.parseInt(appContext.param.arrays[0]);
@@ -2170,6 +2249,9 @@ public class CouponManageModule {
 
 
 
+
+
+
     @UserPermission(ignore = true)
     public int couponRevRecord(AppContext appContext){
         int compid = Integer.parseInt(appContext.param.arrays[0]);
@@ -2206,6 +2288,36 @@ public class CouponManageModule {
 
 
     public static void main(String[] args) {
+
+        List<Object[]> coupRet = baseDao.queryNative(QUERY_COUP_NEWPERSONS,new Object[]{});
+
+//        if(coupRet == null || coupRet.isEmpty()){
+//            return result.fail("没有开启新人专享活动！");
+//        }
+        CouponPubVO[] couponPubVOS = new CouponPubVO[coupRet.size()];
+        baseDao.convToEntity(coupRet, couponPubVOS, CouponPubVO.class,
+                new String[]{"coupno","brulecode","rulename",
+                        "validday","validflag","glbno","goods","qlfno","qlfval"});
+        List<CouponPubVO> couponPubVOList = new ArrayList(Arrays.asList(couponPubVOS));
+        for (CouponPubVO couponPubVO:couponPubVOList){
+            String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer from {{?" + DSMConst.TD_PROM_RELA
+                    + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
+                    + " and a.actcode=" + couponPubVO.getCoupno() + " order by ladamt desc ";
+            List<Object[]> queryRet = baseDao.queryNative(selectSQL);
+            CouponPubLadderVO[] ladderVOS = new CouponPubLadderVO[queryRet.size()];
+            baseDao.convToEntity(queryRet, ladderVOS, CouponPubLadderVO.class,
+                    new String[]{"unqid","ladamt","ladnum","offercode","offer"});
+            for (CouponPubLadderVO ladderVO:ladderVOS) {
+                ladderVO.setLadamt(MathUtil.exactDiv(ladderVO.getLadamt(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                ladderVO.setOffer(MathUtil.exactDiv(ladderVO.getOffer(),100L).
+                        setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            }
+            couponPubVO.setLadderVOS(Arrays.asList(ladderVOS));
+            couponPubVO.setCompid(111);
+        }
+
+
 //        CouponManageModule couponManageModule = new CouponManageModule();
 //        String[] coupNos = couponManageModule.getCoupNos(50);
 //        for (int i = 0 ;i < coupNos.length; i++){

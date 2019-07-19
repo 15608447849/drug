@@ -6,6 +6,7 @@ import com.onek.calculate.entity.Ladoff;
 import com.onek.calculate.util.DiscountUtil;
 import util.MathUtil;
 
+import java.math.RoundingMode;
 import java.util.List;
 
 public final class RuleParser {
@@ -79,7 +80,7 @@ public final class RuleParser {
 
         if (ladoff.isPercentage()) {
             value = MathUtil.exactMul(
-                    currentPrice, ladoff.getOffer()).setScale(2).doubleValue();
+                    currentPrice, ladoff.getOffer()).setScale(2, RoundingMode.HALF_UP).doubleValue();
         }
 
         return new ValueAndTimes(value, times);

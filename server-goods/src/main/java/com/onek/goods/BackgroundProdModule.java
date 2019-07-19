@@ -34,6 +34,7 @@ import org.elasticsearch.search.SearchHit;
 import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.MathUtil;
+import util.ModelUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
@@ -225,7 +226,7 @@ public class BackgroundProdModule {
     }
 
     private boolean checkStore(long sku, int store) {
-        boolean result = sku > 0 && store > 0;
+        boolean result = sku > 0 && store >= 0;
 
         if (result) {
             String sql = " SELECT s.freezestore "
@@ -691,14 +692,19 @@ public class BackgroundProdModule {
             RedisStockUtil.setStock(bgProdVO.getSku(), bgProdVO.getStore());
 
             try {
-                BASE_DAO.updateTransNative(
-                        new String[] { INSERT_PROD_SPU, INSERT_PROD_SKU },
-                        params);
+                int[] result = BASE_DAO.updateTransNative(
+                    new String[] { INSERT_PROD_SPU, INSERT_PROD_SKU },
+                    params);
+
+                if (ModelUtil.updateTransEmpty(result)) {
+                    throw new Exception("商品增加失败！");
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
                 ProdESUtil.deleteProdDocument(Long.parseLong(sku));
                 RedisUtil.getStringProvide().decrease(spu);
-                throw new IllegalArgumentException("SQL异常");
+                throw new IllegalArgumentException(e);
             }
         }
 
@@ -1078,6 +1084,79 @@ public class BackgroundProdModule {
         return new Result().success();
     }
 
+
+    /**
+     * @接口摘要 更新库存 (ERP专用)
+     * @业务场景 ERP更新库存和四大日期
+     * @传参类型 json
+     * @传参列表 {erpcode:erp码, store:库存，四大日期}
+     * @返回列表 code=200 data=结果信息
+     */
+    public Result updateStoreDateFromERP(AppContext appContext) {
+        JSONObject erpProd =
+                JSON.parseObject(appContext.param.json);
+
+        if (erpProd == null) {
+            return new Result().fail("参数格式错误！");
+        }
+
+        String erpcode = erpProd.getString("erpcode");
+
+        if (StringUtils.isEmpty(erpcode)) {
+            return new Result().fail("非法唯一码！");
+        }
+
+        int store = erpProd.getIntValue("store");
+
+        if (store < 0) {
+            return new Result().fail("非法库存！");
+        }
+
+        String vaildsdate = null, vaildedate = null, prodsdate = null, prodedate = null;
+
+        boolean dateJudge =
+                StringUtils.isDateFormatter(vaildsdate = erpProd.getString("vaildsdate"))
+                && StringUtils.isDateFormatter(vaildedate = erpProd.getString("vaildedate"))
+                && StringUtils.isDateFormatter(prodsdate = erpProd.getString("prodsdate"))
+                && StringUtils.isDateFormatter(prodedate = erpProd.getString("prodedate"));
+
+        if (!dateJudge) {
+            return new Result().fail("非法日期！");
+        }
+
+        BgProdVO bgProd = getProdByERPCode(erpcode);
+
+        if (bgProd == null) {
+            return new Result().fail("非法erp码！");
+        }
+
+        int freezeStore = getFreezeStore(bgProd.getSku());
+
+        if (freezeStore < 0) {
+            return new Result().fail("该商品不存在！");
+        }
+
+        if (store < freezeStore) {
+            bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
+        } else {
+            bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
+            bgProd.setStore(store);
+        }
+
+        RedisStockUtil.setStock(bgProd.getSku(), store);
+
+        String updateSQL = " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
+                + " SET store = ?, cstatus = ?, "
+                + " vaildsdate = ?, vaildedate = ?, prodsdate = ?, prodedate = ? "
+                + " WHERE cstatus&1 = 0 AND erpsku = ? ";
+
+        BASE_DAO.updateNative(updateSQL, bgProd.getStore(), bgProd.getSkuCstatus(),
+                vaildsdate, vaildedate, prodsdate, prodedate,
+                erpcode);
+
+        return new Result().success();
+    }
+
     /**
      * @接口摘要 导入商品 (ERP专用)
      * @业务场景 ERP导入商品
@@ -1201,6 +1280,7 @@ public class BackgroundProdModule {
 
             }
         } catch (Exception e) {
+            e.printStackTrace();
             return new Result().fail(e.getMessage());
         }
 

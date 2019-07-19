@@ -157,6 +157,13 @@ public class CouponRevModule {
             " where unqid = ? ";
 
 
+    //新增领取优惠券
+    private final String INSERT_COUPONREV_CSQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
+            + "(unqid,coupno,compid,startdate,starttime,enddate,endtime,brulecode,"
+            + "rulename,goods,ladder,glbno,cstatus,ctype) "
+            + "values (?,?,?,?,?,?,?,?,?,?,?,?,?,?)";
+
+
 
     /**
      * @description 优惠券新增
@@ -459,6 +466,41 @@ public class CouponRevModule {
                         endDate,"00:00:00",couponVO.getBrulecode(),
                 couponVO.getRulename(),couponVO.getGoods(),
                         ladderJson,couponVO.getGlbno(),0});
+    }
+
+
+    public boolean insertCoupons(List<CouponPubVO> couponPubVOS){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date curDate = new Date();
+        List<Object[]> parmList = new ArrayList<>();
+        for(CouponPubVO couponPubVO :couponPubVOS){
+            String startDate = dateFormat.format(curDate);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(curDate);
+
+            calendar.add(Calendar.DATE, couponPubVO.getValidday());
+            String endDate = dateFormat.format(calendar.getTime());
+            if(couponPubVO.getValidflag() == 1){
+                calendar.setTime(curDate);
+                calendar.add(Calendar.DATE, 1);
+                startDate = dateFormat.format(calendar.getTime());
+                calendar.add(Calendar.DATE, couponPubVO.getValidday());
+                endDate = dateFormat.format(calendar.getTime());
+            }
+            String ladderJson =  GsonUtils.javaBeanToJson(couponPubVO.getLadderVOS());
+            parmList.add( new Object[]{GenIdUtil.getUnqId(),couponPubVO.getCoupno(),
+                    couponPubVO.getCompid(),startDate,"00:00:00",
+                    endDate,"00:00:00",couponPubVO.getBrulecode(),
+                    couponPubVO.getRulename(),couponPubVO.getGoods(),
+                    ladderJson,couponPubVO.getGlbno(),0,couponPubVO.getCtype()});
+        }
+        int result[] = baseDao.updateBatchNativeSharding(couponPubVOS.get(0).getCompid(),
+                TimeUtils.getCurrentYear(),INSERT_COUPONREV_CSQL,parmList,parmList.size());
+
+       // IceRemoteUtil.updateTransNative()
+
+        return !ModelUtil.updateTransEmpty(result);
+
     }
 
 
@@ -927,7 +969,7 @@ public class CouponRevModule {
      * @return
      */
     @UserPermission(ignore = true)
-    public Result insertNewComerBalCoupon(AppContext appContext){
+    public Result insertNewComerCoupon(AppContext appContext){
         Result result = new Result();
         String json = appContext.param.json;
         List<HashMap<String,String>> hashMaps = new ArrayList<>();
@@ -1077,6 +1119,40 @@ public class CouponRevModule {
             return result.fail("领取失败");
         }
         return result.success("领取成功");
+    }
+
+
+
+
+    /**
+     * 注册有礼
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result revNewCoupons(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        LogUtil.getDefaultLogger().debug(json);
+        JsonParser jsonParser = new JsonParser();
+        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+
+        List<CouponPubVO> couponPubVOList = new ArrayList<>();
+        Gson gson = new Gson();
+        for (JsonElement coupn : jsonArray) {
+            CouponPubVO couponPubVO = gson.fromJson(coupn, CouponPubVO.class);
+            if (couponPubVO != null) {
+                if(couponPubVO.getQlfno() == 1){
+                    couponPubVO.setCtype(4);
+                }
+                couponPubVOList.add(couponPubVO);
+            }
+        }
+
+        if (insertCoupons(couponPubVOList)) {
+            return result.success("领取成功");
+        }
+        return result.fail("领取失败");
     }
 
 }

@@ -268,6 +268,12 @@ public class RedisStockUtil {
      */
     public static long addActStock(long sku, long actCode, int stock) {
         if(RedisUtil.getHashProvide().existsByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.ACTSTOCK_PREFIX + actCode)){
+            Map<String,String> hashMap = RedisUtil.getHashProvide().getAllHash(RedisGlobalKeys.STOCK_PREFIX + sku);
+            String key = RedisGlobalKeys.ACTSTOCK_PREFIX + actCode;
+            String currentStock = hashMap.get(key);
+            if(ALL.equals(currentStock)){
+                return 1;
+            }
             Long num = RedisUtil.getHashProvide().incrByKey(RedisGlobalKeys.STOCK_PREFIX + sku, RedisGlobalKeys.ACTSTOCK_PREFIX + actCode, stock);
             return num;
         }
@@ -315,142 +321,6 @@ public class RedisStockUtil {
             }
         }
         return sumStock;
-    }
-
-
-//    /**
-//     * 检查活动库存设置
-//     *
-//     * @param skuList skuList
-//     * @param calctype 计算类型 0:代表数量; 1:代表百分比
-//     * @param num 基准数量/百分比值
-//     * @param stockMap
-//     * @return
-//     */
-//    public static long checkActStockSetting(List<Long> skuList, int calctype,int num, Map<Long, Integer> stockMap){
-//        long start = System.currentTimeMillis();
-//        Long sku = skuList.get(0);
-//        String existKey = "";
-//
-//        Map<String,String> map = RedisUtil.getHashProvide().getAllHash(RedisGlobalKeys.AVAILSTOCK_PREFIX);
-//        double rate =  MathUtil.exactDiv(num, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-//        if(sku == 0){ // 全部商品
-//
-//            if(map != null){
-//                for(String key : map.keySet()){
-//                    String availStock = map.get(key);
-//                    if(StringUtils.isEmpty(availStock) || Integer.parseInt(availStock) <=0){
-//                         existKey = key;
-//                         break;
-//                    }
-//                    int ori_stock = stockMap.containsKey(key) ? stockMap.get(key) : 0;
-//                    int new_stock = ori_stock + Integer.parseInt(availStock);
-//                    int val = calctype == 0 ? num : MathUtil.exactMul(new_stock, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
-//                    if(new_stock - val < 0){
-//                        existKey = key;
-//                        break;
-//                    }
-//                }
-//            }
-//        }else if(sku < 100000000000L){ // 指定类别
-//            for(String key : map.keySet()){
-//                if(key.substring(1,key.length()-1).contains(sku+"")){
-//                    String availStock = map.get(key);
-//                    if(StringUtils.isEmpty(availStock) || Integer.parseInt(availStock) <=0){
-//                        existKey = key;
-//                    }
-//                    int ori_stock = stockMap.containsKey(key) ? stockMap.get(key) : 0;
-//                    int new_stock = ori_stock + Integer.parseInt(availStock);
-//                    int val = calctype == 0 ? num : MathUtil.exactMul(new_stock, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
-//                    if(new_stock - val < 0){
-//                        existKey = key;
-//                        break;
-//                    }
-//                }
-//
-//            }
-//        }else if(sku >= 100000000000L){ // 具体商品
-//            for(String key : map.keySet()){
-//                for(Long s : skuList){
-//                    if(key.equals(s)){
-//                        String availStock = map.get(key);
-//                        if(StringUtils.isEmpty(availStock) || Integer.parseInt(availStock) <=0){
-//                            existKey = key;
-//                        }
-//                        int ori_stock = stockMap.containsKey(key) ? stockMap.get(key) : 0;
-//                        int new_stock = ori_stock + Integer.parseInt(availStock);
-//                        int val = calctype == 0 ? num : MathUtil.exactMul(new_stock, rate).setScale(0, BigDecimal.ROUND_HALF_DOWN).intValue() ;
-//                        if(new_stock - val < 0){
-//                            existKey = key;
-//                            break;
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//        long end = System.currentTimeMillis();
-//        if(!StringUtils.isEmpty(existKey)){
-//            return Long.parseLong(existKey);
-//        }
-//        System.out.println("cost "+(end - start) + " ms");
-//        return 0;
-//    }
-
-    public static void main(String[] args) {
-        int n = 6;
-        int[] a = { Integer.MAX_VALUE,
-                20, 8, 7,
-                6, 4, 3 };
-
-        int[] f = { Integer.MAX_VALUE,
-                Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE,
-                Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE };
-
-        f[1]=a[1];
-        int len=1;//通过记录f数组的有效位数，求得个数
-    /*因为上文中所提到我们有可能要不断向前寻找，
-    所以可以采用二分查找的策略，这便是将时间复杂
-    度降成nlogn级别的关键因素。*/
-        for(int i=2;i<=n;i++)
-        {
-            int l=0,r=len,mid;
-            if(a[i]>f[len])f[++len]=a[i];
-                //如果刚好大于末尾，暂时向后顺次填充
-            else
-            {
-                while(l<r)
-                {
-                    mid=(l+r)/2;
-                    if(f[mid]>a[i])r=mid;
-                        //如果仍然小于之前所记录的最小末尾，那么不断
-                        //向前寻找(因为是最长上升子序列，所以f数组必
-                        //然满足单调)
-                    else l=mid+1;
-                }
-
-                f[l]=Math.min(a[i],f[l]);//更新最小末尾
-            }
-        }
-
-        System.out.println(len);
-
-//        List<Long> skuList = new ArrayList<>();
-//        skuList.add(0L);
-//        Long key = checkActStockSetting(skuList,0,20, new HashMap<>());
-//        System.out.println(key);
-//        int a = RedisStockUtil.setStock(11000000011001L, 50);
-//        System.out.println(a);
-//        Long a= RedisStockUtil.clearActStock(11000000011001L, 18071576649925632L);
-//        System.out.println(a);
-//        boolean aa = RedisStockUtil.deductionActStock(11000000011001L, 5, 18071576649925632L);
-//        System.out.println(aa);
-//        RedisStockUtil.deductionStock(11000000011001L, 4);
-//        RedisStockUtil.addStock(11000000011001L, 8);
-//        RedisStockUtil.addActStock(11000000011001L, 18071576649925632L, 2);
-//        int stock = RedisStockUtil.getSumActStock(11000000011001L);
-//        System.out.println(stock);
-//        int stock = RedisStockUtil.getActStockBySkuAndActno(11000000011001L, 18071576649925632L);
-//        System.out.println(stock);
     }
 }
 

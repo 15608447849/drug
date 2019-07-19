@@ -42,6 +42,50 @@ public class BackgroundProdManuModule {
      * @返回列表 code=200 data=结果信息
      */
     @UserPermission(ignore = true)
+    public Result addProdManuFromERP(AppContext appContext) {
+        ProdManuVO prodManuVO;
+        try {
+            prodManuVO =
+                    new Gson().fromJson(appContext.param.json, ProdManuVO.class);
+
+            if (prodManuVO == null) {
+                throw new IllegalArgumentException("对象为空");
+            }
+
+            if (StringUtils.isEmpty(prodManuVO.getManuname())) {
+                throw new IllegalArgumentException("厂家名为空");
+            }
+        } catch (Exception e) {
+//            e.printStackTrace();
+            return new Result().fail(e.getMessage());
+        }
+
+        long manuId = prodManuVO.getManuno() == 0 ? GenIdUtil.getUnqId() : prodManuVO.getManuno();
+
+        String sql = "INSERT INTO {{?" + DSMConst.TD_PROD_MANU + "}} "
+                + " (manuno, manuname, manunameh, areac, address, createdate, createtime) "
+                + " SELECT ?, ?, CRC32(?), ?, ?, CURRENT_DATE, CURRENT_TIME "
+                + " FROM DUAL "
+                + " WHERE NOT EXISTS ("
+                + " SELECT *"
+                + " FROM {{?" + DSMConst.TD_PROD_MANU + "}} "
+                + " WHERE manuno = ? ) ";
+
+        int result = BASE_DAO.updateNative(sql,
+                manuId, prodManuVO.getManuname(), prodManuVO.getManuname(),
+                prodManuVO.getAreac(), prodManuVO.getAddress(), manuId);
+
+        return new Result().success(result > 0 ? manuId : 0);
+    }
+
+    /**
+     * @接口摘要 增加商品厂商
+     * @业务场景 增加商品厂商
+     * @传参类型 json
+     * @传参列表 com.onek.goods.entities.ProdManuVO
+     * @返回列表 code=200 data=结果信息
+     */
+    @UserPermission(ignore = true)
     public Result addProdManu(AppContext appContext) {
         ProdManuVO prodManuVO;
         try {
