@@ -5,7 +5,6 @@ import com.onek.consts.ESConstant;
 import com.onek.goods.entities.BgProdVO;
 import elasticsearch.ElasticSearchClientFactory;
 import elasticsearch.ElasticSearchProvider;
-import objectref.ObjectRefUtil;
 import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
@@ -15,7 +14,6 @@ import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
-import org.elasticsearch.index.mapper.RootObjectMapper;
 import org.elasticsearch.index.query.*;
 import org.elasticsearch.rest.RestStatus;
 import org.elasticsearch.search.SearchHit;
@@ -25,14 +23,12 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
-import util.GsonUtils;
 import util.StringUtils;
 import util.TimeUtils;
 
 import java.util.*;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
-import static org.elasticsearch.index.query.QueryBuilders.termsQuery;
 
 public class ProdESUtil {
 
@@ -496,7 +492,7 @@ public class ProdESUtil {
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdHasBrand(String keyword,String brandno, int pagenum, int pagesize){
+    public static SearchResponse searchProdHasBrand(String keyword,String brandno, String manuName, int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
@@ -509,6 +505,10 @@ public class ProdESUtil {
             }
             if(!StringUtils.isEmpty(brandno)){
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_BRANDNO, brandno);
+                boolQuery.must(matchQuery);
+            }
+            if(!StringUtils.isEmpty(manuName)){
+                MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_MANUNAME, manuName);
                 boolQuery.must(matchQuery);
             }
             MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
@@ -765,8 +765,8 @@ public class ProdESUtil {
 //        spuList.add(110180400010L);
 //        SearchResponse response = searchProd("",null, null, null,1,20);
 //        System.out.println(response.getHits().totalHits);
-        SearchResponse response = searchProdHasBrand("", "3853312138937344", 1,20);
-        System.out.println(response.getHits().totalHits);
+//        SearchResponse response = searchProdHasBrand("", "3853312138937344", 1,20);
+//        System.out.println(response.getHits().totalHits);
     }
 
 }

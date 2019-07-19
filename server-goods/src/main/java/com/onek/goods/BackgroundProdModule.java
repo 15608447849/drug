@@ -100,7 +100,7 @@ public class BackgroundProdModule {
                     + " LEFT JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
                     + " WHERE spu.spu = ? ";
 
-    private static final String QUERY_PROD_BASE =
+    static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
                     + " spu.brandno, b.brandname, spu.manuno, m.manuname, spu.rx, "
                     + " spu.insurance, spu.gspgms, spu.gspsc, spu.detail, spu.cstatus, "
@@ -343,19 +343,23 @@ public class BackgroundProdModule {
             return new Result().success(null);
         }
 
+        return new Result().success(prodHandle(queryResult,appContext.isAnonymous(),appContext.isSignControlAgree()));
+    }
+
+    public static BgProdVO[] prodHandle(List<Object[]> queryResult,boolean isAnonymous,boolean isSign){
         BgProdVO[] returnResults = new BgProdVO[queryResult.size()];
 
         BASE_DAO.convToEntity(queryResult, returnResults, BgProdVO.class);
 
         convProds(returnResults);
 
-        if (appContext.isAnonymous()) {
+        if (isAnonymous) {
             for (BgProdVO returnResult : returnResults) {
                 returnResult.setRrp(-1);
                 returnResult.setMp(-1);
                 returnResult.setVatp(-1);
             }
-        } else if (!appContext.isSignControlAgree()) {
+        } else if (!isSign) {
             for (BgProdVO returnResult : returnResults) {
                 if ((returnResult.getConsell() & 1) > 0) {
                     returnResult.setRrp(-2);
@@ -364,8 +368,7 @@ public class BackgroundProdModule {
                 }
             }
         }
-
-        return new Result().success(returnResults);
+        return returnResults;
     }
 
     /**
@@ -733,7 +736,7 @@ public class BackgroundProdModule {
         return new Result().success(bgProdVO);
     }
 
-    private void convProds(BgProdVO[] bgProdVOs) {
+    public static void convProds(BgProdVO[] bgProdVOs) {
         String[] spuParser = null;
 
         for (BgProdVO bgProdVO : bgProdVOs) {
@@ -817,7 +820,7 @@ public class BackgroundProdModule {
      * @return [类型码, 剂型码]
      */
 
-    private String[] parseSPU(long spu) {
+    public static String[] parseSPU(long spu) {
         String spuStr = String.valueOf(spu);
 
         if (spuStr.length() != 12) {

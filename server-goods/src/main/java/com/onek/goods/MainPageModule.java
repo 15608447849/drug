@@ -9,6 +9,7 @@ import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.entities.ProdBrandVO;
 import com.onek.goods.entities.ProdVO;
 import com.onek.goods.mainpagebean.Attr;
@@ -16,21 +17,24 @@ import com.onek.goods.mainpagebean.UiElement;
 import com.onek.goods.util.ProdActPriceUtil;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.server.infimp.IceDebug;
+import com.onek.util.FileServerUtils;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
-import com.onek.util.FileServerUtils;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.*;
 
 import java.math.BigDecimal;
 import java.util.*;
 
+import static com.onek.goods.BackgroundProdModule.QUERY_PROD_BASE;
+import static com.onek.goods.BackgroundProdModule.prodHandle;
 import static constant.DSMConst.TB_UI_PAGE;
 
 /**
@@ -87,25 +91,26 @@ public class MainPageModule {
         page.pageIndex = pageIndex <= 0 ? 1 : pageIndex;
         page.pageSize = pageNumber <= 0 ? 100 : pageNumber;
         int compId = context.getUserSession() != null ? context.getUserSession().compId : 0;
-        String keyword = "", brandno = "";
+        String keyword = "", brandno = "", manuName="";
         if (jsonStr != null && !jsonStr.isEmpty()) {
             JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
             keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
             brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
+            manuName = (json.has("manuname") ? json.get("manuname").getAsString() : "").trim();
         }
         try {
             if (bRuleCodes < 0 && bRuleCodes >= -10) {//非活动专区
                 if (isQuery) {
                     List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), context.isSignControlAgree(),
-                            page, attr, keyword, brandno);
+                            page, attr, keyword, brandno, manuName);
                     if (prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
                         page.totalPageCount = page.totalItems%page.pageSize > 0 ?
                                 page.totalItems/page.pageSize+1 :page.totalItems/page.pageSize;
                         attr.page = new PageHolder(page);
-                        return attr.list.size() > 0 ? attr : null;
                     }
+                    return  attr;
                 }
             } else {//活动专区
                 String ruleCodeStr;
@@ -452,7 +457,7 @@ public class MainPageModule {
      * @version 1.1.1
      **/
     private static List<ProdVO> getFloorByState(long state, boolean isAnonymous, boolean isSign, Page page,
-                                                 Attr attr,String keyword, String brandno) {
+                                                 Attr attr,String keyword, String brandno,  String manuName) {
 
         Set<Integer> result = new HashSet<>();
         if (state == -1) { // 新品
@@ -480,20 +485,51 @@ public class MainPageModule {
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
         } else {//品牌专区-4 //热销专区 -5 //控销专区 -6
-            return getOtherMallFloor(page, isAnonymous, isSign, state, attr, keyword, brandno);
+            return getOtherMallFloor(page, isAnonymous, isSign, state, attr, keyword, brandno, manuName);
         }
         Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, isSign, result, keyword, 1, page);
         return (List<ProdVO>) resultMap.get("prodList");
     }
 
 
+    private static class Manu{
+        long manuNo; // 厂商码
+        String manuName;//厂商名
+
+        public Manu(long manuNo, String manuName) {
+            this.manuNo = manuNo;
+            this.manuName = manuName;
+        }
+    }
+
+    private static class BarndManu{
+        private long brandno; //品牌码
+        private String brandname;//品牌名
+        private Set<Manu> manuList; //关联的厂商列表
+
+        public BarndManu(long brandno, String brandname) {
+            this.brandno = brandno;
+            this.brandname = brandname;
+            this.manuList = new HashSet<>();
+        }
+    }
+
+
     //品牌-4 热销 -5
     private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous, boolean isSign,
-                                                  long state, Attr attr, String keyword, String brandno) {
-        SearchResponse response;
-        if (state == -4) {//品牌
-            attr.actObj = getBrandInfo();
-            response = ProdESUtil.searchProdHasBrand(keyword, brandno, page.pageIndex, page.pageSize);
+                                                  long state, Attr attr, String keyword, String brandno, String manuName) {
+
+        SearchResponse response = null;
+        if (state == -4) {//品牌 - 多厂商
+//           List<ProdBrandVO> prodBarnds = getBrandInfo();
+            if (!StringUtils.isEmpty(manuName)){
+//                LogUtil.getDefaultLogger().info("品牌-厂家-查询关键字: "+manuName );
+                //厂家码
+                response = ProdESUtil.searchProdHasBrand(keyword, brandno, manuName, page.pageIndex, page.pageSize);
+            }else{
+                attr.actObj = selectAllBarnd(isAnonymous,isSign);
+            }
+
         } else if (state == -5) { //热销
             response = ProdESUtil.searchHotProd(0, keyword, page.pageIndex, page.pageSize);
         } else {//控销专区
@@ -505,6 +541,38 @@ public class MainPageModule {
         return prodList;
     }
 
+    private static List<BarndManu> selectAllBarnd(boolean isAnonymous, boolean isSign) {
+        List<BarndManu> barList;
+        List<Object[]> lines = BASE_DAO.queryNative(QUERY_PROD_BASE);
+        BgProdVO[] bgProds = prodHandle(lines,isAnonymous,isSign);
+        String json = RedisUtil.getStringProvide().get("BRANS_MANU");
+        if (StringUtils.isEmpty(json)){
+            barList = new ArrayList<>();
+            BgProdVO b;
+            BarndManu bm;
+            HashMap<String,BarndManu> fastMap = new HashMap<>();
+            for (int i = 0 ; i < bgProds.length ; i ++){
+                b = bgProds[i];
+                if (b.getBrandNo() > 0 && !StringUtils.isEmpty(b.getBrandName())) {
+                    LogUtil.getDefaultLogger().info("当前品牌: "+ b.getBrandNo()+" - "+ b.getBrandName());
+                    bm = fastMap.get(b.getBrandNo()+"");
+                    if (bm == null){
+                        bm = new BarndManu(b.getBrandNo(),b.getBrandName());
+                        fastMap.put(b.getBrandNo()+"", bm);
+                        barList.add(bm);
+                    }
+                    bm.manuList.add(new Manu(b.getManuNo(),b.getManuName()));
+                }
+            }
+            RedisUtil.getStringProvide().set("BRANS_MANU",GsonUtils.javaBeanToJson(barList));
+            RedisUtil.getStringProvide().expire("BRANS_MANU", 3 * 60);
+        }else{
+            barList = GsonUtils.json2List(json , BarndManu.class);
+        }
+        return barList;
+    }
+
+    //获取所有品牌
     private static List<ProdBrandVO> getBrandInfo() {
         List<Object[]> queryResult = BASE_DAO.queryNative(QUERY_PROD_BRAND + " order by sku.sales desc");
         if (queryResult == null || queryResult.isEmpty()) return null;
