@@ -723,6 +723,29 @@ public class ProdESUtil {
         return str;
     }
 
+    public static SearchResponse searchProdGroupByCol(String keyword, String col, String brandName, String maNuName) {
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        if(!StringUtils.isEmpty(keyword)){
+            MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+            boolQuery.must(matchQuery);
+        }
+        if (!StringUtils.isEmpty(brandName)) {
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_BRANDNAME, brandName);
+            boolQuery.must(builder);
+        }
+        if (!StringUtils.isEmpty(maNuName)) {
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNAME, maNuName);
+            boolQuery.must(builder);
+        }
+        MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
+        boolQuery.must(builder);
+        TransportClient client = ElasticSearchClientFactory.getClientInstance();
+        SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX).setQuery(boolQuery);
+        AggregationBuilder aggregationBuilder = AggregationBuilders.terms("agg")
+                .field(col).subAggregation(AggregationBuilders.topHits("top")).size(1000);
+        return requestBuilder.addAggregation(aggregationBuilder).setExplain(true).execute().actionGet();
+    }
+
     public static void main(String[] args) {
         String s = "10";
         System.out.println(addZeroForNum(s, 6, '9'));
