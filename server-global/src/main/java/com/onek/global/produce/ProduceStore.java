@@ -15,8 +15,7 @@ public class ProduceStore {
     private static final String PRODUCE_SELECT =
             " SELECT * "
             + " FROM {{?" + DSMConst.TD_PRODUCE_CLASS + "}} "
-            + " WHERE cstatus&1 = 0 "
-            + " ORDER BY sorted ";
+            + " WHERE cstatus&1 = 0 ";
 
     private static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -33,11 +32,11 @@ public class ProduceStore {
                     + " LEFT  JOIN {{?" + DSMConst.TD_PROD_BRAND + "}} b   ON b.cstatus&1 = 0 AND b.brandno = spu.brandno "
                     + " WHERE 1=1 ";
 
-    static {
-        init();
-    }
+    /*static {
+//        init();
+    }*/
 
-    private static void init() {
+   /* private static void init() {
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(PRODUCE_SELECT);
         ProduceClassEntity[] produceEntities = new ProduceClassEntity[queryResult.size()];
         BaseDAO.getBaseDAO().convToEntity(queryResult, produceEntities, ProduceClassEntity.class);
@@ -49,7 +48,7 @@ public class ProduceStore {
 //                .getAsJsonArray();
 //        handlerJson(temp);
 //        TREE_STR = temp.toString();
-    }
+    }*/
 
     public static String getTreeJson() {
         JsonArray temp = new JsonParser()
@@ -61,13 +60,13 @@ public class ProduceStore {
         return temp.toString();
     }
 
-
     public static List<ProduceClassEntity> getProduceClassTree() {
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(PRODUCE_SELECT);
         ProduceClassEntity[] produceEntities = new ProduceClassEntity[queryResult.size()];
-        BaseDAO.getBaseDAO().convToEntity(queryResult, produceEntities, ProduceClassEntity.class);
+        BaseDAO.getBaseDAO().convToEntity(
+                queryResult, produceEntities, ProduceClassEntity.class, "classId", "className", "cstatus", "sorted");
+        Arrays.sort(produceEntities, Comparator.comparingInt(ProduceClassEntity::getSorted));
         List<ProduceClassEntity> treeList = TreeUtil.list2Tree(Arrays.asList(produceEntities));
-        treeList.sort(Comparator.comparingInt(ProduceClassEntity::getSorted));
         return Collections.unmodifiableList(treeList);
     }
 
