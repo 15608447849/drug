@@ -12,12 +12,11 @@ import java.util.*;
 
 @SuppressWarnings("unchecked")
 public class ProduceStore {
-    private static List<ProduceClassEntity> PRODUCE_TREE = null;
-    private static String TREE_STR = null;
     private static final String PRODUCE_SELECT =
             " SELECT * "
             + " FROM {{?" + DSMConst.TD_PRODUCE_CLASS + "}} "
-            + " WHERE cstatus&1 = 0 ";
+            + " WHERE cstatus&1 = 0 "
+            + " ORDER BY sorted ";
 
     private static final String QUERY_PROD_BASE =
             " SELECT spu.spu, spu.popname, spu.prodname, spu.standarno, "
@@ -43,17 +42,33 @@ public class ProduceStore {
         ProduceClassEntity[] produceEntities = new ProduceClassEntity[queryResult.size()];
         BaseDAO.getBaseDAO().convToEntity(queryResult, produceEntities, ProduceClassEntity.class);
         List<ProduceClassEntity> treeList = TreeUtil.list2Tree(Arrays.asList(produceEntities));
-        PRODUCE_TREE = Collections.unmodifiableList(treeList);
+//        PRODUCE_TREE = Collections.unmodifiableList(treeList);
 
-        JsonArray temp = new JsonParser()
-                .parse(new Gson().toJson(PRODUCE_TREE))
-                .getAsJsonArray();
-        handlerJson(temp);
-        TREE_STR = temp.toString();
+//        JsonArray temp = new JsonParser()
+//                .parse(new Gson().toJson(PRODUCE_TREE))
+//                .getAsJsonArray();
+//        handlerJson(temp);
+//        TREE_STR = temp.toString();
     }
 
     public static String getTreeJson() {
-        return TREE_STR;
+        JsonArray temp = new JsonParser()
+                .parse(new Gson().toJson(getProduceClassTree()))
+                .getAsJsonArray();
+
+        handlerJson(temp);
+
+        return temp.toString();
+    }
+
+
+    public static List<ProduceClassEntity> getProduceClassTree() {
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(PRODUCE_SELECT);
+        ProduceClassEntity[] produceEntities = new ProduceClassEntity[queryResult.size()];
+        BaseDAO.getBaseDAO().convToEntity(queryResult, produceEntities, ProduceClassEntity.class);
+        List<ProduceClassEntity> treeList = TreeUtil.list2Tree(Arrays.asList(produceEntities));
+        treeList.sort(Comparator.comparingInt(ProduceClassEntity::getSorted));
+        return Collections.unmodifiableList(treeList);
     }
 
     public static String[] getCompleteName(String pclass) {
@@ -77,7 +92,7 @@ public class ProduceStore {
      * @return
      */
     public static ProduceClassEntity getProduceByClassNo(String pclass) {
-        ProduceClassEntity ProduceClassEntity = findArea(PRODUCE_TREE, pclass, 0);
+        ProduceClassEntity ProduceClassEntity = findArea(getProduceClassTree(), pclass, 0);
 
         return ProduceClassEntity;
     }
@@ -98,7 +113,7 @@ public class ProduceStore {
     }
 
     public static String getProduceName(String pclass) {
-        ProduceClassEntity ProduceClassEntity = findArea(PRODUCE_TREE, pclass, 0);
+        ProduceClassEntity ProduceClassEntity = findArea(getProduceClassTree(), pclass, 0);
 
         return ProduceClassEntity == null ? "" : ProduceClassEntity.getClassName();
     }
