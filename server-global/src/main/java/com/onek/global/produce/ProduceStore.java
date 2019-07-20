@@ -64,7 +64,7 @@ public class ProduceStore {
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(PRODUCE_SELECT);
         ProduceClassEntity[] produceEntities = new ProduceClassEntity[queryResult.size()];
         BaseDAO.getBaseDAO().convToEntity(
-                queryResult, produceEntities, ProduceClassEntity.class, "classId", "className", "cstatus", "sorted");
+                queryResult, produceEntities, ProduceClassEntity.class);
         Arrays.sort(produceEntities, Comparator.comparingInt(ProduceClassEntity::getSorted));
         List<ProduceClassEntity> treeList = TreeUtil.list2Tree(Arrays.asList(produceEntities));
         return Collections.unmodifiableList(treeList);
