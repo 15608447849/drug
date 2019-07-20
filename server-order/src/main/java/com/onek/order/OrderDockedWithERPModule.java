@@ -56,13 +56,13 @@ public class OrderDockedWithERPModule {
 
     private static int generateOrder(String orderNo, int type) {
         String selectOrderSQL = "select orderno,cusno,payamt,remarks,invoicetype,rvaddno,address,"
-                + " consignee,contact from {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} where cstatus&1=0 and "
+                + " consignee,contact,freight from {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} where cstatus&1=0 and "
                 + " orderno=?";
         int year = TimeUtils.getYearByOrderno(orderNo + "");
         List<Object[]> queryResult = baseDao.queryNativeSharding(0, year, selectOrderSQL, orderNo);
         TranOrder[] tranOrders = new TranOrder[queryResult.size()];
         baseDao.convToEntity(queryResult, tranOrders, TranOrder.class, "orderno", "cusno", "payamt", "remarks", "invoicetype", "rvaddno",
-                "address", "consignee", "contact");
+                "address", "consignee", "contact", "freight");
         List<ERPGoodsVO> oGoodsList = getOrderGoods(orderNo);
         List<ERPGoodsVO> oGiftList = getOrderGift(orderNo);
         if (oGiftList != null) {
@@ -223,19 +223,19 @@ public class OrderDockedWithERPModule {
     public String batchProduceSalesOrder(AppContext context) {
         String orderNoStr = context.param.arrays[0];
         String selectOrderSQL = "select orderno,cusno,payamt,remarks,invoicetype,rvaddno,address,"
-                + " consignee,contact from {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} where cstatus&1=0 and "
+                + " consignee,contact,freight from {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} where cstatus&1=0 and "
                 + " orderno in(" +orderNoStr+ ")";
         List<Object[]> queryResult = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), selectOrderSQL);
         TranOrder[] tranOrders = new TranOrder[queryResult.size()];
         baseDao.convToEntity(queryResult, tranOrders, TranOrder.class, "orderno", "cusno", "payamt", "remarks", "invoicetype", "rvaddno",
-                "address", "consignee", "contact");
+                "address", "consignee", "contact","freight");
         List<TranOrder> tranOrderList = new ArrayList<>(Arrays.asList(tranOrders));
         JsonObject allOrderObj = new JsonObject();
-        allOrderObj.add("list", setBatchApt(orderNoStr, tranOrderList));
+        allOrderObj.add("list", setBatchGoods(orderNoStr, tranOrderList));
         return allOrderObj.toString();
     }
 
-    private JsonArray setBatchApt(String orderNoStr, List<TranOrder> tranOrderList) {
+    private JsonArray setBatchGoods(String orderNoStr, List<TranOrder> tranOrderList) {
         JsonArray orderArr = new JsonArray();
         HashMap<String, List<ERPGoodsVO>> erpGoodsMap = new HashMap<>();
         List<ERPGoodsVO> oGoodsList = getOrderGoods(orderNoStr);
@@ -263,7 +263,8 @@ public class OrderDockedWithERPModule {
         JsonObject orderObj = new JsonObject();
         orderObj.addProperty("orderno", tranOrder.getOrderno());
         orderObj.addProperty("compid", tranOrder.getCusno());
-        orderObj.addProperty("payamt", tranOrder.getPayamt());
+        orderObj.addProperty("payamt", (tranOrder.getPayamt()-tranOrder.getFreight()) > 0
+                 ? tranOrder.getPayamt()-tranOrder.getFreight() : tranOrder.getPayamt());
         orderObj.addProperty("remarks", tranOrder.getRemarks());
         orderObj.addProperty("invoicetype", tranOrder.getInvoicetype());
         String completeName = IceRemoteUtil.getCompleteName(tranOrder.getRvaddno() + "") + tranOrder.getAddress();
