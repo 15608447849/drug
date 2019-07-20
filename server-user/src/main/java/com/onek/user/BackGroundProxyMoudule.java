@@ -380,7 +380,7 @@ public class BackGroundProxyMoudule {
                 + " where tu.cstatus&1=0 and ctype in (2,3) and  tu.roleid & 2048 > 0 ";
 
         sqlBuilder.append(selectSQL);
-        sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" group by tu.uid desc ");
+        sqlBuilder = getgetParamsDYSQL(sqlBuilder, jsonObject).append(" or (cp.cid = 100000001 and tu.roleid & 2048 > 0) group by tu.uid desc ");
         LogUtil.getDefaultLogger().debug("queryPartners: "+sqlBuilder.toString());
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
         if (queryResult == null || queryResult.isEmpty()) return result.setQuery(null,pageHolder);
@@ -936,7 +936,7 @@ public class BackGroundProxyMoudule {
         List<Object[]> queryResult = null;
 
         if((roleCode & RoleCodeCons._PROXY_DIRECTOR) > 0){
-            String querySql = "select uid,urealname from {{?"+DSMConst.TB_SYSTEM_USER+"}} u join " +
+            String querySql = "select distinct uid,urealname from {{?"+DSMConst.TB_SYSTEM_USER+"}} u join " +
                     "(select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} su where belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} u " +
                     "  where belong = ? and u.cstatus & 1 = 0) and su.cstatus & 1 = 0) a " +
                     "on u.cid = a.cid where u.roleid & ? > 0 and u.cstatus & 1 = 0 ";
@@ -949,7 +949,7 @@ public class BackGroundProxyMoudule {
         }
 
         if((roleCode & RoleCodeCons._PROXY_MGR) > 0){
-           String querySql = "select uid,urealname from {{?"+DSMConst.TB_SYSTEM_USER+"}} u join "+
+           String querySql = "select distinct uid,urealname from {{?"+DSMConst.TB_SYSTEM_USER+"}} u join "+
            " (select cid from {{?"+DSMConst.TB_SYSTEM_USER+"}} su where belong = ?) a "+
            " on u.cid = a.cid where u.roleid & ? > 0 and u.cstatus & 1 = 0 ";
 
@@ -960,14 +960,14 @@ public class BackGroundProxyMoudule {
         }
 
         if((roleCode & RoleCodeCons._PROXY_PARTNER) > 0){
-            String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? ";
+            String selectSQL = " select distinct uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? ";
             queryResult = baseDao.queryNative(selectSQL,roleid,cid);
             if (queryResult == null || queryResult.isEmpty()) return result.success(null);
             return  result.success(convBdList(queryResult));
         }
 
         if((roleCode & RoleCodeCons._DBM) > 0){
-            String selectSQL =  " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and belong = ? or uid = ? ";
+            String selectSQL =  " select distinct uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and belong = ? or uid = ? ";
             queryResult = baseDao.queryNative(selectSQL,roleid,uid,uid);
             if (queryResult == null || queryResult.isEmpty()) return result.success(null);
             return  result.success(convBdList(queryResult));
