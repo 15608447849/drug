@@ -551,13 +551,15 @@ public class MainPageModule {
 
     private static List<BarndManu> selectAllBarnd(boolean isAnonymous, boolean isSign) {
         List<BarndManu> barList;
-        long time = System.currentTimeMillis();
-        LogUtil.getDefaultLogger().info("开始查询" );
-        List<Object[]> lines = BASE_DAO.queryNative(QUERY_PROD_BASE);
-        LogUtil.getDefaultLogger().info("查询时间:"+(System.currentTimeMillis() - time));
-        BgProdVO[] bgProds = prodHandle(lines,isAnonymous,isSign);
+
         String json = RedisUtil.getStringProvide().get("BRANS_MANU");
         if (StringUtils.isEmpty(json)){
+            long time = System.currentTimeMillis();
+            LogUtil.getDefaultLogger().info("开始查询" );
+            List<Object[]> lines = BASE_DAO.queryNative(QUERY_PROD_BASE);
+            LogUtil.getDefaultLogger().info("查询时间:"+(System.currentTimeMillis() - time));
+            BgProdVO[] bgProds = prodHandle(lines,isAnonymous,isSign);
+
             barList = new ArrayList<>();
             BgProdVO b;
             BarndManu bm;
