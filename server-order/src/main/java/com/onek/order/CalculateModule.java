@@ -17,11 +17,11 @@ import util.StringUtils;
 import util.TimeUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 
 public class CalculateModule {
-
     /**
      * @接口摘要 获取商品参与活动
      * @业务场景 获取商品参与活动
@@ -50,6 +50,8 @@ public class CalculateModule {
 
         List<IDiscount> discounts
                 = CalculateUtil.getDiscount(appContext.getUserSession().compId, products);
+
+        Collections.sort(discounts, (o1, o2) -> o2.getPriority() - o1.getPriority());
 
         int minStock = Integer.MAX_VALUE;
         int minLimit = Integer.MAX_VALUE;
