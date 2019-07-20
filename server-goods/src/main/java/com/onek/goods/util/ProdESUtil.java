@@ -340,14 +340,16 @@ public class ProdESUtil {
             MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
             boolQuery.must(builder);
             if(spu > 0){
-                String start = "1"+addZeroForNum(spu+"", 6) +"00000";
-                String end = "1"+addZeroForNum(spu+"", 6) +"99999";
+                String spuStr = String.valueOf(spu);
+
+                String start = "1"+addZeroForNum(spuStr, 6, '0') +"00000";
+                String end   = "1"+addZeroForNum(spuStr, 6, '9') +"99999";
                 RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("spu");
                 rangeQuery.gt(start);
                 rangeQuery.lt(end);
 
-                String start1 = "2"+addZeroForNum(spu+"", 6) +"00000";
-                String end1 = "2"+addZeroForNum(spu+"", 6) +"99999";
+                String start1 = "2"+addZeroForNum(spuStr, 6, '0') +"00000";
+                String end1   = "2"+addZeroForNum(spuStr, 6, '9') +"99999";
                 RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery("spu");
                 rangeQuery1.gt(start1);
                 rangeQuery1.lt(end1);
@@ -551,14 +553,15 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(spu > 0){
-                String start = "1"+addZeroForNum(spu+"", 6) +"00000";
-                String end = "1"+addZeroForNum(spu+"", 6) +"99999";
+                String spuStr = String.valueOf(spu);
+                String start = "1"+addZeroForNum(spuStr, 6, '0') +"00000";
+                String end = "1"+addZeroForNum(spuStr, 6, '9') +"99999";
                 RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("spu");
                 rangeQuery.gt(start);
                 rangeQuery.lt(end);
 
-                String start1 = "2"+addZeroForNum(spu+"", 6) +"00000";
-                String end1 = "2"+addZeroForNum(spu+"", 6) +"99999";
+                String start1 = "2"+addZeroForNum(spuStr, 6, '0') +"00000";
+                String end1 = "2"+addZeroForNum(spuStr, 6, '9') +"99999";
                 RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SPU);
                 rangeQuery1.gt(start1);
                 rangeQuery1.lt(end1);
@@ -596,14 +599,15 @@ public class ProdESUtil {
 
         if(spu > 0){
             //110000000101
-            String start = "1"+addZeroForNum(spu+"", 6) +"00000";
-            String end = "1"+addZeroForNum(spu+"", 6) +"99999";
+            String spuStr = String.valueOf(spu);
+            String start = "1"+addZeroForNum(spuStr, 6, '0') +"00000";
+            String end = "1"+addZeroForNum(spuStr, 6, '9') +"99999";
             RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery("spu");
             rangeQuery.gt(start);
             rangeQuery.lt(end);
 
-            String start1 = "2"+addZeroForNum(spu+"", 6) +"00000";
-            String end1 = "2"+addZeroForNum(spu+"", 6) +"99999";
+            String start1 = "2"+addZeroForNum(spuStr, 6, '0') +"00000";
+            String end1 = "2"+addZeroForNum(spuStr, 6, '9') +"99999";
             RangeQueryBuilder rangeQuery1 = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_SPU);
             rangeQuery1.gt(start1);
             rangeQuery1.lt(end1);
@@ -708,12 +712,13 @@ public class ProdESUtil {
         return response;
     }
 
-    public static String addZeroForNum(String str, int strLength) {
+    public static String addZeroForNum(String str, int strLength, char c) {
         int strLen = str.length();
         StringBuffer sb = null;
+
         while (strLen < strLength) {
             sb = new StringBuffer();
-            sb.append(str).append("0");// 右补0
+            sb.append(str).append(c);// 右补0
             str = sb.toString();
             strLen = str.length();
         }
@@ -721,9 +726,13 @@ public class ProdESUtil {
     }
 
     public static void main(String[] args) {
+        String s = "10";
+        System.out.println(addZeroForNum(s, 6, '9'));
+
+
 //        getConditions("", 10, "manuname");
-        Set<Integer> statusList = new HashSet<>();
-        statusList.add(0);
+//        Set<Integer> statusList = new HashSet<>();
+//        statusList.add(0);
 //        statusList.add(256);
 //        SearchResponse response = searchProdWithStatusList(statusList,1, 1,100);
 //        System.out.println(response.getHits().totalHits);
