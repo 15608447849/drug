@@ -129,7 +129,6 @@ public class MyFootprintModule {
 
     private List<Param> selectInfoByComp(int compId,String dateStr){
 
-        System.out.println(dateStr);
         if (StringUtils.isEmpty(dateStr)) dateStr = "CURRENT_DATE";
 
         ArrayList<Param> list = new ArrayList<>();

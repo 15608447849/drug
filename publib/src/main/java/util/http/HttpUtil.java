@@ -653,7 +653,6 @@ public class HttpUtil {
     public static String contentToHttpBody(String url, String type, String json){
         String text = null;
         HttpURLConnection con = null;
-        System.out.println(url+ " "+  type);
         try{
             con = (HttpURLConnection) new URL(url).openConnection();
             con.setRequestMethod(type);

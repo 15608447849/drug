@@ -114,7 +114,6 @@ public class RedisGlobalKeys {
 //        System.out.println(getUserCode());
 //        System.out.println(getCompanyCode());;
 //        System.out.println(getNextPayNo("1905060000009000"));
-        System.out.println("1905060000009000002".substring(0, 16));
     }
 
     /**

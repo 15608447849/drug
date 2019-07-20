@@ -217,7 +217,6 @@ public class OrderUtil {
             if (!IceRemoteUtil.systemConfigOpen("SYNC_YKWL")){//不同步到ykwl
                 return;
             }
-            System.out.println("## 541 line "+compid+ ";"+orderno+" ####");
             List<Object[]> list = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_PAY_SQL, new Object[]{ orderno, compid});
             if(list != null && list.size() > 0) {
                 TranOrder[] result = new TranOrder[list.size()];
@@ -248,16 +247,11 @@ public class OrderUtil {
                 if(!StringUtils.isEmpty(lccResult)){
                     JSONObject jsonObject = JSONObject.parseObject(lccResult);
                     if(Integer.parseInt(jsonObject.get("code").toString()) == 0){
-                        System.out.println("## 生成一块物流订单成功 ####");
+                        //生成一块物流订单成功
                     }else{
-                        System.out.println("## 生成一块物流订单失败 ####");
+                        //生成一块物流订单失败
                     }
                 }
-
-//                long unqid = GenIdUtil.getUnqId();
-//                int payamt = MathUtil.exactDiv(tranOrder.getPayamt(), 100).intValue();
-//                int code = MemberStore.addPoint(compid, payamt);
-//                if(code > 0) baseDao.updateNativeSharding(compid, TimeUtils.getCurrentYear(),INSERT_INTEGRAL_DETAIL_SQL, new Object[]{unqid, compid, IntegralConstant.SOURCE_ORDER_GIVE, payamt, orderno,0 });
 
             }
 

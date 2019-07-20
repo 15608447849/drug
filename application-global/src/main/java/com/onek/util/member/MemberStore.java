@@ -60,8 +60,4 @@ public class MemberStore {
         }
         return level;
     }
-//
-//    public static void main(String[] args) {
-//        System.out.println(MemberStore.getLevelByCompid(536862722));
-//    }
 }

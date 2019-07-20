@@ -106,7 +106,6 @@ public abstract class PagedListAbstractListI implements PagedList{
 			 sql = sql+" order by "+sortBy;
 		}
 		if(page==null || page.pageIndex<=0||page.pageSize<=0){
-			System.out.println("===========bufenye====");
 			return baseDao.queryNativeSharding(sharding,tbSharding,sql, params);
 		}else{			
 			int start = (page.pageIndex-1)*page.pageSize;

@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
+import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BgProdVO;
@@ -26,6 +27,8 @@ import dao.BaseDAO;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
+import org.elasticsearch.search.aggregations.bucket.terms.Terms;
+import org.elasticsearch.search.aggregations.metrics.tophits.TopHits;
 import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.*;
@@ -69,11 +72,8 @@ public class MainPageModule {
     @UserPermission(ignore = true)
     public void getDataSource(AppContext appContext) {
         long sss = System.currentTimeMillis();
-        System.out.println();
         long br = Long.parseLong(appContext.param.arrays[0]);
         Attr attr = dataSource(br, false, appContext.param.pageIndex, 6, appContext, "");
-        System.out.println("213123bfkfbkjfajd------------" + GsonUtils.javaBeanToJson(attr));
-        System.out.println("times------------" + (System.currentTimeMillis() - sss));
     }
 
     private static long getGroupCount(long actCode) {
@@ -550,38 +550,65 @@ public class MainPageModule {
     }
 
     private static List<BarndManu> selectAllBarnd(boolean isAnonymous, boolean isSign) {
-        List<BarndManu> barList;
+//        List<BarndManu> barList;
+//
+//        String json = RedisUtil.getStringProvide().get("BRANS_MANU");
+//        if (StringUtils.isEmpty(json)){
+//            long time = System.currentTimeMillis();
+//            LogUtil.getDefaultLogger().info("开始查询" );
+//            List<Object[]> lines = BASE_DAO.queryNative(QUERY_PROD_BASE);
+//            LogUtil.getDefaultLogger().info("查询时间:"+(System.currentTimeMillis() - time));
+//            BgProdVO[] bgProds = prodHandle(lines,isAnonymous,isSign);
+//
+//            barList = new ArrayList<>();
+//            BgProdVO b;
+//            BarndManu bm;
+//            HashMap<String,BarndManu> fastMap = new HashMap<>();
+//            for (BgProdVO bgProd : bgProds) {
+//                b = bgProd;
+//                if (b.getBrandNo() > 0 && !StringUtils.isEmpty(b.getBrandName())) {
+//                    bm = fastMap.get(b.getBrandNo() + "");
+//                    if (bm == null) {
+//                        bm = new BarndManu(b.getBrandNo(), b.getBrandName());
+//                        fastMap.put(b.getBrandNo() + "", bm);
+//                        barList.add(bm);
+//                    }
+//                    bm.add(new BarndManu.Manu(b.getManuNo(), b.getManuName()));
+//                }
+//            }
+//            RedisUtil.getStringProvide().set("BRANS_MANU",GsonUtils.javaBeanToJson(barList));
+//            RedisUtil.getStringProvide().expire("BRANS_MANU", 3 * 60);
+//        }else{
+//            barList = GsonUtils.json2List(json , BarndManu.class);
+//        }
+//        return barList;
 
-        String json = RedisUtil.getStringProvide().get("BRANS_MANU");
-        if (StringUtils.isEmpty(json)){
-            long time = System.currentTimeMillis();
-            LogUtil.getDefaultLogger().info("开始查询" );
-            List<Object[]> lines = BASE_DAO.queryNative(QUERY_PROD_BASE);
-            LogUtil.getDefaultLogger().info("查询时间:"+(System.currentTimeMillis() - time));
-            BgProdVO[] bgProds = prodHandle(lines,isAnonymous,isSign);
-
-            barList = new ArrayList<>();
-            BgProdVO b;
-            BarndManu bm;
-            HashMap<String,BarndManu> fastMap = new HashMap<>();
-            for (BgProdVO bgProd : bgProds) {
-                b = bgProd;
-                if (b.getBrandNo() > 0 && !StringUtils.isEmpty(b.getBrandName())) {
-                    bm = fastMap.get(b.getBrandNo() + "");
-                    if (bm == null) {
-                        bm = new BarndManu(b.getBrandNo(), b.getBrandName());
-                        fastMap.put(b.getBrandNo() + "", bm);
-                        barList.add(bm);
+        List<BarndManu> brandMaNuList = new ArrayList<>();
+        SearchResponse response = ProdESUtil.searchProdGroupByCol("", ESConstant.PROD_COLUMN_BRANDNAME, "", "");
+        if (response != null && response.getHits().totalHits > 0) {
+            Terms agg = response.getAggregations().get("agg");
+            for (Terms.Bucket bucket : agg.getBuckets()) {
+                String brandName = bucket.getKey().toString();
+                if (brandName != null && !brandName.isEmpty()) {
+                    List<BarndManu.Manu> maNuList = new ArrayList<>();
+                    TopHits topHits = bucket.getAggregations().get("top");
+                    SearchHit[] maNuHits = topHits.getHits().getHits();
+                    long brandNo = Long.valueOf(maNuHits[0].getSourceAsMap().get("brandno").toString());
+                    BarndManu barndManu = new BarndManu(brandNo, bucket.getKey().toString());
+                    System.out.println(bucket.getKey() + ":" + bucket.getDocCount());
+                    for (SearchHit hit : maNuHits) {
+                        Map<String, Object> sMap = hit.getSourceAsMap();
+                        long maNuNo = Long.valueOf(sMap.get("manuno").toString());
+                        String maNuName = sMap.get("manuname").toString();
+                        BarndManu.Manu manu = new BarndManu.Manu(maNuNo, maNuName);
+                        maNuList.add(manu);
                     }
-                    bm.add(new BarndManu.Manu(b.getManuNo(), b.getManuName()));
+                    barndManu.manuList = maNuList;
+                    brandMaNuList.add(barndManu);
                 }
             }
-            RedisUtil.getStringProvide().set("BRANS_MANU",GsonUtils.javaBeanToJson(barList));
-            RedisUtil.getStringProvide().expire("BRANS_MANU", 3 * 60);
-        }else{
-            barList = GsonUtils.json2List(json , BarndManu.class);
         }
-        return barList;
+        return brandMaNuList;
     }
 
     //获取所有品牌

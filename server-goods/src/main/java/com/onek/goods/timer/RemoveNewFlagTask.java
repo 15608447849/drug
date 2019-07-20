@@ -83,9 +83,6 @@ public class RemoveNewFlagTask extends TimerTask {
                 }
                 BulkResponse bulkResponse =  bulkRequest.execute().actionGet();
                 if (bulkResponse.hasFailures()) {
-                    for(BulkItemResponse item : bulkResponse.getItems()){
-                        System.out.println(item.getFailureMessage());
-                    }
                     return -1;
                 }
 

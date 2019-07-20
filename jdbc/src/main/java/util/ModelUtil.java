@@ -1,5 +1,12 @@
 package util;
 
+import cn.hy.otms.rpcproxy.comm.cstruct.BoolMessage;
+import cn.hy.otms.rpcproxy.comm.cstruct.Page;
+import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import dao.BaseDAO;
+import global.QCParam;
+import org.apache.commons.lang.ArrayUtils;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.text.DateFormat;
@@ -7,21 +14,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-
-import dao.BaseDAO;
-
-
-import cn.hy.otms.rpcproxy.comm.cstruct.BoolMessage;
-import cn.hy.otms.rpcproxy.comm.cstruct.Page;
-import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import global.QCParam;
-import org.apache.commons.lang.ArrayUtils;
+import java.util.*;
 
 /**
  * 查询工具类
@@ -484,7 +477,6 @@ public class ModelUtil {
 		}
 		try {
 			params = getInsertSQL(tableInt, t, sql, nFields);
-//			System.out.println("insertSQL-------------" + sql.toString());
 		} catch (Exception e) {
 			e.printStackTrace();
 		}

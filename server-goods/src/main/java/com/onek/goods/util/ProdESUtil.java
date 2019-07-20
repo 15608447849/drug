@@ -100,7 +100,6 @@ public class ProdESUtil {
             return 0;
         }catch (Exception e){
             e.printStackTrace();
-            System.out.println("es error:" + e.getMessage());
             return -1;
         }
     }
@@ -230,7 +229,7 @@ public class ProdESUtil {
                 BulkResponse bulkResponse = bulkRequest.get();
                 if (bulkResponse.hasFailures()) {
                     for(BulkItemResponse item : bulkResponse.getItems()){
-                        System.out.println(item.getFailureMessage());
+                        item.getFailureMessage();
                     }
                     return -1;
                 }
@@ -630,7 +629,6 @@ public class ProdESUtil {
 
         List<String> keys = new ArrayList<>();
         for (Terms.Bucket bucket : agg.getBuckets()) {
-            System.out.println(bucket.getKey() + ":" + bucket.getDocCount());
             keys.add(bucket.getKey().toString());
         }
         return keys;
@@ -723,6 +721,29 @@ public class ProdESUtil {
             strLen = str.length();
         }
         return str;
+    }
+
+    public static SearchResponse searchProdGroupByCol(String keyword, String col, String brandName, String maNuName) {
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        if(!StringUtils.isEmpty(keyword)){
+            MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
+            boolQuery.must(matchQuery);
+        }
+        if (!StringUtils.isEmpty(brandName)) {
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_BRANDNAME, brandName);
+            boolQuery.must(builder);
+        }
+        if (!StringUtils.isEmpty(maNuName)) {
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNAME, maNuName);
+            boolQuery.must(builder);
+        }
+        MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
+        boolQuery.must(builder);
+        TransportClient client = ElasticSearchClientFactory.getClientInstance();
+        SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX).setQuery(boolQuery);
+        AggregationBuilder aggregationBuilder = AggregationBuilders.terms("agg")
+                .field(col).subAggregation(AggregationBuilders.topHits("top")).size(1000);
+        return requestBuilder.addAggregation(aggregationBuilder).setExplain(true).execute().actionGet();
     }
 
     public static void main(String[] args) {

@@ -464,7 +464,6 @@ public class IceRemoteUtil {
      */
     public static String getCompanyJson(int compid) {
         try {
-//            System.out.println("---->>>>>>>>>>. " + compid);
             return ic.setServerAndRequest("userServer","LoginRegistrationModule","getStoreInfo").setArrayParams(compid).execute();
         } catch (Exception ignored) {
             ignored.printStackTrace();
@@ -838,7 +837,7 @@ public class IceRemoteUtil {
             map.put("identity",-4);
 
             HashMap map2 = new HashMap();
-                map2.put("manuname","华润三九医药股份有限公司委托惠州市九惠制药股份有限公司");
+//                map2.put("manuname","华润三九医药股份有限公司委托惠州市九惠制药股份有限公司");
 
             map.put("jsonStr",GsonUtils.javaBeanToJson(map2));
         String json =
@@ -846,7 +845,6 @@ public class IceRemoteUtil {
                 .settingParam(GsonUtils.javaBeanToJson(map),1,10)
                 .execute();
         ic.stopCommunication();
-        System.out.println(json);
     }
 
 }

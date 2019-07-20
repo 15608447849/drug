@@ -162,7 +162,6 @@ public class OrderDockedWithERPModule {
         });
         String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
         String result = IceRemoteUtil.getErpSkuBySku(skuStr);
-//        System.out.println("getErpSkuBySku000000000000011111111111----->>>  " + result);
         if (result != null) {
             Map<String, String> erpSkuMap = new HashMap<>();
             JsonArray dataArr = new JsonParser().parse(result).getAsJsonObject().get("data").getAsJsonArray();

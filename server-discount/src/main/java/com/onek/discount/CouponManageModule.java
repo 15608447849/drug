@@ -24,7 +24,6 @@ import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
-import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.GsonUtils;
@@ -2334,10 +2333,5 @@ public class CouponManageModule {
         }
 
 
-//        CouponManageModule couponManageModule = new CouponManageModule();
-//        String[] coupNos = couponManageModule.getCoupNos(50);
-//        for (int i = 0 ;i < coupNos.length; i++){
-//            System.out.println(coupNos[i]);
-//        }
     }
 }

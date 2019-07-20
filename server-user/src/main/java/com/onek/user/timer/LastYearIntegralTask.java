@@ -1,13 +1,11 @@
 package com.onek.user.timer;
 
-import com.alibaba.fastjson.JSONObject;
-import com.onek.propagation.prod.ActivityManageServer;
-import com.onek.propagation.prod.ProdDiscountObserver;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.TimeUtils;
 
-import java.util.*;
+import java.util.Calendar;
+import java.util.TimerTask;
 
 /**
  * 每年1月1号就过年的积分余额转换为过期积分
@@ -18,19 +16,13 @@ public class LastYearIntegralTask extends TimerTask {
 
     @Override
     public void run() {
-
-
-        System.out.println("#### [" + TimeUtils.getCurrentDate() + "] expire intergal convert start ########");
         Calendar calendar = Calendar.getInstance();
         calendar.set(Calendar.MONTH, Calendar.JANUARY);
         calendar.set(Calendar.DAY_OF_MONTH, 1);
-        System.out.println("#### [" + TimeUtils.date_yMd_2String(calendar.getTime()) + ";" +  TimeUtils.getCurrentDate() + "]  ########");
         if(TimeUtils.getCurrentDate() == TimeUtils.date_yMd_2String(calendar.getTime())){
 
             int result = BaseDAO.getBaseDAO().updateNative(SQL, new Object[]{});
-            System.out.println("#### [" + TimeUtils.getCurrentDate() + "] expire intergal result:["+ result+"] ########");
         }
 
-        System.out.println("#### [" + TimeUtils.getCurrentDate() + "] expire intergal convert end ########");
     }
 }

@@ -137,7 +137,6 @@ public class SecKillModule {
         }
         int num = RedisOrderUtil.getActBuyNum(compid, sku ,actno);
         int limitNum = RedisOrderUtil.getActLimit(sku, actno);
-//        System.out.println("#### num:"+num + "; limitNum:"+limitNum+"; stock:"+stock);
         if(num > 0 && limitNum > 0 && (limitNum - (num + stock)) < 0){
             return new Result().fail("您秒杀的数量过多或次数过于频繁!");
         }
