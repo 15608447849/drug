@@ -492,27 +492,6 @@ public class MainPageModule {
     }
 
 
-    private static class Manu{
-        long manuNo; // 厂商码
-        String manuName;//厂商名
-
-        public Manu(long manuNo, String manuName) {
-            this.manuNo = manuNo;
-            this.manuName = manuName;
-        }
-    }
-
-    private static class BarndManu{
-        private long brandno; //品牌码
-        private String brandname;//品牌名
-        private Set<Manu> manuList; //关联的厂商列表
-
-        public BarndManu(long brandno, String brandname) {
-            this.brandno = brandno;
-            this.brandname = brandname;
-            this.manuList = new HashSet<>();
-        }
-    }
 
 
     //品牌-4 热销 -5
@@ -541,9 +520,41 @@ public class MainPageModule {
         return prodList;
     }
 
+    private static class BarndManu{
+
+        private static class Manu{
+            long manuNo; // 厂商码
+            String manuName;//厂商名
+
+            private Manu(long manuNo, String manuName) {
+                this.manuNo = manuNo;
+                this.manuName = manuName;
+            }
+        }
+
+        private long brandno; //品牌码
+        private String brandname;//品牌名
+        private List<Manu> manuList; //关联的厂商列表
+
+        private BarndManu(long brandno, String brandname) {
+            this.brandno = brandno;
+            this.brandname = brandname;
+            this.manuList = new ArrayList<>();
+        }
+        void add(Manu manu){
+            for (Manu m : manuList){
+                if (m.manuNo == manu.manuNo) return;
+            }
+           manuList.add(manu);
+        }
+    }
+
     private static List<BarndManu> selectAllBarnd(boolean isAnonymous, boolean isSign) {
         List<BarndManu> barList;
+        long time = System.currentTimeMillis();
+        LogUtil.getDefaultLogger().info("开始查询" );
         List<Object[]> lines = BASE_DAO.queryNative(QUERY_PROD_BASE);
+        LogUtil.getDefaultLogger().info("查询时间:"+(System.currentTimeMillis() - time));
         BgProdVO[] bgProds = prodHandle(lines,isAnonymous,isSign);
         String json = RedisUtil.getStringProvide().get("BRANS_MANU");
         if (StringUtils.isEmpty(json)){
@@ -551,17 +562,16 @@ public class MainPageModule {
             BgProdVO b;
             BarndManu bm;
             HashMap<String,BarndManu> fastMap = new HashMap<>();
-            for (int i = 0 ; i < bgProds.length ; i ++){
-                b = bgProds[i];
+            for (BgProdVO bgProd : bgProds) {
+                b = bgProd;
                 if (b.getBrandNo() > 0 && !StringUtils.isEmpty(b.getBrandName())) {
-                    LogUtil.getDefaultLogger().info("当前品牌: "+ b.getBrandNo()+" - "+ b.getBrandName());
-                    bm = fastMap.get(b.getBrandNo()+"");
-                    if (bm == null){
-                        bm = new BarndManu(b.getBrandNo(),b.getBrandName());
-                        fastMap.put(b.getBrandNo()+"", bm);
+                    bm = fastMap.get(b.getBrandNo() + "");
+                    if (bm == null) {
+                        bm = new BarndManu(b.getBrandNo(), b.getBrandName());
+                        fastMap.put(b.getBrandNo() + "", bm);
                         barList.add(bm);
                     }
-                    bm.manuList.add(new Manu(b.getManuNo(),b.getManuName()));
+                    bm.add(new BarndManu.Manu(b.getManuNo(), b.getManuName()));
                 }
             }
             RedisUtil.getStringProvide().set("BRANS_MANU",GsonUtils.javaBeanToJson(barList));
