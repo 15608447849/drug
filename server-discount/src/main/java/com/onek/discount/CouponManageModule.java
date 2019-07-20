@@ -74,11 +74,17 @@ public class CouponManageModule {
             + " values(?,?,?,?,?,?,?,?,?)";
 
     //修改优惠券
+//    private static final String UPDATE_COUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set coupname=?,"
+//            + "glbno=?,qlfno=?,qlfval=?,coupdesc=?,periodtype=?,"
+//            + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=?,actstock=?,"
+//            + " cstatus=(case cstatus & 256 when 256 then cstatus&~256 when 0 "
+//            + "then cstatus|256 else cstatus end) where cstatus&1=0 "
+//            + " and unqid=?";
+
     private static final String UPDATE_COUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set coupname=?,"
             + "glbno=?,qlfno=?,qlfval=?,coupdesc=?,periodtype=?,"
             + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=?,actstock=?,"
-            + " cstatus=(case cstatus & 256 when 256 then cstatus&~256 when 0 "
-            + "then cstatus|256 else cstatus end) where cstatus&1=0 "
+            + " cstatus= ? where cstatus&1=0 "
             + " and unqid=?";
 
     //修改优惠券
@@ -564,6 +570,11 @@ public class CouponManageModule {
         if(coupResult == null || coupResult.isEmpty()){
             return  result.success(couponVOS);
         }
+
+//        unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
+//        "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
+//                "cop.brulecode,validday,validflag,rulename,actstock, cop.cstatus,cop.ckstatus
+
         baseDao.convToEntity(coupResult, couponVOS, CouponVO.class,
                     new String[]{"coupno", "coupname", "glbno",
                             "qlfno", "qlfval", "desc", "periodtype", "periodday",
@@ -1222,11 +1233,16 @@ public class CouponManageModule {
         //新增活动
 
         if((couponVO.getCstatus() & 512 )== 0) {
+            int cstatus = 64;
+            if((couponVO.getCstatus() & 256 )> 0){
+                cstatus = 256;
+            }
+
             ret = baseDao.updateNative(UPDATE_COUPON_SQL, couponVO.getCoupname(),
                     couponVO.getGlbno(), couponVO.getQlfno(), couponVO.getQlfval(),
                     couponVO.getDesc(), couponVO.getPeriodtype(), couponVO.getPeriodday(),
                     couponVO.getStartdate(), couponVO.getEnddate(), couponVO.getRuleno(), couponVO.getValidday(),
-                    couponVO.getValidflag(), couponVO.getActstock(), actCode);
+                    couponVO.getValidflag(), couponVO.getActstock(), cstatus,actCode);
         } else {
             ret = baseDao.updateNative(UPDATE_OFFCOUPON_SQL, couponVO.getCoupname(),
                     couponVO.getGlbno(), couponVO.getQlfno(), couponVO.getQlfval(),
