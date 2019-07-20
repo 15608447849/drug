@@ -1094,7 +1094,7 @@ public class OrderOptModule {
         Result result = new Result();
         JsonParser jsonParser = new JsonParser();
         UserSession userSession = appContext.getUserSession();
-        if (userSession == null || (userSession.roleCode & (128 + 1)) == 0) {
+        if (userSession == null) {
             return result.fail("当前用户没有该权限");
         }
 
