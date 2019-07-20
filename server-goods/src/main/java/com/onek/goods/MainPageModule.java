@@ -7,10 +7,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
-import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
-import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.entities.ProdBrandVO;
 import com.onek.goods.entities.ProdVO;
 import com.onek.goods.mainpagebean.Attr;
@@ -29,15 +27,12 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHits;
-import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.*;
 
 import java.math.BigDecimal;
 import java.util.*;
 
-import static com.onek.goods.BackgroundProdModule.QUERY_PROD_BASE;
-import static com.onek.goods.BackgroundProdModule.prodHandle;
 import static constant.DSMConst.TB_UI_PAGE;
 
 /**
@@ -594,7 +589,6 @@ public class MainPageModule {
                 SearchHit[] maNuHits = topHits.getHits().getHits();
                 String brandName = maNuHits[0].getSourceAsMap().get("brandname").toString();
                 BarndManu barndManu = new BarndManu(brandNo, brandName);
-                System.out.println(bucket.getKey() + ":" + bucket.getDocCount());
                 for (SearchHit hit : maNuHits) {
                     Map<String, Object> sMap = hit.getSourceAsMap();
                     long maNuNo = Long.valueOf(sMap.get("manuno").toString());

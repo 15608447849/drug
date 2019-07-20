@@ -212,14 +212,7 @@ public class LoginRegistrationModule {
      *      StoreBasicInfo comp; //公司信息
      */
     public Result getStoreSession(AppContext appContext){
-        if (appContext.getUserSession().compId > 0){
-            StoreBasicInfo info = new StoreBasicInfo(appContext.getUserSession().compId);
-            if (getStoreInfoById(info)){
-                UserSession userSession = appContext.getUserSession().cloneStoreUserInfo(info);
-                return new Result().success(userSession);//返回用户信息
-            };
-        }
-        return new Result().success(null);//返回用户信息
+        return new Result().success( appStoreInfo(appContext));//返回用户信息
     }
 
     /**
@@ -232,13 +225,13 @@ public class LoginRegistrationModule {
      *
      */
     public UserSession appStoreInfo(AppContext context){
+
         if (context.getUserSession().compId > 0){
-            StoreBasicInfo info = new StoreBasicInfo(context.getUserSession().compId);
-            if (getStoreInfoById(info)){
-                return context.getUserSession().cloneStoreUserInfo(info);
-            };
+            //返回用户信息
+            StoreBasicInfo info = updateCompInfoToCacheById(context.getUserSession().compId);
+            return context.getUserSession().cloneStoreUserInfo(info);
         }
-        return null;//返回用户信息
+        return null;
     }
 
     /***
