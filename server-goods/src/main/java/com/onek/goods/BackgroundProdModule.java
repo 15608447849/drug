@@ -203,8 +203,9 @@ public class BackgroundProdModule {
     private void updateActStockOn(List<Long> skuList) {
         String[] classArr = getClassBySku(skuList);
         String classStr = String.join(",", classArr);
-        String selectSQL = "select gcode,cstatus,limitnum,0,actstock,actcode from {{?" + DSMConst.TD_PROM_ASSDRUG
-                + "}} where cstatus&1=0 and (length( gcode )=0 or gcode in(" + classStr + ")) ";
+        String selectSQL = "select gcode,a.cstatus,limitnum,0,actstock,actcode from {{?" + DSMConst.TD_PROM_ASSDRUG
+                + "}} a, {{?" +  DSMConst.TD_PROM_ACT + "}} b where a.actcode=b.unqid and a.cstatus&1=0 and "
+                + " b.cstatus&1=0 and (gcode=0 or gcode in(" + classStr + ")) ";
         List<Object[]> queryResult = BASE_DAO.queryNative(selectSQL);
         if (queryResult == null || queryResult.isEmpty()) {
             LogUtil.getDefaultLogger().info("上架商品未参加活动！");
