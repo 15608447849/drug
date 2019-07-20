@@ -38,7 +38,6 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 	@Override
 	public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
 
-//		System.out.println("############ redis inocation invoke ###############");
         CacheInvoke cacheInvoke =method.getAnnotation(CacheInvoke.class);
         if(cacheInvoke == null) {
             return method.invoke(target, args);
@@ -52,7 +51,6 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 
 	private Object loadCacheObject(Method method, Object target,Object[] args) throws IllegalAccessException, InvocationTargetException {
 
-//        System.out.println("############ redis loadCacheObject invoke ###############");
 		Class<?> clazz = null;
 		String type = null;
 
@@ -75,7 +73,6 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 
 		Object cacheObj = null;
 		String keyval = "";
-//        System.out.println("#### loadCacheObject "+prefix+";"+keycolum);
 		if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
 
             Object arg = args[0];
@@ -100,7 +97,6 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 			}
 			return result;
 		}else {
-			System.out.println("#### loadCacheObject cahce hit!!!");
 			return cacheObj;
 
 		}
@@ -157,7 +153,6 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
             }
             return result;
         }else {
-            //System.out.println("#### loadAllCache cahce hit!!!");
             return cacheObj;
 
         }
@@ -178,7 +173,6 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
 
         String key = String.join(",", strings);
         String hash = md5(key);
-       // System.out.println("##### hash: "+hash + "#######");
 
         if(!StringUtils.isEmpty(prefix) && !StringUtils.isEmpty(keycolum)) {
 
@@ -219,7 +213,6 @@ public class RedisInvocationHandler<T> implements InvocationHandler {
             }
             return result;
         }else {
-           // System.out.println("#### loadCacheList cahce hit!!!");
             return cacheObj;
 
         }

@@ -38,8 +38,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 import static com.onek.order.PayModule.*;
 
@@ -390,8 +388,6 @@ public class TranOrderOptModule {
         });
         DiscountResult discountResult = CalculateUtil.calculate(tranOrder.getCusno(), tempProds, coupon);
 
-/*        System.out.println("___________________________ ");
-        System.out.println(JSON.toJSONString(discountResult.getGiftList()));*/
 
         // 保存返利信息
         if (!discountResult.getGiftList().isEmpty()) {
@@ -1257,8 +1253,6 @@ public class TranOrderOptModule {
                             .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
 
-        System.out.println("~~~~~~~~~~~~~~~~~~~~ bal " + bal);
-        System.out.println("~~~~~~~~~~~~~~~~~~~~ afterDiscountPrice " + afterDiscountPrice);
 
         bal = Math.min(bal, afterDiscountPrice);
 

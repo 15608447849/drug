@@ -131,7 +131,6 @@ public class HttpRequestUtil {
             Iterator<Map.Entry<String, String>> it = parmMap.entrySet().iterator();
             while(it.hasNext()){
                 Map.Entry<String, String> entry = it.next();
-                System.out.println("key= "+entry.getKey()+" and value= "+entry.getValue());
                 pairList.add(new BasicNameValuePair(entry.getKey(),entry.getValue()));
             }
             HttpEntity reqEntity = new UrlEncodedFormEntity(pairList,Consts.UTF_8 );
@@ -188,7 +187,6 @@ public class HttpRequestUtil {
             while(!StringUtils.isEmpty(str = reader.readLine())) {
                 buffer.append(str);
             }
-            System.out.println(buffer.toString());
         }
         httpClient.close();
         if(httpResponse!=null){
@@ -204,13 +202,11 @@ public class HttpRequestUtil {
 //        System.out.println(reqStr);
        String res = HttpRequestUtil.postForm("http://192.168.1.240:8090/getCompLogo",map);
         //String res = HttpRequestUtil.get("http://192.168.1.240:8090/getCompLogo?comp=0,1,4,536862839,536862844");
-        System.out.println(res);
         JSONObject jsonObject = JSON.parseObject(res);
         int code = (Integer) jsonObject.get("code");
         String mapStr  = jsonObject.get("data").toString();
         Map maps = (Map)JSON.parse(mapStr);
         //  jsonMap.get("1");
-        System.out.println(maps.get("1"));
     }
 
 }

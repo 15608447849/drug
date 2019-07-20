@@ -69,7 +69,6 @@ public class RpcClientUtil {
                     if (rb != null) {
                         iceLocator = rb.getString("--Ice.Default.Locator");
                         idleTimeOutSeconds = Integer.parseInt(rb.getString("idleTimeOutSeconds"));
-//						System.out.println("Ice client`s locator is " + iceLocator + " proxy cache time out seconds :" + idleTimeOutSeconds);
                         String[] initParams = new String[]{"--Ice.Default.Locator=" + iceLocator};
                         ic = Ice.Util.initialize(initParams);
                         //创建守护线程
@@ -138,7 +137,6 @@ public class RpcClientUtil {
     private static ObjectPrx createIceProxy(Ice.Communicator communicator, Class serviceCls) {
         ObjectPrx proxy = null;
         String clsName = serviceCls.getName();
-//		System.out.println("clsName:"+clsName);
         String serviceName = serviceCls.getSimpleName();
         int pos = serviceName.lastIndexOf("Prx");
         if (pos <= 0) {
@@ -147,7 +145,6 @@ public class RpcClientUtil {
         String realSvName = serviceName.substring(0, pos);
         try {
             ObjectPrx base = communicator.stringToProxy(realSvName);
-//			System.out.println("realSvName:"+realSvName);
             proxy = (ObjectPrx) Class.forName(clsName + "Helper").newInstance();
             Method m1 = proxy.getClass().getDeclaredMethod("uncheckedCast", ObjectPrx.class);
             proxy = (ObjectPrx) m1.invoke(proxy, base);

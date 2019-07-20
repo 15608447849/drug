@@ -100,7 +100,6 @@ public class ProdESUtil {
             return 0;
         }catch (Exception e){
             e.printStackTrace();
-            System.out.println("es error:" + e.getMessage());
             return -1;
         }
     }
@@ -230,7 +229,7 @@ public class ProdESUtil {
                 BulkResponse bulkResponse = bulkRequest.get();
                 if (bulkResponse.hasFailures()) {
                     for(BulkItemResponse item : bulkResponse.getItems()){
-                        System.out.println(item.getFailureMessage());
+                        item.getFailureMessage();
                     }
                     return -1;
                 }
@@ -630,7 +629,6 @@ public class ProdESUtil {
 
         List<String> keys = new ArrayList<>();
         for (Terms.Bucket bucket : agg.getBuckets()) {
-            System.out.println(bucket.getKey() + ":" + bucket.getDocCount());
             keys.add(bucket.getKey().toString());
         }
         return keys;

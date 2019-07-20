@@ -1810,7 +1810,6 @@ public class ProdModule {
                 }
             } else if (obj instanceof JSONObject) {
                 JSONObject proJson = (JSONObject) rs.data;
-                System.out.println(">>>>>>>>>>>>>>\n" + proJson);
                 List list = (List) proJson.get("list");
                 if (list != null && list.size() >= MAX_SELECT_PRO_NUM) {
                     jsonObject = new JSONObject();

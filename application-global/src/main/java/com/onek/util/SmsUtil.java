@@ -55,7 +55,6 @@ public class SmsUtil  extends ApplicationPropertiesBase {
                 username = INSTANCE.usernameMarket;
                 password = INSTANCE.passwordMarket;
             }
-            System.out.println(username+" "+password);
             // 短信相关的必须参数
             String mobile = phone;
             String message = content;
@@ -83,7 +82,6 @@ public class SmsUtil  extends ApplicationPropertiesBase {
             sb.append("&ts=").append(timestamp);//加密时间戳
             String request = sb.toString();
             // 以GET方式发起请求
-            System.out.println(username+" "+request);
             return Request.Get(request).execute().returnContent().asString();
         } catch (Exception e) {
             e.printStackTrace();
@@ -120,13 +118,5 @@ public class SmsUtil  extends ApplicationPropertiesBase {
             }
         });
     }
-
-
-    public static void main(String[] args) {
-        String res = sendMsg("15608447849","【一块医药】尊敬的用户：您收藏的商品：SOD眼霜 降价啦，原价：1800，现价：1200，赶快前去采购吧。",true);
-        System.out.println(res);
-    }
-
-
 
 }

@@ -233,7 +233,6 @@ public class SynDbLog {
         }else{
             if(sql.contains("where")){
                 wSql = sql.substring(sql.indexOf("where"));
-                System.out.println(wSql);
             }
             wParmSize = wSql.split("\\?").length;
         }

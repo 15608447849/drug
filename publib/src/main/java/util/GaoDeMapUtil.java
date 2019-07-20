@@ -149,7 +149,6 @@ public class GaoDeMapUtil {
             if (index>=4) map.put("filter",temp);
             map.put("extensions","all");
             String result = new HttpRequest().bindParam(sb,map).getRespondContent();
-            System.out.println(result);
             if(StringUtils.isEmpty(result)) throw  new NullPointerException();
             JsonBean jsonBean = GsonUtils.jsonToJavaBean(result,JsonBean.class);
             if (jsonBean == null || jsonBean.status != 1 || jsonBean.districts.size() == 0) throw  new NullPointerException();
@@ -224,7 +223,6 @@ public class GaoDeMapUtil {
 //            pointS = polygon.get(i);
 //            pointD = polygon.get( i+1 == polygon.size() ? 0 : i+1);
 //            if (checkPointOnLine(point,pointS,pointD)) return true;
-//            System.out.println(point+" 不包含在线段( "+ pointS+" -> "+ pointD+" )上面");
 //        }
 
         java.awt.geom.GeneralPath peneralPath = new java.awt.geom.GeneralPath();
@@ -334,7 +332,7 @@ public class GaoDeMapUtil {
 
 //        System.out.println(pointJsonToListArrayJson(json));
 
-        System.out.println( areaPolyline("湖南省株洲市渌口区"));
+//        System.out.println( areaPolyline("湖南省株洲市渌口区"));
 
 //https://lbs.amap.com/api/javascript-api/example/relationship-judgment/point-surface-relation  console.log(JSON.stringify(point))
 

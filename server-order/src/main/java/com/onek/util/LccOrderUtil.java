@@ -5,7 +5,6 @@ import com.alibaba.fastjson.JSONObject;
 import com.hsf.framework.api.cstruct.UserParam;
 import com.hsf.framework.api.myOrder.MyOrderServerPrx;
 import com.hsf.framework.order.OrderICE;
-import com.hsf.framework.order.OrderService;
 import com.hsf.framework.order.OrderServicePrx;
 import com.onek.entity.TranOrder;
 import com.onek.property.LccProperties;
@@ -67,15 +66,6 @@ public class LccOrderUtil {
         param.compid = orderIce.pubercompid;
 
         String result = orderServicePrx.addOrder(param, orderIce);
-        System.out.println(result);
-
-//        UserParam robbParam = new UserParam();
-//        robbParam.uid = LccProperties.INSTANCE.robbid + "";
-//        robbParam.compid = LccProperties.INSTANCE.robbcompid + "";
-//        result = orderServicePrx.robbingOrder(robbParam, new String[] {orderIce.orderno, orderIce.pubercompid});
-//
-//        System.out.println(result);
-
         return result;
 
     }
@@ -134,10 +124,5 @@ public class LccOrderUtil {
         }
 
         return traceJson;
-    }
-
-    public static void main(String[] args) {
-        JSONObject result = LccOrderUtil.queryTraceByOrderno("1905040000007404");
-        System.out.println(result.toJSONString());
     }
 }

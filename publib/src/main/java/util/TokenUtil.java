@@ -33,11 +33,4 @@ public class TokenUtil {
         }
         return md5code;
     }
-//
-//    public static void main(String[] args) {
-//        int userid = 29;
-//        int storeid = 593939;
-//        String token = TokenUtil.getInstance().makeToken(new String[]{userid+"", storeid+""});
-//        System.out.println(token);
-//    }
 }

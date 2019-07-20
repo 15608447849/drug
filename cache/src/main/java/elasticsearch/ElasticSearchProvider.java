@@ -55,12 +55,10 @@ public class ElasticSearchProvider {
 			IndicesExistsRequest inExistsRequest = new IndicesExistsRequest(index);
 			IndicesExistsResponse inExistsResponse = client.admin().indices().exists(inExistsRequest).actionGet();
 
-			System.out.println("index ["+ index +"] is exist :" + inExistsResponse.isExists());
 			if (!inExistsResponse.isExists()) {
 				CreateIndexRequestBuilder cib = client.admin().indices().prepareCreate(index);
 				cib.addMapping(type, mapping);
 				CreateIndexResponse response = cib.execute().actionGet();
-				System.out.println("add index isAcknowledged: " + response.isAcknowledged() + "; index :" + response.index());
 				return response;
 			}
 			
@@ -87,10 +85,8 @@ public class ElasticSearchProvider {
 			IndicesExistsRequest inExistsRequest = new IndicesExistsRequest(index);
 			IndicesExistsResponse inExistsResponse = client.admin().indices().exists(inExistsRequest).actionGet();
 
-			System.out.println("index ["+ index +"] is exist :" + inExistsResponse.isExists());
 			if (inExistsResponse.isExists()) {
 				DeleteIndexResponse dResponse = client.admin().indices().prepareDelete(index).execute().actionGet();
-				System.out.println("index ["+ index +"] delete status :" + dResponse.isAcknowledged());
 				return dResponse.isAcknowledged();
 			} else {
 				return false;

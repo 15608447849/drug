@@ -234,7 +234,6 @@ public class IntegralModule {
 
         String beginDate = dayYM+"-0"+minDay;//开始时间
         String endDate = dayYM+"-"+maxDay;//结束时间
-        System.out.println("BEGIN = " + beginDate + " END = " + endDate);
         int compid = appContext.getUserSession().compId;
         if(compid <= 0){
             return result.fail("企业码不能为空！");

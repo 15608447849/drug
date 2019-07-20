@@ -69,11 +69,8 @@ public class MainPageModule {
     @UserPermission(ignore = true)
     public void getDataSource(AppContext appContext) {
         long sss = System.currentTimeMillis();
-        System.out.println();
         long br = Long.parseLong(appContext.param.arrays[0]);
         Attr attr = dataSource(br, false, appContext.param.pageIndex, 6, appContext, "");
-        System.out.println("213123bfkfbkjfajd------------" + GsonUtils.javaBeanToJson(attr));
-        System.out.println("times------------" + (System.currentTimeMillis() - sss));
     }
 
     private static long getGroupCount(long actCode) {

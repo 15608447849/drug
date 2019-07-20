@@ -141,15 +141,6 @@ public class RedisProvide{
 
 
 		}
-
-//		ScanParams scanParams = new ScanParams();
-//		scanParams.match("*{"+keyStartWith+"}*");
-//		ScanResult<String> result = jedisCluster.scan("0", scanParams);
-//		List<String> keys = result.getResult();
-//		for (String key : keys){
-//			System.out.println(key);
-//		}
-//		jedisCluster.del(keys.toArray(new String[keys.size()]));
 	}
 
 	/**

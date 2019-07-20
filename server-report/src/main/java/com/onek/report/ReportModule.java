@@ -191,12 +191,6 @@ public class ReportModule {
     }
 
 
-    /*public static void main(String[] args) {
-        String r = new OrderAnalysisServiceImpl(0, 430100000000L, "2019-06").getExportPath();
-        System.out.println(r);
-	}*/
-	
-	
 	
     /*
      * 功能: 商品报表

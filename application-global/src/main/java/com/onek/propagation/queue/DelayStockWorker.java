@@ -19,7 +19,6 @@ public class DelayStockWorker implements Runnable {
         if(stockList != null && stockList.size() > 0){
             for (JSONObject jsonObject : stockList) {
                 String gcode = jsonObject.get("gcode").toString();
-                System.out.println("#### delay stock work : [" +gcode+"] ######");
                 if(gcode.length() >= 14){
                     long actcode = Long.parseLong(jsonObject.get("actcode").toString());
                     int stock = Integer.parseInt(jsonObject.get("stock").toString());
@@ -28,7 +27,6 @@ public class DelayStockWorker implements Runnable {
                     if (jsonObject.containsKey("limitnum")) {
                         limitnum = Integer.parseInt(jsonObject.get("limitnum").toString());
                     }
-                    System.out.println("#### delay stock work : [" +gcode+"] ######");
                     if (cstatus == 0) {
                         RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, stock, limitnum);
                     }

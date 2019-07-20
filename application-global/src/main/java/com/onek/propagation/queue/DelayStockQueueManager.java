@@ -47,9 +47,7 @@ public class DelayStockQueueManager {
     private void execute() {
         while (true) {
             Map<Thread, StackTraceElement[]> map = Thread.getAllStackTraces();
-            System.out.println("############# 延时库存队列当前存活线程数量:" + map.size());
             int taskNum = delayQueue.size();
-            System.out.println("######### 当前延时任务数量:" + taskNum);
             try {
                 // 从延时队列中获取任务
                 DelayStockTask<?> DelayStockTask = delayQueue.take();

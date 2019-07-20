@@ -1090,8 +1090,6 @@ public class ShoppingCartModule {
             for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOs) {
                 if (shoppingCartDTO.getPdno() == shoppingCartVO.getPdno()) {
                     if (shoppingCartDTO.getPdprice() != shoppingCartVO.getPdprice()) {
-                        System.out.println("shoppingCartDTO.getPdprice() " + shoppingCartDTO.getPdprice());
-                        System.out.println("shoppingCartVO.getPdprice() " + shoppingCartVO.getPdprice());
                         results.add(shoppingCartVO);
                     }
                 }
