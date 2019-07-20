@@ -723,7 +723,7 @@ public class ProdESUtil {
         return str;
     }
 
-    public static SearchResponse searchProdGroupByCol(String keyword, String col, String brandName, String maNuName) {
+    public static SearchResponse searchProdGroupByBrand(String keyword,String brandName, String maNuName) {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
             MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
@@ -737,14 +737,22 @@ public class ProdESUtil {
             TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNAME, maNuName);
             boolQuery.must(builder);
         }
-        MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
-        boolQuery.must(builder);
+        MatchQueryBuilder pBuilder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
+        boolQuery.must(pBuilder);
+        RangeQueryBuilder bBuilder = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_BRANDNO).gt(0);
+        boolQuery.must(bBuilder);
+        return searchProdGroupByCol( ESConstant.PROD_COLUMN_BRANDNO, boolQuery);
+    }
+
+
+    private static SearchResponse searchProdGroupByCol(String col, BoolQueryBuilder boolQuery) {
         TransportClient client = ElasticSearchClientFactory.getClientInstance();
         SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX).setQuery(boolQuery);
         AggregationBuilder aggregationBuilder = AggregationBuilders.terms("agg")
                 .field(col).subAggregation(AggregationBuilders.topHits("top")).size(1000);
         return requestBuilder.addAggregation(aggregationBuilder).setExplain(true).execute().actionGet();
     }
+
 
     public static void main(String[] args) {
         String s = "10";
