@@ -584,28 +584,26 @@ public class MainPageModule {
 //        return barList;
 
         List<BarndManu> brandMaNuList = new ArrayList<>();
-        SearchResponse response = ProdESUtil.searchProdGroupByCol("", ESConstant.PROD_COLUMN_BRANDNAME, "", "");
+        SearchResponse response = ProdESUtil.searchProdGroupByBrand("", "", "");
         if (response != null && response.getHits().totalHits > 0) {
             Terms agg = response.getAggregations().get("agg");
             for (Terms.Bucket bucket : agg.getBuckets()) {
-                String brandName = bucket.getKey().toString();
-                if (brandName != null && !brandName.isEmpty()) {
-                    List<BarndManu.Manu> maNuList = new ArrayList<>();
-                    TopHits topHits = bucket.getAggregations().get("top");
-                    SearchHit[] maNuHits = topHits.getHits().getHits();
-                    long brandNo = Long.valueOf(maNuHits[0].getSourceAsMap().get("brandno").toString());
-                    BarndManu barndManu = new BarndManu(brandNo, bucket.getKey().toString());
-                    System.out.println(bucket.getKey() + ":" + bucket.getDocCount());
-                    for (SearchHit hit : maNuHits) {
-                        Map<String, Object> sMap = hit.getSourceAsMap();
-                        long maNuNo = Long.valueOf(sMap.get("manuno").toString());
-                        String maNuName = sMap.get("manuname").toString();
-                        BarndManu.Manu manu = new BarndManu.Manu(maNuNo, maNuName);
-                        maNuList.add(manu);
-                    }
-                    barndManu.manuList = maNuList;
-                    brandMaNuList.add(barndManu);
+                long brandNo = Long.valueOf(bucket.getKey().toString());
+                List<BarndManu.Manu> maNuList = new ArrayList<>();
+                TopHits topHits = bucket.getAggregations().get("top");
+                SearchHit[] maNuHits = topHits.getHits().getHits();
+                String brandName = maNuHits[0].getSourceAsMap().get("brandname").toString();
+                BarndManu barndManu = new BarndManu(brandNo, brandName);
+                System.out.println(bucket.getKey() + ":" + bucket.getDocCount());
+                for (SearchHit hit : maNuHits) {
+                    Map<String, Object> sMap = hit.getSourceAsMap();
+                    long maNuNo = Long.valueOf(sMap.get("manuno").toString());
+                    String maNuName = sMap.get("manuname").toString();
+                    BarndManu.Manu manu = new BarndManu.Manu(maNuNo, maNuName);
+                    maNuList.add(manu);
                 }
+                barndManu.manuList = maNuList;
+                brandMaNuList.add(barndManu);
             }
         }
         return brandMaNuList;
