@@ -594,7 +594,7 @@ public class MainPageModule {
                     Map<String, Object> sMap = hit.getSourceAsMap();
                     long maNuNo = Long.valueOf(sMap.get("manuno").toString());
                     String maNuName = sMap.get("manuname").toString();
-                    /*if (!manuNoSet.contains(maNuNo)) {   @陈雨琼,  这样判断 是 对象的 equals方法,  会存在误判, 只要重写对象equals方法
+                    /*if (!manuNoSet.contains(maNuNo)) {
                         BarndManu.Manu manu = new BarndManu.Manu(maNuNo, maNuName);
                         maNuList.add(manu);
                     }
