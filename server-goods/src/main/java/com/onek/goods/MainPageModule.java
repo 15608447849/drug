@@ -544,7 +544,7 @@ public class MainPageModule {
         }
     }
 
-    private static List<BarndManu> selectAllBarnd(boolean isAnonymous, boolean isSign) {
+    public static List<BarndManu> selectAllBarnd(boolean isAnonymous, boolean isSign) {
 //        List<BarndManu> barList;
 //
 //        String json = RedisUtil.getStringProvide().get("BRANS_MANU");
@@ -585,6 +585,7 @@ public class MainPageModule {
             for (Terms.Bucket bucket : agg.getBuckets()) {
                 long brandNo = Long.valueOf(bucket.getKey().toString());
                 List<BarndManu.Manu> maNuList = new ArrayList<>();
+                Set<Long> manuNoSet = new HashSet<>();
                 TopHits topHits = bucket.getAggregations().get("top");
                 SearchHit[] maNuHits = topHits.getHits().getHits();
                 String brandName = maNuHits[0].getSourceAsMap().get("brandname").toString();
@@ -593,13 +594,17 @@ public class MainPageModule {
                     Map<String, Object> sMap = hit.getSourceAsMap();
                     long maNuNo = Long.valueOf(sMap.get("manuno").toString());
                     String maNuName = sMap.get("manuname").toString();
-                    BarndManu.Manu manu = new BarndManu.Manu(maNuNo, maNuName);
-                    maNuList.add(manu);
+                    if (!manuNoSet.contains(maNuNo)) {
+                        BarndManu.Manu manu = new BarndManu.Manu(maNuNo, maNuName);
+                        maNuList.add(manu);
+                    }
+                    manuNoSet.add(maNuNo);
                 }
                 barndManu.manuList = maNuList;
                 brandMaNuList.add(barndManu);
             }
         }
+        System.out.println(GsonUtils.javaBeanToJson(brandMaNuList));
         return brandMaNuList;
     }
 
