@@ -536,11 +536,11 @@ public class MainPageModule {
             this.brandname = brandname;
             this.manuList = new ArrayList<>();
         }
-        void add(Manu manu){
+        void add(long manuNo, String manuName){
             for (Manu m : manuList){
-                if (m.manuNo == manu.manuNo) return;
+                if (m.manuNo == manuNo) return;
             }
-           manuList.add(manu);
+           manuList.add(new Manu(manuNo,manuName));
         }
     }
 
@@ -584,8 +584,8 @@ public class MainPageModule {
             Terms agg = response.getAggregations().get("agg");
             for (Terms.Bucket bucket : agg.getBuckets()) {
                 long brandNo = Long.valueOf(bucket.getKey().toString());
-                List<BarndManu.Manu> maNuList = new ArrayList<>();
-                Set<Long> manuNoSet = new HashSet<>();
+//                List<BarndManu.Manu> maNuList = new ArrayList<>();
+                /*Set<Long> manuNoSet = new HashSet<>();*/
                 TopHits topHits = bucket.getAggregations().get("top");
                 SearchHit[] maNuHits = topHits.getHits().getHits();
                 String brandName = maNuHits[0].getSourceAsMap().get("brandname").toString();
@@ -594,13 +594,14 @@ public class MainPageModule {
                     Map<String, Object> sMap = hit.getSourceAsMap();
                     long maNuNo = Long.valueOf(sMap.get("manuno").toString());
                     String maNuName = sMap.get("manuname").toString();
-                    if (!manuNoSet.contains(maNuNo)) {
+                    /*if (!manuNoSet.contains(maNuNo)) {   @陈雨琼,  这样判断 是 对象的 equals方法,  会存在误判, 只要重写对象equals方法
                         BarndManu.Manu manu = new BarndManu.Manu(maNuNo, maNuName);
                         maNuList.add(manu);
                     }
-                    manuNoSet.add(maNuNo);
+                    manuNoSet.add(maNuNo);*/
+                    barndManu.add(maNuNo, maNuName);
                 }
-                barndManu.manuList = maNuList;
+//                barndManu.manuList = maNuList;
                 brandMaNuList.add(barndManu);
             }
         }
