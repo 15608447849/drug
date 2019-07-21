@@ -37,7 +37,7 @@ public class LoginStoreOp extends LoginAbsOp implements IOperation<AppContext> {
             //检查用户是否锁定
             if (checkLock()) return new Result().fail(error);
             //检测用户名/密码是否正确 创建会话
-            if (!checkSqlAndUserExist(context.remoteIp,phone,password)) return new Result().fail(error).setHashMap("index",failIndex);;
+            if (!checkSqlAndUserExist(context.remoteIp,phone,password,2)) return new Result().fail(error).setHashMap("index",failIndex);;
             //关联token-用户信息
             if (relationTokenUserSession(context,true)) return new Result().success("登陆成功");
         } catch (Exception e) {
