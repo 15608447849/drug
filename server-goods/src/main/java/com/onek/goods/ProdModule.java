@@ -1236,6 +1236,10 @@ public class ProdModule {
             prodVO.setImageUrl(FileServerUtils.goodsFilePath(prodVO.getSpu(), prodVO.getSku()));
             int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(ruleStatus);
+
+            //商品参加活动描述
+            prodVO.setLadOffDesc(ProdActPriceUtil.getLoadOffBySku(prodVO.getSku()));
+
             if (context.isAnonymous()) {//无权限价格不可见
                 prodVO.setVatp(-1);
                 prodVO.setMp(-1);
@@ -1416,7 +1420,7 @@ public class ProdModule {
      * @param prodList
      * @param searchHit
      */
-    private static void    convertSearchData(AppContext context, List<ProdVO> prodList, SearchHit searchHit) {
+    private static void convertSearchData(AppContext context, List<ProdVO> prodList, SearchHit searchHit) {
         Map<String, Object> sourceMap = searchHit.getSourceAsMap();
         ProdVO prodVO = new ProdVO();
         HashMap detail = (HashMap) sourceMap.get("detail");
@@ -1428,8 +1432,10 @@ public class ProdModule {
         prodList.add(prodVO);
 
         int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
-
         prodVO.setRulestatus(ruleStatus);
+
+        //商品参加活动描述
+        prodVO.setLadOffDesc(ProdActPriceUtil.getLoadOffBySku(prodVO.getSku()));
 
         if (context.isAnonymous()) {//无权限价格不可见
             prodVO.setVatp(-1);
