@@ -7,7 +7,6 @@ import com.onek.util.IceRemoteUtil;
 import com.onek.util.prod.ProdEntity;
 import dao.BaseDAO;
 import util.GsonUtils;
-import util.NumUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
@@ -175,6 +174,8 @@ public class MyCollectModule {
                data.info = IceRemoteUtil.getProdBySku(data.sku);
                if (data.info != null) {
                    setPrice(appContext, data.info);
+               }else{
+                   continue;
                }
            } catch (Exception e) {
 //               e.printStackTrace();

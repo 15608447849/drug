@@ -73,7 +73,9 @@ public class AppModule {
         if (temp > limit) return new Result().fail("超过商品限制数",current);
 
         //写入商品购物车数量
-        boolean flag = writeNumberBySku(compid,beanGop.number,beanGop.sku,context);
+        Result result = writeNumberBySku(compid,beanGop.number,beanGop.sku,context);
+
+        boolean flag =   result.isSuccess();
 
         //获取商品的购物车数量
         current = queryShopCartNumBySku(compid,beanGop.sku);
@@ -81,19 +83,19 @@ public class AppModule {
 
         context.logger.print("最终结果数量: " + temp);
 
-        return flag ? new Result().success("已加入购物车",current) : new Result().fail("无法加入购物车",current);
+        return flag ? new Result().success("已加入购物车",current) : new Result().fail(result.message,current);
     }
 
     //写入商品数量到购物车
-    private static boolean writeNumberBySku(int compid, int number, long sku,AppContext context) {
+    private static Result writeNumberBySku(int compid, int number, long sku,AppContext context) {
         HashMap map = new HashMap();
         map.put("pdno",sku);
         map.put("pnum",number);
         map.put("compid",compid);
         map.put("checked",-2);
         context.param.json = GsonUtils.javaBeanToJson(map);
-        Result result = new ShoppingCartModule().saveShopCart(context);
-        return result.isSuccess();
+        return new ShoppingCartModule().saveShopCart(context);
+
     }
 
 }
