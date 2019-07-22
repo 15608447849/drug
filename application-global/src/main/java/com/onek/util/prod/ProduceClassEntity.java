@@ -9,6 +9,11 @@ public class ProduceClassEntity implements Cloneable, ITreeNode<ProduceClassEnti
     private String classId;
     private String className;
     private int cstatus;
+    private int sorted;
+
+    public int getSorted() {
+        return sorted;
+    }
 
     private List<ProduceClassEntity> children;
 

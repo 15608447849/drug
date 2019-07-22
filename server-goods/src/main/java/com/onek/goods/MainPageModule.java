@@ -7,10 +7,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.auth.QualJudge;
-import com.onek.consts.ESConstant;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
-import com.onek.goods.entities.BgProdVO;
 import com.onek.goods.entities.ProdBrandVO;
 import com.onek.goods.entities.ProdVO;
 import com.onek.goods.mainpagebean.Attr;
@@ -29,15 +27,12 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHits;
-import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.*;
 
 import java.math.BigDecimal;
 import java.util.*;
 
-import static com.onek.goods.BackgroundProdModule.QUERY_PROD_BASE;
-import static com.onek.goods.BackgroundProdModule.prodHandle;
 import static constant.DSMConst.TB_UI_PAGE;
 
 /**
@@ -541,15 +536,15 @@ public class MainPageModule {
             this.brandname = brandname;
             this.manuList = new ArrayList<>();
         }
-        void add(Manu manu){
+        void add(long manuNo, String manuName){
             for (Manu m : manuList){
-                if (m.manuNo == manu.manuNo) return;
+                if (m.manuNo == manuNo) return;
             }
-           manuList.add(manu);
+           manuList.add(new Manu(manuNo,manuName));
         }
     }
 
-    private static List<BarndManu> selectAllBarnd(boolean isAnonymous, boolean isSign) {
+    public static List<BarndManu> selectAllBarnd(boolean isAnonymous, boolean isSign) {
 //        List<BarndManu> barList;
 //
 //        String json = RedisUtil.getStringProvide().get("BRANS_MANU");
@@ -584,30 +579,25 @@ public class MainPageModule {
 //        return barList;
 
         List<BarndManu> brandMaNuList = new ArrayList<>();
-        SearchResponse response = ProdESUtil.searchProdGroupByCol("", ESConstant.PROD_COLUMN_BRANDNAME, "", "");
+        SearchResponse response = ProdESUtil.searchProdGroupByBrand("", "", "");
         if (response != null && response.getHits().totalHits > 0) {
             Terms agg = response.getAggregations().get("agg");
             for (Terms.Bucket bucket : agg.getBuckets()) {
-                String brandName = bucket.getKey().toString();
-                if (brandName != null && !brandName.isEmpty()) {
-                    List<BarndManu.Manu> maNuList = new ArrayList<>();
-                    TopHits topHits = bucket.getAggregations().get("top");
-                    SearchHit[] maNuHits = topHits.getHits().getHits();
-                    long brandNo = Long.valueOf(maNuHits[0].getSourceAsMap().get("brandno").toString());
-                    BarndManu barndManu = new BarndManu(brandNo, bucket.getKey().toString());
-                    System.out.println(bucket.getKey() + ":" + bucket.getDocCount());
-                    for (SearchHit hit : maNuHits) {
-                        Map<String, Object> sMap = hit.getSourceAsMap();
-                        long maNuNo = Long.valueOf(sMap.get("manuno").toString());
-                        String maNuName = sMap.get("manuname").toString();
-                        BarndManu.Manu manu = new BarndManu.Manu(maNuNo, maNuName);
-                        maNuList.add(manu);
-                    }
-                    barndManu.manuList = maNuList;
-                    brandMaNuList.add(barndManu);
+                long brandNo = Long.valueOf(bucket.getKey().toString());
+                TopHits topHits = bucket.getAggregations().get("top");
+                SearchHit[] maNuHits = topHits.getHits().getHits();
+                String brandName = maNuHits[0].getSourceAsMap().get("brandname").toString();
+                BarndManu barndManu = new BarndManu(brandNo, brandName);
+                for (SearchHit hit : maNuHits) {
+                    Map<String, Object> sMap = hit.getSourceAsMap();
+                    long maNuNo = Long.valueOf(sMap.get("manuno").toString());
+                    String maNuName = sMap.get("manuname").toString();
+                    barndManu.add(maNuNo, maNuName);
                 }
+                brandMaNuList.add(barndManu);
             }
         }
+//        System.out.println(GsonUtils.javaBeanToJson(brandMaNuList));
         return brandMaNuList;
     }
 

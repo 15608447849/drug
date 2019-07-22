@@ -34,7 +34,13 @@ public abstract class LoginAbsOp {
         return true;
     }
 
-    boolean checkUserRoleStatus(long urole,int ucstatus){
+    boolean checkUserRoleStatus(long urole,int ucstatus,int spicRole){
+        if (spicRole>0){
+            if ((urole&spicRole) == 0){
+                error = "无效账户或角色";
+                return false;
+            }
+        }
         if ((ucstatus&32)>0){
             error = "用户账号停止使用";
             return false;
@@ -73,7 +79,7 @@ public abstract class LoginAbsOp {
     }
 
     //检查用户是否正确
-    boolean checkSqlAndUserExist(String ipAddress,String phone,String password){
+    boolean checkSqlAndUserExist(String ipAddress,String phone,String password,int spicRole){
         //0-用户码 1-角色码 2-状态码 3-用户手机号 4-用户MD5密码 5-用户名 6-用户企业码 7-用户所属
         String selectSql = "SELECT uid,roleid,cstatus,uphone,upw,urealname,cid,belong " +
                 "FROM {{?" + TB_SYSTEM_USER + "}} " +
@@ -102,7 +108,7 @@ public abstract class LoginAbsOp {
             if (upassword.equalsIgnoreCase(password)) {
 
                 //检查用户是否停用,角色是否有效
-                if (checkUserRoleStatus(urole, ucstatus) && recodeLoginInfo(ipAddress,uid)){
+                if (checkUserRoleStatus(urole, ucstatus,spicRole) && recodeLoginInfo(ipAddress,uid)){
                     loginSuccess();
                     //赋值用户信息
                     userSession = UserSession.genUserSession(uid,urole,uphone,password,ipAddress,uname,compid,belong);
