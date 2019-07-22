@@ -1,5 +1,7 @@
 package com.onek.calculate.entity;
 
+import com.onek.util.discount.DiscountRuleStore;
+
 import java.util.List;
 
 public class Ladoff {
@@ -84,5 +86,9 @@ public class Ladoff {
 
     public boolean isPercentage() {
         return (this.cstatus & 256) > 0;
+    }
+
+    public String getLadoffDesc() {
+        return DiscountRuleStore.getLadoffDesc(this);
     }
 }

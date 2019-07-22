@@ -400,7 +400,7 @@ public class Activity extends AccurateMath implements IDiscount {
         List<String> results = new ArrayList<>();
 
         for (Ladoff ladoff : this.getLadoffs()) {
-            results.add(DiscountRuleStore.getLadoffDesc(ladoff));
+            results.add(ladoff.getLadoffDesc());
         }
 
         return results;
@@ -417,7 +417,7 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     public boolean isGlobalActivity() {
-        return this.activityGcode == 0;
+        return this.incpriority == 0;
     }
 
     @Override
