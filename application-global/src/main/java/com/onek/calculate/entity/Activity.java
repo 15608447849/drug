@@ -3,6 +3,7 @@ package com.onek.calculate.entity;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.onek.calculate.service.AccurateMath;
 import com.onek.calculate.util.DiscountUtil;
+import com.onek.util.discount.DiscountRuleStore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -383,6 +384,14 @@ public class Activity extends AccurateMath implements IDiscount {
 
     public void setAssCstatus(int assCstatus) {
         this.assCstatus = assCstatus;
+    }
+
+    public String getCurrentLadoffDesc() {
+        return DiscountRuleStore.getActivityDesc(this);
+    }
+
+    public String getNextLadoffDesc() {
+        return DiscountRuleStore.getGapActivityDesc(this);
     }
 
     @Override

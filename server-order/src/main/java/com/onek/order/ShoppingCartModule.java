@@ -1217,7 +1217,7 @@ public class ShoppingCartModule {
                 offerTipsVO.setOffer(currLadoff.getOffer());
                 offerTipsVO.setOffercode(currLadoff.getOffercode());
                 offerTipsVO.setUnqid(currLadoff.getUnqid()+"");
-                offerTipsVO.setCurrladDesc(DiscountRuleStore.getActivityDesc(currLadoff.getOffercode(), currLadoff));
+                offerTipsVO.setCurrladDesc(activity.getCurrentLadoffDesc());
             }
 
             if(nextLadoff != null){
@@ -1226,7 +1226,7 @@ public class ShoppingCartModule {
                 offerTipsVO.setNoffer(nextLadoff.getOffer());
                 offerTipsVO.setOffercode(nextLadoff.getOffercode());
                 offerTipsVO.setUnqid(nextLadoff.getUnqid()+"");
-                offerTipsVO.setNextladDesc(DiscountRuleStore.getGapActivityDesc(nextLadoff.getOffercode(), activity.getNextGapAmt(), nextLadoff));
+                offerTipsVO.setNextladDesc(activity.getNextLadoffDesc());
             }
 
             offerTipsVOS.add(offerTipsVO);
