@@ -5,6 +5,7 @@ import com.onek.calculate.entity.IProduct;
 import com.onek.calculate.entity.Product;
 import com.onek.goods.calculate.ActivityCalculateService;
 import com.onek.goods.calculate.ActivityFilterService;
+import com.onek.goods.service.PromLoadOffService;
 import com.onek.goods.service.PromRuleService;
 import com.onek.goods.service.PromTimeService;
 import com.onek.util.RedisGlobalKeys;
@@ -33,9 +34,15 @@ public class ProdActPriceUtil {
     private static transient HashMap<Long, Long> versionTimeMap = new HashMap<>();
     private static HashMap<Long,  List<String[]>> promTimeMap = new HashMap<>();
 
+
+    private static transient HashMap<Long, Long> versionLadOffMap = new HashMap<>();
+    private static HashMap<Long, List<String>> promLadOffMap = new HashMap<>();
+
     private static PromTimeService timeService = new PromTimeService();
 
     private static PromRuleService ruleService = new PromRuleService();
+
+    private static PromLoadOffService ladService = new PromLoadOffService();
 
     private static long getVersion(){
         RedisStringProvide rs = RedisUtil.getStringProvide();
@@ -161,6 +168,19 @@ public class ProdActPriceUtil {
         }
 
         return promTimeMap.get(actcode);
+    }
+
+
+    public static List<String> getLoadOffBySku(long sku){
+        long v = getVersion();
+        Long subVersion = versionLadOffMap.getOrDefault(sku, 0L);
+        if(v > subVersion || subVersion == 0){
+            //
+            List<String> loadOffs = ladService.getLadOffBySku(sku);
+            promLadOffMap.put(sku, loadOffs);
+            versionLadOffMap.put(sku, v);
+        }
+        return promLadOffMap.get(sku);
     }
 
 

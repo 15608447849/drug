@@ -343,6 +343,8 @@ public class MainPageModule {
                     +"/"+ prodVO.getSku()+"-200x200.jpg");
             int ruleStatus = ProdActPriceUtil.getRuleBySku(prodVO.getSku());
             prodVO.setRulestatus(ruleStatus);
+            //商品参加活动描述
+            prodVO.setLadOffDesc(ProdActPriceUtil.getLoadOffBySku(prodVO.getSku()));
 
             if (isAnonymous) {//无权限价格不可见
                 prodVO.setVatp(-1);

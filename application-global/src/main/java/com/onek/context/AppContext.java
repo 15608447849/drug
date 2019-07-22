@@ -109,8 +109,7 @@ public class AppContext extends IceContext {
     private void checkMorePointLogin() {
         if(userSession!=null &&
                 (userSession.phone.equals("15608447849")
-                        || userSession.phone.equals("13397606966")
-                        || userSession.phone.equals("15399902100"))
+                        || userSession.phone.equals("18511709471"))
         ) {
             logger.print("不检测多点登陆的过滤用户");
             return;
