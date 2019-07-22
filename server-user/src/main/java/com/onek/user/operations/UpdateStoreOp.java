@@ -106,7 +106,7 @@ public class UpdateStoreOp implements IOperation<AppContext> {
                 session.compId
         );
         if (i>0){
-            updateCompInfoToCacheById(session.compId);//更新企业信息到缓存
+            updateCompInfoToCacheById(session.compId,true);//更新企业信息到缓存
             return new Result().success("修改信息成功");
         }else{
             return new Result().success("无法修改信息");
