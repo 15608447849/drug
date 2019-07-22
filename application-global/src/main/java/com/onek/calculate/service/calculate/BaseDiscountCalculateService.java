@@ -35,6 +35,8 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
 
         Ladoff[] ladoff = getLadoffs(actNo);
 
+        currDiscount.setLadoffs(ladoff);
+
         if (ArrayUtil.isEmpty(ladoff)) {
             return;
         }

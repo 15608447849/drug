@@ -1,9 +1,8 @@
 package com.onek.user;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.JSONArray;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
+import com.onek.consts.IntegralConstant;
 import com.onek.context.AppContext;
 import com.onek.entity.SyncErrVO;
 import com.onek.entitys.Result;
@@ -11,16 +10,17 @@ import com.onek.prop.AppProperties;
 import com.onek.user.entity.AptitudeVO;
 import com.onek.user.entity.CompInfoVO;
 import com.onek.user.entity.ConsigneeVO;
-import com.onek.user.operations.UpdateAuditOp;
-import com.onek.user.operations.UpdateStoreOp;
+import com.onek.user.service.MemberImpl;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
+import com.onek.util.member.MemberEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
-import redis.util.RedisUtil;
+import redis.IRedisPartCache;
+import redis.proxy.CacheProxyInstance;
 import util.GsonUtils;
 import util.ModelUtil;
 import util.http.HttpRequestUtil;
@@ -300,17 +300,41 @@ public class SyncCustomerInfoModule {
                 phone = Long.parseLong(String.valueOf(rList.get(0)[0]));
             }
             if (state == 256) {
-                UpdateAuditOp.Companion.giftPoints(compId);
+                giftPoints(compId);
                 IceRemoteUtil.revNewComerCoupon(compId, phone);
             } else {
                 message = "信息有误";
             }
-            updateCompInfoToCacheById(compId);
+            updateCompInfoToCacheById(compId,true);
             IceRemoteUtil.sendTempMessageToClient(compId, tempNo);
             SmsUtil.sendSmsBySystemTemp(phone + "",tempNo, message);
         });
     }
+    //赠送积分
+    private static void giftPoints(int compid){
 
+        try {
+            IRedisPartCache memProxy = CacheProxyInstance.createPartInstance(new MemberImpl()) ;
+
+            int point = 1000;
+            MemberEntity memberVO = (MemberEntity)memProxy.getId(compid);
+            int accupoints = memberVO.getAccupoints();
+            int balpoints = memberVO.getBalpoints();
+
+            if( balpoints <= 0){ // 积分余额为0代表第一次注册
+                MemberEntity updateMemberVO = new MemberEntity();
+                updateMemberVO.setCompid(compid);
+                updateMemberVO.setAccupoints(accupoints + point);
+                updateMemberVO.setBalpoints(balpoints + point);
+                int r = memProxy.update(compid, updateMemberVO);
+                if(r > 0){
+                    IceRemoteUtil.addIntegralDetail(compid, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
 
     /**
      * @接口摘要 ERP对接返回修改的资质信息

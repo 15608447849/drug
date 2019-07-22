@@ -1577,7 +1577,7 @@ public class BackGroundProxyMoudule {
             if (!updCompType(storetype, compInfoVO.getControl(), compId,invoice,taxpayer)) {
                 return result.fail("修改失败！");
             }
-            StoreBasicInfoOp.updateCompInfoToCacheById(compId);
+            StoreBasicInfoOp.updateCompInfoToCacheById(compId,true);
             b = optAptInfo(compId,frontAptList,aTypeList);
         }
         if (b) {//同步信息到ERP

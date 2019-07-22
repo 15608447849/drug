@@ -47,7 +47,11 @@ public class AppContext extends IceContext {
                 userSession.comp = GsonUtils.jsonToJavaBean(json, StoreBasicInfo.class);
             }
             if (userSession!=null) logger.print(" ##-------当 前 用 户 ( "+ key +" )----->>>"+userSession);
+            //更新用户token有效时长
+            updateUKeyTime();
     }
+
+
 
     public UserSession getUserSession() {
         return userSession;
@@ -57,10 +61,9 @@ public class AppContext extends IceContext {
         this.userSession = userSession;
     }
 
-
     //创建用户会话KRY lzp
     private String genUKey() {
-        return EncryptUtils.encryption(param.token);
+        return EncryptUtils.encryption(param.token); //客户端传递过来的 客户端唯一标识
     }
 
     //创建多端检测key
@@ -90,18 +93,34 @@ public class AppContext extends IceContext {
         checkMorePointLogin();
         //防止多点登陆 - 存入  当前登陆用户k = 已存在的token
         RedisUtil.getStringProvide().set(genUKeyByMore(),genUKey());
-        logger.print("登陆成功, 设置当前用户("+genUKeyByMore()+") 唯一token = " +" = "+ genUKey());
-
+        logger.print("登陆成功, 设置当前用户多端登陆标识("+genUKeyByMore()+") => 用户信息token = " + genUKey());
+        updateUKeyTime();
     }
 
+    //刷新有效时长
+    private void updateUKeyTime() {
+        try{
+            RedisUtil.getStringProvide().expire(genUKey(),7 * 24 * 60 * 60);
+            RedisUtil.getStringProvide().expire(genUKeyByMore(),7 * 24 * 60 * 60);
+        }catch (Exception ignored){ }
+    }
 
     //检测是存在多端登陆的情况
     private void checkMorePointLogin() {
+        if(userSession!=null &&
+                (userSession.phone.equals("15608447849")
+                        || userSession.phone.equals("13397606966")
+                        || userSession.phone.equals("15399902100"))
+        ) {
+            logger.print("不检测多点登陆的过滤用户");
+            return;
+        }
         String token = RedisUtil.getStringProvide().get(genUKeyByMore());
         logger.print(genUKeyByMore()+" - 检测是否存在多点登陆,上一个用户信息token = "+token+", 当前用户信息token = "+ genUKey());
         if (StringUtils.isEmpty(token)) return;
+
         if (!token.equals(genUKey())){
-            //删除上一个用户token
+            //删除上一个客户端对应的用户信息的token
             RedisUtil.getStringProvide().delete(token);
             logger.print(genUKeyByMore()+" - 检测多点登陆,删除上一个用户token缓存信息 = "+token);
         }
@@ -110,7 +129,10 @@ public class AppContext extends IceContext {
     //清理用户会话
     public boolean clearTokenByUserSession(){
         if (userSession!=null){
+            int compid =userSession.compId;
+            //移除当前客户端对应的用户信息
             RedisUtil.getStringProvide().delete(genUKey());
+            //移除多端登陆信息
             RedisUtil.getStringProvide().delete(genUKeyByMore());
             userSession = null;
             return true;

@@ -3,6 +3,7 @@ package com.onek.calculate.entity;
 import com.alibaba.fastjson.annotation.JSONField;
 import com.onek.calculate.service.AccurateMath;
 import com.onek.calculate.util.DiscountUtil;
+import com.onek.util.discount.DiscountRuleStore;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -39,6 +40,7 @@ public class Activity extends AccurateMath implements IDiscount {
 
     private List<Gift> giftList = new ArrayList<Gift>();
 
+    private Ladoff[] ladoffs;
     private Ladoff currLadoff;
     private Ladoff nextLadoff;
     private double nextGapAmt;
@@ -383,6 +385,34 @@ public class Activity extends AccurateMath implements IDiscount {
 
     public void setAssCstatus(int assCstatus) {
         this.assCstatus = assCstatus;
+    }
+
+    public String getCurrentLadoffDesc() {
+        return DiscountRuleStore.getCurrActivityDesc(this);
+    }
+
+    public String getNextLadoffDesc() {
+        return DiscountRuleStore.getGapActivityDesc(this);
+    }
+
+    public List<String> getLadoffDescs() {
+        List<String> results = new ArrayList<>();
+
+        for (Ladoff ladoff : this.getLadoffs()) {
+            results.add(DiscountRuleStore.getLadoffDesc(ladoff));
+        }
+
+        return results;
+    }
+
+    @Override
+    public void setLadoffs(Ladoff[] ladoffs) {
+        this.ladoffs = ladoffs;
+    }
+
+    @Override
+    public Ladoff[] getLadoffs() {
+        return this.ladoffs == null ? new Ladoff[0] : this.ladoffs;
     }
 
     @Override
