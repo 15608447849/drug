@@ -31,6 +31,7 @@ public class Activity extends AccurateMath implements IDiscount {
     private String eTime; // 结束时间
     private double actPrice;
     private int assCstatus;
+    private long activityGcode;
 
     private double discounted;
     private List<IProduct> productList;
@@ -413,6 +414,10 @@ public class Activity extends AccurateMath implements IDiscount {
     @Override
     public Ladoff[] getLadoffs() {
         return this.ladoffs == null ? new Ladoff[0] : this.ladoffs;
+    }
+
+    public boolean isGlobalActivity() {
+        return this.activityGcode == 0;
     }
 
     @Override
