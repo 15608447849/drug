@@ -389,11 +389,11 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     public String getCurrentLadoffDesc() {
-        return DiscountRuleStore.getCurrActivityDesc(this);
+        return this.currLadoff == null ? "" : this.currLadoff.getLadoffDesc();
     }
 
     public String getNextLadoffDesc() {
-        return DiscountRuleStore.getGapActivityDesc(this);
+        return this.nextLadoff == null ? "" : this.nextLadoff.getLadoffDesc();
     }
 
     public List<String> getLadoffDescs() {

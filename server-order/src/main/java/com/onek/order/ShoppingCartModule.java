@@ -860,14 +860,15 @@ public class ShoppingCartModule {
             product.setSku(shoppingCartVO.getPdno());
             product.autoSetCurrentPrice(shoppingCartVO.getPdprice(),shoppingCartVO.getNum());
             productList.add(product);
-            if(shoppingCartVO.getChecked() == 1){
-                ckProduct.add(product);
+
+            if (shoppingCartVO.getChecked() == 1) {
                 result = result.add(BigDecimal.valueOf(product.getCurrentPrice()));
             }
+
         }
 
-        List<IDiscount> discountList = getActivityList(compid,productList);
-
+        DiscountResult discountResult
+                = CalculateUtil.calculate(compid,productList,Long.parseLong(shoppingCartList.get(0).getConpno()));
         //获取活动
 
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
@@ -876,12 +877,22 @@ public class ShoppingCartModule {
             int minLimit = Integer.MAX_VALUE;
             int subStock = Integer.MAX_VALUE;
             int actStock = Integer.MAX_VALUE;
-            for(IDiscount discount : discountList){
+            for(IDiscount discount : discountResult.getActivityList()){
                 Activity activity = (Activity)discount;
                 int brule = (int)discount.getBRule();
                 List<IProduct> pList =  discount.getProductList();
                 for (IProduct product: pList){
                     if(product.getSKU() == shoppingCartVO.getPdno()){
+                        if (activity.getProductList().size() == 1) {
+                            if (!StringUtils.isEmpty(activity.getCurrentLadoffDesc())) {
+                                shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
+                            }
+
+                            if (!StringUtils.isEmpty(activity.getNextLadoffDesc())) {
+                                shoppingCartVO.addNextLadDesc(brule, activity.getNextLadoffDesc());
+                            }
+                        }
+
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
@@ -939,7 +950,16 @@ public class ShoppingCartModule {
             shoppingCartVO.setRule(ruleList);
         }
 
-        DiscountResult discountResult
+        for (ShoppingCartVO shoppingCartVO : shoppingCartList) {
+            if (shoppingCartVO.getChecked() == 1) {
+                Product product = new Product();
+                product.setSku(shoppingCartVO.getPdno());
+                product.autoSetCurrentPrice(shoppingCartVO.getPdprice(), shoppingCartVO.getNum());
+                ckProduct.add(product);
+            }
+        }
+
+        discountResult
                 = CalculateUtil.calculate(compid,ckProduct,Long.parseLong(shoppingCartList.get(0).getConpno()));
 
         for (ShoppingCartVO shoppingCartVO : shoppingCartList){
