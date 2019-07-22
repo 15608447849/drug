@@ -33,9 +33,10 @@ import java.util.Map;
  */
 public class CommonModule {
 
+
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
-    private static final String SELECT_LADDER_NO = "select IFNULL(max(right(offercode,2)),0) from {{?" + DSMConst.TD_PROM_LADOFF + "}} ";
+    private static final String SELECT_LADDER_NO = "select IFNULL(max(SUBSTR(offercode,6)),0) from {{?" + DSMConst.TD_PROM_LADOFF + "}} ";
 
 
     /**
@@ -448,17 +449,30 @@ public class CommonModule {
         List<Object[]> queryResult = baseDao.queryNative(sb.toString());
         int ladernum = Integer.parseInt(queryResult.get(0)[0].toString());
         int [] laddnumArray = new int[size];
+        int length;
+        int maxLength = 5;
+        int fid = Integer.parseInt(preLader.substring(0,1));
+        if(fid > 2){
+            maxLength = 4;
+        }
         for(int i = 0; i < laddnumArray.length; i++){
             ladernum = ladernum +1;
+            length = (ladernum+"").length();
             sb.setLength(0);
             sb.append(preLader);
-            if(ladernum < 10){
-                sb.append("0");
+            if(length < maxLength){
+                for(int j = 0;j < maxLength - length; j++){
+                    sb.append("0");
+                }
+                sb.append(ladernum);
+            }else{
+                sb.append(ladernum);
             }
-            sb.append(ladernum);
+
             laddnumArray[i] = Integer.parseInt(sb.toString());
         }
         return laddnumArray;
     }
+
 
 }
