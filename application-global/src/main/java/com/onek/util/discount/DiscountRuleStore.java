@@ -54,31 +54,29 @@ public class DiscountRuleStore {
         return ruleNameMap.get(brule);
     }
 
-    public static String getActivityDesc(Activity activity) {
+    public static String getLadoffDesc(Ladoff ladoff) {
         try {
-            Ladoff currentLadoff = activity.getCurrLadoff();
-
-            if (currentLadoff == null) {
+            if (ladoff == null) {
                 return "";
             }
 
-            String codeStr = String.valueOf(currentLadoff.getOffercode());
+            String codeStr = String.valueOf(ladoff.getOffercode());
             StringBuilder value = new StringBuilder();
             int four = Character.digit(codeStr.charAt(4), 10);
             int one = Character.digit(codeStr.charAt(1), 10);
             int two = Character.digit(codeStr.charAt(2), 10);
-            double offerValue = currentLadoff.getOffer();
+            double offerValue = ladoff.getOffer();
             String offer = offerValue + "元";
 
-            if (currentLadoff.isPercentage()) {
+            if (ladoff.isPercentage()) {
                 offer = (offerValue * 100) + "%";
             }
 
             StringBuilder giftName = new StringBuilder();
 
             if (one == 2 && two == 4) {
-                if (currentLadoff.getGiftList() != null && !currentLadoff.getGiftList().isEmpty()) {
-                    for (Gift gift : currentLadoff.getGiftList()) {
+                if (ladoff.getGiftList() != null && !ladoff.getGiftList().isEmpty()) {
+                    for (Gift gift : ladoff.getGiftList()) {
                         giftName.append(" " + gift.getGiftName());
                     }
                 }
@@ -86,24 +84,30 @@ public class DiscountRuleStore {
 
             value.append(FOUR[four]);
 
-            if (currentLadoff.getLadnum() > 0) {
-                value.append(currentLadoff.getLadnum() + "件，");
+            if (ladoff.getLadnum() > 0) {
+                value.append(ladoff.getLadnum() + "件，");
             }
 
-            if (currentLadoff.getLadamt() > 0) {
-                value.append(currentLadoff.getLadamt() + "元，");
+            if (ladoff.getLadamt() > 0) {
+                value.append(ladoff.getLadamt() + "元，");
             }
 
             value.append(
                     ONE_TWO[one][two]
                             .replace("&",
-                                ONE_TWO[0][two]
-                                        .replace("$", offer).replace("#", giftName.toString())));
+                                    ONE_TWO[0][two]
+                                            .replace("$", offer).replace("#", giftName.toString())));
 
             return value.toString();
+
         } catch (Exception e) {
+            e.printStackTrace();
             return "";
         }
+    }
+
+    public static String getCurrActivityDesc(Activity activity) {
+        return getLadoffDesc(activity.getCurrLadoff());
     }
 
     public static String getGapActivityDesc(Activity activity) {

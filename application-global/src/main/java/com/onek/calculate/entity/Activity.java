@@ -40,6 +40,7 @@ public class Activity extends AccurateMath implements IDiscount {
 
     private List<Gift> giftList = new ArrayList<Gift>();
 
+    private Ladoff[] ladoffs;
     private Ladoff currLadoff;
     private Ladoff nextLadoff;
     private double nextGapAmt;
@@ -387,11 +388,31 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     public String getCurrentLadoffDesc() {
-        return DiscountRuleStore.getActivityDesc(this);
+        return DiscountRuleStore.getCurrActivityDesc(this);
     }
 
     public String getNextLadoffDesc() {
         return DiscountRuleStore.getGapActivityDesc(this);
+    }
+
+    public List<String> getLadoffDescs() {
+        List<String> results = new ArrayList<>();
+
+        for (Ladoff ladoff : this.getLadoffs()) {
+            results.add(DiscountRuleStore.getLadoffDesc(ladoff));
+        }
+
+        return results;
+    }
+
+    @Override
+    public void setLadoffs(Ladoff[] ladoffs) {
+        this.ladoffs = ladoffs;
+    }
+
+    @Override
+    public Ladoff[] getLadoffs() {
+        return this.ladoffs == null ? new Ladoff[0] : this.ladoffs;
     }
 
     @Override
