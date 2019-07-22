@@ -201,15 +201,15 @@ public class ActivityManageModule {
         String json = appContext.param.json;
         ActivityVO activityVO = GsonUtils.jsonToJavaBean(json, ActivityVO.class);
         if (activityVO == null) return result.fail("参数错误");
-        int cpt = getCPCount(activityVO.getIncpriority(), activityVO.getCpriority());
-        if (cpt == -1) return result.fail("优先级已超过");
+//        int cpt = getCPCount(activityVO.getIncpriority(), activityVO.getCpriority());
+//        if (cpt == -1) return result.fail("优先级已超过");
         if (Long.parseLong(activityVO.getUnqid()) > 0) {//修改
 //            if (theActInProgress(Long.parseLong(activityVO.getUnqid()))) {
 //                return result.fail("活动正在进行中，无法修改！");
 //            }
-            result =  updateActivity(activityVO, cpt);
+            result = updateActivity(activityVO, 0);
         } else {//新增
-            result = insertActivity(activityVO, cpt);
+            result = insertActivity(activityVO, 0);
         }
         SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         try {
@@ -249,19 +249,19 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private Result insertActivity(ActivityVO activityVO, int cpt) {
-        boolean b;
+//        boolean b;
         int bruleCode = activityVO.getBrulecode();//规则码(前四位)
         int rCode = Integer.parseInt(bruleCode + "" + activityVO.getRulecomp());//前五位码
         Result result = new Result();
         long actCode = GenIdUtil.getUnqId();//唯一码(活动码)
         //新增活动
-        if (cpt == activityVO.getCpriority()) {
+//        if (cpt == activityVO.getCpriority()) {
            int re = baseDao.updateNative(INSERT_ACT_SQL,actCode, activityVO.getActname(),
                    activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                    activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
                    activityVO.getEdate(), bruleCode);
-           b = re > 0;
-        } else {
+//           b = re > 0;
+/*        } else {
             List<Object[]> params = new ArrayList<>();
             params.add(new Object[]{cpt, activityVO.getIncpriority(), activityVO.getCpriority()});
             params.add(new Object[]{actCode, activityVO.getActname(),
@@ -270,8 +270,8 @@ public class ActivityManageModule {
                     activityVO.getEdate(), bruleCode});
             int[] actResult = baseDao.updateTransNative(new String[]{UPDATE_ACT_CP, INSERT_ACT_SQL}, params);
             b = !ModelUtil.updateTransEmpty(actResult);
-        }
-        if (b) {
+        }*/
+        if (re>0) {
             //新增活动场次
             if (activityVO.getTimeVOS() != null && !activityVO.getTimeVOS().isEmpty()) {
                 insertTimes(activityVO.getTimeVOS(), actCode);
@@ -304,19 +304,19 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private Result updateActivity(ActivityVO activityVO, int cpt) {
-        boolean b;
+//        boolean b;
         Result result = new Result();
         long actCode = Long.parseLong(activityVO.getUnqid());
-        int oldRuleCode = selectBRuleCode(actCode);
+//        int oldRuleCode = selectBRuleCode(actCode);
         int bRuleCode = activityVO.getBrulecode();//前四位 规则业务码
         int rCode = Integer.parseInt(bRuleCode + "" + activityVO.getRulecomp());//前五位码
         //新增活动
-        if (cpt == activityVO.getCpriority()) {
+//        if (cpt == activityVO.getCpriority()) {
             int re = baseDao.updateNative(UPD_ACT_SQL, activityVO.getActname(),
                     activityVO.getIncpriority(), activityVO.getCpriority(), activityVO.getQualcode(), activityVO.getQualvalue(), activityVO.getActdesc(),
                     activityVO.getExcdiscount(), activityVO.getActtype(), activityVO.getActcycle(), activityVO.getSdate(),
                     activityVO.getEdate(), bRuleCode, actCode);
-            b = re > 0;
+       /*     b = re > 0;
         } else {
             long otherCode = selectActCode(activityVO.getIncpriority(), activityVO.getCpriority());
             List<Object[]> params = new ArrayList<>();
@@ -328,8 +328,8 @@ public class ActivityManageModule {
             int[] actResult = baseDao.updateTransNative(new String[]{UPDATE_ACT_CPONE + " and unqid=" + otherCode,
                     UPD_ACT_SQL}, params);
             b = !ModelUtil.updateTransEmpty(actResult);
-        }
-        if (b) {
+        }*/
+        if (re > 0) {
             //新增活动场次
             if (activityVO.getTimeVOS() != null && !activityVO.getTimeVOS().isEmpty()) {
                 if (baseDao.updateNative(DEL_TIME_SQL,actCode) > 0) {
@@ -1245,13 +1245,18 @@ public class ActivityManageModule {
      * @version 1.1.1
      **/
     private boolean theActInProgress(long actCode) {
+//        String selectTypeSQL = "select acttype,actcycle,brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} "
+//            + " where cstatus&1=0 and cstatus&2048>0 and unqid=" + actCode;
         String selectTypeSQL = "select acttype,actcycle,brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} "
                 + " where cstatus&1=0 and unqid=" + actCode;
         List<Object[]> qTResult = baseDao.queryNative(selectTypeSQL);
+//        if (qTResult == null || qTResult.isEmpty()) {
+//            return false;
+//        }
         int acttype = (int)qTResult.get(0)[0];
         long actcycle = (long)qTResult.get(0)[1];
         int brulecode = (int) qTResult.get(0)[2];
-        String selectSQL = "";
+        String selectSQL;
         if(brulecode == 1133){
             selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
                     + "where a.cstatus&1=0 and a.unqid=" + actCode + " and a.sdate<=CURRENT_DATE"
@@ -1269,20 +1274,12 @@ public class ActivityManageModule {
            if (((int)actcycle & valW) == 0) {
                return false;
            }
-//            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
-//                    + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
-//                    + "where a.cstatus&1=0 and a.unqid=" + actCode
-//                    + " and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
         } else if (acttype == 2) {//每月
             int dayOfMouth = localDateTime.getDayOfMonth();
             int valM = BigDecimal.valueOf(Math.pow(2,dayOfMouth-1)).intValue();
             if (((int)actcycle & valM) == 0) {
                 return false;
             }
-//            selectSQL = "select count(*) from {{?" + DSMConst.TD_PROM_ACT + "}} a "
-//                    + "left join {{?" + DSMConst.TD_PROM_TIME + "}} t on a.unqid=t.actcode and t.cstatus&1=0 "
-//                    + "where a.cstatus&1=0 and a.unqid=" + actCode
-//                    + " and t.sdate<=CURRENT_TIME and t.edate>=CURRENT_TIME";
         } else if (acttype == 3) {//每年
             String actcycleStr = String.valueOf(actcycle);
             String actDate =TimeUtils.getCurrentYear() + "-" + actcycleStr.substring(2,4)
