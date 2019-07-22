@@ -31,6 +31,7 @@ public class Activity extends AccurateMath implements IDiscount {
     private String eTime; // 结束时间
     private double actPrice;
     private int assCstatus;
+    private long activityGcode;
 
     private double discounted;
     private List<IProduct> productList;
@@ -40,6 +41,7 @@ public class Activity extends AccurateMath implements IDiscount {
 
     private List<Gift> giftList = new ArrayList<Gift>();
 
+    private Ladoff[] ladoffs;
     private Ladoff currLadoff;
     private Ladoff nextLadoff;
     private double nextGapAmt;
@@ -387,11 +389,35 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     public String getCurrentLadoffDesc() {
-        return DiscountRuleStore.getActivityDesc(this);
+        return DiscountRuleStore.getCurrActivityDesc(this);
     }
 
     public String getNextLadoffDesc() {
         return DiscountRuleStore.getGapActivityDesc(this);
+    }
+
+    public List<String> getLadoffDescs() {
+        List<String> results = new ArrayList<>();
+
+        for (Ladoff ladoff : this.getLadoffs()) {
+            results.add(ladoff.getLadoffDesc());
+        }
+
+        return results;
+    }
+
+    @Override
+    public void setLadoffs(Ladoff[] ladoffs) {
+        this.ladoffs = ladoffs;
+    }
+
+    @Override
+    public Ladoff[] getLadoffs() {
+        return this.ladoffs == null ? new Ladoff[0] : this.ladoffs;
+    }
+
+    public boolean isGlobalActivity() {
+        return this.incpriority == 0;
     }
 
     @Override

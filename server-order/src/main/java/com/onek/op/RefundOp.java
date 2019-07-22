@@ -147,6 +147,41 @@ public class RefundOp implements IOperation<AppContext> {
             _pay = .0;
         }
 
+        String insertSql = " INSERT INTO {{?" + TD_TRAN_TRANS + "}} "
+                + " (unqid, compid, orderno, payno, payprice, "
+                + " payway, paysource, paystatus, payorderno, tppno, "
+                + " paydate, paytime, completedate, completetime, cstatus) VALUES "
+                + " (?,?,?,?,?, ?,?,?,?,?, CURRENT_DATE,CURRENT_TIME,NULL,NULL,?)";
+
+        if(onilePayType == 4){
+            //付款方式为线下转账
+            _pay = .0;
+            double _realBal = .0;
+            boolean refamtResult = false;
+            if(_bal>realrefamt){
+                _realBal = realrefamt;
+            }else{
+                _realBal = _bal;
+            }
+            log.print("支付方式为线下支付时，余额应退款金额为:" + _bal + "  实际余额退款金额：" + _realBal + "   线上退款金额为：" + _pay);
+            double _realbalAbs = Math.abs(_realBal);
+            boolean isUpdate =  IceRemoteUtil.updateCompBal(compid, MathUtil.exactMul(_realbalAbs  , 100).intValue()) > 0;
+            if (isUpdate){
+                int rn = baseDao.updateNativeSharding(compid, year,insertSql,GenIdUtil.getUnqId(), compid, orderNo, 0, _realbalAbs * 100, 0,clientType,1,0,otherNo, 1024);
+                if(rn >0){
+                    refamtResult = afterSaleFinish(asno);
+                }
+
+                if(refamtResult){
+                    return new Result().success("退款成功");
+                }else{
+                    return new Result().fail("退款失败");
+                }
+
+            }else{
+                return new Result().fail("退款失败");
+            }
+        }
       if ((_bal + _pay) < realrefamt) return new Result().fail("超过可退款的金额, 当前可退款金额: "+ (_bal + _pay));
 
         String typeStr = onilePayType ==  1 ? "wxpay" : "alipay";
@@ -197,13 +232,6 @@ public class RefundOp implements IOperation<AppContext> {
                });
            }
        }
-
-
-        String insertSql = " INSERT INTO {{?" + TD_TRAN_TRANS + "}} "
-                + " (unqid, compid, orderno, payno, payprice, "
-                + " payway, paysource, paystatus, payorderno, tppno, "
-                + " paydate, paytime, completedate, completetime, cstatus) VALUES "
-                + " (?,?,?,?,?, ?,?,?,?,?, CURRENT_DATE,CURRENT_TIME,NULL,NULL,?)";
 
        if (params.size() > 0){
            baseDao.updateBatchNativeSharding(compid, year,insertSql, params, params.size());

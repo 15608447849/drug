@@ -34,4 +34,7 @@ public interface IDiscount {
 
     default void setNextGapAmt(double nextGapAmt) {}
     default void setNextGapNum(int nextGapNum) {}
+
+    default void setLadoffs(Ladoff[] ladoffs) {}
+    default Ladoff[] getLadoffs() { return new Ladoff[0]; }
 }
