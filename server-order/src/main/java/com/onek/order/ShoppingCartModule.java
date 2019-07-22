@@ -2,6 +2,7 @@ package com.onek.order;
 
 import Ice.Application;
 import Ice.Logger;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
@@ -883,7 +884,11 @@ public class ShoppingCartModule {
                 List<IProduct> pList =  discount.getProductList();
                 for (IProduct product: pList){
                     if(product.getSKU() == shoppingCartVO.getPdno()){
-                        if (activity.getProductList().size() == 1) {
+                        LogUtil.getDefaultLogger().info(
+                                "PNO -> " + product.getSKU() + "\n" +
+                                JSON.toJSONString(activity));
+                        
+                        if (pList.size() == 1) {
                             if (!StringUtils.isEmpty(activity.getCurrentLadoffDesc())) {
                                 shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
                             }
