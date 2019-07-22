@@ -333,7 +333,7 @@ public class CouponManageModule {
 
 
     private static final String QUERY_COUP_EXCG = " select tpcp.unqid coupno,tpcp.brulecode,rulename,validday," +
-            "validflag,periodtype,periodday,tpcp.actstock,0 glbno," +
+            "validflag,periodtype,periodday,tpcp.actstock,tpcp.glbno," +
             "0 goods,0 qlfno,0 qlfval " +
             " from {{?" + DSMConst.TD_PROM_COUPON + "}} tpcp " +
             " inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr "
