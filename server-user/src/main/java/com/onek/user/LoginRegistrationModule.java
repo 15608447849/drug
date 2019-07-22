@@ -194,7 +194,7 @@ public class LoginRegistrationModule {
     @UserPermission(ignore = true)
     public StoreBasicInfo getStoreInfo(AppContext appContext){
         int compid = Integer.parseInt(appContext.param.arrays[0]);
-        return updateCompInfoToCacheById(compid);
+        return updateCompInfoToCacheById(compid,false);
     }
 
     /**
@@ -228,7 +228,7 @@ public class LoginRegistrationModule {
 
         if (context.getUserSession().compId > 0){
             //返回用户信息
-            StoreBasicInfo info = updateCompInfoToCacheById(context.getUserSession().compId);
+            StoreBasicInfo info = updateCompInfoToCacheById(context.getUserSession().compId,false);
             return context.getUserSession().cloneStoreUserInfo(info);
         }
         return null;
