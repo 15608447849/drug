@@ -162,10 +162,9 @@ public class ServerImp extends IMServerImps {
     @Override
     public String accessService(IRequest request, Current __current) {
         Object result;
-        boolean inPrint = false;
+        boolean inPrint = true;
         boolean timePrint = false;
         boolean outPrint = false;
-        String callInfo = null;
         try {
             check(request);
             IceContext context = generateContext(__current,request);//产生context
@@ -174,9 +173,7 @@ public class ServerImp extends IMServerImps {
                 outPrint = context.debug.outPrint();
                 timePrint = context.debug.timePrint();
             }
-            callInfo = printParam(request,__current);
-
-            if (inPrint) logger.print(callInfo);
+            if (inPrint) logger.print(printParam(request,__current));
             context.initialization(); //初始化context
             result = interceptor(context);//拦截器
             //具体业务实现调用 返回值不限制
@@ -190,7 +187,7 @@ public class ServerImp extends IMServerImps {
             if (e instanceof InvocationTargetException) {
                 targetEx =((InvocationTargetException)e).getTargetException();
             }
-            LogUtil.getDefaultLogger().error(callInfo,targetEx);
+            LogUtil.getDefaultLogger().error(targetEx);
             result = new Result().error("错误调用",targetEx);
         }
         String resultString =  printResult(result);

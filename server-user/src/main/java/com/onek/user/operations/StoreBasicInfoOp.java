@@ -24,25 +24,27 @@ public class StoreBasicInfoOp {
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql);
         if (lines == null) return;
         for (Object[] rows : lines){
-            updateCompInfoToCacheById(checkObjectNull(rows[0],0));
+            updateCompInfoToCacheById(checkObjectNull(rows[0],0),false);
         }
     }
 
     //企业码更新企业信息到缓存
-    public static StoreBasicInfo updateCompInfoToCacheById(int cid){
+    public static StoreBasicInfo updateCompInfoToCacheById(int cid,boolean isRefClientInfo){
        StoreBasicInfo info = new StoreBasicInfo(cid);
        getStoreInfoById(info);
        infoToCache(info);
+        //通知客户端刷新
+       if (isRefClientInfo) IceRemoteUtil.sendMessageToClient(cid,"ref:刷新用户信息");
        return info;
     }
 
     //企业信息 json保存到缓存 -> 企业码 = 企业信息json
     private static void infoToCache(StoreBasicInfo info) {
         if (info.storeId>0){
-            RedisUtil.getStringProvide().delete(""+info.storeId);
-            RedisUtil.getStringProvide().set(""+info.storeId, GsonUtils.javaBeanToJson(info) );
-            //通知客户端刷新
-            IceRemoteUtil.sendMessageToClient(info.storeId,"ref:刷新用户信息");
+            String key = info.storeId + "";
+            RedisUtil.getStringProvide().delete(key);
+            RedisUtil.getStringProvide().set(key, GsonUtils.javaBeanToJson(info) );
+            RedisUtil.getStringProvide().expire(key,24 * 60 * 60 ); //存活一天
         }
     }
 

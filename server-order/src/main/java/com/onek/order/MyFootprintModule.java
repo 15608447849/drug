@@ -168,7 +168,6 @@ public class MyFootprintModule {
             if (query != null) {
                 date = query.date;
             }
-            appContext.logger.print("---------------------" +query.date +" - " +  date);
             int compId = appContext.getUserSession().compId;
             List<Param> list = selectInfoByComp(compId,date);
             for (Param it : list){
@@ -192,7 +191,11 @@ public class MyFootprintModule {
                      * 判断查看我的足迹时登陆账号是否已认证，认证显示价格，反之显示未认证
                      */
                     ProdEntity prod =  IceRemoteUtil.getProdBySku(Long.parseLong(it.sku));
-                    setPrice(appContext, prod);
+                    if (prod!=null){
+                        setPrice(appContext, prod);
+                    }else{
+                        continue;
+                    }
                     /*add end */
                     rit.list.add(prod);
                 } catch (Exception e) {

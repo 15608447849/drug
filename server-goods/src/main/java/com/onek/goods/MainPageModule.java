@@ -27,6 +27,7 @@ import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHits;
+import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.*;
 
@@ -68,7 +69,7 @@ public class MainPageModule {
     public void getDataSource(AppContext appContext) {
         long sss = System.currentTimeMillis();
         long br = Long.parseLong(appContext.param.arrays[0]);
-        Attr attr = dataSource(br, false, appContext.param.pageIndex, 6, appContext, "");
+        Attr attr = dataSource(br, false, false,appContext.param.pageIndex, 6, appContext, "");
     }
 
     private static long getGroupCount(long actCode) {
@@ -79,14 +80,14 @@ public class MainPageModule {
     /**
      * 通过活动码 获取 活动属性 及 商品信息
      **/
-    private static Attr dataSource(long bRuleCodes, boolean isQuery, int pageIndex, int pageNumber,
+    private static Attr dataSource(long bRuleCodes, boolean isQuery, boolean onlyActivity,int pageIndex, int pageNumber,
                                    AppContext context, String jsonStr) {
         Attr attr = new Attr();
         Page page = new Page();
         page.pageIndex = pageIndex <= 0 ? 1 : pageIndex;
         page.pageSize = pageNumber <= 0 ? 100 : pageNumber;
         int compId = context.getUserSession() != null ? context.getUserSession().compId : 0;
-        String keyword = "", brandno = "", manuName="";
+        String keyword = "", brandno = "", manuName = "";
         if (jsonStr != null && !jsonStr.isEmpty()) {
             JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
             keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
@@ -94,7 +95,8 @@ public class MainPageModule {
             manuName = (json.has("manuname") ? json.get("manuname").getAsString() : "").trim();
         }
         try {
-            if (bRuleCodes < 0 && bRuleCodes >= -10) {//非活动专区
+            if (bRuleCodes < 0 && bRuleCodes >= -10) {
+                //非活动专区
                 if (isQuery) {
                     List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), context.isSignControlAgree(),
                             page, attr, keyword, brandno, manuName);
@@ -105,12 +107,11 @@ public class MainPageModule {
                                 page.totalItems/page.pageSize+1 :page.totalItems/page.pageSize;
                         attr.page = new PageHolder(page);
                     }
-                    return  attr;
                 }
-            } else {//活动专区
+            } else {
+                //活动专区
                 String ruleCodeStr;
-                String SQL = SELECT_ACT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE
-                        + "}} where cstatus&1=0 ";
+                String SQL = SELECT_ACT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0 ";
                 if (bRuleCodes == -11) {//新人专享
                     SQL = SQL + " ) and qualcode = 1 and qualvalue = 0";
                 } else {
@@ -123,13 +124,16 @@ public class MainPageModule {
                 if (queryResult == null || queryResult.isEmpty()) return null;
                 if (isQuery) {
                     combatActData(attr,queryResult,context, page, compId, keyword);
-                    return attr.list != null && attr.list.size() > 0 ? attr : null;
                 }
             }
         } catch (Exception e) {
-            e.printStackTrace();
+            LogUtil.getDefaultLogger().error(e);
+            attr = null;
         }
-        return null;
+        if (onlyActivity && attr!=null && attr.list!=null && attr.list.size() > 0){
+            attr.list.removeIf(prodVO -> prodVO.getRulestatus() <= 0);
+        }
+        return attr;
     }
 
     /* *
@@ -500,8 +504,9 @@ public class MainPageModule {
 //                LogUtil.getDefaultLogger().info("品牌-厂家-查询关键字: "+manuName );
                 //厂家码
                 response = ProdESUtil.searchProdHasBrand(keyword, brandno, manuName, page.pageIndex, page.pageSize);
+
             }else{
-                attr.actObj = selectAllBarnd(isAnonymous,isSign);
+                attr.actObj = selectAllBarnd();
             }
 
         } else if (state == -5) { //热销
@@ -544,39 +549,7 @@ public class MainPageModule {
         }
     }
 
-    public static List<BarndManu> selectAllBarnd(boolean isAnonymous, boolean isSign) {
-//        List<BarndManu> barList;
-//
-//        String json = RedisUtil.getStringProvide().get("BRANS_MANU");
-//        if (StringUtils.isEmpty(json)){
-//            long time = System.currentTimeMillis();
-//            LogUtil.getDefaultLogger().info("开始查询" );
-//            List<Object[]> lines = BASE_DAO.queryNative(QUERY_PROD_BASE);
-//            LogUtil.getDefaultLogger().info("查询时间:"+(System.currentTimeMillis() - time));
-//            BgProdVO[] bgProds = prodHandle(lines,isAnonymous,isSign);
-//
-//            barList = new ArrayList<>();
-//            BgProdVO b;
-//            BarndManu bm;
-//            HashMap<String,BarndManu> fastMap = new HashMap<>();
-//            for (BgProdVO bgProd : bgProds) {
-//                b = bgProd;
-//                if (b.getBrandNo() > 0 && !StringUtils.isEmpty(b.getBrandName())) {
-//                    bm = fastMap.get(b.getBrandNo() + "");
-//                    if (bm == null) {
-//                        bm = new BarndManu(b.getBrandNo(), b.getBrandName());
-//                        fastMap.put(b.getBrandNo() + "", bm);
-//                        barList.add(bm);
-//                    }
-//                    bm.add(new BarndManu.Manu(b.getManuNo(), b.getManuName()));
-//                }
-//            }
-//            RedisUtil.getStringProvide().set("BRANS_MANU",GsonUtils.javaBeanToJson(barList));
-//            RedisUtil.getStringProvide().expire("BRANS_MANU", 3 * 60);
-//        }else{
-//            barList = GsonUtils.json2List(json , BarndManu.class);
-//        }
-//        return barList;
+    public static List<BarndManu> selectAllBarnd() {
 
         List<BarndManu> brandMaNuList = new ArrayList<>();
         SearchResponse response = ProdESUtil.searchProdGroupByBrand("", "", "");
@@ -597,7 +570,6 @@ public class MainPageModule {
                 brandMaNuList.add(barndManu);
             }
         }
-//        System.out.println(GsonUtils.javaBeanToJson(brandMaNuList));
         return brandMaNuList;
     }
 
@@ -647,6 +619,7 @@ public class MainPageModule {
     private static class Param {
         long identity; //活动叠加码
         int limit = -1;//楼层商品限制数
+        boolean onlyActivity;
         String jsonStr;//其他附加参数
     }
 
@@ -712,6 +685,7 @@ public class MainPageModule {
      * @传参列表 {不带参数-获取首页楼层元素,
      * identity=活动叠加码 + limit=楼层商品限制数 -> 根据指定活动码返回指定数量商品,
      * identity + 分页信息 -根据指定活动码/分页信息 查询商品/活动属性}
+     * onlyActivity 只看活动商品
      * @返回列表 MainPage/UiElement 对象
      */
     @UserPermission(ignore = true)
@@ -725,10 +699,10 @@ public class MainPageModule {
         }else{
             if (param.limit > 0) {
                 //获取指定活动的商品信息
-                return new Result().success(dataSource(param.identity, true, 1, param.limit, context, param.jsonStr));
+                return new Result().success(dataSource(param.identity, true, param.onlyActivity,1, param.limit, context, param.jsonStr));
             }
             if (param.limit == -1) {
-                return new Result().success(dataSource(param.identity, true, context.param.pageIndex, context.param.pageNumber, context, param.jsonStr));
+                return new Result().success(dataSource(param.identity, true, param.onlyActivity,context.param.pageIndex, context.param.pageNumber, context, param.jsonStr));
             }
         }
         return new Result().fail("参数异常");

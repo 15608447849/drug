@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 
 public class MemberStore {
 
-    private static IRedisPartCache memProxy =(IRedisPartCache) CacheProxyInstance.createPartInstance(new MemberUtil());
+    private static IRedisPartCache memProxy = CacheProxyInstance.createPartInstance(new MemberUtil());
 
     public static int getLevelByCompid(int compid){
 

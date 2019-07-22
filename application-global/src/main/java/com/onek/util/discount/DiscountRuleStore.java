@@ -1,10 +1,9 @@
 package com.onek.util.discount;
 
+import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.Gift;
 import com.onek.calculate.entity.Ladoff;
-import util.MathUtil;
 
-import java.math.BigDecimal;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -55,9 +54,13 @@ public class DiscountRuleStore {
         return ruleNameMap.get(brule);
     }
 
-    public static String getActivityDesc(int offerCode, Ladoff ladoff) {
+    public static String getLadoffDesc(Ladoff ladoff) {
         try {
-            String codeStr = String.valueOf(offerCode);
+            if (ladoff == null) {
+                return "";
+            }
+
+            String codeStr = String.valueOf(ladoff.getOffercode());
             StringBuilder value = new StringBuilder();
             int four = Character.digit(codeStr.charAt(4), 10);
             int one = Character.digit(codeStr.charAt(1), 10);
@@ -80,22 +83,42 @@ public class DiscountRuleStore {
             }
 
             value.append(FOUR[four]);
-            value.append(ladoff.getLadamt() + "元，");
+
+            if (ladoff.getLadnum() > 0) {
+                value.append(ladoff.getLadnum() + "件，");
+            }
+
+            if (ladoff.getLadamt() > 0) {
+                value.append(ladoff.getLadamt() + "元，");
+            }
+
             value.append(
                     ONE_TWO[one][two]
                             .replace("&",
-                                ONE_TWO[0][two]
-                                        .replace("$", offer).replace("#", giftName.toString())));
+                                    ONE_TWO[0][two]
+                                            .replace("$", offer).replace("#", giftName.toString())));
 
             return value.toString();
+
         } catch (Exception e) {
+            e.printStackTrace();
             return "";
         }
     }
 
-    public static String getGapActivityDesc(int offerCode, double gap, Ladoff nextLadoff) {
+    public static String getCurrActivityDesc(Activity activity) {
+        return getLadoffDesc(activity.getCurrLadoff());
+    }
+
+    public static String getGapActivityDesc(Activity activity) {
         try {
-            String codeStr = String.valueOf(offerCode);
+            Ladoff nextLadoff = activity.getNextLadoff();
+
+            if (nextLadoff == null) {
+                return "";
+            }
+
+            String codeStr = String.valueOf(nextLadoff);
             StringBuilder value = new StringBuilder();
             int one = Character.digit(codeStr.charAt(1), 10);
             int two = Character.digit(codeStr.charAt(2), 10);
@@ -104,7 +127,7 @@ public class DiscountRuleStore {
             String offer = offerValue + "元";
 
             if (nextLadoff.isPercentage()) {
-                offer = (offerCode * 100) + "%";
+                offer = (nextLadoff.getOffercode() * 100) + "%";
             }
 
             StringBuilder giftName = new StringBuilder();
@@ -118,7 +141,15 @@ public class DiscountRuleStore {
             }
 
             value.append("还需");
-            value.append(gap + "元");
+
+            if (activity.getNextGapAmt() > 0) {
+                value.append(activity.getNextGapAmt() + "元，");
+            }
+
+            if (activity.getNextGapNum() > 0) {
+                value.append(activity.getNextGapNum() + "件，");
+            }
+
             value.append(
                     ONE_TWO[one][two]
                             .replace("&",
