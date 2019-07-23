@@ -43,7 +43,7 @@ public class DiscountRuleStore {
     private static String[] FOUR = {"", "每满", "满"};
     private static String[][] ONE_TWO = {
             {"", "$", "包邮", "$折", "#" },
-            {"", "减&", "&", "打&" },
+            {"", "减&元", "&", "打&" },
             {"", "返现&", "赠&券", "赠&券", "赠&"}};
 
     public static int getRuleByBRule(int brule){
@@ -66,18 +66,22 @@ public class DiscountRuleStore {
             int one = Character.digit(codeStr.charAt(1), 10);
             int two = Character.digit(codeStr.charAt(2), 10);
             double offerValue = ladoff.getOffer();
-            String offer = offerValue + "元";
-
-            if (ladoff.isPercentage()) {
-                offer = (offerValue * 100) + "%";
-            }
+            String offer = offerValue + "";
 
             StringBuilder giftName = new StringBuilder();
 
-            if (one == 2 && two == 4) {
-                if (ladoff.getGiftList() != null && !ladoff.getGiftList().isEmpty()) {
-                    for (Gift gift : ladoff.getGiftList()) {
-                        giftName.append(" " + gift.getGiftName());
+            if (one == 2) {
+                if (two == 4) {
+                    if (ladoff.getGiftList() != null && !ladoff.getGiftList().isEmpty()) {
+                        for (Gift gift : ladoff.getGiftList()) {
+                            giftName.append(" " + gift.getGiftName());
+                        }
+                    }
+                } else if (two == 1) {
+                    if (ladoff.isPercentage()) {
+                        offer = (offerValue * 100) + "%";
+                    } else {
+                        offer = offerValue + "元";
                     }
                 }
             }
@@ -101,7 +105,7 @@ public class DiscountRuleStore {
             return value.toString();
 
         } catch (Exception e) {
-            e.printStackTrace();
+//            e.printStackTrace();
             return "";
         }
     }
@@ -124,13 +128,26 @@ public class DiscountRuleStore {
             int two = Character.digit(codeStr.charAt(2), 10);
 
             double offerValue = nextLadoff.getOffer();
-            String offer = offerValue + "元";
-
-            if (nextLadoff.isPercentage()) {
-                offer = (nextLadoff.getOffercode() * 100) + "%";
-            }
+            String offer = offerValue + "";
 
             StringBuilder giftName = new StringBuilder();
+
+
+            if (one == 2) {
+                if (two == 4) {
+                    if (nextLadoff.getGiftList() != null && !nextLadoff.getGiftList().isEmpty()) {
+                        for (Gift gift : nextLadoff.getGiftList()) {
+                            giftName.append(" " + gift.getGiftName());
+                        }
+                    }
+                } else if (two == 1) {
+                    if (nextLadoff.isPercentage()) {
+                        offer = (offerValue * 100) + "%";
+                    } else {
+                        offer = offerValue + "元";
+                    }
+                }
+            }
 
             if (one == 2 && two == 4) {
                 if (nextLadoff.getGiftList() != null && !nextLadoff.getGiftList().isEmpty()) {

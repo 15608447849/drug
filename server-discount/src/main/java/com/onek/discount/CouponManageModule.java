@@ -333,7 +333,7 @@ public class CouponManageModule {
 
 
     private static final String QUERY_COUP_EXCG = " select tpcp.unqid coupno,tpcp.brulecode,rulename,validday," +
-            "validflag,periodtype,periodday,tpcp.actstock,tpcp.glbno," +
+            "validflag,tpcp.glbno," +
             "0 goods,0 qlfno,0 qlfval " +
             " from {{?" + DSMConst.TD_PROM_COUPON + "}} tpcp " +
             " inner join {{?" + DSMConst.TD_PROM_RULE + "}} tpcr "
@@ -1534,11 +1534,14 @@ public class CouponManageModule {
 
         StringBuilder sbSql = new StringBuilder(QUERY_COUP_EXCG);
 
+
+
         List<Object[]> queryResult = baseDao.queryNative(sbSql.toString());
         CouponPubVO[] couponPubVOS = new CouponPubVO[queryResult.size()];
         if(queryResult == null || queryResult.isEmpty()){
             return result.success(couponPubVOS);
         }
+
 
         baseDao.convToEntity(queryResult, couponPubVOS, CouponPubVO.class,
                 new String[]{"coupno","brulecode","rulename",
