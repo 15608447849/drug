@@ -824,9 +824,9 @@ public class BDManageModule {
             parm.add(new Object[]{queryBdRet.get(0)[3],queryBdRet.get(0)[1],compid});
             parm.add(new Object[]{queryBdRet.get(0)[4],uphone});
             int[] rets = baseDao.updateTransNative(new String[]{updateBd, updateBdm}, parm);
-            if(!ModelUtil.updateTransEmpty(rets)){
-                return result.success();
-            }
+//            if(!ModelUtil.updateTransEmpty(rets)){
+//                return result.success();
+//            }
             return result.success();
         }
 
@@ -849,11 +849,12 @@ public class BDManageModule {
             sqlArray = sqlList.toArray(sqlArray);
 
             int[] rets = baseDao.updateTransNative(sqlArray, parm);
-            if(!ModelUtil.updateTransEmpty(rets)){
-                return result.success();
-            }else{
-                return result.success();
-            }
+            return result.success();
+//            if(!ModelUtil.updateTransEmpty(rets)){
+//                return result.success();
+//            }else{
+//                return result.success();
+//            }
         }
         return result.success();
     }
