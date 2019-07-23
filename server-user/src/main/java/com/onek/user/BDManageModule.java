@@ -757,6 +757,118 @@ public class BDManageModule {
         return result.success(areaCL);
     }
 
+
+    /**
+     * 获取为唯一BD 、BDM
+     * @param context
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result getUnqBd(AppContext context) {
+        String json = context.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+        long areac = jsonObject.get("areac").getAsLong();
+
+        Map<String,String> retMap = new HashMap<>();
+        retMap.put("uph","");
+        String selectSQL = "select distinct u.uphone,u.uid,areac from {{?"+DSMConst.TB_PROXY_UAREA +"}} area join {{?" +
+                DSMConst.TB_SYSTEM_USER+ "}} u on area.uid = u.uid where area.cstatus & 1 = 0 " +
+                " and u.cstatus & 1 = 0 and u.roleid & ? > 0 and areac = ? ";
+
+        List<Object[]> queryRet = baseDao.queryNative(selectSQL, new Object[]{RoleCodeCons._DB,areac});
+        if(queryRet != null && !queryRet.isEmpty() && queryRet.size() == 1){
+            retMap.put("uph",queryRet.get(0)[0].toString());
+            return result.success(retMap);
+        }
+
+        if(queryRet == null || queryRet.isEmpty()){
+            queryRet = baseDao.queryNative(selectSQL, new Object[]{RoleCodeCons._DBM,areac});
+            if(queryRet != null && !queryRet.isEmpty() && queryRet.size() == 1){
+                retMap.put("uph",queryRet.get(0)[0].toString());
+                return result.success(retMap);
+            }
+        }
+        return result.success(retMap);
+    }
+
+
+    /**
+     * 更新绑定BD BDM
+     * @param context
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result bindUnqBd(AppContext context) {
+        String json = context.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        Result result = new Result();
+        long areac = jsonObject.get("areac").getAsLong();
+        int compid = jsonObject.get("compid").getAsInt();
+        String uphone = jsonObject.get("uphone").getAsString();
+        String selectSQL = "select distinct u.uphone,u.uid,areac,u.cid,u.belong from {{?"+DSMConst.TB_PROXY_UAREA +"}} area join {{?" +
+                DSMConst.TB_SYSTEM_USER+ "}} u on area.uid = u.uid join {{?"+DSMConst.TB_COMP +"}} comp on comp.cid = u.cid " +
+                " where area.cstatus & 1 = 0 and comp.cstatus & 1 = 0 " +
+                " and u.cstatus & 1 = 0 and u.roleid & ? > 0 and areac = ? ";
+
+        String updateBd = "update {{?"+DSMConst.TB_COMP+"}} set invitercid = ?,inviter = ? where cid = ? and cstatus & 1 = 0";
+
+        String updateBdm = "update {{?"+DSMConst.TB_SYSTEM_USER+"}} set belong = ? where uphone = ? and cstatus & 1 = 0";
+
+        List<Object[]> parm = new ArrayList<>();
+        List<Object[]> queryBdRet = baseDao.queryNative(selectSQL,
+                new Object[]{RoleCodeCons._DB,areac});
+        if(queryBdRet != null && !queryBdRet.isEmpty() && queryBdRet.size() == 1){
+            parm.add(new Object[]{queryBdRet.get(0)[3],queryBdRet.get(0)[1],compid});
+            parm.add(new Object[]{queryBdRet.get(0)[4],uphone});
+            int[] rets = baseDao.updateTransNative(new String[]{updateBd, updateBdm}, parm);
+            if(!ModelUtil.updateTransEmpty(rets)){
+                return result.success();
+            }else{
+                return result.fail("操作失败！");
+            }
+        }
+
+        List<Object[]> queryBdmRet = baseDao.queryNative(selectSQL,
+                new Object[]{RoleCodeCons._DBM,areac});
+
+        List<String> sqlList = new ArrayList<>();
+        if(queryBdmRet != null && !queryBdmRet.isEmpty() && queryBdmRet.size() == 1){
+            if(queryBdRet == null || queryBdRet.isEmpty()){
+                sqlList.add(updateBd);
+                sqlList.add(updateBdm);
+                parm.add(new Object[]{queryBdRet.get(0)[3],queryBdRet.get(0)[1],compid});
+                parm.add(new Object[]{queryBdRet.get(0)[1],uphone});
+            }else{
+                sqlList.add(updateBdm);
+                parm.add(new Object[]{queryBdmRet.get(0)[1],uphone});
+            }
+
+            String[] sqlArray = new String[sqlList.size()];
+            sqlArray = sqlList.toArray(sqlArray);
+
+            int[] rets = baseDao.updateTransNative(sqlArray, parm);
+            if(!ModelUtil.updateTransEmpty(rets)){
+                return result.success();
+            }else{
+                return result.fail("操作失败！");
+            }
+        }
+        return result.fail("操作失败！");
+    }
+
+
+
+
+
+
+
+
+
+
+
     public static void main(String[] args) {
 
     }
