@@ -393,7 +393,7 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     public String getNextLadoffDesc() {
-        return this.nextLadoff == null ? "" : this.nextLadoff.getLadoffDesc();
+        return DiscountRuleStore.getGapActivityDesc(this);
     }
 
     public List<String> getLadoffDescs() {

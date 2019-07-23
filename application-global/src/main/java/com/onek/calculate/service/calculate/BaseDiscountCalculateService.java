@@ -19,18 +19,19 @@ public abstract class BaseDiscountCalculateService implements ICalculateService 
             currDiscount = iDiscount;
 
             if (currDiscount.getBRule() == 1133
-             || currDiscount.getBRule() == 1113) {
-                // 不计算团购和秒杀
+             || currDiscount.getBRule() == 1113
+             || currDiscount.getBRule() == 1114) {
+                // 团购、秒杀、套餐无阶梯
                 continue;
             }
 
-            discountHandler();
+            ladoffHandler();
         }
 
         DiscountUtil.updateAllPrices(DiscountUtil.getProds(discountList));
     }
 
-    protected void discountHandler() {
+    protected void ladoffHandler() {
         long actNo = currDiscount.getDiscountNo();
 
         Ladoff[] ladoff = getLadoffs(actNo);
