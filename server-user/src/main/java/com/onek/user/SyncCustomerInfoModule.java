@@ -289,7 +289,6 @@ public class SyncCustomerInfoModule {
     }
 
     private void otherOpt(int compId, int state) {
-        LogUtil.getDefaultLogger().info("state00000000000------------111111111111 " + state);
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         int tempNo = state==256 ? AUTHENTICATION_SUCCESS : AUTHENTICATION_FAILURE;
         executorService.execute(() -> {
@@ -318,21 +317,19 @@ public class SyncCustomerInfoModule {
     //赠送积分
     public static void giftPoints(int compid){
         try {
-            LogUtil.getDefaultLogger().info("compid00000000000------------111111111111 " + compid);
             IRedisPartCache memProxy = CacheProxyInstance.createPartInstance(new MemberImpl()) ;
             int point = 1000;
             MemberEntity memberVO = (MemberEntity)memProxy.getId(compid);
             int accupoints = memberVO.getAccupoints();
             int balpoints = memberVO.getBalpoints();
-            LogUtil.getDefaultLogger().info("accupoints00000000000------------111111111111 " + accupoints);
-            LogUtil.getDefaultLogger().info("balpoints00000000000------------111111111111 " + balpoints);
+            LogUtil.getDefaultLogger().info("账户积分balpoints--->>> " + balpoints);
             if( balpoints <= 0){ // 积分余额为0代表第一次注册
                 MemberEntity updateMemberVO = new MemberEntity();
                 updateMemberVO.setCompid(compid);
                 updateMemberVO.setAccupoints(accupoints + point);
                 updateMemberVO.setBalpoints(balpoints + point);
                 int r = memProxy.update(compid, updateMemberVO);
-                LogUtil.getDefaultLogger().info("111111111111-2222222222222" +  ((MemberEntity) memProxy.getId(compid)).getAccupoints());
+                LogUtil.getDefaultLogger().info("赠送后积分--->>> " +  ((MemberEntity) memProxy.getId(compid)).getAccupoints());
                 if(r > 0){
                     IceRemoteUtil.addIntegralDetail(compid, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
                 }
