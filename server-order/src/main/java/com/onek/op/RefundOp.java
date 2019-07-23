@@ -40,7 +40,10 @@ public class RefundOp implements IOperation<AppContext> {
     //更新订单相关商品售后状态
     private static final String UPD_ORDER_GOODS_CK_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
             + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=? and compid  = ? ";
-    
+
+    //更新退款金额
+    private static final String UPDATE_ORDER_REFAMT = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set realrefamt = ? where asno = ?";
+
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
     long asno; //售后单号
     double refamt;//客户输入的退款金额
@@ -169,7 +172,7 @@ public class RefundOp implements IOperation<AppContext> {
             if (isUpdate){
                 int rn = baseDao.updateNativeSharding(compid, year,insertSql,GenIdUtil.getUnqId(), compid, orderNo, 0, _realbalAbs * 100, 0,clientType,1,0,otherNo, 1024);
                 if(rn >0){
-                    refamtResult = afterSaleFinish(asno);
+                    refamtResult = afterSaleFinish(asno,realrefamt);
                 }
 
                 if(refamtResult){
@@ -239,7 +242,7 @@ public class RefundOp implements IOperation<AppContext> {
 
        if (isOk) {
            if (onilePayType <= 3) {
-               isOk = afterSaleFinish(asno);
+               isOk = afterSaleFinish(asno,realrefamt);
            }
        }
 
@@ -253,7 +256,7 @@ public class RefundOp implements IOperation<AppContext> {
      * @传参列表 {asno 售后单号}
      * @返回列表 200 成功 -1 失败
      */
-    public boolean afterSaleFinish(long asno) {
+    public boolean afterSaleFinish(long asno,double realrefamt) {
         String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
         List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
         if (queryRet == null || queryRet.isEmpty()) {
@@ -267,6 +270,7 @@ public class RefundOp implements IOperation<AppContext> {
 
 
         baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_CK_FINISH_SQL, new Object[]{200, asno});
+        baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPDATE_ORDER_REFAMT, new Object[]{realrefamt * 100, asno});
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()), year,
                 new String[]{UPD_ORDER_CK_SQL, UPD_ORDER_GOODS_CK_SQL}, params));
 
