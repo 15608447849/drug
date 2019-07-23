@@ -824,11 +824,10 @@ public class BDManageModule {
             parm.add(new Object[]{queryBdRet.get(0)[3],queryBdRet.get(0)[1],compid});
             parm.add(new Object[]{queryBdRet.get(0)[4],uphone});
             int[] rets = baseDao.updateTransNative(new String[]{updateBd, updateBdm}, parm);
-            if(!ModelUtil.updateTransEmpty(rets)){
-                return result.success();
-            }else{
-                return result.fail("操作失败！");
-            }
+//            if(!ModelUtil.updateTransEmpty(rets)){
+//                return result.success();
+//            }
+            return result.success();
         }
 
         List<Object[]> queryBdmRet = baseDao.queryNative(selectSQL,
@@ -850,13 +849,14 @@ public class BDManageModule {
             sqlArray = sqlList.toArray(sqlArray);
 
             int[] rets = baseDao.updateTransNative(sqlArray, parm);
-            if(!ModelUtil.updateTransEmpty(rets)){
-                return result.success();
-            }else{
-                return result.fail("操作失败！");
-            }
+            return result.success();
+//            if(!ModelUtil.updateTransEmpty(rets)){
+//                return result.success();
+//            }else{
+//                return result.success();
+//            }
         }
-        return result.fail("操作失败！");
+        return result.success();
     }
 
 

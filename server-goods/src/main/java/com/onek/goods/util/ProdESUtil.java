@@ -620,7 +620,8 @@ public class ProdESUtil {
 
         TransportClient client = ElasticSearchClientFactory.getClientInstance();
         SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX).setQuery(boolQuery);
-        AggregationBuilder aggregationBuilder = AggregationBuilders.terms("agg").field(column);
+        AggregationBuilder aggregationBuilder = AggregationBuilders.terms("agg").field(column)
+                .size(Integer.MAX_VALUE);
         SearchResponse response = requestBuilder
                 .addAggregation(aggregationBuilder)
                 .setExplain(true).execute().actionGet();

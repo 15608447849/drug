@@ -292,41 +292,45 @@ public class SyncCustomerInfoModule {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         int tempNo = state==256 ? AUTHENTICATION_SUCCESS : AUTHENTICATION_FAILURE;
         executorService.execute(() -> {
-            String message = "";
-            String uphoneSQL = "select uphone from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and cid=?";
-            List<Object[]> rList = baseDao.queryNative(uphoneSQL, compId);
-            long phone = 0;
-            if (rList != null && rList.size() > 0) {
-                phone = Long.parseLong(String.valueOf(rList.get(0)[0]));
+            try {
+                String message = "";
+                String uphoneSQL = "select uphone from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and cid=?";
+                List<Object[]> rList = baseDao.queryNative(uphoneSQL, compId);
+                long phone = 0;
+                if (rList != null && rList.size() > 0) {
+                    phone = Long.parseLong(String.valueOf(rList.get(0)[0]));
+                }
+                if (state == 256) {
+                    giftPoints(compId);
+                    IceRemoteUtil.revNewComerCoupon(compId, phone);
+                } else {
+                    message = "信息有误";
+                }
+                updateCompInfoToCacheById(compId,true);
+                IceRemoteUtil.sendTempMessageToClient(compId, tempNo);
+                SmsUtil.sendSmsBySystemTemp(phone + "",tempNo, message);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            if (state == 256) {
-                giftPoints(compId);
-                IceRemoteUtil.revNewComerCoupon(compId, phone);
-            } else {
-                message = "信息有误";
-            }
-            updateCompInfoToCacheById(compId,true);
-            IceRemoteUtil.sendTempMessageToClient(compId, tempNo);
-            SmsUtil.sendSmsBySystemTemp(phone + "",tempNo, message);
         });
     }
     //赠送积分
-    private static void giftPoints(int compid){
-
+    public static void giftPoints(int compid){
         try {
             IRedisPartCache memProxy = CacheProxyInstance.createPartInstance(new MemberImpl()) ;
-
             int point = 1000;
             MemberEntity memberVO = (MemberEntity)memProxy.getId(compid);
             int accupoints = memberVO.getAccupoints();
             int balpoints = memberVO.getBalpoints();
-
-            if( balpoints <= 0){ // 积分余额为0代表第一次注册
+            LogUtil.getDefaultLogger().info("账户积分balpoints--->>> " + balpoints);
+            if( (memberVO.getCstatus() & 256) == 0){ // 256代表已审核过
                 MemberEntity updateMemberVO = new MemberEntity();
                 updateMemberVO.setCompid(compid);
                 updateMemberVO.setAccupoints(accupoints + point);
                 updateMemberVO.setBalpoints(balpoints + point);
+                updateMemberVO.setCstatus(updateMemberVO.getCstatus()|256);
                 int r = memProxy.update(compid, updateMemberVO);
+                LogUtil.getDefaultLogger().info("赠送后积分--->>> " +  ((MemberEntity) memProxy.getId(compid)).getAccupoints());
                 if(r > 0){
                     IceRemoteUtil.addIntegralDetail(compid, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
                 }
