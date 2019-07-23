@@ -289,44 +289,50 @@ public class SyncCustomerInfoModule {
     }
 
     private void otherOpt(int compId, int state) {
+        LogUtil.getDefaultLogger().info("state00000000000------------111111111111 " + state);
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         int tempNo = state==256 ? AUTHENTICATION_SUCCESS : AUTHENTICATION_FAILURE;
         executorService.execute(() -> {
-            String message = "";
-            String uphoneSQL = "select uphone from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and cid=?";
-            List<Object[]> rList = baseDao.queryNative(uphoneSQL, compId);
-            long phone = 0;
-            if (rList != null && rList.size() > 0) {
-                phone = Long.parseLong(String.valueOf(rList.get(0)[0]));
+            try {
+                String message = "";
+                String uphoneSQL = "select uphone from {{?" + DSMConst.TB_SYSTEM_USER + "}} where cstatus&1=0 and cid=?";
+                List<Object[]> rList = baseDao.queryNative(uphoneSQL, compId);
+                long phone = 0;
+                if (rList != null && rList.size() > 0) {
+                    phone = Long.parseLong(String.valueOf(rList.get(0)[0]));
+                }
+                if (state == 256) {
+                    giftPoints(compId);
+                    IceRemoteUtil.revNewComerCoupon(compId, phone);
+                } else {
+                    message = "信息有误";
+                }
+                updateCompInfoToCacheById(compId,true);
+                IceRemoteUtil.sendTempMessageToClient(compId, tempNo);
+                SmsUtil.sendSmsBySystemTemp(phone + "",tempNo, message);
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-            if (state == 256) {
-                giftPoints(compId);
-                IceRemoteUtil.revNewComerCoupon(compId, phone);
-            } else {
-                message = "信息有误";
-            }
-            updateCompInfoToCacheById(compId,true);
-            IceRemoteUtil.sendTempMessageToClient(compId, tempNo);
-            SmsUtil.sendSmsBySystemTemp(phone + "",tempNo, message);
         });
     }
     //赠送积分
-    private static void giftPoints(int compid){
-
+    public static void giftPoints(int compid){
         try {
+            LogUtil.getDefaultLogger().info("compid00000000000------------111111111111 " + compid);
             IRedisPartCache memProxy = CacheProxyInstance.createPartInstance(new MemberImpl()) ;
-
             int point = 1000;
             MemberEntity memberVO = (MemberEntity)memProxy.getId(compid);
             int accupoints = memberVO.getAccupoints();
             int balpoints = memberVO.getBalpoints();
-
+            LogUtil.getDefaultLogger().info("accupoints00000000000------------111111111111 " + accupoints);
+            LogUtil.getDefaultLogger().info("balpoints00000000000------------111111111111 " + balpoints);
             if( balpoints <= 0){ // 积分余额为0代表第一次注册
                 MemberEntity updateMemberVO = new MemberEntity();
                 updateMemberVO.setCompid(compid);
                 updateMemberVO.setAccupoints(accupoints + point);
                 updateMemberVO.setBalpoints(balpoints + point);
                 int r = memProxy.update(compid, updateMemberVO);
+                LogUtil.getDefaultLogger().info("111111111111-2222222222222" +  ((MemberEntity) memProxy.getId(compid)).getAccupoints());
                 if(r > 0){
                     IceRemoteUtil.addIntegralDetail(compid, IntegralConstant.SOURCE_AUTH_MATERIAL, point, 0);
                 }
