@@ -826,9 +826,8 @@ public class BDManageModule {
             int[] rets = baseDao.updateTransNative(new String[]{updateBd, updateBdm}, parm);
             if(!ModelUtil.updateTransEmpty(rets)){
                 return result.success();
-            }else{
-                return result.fail("操作失败！");
             }
+            return result.success();
         }
 
         List<Object[]> queryBdmRet = baseDao.queryNative(selectSQL,
@@ -853,10 +852,10 @@ public class BDManageModule {
             if(!ModelUtil.updateTransEmpty(rets)){
                 return result.success();
             }else{
-                return result.fail("操作失败！");
+                return result.success();
             }
         }
-        return result.fail("操作失败！");
+        return result.success();
     }
 
 
