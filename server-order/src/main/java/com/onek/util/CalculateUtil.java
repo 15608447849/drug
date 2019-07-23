@@ -8,11 +8,8 @@ import com.onek.calculate.entity.*;
 import com.onek.calculate.filter.*;
 import com.onek.calculate.service.calculate.CouponCalculateService;
 import com.onek.calculate.util.DiscountUtil;
-import util.ArrayUtil;
-import util.MathUtil;
+import org.hyrdpf.ds.AppConfig;
 
-import javax.xml.crypto.dsig.keyinfo.RetrievalMethod;
-import java.math.BigDecimal;
 import java.util.*;
 
 public class CalculateUtil {
@@ -118,4 +115,20 @@ public class CalculateUtil {
 
         return new DiscountResult(activityList, couponValue, products);
     }
+
+    /*static {
+        *//**初始化LOG4J2日志环境*//*
+        AppConfig.initLogger("log4j2.xml");
+        *//**初始化应用程序环境，如数据源等*//*
+        AppConfig.initialize();
+    }
+
+    public static void main(String[] args) {
+        List<Product> pl = new ArrayList<>();
+        Product p = new Product();
+        p.setSku(11000000001201L);
+        p.setNums(10);
+        pl.add(p);
+        calculate(536862726, pl, 0);
+    }*/
 }

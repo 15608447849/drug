@@ -1,8 +1,9 @@
 package com.onek.entity;
 
-import com.onek.calculate.entity.Gift;
-
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Administrator
@@ -106,6 +107,34 @@ public class ShoppingCartVO {
     private double skprice;
 
     private int consell;
+
+    private Map<Integer, List<String>> nextLadDesc = new HashMap<>();
+    private Map<Integer, List<String>> currLadDesc = new HashMap<>();
+//    private String ladsDesc;
+
+    public Map<Integer, List<String>> getNextLadDesc() {
+        return nextLadDesc;
+    }
+
+    public void addNextLadDesc(int type, String nextLadDesc) {
+        if (!this.nextLadDesc.containsKey(type)) {
+             this.nextLadDesc.put(type, new ArrayList<>());
+        }
+
+        this.nextLadDesc.get(type).add(nextLadDesc) ;
+    }
+
+    public Map<Integer, List<String>> getCurrLadDesc() {
+        return currLadDesc;
+    }
+
+    public void addCurrLadDesc(int type, String currLadDesc) {
+        if (!this.currLadDesc.containsKey(type)) {
+            this.currLadDesc.put(type, new ArrayList<>());
+        }
+
+        this.currLadDesc.get(type).add(currLadDesc) ;
+    }
 
     public int getConsell() {
         return consell;

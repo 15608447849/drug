@@ -3,6 +3,7 @@ package com.onek.goods.entities;
 import redis.annation.DictCacheField;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 public class ProdVO {
     /* ----------- 商品SPU表 ------------- */
@@ -60,8 +61,8 @@ public class ProdVO {
     public int cart;
     private int consell;
 
-
     private int grossProfit;//毛利润
+    private List<String> ladOffDesc;//毛利润
 
     public int getGrossProfit() {
         return grossProfit;
@@ -415,5 +416,13 @@ public class ProdVO {
 
     public void setConsell(int consell) {
         this.consell = consell;
+    }
+
+    public List<String> getLadOffDesc() {
+        return ladOffDesc;
+    }
+
+    public void setLadOffDesc(List<String> ladOffDesc) {
+        this.ladOffDesc = ladOffDesc;
     }
 }
