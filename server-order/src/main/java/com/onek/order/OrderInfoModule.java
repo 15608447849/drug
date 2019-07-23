@@ -628,7 +628,7 @@ public class OrderInfoModule {
             String erpSKU = IceRemoteUtil.getErpSKU(params.getString("sku"));
 
             if (erpSKU == null || "null".equalsIgnoreCase(erpSKU)) {
-                return new Result().fail("获取失败");
+                return new Result().fail("此药品暂无药检报告");
             }
 
             params.put("erpsku", erpSKU);
@@ -643,7 +643,11 @@ public class OrderInfoModule {
             JSONObject jo = JSON.parseObject(result);
 
             if (jo.getIntValue("code") == 200) {//同步失败处理
-                return new Result().success(jo.getString("path"));
+                String path = jo.getString("path");
+
+                return StringUtils.isEmpty(path)
+                        ? new Result().fail("暂未上传药检报告")
+                        : new Result().success(path);
             }
         }
 
@@ -671,7 +675,11 @@ public class OrderInfoModule {
             JSONObject jo = JSON.parseObject(result);
 
             if (jo.getIntValue("code") == 200) {//同步失败处理
-                return new Result().success(jo.getString("path"));
+                String path = jo.getString("path");
+
+                return StringUtils.isEmpty(path)
+                        ? new Result().fail("暂未上传发票信息")
+                        : new Result().success(path);
             }
         }
 
