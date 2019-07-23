@@ -270,7 +270,8 @@ public class RefundOp implements IOperation<AppContext> {
 
 
         baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_CK_FINISH_SQL, new Object[]{200, asno});
-        baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPDATE_ORDER_REFAMT, new Object[]{realrefamt * 100, asno});
+        int row  = baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPDATE_ORDER_REFAMT, new Object[]{realrefamt * 100, asno});
+        log.print("影响行数：" + row + "实际退款金额:"+realrefamt);
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()), year,
                 new String[]{UPD_ORDER_CK_SQL, UPD_ORDER_GOODS_CK_SQL}, params));
 
