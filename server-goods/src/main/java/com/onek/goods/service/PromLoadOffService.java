@@ -38,7 +38,7 @@ public class PromLoadOffService {
         for (IDiscount iDiscount : activityList) {
             Activity activity = (Activity)iDiscount;
             if (!activity.isGlobalActivity()) {
-                if (activity.getLadoffDescs() != null) {
+                if (!activity.getLadoffDescs().isEmpty()) {
                     String ladOff = activity.getLadoffDescs().get(activity.getLadoffDescs().size() - 1);
                     ladOffList.add(ladOff);
                 }
