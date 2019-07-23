@@ -323,11 +323,12 @@ public class SyncCustomerInfoModule {
             int accupoints = memberVO.getAccupoints();
             int balpoints = memberVO.getBalpoints();
             LogUtil.getDefaultLogger().info("账户积分balpoints--->>> " + balpoints);
-            if( balpoints <= 0){ // 积分余额为0代表第一次注册
+            if( (memberVO.getCstatus() & 256) == 0){ // 256代表已审核过
                 MemberEntity updateMemberVO = new MemberEntity();
                 updateMemberVO.setCompid(compid);
                 updateMemberVO.setAccupoints(accupoints + point);
                 updateMemberVO.setBalpoints(balpoints + point);
+                updateMemberVO.setCstatus(updateMemberVO.getCstatus()|256);
                 int r = memProxy.update(compid, updateMemberVO);
                 LogUtil.getDefaultLogger().info("赠送后积分--->>> " +  ((MemberEntity) memProxy.getId(compid)).getAccupoints());
                 if(r > 0){
