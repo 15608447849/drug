@@ -118,7 +118,7 @@ public class DiscountRuleStore {
                 return "";
             }
 
-            String codeStr = String.valueOf(nextLadoff);
+            String codeStr = String.valueOf(nextLadoff.getOffercode());
             StringBuilder value = new StringBuilder();
             int one = Character.digit(codeStr.charAt(1), 10);
             int two = Character.digit(codeStr.charAt(2), 10);
