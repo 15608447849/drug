@@ -747,17 +747,22 @@ public class OrderOptModule {
 
 //            MathUtil.exactMul(asAppDtVO.getAsnum(),asAppDtVO.getBalamt()).
 //                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue()
-
-            asAppDtVO.setPayamt(MathUtil.exactMul(asAppDtVO.getAsnum(), acprice)
-                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            //商品合计金额
+            asAppDtVO.setPayamt(new BigDecimal(String.valueOf(asAppDtVO.getSpayamt())).divide(new BigDecimal(String.valueOf(asAppDtVO.getPnum()))).
+                    multiply(new BigDecimal(String.valueOf(asAppDtVO.getAsnum()))).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            appContext.logger.print("---------------------->商品合计金额 = " + asAppDtVO.getPayamt());
+//            asAppDtVO.setPayamt(MathUtil.exactMul(asAppDtVO.getAsnum(), acprice)
+//                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
 
 
             double acbalamt = MathUtil.exactDiv(asAppDtVO.getBalamt(),
                     asAppDtVO.getPnum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
-
-
-            asAppDtVO.setRefbal(MathUtil.exactMul(asAppDtVO.getAsnum(), acbalamt).
-                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            //退款余额合计
+            asAppDtVO.setRefbal(new BigDecimal(String.valueOf(asAppDtVO.getBalamt())).divide(new BigDecimal(String.valueOf(asAppDtVO.getPnum()))).
+                    multiply(new BigDecimal(String.valueOf(asAppDtVO.getAsnum()))).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            appContext.logger.print("---------------------->退款余额合计 = " + asAppDtVO.getRefbal());
+//            asAppDtVO.setRefbal(MathUtil.exactMul(asAppDtVO.getAsnum(), acbalamt).
+//                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
             asAppDtVO.setSumRefAmt(asAppDtVO.getRefamt());
             asAppDtVO.setBalamt(acbalamt);
             ProdEntity prodBySku = null;
