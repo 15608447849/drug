@@ -810,8 +810,8 @@ public class BDManageModule {
         String uphone = jsonObject.get("uphone").getAsString();
         String selectSQL = "select distinct u.uphone,u.uid,areac,u.cid,u.belong from {{?"+DSMConst.TB_PROXY_UAREA +"}} area join {{?" +
                 DSMConst.TB_SYSTEM_USER+ "}} u on area.uid = u.uid join {{?"+DSMConst.TB_COMP +"}} comp on comp.cid = u.cid " +
-                " where area.cstatus & 1 = 0 and comp.cstatus & 1 = 0 " +
-                " and u.cstatus & 1 = 0 and u.roleid & ? > 0 and areac = ? ";
+                " where area.cstatus & 1 = 0 and comp.cstatus & 33 = 0 " +
+                " and u.cstatus & 33 = 0 and u.roleid & ? > 0 and areac = ? ";
 
         String updateBd = "update {{?"+DSMConst.TB_COMP+"}} set invitercid = ?,inviter = ? where cid = ? and cstatus & 1 = 0";
 
