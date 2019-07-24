@@ -50,6 +50,8 @@ public class FileInfoModule {
         HashMap<String,Object> map = new HashMap<>();
             map.put("upUrl", fileUploadAddress());//上传url
             map.put("ergodicUrl",fileErgodicAddress());//遍历url
+            map.put("deleteUrl",fileDeleteAddress());//删除文件地址url
+            map.put("ocrUrl",imageOCRAddress());//orc url
             map.put("downPrev",fileDownloadPrev());//下载地址url
             map.put("home",defaultHome());//资源主目录-轮播图等存放
             map.put("notice",defaultNotice());//公告目录

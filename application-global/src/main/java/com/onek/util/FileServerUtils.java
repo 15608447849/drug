@@ -29,13 +29,18 @@ public class FileServerUtils {
         return fsp.fileServerAddress +"/upload";
     }
 
+    //文件遍历
     public static String fileErgodicAddress() {
         return fsp.fileServerAddress +"/ergodic";
     }
 
+    //文件删除
     public static String fileDeleteAddress() {
         return fsp.fileServerAddress +"/delete";
     }
+
+    //ocr
+    public static String imageOCRAddress(){return fsp.fileServerAddress +"/ocr"; };
 
     // 文件下载地址 前缀 ,例如 下载文件 /目录/文件.png -> 下载前缀/目录/文件.png
     public static String fileDownloadPrev(){
@@ -75,8 +80,6 @@ public class FileServerUtils {
         int index = uid % MOD; //取模
         return "/" +index + "/" + uid + "/"+ EncryptUtils.encryption("_user") ;
     }
-
-
 
     //spu - 确定商品分类目录 ,spk - 确定具体商品目录
     public static String goodsFilePath(long spu,long sku){

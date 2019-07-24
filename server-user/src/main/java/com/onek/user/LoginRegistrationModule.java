@@ -69,7 +69,6 @@ public class LoginRegistrationModule {
             }
         }
         return result;
-
     }
 
     /**

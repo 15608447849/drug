@@ -20,6 +20,8 @@ public class LoginBackOp extends LoginAbsOp implements IOperation<AppContext> {
     String account;
     String password;
 
+    int spicRole = 0;
+
     protected LoginBackOp() {
         super(256);
     }
@@ -29,7 +31,7 @@ public class LoginBackOp extends LoginAbsOp implements IOperation<AppContext> {
         try {
             if (!checkAccountPassword(account,password)) return new Result().fail(error);
             //检测用户名/密码是否正确
-            if (!checkSqlAndUserExist(context.remoteIp,account,password,0)) return new Result().fail(error);
+            if (!checkSqlAndUserExist(context.remoteIp,account,password,spicRole)) return new Result().fail(error);
             if (!partnerCheck(account))  return new Result().fail("该账号已被停用或该企业审核未通过！");
             //关联token-用户信息
             if (relationTokenUserSession(context,false)) return new Result().success("登陆成功");
