@@ -83,7 +83,7 @@ public class MainPageModule {
     private static Attr dataSource(long bRuleCodes, boolean isQuery, boolean onlySpecActivity,int pageIndex, int pageNumber,
                                    AppContext context, String jsonStr) {
 
-        LogUtil.getDefaultLogger().info("品牌参数111111111111---------0000000000000000000 " + jsonStr);
+//        LogUtil.getDefaultLogger().info("品牌参数111111111111---------0000000000000000000 " + jsonStr);
         Attr attr = new Attr();
         Page page = new Page();
         page.pageIndex = pageIndex <= 0 ? 1 : pageIndex;
@@ -293,7 +293,7 @@ public class MainPageModule {
 
     private static void getActGoods(Attr attr, Page page, boolean isAnonymous,boolean isSign,
                                     String actCodeStr, String[] otherArr, boolean onlySpecActivity,String[] params) {
-        LogUtil.getDefaultLogger().info("参数111111111111---------0000000000000000000 " + Arrays.toString(params));
+//        LogUtil.getDefaultLogger().info("参数111111111111---------0000000000000000000 " + Arrays.toString(params));
         PageHolder pageHolder = new PageHolder(page);
         List<ProdVO> prodVOList = new ArrayList<>();
         List<Long> skuList = new ArrayList<>();
@@ -302,29 +302,18 @@ public class MainPageModule {
         List<Object[]> queryResult;
         String selectClassSQL ,selectGoodsSQL ,selectAllSQL, sqlBuilder ;
         if (onlySpecActivity) {//只差特殊活动（剔除全局活动）
-            selectClassSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode,brandno from {{?"
-                    + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
-                    + DSMConst.TD_PROD_SKU + "}} s on s.sku LIKE CONCAT( '_', a.gcode, '%' ) left join {{?"
-                    + DSMConst.TD_PROD_SPU +"}} p on s.spu=p.spu where a.cstatus&1=0 and s.cstatus&1=0 and p.cstatus&1=0 "
-                    + " and length( gcode ) < 14 AND gcode > 0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
             selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode,brandno from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
-                    + DSMConst.TD_PROD_SKU + "}} s on s.sku = gcode left join {{?"
+                    + DSMConst.TD_PROD_SKU + "}} s on (s.sku LIKE CONCAT( '_', a.gcode, '%' ) or gcode=sku) left join {{?"
                     + DSMConst.TD_PROD_SPU + "}} p on s.spu=p.spu where a.cstatus&1=0 and s.cstatus&1=0 and p.cstatus&1=0 "
-                    + " and length(gcode) = 14 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
-            selectAllSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode,brandno from {{?"
-                    + DSMConst.TD_PROM_ASSDRUG + "}} a ,{{?"
-                    + DSMConst.TD_PROD_SKU + "}} s, {{?" +   + DSMConst.TD_PROD_SPU +"}} p where a.cstatus&1=0 and s.cstatus&1=0 "
-                    + " and p.cstatus&1=0 and gcode=0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+                    + " and gcode > 0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
             if (!StringUtils.isEmpty(params[2])) {
                 sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno FROM ("
-                        + selectClassSQL + " UNION ALL " + selectGoodsSQL +
-                        " UNION ALL " + selectAllSQL + ") ua WHERE brandno=? and gcode>0 group by sku  " ;
+                         + selectGoodsSQL + ") ua WHERE brandno=? group by sku  " ;
                 queryResult = BASE_DAO.queryNativeC(pageHolder, page, null, sqlBuilder, params[1]);
             } else {
                 sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno FROM ("
-                        + selectClassSQL + " UNION ALL " + selectGoodsSQL +
-                        " UNION ALL " + selectAllSQL + ") ua group by sku HAVING gcode>0 ";
+                        + selectGoodsSQL + ") ua group by sku ";
                 queryResult = BASE_DAO.queryNativeC(pageHolder, page, sqlBuilder);
             }
         } else {
