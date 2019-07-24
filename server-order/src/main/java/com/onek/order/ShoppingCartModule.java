@@ -889,13 +889,8 @@ public class ShoppingCartModule {
                                 JSON.toJSONString(activity));
                         
                         if (pList.size() == 1) {
-                            if (!StringUtils.isEmpty(activity.getCurrentLadoffDesc())) {
-                                shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
-                            }
-
-                            if (!StringUtils.isEmpty(activity.getNextLadoffDesc())) {
-                                shoppingCartVO.addNextLadDesc(brule, activity.getNextLadoffDesc());
-                            }
+                            shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
+                            shoppingCartVO.addNextLadDesc(brule, activity.getNextLadoffDesc());
                         }
 
                         DiscountRule discountRule = new DiscountRule();
