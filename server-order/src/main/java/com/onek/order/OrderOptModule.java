@@ -233,12 +233,16 @@ public class OrderOptModule {
             //向售后表插入申请数据
             int invoType = asAppVOS.get(0).getInvoicetype();
 
+            if (!MathUtil.isBetween(1, invoType, 3)) {
+                return new Result().fail("未选择发票类型！");
+            }
+
             String asOrderId = GenIdUtil.getAsOrderId();
             Object[] pramsObj = new Object[]{asAppVOS.get(0).getOrderno(), asAppVOS.get(0).getPdno(), asOrderId,
                     asAppVOS.get(0).getCompid(), asAppVOS.get(0).getAstype(), asAppVOS.get(0).getGstatus(), asAppVOS.get(0).getReason(),
                     asAppVOS.get(0).getCkstatus(), asAppVOS.get(0).getCkdesc(), asAppVOS.get(0).getInvoice(),
                     invoType == 1 ? 0 : 1, asAppVOS.get(0).getApdesc(),
-                    asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum(), asAppVOS.get(0).getInvoicetype()};
+                    asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum(), invoType};
 
             int res = baseDao.updateNativeSharding(0, localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
 
