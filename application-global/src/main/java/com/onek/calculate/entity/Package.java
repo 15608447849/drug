@@ -3,7 +3,9 @@ package com.onek.calculate.entity;
 import com.onek.calculate.service.AccurateMath;
 import com.onek.calculate.util.DiscountUtil;
 import org.apache.poi.ss.formula.functions.T;
+import util.MathUtil;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Consumer;
@@ -16,6 +18,20 @@ public class Package extends AccurateMath implements IProduct {
     private double discounted;
     private List<Product> productList = new ArrayList<>();
     private int expireFlag = -2;  // -2：套餐被过滤； -1：无此套餐； 0：正常
+
+    public int singleProdsCount() {
+        if (this.nums == 0) {
+            return 0;
+        }
+
+        int result = 0;
+
+        for (Product product : productList) {
+            result += product.getNums();
+        }
+
+        return MathUtil.exactDiv(result, this.nums).intValue();
+    }
 
     public long getPackageId() {
         return packageId;
