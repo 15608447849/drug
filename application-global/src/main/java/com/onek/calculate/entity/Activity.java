@@ -32,6 +32,7 @@ public class Activity extends AccurateMath implements IDiscount {
     private double actPrice;
     private int assCstatus;
     private long activityGcode;
+    private int pkgprodnum;
 
     private double discounted;
     private List<IProduct> productList;
@@ -49,6 +50,10 @@ public class Activity extends AccurateMath implements IDiscount {
 
     public Activity() {
         this.productList = new ArrayList<>();
+    }
+
+    public int getPkgprodnum() {
+        return pkgprodnum;
     }
 
     @JSONField(serialize = false)
@@ -94,6 +99,9 @@ public class Activity extends AccurateMath implements IDiscount {
         this.discounted = totalDiscounted;
     }
 
+    public long getActivityGcode() {
+        return activityGcode;
+    }
 
     @Override
     public double getDiscounted() {

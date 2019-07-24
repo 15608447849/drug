@@ -16,6 +16,7 @@ public class DiscountResult {
     private double couponValue;
     private List<Gift> giftList; // 总赠品
     private List<IDiscount> activityList; // 活动列表
+    private boolean pkgExpired;
 
     public DiscountResult(List<IDiscount> activityList,
                           double couponValue,
@@ -26,6 +27,15 @@ public class DiscountResult {
         this.totalNums = prodsNum(products);
         this.totalCurrentPrice = prodsCurrentTotal(products);
         this.giftList = new ArrayList<>();
+
+        for (IProduct product : products) {
+            if (product instanceof Package) {
+                if (((Package) product).getExpireFlag() < 0) {
+                    pkgExpired = true;
+                    break;
+                }
+            }
+        }
 
         for (IDiscount discount : activityList) {
             this.freeShipping = this.freeShipping || discount.getFreeShipping() ;
@@ -95,4 +105,7 @@ public class DiscountResult {
         return giftList;
     }
 
+    public boolean isPkgExpired() {
+        return pkgExpired;
+    }
 }

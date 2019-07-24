@@ -1,14 +1,13 @@
 package com.onek.calculate.service.filter;
 
-import com.onek.calculate.entity.Product;
-import com.onek.calculate.filter.ActivitiesFilter;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.IProduct;
-import com.onek.util.prod.ProdEntity;
-import com.onek.util.prod.ProdInfoStore;
+import com.onek.calculate.entity.Package;
+import com.onek.calculate.entity.Product;
+import com.onek.calculate.filter.ActivitiesFilter;
 import util.MathUtil;
-import util.StringUtils;
 
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,7 +41,6 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
             }
 
             temp = getCurrentDiscounts(product);
-
             doFilter(temp, product);
 
             for (IDiscount activity : temp) {
@@ -67,21 +65,41 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
                     p.autoSetCurrentPrice(activity.getActionPrice(p.getSKU()), p.getNums());
                 }
 
+                if (activity.getBRule() == 1114 && product instanceof Package) {
+                    Package p = (Package) product;
+
+                    activity.setDiscounted(MathUtil.exactSub(
+                            p.getOriginalPrice() * p.getNums(),
+                            activity.getActionPrice(p.getSKU())
+                                    * p.getNums()).setScale(2, RoundingMode.HALF_UP).doubleValue());
+
+                    p.setCurrentPrice(activity.getActionPrice(p.getSKU()) * p.getNums());
+
+                    //                    p.addDiscounted(
+                    //                            MathUtil.exactSub(
+                    //                                    p.getOriginalPrice() * p.getNums(),
+                    //                                    p.getCurrentPrice()).setScale(2, RoundingMode.HALF_UP).doubleValue());
+
+                    p.setExpireFlag(0);
+                }
+
             }
+
         }
 
         return result;
     }
 
     private final int checkSKU(long sku) {
-        int length = String.valueOf(sku).length();
-
-        switch (length) {
-            case 14 :
-                return 0;
-            default :
-                return -1;
-        }
+        return sku == 0 ? -1 : 0;
+//        int length = String.valueOf(sku).length();
+//
+//        switch (length) {
+//            case 14 :
+//                return 0;
+//            default :
+//                return -1;
+//        }
     }
 
     protected final String[] getProductCode(long sku) {
