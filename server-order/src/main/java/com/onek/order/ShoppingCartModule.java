@@ -1007,7 +1007,7 @@ public class ShoppingCartModule {
     }
 
 
-    private static List<IDiscount> getActivityList(int compid, List<Product> products){
+    private static List<IDiscount> getActivityList(int compid, List<Product> products) {
         List<IDiscount> activityList =
                 new ActivityFilterService(
                         new ActivitiesFilter[] {
