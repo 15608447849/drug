@@ -80,7 +80,7 @@ public class MainPageModule {
     /**
      * 通过活动码 获取 活动属性 及 商品信息
      **/
-    private static Attr dataSource(long bRuleCodes, boolean isQuery, boolean onlyActivity,int pageIndex, int pageNumber,
+    private static Attr dataSource(long bRuleCodes, boolean isQuery, boolean onlySpecActivity,int pageIndex, int pageNumber,
                                    AppContext context, String jsonStr) {
         Attr attr = new Attr();
         Page page = new Page();
@@ -95,7 +95,7 @@ public class MainPageModule {
             manuName = (json.has("manuname") ? json.get("manuname").getAsString() : "").trim();
         }
         try {
-            if (bRuleCodes < 0 && bRuleCodes >= -10) {
+            if (bRuleCodes < 0 && bRuleCodes >= -10 && !onlySpecActivity) {
                 //非活动专区
                 if (isQuery) {
                     List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), context.isSignControlAgree(),
@@ -109,31 +109,42 @@ public class MainPageModule {
                     }
                 }
             } else {
-                //活动专区
-                String ruleCodeStr;
-                String SQL = SELECT_ACT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0 ";
-                if (bRuleCodes == -11) {//新人专享
-                    SQL = SQL + " ) and qualcode = 1 and qualvalue = 0";
-                } else {
-                    ruleCodeStr = getCodeStr(bRuleCodes);
-                    if (ruleCodeStr == null) return null;
-                    SQL = SQL + " and rulecode in(" + ruleCodeStr + ")) ";
-                }
-                String mmdd = TimeUtils.date_Md_2String(new Date());
-                List<Object[]> queryResult = BASE_DAO.queryNative(SQL, mmdd);
-                if (queryResult == null || queryResult.isEmpty()) return null;
-                if (isQuery) {
-                    combatActData(attr,queryResult,context, page, compId, keyword);
-                }
+                getActProds(bRuleCodes, isQuery, attr, context, page, compId,
+                        onlySpecActivity, new String[]{keyword, brandno, manuName});
             }
         } catch (Exception e) {
+            e.printStackTrace();
             LogUtil.getDefaultLogger().error(e);
             attr = null;
         }
-        if (onlyActivity && attr!=null && attr.list!=null && attr.list.size() > 0){
-            attr.list.removeIf(prodVO -> prodVO.getRulestatus() <= 0);
-        }
+//        if (onlyActivity && attr!=null && attr.list!=null && attr.list.size() > 0){
+//            attr.list.removeIf(prodVO -> prodVO.getRulestatus() <= 0);
+//        }
         return attr;
+    }
+
+    private static void getActProds(long bRuleCodes, boolean isQuery, Attr attr, AppContext context,
+                                    Page page, int compId, boolean onlySpecActivity, String[] params) {
+        //活动专区
+        String ruleCodeStr;
+        String SQL = SELECT_ACT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0 ";
+        if (bRuleCodes == -11) {//新人专享
+            SQL = SQL + " ) and qualcode = 1 and qualvalue = 0";
+        } else {
+            if (bRuleCodes != -4) {
+                ruleCodeStr = getCodeStr(bRuleCodes);
+                if (ruleCodeStr == null) return;
+                SQL = SQL + " and rulecode in(" + ruleCodeStr + ")) ";
+            } else {
+                SQL = SQL + ")";
+            }
+        }
+        String mmdd = TimeUtils.date_Md_2String(new Date());
+        List<Object[]> queryResult = BASE_DAO.queryNative(SQL, mmdd);
+        if (queryResult == null || queryResult.isEmpty()) return ;
+        if (isQuery) {
+            combatActData(attr,queryResult,context, page, compId, onlySpecActivity, params);
+        }
     }
 
     /* *
@@ -180,7 +191,7 @@ public class MainPageModule {
      * @version 1.1.1
      **/
     private static void combatActData(Attr attr, List<Object[]> queryResult,
-                                      AppContext context,Page page, int compId, String keyword){
+                                      AppContext context,Page page, int compId, boolean onlySpecActivity,String[] params){
         String actCodeStr;
         StringBuilder actCodeSB = new StringBuilder();
         String[] otherArr = {String.valueOf(queryResult.get(0)[1]), "0", compId + ""};
@@ -214,11 +225,9 @@ public class MainPageModule {
         if (actCodeSB.toString().contains(",")) {
             actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
             //获取活动下的商品
-            getActGoods(attr, page, context.isAnonymous(), context.isSignControlAgree(),actCodeStr, otherArr, keyword);
+            getActGoods(attr, page, context.isAnonymous(), context.isSignControlAgree(),actCodeStr,
+                    otherArr, onlySpecActivity, params);
         }
-//        if (isQuery) {
-//
-//        }
     }
 
 
@@ -281,26 +290,29 @@ public class MainPageModule {
 
 
     private static void getActGoods(Attr attr, Page page, boolean isAnonymous,boolean isSign,
-                                    String actCodeStr, String[] otherArr, String keyword) {
+                                    String actCodeStr, String[] otherArr, boolean onlySpecActivity,String[] params) {
         PageHolder pageHolder = new PageHolder(page);
         List<ProdVO> prodVOList = new ArrayList<>();
         List<Long> skuList = new ArrayList<>();
         Map<Long, String[]> dataMap = new HashMap<>();
-        String selectClassSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode from {{?"
+        String selectClassSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
                 + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                 + DSMConst.TD_PROD_SKU + "}} s on s.sku LIKE CONCAT( '_', a.gcode, '%' ) where a.cstatus&1=0 "
                 + " and length( gcode ) < 14 AND gcode > 0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
-        String selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode from {{?"
+        String selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
                 + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                 + DSMConst.TD_PROD_SKU + "}} s on s.sku = gcode where a.cstatus&1=0 "
                 + " and length(gcode) = 14 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
-        String selectAllSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode from {{?"
+        String selectAllSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
                 + DSMConst.TD_PROM_ASSDRUG + "}} a ,{{?"
                 + DSMConst.TD_PROD_SKU + "}} s where a.cstatus&1=0 "
                 + " and gcode=0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
-        String sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode FROM ("
+        String sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode FROM ("
                 + selectClassSQL + " UNION ALL " + selectGoodsSQL +
                 " UNION ALL " + selectAllSQL + ") ua group by sku";
+        if (onlySpecActivity) {//只差特殊活动（剔除全局活动）
+            sqlBuilder = sqlBuilder + " HAVING gcode>0 ";
+        }
         List<Object[]> queryResult = BASE_DAO.queryNativeC(pageHolder, page, sqlBuilder);
         if (queryResult == null || queryResult.isEmpty()) {
             return;
@@ -312,7 +324,18 @@ public class MainPageModule {
                             String.valueOf(qResult[3]), String.valueOf(qResult[4]), String.valueOf(qResult[5])});
         });
         //ES数据组装
-        SearchResponse response = ProdESUtil.searchProdBySpuList(skuList, keyword, 1, 100);
+        SearchResponse response;
+        if (onlySpecActivity) {
+            if (!StringUtils.isEmpty(params[2])) {
+                response = ProdESUtil.searchProdHasBrand(skuList, params[0], params[1], params[2], 1, 100);
+            } else {
+                attr.actObj = selectAllBarnd(skuList);
+                return;
+            }
+
+        } else {
+            response = ProdESUtil.searchProdBySpuList(skuList, params[0], 1, 100);
+        }
         if (response != null && response.getHits().totalHits > 0) {
             assembleData(isAnonymous, isSign, response, prodVOList, dataMap, otherArr);
             page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
@@ -505,10 +528,10 @@ public class MainPageModule {
             if (!StringUtils.isEmpty(manuName)){
 //                LogUtil.getDefaultLogger().info("品牌-厂家-查询关键字: "+manuName );
                 //厂家码
-                response = ProdESUtil.searchProdHasBrand(keyword, brandno, manuName, page.pageIndex, page.pageSize);
+                response = ProdESUtil.searchProdHasBrand(null, keyword, brandno, manuName, page.pageIndex, page.pageSize);
 
             }else{
-                attr.actObj = selectAllBarnd();
+                attr.actObj = selectAllBarnd(null);
             }
 
         } else if (state == -5) { //热销
@@ -551,10 +574,10 @@ public class MainPageModule {
         }
     }
 
-    public static List<BarndManu> selectAllBarnd() {
+    public static List<BarndManu> selectAllBarnd(List<Long> skuList) {
 
         List<BarndManu> brandMaNuList = new ArrayList<>();
-        SearchResponse response = ProdESUtil.searchProdGroupByBrand("", "", "");
+        SearchResponse response = ProdESUtil.searchProdGroupByBrand(skuList,"", "", "");
         if (response != null && response.getHits().totalHits > 0) {
             Terms agg = response.getAggregations().get("agg");
             for (Terms.Bucket bucket : agg.getBuckets()) {

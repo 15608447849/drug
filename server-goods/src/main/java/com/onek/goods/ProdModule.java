@@ -255,7 +255,7 @@ public class ProdModule {
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         String brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
 
-        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, brandno, "",pageIndex, pageSize);
+        SearchResponse response = ProdESUtil.searchProdHasBrand(null,keyword, brandno, "",pageIndex, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         assembleData(appContext, response, prodList);
 
@@ -526,7 +526,7 @@ public class ProdModule {
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         String brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
 
-        SearchResponse response = ProdESUtil.searchProdHasBrand(keyword, brandno, ""
+        SearchResponse response = ProdESUtil.searchProdHasBrand(null, keyword, brandno, ""
                 ,pageIndex, pageSize);
         List<ProdVO> prodList = new ArrayList<>();
         assembleData(appContext, response, prodList);

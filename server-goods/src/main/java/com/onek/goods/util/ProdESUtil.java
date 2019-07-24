@@ -493,13 +493,18 @@ public class ProdESUtil {
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdHasBrand(String keyword,String brandno, String manuName, int pagenum, int pagesize){
+    public static SearchResponse searchProdHasBrand(List<Long> skuList, String keyword,String brandno,
+                                                    String manuName, int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_BRANDNO);
             rangeQuery.gt(0);
             boolQuery.must(rangeQuery);
+            if(skuList != null && skuList.size() > 0){
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuList);
+                boolQuery.must(builder);
+            }
             if(!StringUtils.isEmpty(keyword)){
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
@@ -724,11 +729,15 @@ public class ProdESUtil {
         return str;
     }
 
-    public static SearchResponse searchProdGroupByBrand(String keyword,String brandName, String maNuName) {
+    public static SearchResponse searchProdGroupByBrand(List<Long> skuList, String keyword,String brandName, String maNuName) {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
             MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
             boolQuery.must(matchQuery);
+        }
+        if(skuList != null && skuList.size() > 0){
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuList);
+            boolQuery.must(builder);
         }
         if (!StringUtils.isEmpty(brandName)) {
             TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_BRANDNAME, brandName);
