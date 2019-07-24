@@ -433,7 +433,6 @@ public class TranOrderOptModule {
                         int ruleCode = DiscountRuleStore.getRuleByBRule((int) iDiscount.getBRule());
                         System.out.println("434 line : ############## "+ iDiscount.getBRule() + ";" + ruleCode);
                         tranOrderGoods.setPromtype(ruleCode | finalTranOrderGood.getPromtype());
-                        break;
                     }
                 }
             }
@@ -456,6 +455,7 @@ public class TranOrderOptModule {
 //            }
         }
     }
+
 
     /**
      * @return boolean
