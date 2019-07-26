@@ -966,18 +966,27 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
         int spu = json.has("spu") ? json.get("spu").getAsInt() : 0;
+        String brandName = (json.has("brandname") ? json.get("brandname").getAsString() : "").trim();//品牌名
+        String maNuName = (json.has("manuname") ? json.get("manuname").getAsString() : "").trim();//厂家名
+/*        String spec = (json.has("spec") ? json.get("spec").getAsString() : "").trim();//规格名
         if (StringUtils.isEmpty(keyword) && spu <= 0) {
             return new Result().success(null);
-        }
-        List<String> specList = ProdESUtil.getConditions(keyword, spu, "spec");
-        List<String> manunameList = ProdESUtil.getConditions(keyword, spu, "manuname");
-        List<String> brandnameList = ProdESUtil.getConditions(keyword, spu, "brandname");
+        }*/
         Map<String, List<String>> map = new HashMap<>();
+        if (StringUtils.isEmpty(brandName)) {
+            List<String> brandList = ProdESUtil.getConditions(keyword, spu, "brandname", brandName, maNuName);
+            map.put("brandnameList", brandList);
+        }
+        if (StringUtils.isEmpty(maNuName)) {
+            List<String> maNuList = ProdESUtil.getConditions(keyword, spu, "manuname", brandName,maNuName);
+            map.put("manunameList", maNuList);
+        }
+        List<String> specList = ProdESUtil.getConditions(keyword, spu, "spec", brandName, maNuName);
         map.put("specList", specList);
-        map.put("manunameList", manunameList);
-        map.put("brandnameList", brandnameList);
         return new Result().success(map);
     }
+
+
 
     /**
      * @接口摘要 商城全文搜索商品

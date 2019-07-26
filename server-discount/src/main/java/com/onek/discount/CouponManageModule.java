@@ -136,7 +136,7 @@ public class CouponManageModule {
     /**
      * 查询优惠券详情
      */
-    private final String QUERY_COUPON_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
+    public static final String QUERY_COUPON_SQL = "select unqid,coupname,glbno,qlfno,qlfval,coupdesc,periodtype," +
             "periodday,DATE_FORMAT(startdate,'%Y-%m-%d') startdate,DATE_FORMAT(enddate,'%Y-%m-%d') enddate," +
             "cop.brulecode,validday,validflag,rulename,actstock, cop.cstatus,cop.ckstatus from {{?"+ DSMConst.TD_PROM_COUPON +"}}  cop left join " +
             "  {{?"+ DSMConst.TD_PROM_RULE +"}} ru on cop.brulecode = ru.brulecode  where cop.cstatus&1=0 and unqid = ? ";
@@ -178,7 +178,7 @@ public class CouponManageModule {
 
 
 
-    private final String QUERY_PROM_TIME_SQL = "select unqid,sdate,edate from {{?" + DSMConst.TD_PROM_TIME+"}} where actcode = ? and cstatus&1=0";
+    private static final String QUERY_PROM_TIME_SQL = "select unqid,sdate,edate from {{?" + DSMConst.TD_PROM_TIME+"}} where actcode = ? and cstatus&1=0";
 
     private final String QUERY_PROM_RULE_SQL = "select rulecode,rulename from {{?" + DSMConst.TD_PROM_RULE+"}} where cstatus&1=0 ";
 
@@ -449,26 +449,6 @@ public class CouponManageModule {
             return result.fail("新增失败");
         }
 
-        if((couponVO.getCstatus() & 512 )== 0){
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            try {
-                long startTime = dateFormat.parse(couponVO.getStartdate() +
-                        " " + couponVO.getTimeVOS().get(0).getSdate()).getTime();
-                if (startTime > new Date().getTime()) {
-                    ExecutorService executors = Executors.newSingleThreadExecutor();
-                    executors.execute(() -> {
-                            IceRemoteUtil.sendMessageToAllClient(SmsTempNo.NEW_COUPONS,
-                                "", "【" +couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
-                                        " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                            SmsUtil.sendMsgToAllBySystemTemp(SmsTempNo.NEW_COUPONS,"", "【" +couponVO.getCoupname() + "】将于" + couponVO.getStartdate() +
-                                    " " + couponVO.getTimeVOS().get(0).getSdate() + "开始进行");
-                        }
-                    );
-                }
-            } catch (ParseException e) {
-                e.printStackTrace();
-            }
-        }
         return result.success("新增成功");
     }
 
@@ -593,7 +573,7 @@ public class CouponManageModule {
      * @param actcode
      * @return
      */
-    private List<TimeVO> getTimeVOS(long actcode){
+    public static List<TimeVO> getTimeVOS(long actcode){
         List<Object[]> result = baseDao.queryNative(QUERY_PROM_TIME_SQL,
                 new Object[]{actcode});
 

@@ -593,7 +593,7 @@ public class ProdESUtil {
         return response;
     }
 
-    public static List<String> getConditions(String keyword,int spu,String column){
+    public static List<String> getConditions(String keyword,int spu,String column, String brandName, String maNuName){
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
@@ -620,6 +620,16 @@ public class ProdESUtil {
                     .should(rangeQuery1);
             boolQuery.must(postFilterBool);
         }
+
+        if (!StringUtils.isEmpty(brandName)) {//品牌
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_BRANDNAME, brandName);
+            boolQuery.must(builder);
+        }
+        if (!StringUtils.isEmpty(maNuName)) {//规格
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNAME, maNuName);
+            boolQuery.must(builder);
+        }
+
         MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
         boolQuery.must(builder);
 
@@ -763,6 +773,19 @@ public class ProdESUtil {
         return requestBuilder.addAggregation(aggregationBuilder).setExplain(true).execute().actionGet();
     }
 
+
+    private static List<String> searchProdGroup(String col, BoolQueryBuilder boolQuery) {
+        TransportClient client = ElasticSearchClientFactory.getClientInstance();
+        SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX).setQuery(boolQuery);
+        AggregationBuilder aggregationBuilder = AggregationBuilders.terms("agg").field(col).size(Integer.MAX_VALUE);
+        SearchResponse searchResponse = requestBuilder.addAggregation(aggregationBuilder).setExplain(true).execute().actionGet();
+        Terms agg = searchResponse.getAggregations().get("agg");
+        List<String> str = new ArrayList<>();
+        for (Terms.Bucket bucket : agg.getBuckets()) {
+            str.add(bucket.getKey().toString());
+        }
+        return str;
+    }
 
     public static void main(String[] args) {
         String s = "10";
