@@ -689,10 +689,14 @@ public class BackgroundProdModule {
                         param = "%" + param + "%";
                         break;
                     case 8:
-                        sql.append(" AND sku.store >= ? ");
+                        sql.append(" AND "
+                                + " IF(sku.store > sku.freezestore, "
+                                + " sku.store - sku.freezestore, 0 ) >= ? ");
                         break;
                     case 9:
-                        sql.append(" AND sku.store <= ? ");
+                        sql.append(" AND "
+                                + " IF(sku.store > sku.freezestore, "
+                                + " sku.store - sku.freezestore, 0 ) <= ? ");
                         break;
 
                 }
@@ -1188,14 +1192,17 @@ public class BackgroundProdModule {
             return new Result().fail("该商品不存在！");
         }
 
+        int s = 0;
         if (store < freezeStore) {
             bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
+            bgProd.setStore(store);
         } else {
             bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
             bgProd.setStore(store);
+            s = store - freezeStore;
         }
 
-        RedisStockUtil.setStock(bgProd.getSku(), store);
+        RedisStockUtil.setStock(bgProd.getSku(), s);
 
         String updateSQL = " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
                 + " SET store = ?, cstatus = ? "
@@ -1259,14 +1266,17 @@ public class BackgroundProdModule {
             return new Result().fail("该商品不存在！");
         }
 
+        int s = 0;
         if (store < freezeStore) {
             bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
+            bgProd.setStore(store);
         } else {
             bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
             bgProd.setStore(store);
+            s = store - freezeStore;
         }
 
-        RedisStockUtil.setStock(bgProd.getSku(), store);
+        RedisStockUtil.setStock(bgProd.getSku(), s);
 
         String updateSQL = " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} "
                 + " SET store = ?, cstatus = ?, "
@@ -1300,6 +1310,12 @@ public class BackgroundProdModule {
 
         if (StringUtils.isEmpty(erpcode)) {
             return new Result().fail("非法唯一码！");
+        }
+
+        int store = erpProd.getIntValue("store");
+
+        if (store < 0) {
+            return new Result().fail("非法库存！");
         }
 
         BgProdVO bgProd = getProdByERPCode(erpcode);
@@ -1372,11 +1388,14 @@ public class BackgroundProdModule {
                 bgProd.setProdedate(erpProd.getString("prodedate"));
                 setVaildDate(bgProd);
 
-                if (erpProd.getIntValue("store") < freezeStore) {
+                int s = 0;
+                if (store < freezeStore) {
                     bgProd.setSkuCstatus(bgProd.getSkuCstatus() | 4096);
+                    bgProd.setStore(store);
                 } else {
                     bgProd.setSkuCstatus(bgProd.getSkuCstatus() & ~4096);
-                    bgProd.setStore(erpProd.getIntValue("store"));
+                    bgProd.setStore(store);
+                    s = store - freezeStore;
                 }
 
                 int esResult = ProdESUtil.updateProdDocument(bgProd);
@@ -1385,7 +1404,7 @@ public class BackgroundProdModule {
                     return new Result().fail("操作失败");
                 }
 
-                RedisStockUtil.setStock(bgProd.getSku(), bgProd.getStore());
+                RedisStockUtil.setStock(bgProd.getSku(), s);
 
                 String updateSql =
                         " UPDATE {{?" + DSMConst.TD_PROD_SKU + "}} sku, "
@@ -1424,7 +1443,7 @@ public class BackgroundProdModule {
             return -1;
         }
 
-        return Integer.parseInt(queryResult.get(0)[0].toString());
+        return Math.max(Integer.parseInt(queryResult.get(0)[0].toString()), 0);
     }
 
     private void setVaildDate(BgProdVO bgProdVO) {
