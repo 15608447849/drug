@@ -688,6 +688,12 @@ public class BackgroundProdModule {
                         sql.append(" AND spu.popname LIKE ? ");
                         param = "%" + param + "%";
                         break;
+                    case 8:
+                        sql.append(" AND sku.store >= ? ");
+                        break;
+                    case 9:
+                        sql.append(" AND sku.store <= ? ");
+                        break;
 
                 }
             } catch (Exception e) {
