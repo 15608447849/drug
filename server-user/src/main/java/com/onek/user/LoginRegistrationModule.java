@@ -247,11 +247,9 @@ public class LoginRegistrationModule {
      *      int compId;//企业ID
      *      int belong;//所属ID
      *      StoreBasicInfo comp; //公司信息
-     *
      */
     public Result getUserSession(AppContext appContext){
-        UserSession userSession = appContext.getUserSession().cloneBackUserInfo();
-        return new Result().success(userSession);
+        return new Result().success(appContext.getUserSession().cloneBackUserInfo());
     }
 
     /**

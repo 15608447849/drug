@@ -37,6 +37,8 @@ public class UpdateStoreOp implements IOperation<AppContext> {
 
         if (session == null || session.userId < 0) return new Result().fail("用户信息异常");
 
+        if (StringUtils.isEmpty(addressCode) || addressCode.equals("0") ) return new Result().fail("请选择区域");
+
        if (StringUtils.isEmpty(storeName,address))  return new Result().fail("门店或地址未填写");
 
         //根据企业营业执照地址查询是否存在相同已认证的企业
