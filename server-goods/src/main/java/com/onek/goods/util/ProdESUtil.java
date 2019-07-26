@@ -493,13 +493,18 @@ public class ProdESUtil {
      * @param pagesize
      * @return
      */
-    public static SearchResponse searchProdHasBrand(String keyword,String brandno, String manuName, int pagenum, int pagesize){
+    public static SearchResponse searchProdHasBrand(List<Long> skuList, String keyword,String brandno,
+                                                    String manuName, int pagenum, int pagesize){
         SearchResponse response = null;
         try {
             BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
             RangeQueryBuilder rangeQuery = QueryBuilders.rangeQuery(ESConstant.PROD_COLUMN_BRANDNO);
             rangeQuery.gt(0);
             boolQuery.must(rangeQuery);
+            if(skuList != null && skuList.size() > 0){
+                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuList);
+                boolQuery.must(builder);
+            }
             if(!StringUtils.isEmpty(keyword)){
                 MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
                 boolQuery.must(matchQuery);
@@ -588,7 +593,7 @@ public class ProdESUtil {
         return response;
     }
 
-    public static List<String> getConditions(String keyword,int spu,String column){
+    public static List<String> getConditions(String keyword,int spu,String column, String brandName, String maNuName){
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
@@ -615,6 +620,16 @@ public class ProdESUtil {
                     .should(rangeQuery1);
             boolQuery.must(postFilterBool);
         }
+
+        if (!StringUtils.isEmpty(brandName)) {//品牌
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_BRANDNAME, brandName);
+            boolQuery.must(builder);
+        }
+        if (!StringUtils.isEmpty(maNuName)) {//规格
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNAME, maNuName);
+            boolQuery.must(builder);
+        }
+
         MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
         boolQuery.must(builder);
 
@@ -724,11 +739,15 @@ public class ProdESUtil {
         return str;
     }
 
-    public static SearchResponse searchProdGroupByBrand(String keyword,String brandName, String maNuName) {
+    public static SearchResponse searchProdGroupByBrand(List<Long> skuList, String keyword,String brandName, String maNuName) {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
             MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
             boolQuery.must(matchQuery);
+        }
+        if(skuList != null && skuList.size() > 0){
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuList);
+            boolQuery.must(builder);
         }
         if (!StringUtils.isEmpty(brandName)) {
             TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_BRANDNAME, brandName);
@@ -754,6 +773,19 @@ public class ProdESUtil {
         return requestBuilder.addAggregation(aggregationBuilder).setExplain(true).execute().actionGet();
     }
 
+
+    private static List<String> searchProdGroup(String col, BoolQueryBuilder boolQuery) {
+        TransportClient client = ElasticSearchClientFactory.getClientInstance();
+        SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX).setQuery(boolQuery);
+        AggregationBuilder aggregationBuilder = AggregationBuilders.terms("agg").field(col).size(Integer.MAX_VALUE);
+        SearchResponse searchResponse = requestBuilder.addAggregation(aggregationBuilder).setExplain(true).execute().actionGet();
+        Terms agg = searchResponse.getAggregations().get("agg");
+        List<String> str = new ArrayList<>();
+        for (Terms.Bucket bucket : agg.getBuckets()) {
+            str.add(bucket.getKey().toString());
+        }
+        return str;
+    }
 
     public static void main(String[] args) {
         String s = "10";

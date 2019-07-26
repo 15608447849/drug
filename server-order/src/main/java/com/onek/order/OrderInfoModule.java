@@ -4,7 +4,6 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
-import com.google.gson.JsonParser;
 import com.onek.calculate.entity.Gift;
 import com.onek.context.AppContext;
 import com.onek.entity.*;
@@ -17,12 +16,10 @@ import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
-import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.*;
 import util.http.HttpRequestUtil;
 
-import java.io.IOException;
 import java.util.*;
 
 public class OrderInfoModule {
@@ -648,6 +645,8 @@ public class OrderInfoModule {
                 return StringUtils.isEmpty(path)
                         ? new Result().fail("暂未上传药检报告")
                         : new Result().success(path);
+            } else {
+                return new Result().fail("暂未上传药检报告");
             }
         }
 
@@ -668,7 +667,7 @@ public class OrderInfoModule {
             result = HttpRequestUtil.postJson(url, appContext.param.json);
         } catch (Exception e) {
             e.printStackTrace();
-            return new Result().fail("获取失败");
+            return new Result().fail("接口调用失败");
         }
 
         if (result != null && !result.isEmpty()) {
@@ -680,6 +679,8 @@ public class OrderInfoModule {
                 return StringUtils.isEmpty(path)
                         ? new Result().fail("暂未上传发票信息")
                         : new Result().success(path);
+            } else {
+                return new Result().fail("暂未上传发票信息");
             }
         }
 

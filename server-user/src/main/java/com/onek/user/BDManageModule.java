@@ -838,8 +838,8 @@ public class BDManageModule {
             if(queryBdRet == null || queryBdRet.isEmpty()){
                 sqlList.add(updateBd);
                 sqlList.add(updateBdm);
-                parm.add(new Object[]{queryBdRet.get(0)[3],queryBdRet.get(0)[1],compid});
-                parm.add(new Object[]{queryBdRet.get(0)[1],uphone});
+                parm.add(new Object[]{queryBdmRet.get(0)[3],queryBdmRet.get(0)[1],compid});
+                parm.add(new Object[]{queryBdmRet.get(0)[1],uphone});
             }else{
                 sqlList.add(updateBdm);
                 parm.add(new Object[]{queryBdmRet.get(0)[1],uphone});

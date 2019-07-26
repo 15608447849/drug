@@ -412,7 +412,7 @@ public class TranOrderOptModule {
         tranOrder.setDistamt((discountResult.getTotalDiscount() * 100));
 
         List<IDiscount> iDiscountList = discountResult.getActivityList();
-
+        System.out.println("415 line : +++++ " +JSONObject.toJSONString(iDiscountList));
         for (IDiscount iDiscount : iDiscountList) {
             for (int i = 0; i < iDiscount.getProductList().size(); i++) {
 //                if (iDiscount.getLimits(iDiscount.getProductList().get(i).getSKU())
@@ -431,8 +431,8 @@ public class TranOrderOptModule {
                 for (TranOrderGoods finalTranOrderGood : finalTranOrderGoods) {
                     if (finalTranOrderGood.getPdno() == iDiscount.getProductList().get(i).getSKU()) {
                         int ruleCode = DiscountRuleStore.getRuleByBRule((int) iDiscount.getBRule());
+                        System.out.println("434 line : ############## "+ iDiscount.getBRule() + ";" + ruleCode);
                         tranOrderGoods.setPromtype(ruleCode | finalTranOrderGood.getPromtype());
-                        break;
                     }
                 }
             }
@@ -455,6 +455,7 @@ public class TranOrderOptModule {
 //            }
         }
     }
+
 
     /**
      * @return boolean

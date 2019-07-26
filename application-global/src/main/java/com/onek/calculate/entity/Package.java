@@ -2,9 +2,13 @@ package com.onek.calculate.entity;
 
 import com.onek.calculate.service.AccurateMath;
 import com.onek.calculate.util.DiscountUtil;
+import org.apache.poi.ss.formula.functions.T;
+import util.MathUtil;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class Package extends AccurateMath implements IProduct {
     private long packageId;
@@ -14,6 +18,20 @@ public class Package extends AccurateMath implements IProduct {
     private double discounted;
     private List<Product> productList = new ArrayList<>();
     private int expireFlag = -2;  // -2：套餐被过滤； -1：无此套餐； 0：正常
+
+    public int singleProdsCount() {
+        if (this.nums == 0) {
+            return 0;
+        }
+
+        int result = 0;
+
+        for (Product product : productList) {
+            result += product.getNums();
+        }
+
+        return MathUtil.exactDiv(result, this.nums).intValue();
+    }
 
     public long getPackageId() {
         return packageId;
@@ -64,25 +82,20 @@ public class Package extends AccurateMath implements IProduct {
     }
 
     public void addDiscounted(double discounted) {
-        double d = Math.min(add(this.discounted, discounted), mul(this.originalPrice, this.nums));
+//        double d = Math.min(add(this.discounted, discounted), mul(this.originalPrice, this.nums));
 
-        double[] prices = new double[this.productList.size()];
-
-        for (int i = 0; i < prices.length; i++) {
-            prices[i] = this.productList.get(i).getCurrentPrice() * this.nums;
-        }
-
-        double[] shared = DiscountUtil.shareDiscount(prices, d);
+        double[] shared = DiscountUtil.shareDiscount(
+                DiscountUtil.getEachCurrent(this.productList), discounted);
 
         Product product;
-        double befDiscounted, totalDiscounted = .0;
+        double befDiscounted, totalDiscounted = this.discounted;
         for (int i = 0; i < shared.length; i++) {
             product = productList.get(i);
             befDiscounted = product.getDiscounted();
-            product.addDiscounted(sub(product.getCurrentPrice() * this.nums, shared[i]));
+            product.addDiscounted(sub(product.getCurrentPrice(), shared[i]));
             totalDiscounted = add(totalDiscounted,
                     sub(product.getDiscounted(), befDiscounted));
-            product.updateCurrentPrice();
+//            product.updateCurrentPrice();
         }
 
         this.discounted = totalDiscounted;
@@ -91,6 +104,8 @@ public class Package extends AccurateMath implements IProduct {
     public void updateCurrentPrice() {
         this.currentPrice = sub(
                 mul(this.originalPrice, this.nums), this.discounted);
+
+        this.getPacageProdList().forEach(product -> product.updateCurrentPrice());
     }
 
     public void addPacageProd(Product p) {
