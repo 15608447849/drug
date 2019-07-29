@@ -37,8 +37,8 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
 
             StringBuilder sb = new StringBuilder();
             sb.append("SELECT " +
-                    //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12
-                    "a.cid,a.uphone,b.cname,b.cstatus,b.examine,b.inviter,b.auditer,b.caddrcode,b.caddr,b.submitdate,b.submittime,b.auditdate,b.audittime " +
+                    //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12,注册日期-13,注册时间-14
+                    "a.cid,a.uphone,b.cname,b.cstatus,b.examine,b.inviter,b.auditer,b.caddrcode,b.caddr,b.submitdate,b.submittime,b.auditdate,b.audittime,b.createdate,b.createtime " +
                     " FROM {{?"+TB_SYSTEM_USER +"}} AS a INNER JOIN {{?" +TB_COMP + "}} AS b ON a.cid=b.cid WHERE a.cstatus&1=0 AND b.cstatus&1=0 AND b.ctype=0");
 
             if (!StringUtils.isEmpty(phone)){
@@ -53,8 +53,11 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
             if (!StringUtils.isEmpty(cursorId)){
                 sb.append(" AND ").append("b.inviter&"+cursorId+">0");//根据客服专员DB - id查询
             }
-            if (!StringUtils.isEmpty(createTime)){
-                sb.append(" AND ").append("b.createdate='"+createTime+"'");//根据时间查询
+            if (!StringUtils.isEmpty(createDate)){
+                sb.append(" AND ").append("b.createdate='"+createDate+"'");//根据注册时间查询
+            }
+            if (!StringUtils.isEmpty(submitDate)){
+                sb.append(" AND ").append("b.submitdate='"+submitDate+"'");//根据提交时间查询
             }
             // 根据所选地区查询
             if (!StringUtils.isEmpty(addressCode)){
@@ -63,8 +66,8 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 } catch (NumberFormatException ignored) {
                 }
             }
-            //根据时间排序-倒叙
-            sb.append(" ORDER BY b.createdate DESC");
+            //根据提交时间排序-倒叙
+            sb.append(" ORDER BY b.submitdate DESC,b.submittime DESC");
             String selectSql = sb.toString();
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(pageHolder, page, selectSql);
             if (lines.size() > 0) {
@@ -97,7 +100,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         AuditInfo info;
         for (Object[] arr : lines){
             try {
-                //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12
+                //公司码-0,手机号-1,公司名-2,审核状态-3,审核失败原因-4,客服专员id-5,审核人id-6，地区码-7,营业执照地址-8,submitdate-9提交审核日期,submittime-10提交审核时间,审核日期-11,审核时间-12,创建日期-13,创建时间-14
                 info = new AuditInfo();
                 info.companyId = StringUtils.obj2Str(arr[0]);
                 info.phone = StringUtils.obj2Str(arr[1]);
@@ -110,6 +113,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 info.address = StringUtils.obj2Str(arr[8]);
                 info.submitDate = StringUtils.obj2Str(arr[9])+" "+StringUtils.obj2Str(arr[10]);
                 info.auditDate = StringUtils.obj2Str(arr[11])+" "+StringUtils.obj2Str(arr[12]);
+                info.createDate = StringUtils.obj2Str(arr[13])+" "+StringUtils.obj2Str(arr[14]);
                 queryAptitude(info);
                 queryCursor(info);
                 list.add(info);
