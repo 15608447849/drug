@@ -2,13 +2,7 @@ package com.onek.goods.util;
 
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.Ladoff;
-import com.onek.calculate.entity.Product;
-import com.onek.calculate.filter.ActivitiesFilter;
-import com.onek.calculate.filter.CycleFilter;
-import com.onek.calculate.filter.PriorityFilter;
-import com.onek.calculate.filter.StoreFilter;
 import com.onek.goods.calculate.ActivityCalculateService;
-import com.onek.goods.calculate.ActivityFilterService;
 import util.ArrayUtil;
 import util.MathUtil;
 
@@ -96,7 +90,7 @@ public class CalculateUtil {
 
         }
 
-        return price;
+        return Math.max(price, 0);
     }
 
     private static double getLatNumPrice(double value, int num) {
