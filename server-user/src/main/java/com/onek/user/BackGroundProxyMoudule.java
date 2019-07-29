@@ -1266,7 +1266,7 @@ public class BackGroundProxyMoudule {
         sqlBuilder.append(dySql.toString());
         sqlBuilder = getgetParamsSTDYSQL(sqlBuilder, jsonObject).append(" group by tu.uid desc ");
         LogUtil.getDefaultLogger().debug(sqlBuilder.toString());
-        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, sqlBuilder.toString());
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, "createdate DESC, createtime DESC", sqlBuilder.toString());
         ProxyStoreVO[] proxyStoreVOS = new ProxyStoreVO[queryResult.size()];
         if (queryResult == null || queryResult.isEmpty()) return result.setQuery(proxyStoreVOS,pageHolder);
 
@@ -1294,12 +1294,16 @@ public class BackGroundProxyMoudule {
         String uphone = jsonObject.get("uphone").getAsString();
        // int opstatus = jsonObject.get("cstatus").getAsInt();
         String areaStr = jsonObject.get("address").getAsString();
+        String createDate = jsonObject.get("createdate").getAsString();
         int bd = jsonObject.get("bd").getAsInt();
-
 
 
         if (cname != null && !cname.isEmpty()) {
             sqlBuilder.append(" and cp.cname like '%").append(cname).append("%'");
+        }
+
+        if (createDate != null && !createDate.isEmpty()) {
+            sqlBuilder.append(" and createdate = '").append(createDate).append("' ");
         }
 
         if (areaStr != null && !areaStr.isEmpty()) {
