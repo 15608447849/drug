@@ -1980,7 +1980,7 @@ public class BackGroundProxyMoudule {
         //注册电话
         createCell(style,row,9,compInfo.getInvoiceVO().getTel());
         //经营范围
-        createCell(style,row,9,compInfo.getBusScopeStr());
+        createCell(style,row,10,compInfo.getBusScopeStr());
     }
     private static void createCell(HSSFCellStyle style, HSSFRow row, int i, String value) {
         HSSFCell cell;

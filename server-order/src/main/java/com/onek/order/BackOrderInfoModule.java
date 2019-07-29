@@ -6,9 +6,13 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entitys.Result;
+import com.onek.op.ExcelOrdersInfoOP;
 import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.apache.poi.hssf.usermodel.HSSFCell;
+import org.apache.poi.hssf.usermodel.HSSFCellStyle;
+import org.apache.poi.hssf.usermodel.HSSFRow;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.MathUtil;
@@ -132,4 +136,15 @@ public class BackOrderInfoModule {
 
         return result;
     }
+
+    /**
+     * 导出订单信息
+     * @param appContext
+     * @return
+     */
+    public Result excelOrdersInfo(AppContext appContext){
+        TranOrder[] tranOrders = (TranOrder[]) queryOrders(appContext).data;
+        return new ExcelOrdersInfoOP(tranOrders).excelOrderInfo();
+    }
+
 }
