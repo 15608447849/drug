@@ -310,13 +310,13 @@ public class MainPageModule {
         if (onlySpecActivity) {//只差特殊活动（剔除全局活动）
             String SQL = SELECT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0)";
             String mmdd = TimeUtils.date_Md_2String(new Date());
-            selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode,brandno from {{?"
+            selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode,brandno,manuno from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                     + DSMConst.TD_PROD_SKU + "}} s on (s.sku LIKE CONCAT( '_', a.gcode, '%' ) or gcode=sku) left join {{?"
                     + DSMConst.TD_PROD_SPU + "}} p on s.spu=p.spu where a.cstatus&1=0 and s.cstatus&1=0 and p.cstatus&1=0 "
                     + " and gcode > 0 and prodstatus=1 and actcode in (" + SQL + ") ";
             if (!StringUtils.isEmpty(params[2])) {
-                sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno FROM ("
+                sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno,manuno FROM ("
                          + selectGoodsSQL + ") ua WHERE brandno=? and manuno=? group by sku " ;
                 queryResult = BASE_DAO.queryNativeC(pageHolder, page, null, sqlBuilder, mmdd, params[1],params[3]);
             } else {
