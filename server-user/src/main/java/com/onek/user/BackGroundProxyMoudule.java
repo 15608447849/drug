@@ -1169,7 +1169,7 @@ public class BackGroundProxyMoudule {
 
 
         String selectSQL = "select distinct cp.cid companyId,tu.uphone phone,tu.uid,cname company,caddrcode addressCode, "
-                + "caddr address,createdate,createtime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName," +
+                + "caddr address,submitdate,submitdate,cp.cstatus,stu.uid cursorId,stu.urealname cursorName," +
                 " stu.uphone cursorPhone,if(sstu.uid is not null and sstu.roleid & 4096 > 0," +
                 "sstu.uid,bdu.uid) bdmid,if(sstu.uid is not null and sstu.roleid & 4096 > 0," +
                 "sstu.urealname,bdu.urealname) bdmn,control from {{?"
@@ -1266,7 +1266,7 @@ public class BackGroundProxyMoudule {
         sqlBuilder.append(dySql.toString());
         sqlBuilder = getgetParamsSTDYSQL(sqlBuilder, jsonObject).append(" group by tu.uid desc ");
         LogUtil.getDefaultLogger().debug(sqlBuilder.toString());
-        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, "createdate DESC, createtime DESC", sqlBuilder.toString());
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, "submitdate DESC, submittime DESC", sqlBuilder.toString());
         ProxyStoreVO[] proxyStoreVOS = new ProxyStoreVO[queryResult.size()];
         if (queryResult == null || queryResult.isEmpty()) return result.setQuery(proxyStoreVOS,pageHolder);
 
@@ -1303,7 +1303,7 @@ public class BackGroundProxyMoudule {
         }
 
         if (createDate != null && !createDate.isEmpty()) {
-            sqlBuilder.append(" and createdate = '").append(createDate).append("' ");
+            sqlBuilder.append(" and submitdate = '").append(createDate).append("' ");
         }
 
         if (areaStr != null && !areaStr.isEmpty()) {
