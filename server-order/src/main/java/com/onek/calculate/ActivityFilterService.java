@@ -28,6 +28,7 @@ public class ActivityFilterService extends BaseDiscountFilterService {
                     + " AND act.cstatus&1 = 0 "
                     + " AND act.cstatus&32 = 0 "
                     + " AND act.cstatus&2048 > 0 "
+                    + " AND act.ckstatus&32 = 0 "
                     + " AND ass.actcode = act.unqid "
                     + " AND act.sdate <= CURRENT_DATE "
                     + " AND CURRENT_DATE <= act.edate"
