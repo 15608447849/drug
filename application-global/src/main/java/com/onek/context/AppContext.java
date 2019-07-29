@@ -3,11 +3,12 @@ package com.onek.context;
 import Ice.Current;
 import com.onek.server.inf.IRequest;
 import com.onek.server.infimp.IceContext;
-import com.onek.util.IceRemoteUtil;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
+
+import static com.onek.util.IceRemoteUtil.getCompInfoByCacheOrSql;
 
 /**
  * 平台上下文对象
@@ -39,11 +40,7 @@ public class AppContext extends IceContext {
             };
             if (userSession.compId > 0) {
                 //加载企业信息
-                json = RedisUtil.getStringProvide().get(userSession.compId+"");
-                if(StringUtils.isEmpty(json)) {
-                    //远程调用查询
-                    json = IceRemoteUtil.getCompanyJson(userSession.compId);
-                };
+                json = getCompInfoByCacheOrSql(userSession.compId);
                 userSession.comp = GsonUtils.jsonToJavaBean(json, StoreBasicInfo.class);
             }
             if (userSession!=null) logger.print(" ##-------当 前 用 户 ( "+ key +" )----->>>"+userSession);

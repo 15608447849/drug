@@ -14,6 +14,7 @@ import com.onek.util.member.MemberEntity;
 import com.onek.util.prod.ProdEntity;
 import com.onek.util.sqltransfer.SqlRemoteReq;
 import com.onek.util.sqltransfer.SqlRemoteResp;
+import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.StringUtils;
@@ -470,6 +471,20 @@ public class IceRemoteUtil {
         }
         return null;
     }
+    /*
+    优先缓存获取企业信息,
+    如果缓存没有,进去数据库查询,自动记录到缓存
+     */
+    public static String getCompInfoByCacheOrSql(int compid){
+        //加载企业信息
+        String json = RedisUtil.getStringProvide().get(compid+"");
+        if(StringUtils.isEmpty(json)) {
+            //远程调用查询
+            json = IceRemoteUtil.getCompanyJson(compid);
+        };
+        return json;
+    }
+
 
     /**
      * 根据企业码获取订单数
