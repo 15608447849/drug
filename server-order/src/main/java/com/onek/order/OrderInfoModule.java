@@ -146,7 +146,7 @@ public class OrderInfoModule {
         JSONObject compJson;
         List<TranOrderGoods> goods;
         for (TranOrderDetail tranOrder : result) {
-            String compStr = RedisUtil.getStringProvide().get(String.valueOf(tranOrder.getCusno()));
+            String compStr = IceRemoteUtil.getCompInfoByCacheOrSql(tranOrder.getCusno());
 
             compJson = JSON.parseObject(compStr);
 
@@ -291,7 +291,7 @@ public class OrderInfoModule {
         Map<Long, List<TranOrderGoods>> og = getOrderGoods(compid, year);
 
         for (TranOrder tranOrder : result) {
-            String compStr = RedisUtil.getStringProvide().get(String.valueOf(tranOrder.getCusno()));
+            String compStr = IceRemoteUtil.getCompInfoByCacheOrSql(tranOrder.getCusno());
 
             compMap = GsonUtils.string2Map(compStr);
 

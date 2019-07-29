@@ -6,6 +6,7 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entity.TranOrder;
 import com.onek.entitys.Result;
+import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
@@ -112,7 +113,7 @@ public class BackOrderInfoModule {
 
         Map<String, String> compMap;
         for (TranOrder tranOrder : result) {
-            String compStr = RedisUtil.getStringProvide().get(String.valueOf(tranOrder.getCusno()));
+            String compStr = IceRemoteUtil.getCompInfoByCacheOrSql(tranOrder.getCusno());
 
             compMap = GsonUtils.string2Map(compStr);
 
