@@ -1910,6 +1910,7 @@ public class BackGroundProxyMoudule {
             HSSFCellStyle style = workbook.createCellStyle();
             HSSFFont font = workbook.createFont();
             font.setFontHeightInPoints((short)14);
+            style.setWrapText(true);
             style.setFont(font);
             style.setAlignment(HSSFCellStyle.ALIGN_CENTER);
             style.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);

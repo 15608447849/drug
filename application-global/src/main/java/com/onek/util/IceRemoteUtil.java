@@ -846,8 +846,24 @@ public class IceRemoteUtil {
         return 0;
     }
 
+    /**
+     * 获取订单详情
+     * @param compid
+     * @param orderno
+     * @return
+     */
+    public static String getOrderDetail(int compid,long orderno){
+        try {
+            String result = ic.setServerAndRequest("orderServer"+getOrderServerNo(compid),"OrderInfoModule","getOrderDetail")
+                    .setArrayParams(compid,orderno)
+                    .execute();
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
     public static void main(String[] args) {
-
         HashMap map = new HashMap();
             map.put("identity",-4);
 
