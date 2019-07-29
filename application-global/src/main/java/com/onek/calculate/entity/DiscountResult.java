@@ -14,6 +14,7 @@ public class DiscountResult {
     private boolean exCoupon; //是否排斥优惠券
     private int totalNums;
     private double couponValue;
+    private double rebeatValue;
     private List<Gift> giftList; // 总赠品
     private List<IDiscount> activityList; // 活动列表
     private boolean pkgExpired;
@@ -43,12 +44,29 @@ public class DiscountResult {
             this.totalDiscount =
                     MathUtil.exactAdd(discount.getDiscounted(), this.totalDiscount)
                             .doubleValue();
-            if (discount.getGiftList() != null) {
+
+
+            if (discount.getGiftList() != null && !discount.getGiftList().isEmpty()) {
                 giftList.addAll(discount.getGiftList());
+
+                if (isRebeatAct(discount.getBRule())) {
+                    this.rebeatValue =
+                            MathUtil.exactAdd(discount.getGiftList().get(0).getGiftValue(), this.rebeatValue)
+                                    .doubleValue();
+                }
             }
         }
 
         this.totalDiscount = MathUtil.decimal(2, this.totalDiscount);
+        this.rebeatValue = MathUtil.decimal(2, this.rebeatValue);
+    }
+
+    private boolean isRebeatAct(long brule) {
+        String bruleStr = brule + "";
+
+        return bruleStr.charAt(0) == '1'
+              && bruleStr.charAt(1) == '2'
+              && bruleStr.charAt(2) == '1';
     }
 
     private int prodsNum(List<? extends IProduct> products) {
@@ -107,5 +125,9 @@ public class DiscountResult {
 
     public boolean isPkgExpired() {
         return pkgExpired;
+    }
+
+    public double getRebeatValue() {
+        return rebeatValue;
     }
 }

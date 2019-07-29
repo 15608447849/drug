@@ -62,8 +62,8 @@ public class ActivityManageModule {
     //修改活动
     private static final String UPD_ACT_SQL = "update {{?" + DSMConst.TD_PROM_ACT + "}} set actname=?,"
             + "incpriority=?,cpriority=?,qualcode=?,qualvalue=?,actdesc=?,"
-            + "excdiscount=?,acttype=?,actcycle=?,sdate=?,edate=?,brulecode=? where cstatus&1=0 "
-            + " and unqid=?";
+            + "excdiscount=?,acttype=?,actcycle=?,sdate=?,edate=?,brulecode=?,cstatus=cstatus&~2048, "
+            + " ckstatus=0 where cstatus&1=0 and unqid=?";
 
     //新增场次
     private static final String INSERT_TIME_SQL = "insert into {{?" + DSMConst.TD_PROM_TIME + "}} "
@@ -753,25 +753,27 @@ public class ActivityManageModule {
         String selectSQL = "select sku, systore,notused as minunused from (select sku,systore, sum(used) as uused, " +
                 " (systore-sum(used)) as notused from ( select sku,systore, used  from ( " +
                 "SELECT sku,gcode,(store-freezestore) as systore, " +
-                "  ceil(IF( ua.cstatus & 256 > 0 and actstock <100, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
+                "  ceil(IF( ua.cstatus & 256 > 0, 0, sum( actstock ) ) * 0.01 * ( store - freezestore ) + IF " +
                 "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
                 "  (SELECT " +
                 "  spu,sku,gcode,store,freezestore,actstock,a.cstatus  " +
                 "FROM  {{?" + DSMConst.TD_PROM_ASSDRUG + "}} a " +
                 "  LEFT JOIN td_prod_sku s ON s.sku LIKE CONCAT( '_', a.gcode, '%' )  " +
                 "WHERE  a.cstatus & 1 = 0 AND length( gcode ) < 14 AND gcode > 0  " +
-                "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) and actcode<>"
+                "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 and cstatus&2048>0 "
+                + " and ckstatus=2) and actcode<>"
                 + actCode + " UNION ALL " +
                 "SELECT  spu,  sku,gcode,  store,  freezestore,actstock,  a.cstatus  " +
                 "FROM td_prom_assdrug a LEFT JOIN td_prod_sku s ON s.sku = gcode  " +
                 "WHERE a.cstatus & 1 = 0  AND length( gcode ) = 14  " +
-                "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) and actcode<>"
+                "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0  and cstatus&2048>0 "
+                + " and ckstatus=2) and actcode<>"
                 + actCode + " UNION ALL " +
                 "SELECT  spu,  sku,  gcode,  store,  freezestore,  actstock,  a.cstatus  " +
                 "FROM  td_prom_assdrug a,  td_prod_sku s  " +
                 "WHERE  a.cstatus & 1 = 0   AND gcode = 0  " + " and actcode<>" + actCode +
-                "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) " +
-                "  ) ua " +
+                "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 and cstatus&2048>0 " +
+                "   and ckstatus=2) ) ua " +
                 "WHERE  ua.cstatus & 1 = 0  " +
                 "GROUP BY  sku , ua.cstatus ) ub UNION ALL  " +
                 "select sku,store, 0 from td_prod_sku where cstatus&1=0) uc GROUP BY sku) ud  ";
@@ -1137,24 +1139,27 @@ public class ActivityManageModule {
             String selectSQL = "select sku, systore,notused as minunused from (select sku,systore, sum(used) as uused, (systore-sum(used)) as notused from ( " +
                     "select sku,systore, used  from ( " +
                     "SELECT sku,gcode,(store-freezestore) as systore, " +
-                    "  ceil(IF( ua.cstatus & 256 > 0 and actstock <100, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
+                    "  ceil(IF( ua.cstatus & 256 > 0 and actstock <100 and actstock>0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
                     "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
                     "  (SELECT " +
                     "  spu,sku,gcode,store,freezestore,actstock,a.cstatus  " +
                     "FROM  {{?" + DSMConst.TD_PROM_ASSDRUG + "}} a " +
                     "  LEFT JOIN td_prod_sku s ON s.sku LIKE CONCAT( '_', a.gcode, '%' )  " +
                     "WHERE  a.cstatus & 1 = 0 AND length( gcode ) < 14 AND gcode > 0  " +
-                    "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) and actcode<>"
+                    "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 and cstatus&2048>0 "
+                    + " and ckstatus=2) and actcode<>"
                     + actCode + " UNION ALL " +
                     "SELECT  spu,  sku,gcode,  store,  freezestore,actstock,  a.cstatus  " +
                     "FROM td_prom_assdrug a LEFT JOIN td_prod_sku s ON s.sku = gcode  " +
                     "WHERE a.cstatus & 1 = 0  AND length( gcode ) = 14  " +
-                    "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) and actcode<>"
+                    "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0  and cstatus&2048>0"
+                    + " and ckstatus=2) and actcode<>"
                     + actCode + " UNION ALL " +
                     "SELECT  spu,  sku,  gcode,  store,  freezestore,  actstock,  a.cstatus  " +
                     "FROM  td_prom_assdrug a,  td_prod_sku s  " +
                     "WHERE  a.cstatus & 1 = 0   AND gcode = 0  " + " and actcode<>" + actCode +
-                    "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0 ) " +
+                    "  AND actcode IN ( SELECT unqid FROM td_prom_act WHERE cstatus & 1 = 0  and cstatus&2048>0 "
+                    + "  and ckstatus=2) " +
                     "  ) ua " +
                     "WHERE  ua.cstatus & 1 = 0  " +
                     "GROUP BY  sku , ua.cstatus ) ub UNION ALL  " +
@@ -1808,10 +1813,8 @@ public class ActivityManageModule {
 
 
         //更新审批状态
-//        String updateCkSql =
-//                " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}"
-//                        + " SET cstatus = cstatus & " + ~2080
-//                        + " ckstatus = 0 WHERE unqid = ? ";
+        String updateCkSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}"
+                + " SET cstatus = cstatus&~2048 WHERE unqid = ? and cstatus&1=0";
 
         //  if(ctype == 0){
         List<Object[]> assRet = baseDao.queryNative(assDugSql, actcode);
@@ -1841,7 +1844,8 @@ public class ActivityManageModule {
             List<Object[]> parm = new ArrayList<>();
             parm.add(new Object[]{actcode});
             parm.add(new Object[]{actcode});
-            baseDao.updateTransNative(new String[]{updateActSql, updateActStatusSql}, parm);
+            parm.add(new Object[]{actcode});
+            baseDao.updateTransNative(new String[]{updateActSql, updateActStatusSql,updateCkSql}, parm);
             // baseDao.updateNative(updateActSql,actcode);
         } catch (Exception e) {
             LogUtil.getDefaultLogger().debug("停用更新商品活动库存缓存失败");
@@ -1856,4 +1860,31 @@ public class ActivityManageModule {
 //            return new Result().fail("操作失败！");
 //        }
     }
+
+    /* *
+     * @description 活动启用
+     * @params [appContext]
+     * @return com.onek.entitys.Result
+     * @exception
+     * @author 11842
+     * @time  2019/7/29 17:11
+     * @version 1.1.1
+     **/
+    @UserPermission(ignore = true)
+    public Result actAble(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        JsonParser jsonParser = new JsonParser();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        String actcode = jsonObject.get("actcode").getAsString();
+        String updateSQL = "update {{?" + DSMConst.TD_PROM_ACT + "}} set ckstatus=0 where cstatus&1=0 "
+                + " and ckstatus&32>0 and unqid=" + actcode;
+        int code = baseDao.updateNative(updateSQL);
+        if (code > 0) {
+            return result.success("活动启用成功,请重新设置活动库存和审核", "");
+        } else {
+            return result.fail("活动启用失败");
+        }
+    }
+
 }
