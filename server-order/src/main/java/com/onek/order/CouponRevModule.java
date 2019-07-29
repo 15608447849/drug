@@ -619,6 +619,7 @@ public class CouponRevModule {
         resultMap.put("acpay",payamt);
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
+        resultMap.put("rebeatp", calculate.getRebeatValue());
         if(couponUseDTOS.get(0).getBalway() > 0 && bal > 0){
             resultMap.put("bal",bal);
             if(bal >= payamt){
