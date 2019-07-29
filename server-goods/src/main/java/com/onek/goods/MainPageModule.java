@@ -2,6 +2,7 @@ package com.onek.goods;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -47,6 +48,10 @@ public class MainPageModule {
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
 
     private static final String SELECT_ACT_SQL = "select unqid,brulecode,qualcode,qualvalue,cpriority from {{?"
+            + DSMConst.TD_PROM_ACT + "}}  where cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 "
+            + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
+
+    private static final String SELECT_SQL = "select unqid from {{?"
             + DSMConst.TD_PROM_ACT + "}}  where cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 "
             + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
 
@@ -302,19 +307,21 @@ public class MainPageModule {
         List<Object[]> queryResult;
         String selectClassSQL ,selectGoodsSQL ,selectAllSQL, sqlBuilder ;
         if (onlySpecActivity) {//只差特殊活动（剔除全局活动）
+            String SQL = SELECT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0)";
+            String mmdd = TimeUtils.date_Md_2String(new Date());
             selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode,brandno from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                     + DSMConst.TD_PROD_SKU + "}} s on (s.sku LIKE CONCAT( '_', a.gcode, '%' ) or gcode=sku) left join {{?"
                     + DSMConst.TD_PROD_SPU + "}} p on s.spu=p.spu where a.cstatus&1=0 and s.cstatus&1=0 and p.cstatus&1=0 "
-                    + " and gcode > 0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+                    + " and gcode > 0 and prodstatus=1 and actcode in (" + SQL + ") ";
             if (!StringUtils.isEmpty(params[2])) {
                 sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno FROM ("
                          + selectGoodsSQL + ") ua WHERE brandno=? group by sku  " ;
-                queryResult = BASE_DAO.queryNativeC(pageHolder, page, null, sqlBuilder, params[1]);
+                queryResult = BASE_DAO.queryNativeC(pageHolder, page, null, sqlBuilder, mmdd, params[1]);
             } else {
                 sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno FROM ("
                         + selectGoodsSQL + ") ua group by sku ";
-                queryResult = BASE_DAO.queryNativeC(pageHolder, page, sqlBuilder);
+                queryResult = BASE_DAO.queryNativeC(pageHolder, page, null, sqlBuilder,mmdd);
             }
         } else {
             selectClassSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
@@ -361,7 +368,8 @@ public class MainPageModule {
         if (prodVOList.size() > 0) {
             remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, isAnonymous);
             attr.list = prodVOList;
-            attr.page = pageHolder;
+            page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
+            attr.page =  new PageHolder(page);
         }
     }
 
@@ -613,6 +621,7 @@ public class MainPageModule {
                 brandMaNuList.add(barndManu);
             }
         }
+        System.out.println(GsonUtils.javaBeanToJson(brandMaNuList));
         return brandMaNuList;
     }
 
