@@ -28,7 +28,7 @@ public class DiscountRuleStore {
         put(1110,"满减现金");
         put(1120,"满减包邮");
         put(1130,"满减折扣");
-        put(1210,"满赠返现");
+        put(1210,"满赠返利");
         put(1220,"满赠包邮券");
         put(1230,"满赠折扣券");
         put(1240,"满赠赠品");
@@ -44,7 +44,7 @@ public class DiscountRuleStore {
     private static String[][] ONE_TWO = {
             {"", "$", "包邮", "$折", "#" },
             {"", "减&元", "&", "打&" },
-            {"", "返现&", "赠&券", "赠&券", "赠&"}};
+            {"", "返利&", "赠&券", "赠&券", "赠&"}};
 
     public static int getRuleByBRule(int brule){
         return map.get(brule);
