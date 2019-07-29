@@ -320,7 +320,7 @@ public class MainPageModule {
                          + selectGoodsSQL + ") ua WHERE brandno=? and manuno=? group by sku " ;
                 queryResult = BASE_DAO.queryNativeC(pageHolder, page, null, sqlBuilder, mmdd, params[1],params[3]);
             } else {
-                sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno FROM ("
+                sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno,manuno FROM ("
                         + selectGoodsSQL + ") ua group by sku ";
                 queryResult = BASE_DAO.queryNative(sqlBuilder, mmdd);
             }
