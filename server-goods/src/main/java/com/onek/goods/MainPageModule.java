@@ -355,7 +355,9 @@ public class MainPageModule {
             if (!StringUtils.isEmpty(params[2])) {
                 response = ProdESUtil.searchProdHasBrand(skuList, params[0], params[1], params[2], 1, 100);
             } else {
+                LogUtil.getDefaultLogger().info("skuList-------------11111111111 " + skuList.size());
                 attr.actObj = selectAllBarnd(skuList);
+                LogUtil.getDefaultLogger().info("brandList-------------222222222 " + GsonUtils.javaBeanToJson(attr.actObj));
                 return;
             }
         } else {
