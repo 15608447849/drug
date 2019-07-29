@@ -47,7 +47,7 @@ public class MainPageModule {
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
 
     private static final String SELECT_ACT_SQL = "select unqid,brulecode,qualcode,qualvalue,cpriority from {{?"
-            + DSMConst.TD_PROM_ACT + "}}  where cstatus&1=0 and cstatus&2048>0 "
+            + DSMConst.TD_PROM_ACT + "}}  where cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 "
             + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
 
     private final static String COUNT_GROUP_NUM =
