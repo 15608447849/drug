@@ -8,7 +8,6 @@ import com.onek.entitys.Result;
 import com.onek.user.interactive.AptitudeInfo;
 import com.onek.user.interactive.AuditInfo;
 import com.onek.util.IceRemoteUtil;
-import com.onek.util.RoleCodeCons;
 import com.onek.util.area.AreaEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -54,6 +53,9 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
             if (!StringUtils.isEmpty(cursorId)){
                 sb.append(" AND ").append("b.inviter&"+cursorId+">0");//根据客服专员DB - id查询
             }
+            if (!StringUtils.isEmpty(createTime)){
+                sb.append(" AND ").append("b.createdate="+createTime);//根据时间查询
+            }
             // 根据所选地区查询
             if (!StringUtils.isEmpty(addressCode)){
                 try {
@@ -61,6 +63,8 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 } catch (NumberFormatException ignored) {
                 }
             }
+            //根据时间排序-倒叙
+            sb.append(" ORDER BY b.createdate DESC");
             String selectSql = sb.toString();
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(pageHolder, page, selectSql);
             if (lines.size() > 0) {
