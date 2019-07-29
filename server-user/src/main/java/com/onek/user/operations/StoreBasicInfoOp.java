@@ -34,7 +34,7 @@ public class StoreBasicInfoOp {
        getStoreInfoById(info);
        infoToCache(info);
         //通知客户端刷新
-       if (isRefClientInfo) IceRemoteUtil.sendMessageToClient(cid,"ref:刷新用户信息");
+       if (isRefClientInfo) IceRemoteUtil.sendMessageToClient(cid,"ref:user");
        return info;
     }
 
