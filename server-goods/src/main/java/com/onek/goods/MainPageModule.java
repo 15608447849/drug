@@ -94,12 +94,13 @@ public class MainPageModule {
         page.pageIndex = pageIndex <= 0 ? 1 : pageIndex;
         page.pageSize = pageNumber <= 0 ? 100 : pageNumber;
         int compId = context.getUserSession() != null ? context.getUserSession().compId : 0;
-        String keyword = "", brandno = "", manuName = "";
+        String keyword = "", brandno = "", manuName = "", maNuNo = "0";
         if (jsonStr != null && !jsonStr.isEmpty()) {
             JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
             keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
             brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
             manuName = (json.has("manuname") ? json.get("manuname").getAsString() : "").trim();
+            maNuNo = (json.has("manuno") ? json.get("manuno").getAsString() : "0").trim();
         }
         try {
             if (bRuleCodes < 0 && bRuleCodes >= -10 && !onlySpecActivity) {
@@ -117,7 +118,7 @@ public class MainPageModule {
                 }
             } else {
                 getActProds(bRuleCodes, isQuery, attr, context, page, compId,
-                        onlySpecActivity, new String[]{keyword, brandno, manuName});
+                        onlySpecActivity, new String[]{keyword, brandno, manuName,maNuNo});
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -316,8 +317,8 @@ public class MainPageModule {
                     + " and gcode > 0 and prodstatus=1 and actcode in (" + SQL + ") ";
             if (!StringUtils.isEmpty(params[2])) {
                 sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno FROM ("
-                         + selectGoodsSQL + ") ua WHERE brandno=? group by sku  " ;
-                queryResult = BASE_DAO.queryNativeC(pageHolder, page, null, sqlBuilder, mmdd, params[1]);
+                         + selectGoodsSQL + ") ua WHERE brandno=? and manuno=? group by sku " ;
+                queryResult = BASE_DAO.queryNativeC(pageHolder, page, null, sqlBuilder, mmdd, params[1],params[3]);
             } else {
                 sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno FROM ("
                         + selectGoodsSQL + ") ua group by sku ";
