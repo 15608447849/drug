@@ -9,7 +9,7 @@ public class AuditInfo {
     public String phone; //手机
     public String company; //公司名
     public String status; //状态
-    public String createTime;//创建时间
+    public String createDate;//创建时间
 
     //需要返回:
     public String companyId; //公司码
