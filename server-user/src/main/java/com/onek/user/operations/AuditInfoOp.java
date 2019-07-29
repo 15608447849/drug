@@ -54,7 +54,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
                 sb.append(" AND ").append("b.inviter&"+cursorId+">0");//根据客服专员DB - id查询
             }
             if (!StringUtils.isEmpty(createTime)){
-                sb.append(" AND ").append("b.createdate="+createTime);//根据时间查询
+                sb.append(" AND ").append("b.createdate='"+createTime+"'");//根据时间查询
             }
             // 根据所选地区查询
             if (!StringUtils.isEmpty(addressCode)){
