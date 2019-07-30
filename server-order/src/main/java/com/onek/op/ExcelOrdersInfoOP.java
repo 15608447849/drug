@@ -37,7 +37,6 @@ public class ExcelOrdersInfoOP {
         this.tranOrders = tranOrders;
     }
 
-
     public Result excelOrderInfo(){
        try{
            long stime = System.currentTimeMillis();
@@ -160,11 +159,11 @@ public class ExcelOrdersInfoOP {
             //公司地址
             createCell(style,row,24,orList.get(0).getCusaddress());
             //纳税人识别号
-            createCell(style,row,25,orList.get(0).getInvoice().getTaxpayer());
+            createCell(style,row,25,orList.get(0).getInvoice()!= null ? orList.get(0).getInvoice().getTaxpayer():"-");
             //开户银行
-            createCell(style,row,26,orList.get(0).getInvoice().getBankers());
+            createCell(style,row,26,orList.get(0).getInvoice()!= null ? orList.get(0).getInvoice().getBankers():"-");
             //银行账号
-            createCell(style,row,27,orList.get(0).getInvoice().getAccount());
+            createCell(style,row,27,orList.get(0).getInvoice()!= null ? orList.get(0).getInvoice().getAccount():"-");
             if(orList.get(0).getGoods().size()>1) {
                 for (int j = 1; j < orList.get(0).getGoods().size(); j++) {
                     HSSFRow orRow = sheet.createRow(startrow++);
