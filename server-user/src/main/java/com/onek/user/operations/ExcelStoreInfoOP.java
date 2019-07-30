@@ -103,11 +103,11 @@ public class ExcelStoreInfoOP {
         //更新日期
         createCell(style,row,7,compInfo.getCreatedate()+" "+ compInfo.getCreatetime());
         //是否已签控销协议
-        createCell(style,row,7,compInfo.getControl()>0 ? "是" : "否");
+        createCell(style,row,8,compInfo.getControl()>0 ? "是" : "否");
         //客服专员
-        createCell(style,row,7,compInfo.getBdmn());
+        createCell(style,row,9,compInfo.getBdmn());
         //药店状态
-        createCell(style,row,7,getCompStatus(compInfo.getStatus()));
+        createCell(style,row,10,getCompStatus(compInfo.getStatus()));
     }
     private static void createCell(HSSFCellStyle style, HSSFRow row, int i, String value) {
         HSSFCell cell;
