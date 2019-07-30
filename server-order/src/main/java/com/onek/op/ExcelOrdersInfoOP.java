@@ -30,6 +30,8 @@ public class ExcelOrdersInfoOP {
     private static final String[] INVOICE_MSG_HEAD = {"发票类型","公司名称","公司地址","纳税人称号","开户银行","银行账号"};
     private static Map<String,Integer> map = new HashMap<String,Integer>();
 
+    private static final String[] ORDER_MSG_HEAD_1 = {"订单号","所属药店","收货人","收货电话","下单时间","付款方式","订单状态","结算状态","订单金额（元）"};
+
     private static final String FILENAME = "订单信息";
     private TranOrder[] tranOrders;
 
@@ -59,7 +61,13 @@ public class ExcelOrdersInfoOP {
 
     private void createExcelOrdersInfoHeader(HSSFWorkbook workbook,HSSFSheet sheet){
         HSSFRow row = sheet.createRow(0);
-
+        HSSFCell cell = null;
+        for (int i = 0;i<ORDER_MSG_HEAD_1.length;i++){
+            cell = row.createCell(i);
+            cell.setCellStyle(headerCellStyle(workbook));
+            cell.setCellValue(ORDER_MSG_HEAD_1[i]);
+        }
+        /*
         HSSFRow row1 = sheet.createRow(1);
         int startcell = 0;
         int nextcell = 0;
@@ -77,7 +85,7 @@ public class ExcelOrdersInfoOP {
             sheet.addMergedRegion(new CellRangeAddress(0,0,startcell>0?startcell:0,startcell+getHeadMerge(HEADERS[i])-1));//5 11
             startcell = startcell+getHeadMerge(HEADERS[i]);//6
         }
-
+        */
     }
 
 
@@ -86,6 +94,7 @@ public class ExcelOrdersInfoOP {
         int marginnum = 2;
         HSSFCellStyle style = dataCellStyle(workbook);
         for (int i =0 ; i<tranOrders.length; i++){
+            /*
             String json = IceRemoteUtil.getOrderDetail(tranOrders[i].getCusno(),Long.valueOf(tranOrders[i].getOrderno()));
             JsonParser jsonParser = new JsonParser();
             JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
@@ -100,10 +109,28 @@ public class ExcelOrdersInfoOP {
             if(orList.get(0).getGoods().size()<=0){
                 continue;
             }
-
-            HSSFRow row = sheet.createRow(startrow++);
-
-
+            */
+            //{"订单号","所属药店","收货人","收货电话","下单时间","付款方式","订单状态","结算状态","订单金额（元）"};
+            HSSFRow row = sheet.createRow(i+1);
+            //订单号
+            createCell(style,row,0,tranOrders[i].getOrderno());
+            //所属药店
+            createCell(style,row,1,tranOrders[i].getCusname());
+            //收货人
+            createCell(style,row,2,tranOrders[i].getConsignee());
+            //收货电话
+            createCell(style,row,3,tranOrders[i].getContact());
+            //下单时间
+            createCell(style,row,4,tranOrders[i].getOdate() + " " + tranOrders[i].getOtime());
+            //付款方式
+            createCell(style,row,5,getOrderPayWay(Integer.valueOf(tranOrders[i].getPayway()).intValue()));
+            //订单状态
+            createCell(style,row,6,getOrderStatus(tranOrders[i].getOstatus()));
+            //结算状态
+            createCell(style,row,7,getOrderPayStatu(tranOrders[i].getSettstatus()));
+            //订单金额（元）
+            createCell(style,row,8,String.valueOf(tranOrders[i].getPayamt()));
+            /*
             //订单编号
             createCell(style,row,0,tranOrders[i].getOrderno());
             //下单时间
@@ -233,6 +260,7 @@ public class ExcelOrdersInfoOP {
             }else{
                 marginnum++;
             }
+            */
         }
     }
 
@@ -257,7 +285,17 @@ public class ExcelOrdersInfoOP {
 
         return list;
     }
-
+    private String getOrderPayStatu(int settstatus){
+        String text = "";
+        if (settstatus==0) {
+            text = "未结算";
+        } else if (settstatus==1) {
+            text = "已结算";
+        } else {
+            text = "已退款";
+        }
+        return text;
+    }
 
     private String getinvoicetype(int invoicetype){
         String text = "";
