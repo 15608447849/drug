@@ -52,7 +52,7 @@ public class MainPageModule {
             + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
 
     private static final String SELECT_SQL = "select unqid from {{?"
-            + DSMConst.TD_PROM_ACT + "}}  where cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 "
+            + DSMConst.TD_PROM_ACT + "}}  where unqid=actcode and cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 "
             + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
 
     private final static String COUNT_GROUP_NUM =
@@ -314,7 +314,7 @@ public class MainPageModule {
                     + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                     + DSMConst.TD_PROD_SKU + "}} s on (s.sku LIKE CONCAT( '_', a.gcode, '%' ) or gcode=sku) left join {{?"
                     + DSMConst.TD_PROD_SPU + "}} p on s.spu=p.spu where a.cstatus&1=0 and s.cstatus&1=0 and p.cstatus&1=0 "
-                    + " and gcode > 0 and prodstatus=1 and actcode in (" + SQL + ") ";
+                    + " and gcode > 0 and prodstatus=1 and exists (" + SQL + ") ";
             if (!StringUtils.isEmpty(params[2])) {
                 sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno,manuno FROM ("
                          + selectGoodsSQL + ") ua WHERE brandno=? and manuno=? group by sku " ;
@@ -328,15 +328,16 @@ public class MainPageModule {
             selectClassSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                     + DSMConst.TD_PROD_SKU + "}} s on s.sku LIKE CONCAT( '_', a.gcode, '%' ) where a.cstatus&1=0 "
-                    + " and length( gcode ) < 14 AND gcode > 0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+                    + " and length( gcode ) < 14 AND gcode > 0 and prodstatus=1 and actstock>0 and actcode in ("
+                    + actCodeStr + ") ";
             selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                     + DSMConst.TD_PROD_SKU + "}} s on s.sku = gcode where a.cstatus&1=0 "
-                    + " and length(gcode) = 14 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+                    + " and length(gcode) = 14 and prodstatus=1 and actstock>0 and actcode in (" + actCodeStr + ") ";
            selectAllSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a ,{{?"
                     + DSMConst.TD_PROD_SKU + "}} s where a.cstatus&1=0 "
-                    + " and gcode=0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+                    + " and gcode=0 and prodstatus=1 and actstock>0 and actcode in (" + actCodeStr + ") ";
             sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode FROM ("
                     + selectClassSQL + " UNION ALL " + selectGoodsSQL +
                     " UNION ALL " + selectAllSQL + ") ua group by sku";
@@ -608,7 +609,7 @@ public class MainPageModule {
         List<BarndManu> brandMaNuList = new ArrayList<>();
         SearchResponse response = ProdESUtil.searchProdGroupByBrand(skuList,"", "", "");
         if (response != null && response.getHits().totalHits > 0) {
-            Terms agg = response.getAggregations().get("agg");
+                Terms agg = response.getAggregations().get("agg");
             for (Terms.Bucket bucket : agg.getBuckets()) {
                 long brandNo = Long.valueOf(bucket.getKey().toString());
                 TopHits topHits = bucket.getAggregations().get("top");
