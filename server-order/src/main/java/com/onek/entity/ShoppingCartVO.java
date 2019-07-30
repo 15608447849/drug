@@ -108,6 +108,46 @@ public class ShoppingCartVO {
 
     private int consell;
 
+    private String pkgno;
+
+    private int pkgnum;
+
+    private boolean isExCoupon;
+
+    public boolean isExCoupon() {
+        return isExCoupon;
+    }
+
+    public void setExCoupon(boolean exCoupon) {
+        isExCoupon = exCoupon;
+    }
+
+    public int getPkgnum() {
+        return pkgnum;
+    }
+
+    public void setPkgnum(int pkgnum) {
+        this.pkgnum = pkgnum;
+    }
+
+    public String getPkgno() {
+        return pkgno;
+    }
+
+    public void setPkgno(String pkgno) {
+        this.pkgno = pkgno;
+    }
+
+    private List<PkgProduct> pkgList;
+
+    public List<PkgProduct> getPkgList() {
+        return pkgList;
+    }
+
+    public void setPkgList(List<PkgProduct> pkgList) {
+        this.pkgList = pkgList;
+    }
+
     private Map<Integer, List<String>> nextLadDesc = new HashMap<>();
     private Map<Integer, List<String>> currLadDesc = new HashMap<>();
 //    private String ladsDesc;
@@ -431,4 +471,5 @@ public class ShoppingCartVO {
     public void setActcode(List<String> actcode) {
         this.actcode = actcode;
     }
+
 }

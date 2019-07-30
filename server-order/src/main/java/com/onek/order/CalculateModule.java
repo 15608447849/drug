@@ -57,6 +57,7 @@ public class CalculateModule {
         int minStock = Integer.MAX_VALUE;
         int minLimit = Integer.MAX_VALUE;
         int maxBuyed = 0;
+        boolean isExCoupon = false;
 
         for (IDiscount discount : discounts) {
             minStock = Math.min(
@@ -67,6 +68,8 @@ public class CalculateModule {
             minLimit = Math.min(discount.getLimits(sku), minLimit);
 
             maxBuyed = Math.max(RedisOrderUtil.getActBuyNum(compid, sku, discount.getDiscountNo()), maxBuyed);
+
+            isExCoupon = isExCoupon || discount.getExCoupon();
         }
 
         JSONObject jsonObject = new JSONObject();
@@ -74,6 +77,7 @@ public class CalculateModule {
         jsonObject.put("minStock", minStock);
         jsonObject.put("minLimit", minLimit);
         jsonObject.put("maxBuyed", maxBuyed);
+        jsonObject.put("isExCoupon", isExCoupon);
 
         return new Result().success(jsonObject);
     }
