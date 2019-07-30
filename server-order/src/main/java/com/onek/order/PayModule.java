@@ -36,7 +36,7 @@ import static com.onek.order.TranOrderOptModule.getGoodsArr;
 
 public class PayModule {
     public static final DelayedHandler<DelayedBase> DELIVERY_DELAYED =
-            new RedisDelayedHandler<>("_DELIVERY", 24,
+            new RedisDelayedHandler<>("_DELIVERY", 72,
                     (d) -> new TranOrderOptModule().delivery(d.getOrderNo(), d.getCompid()),
                     DelayedHandler.TIME_TYPE.HOUR);
 
@@ -77,7 +77,7 @@ public class PayModule {
     //                + " else ostatus end)
     private static final String UPD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
             + " actstock=(case (actstock-?)>0 when 0 then 0 else actstock-? end) where cstatus&1=0 "
-            + " and gcode=? and actcode=?";
+            + " and cstatus&256=0 and gcode=? and actcode=?";
 
 
     //取消时加库存 远程调用
@@ -86,7 +86,7 @@ public class PayModule {
 
     //取消时加活动库存 远程调用
     private static final String ADD_ACT_STORE = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set "
-            + "actstock=actstock+? where cstatus&1=0 and gcode=? and actcode=? ";
+            + "actstock=actstock+? where cstatus&1=0 and cstatus&256=0 and gcode=? and actcode=? ";
 
     //订单交易表新增
     private static final String INSERT_TRAN_TRANS = "insert into {{?" + DSMConst.TD_TRAN_TRANS + "}} "

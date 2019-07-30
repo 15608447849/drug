@@ -11,6 +11,7 @@ import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.user.entity.*;
+import com.onek.user.operations.ExcelStoreInfoOP;
 import com.onek.user.operations.StoreBasicInfoOp;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
@@ -1183,7 +1184,7 @@ public class BackGroundProxyMoudule {
                 + "caddr address,cp.submitdate,cp.submittime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName," +
                 " stu.uphone cursorPhone,if(sstu.uid is not null and sstu.roleid & 4096 > 0," +
                 "sstu.uid,bdu.uid) bdmid,if(sstu.uid is not null and sstu.roleid & 4096 > 0," +
-                "sstu.urealname,bdu.urealname) bdmn,control from {{?"
+                "sstu.urealname,bdu.urealname) bdmn,control,cp.storetype storetype from {{?"
                 + DSMConst.TB_COMP + "}} cp  join {{?" + DSMConst.TB_SYSTEM_USER + "}} tu  on cp.cid = tu.cid "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} stu on stu.uid = cp.inviter "
                 + "left join {{?" + DSMConst.TB_SYSTEM_USER + "}} sstu on sstu.uid = stu.belong "
@@ -1283,7 +1284,7 @@ public class BackGroundProxyMoudule {
 
         baseDao.convToEntity(queryResult, proxyStoreVOS, ProxyStoreVO.class,
                 "companyId","phone","uid","company","addressCode","address","createdate",
-                "createtime","status","cursorId","cursorName","cursorPhone","bdmid","bdmn","control");
+                "createtime","status","cursorId","cursorName","cursorPhone","bdmid","bdmn","control","storetype");
 
         for (ProxyStoreVO proxyStoreVO : proxyStoreVOS){
             AreaEntity[] ancestors = IceRemoteUtil.getAncestors(Long.parseLong(proxyStoreVO.getAddressCode()));
@@ -1895,134 +1896,6 @@ public class BackGroundProxyMoudule {
     public Result exportCompInfo(AppContext appContext){
         Result result = queryStores(appContext);
         ProxyStoreVO[] proxyStoreVOS = (ProxyStoreVO[]) result.data;
-//        System.out.println("===============" + proxyStoreVOS.length);
-        String fileName = "门店信息";
-
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-
-        String[] header = new String[]{"药店名称","门店注册手机","药店地址","收货地址","药店状态","企业类型","是否已签控销协议","开户银行","银行账号","注册电话","经营范围"};
-        try{
-            //工作簿
-            HSSFWorkbook workbook = new HSSFWorkbook();
-            //列表页
-            HSSFSheet sheet = workbook.createSheet("门店信息");
-            //单元格样式
-            HSSFCellStyle style = workbook.createCellStyle();
-            HSSFFont font = workbook.createFont();
-            font.setFontHeightInPoints((short)14);
-            style.setWrapText(true);
-            style.setFont(font);
-            style.setAlignment(HSSFCellStyle.ALIGN_CENTER);
-            style.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
-
-            HSSFRow row = sheet.createRow(0);
-
-            HSSFCell cell = null;
-            for (int i = 0;i<header.length;i++){
-                cell = row.createCell(i);
-                cell.setCellStyle(headerCellStyle(workbook));
-                cell.setCellValue(header[i]);
-            }
-
-            for(int i = 0;i<proxyStoreVOS.length;i++){
-                if(proxyStoreVOS[i].getCompanyId()<0){
-                    continue;
-                }
-                row = sheet.createRow(i+1);
-                createCompInfoDATA(row,cell,style,proxyStoreVOS[i]);
-            }
-
-
-
-            workbook.write(bos);
-            String title = getExcelDownPath(fileName.toString(), new ByteArrayInputStream(bos.toByteArray()));
-            return new Result().success(title);
-        }catch (Exception e){
-            e.printStackTrace();
-        }finally {
-
-        }
-        return new Result().fail("导出时失败");
-    }
-
-    private HSSFCellStyle headerCellStyle(HSSFWorkbook workbook){
-        HSSFCellStyle style = workbook.createCellStyle();
-        HSSFFont font = workbook.createFont();
-        font.setFontHeightInPoints((short)16);
-        style.setFont(font);
-        style.setAlignment(HSSFCellStyle.ALIGN_CENTER);
-        style.setVerticalAlignment(HSSFCellStyle.VERTICAL_CENTER);
-        return style;
-    }
-
-    /**
-     * 为门店excel导出填充数据
-     * @param row 行
-     * @param cell 列
-     * @param style 样式
-     * @param proxyStoreVO 门店信息
-     */
-    public void createCompInfoDATA(HSSFRow row,HSSFCell cell,HSSFCellStyle style,ProxyStoreVO proxyStoreVO) {
-        CompInfoVO compInfo = getCompInfo(proxyStoreVO.getCompanyId());
-        //药店名称
-        createCell(style,row,0,String.valueOf(compInfo.getCname()));
-        //门店注册手机
-        createCell(style,row,1,String.valueOf(compInfo.getUphone()));
-        //药店地址
-        createCell(style,row,2,String.valueOf(compInfo.getCaddr()));
-        //收货地址
-        createCell(style,row,3,String.valueOf(compInfo.getCaddrname()));
-        //药店状态
-        createCell(style,row,4,getCompStatus(compInfo.getCstatus()));
-        //企业类型
-        createCell(style,row,5,getCompType(compInfo.getStoretype()));
-        //是否已签控销协议
-        createCell(style,row,6,compInfo.getControl()>0 ? "是" : "否");
-        //开户银行
-        createCell(style,row,7,compInfo.getInvoiceVO().getBankers());
-        //银行账号
-        createCell(style,row,8,compInfo.getInvoiceVO().getAccount());
-        //注册电话
-        createCell(style,row,9,compInfo.getInvoiceVO().getTel());
-        //经营范围
-        createCell(style,row,10,compInfo.getBusScopeStr());
-    }
-    private static void createCell(HSSFCellStyle style, HSSFRow row, int i, String value) {
-        HSSFCell cell;
-        cell = row.createCell(i);
-        cell.setCellStyle(style);
-        cell.setCellValue(value);
-    }
-
-    /**
-     * 获取门店状态
-     * @param status
-     * @return
-     */
-    private String getCompStatus(int status){
-        String text = "";
-        if((status & 128) > 0){
-            text = "待审核";
-        } else if((status & 256) > 0) {
-            text = "审核通过";
-        } else if((status & 512) > 0) {
-            text = "不通过";
-        }
-        return text;
-    }
-
-    /**
-     * 获取门店类型
-     * @param type
-     * @return
-     */
-    private String getCompType(int type){
-        String text ="";
-        if(type==0){
-            text = "医疗机构";
-        }else{
-            text = "药品经营企业";
-        }
-        return text;
+        return new ExcelStoreInfoOP(proxyStoreVOS).excelStoreInfo();
     }
 }
