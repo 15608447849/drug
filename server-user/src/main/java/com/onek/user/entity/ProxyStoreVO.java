@@ -27,6 +27,16 @@ public class ProxyStoreVO {
     private int bdmid; //bdm id
     private String bdmn; //bdm 名称
     private int control;//控销协议
+    private int storetype;//门店类型
+
+
+    public int getStoretype() {
+        return storetype;
+    }
+
+    public void setStoretype(int storetype) {
+        this.storetype = storetype;
+    }
 
     public int getBdmid() {
         return bdmid;
