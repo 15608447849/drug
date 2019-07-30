@@ -10,6 +10,7 @@ import com.onek.entitys.Result;
 import com.onek.util.IceRemoteUtil;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import util.TimeUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -39,12 +40,15 @@ public class ExcelOrdersInfoOP {
 
     public Result excelOrderInfo(){
        try{
+           long stime = System.currentTimeMillis();
            ByteArrayOutputStream bos = new ByteArrayOutputStream();
            HSSFWorkbook workbook = new HSSFWorkbook();
 
            HSSFSheet sheet = workbook.createSheet("订单信息");
            createExcelOrdersInfoHeader(workbook,sheet);
            createExcelOrderGoodsInfo(workbook,sheet);
+           long etime = System.currentTimeMillis();
+           System.out.println("=========================查询订单数据以及填充数据使用 = " + (etime-stime)/1000);
            workbook.write(bos);
            String title = getExcelDownPath(FILENAME.toString(), new ByteArrayInputStream(bos.toByteArray()));
            return new Result().success(title);
