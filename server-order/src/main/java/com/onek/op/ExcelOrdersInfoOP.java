@@ -10,6 +10,7 @@ import com.onek.entitys.Result;
 import com.onek.util.IceRemoteUtil;
 import org.apache.poi.hssf.usermodel.*;
 import org.apache.poi.ss.util.CellRangeAddress;
+import util.TimeUtils;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -36,15 +37,17 @@ public class ExcelOrdersInfoOP {
         this.tranOrders = tranOrders;
     }
 
-
     public Result excelOrderInfo(){
        try{
+           long stime = System.currentTimeMillis();
            ByteArrayOutputStream bos = new ByteArrayOutputStream();
            HSSFWorkbook workbook = new HSSFWorkbook();
 
            HSSFSheet sheet = workbook.createSheet("订单信息");
            createExcelOrdersInfoHeader(workbook,sheet);
            createExcelOrderGoodsInfo(workbook,sheet);
+           long etime = System.currentTimeMillis();
+           System.out.println("=========================查询订单数据以及填充数据使用 = " + (etime-stime)/1000);
            workbook.write(bos);
            String title = getExcelDownPath(FILENAME.toString(), new ByteArrayInputStream(bos.toByteArray()));
            return new Result().success(title);
@@ -156,11 +159,11 @@ public class ExcelOrdersInfoOP {
             //公司地址
             createCell(style,row,24,orList.get(0).getCusaddress());
             //纳税人识别号
-            createCell(style,row,25,orList.get(0).getInvoice().getTaxpayer());
+            createCell(style,row,25,orList.get(0).getInvoice()!= null ? orList.get(0).getInvoice().getTaxpayer():"-");
             //开户银行
-            createCell(style,row,26,orList.get(0).getInvoice().getBankers());
+            createCell(style,row,26,orList.get(0).getInvoice()!= null ? orList.get(0).getInvoice().getBankers():"-");
             //银行账号
-            createCell(style,row,27,orList.get(0).getInvoice().getAccount());
+            createCell(style,row,27,orList.get(0).getInvoice()!= null ? orList.get(0).getInvoice().getAccount():"-");
             if(orList.get(0).getGoods().size()>1) {
                 for (int j = 1; j < orList.get(0).getGoods().size(); j++) {
                     HSSFRow orRow = sheet.createRow(startrow++);
