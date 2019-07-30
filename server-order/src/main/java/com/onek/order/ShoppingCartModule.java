@@ -8,13 +8,12 @@ import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.ActivityFilterService;
 import com.onek.calculate.entity.*;
+import com.onek.calculate.entity.Package;
 import com.onek.calculate.filter.*;
 import com.onek.context.AppContext;
-import com.onek.entity.DiscountRule;
-import com.onek.entity.OfferTipsVO;
-import com.onek.entity.ShoppingCartDTO;
-import com.onek.entity.ShoppingCartVO;
+import com.onek.entity.*;
 import com.onek.entitys.Result;
+import com.onek.server.infimp.IceDebug;
 import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
@@ -882,12 +881,30 @@ public class ShoppingCartModule {
                 Activity activity = (Activity)discount;
                 int brule = (int)discount.getBRule();
                 List<IProduct> pList =  discount.getProductList();
+               // long codno;
                 for (IProduct product: pList){
-                    if(product.getSKU() == shoppingCartVO.getPdno()){
+                    if(product instanceof Package
+                            && Long.parseLong(shoppingCartVO.getPkgno()) == ((Package) product).getPackageId()){
+                        shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
+
+                        //判断库存
+                        if(((Package) product).getExpireFlag() < 0){
+                            shoppingCartVO.setStatus(3);
+                        }
+
+                        minLimit = Math.min
+                                (activity.getLimits(((Package) product).getPackageId())
+                                        ,minLimit);
+                    }
+
+                    if(product instanceof Product
+                            && product.getSKU() == shoppingCartVO.getPdno()){
                         LogUtil.getDefaultLogger().info(
                                 "PNO -> " + product.getSKU() + "\n" +
                                 JSON.toJSONString(activity));
-                        
+
+                        shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
+
                         if (pList.size() == 1) {
                             shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
                             shoppingCartVO.addNextLadDesc(brule, activity.getNextLadoffDesc());
