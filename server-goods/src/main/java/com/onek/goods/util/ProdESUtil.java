@@ -108,9 +108,10 @@ public class ProdESUtil {
      * 修改商品数据到ES中
      *
      * @param paramVo 商品SKU对象
+     * @param prodStatus 上架状态
      * @return
      */
-    public static int updateProdDocument(BgProdVO paramVo){
+    public static int updateProdDocument(BgProdVO paramVo,int prodStatus){
 
         try{
             BgProdVO prodVO = (BgProdVO)paramVo.clone();
@@ -143,7 +144,6 @@ public class ProdESUtil {
             long brandno = prodVO.getBrandNo();
             String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"").trim();
 
-            prodVO.clone();
             GetResponse getResponse = ElasticSearchProvider.getDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
             Map<String, Object> data = new HashMap<>();
             data.put(ESConstant.PROD_COLUMN_SKU, sku);
@@ -154,7 +154,7 @@ public class ProdESUtil {
             data.put(ESConstant.PROD_COLUMN_MANUNAME, manuname);
             data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
             data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
-            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_PRODSTATUS));
+            data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodStatus);
             data.put(ESConstant.PROD_COLUMN_SKUCSTATUS,  paramVo.getSkuCstatus());
             data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
             data.put(ESConstant.PROD_COLUMN_SALES, getResponse.getSourceAsMap().get(ESConstant.PROD_COLUMN_SALES));
@@ -189,6 +189,60 @@ public class ProdESUtil {
         }
     }
 
+//    /**
+//     * 批量修改商品状态
+//     *
+//     * @param skuList sku列表
+//     * @param prodstatus 1:代表上架 0:代表下架
+//     * @return
+//     */
+//    public static int updateProdStatusDocList(List<Long> skuList,int prodstatus){
+//        SearchResponse response = null;
+//        try {
+//            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+//            if(skuList != null && skuList.size() > 0){
+//                Object [] skuArray = new Long[skuList.size()];
+//                skuArray = skuList.toArray(skuArray);
+//                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuArray);
+//                boolQuery.must(builder);
+//            }
+//
+//            TransportClient client = ElasticSearchClientFactory.getClientInstance();
+//
+//            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
+//                    .setQuery(boolQuery);
+//
+//
+//            response = requestBuilder
+//                    .execute().actionGet();
+//
+//            BulkRequestBuilder bulkRequest = client.prepareBulk();
+//            if(response != null && response.getHits().totalHits > 0){
+//                for (SearchHit searchHit : response.getHits()) {
+//                    Map<String, Object> sourceMap = searchHit.getSourceAsMap();
+//                    long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
+//                    sourceMap.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodstatus);
+//                    sourceMap.put(ESConstant.PROD_COLUMN_UPDATETIME, TimeUtils.date_yMd_Hms_2String(new Date()));
+//                    bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
+//
+//                }
+//                BulkResponse bulkResponse = bulkRequest.get();
+//                if (bulkResponse.hasFailures()) {
+//                    for(BulkItemResponse item : bulkResponse.getItems()){
+//                        item.getFailureMessage();
+//                    }
+//                    return -1;
+//                }
+//
+//            }
+//
+//
+//        }catch(Exception e) {
+//            e.printStackTrace();
+//        }
+//        return 1;
+//
+//    }
     /**
      * 批量修改商品状态
      *
@@ -197,30 +251,14 @@ public class ProdESUtil {
      * @return
      */
     public static int updateProdStatusDocList(List<Long> skuList,int prodstatus){
-        SearchResponse response = null;
         try {
-            BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-            if(skuList != null && skuList.size() > 0){
-                Object [] skuArray = new Long[skuList.size()];
-                skuArray = skuList.toArray(skuArray);
-                TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_SKU, skuArray);
-                boolQuery.must(builder);
-            }
 
             TransportClient client = ElasticSearchClientFactory.getClientInstance();
 
-            SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
-                    .setQuery(boolQuery);
-
-
-            response = requestBuilder
-                    .execute().actionGet();
-
             BulkRequestBuilder bulkRequest = client.prepareBulk();
-            if(response != null && response.getHits().totalHits > 0){
-                for (SearchHit searchHit : response.getHits()) {
-                    Map<String, Object> sourceMap = searchHit.getSourceAsMap();
-                    long sku = Long.parseLong(sourceMap.get(ESConstant.PROD_COLUMN_SKU).toString());
+            if(skuList != null && skuList.size() > 0){
+                for (Long sku :skuList) {
+                    Map<String, Object> sourceMap = new HashMap<>();
                     sourceMap.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodstatus);
                     sourceMap.put(ESConstant.PROD_COLUMN_UPDATETIME, TimeUtils.date_yMd_Hms_2String(new Date()));
                     bulkRequest.add(client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(sourceMap));
@@ -239,6 +277,7 @@ public class ProdESUtil {
 
         }catch(Exception e) {
             e.printStackTrace();
+            return -1;
         }
         return 1;
 

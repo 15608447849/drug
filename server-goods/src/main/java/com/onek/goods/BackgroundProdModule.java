@@ -369,6 +369,7 @@ public class BackgroundProdModule {
      */
     public Result updateProd(AppContext appContext) {
         BgProdVO bgProdVO;
+        BgProdVO sqlProdVO;
         try {
             bgProdVO = JSON.parseObject(appContext.param.json, BgProdVO.class);
 
@@ -382,7 +383,7 @@ public class BackgroundProdModule {
 
             checkProdBase(bgProdVO);
 
-            BgProdVO sqlProdVO = getProd(bgProdVO.getSku() + "");
+            sqlProdVO = getProd(bgProdVO.getSku() + "");
 
             if (sqlProdVO == null) {
                 return new Result().fail("此商品不存在");
@@ -403,7 +404,7 @@ public class BackgroundProdModule {
         bgProdVO.setVatp(MathUtil.exactMul(bgProdVO.getVatp(), 100).intValue());
         bgProdVO.setMp(MathUtil.exactMul(bgProdVO.getMp(), 100).intValue());
         bgProdVO.setRrp(MathUtil.exactMul(bgProdVO.getRrp(), 100).intValue());
-        int esResult = ProdESUtil.updateProdDocument(bgProdVO);
+        int esResult = ProdESUtil.updateProdDocument(bgProdVO, sqlProdVO.getProdstatus());
 
         if (esResult != 0) {
             return new Result().fail("操作失败");
@@ -1398,7 +1399,7 @@ public class BackgroundProdModule {
                     s = store - freezeStore;
                 }
 
-                int esResult = ProdESUtil.updateProdDocument(bgProd);
+                int esResult = ProdESUtil.updateProdDocument(bgProd, bgProd.getProdstatus());
 
                 if (esResult != 0) {
                     return new Result().fail("操作失败");
