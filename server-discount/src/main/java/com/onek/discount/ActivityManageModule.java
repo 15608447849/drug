@@ -1830,7 +1830,7 @@ public class ActivityManageModule {
                 " SET actstock = 0  where actcode = ? ";
 
         String updateActStatusSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}" +
-                " SET ckstatus = ckstatus | 32  where unqid = ? ";
+                " SET ckstatus = 32  where unqid = ? ";
 
 
         //更新审批状态
