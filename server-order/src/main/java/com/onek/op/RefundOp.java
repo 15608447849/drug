@@ -44,6 +44,8 @@ public class RefundOp implements IOperation<AppContext> {
     //更新退款金额
     private static final String UPDATE_ORDER_REFAMT = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set realrefamt = ? where asno = ?";
 
+    private static List<Long> asnoList = new ArrayList<Long>();
+
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
     long asno; //售后单号
     double refamt;//客户输入的退款金额
@@ -71,11 +73,18 @@ public class RefundOp implements IOperation<AppContext> {
         }else{
             r.fail("售后类型不匹配");
         }
-
+        //清空存储器
+        asnoList.clear();
         return r;
     }
 
     private Result startRefund() {
+        //判断售后订单是否在退款中
+        if(asnoList.contains(asno)){
+            return new Result().fail("订单正在退款中！");
+        }else{
+            asnoList.add(asno);
+        }
         int year = Integer.parseInt("20" + String.valueOf(asno).substring(0, 2));
         //订单号,公司码,商品码sku
         String querySql = "SELECT orderno,compid,pdno FROM {{?" + TD_TRAN_ASAPP + "}} where asno = ? AND ckstatus = 1"; //通过售后订单, 查询售后状态 , 审核通过
