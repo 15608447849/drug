@@ -77,9 +77,10 @@ public class CalculateModule {
         JSONObject jsonObject = new JSONObject();
         jsonObject.put("discounts", discounts);
         jsonObject.put("minStock", minStock);
-        jsonObject.put("minLimit", minLimit);
+        jsonObject.put("minLimit", minLimit == Integer.MAX_VALUE ? 0 : minLimit);
         jsonObject.put("maxBuyed", maxBuyed);
         jsonObject.put("isExCoupon", isExCoupon);
+        jsonObject.put("minimum", Math.max(0, Math.min(minLimit - maxBuyed, minStock)));
 
         return new Result().success(jsonObject);
     }
