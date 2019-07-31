@@ -32,6 +32,7 @@ import java.util.concurrent.*;
 import static com.onek.user.operations.StoreBasicInfoOp.updateCompInfoToCacheById;
 import static com.onek.util.SmsTempNo.AUTHENTICATION_FAILURE;
 import static com.onek.util.SmsTempNo.AUTHENTICATION_SUCCESS;
+import static com.onek.util.SmsTempNo.AUTHENTICATION_SUCCES_TOBD;
 
 /* *
  * @服务名 userServer
@@ -312,6 +313,7 @@ public class SyncCustomerInfoModule {
                 if (state == 256) {
                     giftPoints(compId);
                     IceRemoteUtil.revNewComerCoupon(compId, phone);
+                    sendMsg2BD(compId);
                 } else {
                     message = "信息有误";
                 }
@@ -322,6 +324,20 @@ public class SyncCustomerInfoModule {
                 e.printStackTrace();
             }
         });
+    }
+
+    //获取企业对应BD的电话号码并发送短信
+    private void sendMsg2BD(int compid) {
+        String selectSQL = "select uphone,IFNULL(urealname,''),cname from {{?" + DSMConst.TB_COMP + "}} c, {{?"
+                + DSMConst.TB_SYSTEM_USER + "}} u where c.inviter=u.uid and c.cid=? "
+                + " and c.cstatus&1=0 and u.cstatus&1=0 ";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, compid);
+        if (queryResult != null && queryResult.size() > 0) {
+            long phone = Long.valueOf(String.valueOf(queryResult.get(0)[0]));
+            String urealname = String.valueOf(queryResult.get(0)[1]);
+            String cname = String.valueOf(queryResult.get(0)[2]);
+            SmsUtil.sendSmsBySystemTemp(phone + "",AUTHENTICATION_SUCCES_TOBD, urealname, cname);
+        }
     }
     //赠送积分
     public static void giftPoints(int compid){

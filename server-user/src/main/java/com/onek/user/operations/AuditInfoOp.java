@@ -9,6 +9,7 @@ import com.onek.user.interactive.AptitudeInfo;
 import com.onek.user.interactive.AuditInfo;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.area.AreaEntity;
+import com.onek.util.area.AreaUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.StringUtils;
@@ -62,7 +63,10 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
             // 根据所选地区查询
             if (!StringUtils.isEmpty(addressCode)){
                 try {
-                    sb.append(" AND ").append("b.caddrcode IN ("+getAdderRandge(Long.parseLong(addressCode))+")");
+                int level = AreaUtil.getLayer(Long.parseLong(addressCode));
+                sb.append(" AND ").append("b.caddrcode LIKE '"+ addressCode.substring(0,2 * level+2) +"%'");
+//
+//                    sb.append(" AND ").append("b.caddrcode IN ("+getAdderRandge(Long.parseLong(addressCode))+")");
                 } catch (NumberFormatException ignored) {
                 }
             }
@@ -90,7 +94,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         for (int i = 0 ; i < arr.length ; i++ ){
             areaArr[i] = arr[i].getAreac()+"";
         }
-        areaArr[areaArr.length-1] =  addressCode+"";
+        areaArr[areaArr.length-1] = addressCode+"";
         return String.join(",",areaArr);
     }
     //赋值

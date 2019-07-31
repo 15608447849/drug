@@ -31,7 +31,7 @@ public class PromLoadOffService {
                         new ActivitiesFilter[] {
                                 new CycleFilter(),
                                 new PriorityFilter(),
-                                new StoreFilter(),
+//                                new StoreFilter(),
                         }).getCurrentActivities(productList);
         new ActivityCalculateService().calculate(activityList);
         activityList.sort((o1, o2) -> o2.getPriority() - o1.getPriority());

@@ -26,6 +26,7 @@ public class SmsTempNo {
     public static final int QUALIFICATION_PRE_EXPIRED= 18;//资质过期预警
     public static final int ACTIVE_INVENTORY= 19; //活动库存自动更新提醒
     public static final int ERP_WARN = 20; //活动库存自动更新提醒
+    public static final int AUTHENTICATION_SUCCES_TOBD = 21; //认证成功通知BD
 
     //发送推送消息的权限值
     public static final int PUSH_MESSAGE_POWER =  2;
