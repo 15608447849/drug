@@ -182,6 +182,27 @@ public class ActivityManageModule {
                 sqlBuilder.append(" and a.brulecode=").append(ruleCode);
             }
         }
+
+        if (jsonObject.get("ckstatus") != null && !jsonObject.get("ckstatus").getAsString().isEmpty()) {
+            int ckstatus = jsonObject.get("ckstatus").getAsInt();
+
+            sqlBuilder.append(" AND ckstatus&~32 = ").append(ckstatus);
+        }
+
+        if (jsonObject.get("actstatus") != null && !jsonObject.get("actstatus").getAsString().isEmpty()) {
+            int ckstatus = jsonObject.get("actstatus").getAsInt();
+
+            sqlBuilder.append(" AND (CASE "
+                    + " WHEN fun_prom_cycle ( unqid, acttype, actcycle, '"
+                    + TimeUtils.date_Md_2String(new Date())
+                    + "', 1 ) = 1   "
+                    + " AND a.cstatus & 2048 > 0 "
+                    + " AND a.cstatus & 1 = 0 "
+                    + " AND ckstatus & 32 = 0 THEN 1 "
+                    + " WHEN ckstatus & 32 > 0 THEN - 1 ELSE 0   "
+                    + " END) = ").append(ckstatus);
+        }
+
         return sqlBuilder;
     }
 
@@ -1225,14 +1246,14 @@ public class ActivityManageModule {
      * @version 1.1.1l
      **/
     private boolean theActInProgress(long actCode) {
-//        String selectTypeSQL = "select acttype,actcycle,brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} "
-//            + " where cstatus&1=0 and cstatus&2048>0 and unqid=" + actCode;
         String selectTypeSQL = "select acttype,actcycle,brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} "
-                + " where cstatus&1=0 and unqid=" + actCode;
+                + " where cstatus&1=0 and cstatus&2048>0 and unqid=" + actCode;
+/*        String selectTypeSQL = "select acttype,actcycle,brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} "
+                + " where cstatus&1=0 and unqid=" + actCode;*/
         List<Object[]> qTResult = baseDao.queryNative(selectTypeSQL);
-//        if (qTResult == null || qTResult.isEmpty()) {
-//            return false;
-//        }
+        if (qTResult == null || qTResult.isEmpty()) {
+            return false;
+        }
         int acttype = (int) qTResult.get(0)[0];
         long actcycle = (long) qTResult.get(0)[1];
         int brulecode = (int) qTResult.get(0)[2];
@@ -1809,7 +1830,7 @@ public class ActivityManageModule {
                 " SET actstock = 0  where actcode = ? ";
 
         String updateActStatusSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}" +
-                " SET ckstatus = ckstatus | 32  where unqid = ? ";
+                " SET ckstatus = 32  where unqid = ? ";
 
 
         //更新审批状态

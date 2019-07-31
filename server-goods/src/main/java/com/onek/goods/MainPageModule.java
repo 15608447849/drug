@@ -52,7 +52,7 @@ public class MainPageModule {
             + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
 
     private static final String SELECT_SQL = "select unqid from {{?"
-            + DSMConst.TD_PROM_ACT + "}}  where cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 "
+            + DSMConst.TD_PROM_ACT + "}}  where unqid=actcode and cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 "
             + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
 
     private final static String COUNT_GROUP_NUM =
@@ -308,13 +308,13 @@ public class MainPageModule {
         List<Object[]> queryResult;
         String selectClassSQL ,selectGoodsSQL ,selectAllSQL, sqlBuilder ;
         if (onlySpecActivity) {//只差特殊活动（剔除全局活动）
-            String SQL = SELECT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0)";
+//            String SQL = SELECT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0)";
             String mmdd = TimeUtils.date_Md_2String(new Date());
             selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode,brandno,manuno from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
-                    + DSMConst.TD_PROD_SKU + "}} s on (s.sku LIKE CONCAT( '_', a.gcode, '%' ) or gcode=sku) left join {{?"
+                    + DSMConst.TD_PROD_SKU + "}} s on  gcode=sku left join {{?"
                     + DSMConst.TD_PROD_SPU + "}} p on s.spu=p.spu where a.cstatus&1=0 and s.cstatus&1=0 and p.cstatus&1=0 "
-                    + " and gcode > 0 and prodstatus=1 and actcode in (" + SQL + ") ";
+                    + " and gcode > 0 and prodstatus=1 and exists (" + SELECT_SQL + ") ";
             if (!StringUtils.isEmpty(params[2])) {
                 sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode,brandno,manuno FROM ("
                          + selectGoodsSQL + ") ua WHERE brandno=? and manuno=? group by sku " ;
@@ -328,7 +328,8 @@ public class MainPageModule {
             selectClassSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                     + DSMConst.TD_PROD_SKU + "}} s on s.sku LIKE CONCAT( '_', a.gcode, '%' ) where a.cstatus&1=0 "
-                    + " and length( gcode ) < 14 AND gcode > 0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+                    + " and length( gcode ) < 14 AND gcode > 0 and prodstatus=1 and actcode in ("
+                    + actCodeStr + ") ";
             selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a left join {{?"
                     + DSMConst.TD_PROD_SKU + "}} s on s.sku = gcode where a.cstatus&1=0 "
@@ -336,7 +337,7 @@ public class MainPageModule {
            selectAllSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode from {{?"
                     + DSMConst.TD_PROM_ASSDRUG + "}} a ,{{?"
                     + DSMConst.TD_PROD_SKU + "}} s where a.cstatus&1=0 "
-                    + " and gcode=0 and prodstatus=1 and actcode in (" + actCodeStr + ") ";
+                    + " and gcode=0 and prodstatus=1 and  actcode in (" + actCodeStr + ") ";
             sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode FROM ("
                     + selectClassSQL + " UNION ALL " + selectGoodsSQL +
                     " UNION ALL " + selectAllSQL + ") ua group by sku";
@@ -376,7 +377,7 @@ public class MainPageModule {
         }
     }
 
-    private static void assembleData(boolean isAnonymous, boolean isSign, SearchResponse response, List<ProdVO> prodList,
+    public static void assembleData(boolean isAnonymous, boolean isSign, SearchResponse response, List<ProdVO> prodList,
                                      Map<Long, String[]> dataMap, String[] otherArr) {
         if (response == null || response.getHits().totalHits <= 0) {
             return;
@@ -461,8 +462,8 @@ public class MainPageModule {
                 prodVO.setGrossProfit(prodVO.getRrp(),prodVO.getVatp());
 
                 if (dataMap != null && otherArr != null) {
-                    int ruleCode = Integer.parseInt(otherArr[0]);
-                    double minOff = Double.parseDouble(otherArr[1]);
+                    int ruleCode = Integer.parseInt(otherArr[0]);//规则码
+                    double minOff = Double.parseDouble(otherArr[1]);//
                     //                int actstock =  dataMap.get(sku) != null ? Integer.parseInt(dataMap.get(sku)[0]): 0;
                     int limitNum = dataMap.get(sku) != null ? Integer.parseInt(dataMap.get(sku)[1]) : 0;
                     double price = dataMap.get(sku) != null ? Double.parseDouble(dataMap.get(sku)[2]) : 0;
@@ -486,7 +487,9 @@ public class MainPageModule {
                         }
                     } else if (ruleCode == 1133) {
                         prodVO.setActprize(NumUtil.roundup(NumUtil.div(prodVO.getVatp() * minOff, 100)));
-                    } else {
+                    } else if (ruleCode == 1114) {//套餐
+                        prodVO.setActprize(NumUtil.div(price, 100));
+                    }else {
                         prodVO.setActprize(NumUtil.div(prodVO.getVatp(), 100));
                     }
                 }
@@ -608,7 +611,7 @@ public class MainPageModule {
         List<BarndManu> brandMaNuList = new ArrayList<>();
         SearchResponse response = ProdESUtil.searchProdGroupByBrand(skuList,"", "", "");
         if (response != null && response.getHits().totalHits > 0) {
-            Terms agg = response.getAggregations().get("agg");
+                Terms agg = response.getAggregations().get("agg");
             for (Terms.Bucket bucket : agg.getBuckets()) {
                 long brandNo = Long.valueOf(bucket.getKey().toString());
                 TopHits topHits = bucket.getAggregations().get("top");

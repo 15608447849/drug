@@ -65,7 +65,9 @@ public class CalculateModule {
                         .getActStockBySkuAndActno(sku, discount.getDiscountNo()),
                     minStock);
 
-            minLimit = Math.min(discount.getLimits(sku), minLimit);
+            if (discount.getLimits(sku) > 0) {
+                minLimit = Math.min(discount.getLimits(sku), minLimit);
+            }
 
             maxBuyed = Math.max(RedisOrderUtil.getActBuyNum(compid, sku, discount.getDiscountNo()), maxBuyed);
 
