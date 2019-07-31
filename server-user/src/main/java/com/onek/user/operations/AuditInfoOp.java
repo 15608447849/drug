@@ -16,6 +16,7 @@ import util.StringUtils;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.onek.util.prod.ProduceClassUtil.getLayer;
 import static constant.DSMConst.TB_COMP;
 import static constant.DSMConst.TB_SYSTEM_USER;
 
@@ -61,10 +62,12 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
             }
             // 根据所选地区查询
             if (!StringUtils.isEmpty(addressCode)){
-                try {
-                    sb.append(" AND ").append("b.caddrcode IN ("+getAdderRandge(Long.parseLong(addressCode))+")");
-                } catch (NumberFormatException ignored) {
-                }
+                int level = getLayer(addressCode);
+                sb.append(" AND ").append("b.caddrcode LIKE '"+ addressCode.substring(0,2 * level+2) +"%'");
+//                try {
+//                    sb.append(" AND ").append("b.caddrcode IN ("+getAdderRandge(Long.parseLong(addressCode))+")");
+//                } catch (NumberFormatException ignored) {
+//                }
             }
             //根据提交时间排序-倒叙
             sb.append(" ORDER BY b.submitdate DESC,b.submittime DESC");
@@ -90,7 +93,7 @@ public class AuditInfoOp extends AuditInfo implements IOperation<AppContext> {
         for (int i = 0 ; i < arr.length ; i++ ){
             areaArr[i] = arr[i].getAreac()+"";
         }
-        areaArr[areaArr.length-1] =  addressCode+"";
+        areaArr[areaArr.length-1] = addressCode+"";
         return String.join(",",areaArr);
     }
     //赋值
