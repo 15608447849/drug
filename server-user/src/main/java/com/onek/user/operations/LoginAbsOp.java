@@ -2,6 +2,7 @@ package com.onek.user.operations;
 
 import com.onek.context.AppContext;
 import com.onek.context.UserSession;
+import com.onek.util.MSGUtil;
 import dao.BaseDAO;
 import util.StringUtils;
 
@@ -28,7 +29,7 @@ public abstract class LoginAbsOp {
 
     boolean checkAccountPassword(String account, String passwrod){
         if (StringUtils.isEmpty(account,passwrod)) {
-            error = "手机号或密码不能为空";
+            error = MSGUtil.LOGIN_PHONE_AND_PWD_NOTNULL;
             return false;
         }
         return true;
@@ -37,12 +38,12 @@ public abstract class LoginAbsOp {
     boolean checkUserRoleStatus(long urole,int ucstatus,int spicRole){
         if (spicRole>0){
             if ((urole&spicRole) == 0){
-                error = "无效账户或角色";
+                error = MSGUtil.LOGIN_ACCOUNT_OR_ROLE_ERROR;
                 return false;
             }
         }
         if ((ucstatus&32)>0){
-            error = "用户账号停止使用";
+            error = MSGUtil.LOGIN_USER_ISSTOP;
             return false;
         }
         //获取系统有效角色列表
@@ -60,7 +61,7 @@ public abstract class LoginAbsOp {
             }
         }
         if (!isAllow){
-            error = "用户角色权限不足";
+            error = MSGUtil.LOGIN_USER_POWER;
             return false;
         }
 
@@ -72,7 +73,7 @@ public abstract class LoginAbsOp {
         String updateSql = "UPDATE {{?" + TB_SYSTEM_USER + "}} SET ip=?, logindate=CURRENT_DATE, logintime=CURRENT_TIME WHERE uid=?";
         int i = BaseDAO.getBaseDAO().updateNative(updateSql, ipAddress,userid);
         if (i<=0){
-            error = "系统异常,拒绝登陆";
+            error = MSGUtil.LOGIN_SYSTEM_ERROR;
             return false;
         }
         return true;
@@ -100,7 +101,7 @@ public abstract class LoginAbsOp {
             int belong = StringUtils.checkObjectNull(objects[7],0);
 
             if (StringUtils.isEmpty(upassword)){
-                error = "用户未设置初始密码";
+                error = MSGUtil.LOGIN_NOT_INITPWD;
                 return false;
             }
 
@@ -115,7 +116,7 @@ public abstract class LoginAbsOp {
                     return true;
                 }
             }else passwordError();
-        }else error = "用户不存在";
+        }else error = MSGUtil.LOGIN_NOT_USER;
         return false;
     }
 
