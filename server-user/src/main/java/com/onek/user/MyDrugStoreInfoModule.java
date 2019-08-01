@@ -83,6 +83,7 @@ public class MyDrugStoreInfoModule {
      * @version 1.1.1
      **/
     public Result insertOrUpdConsignee(AppContext appContext) {
+        String addorupdate = "";
         Result result = new Result();
         int code;
         String json = appContext.param.json;
@@ -105,15 +106,17 @@ public class MyDrugStoreInfoModule {
                 + " where cstatus&1=0 and shipid=?";
         if (shipId > 0) {
             code = baseDao.updateNative(updSQL, contactName, contactPhone, shipId);
+            addorupdate = "修改";
         } else {
             shipId = RedisGlobalKeys.getShipId();
             code = baseDao.updateNative(insertSQL, shipId, compId, contactName, contactPhone);
+            addorupdate = "新增";
         }
         if (code > 0) {//同步默认收货人到ERP（异步操作）
             SyncCustomerInfoModule.saveCusConcat(compId);
         }
         myCgProxy.update(null);
-        return code > 0 ? result.success("操作成功") : result.fail("操作失败");
+        return code > 0 ? result.success("操作成功").message(addorupdate+"收货人成功") : result.fail(addorupdate+"收货人失败");
     }
 
     private int queryCount(int compid, int shipId, long contactPhone, int type) {
@@ -146,6 +149,7 @@ public class MyDrugStoreInfoModule {
      * @version 1.1.1
      **/
     public Result optConsigneeForApp(AppContext appContext) {
+        String addorupdate = "";
         Result result = new Result();
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
@@ -179,10 +183,12 @@ public class MyDrugStoreInfoModule {
         if (shipId > 0) {//修改
             sqlList.add(updSQL);
             params.add(new Object[]{contactName, contactPhone,cstatus, shipId});
+            addorupdate = "修改";
         } else {//新增
             shipId = RedisGlobalKeys.getShipId();
             sqlList.add(insertSQL);
             params.add(new Object[]{shipId, compId, contactName, contactPhone, cstatus});
+            addorupdate = "添加";
         }
         String[] sqlNative = new String[sqlList.size()];
         sqlNative = sqlList.toArray(sqlNative);
@@ -191,7 +197,7 @@ public class MyDrugStoreInfoModule {
             myCgProxy.update(null);
             SyncCustomerInfoModule.saveCusConcat(compId);
         }
-        return b ? result.success("操作成功") : result.fail("操作失败");
+        return b ? result.success("操作成功").message(addorupdate+"收货人成功") : result.fail(addorupdate+"收货人失败");
     }
 
     private boolean hasDefault(int compId) {
@@ -234,7 +240,7 @@ public class MyDrugStoreInfoModule {
             myCgProxy.update(null);
             SyncCustomerInfoModule.saveCusConcat(compId);
         }
-        return b ? result.success("操作成功") : result.fail("操作失败");
+        return b ? result.success("操作成功").message("默认收货人设置成功") : result.fail("设置默认收货人失败");
     }
 
     /* *
@@ -259,7 +265,7 @@ public class MyDrugStoreInfoModule {
             myCgProxy.del(null);
             SyncCustomerInfoModule.saveCusConcat(appContext.getUserSession().compId);
         }
-        return  b ? result.success("操作成功") : result.fail("操作失败");
+        return  b ? result.success("操作成功").message("删除收货人成功") : result.fail("删除收货人失败");
     }
 
     public Result queryDefaultCg(AppContext appContext) {
