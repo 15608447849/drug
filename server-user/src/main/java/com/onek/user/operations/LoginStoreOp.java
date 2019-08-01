@@ -4,6 +4,7 @@ import com.onek.context.AppContext;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
 import com.onek.user.service.USProperties;
+import com.onek.util.MSGUtil;
 import redis.util.RedisUtil;
 import util.StringUtils;
 
@@ -33,17 +34,17 @@ public class LoginStoreOp extends LoginAbsOp implements IOperation<AppContext> {
         try {
             if (!checkAccountPassword(phone,password)) return new Result().fail(error);
             //检测验证码是否正确
-            if (!checkVerification()) return new Result().fail("验证码不正确");
+            if (!checkVerification()) return new Result().fail(MSGUtil.LOGIN_VERIFICATION_CODE_ERROR);
             //检查用户是否锁定
             if (checkLock()) return new Result().fail(error);
             //检测用户名/密码是否正确 创建会话
             if (!checkSqlAndUserExist(context.remoteIp,phone,password,2)) return new Result().fail(error).setHashMap("index",failIndex);;
             //关联token-用户信息
-            if (relationTokenUserSession(context,true)) return new Result().success("登陆成功");
+            if (relationTokenUserSession(context,true)) return new Result().success(MSGUtil.LOGIN_SUCCESS);
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new Result().fail("登陆失败");
+        return new Result().fail(MSGUtil.LOGIN_FAIL);
     }
 
     @Override
@@ -59,7 +60,7 @@ public class LoginStoreOp extends LoginAbsOp implements IOperation<AppContext> {
 
     //用户-登陆失败处理
     private void loginFailHandle() {
-        error = "用户名或密码不正确";
+        error = MSGUtil.LOGIN_USER_OR_PWD_ERROR;
         //密码错误 记录次数 - 缓存
         //当次数到达指定次数 , 锁定账户, 指定时间
         String indexStr = RedisUtil.getStringProvide().get("USER-"+phone);
@@ -71,7 +72,7 @@ public class LoginStoreOp extends LoginAbsOp implements IOperation<AppContext> {
             RedisUtil.getStringProvide().set("USER-LOCK-"+phone,"LOCK");
             //设置时效性
             RedisUtil.getStringProvide().expire("USER-LOCK-"+phone,  USProperties.INSTANCE.sLoginLockTime);
-            error+=",账户已锁定";
+            error+=","+MSGUtil.LOGIN_USER_LOCK;
         }else{
             //记录次数
             RedisUtil.getStringProvide().set("USER-"+phone,String.valueOf(failIndex));
@@ -97,7 +98,7 @@ public class LoginStoreOp extends LoginAbsOp implements IOperation<AppContext> {
         String code = RedisUtil.getStringProvide().get(key);
         communicator().getLogger().print("图形验证码 key = "+ key +" , code = "+ code +" , verification = "+ verification);
         if (!code.equalsIgnoreCase(verification)){
-            error = "验证码不正确";
+            error = MSGUtil.LOGIN_VERIFICATION_CODE_ERROR;
             return false;
         };
         return true;
