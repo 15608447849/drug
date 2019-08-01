@@ -2,6 +2,7 @@ package com.onek.discount.timer;
 
 import com.alibaba.fastjson.JSONObject;
 import com.onek.propagation.prod.ActivityManageServer;
+import com.onek.propagation.prod.ProdCurrentActPriceObserver;
 import com.onek.propagation.prod.ProdDiscountObserver;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.RedisGlobalKeys;
@@ -40,14 +41,15 @@ public class ActStockCheckTask extends TimerTask {
         String y = TimeUtils.date_yMd_2String(date);
         List<Object[]> results = BaseDAO.getBaseDAO().queryNative(SQL, y);
         if(results != null && results.size() > 0){
-//            ActivityManageServer server = new ActivityManageServer();
-//            server.registerObserver(new ProdDiscountObserver());
+            ActivityManageServer server = new ActivityManageServer();
+            server.registerObserver(new ProdCurrentActPriceObserver());
             Set<Long> actCodeList = new HashSet<>();
             for(Object[] result : results){
                 Long goodsCode = (Long) result[0];
                 Long actCode = (Long) result[1];
                 int rulecode = (Integer) result[2];
                 actCodeList.add(actCode);
+                server.actUpdate(actCode);
                 if(goodsCode > 0 && String.valueOf(goodsCode).length() >= 14){
                     RedisStockUtil.clearActStock(goodsCode, actCode);
                 }
