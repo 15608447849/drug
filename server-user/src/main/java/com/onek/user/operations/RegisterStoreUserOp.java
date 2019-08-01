@@ -4,6 +4,7 @@ import com.onek.context.AppContext;
 import com.onek.context.UserSession;
 import com.onek.entitys.IOperation;
 import com.onek.entitys.Result;
+import com.onek.util.MSGUtil;
 import com.onek.util.RoleCodeCons;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
@@ -36,13 +37,13 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
 
     @Override
     public Result execute(AppContext context) {
-        if (StringUtils.isEmpty(phone) || phone.length() != 11) return new Result().fail("无效的手机号码");
+        if (StringUtils.isEmpty(phone) || phone.length() != 11) return new Result().fail(MSGUtil.REG_INVAILD_PHONE);
         if (type == 1) return checkPhoneIsExist();
         if (type == 2) return new VerificationOp().setType(type).setPhone(phone).execute(context);
         if (type == 3) {
-            if (!validSmsCode()) return new Result().fail("短信验证码不正确");
+            if (!validSmsCode()) return new Result().fail(MSGUtil.REG_VERIFICATION_CODE_ERROR);
             if (!validPassword(password)) return new Result().fail(PASSWORD_VALID_MESSAGE);
-            if (StringUtils.isEmpty(password2) || !password.equals(password2)) return new Result().fail("两次密码输入不一致");
+            if (StringUtils.isEmpty(password2) || !password.equals(password2)) return new Result().fail(MSGUtil.REG_INCONSISTENT_PWD);
             return submit(context);
         }
         return new Result().fail("未知的操作类型");
@@ -97,17 +98,17 @@ public class RegisterStoreUserOp implements IOperation<AppContext> {
         if (i > 0) {
             //设置content - User信息
             context.setUserSession(new UserSession(userId ,RoleCodeCons._STORE, phone));
-            return new Result().success("注册成功,已添加用户信息");
+            return new Result().success(MSGUtil.REG_SUCCESS);
         }
-        return new Result().fail("注册失败,无法添加用户信息");
+        return new Result().fail(MSGUtil.REG_COMP_FAIL);
     }
 
     //验证手机是否存在
     private Result checkPhoneIsExist() {
         String selectSql = "SELECT oid FROM {{?" + TB_SYSTEM_USER + "}} WHERE cstatus&1 = 0 AND uphone = ?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,phone);
-        if (lines.size()>0) return new Result().fail("已注册");
-            else return new Result().success("未注册");
+        if (lines.size()>0) return new Result().fail(MSGUtil.REG_ISREG);
+            else return new Result().success(MSGUtil.REG_NOTREG);
     }
 
 
