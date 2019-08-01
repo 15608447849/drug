@@ -113,7 +113,7 @@ public class MyInvoiceModule {
             return new Result().fail("发送失败！");
         }
 
-        return new Result().success("发送成功！");
+        return new Result().success("发送成功！","发送成功！");
     }
 
     private int setEmail(int compid, String vcode, String email) {
@@ -181,7 +181,7 @@ public class MyInvoiceModule {
         int result =
                 BaseDAO.getBaseDAO().updateNative(UPDATE_EMAIL, email, compId);
 
-        return result > 0 ? new Result().success("操作成功") : new Result().fail("操作失败");
+        return result > 0 ? new Result().success("操作成功").message("发票收件邮箱保存成功") : new Result().fail("发票收件邮箱保存失败");
     }
 
     public Result saveInvoice(AppContext appContext) {
@@ -233,6 +233,6 @@ public class MyInvoiceModule {
             e.printStackTrace();
         }
 
-        return result > 0 ? new Result().success("操作成功") : new Result().fail("操作失败");
+        return result > 0 ? new Result().success("操作成功").message("开票信息保存成功") : new Result().fail("开票信息保存失败");
     }
 }
