@@ -106,7 +106,7 @@ public class UpdateUserOp implements IOperation<AppContext> {
         }
 
 
-        return flag? new Result().success(rmsg) : new Result().fail(rmsg) ;
+        return flag? new Result().success(rmsg).message(rmsg) : new Result().fail(rmsg) ;
     }
 
     private Boolean changUserByUid(String param ,String ifs) {
