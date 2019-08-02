@@ -7,6 +7,7 @@ import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.CouponListFilterService;
 import com.onek.calculate.entity.*;
+import com.onek.calculate.entity.Package;
 import com.onek.calculate.util.DiscountUtil;
 import com.onek.consts.CSTATUS;
 import com.onek.consts.IntegralConstant;
@@ -14,6 +15,7 @@ import com.onek.context.AppContext;
 import com.onek.entity.CouponPubLadderVO;
 import com.onek.entity.CouponPubVO;
 import com.onek.entity.CouponUseDTO;
+import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
@@ -26,6 +28,7 @@ import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
@@ -614,12 +617,51 @@ public class CouponRevModule {
         double bal = IceRemoteUtil.queryCompBal(compid);
         bal = MathUtil.exactDiv(bal,100L).
                 setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+
+        int rebeatTotal = 0;
+        Map<Long, Integer> balMap = new HashMap<>();
+
+        double[] r = apportionBal(productList,
+                couponUseDTOS.get(0).getBalway() > 0 ? bal : 0);
+
+        for(int i = 0; i < r.length; i++) {
+            balMap.put(productList.get(i).getSKU(), (int) (r[i] * 100));
+        }
+
+        for (IDiscount iDiscount : activityList) {
+            if (iDiscount.getBRule() == 1210) {
+                if (iDiscount instanceof Activity) {
+                    Activity a = (Activity) iDiscount;
+                    Ladoff currLadoff = a.getCurrLadoff();
+
+                    if (currLadoff == null) {
+                        continue;
+                    }
+
+                    if (currLadoff.isPercentage()) {
+                        int total = 0;
+                        for (IProduct iProduct : iDiscount.getProductList()) {
+                            Integer bm = balMap.get(iProduct.getSKU());
+                            if (bm != null) {
+                                total += bm;
+                            }
+                        }
+                        // TODO
+                        rebeatTotal += (int) (total * currLadoff.getOffer());
+                    } else {
+                        rebeatTotal += (int) (currLadoff.getOffer() * 100);
+                    }
+
+                }
+            }
+        }
+
         resultMap.put("bal",bal);
         resultMap.put("debal",0);
         resultMap.put("acpay",payamt);
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
-        resultMap.put("rebeatp", calculate.getRebeatValue());
+        resultMap.put("rebeatp", rebeatTotal / 100.0);
         if(couponUseDTOS.get(0).getBalway() > 0 && bal > 0){
             resultMap.put("bal",bal);
             if(bal >= payamt){
@@ -632,7 +674,38 @@ public class CouponRevModule {
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }
         }
+
         return result.success(resultMap);
+    }
+
+    public static double[] apportionBal(List<IProduct> tranOrderGoodsList, double bal) {
+        double[] dprice = new double[tranOrderGoodsList.size()];
+        double[] result = new double[tranOrderGoodsList.size()];
+        double afterDiscountPrice = .0;
+
+
+        for (int i = 0; i < tranOrderGoodsList.size(); i++) {
+            dprice[i] = tranOrderGoodsList.get(i).getCurrentPrice();
+
+            afterDiscountPrice =
+                    MathUtil.exactAdd(afterDiscountPrice, tranOrderGoodsList.get(i).getCurrentPrice())
+                            .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        }
+
+
+        bal = Math.min(bal, afterDiscountPrice);
+
+        double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
+
+        for (int i = 0; i < tranOrderGoodsList.size(); i++) {
+            result[i] = MathUtil.exactSub(
+                    tranOrderGoodsList.get(i).getCurrentPrice(),
+                    MathUtil.exactSub(dprice[i], cdprice[i]).
+                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue()).
+                    setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
+        }
+
+        return result;
     }
 
 
