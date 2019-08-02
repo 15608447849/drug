@@ -200,9 +200,9 @@ public class ShoppingCartModule {
 
         }
         if(ret > 0){
-            return result.success("新增成功");
+            return result.success("加入采购单成功","新增成功");
         }
-        return result.fail("新增失败");
+        return result.fail("无法加入采购单");
     }
 
 
