@@ -138,4 +138,8 @@ public class Gift {
     public Ladoff getCurrLadoff() {
         return currLadoff;
     }
+
+    public void setCurrLadoff(Ladoff currLadoff) {
+        this.currLadoff = currLadoff;
+    }
 }

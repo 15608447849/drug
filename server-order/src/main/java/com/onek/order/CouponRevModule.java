@@ -767,6 +767,20 @@ public class CouponRevModule {
 
 
 
+    public static int getPayamtByAct(long orderno, int compid, long actcode) {
+        List<Object[]> result = baseDao.queryNativeSharding(compid,
+                TimeUtils.getYearByOrderno(orderno + ""),
+                " SELECT SUM(payamt) "
+                + " FROM {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+                + " WHERE cstatus&1 = 0 AND orderno = ? "
+                + " AND JSON_SEARCH(actcode, 'one', ?) IS NOT NULL ", orderno, actcode);
+
+        if (result.isEmpty()) {
+            return 0;
+        }
+
+        return Integer.parseInt(result.get(0)[0].toString());
+    }
 
     /**
      * 新增满赠券
@@ -774,7 +788,7 @@ public class CouponRevModule {
      * @param giftList
      * @return
      */
-    public static boolean insertGiftCoupon(int compid , List<Gift> giftList, int payamt){
+    public static boolean insertGiftCoupon(int compid, long orderno, List<Gift> giftList){
         List<Object[]> coupParams = new ArrayList<>();
         List<Object[]> stockParams = new ArrayList<>();
         List<String> sqlList = new ArrayList<>();
@@ -834,12 +848,13 @@ public class CouponRevModule {
                         int value = (int) (currLadoff.getOffer() * 100);
 
                         if (currLadoff.isPercentage()) {
-                            value = payamt * (int)(currLadoff.getOffer() * 100);
+                            int currPayamt = getPayamtByAct(orderno, compid, gift.getActivityCode());
+                            value = (int) (currPayamt * currLadoff.getOffer());
                         }
 
                         bal = bal + value;
                         coupSqlList.add(INSERT_GLBCOUPONREV_SQL);
-                        coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,2110,"全局现金券",1,5,0,new Double(gift.getGiftValue() * 100).intValue()});
+                        coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,2110,"全局现金券",1,5,0,value});
                     }
 
                 }else{
@@ -909,9 +924,8 @@ public class CouponRevModule {
         List<Gift> jsonObj = getGifts(orderno, compid);
 
         if (!jsonObj.isEmpty()) {
-            int payamt = getPayamt(orderno, compid);
-
-            return insertGiftCoupon(compid,jsonObj, payamt);
+//            int payamt = getPayamt(orderno, compid);
+            return insertGiftCoupon(compid, orderno, jsonObj);
         }
 
         return false;
