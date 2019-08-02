@@ -565,7 +565,7 @@ public class CouponRevModule {
         Map resultMap = new HashMap();
         List<CouponUseDTO> couponUseDTOS = new ArrayList<>();
         Gson gson = new Gson();
-        List<Product> productList = new ArrayList<>();
+        List<IProduct> productList = new ArrayList<>();
         BigDecimal subCalRet = BigDecimal.ZERO;
         for (JsonElement coupn : jsonArray) {
             CouponUseDTO couponUseDTO = gson.fromJson(coupn, CouponUseDTO.class);
