@@ -2,7 +2,6 @@ package com.onek.goods;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
-import com.alibaba.fastjson.JSON;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -357,9 +356,9 @@ public class MainPageModule {
             if (!StringUtils.isEmpty(params[2])) {
                 response = ProdESUtil.searchProdHasBrand(skuList, params[0], params[1], params[2], 1, 100);
             } else {
-                LogUtil.getDefaultLogger().info("skuList-------------11111111111 " + skuList.size());
+//                LogUtil.getDefaultLogger().info("skuList-------------11111111111 " + skuList.size());
                 attr.actObj = selectAllBarnd(skuList);
-                LogUtil.getDefaultLogger().info("brandList-------------222222222 " + GsonUtils.javaBeanToJson(attr.actObj));
+//                LogUtil.getDefaultLogger().info("brandList-------------222222222 " + GsonUtils.javaBeanToJson(attr.actObj));
                 return;
             }
         } else {
@@ -525,6 +524,7 @@ public class MainPageModule {
                 add(128);
                 add(512);
                 add(1024);
+                add(2048);
             }};
             NumUtil.perComAdd(256, bb, result);
             result.add(256);
@@ -533,6 +533,7 @@ public class MainPageModule {
                 add(128);
                 add(256);
                 add(1024);
+                add(2048);
             }};
             NumUtil.perComAdd(512, bb1, result);
             result.add(512);
@@ -541,17 +542,25 @@ public class MainPageModule {
                 add(128);
                 add(256);
                 add(512);
+                add(2048);
             }};
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
+        } else if (state == -7) {
+            List<Integer> bb1 = new ArrayList() {{
+                add(128);
+                add(256);
+                add(512);
+                add(1024);
+            }};
+            NumUtil.perComAdd(2048, bb1, result);
+            result.add(2048);
         } else {//品牌专区-4 //热销专区 -5 //控销专区 -6
             return getOtherMallFloor(page, isAnonymous, isSign, state, attr, keyword, brandno, manuName);
         }
         Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, isSign, result, keyword, 1, page);
         return (List<ProdVO>) resultMap.get("prodList");
     }
-
-
 
 
     //品牌-4 热销 -5
