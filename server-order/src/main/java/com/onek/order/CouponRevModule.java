@@ -618,7 +618,7 @@ public class CouponRevModule {
         bal = MathUtil.exactDiv(bal,100L).
                 setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
 
-        int rebeatTotal = 0;
+        double rebeatTotal = 0;
         Map<Long, Integer> balMap = new HashMap<>();
 
         double[] r = apportionBal(productList,
@@ -647,9 +647,11 @@ public class CouponRevModule {
                             }
                         }
                         // TODO
-                        rebeatTotal += (int) (total * currLadoff.getOffer());
+                        rebeatTotal = MathUtil.exactAdd(
+                                total * currLadoff.getOffer(), rebeatTotal).doubleValue();
                     } else {
-                        rebeatTotal += (int) (currLadoff.getOffer() * 100);
+                        rebeatTotal = MathUtil.exactAdd(
+                                currLadoff.getOffer() * 100, rebeatTotal).doubleValue();
                     }
 
                 }
@@ -661,7 +663,7 @@ public class CouponRevModule {
         resultMap.put("acpay",payamt);
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
-        resultMap.put("rebeatp", rebeatTotal / 100.0);
+        resultMap.put("rebeatp", MathUtil.exactDiv(rebeatTotal, 100.0).doubleValue());
         if(couponUseDTOS.get(0).getBalway() > 0 && bal > 0){
             resultMap.put("bal",bal);
             if(bal >= payamt){
