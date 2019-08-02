@@ -69,7 +69,7 @@ public class ShoppingCartModule {
 
     //删除购物车信息
     private final String DEL_SHOPCART_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and unqid=?";
+            + " where cstatus&1=0 and unqid=? and orderno=0 ";
 
 
     //查询购物车列表
