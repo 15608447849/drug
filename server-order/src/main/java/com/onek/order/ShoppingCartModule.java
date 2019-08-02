@@ -57,12 +57,12 @@ public class ShoppingCartModule {
 
     //新增数量
     private final String UPDATE_SHOPCART_SQL_EXT = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set pnum = ? " +
-            " where unqid = ? ";
+            " where unqid = ?  and orderno=0 ";
 
 
     //新增数量
     private final String UPDATE_SHOPCART_SQL_NUM = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set pnum =  ? " +
-            " where unqid = ? ";
+            " where unqid = ? and orderno=0 ";
 
 
 
