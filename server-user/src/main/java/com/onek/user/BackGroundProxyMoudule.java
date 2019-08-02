@@ -283,7 +283,9 @@ public class BackGroundProxyMoudule {
 
         //合伙人
         if((roleid & RoleCodeCons._PROXY_MGR) > 0){
-            List<Object[]> queryRet = baseDao.queryNative(QUERY_DIST_AREAC,
+            StringBuilder sqlSb = new StringBuilder(QUERY_DIST_AREAC);
+            sqlSb.append(" and roleid & 1024 = 0 ");
+            List<Object[]> queryRet = baseDao.queryNative(sqlSb.toString(),
                     RoleCodeCons._PROXY_PARTNER);
             List<Object[]> queryParentRet = baseDao.queryNative(QUERY_MY_AREAC, uid);
             if(queryParentRet == null || queryParentRet.isEmpty()){

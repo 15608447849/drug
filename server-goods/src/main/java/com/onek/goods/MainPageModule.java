@@ -372,8 +372,12 @@ public class MainPageModule {
         if (prodVOList.size() > 0) {
             remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, isAnonymous);
             attr.list = prodVOList;
-            page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
-            attr.page =  new PageHolder(page);
+            if(onlySpecActivity && StringUtils.isEmpty(params[2])) {
+                page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
+                attr.page = new PageHolder(page);
+            } else {
+                attr.page = pageHolder;
+            }
         }
     }
 

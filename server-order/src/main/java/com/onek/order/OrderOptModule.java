@@ -172,7 +172,7 @@ public class OrderOptModule {
             b = IceRemoteUtil.insertApprise(json) > 0;
         }
 
-        return b ? result.success("评价成功!") : result.fail("评价失败!");
+        return b ? result.success("感谢您的评价!","评价成功!") : result.fail("评价失败!");
     }
 
 
@@ -249,7 +249,7 @@ public class OrderOptModule {
             return res > 0 ? result.success(asOrderId) : result.fail("申请失败");
 //            }
         }
-        return b ? result.success("申请成功") : result.fail("申请失败");
+        return b ? result.success("您的售后已提交，小药会为您尽快处理！","申请成功") : result.fail("申请失败");
     }
 
     private boolean doApply(List<AsAppVO> asAppVOS, String orderNo, int asType) {
@@ -704,7 +704,7 @@ public class OrderOptModule {
 //        String[] sqlNative = new String[sqlList.size()];
 //        sqlNative = sqlList.toArray(sqlNative);
 //        boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compId, year, sqlNative, params));
-        return re > 0 ? result.success("删除成功") : result.fail("删除失败");
+        return re > 0 ? result.success("订单删除成功","删除成功") : result.fail("订单删除失败");
     }
 
     /**
