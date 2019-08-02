@@ -1,5 +1,6 @@
 package com.onek.calculate.rule;
 
+import com.onek.calculate.entity.Activity;
 import com.onek.calculate.entity.Gift;
 import com.onek.calculate.entity.IDiscount;
 
@@ -8,7 +9,14 @@ import java.util.List;
 public class GiftRuleHandler implements IRuleHandler {
     @Override
     public void subHandler(IDiscount discount, double value, int times) {
-        discount.addGift(Gift.getSubCoupon(value, times, discount.getDiscountNo()));
+        if (discount instanceof Activity) {
+            discount.addGift(
+                    Gift.getSubCoupon(
+                            value, times, discount.getDiscountNo(),
+                            ((Activity) discount).getCurrLadoff()));
+        } else {
+            discount.addGift(Gift.getSubCoupon(value, times, discount.getDiscountNo(), null));
+        }
     }
 
     @Override

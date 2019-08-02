@@ -20,14 +20,16 @@ public class Gift {
     private int nums = 1;
     private int type = TYPE.GIFT;
     private long activityCode;
+    private Ladoff currLadoff;
 
-    public static Gift getSubCoupon(double giftValue, int nums, long activityCode) {
+    public static Gift getSubCoupon(double giftValue, int nums, long activityCode, Ladoff currLadoff) {
         Gift gift = new Gift();
         gift.activityCode = activityCode;
         gift.giftValue = giftValue;
         gift.nums = nums;
         gift.giftName = "现金券";
         gift.type = TYPE.SUB;
+        gift.currLadoff = currLadoff;
 
         return gift;
     }
@@ -131,5 +133,9 @@ public class Gift {
 
     public int getTotalNums() {
         return this.giftNum * this.nums;
+    }
+
+    public Ladoff getCurrLadoff() {
+        return currLadoff;
     }
 }

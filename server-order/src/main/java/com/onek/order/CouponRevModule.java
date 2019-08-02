@@ -774,7 +774,7 @@ public class CouponRevModule {
      * @param giftList
      * @return
      */
-    public static boolean insertGiftCoupon(int compid , List<Gift> giftList){
+    public static boolean insertGiftCoupon(int compid , List<Gift> giftList, int payamt){
         List<Object[]> coupParams = new ArrayList<>();
         List<Object[]> stockParams = new ArrayList<>();
         List<String> sqlList = new ArrayList<>();
@@ -829,9 +829,19 @@ public class CouponRevModule {
 
             for (int i = 0; i < gift.getNums(); i++){
                 if(brule == 2110){
-                    bal = bal + new Double(gift.getGiftValue() * 100).intValue();
-                    coupSqlList.add(INSERT_GLBCOUPONREV_SQL);
-                    coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,2110,"全局现金券",1,5,0,new Double(gift.getGiftValue() * 100).intValue()});
+                    Ladoff currLadoff = gift.getCurrLadoff();
+                    if (currLadoff != null) {
+                        int value = (int) (currLadoff.getOffer() * 100);
+
+                        if (currLadoff.isPercentage()) {
+                            value = payamt * (int)(currLadoff.getOffer() * 100);
+                        }
+
+                        bal = bal + value;
+                        coupSqlList.add(INSERT_GLBCOUPONREV_SQL);
+                        coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,2110,"全局现金券",1,5,0,new Double(gift.getGiftValue() * 100).intValue()});
+                    }
+
                 }else{
                     coupSqlList.add(INSERT_ACCOUPONREV_SQL);
                     coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,
@@ -877,6 +887,20 @@ public class CouponRevModule {
         return JSON.parseArray(queryResult.get(0)[0].toString(), Gift.class);
     }
 
+    private static int getPayamt(long orderno, int compid) {
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compid,
+                TimeUtils.getYearByOrderno(orderno + ""),
+                " SELECT payamt "
+                + " FROM {{?" + DSMConst.TD_TRAN_ORDER + "}} "
+                + " WHERE cstatus&1 = 0 AND orderno = ? ", orderno);
+
+        if (queryResult.isEmpty()) {
+            return 0;
+        }
+
+        return Integer.parseInt(queryResult.get(0)[0].toString());
+    }
+
     public static boolean revGiftCoupon(long orderno,int compid){
         if(compid <= 0 || orderno <= 0){
             return false;
@@ -884,7 +908,13 @@ public class CouponRevModule {
 
         List<Gift> jsonObj = getGifts(orderno, compid);
 
-        return !jsonObj.isEmpty() && insertGiftCoupon(compid,jsonObj);
+        if (!jsonObj.isEmpty()) {
+            int payamt = getPayamt(orderno, compid);
+
+            return insertGiftCoupon(compid,jsonObj, payamt);
+        }
+
+        return false;
     }
 
     /**
