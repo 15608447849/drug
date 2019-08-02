@@ -57,19 +57,19 @@ public class ShoppingCartModule {
 
     //新增数量
     private final String UPDATE_SHOPCART_SQL_EXT = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set pnum = ? " +
-            " where unqid = ? ";
+            " where unqid = ?  and orderno=0 ";
 
 
     //新增数量
     private final String UPDATE_SHOPCART_SQL_NUM = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set pnum =  ? " +
-            " where unqid = ? ";
+            " where unqid = ? and orderno=0 ";
 
 
 
 
     //删除购物车信息
     private final String DEL_SHOPCART_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set cstatus=cstatus|1 "
-            + " where cstatus&1=0 and unqid=?";
+            + " where cstatus&1=0 and unqid=? and orderno=0 ";
 
 
     //查询购物车列表
