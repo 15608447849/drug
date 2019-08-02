@@ -103,10 +103,10 @@ public class MyFootprintModule {
                    return new Result().fail("删除失败");
                }
            }
-            return new Result().success("删除成功");
+            return new Result().success("商品足迹移除成功","删除成功");
         }
 
-        return new Result().fail("删除失败");
+        return new Result().fail("商品足迹移除失败");
     }
 
     private class ResultItem{

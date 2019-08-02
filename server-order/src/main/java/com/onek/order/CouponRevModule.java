@@ -362,7 +362,7 @@ public class CouponRevModule {
                 int ret = IceRemoteUtil.couponRevRecord(couponVO.getCompid(),
                         Long.parseLong(couponVO.getCoupno()),couponVO.getQlfno());
                 if(ret > 0){
-                    return result.success("领取成功");
+                    return result.success("优惠券领取成功","领取成功");
                 }
                 baseDao.updateNativeSharding(couponVO.getCompid(),
                         TimeUtils.getCurrentYear(),DEL_COUPON_SQL,unqid);
@@ -373,7 +373,7 @@ public class CouponRevModule {
                         getCurrentYear(),DEL_COUPON_SQL,unqid);
             }
         }
-        return result.success("领取失败");
+        return result.success("优惠券领取失败");
 
 
 //        ret = IceRemoteUtil.updateNative(INSERT_COURCD,

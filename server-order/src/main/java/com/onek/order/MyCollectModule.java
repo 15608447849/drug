@@ -76,7 +76,7 @@ public class MyCollectModule {
         if (p.sku > 0){
             add(p,compId);
         }
-        return new Result().success("收藏成功");
+        return new Result().success("商品已添加到收藏夹","收藏成功");
     }
 
     public Result add(Param p,int compId){
@@ -211,9 +211,9 @@ public class MyCollectModule {
         int compId = appContext.getUserSession().compId;
         int i = delDataById(p.unqid,p.sku,compId);
         if (i > 0){
-            return new Result().success("删除成功");
+            return new Result().success("商品移除收藏夹成功","删除成功");
         }
-        return new Result().fail("删除失败");
+        return new Result().fail("商品移除收藏夹失败");
     }
 
     //根据ID删除数据
