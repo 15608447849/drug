@@ -43,3 +43,4 @@ server-order/src/main/java/cstruct.js
 server-report/out/production/classes/
 server-report/src/main/resources/
 server-report/out/
+*.log
