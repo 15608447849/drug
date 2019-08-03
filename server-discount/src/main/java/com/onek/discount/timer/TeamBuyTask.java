@@ -71,8 +71,8 @@ public class TeamBuyTask extends TimerTask {
 
                         int offer = 0;
                         Set<String> compSet = new HashSet<>();
-                        for(Object o : array){
-                            LinkedTreeMap map = ((LinkedTreeMap) o);
+                        for(int k = 0 ; k < array.size(); k++){
+                            JSONObject map = array.getJSONObject(k);
                             String compid = map.get("compid").toString();
                             compSet.add(compid);
                         }
