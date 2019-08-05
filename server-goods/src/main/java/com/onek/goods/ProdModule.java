@@ -1475,7 +1475,7 @@ public class ProdModule {
                             prodVO.setRulestatus(0);
                             prodVO.setActprod(false);
                             prodVO.setMutiact(false);
-                            prodVO.setMinprize(purchaseprice);
+                            prodVO.setMinprize(NumUtil.div(prodVO.getVatp(), 100));
                             prodVO.setMaxprize(NumUtil.div(prodVO.getVatp(), 100));
                             prodVO.setActprize(NumUtil.div(prodVO.getVatp(), 100));
                             purchaseprice = NumUtil.div(prodVO.getVatp(), 100);;
