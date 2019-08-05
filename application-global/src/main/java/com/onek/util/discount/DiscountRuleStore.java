@@ -68,6 +68,10 @@ public class DiscountRuleStore {
             double offerValue = ladoff.getOffer();
             String offer = offerValue + "";
 
+            if (ladoff.isExActivity()) {
+                return "不参与返利";
+            }
+
             StringBuilder giftName = new StringBuilder();
 
             if (one == 2) {

@@ -519,8 +519,10 @@ public class BackgroundProdModule {
             result.setRrp(-1);
             result.setMp(-1);
             result.setVatp(-1);
-        } else if (!appContext.isSignControlAgree()) {
-            if ((result.getConsell() & 1) > 0) {
+        } else {
+            int controlCode = appContext.getUserSession().comp.controlCode;
+            int resultConsell = result.getConsell();
+            if ((controlCode & resultConsell) != resultConsell) {
                 result.setRrp(-2);
                 result.setMp(-2);
                 result.setVatp(-2);
