@@ -10,7 +10,6 @@ import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.AppriseVO;
 import com.onek.goods.entities.ProdVO;
-import com.onek.goods.service.MallFloorImpl;
 import com.onek.goods.util.ProdActPriceUtil;
 import com.onek.goods.util.ProdESUtil;
 import com.onek.util.GenIdUtil;
@@ -23,9 +22,6 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.search.SearchHit;
-import org.elasticsearch.search.SearchHits;
-import redis.IRedisCache;
-import redis.proxy.CacheProxyInstance;
 import redis.util.RedisUtil;
 import util.*;
 
@@ -43,13 +39,6 @@ import java.util.*;
 @SuppressWarnings({"unchecked"})
 public class ProdModule {
 
-    /**
-     * 过滤做大商品数量，大于当前数量显示出楼层
-     **/
-    private static int MAX_SELECT_PRO_NUM = 0;
-
-    private static IRedisCache mallFloorProxy = (IRedisCache) CacheProxyInstance.createInstance(new MallFloorImpl());
-
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
 
     //商品评价
@@ -59,9 +48,6 @@ public class ProdModule {
             + " values(?,?,?,?,?,"
             + "?,CURRENT_DATE,CURRENT_TIME,0,?,"
             + "?)";
-
-    private static String TEAM_BUY_LADOFF_SQL = "select ladamt,ladnum,offer from " +
-            "{{?" + DSMConst.TD_PROM_RELA + "}} r, {{?" + DSMConst.TD_PROM_LADOFF + "}} l where r.ladid = l.unqid and l.offercode like '1133%' and r.actcode = ? and r.cstatus&1=0 ";
 
     private static final String QUERY_SPU = "select spu from {{?" + DSMConst.TD_PROD_SPU + "}} where spu REGEXP ?";
 
@@ -387,38 +373,6 @@ public class ProdModule {
         PageHolder pageHolder = new PageHolder(page);
         pageHolder.value = page;
         return r.setQuery(resultList, pageHolder);
-    }
-
-    private static Map<String, Object> getFilterHotProds(AppContext appContext, String keyword, int pageNum, int pageSize) {
-        Map<String, Object> resultMap = new HashMap<>();
-        SearchResponse response = ProdESUtil.searchHotProd(0, keyword, pageNum, pageSize);
-        List<ProdVO> prodList = new ArrayList<>();
-        if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
-            SearchHits hits = response.getHits();
-            if (hits.totalHits > 0) {
-                assembleData(appContext, response, prodList);
-            }
-        }
-
-        resultMap.put("response", response);
-        resultMap.put("prodList", prodList);
-        return resultMap;
-    }
-
-
-    private static Map<String, Object> getFilterProdsCommon(AppContext context, Set<Integer> result, String keyword, int sort, int pageNum, int pageSize) {
-        Map<String, Object> resultMap = new HashMap<>();
-        SearchResponse response = ProdESUtil.searchProdWithStatusList(result, keyword, sort, pageNum, pageSize);
-        List<ProdVO> prodList = new ArrayList<>();
-        if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
-            SearchHits hits = response.getHits();
-            if (hits.totalHits > 0) {
-                assembleData(context, response, prodList);
-            }
-        }
-        resultMap.put("response", response);
-        resultMap.put("prodList", prodList);
-        return resultMap;
     }
 
     private static void assembleData(AppContext context, SearchResponse response, List<ProdVO> prodList) {
@@ -755,7 +709,6 @@ public class ProdModule {
         return isAll;
     }
 
-
     public static class GetEffectiveTimeByActCode {
         private List<String[]> times;
         private String sdate;
@@ -830,8 +783,6 @@ public class ProdModule {
         return result.setQuery(appriseVOS, pageHolder);
     }
 
-
-
     /**
      * @接口摘要 订单评价商品接口
      * @业务场景
@@ -858,8 +809,5 @@ public class ProdModule {
         return !ModelUtil.updateTransEmpty(BASE_DAO.updateBatchNativeSharding(0, localDateTime.getYear(),
                 INSERT_APPRISE_SQL, params, params.size())) ? 1 : 0;
     }
-
-
-
 
 }
