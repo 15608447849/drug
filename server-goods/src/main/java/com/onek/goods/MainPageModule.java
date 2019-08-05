@@ -523,7 +523,7 @@ public class MainPageModule {
                     } else if (ruleCode == 1114) {//套餐
                         prodVO.setActprize(NumUtil.div(price, 100));
                     }else {
-                        prodVO.setActprize(NumUtil.div(prodVO.getVatp(), 100));
+                        prodVO.setActprize(0);
                     }
                 }
 
