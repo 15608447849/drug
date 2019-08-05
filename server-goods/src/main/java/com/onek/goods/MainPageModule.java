@@ -404,10 +404,11 @@ public class MainPageModule {
             prodVO.setLadOffDesc(ProdActPriceUtil.getLoadOffBySku(prodVO.getSku()));
 
             double purchaseprice = NumUtil.div(prodVO.getVatp(), 100);
-            if (dataMap == null && (ruleStatus & 2048) > 0) {
+            if (prodVO.getActprize() != 0) {
+                purchaseprice = prodVO.getActprize();
+            } else if ((ruleStatus&2048) > 0){
                 ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), purchaseprice);
                 if (prizeEntity != null) {
-                    purchaseprice = prizeEntity.getMinactprize();
                     // 代表值存在一个活动
                     if (prizeEntity.getActcode() > 0) {
                         List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
