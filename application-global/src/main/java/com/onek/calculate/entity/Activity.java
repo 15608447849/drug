@@ -400,6 +400,10 @@ public class Activity extends AccurateMath implements IDiscount {
         return this.currLadoff == null ? "" : this.currLadoff.getLadoffDesc();
     }
 
+    public boolean isExActivity() {
+        return this.incpriority == 6;
+    }
+
     public String getNextLadoffDesc() {
         return DiscountRuleStore.getGapActivityDesc(this);
     }

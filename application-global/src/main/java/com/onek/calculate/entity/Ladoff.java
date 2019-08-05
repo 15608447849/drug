@@ -88,6 +88,8 @@ public class Ladoff {
         return (this.cstatus & 256) > 0;
     }
 
+    public boolean isExActivity() { return this.ladamt == 0 && this.ladnum == 0 && this.offer == 0; }
+
     public String getLadoffDesc() {
         return DiscountRuleStore.getLadoffDesc(this);
     }
