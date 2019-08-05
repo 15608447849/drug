@@ -1637,6 +1637,9 @@ public class BackGroundProxyMoudule {
         //修改门店类型
         String updCompSQL = "update {{?" + DSMConst.TB_COMP + "}} set storetype=?,control=? "
                 + " where cstatus&1=0 and cid=?";
+        if (control == 3) {//强控销
+            updCompSQL = updCompSQL + " and control&1>0";
+        }
         params.add(new Object[]{storetype, control, compId});
         return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{optInvSQL, updCompSQL}, params));
     }
