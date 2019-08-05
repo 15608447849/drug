@@ -64,6 +64,8 @@ public class ProdVO {
     private int grossProfit;//毛利润
     private List<String> ladOffDesc;//毛利润
 
+    private double purchaseprice;
+
     public int getGrossProfit() {
         return grossProfit;
     }
@@ -424,5 +426,25 @@ public class ProdVO {
 
     public void setLadOffDesc(List<String> ladOffDesc) {
         this.ladOffDesc = ladOffDesc;
+    }
+
+    public int getCart() {
+        return cart;
+    }
+
+    public void setCart(int cart) {
+        this.cart = cart;
+    }
+
+    public void setGrossProfit(int grossProfit) {
+        this.grossProfit = grossProfit;
+    }
+
+    public double getPurchaseprice() {
+        return purchaseprice;
+    }
+
+    public void setPurchaseprice(double purchaseprice) {
+        this.purchaseprice = purchaseprice;
     }
 }

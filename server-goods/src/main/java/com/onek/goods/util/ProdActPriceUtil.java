@@ -10,6 +10,7 @@ import com.onek.goods.service.PromRuleService;
 import com.onek.goods.service.PromTimeService;
 import com.onek.util.RedisGlobalKeys;
 import com.onek.util.prod.ProdPriceEntity;
+import org.hyrdpf.util.LogUtil;
 import redis.provide.RedisStringProvide;
 import redis.util.RedisUtil;
 
@@ -123,9 +124,9 @@ public class ProdActPriceUtil {
                     entity = new ProdPriceEntity();
                     entity.setSku(sku);
                     entity.setVatp(vatp);
+                    entity.setMinactprize(vatp);
+                    entity.setMaxactprize(vatp);
                 }
-                entity.setMinactprize(vatp);
-                entity.setMaxactprize(vatp);
                 prizeIntervalMap.put(sku, entity);
             }
             versionIntervalMap.put(sku, v);
@@ -277,6 +278,9 @@ public class ProdActPriceUtil {
             for(IProduct product : discountProduct){
                 if(sku == product.getSKU()){
                     actPrize = product.getCurrentPrice();
+
+                    LogUtil.getDefaultLogger().info("####### " + sku + " ########## " + actPrize);
+
                     if(minPrize <= actPrize || minPrize == 0){
                         minPrize = actPrize;
                     }
@@ -287,6 +291,8 @@ public class ProdActPriceUtil {
             }
 
         }
+
+        LogUtil.getDefaultLogger().info("####### " + minPrize + " ########## " + maxPrize);
 
         ProdPriceEntity entity = new ProdPriceEntity();
         entity.setSku(sku);
