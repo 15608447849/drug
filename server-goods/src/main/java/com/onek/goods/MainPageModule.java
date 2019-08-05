@@ -409,6 +409,7 @@ public class MainPageModule {
             } else if ((ruleStatus&2048) > 0){
                 ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), purchaseprice);
                 if (prizeEntity != null) {
+                    purchaseprice = prizeEntity.getMinactprize();
                     // 代表值存在一个活动
                     if (prizeEntity.getActcode() > 0) {
                         List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
