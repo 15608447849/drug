@@ -105,7 +105,7 @@ public class MainPageModule {
             if (bRuleCodes < 0 && bRuleCodes >= -10 && !onlySpecActivity) {
                 //非活动专区
                 if (isQuery) {
-                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context.isAnonymous(), context.isSignControlAgree(),
+                    List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context,
                             page, attr, keyword, brandno, manuName);
                     if (prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
@@ -232,8 +232,7 @@ public class MainPageModule {
         if (actCodeSB.toString().contains(",")) {
             actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
             //获取活动下的商品
-            getActGoods(attr, page, context.isAnonymous(), context.isSignControlAgree(),actCodeStr,
-                    otherArr, onlySpecActivity, params);
+            getActGoods(attr, page, context,actCodeStr, otherArr, onlySpecActivity, params);
         }
     }
 
@@ -296,7 +295,7 @@ public class MainPageModule {
     }
 
 
-    private static void getActGoods(Attr attr, Page page, boolean isAnonymous,boolean isSign,
+    private static void getActGoods(Attr attr, Page page, AppContext context,
                                     String actCodeStr, String[] otherArr, boolean onlySpecActivity,String[] params) {
 //        LogUtil.getDefaultLogger().info("参数111111111111---------0000000000000000000 " + Arrays.toString(params));
         PageHolder pageHolder = new PageHolder(page);
@@ -365,11 +364,11 @@ public class MainPageModule {
             response = ProdESUtil.searchProdBySpuList(skuList, params[0], 1, 100);
         }
         if (response != null && response.getHits().totalHits > 0) {
-            assembleData(isAnonymous, isSign, response, prodVOList, dataMap, otherArr);
+            assembleData(context, response, prodVOList, dataMap, otherArr);
             page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
         }
         if (prodVOList.size() > 0) {
-            remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, isAnonymous);
+            remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, context.isAnonymous());
             attr.list = prodVOList;
             if(onlySpecActivity && StringUtils.isEmpty(params[2])) {
                 page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
@@ -380,7 +379,7 @@ public class MainPageModule {
         }
     }
 
-    public static void assembleData(boolean isAnonymous, boolean isSign, SearchResponse response, List<ProdVO> prodList,
+    public static void assembleData(AppContext context, SearchResponse response, List<ProdVO> prodList,
                                      Map<Long, String[]> dataMap, String[] otherArr) {
         if (response == null || response.getHits().totalHits <= 0) {
             return;
@@ -402,19 +401,22 @@ public class MainPageModule {
             //商品参加活动描述
             prodVO.setLadOffDesc(ProdActPriceUtil.getLoadOffBySku(prodVO.getSku()));
 
-            if (isAnonymous) {//无权限价格不可见
+            if (context.isAnonymous()) {//无权限价格不可见
                 prodVO.setVatp(-1);
                 prodVO.setMp(-1);
                 prodVO.setRrp(-1);
+                prodVO.setActprize(-1);
             } else {
-                if (prodVO.getConsell() > 0 && !isSign) {//控销商品未签约价格不可见
-                    prodVO.setVatp(-2);
-                    prodVO.setMp(-2);
-                    prodVO.setRrp(-2);
-                } else {
+                int controlCode = context.getUserSession() != null ? context.getUserSession().comp.controlCode : 0;
+                if ((prodVO.getConsell() & controlCode) == prodVO.getConsell()) {
                     prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
                     prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
                     prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+                } else {//控销商品未签约价格不可见
+                    prodVO.setVatp(-2);
+                    prodVO.setMp(-2);
+                    prodVO.setRrp(-2);
+                    prodVO.setActprize(-2);
                 }
             }
             prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
@@ -515,7 +517,7 @@ public class MainPageModule {
      * @time  2019/6/29 14:41
      * @version 1.1.1
      **/
-    private static List<ProdVO> getFloorByState(long state, boolean isAnonymous, boolean isSign, Page page,
+    private static List<ProdVO> getFloorByState(long state, AppContext context, Page page,
                                                  Attr attr,String keyword, String brandno,  String manuName) {
 
         Set<Integer> result = new HashSet<>();
@@ -556,15 +558,15 @@ public class MainPageModule {
             NumUtil.perComAdd(2048, bb1, result);
             result.add(2048);
         } else {//品牌专区-4 //热销专区 -5 //控销专区 -6
-            return getOtherMallFloor(page, isAnonymous, isSign, state, attr, keyword, brandno, manuName);
+            return getOtherMallFloor(page, context, state, attr, keyword, brandno, manuName);
         }
-        Map<String, Object> resultMap = getFilterProdsCommon(isAnonymous, isSign, result, keyword, 1, page);
+        Map<String, Object> resultMap = getFilterProdsCommon(context, result, keyword, 1, page);
         return (List<ProdVO>) resultMap.get("prodList");
     }
 
 
     //品牌-4 热销 -5
-    private static List<ProdVO> getOtherMallFloor(Page page, boolean isAnonymous, boolean isSign,
+    private static List<ProdVO> getOtherMallFloor(Page page, AppContext context,
                                                   long state, Attr attr, String keyword, String brandno, String manuName) {
 
         SearchResponse response = null;
@@ -586,7 +588,7 @@ public class MainPageModule {
         }
         page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
         List<ProdVO> prodList = new ArrayList<>();
-        assembleData(isAnonymous, isSign, response, prodList, null, null);
+        assembleData(context, response, prodList, null, null);
         return prodList;
     }
 
@@ -655,7 +657,7 @@ public class MainPageModule {
 
 
 
-    private static Map<String, Object> getFilterProdsCommon(boolean isAnonymous, boolean isSign, Set<Integer> result,
+    private static Map<String, Object> getFilterProdsCommon(AppContext context, Set<Integer> result,
                                                             String keyword, int sort, Page page) {
         Map<String, Object> resultMap = new HashMap<>();
         SearchResponse response = ProdESUtil.searchProdWithStatusList(result, keyword, sort, page.pageIndex, page.pageSize);
@@ -663,7 +665,7 @@ public class MainPageModule {
         if (response != null && response.getHits() != null && response.getHits().totalHits > 0) {
             SearchHits hits = response.getHits();
             if (hits.totalHits > 0) {
-                assembleData(isAnonymous, isSign,response, prodList, null, null);
+                assembleData(context,response, prodList, null, null);
             }
             page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
         }

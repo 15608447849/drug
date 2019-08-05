@@ -71,7 +71,7 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
         return this;
     }
 
-    private String logo = " ";
+    private String logo;
     public HttpRequest setLogoText(String logo){
         this.logo = logo;
         return this;
@@ -106,7 +106,9 @@ public class HttpRequest extends HttpUtil.CallbackAbs  {
         headParams.put("specify-path",join(pathList,";"));
         headParams.put("specify-filename",join(nameList,";"));
         headParams.put("tailor-list",join(nameList,";"));
-        try { headParams.put("image-logo",URLEncoder.encode(URLEncoder.encode(logo,"UTF-8"),"UTF-8")); } catch (UnsupportedEncodingException ignored) { }
+       if (logo != null) {
+           headParams.put("image-logo","true" ) ;
+       }
         new HttpUtil.Request(url, HttpUtil.Request.POST, this)
                 .setFormSubmit()
                 .setParams(headParams)

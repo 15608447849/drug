@@ -1446,21 +1446,8 @@ public class ProdModule {
         //商品参加活动描述
         prodVO.setLadOffDesc(ProdActPriceUtil.getLoadOffBySku(prodVO.getSku()));
 
-        if (context.isAnonymous()) {//无权限价格不可见
-            prodVO.setVatp(-1);
-            prodVO.setMp(-1);
-            prodVO.setRrp(-1);
-        } else {
-            if (prodVO.getConsell() > 0 && !context.isSignControlAgree()) {//控销商品未签约价格不可见
-                prodVO.setVatp(-2);
-                prodVO.setMp(-2);
-                prodVO.setRrp(-2);
-            } else {
-                prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
-                prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
-                prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
-            }
-        }
+        // 列表显示购进价
+        double purchaseprice = NumUtil.div(prodVO.getVatp(), 100);
 
         // 表示存在活动
         if (ruleStatus > 0) {
@@ -1471,11 +1458,12 @@ public class ProdModule {
             }
 
             if ((ruleStatus & 2048) > 0) { // 秒杀
-                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
+                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), purchaseprice);
                 if (prizeEntity != null) {
                     prodVO.setMinprize(prizeEntity.getMinactprize());
                     prodVO.setMaxprize(prizeEntity.getMaxactprize());
                     prodVO.setActcode(prizeEntity.getActcode() + "");
+                    purchaseprice = prizeEntity.getMinactprize();
                     // 代表值存在一个活动
                     if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
                         List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
@@ -1487,9 +1475,10 @@ public class ProdModule {
                             prodVO.setRulestatus(0);
                             prodVO.setActprod(false);
                             prodVO.setMutiact(false);
-                            prodVO.setMinprize(prodVO.getVatp());
-                            prodVO.setMaxprize(prodVO.getVatp());
-                            prodVO.setActprize(prodVO.getVatp());
+                            prodVO.setMinprize(NumUtil.div(prodVO.getVatp(), 100));
+                            prodVO.setMaxprize(NumUtil.div(prodVO.getVatp(), 100));
+                            prodVO.setActprize(NumUtil.div(prodVO.getVatp(), 100));
+                            purchaseprice = NumUtil.div(prodVO.getVatp(), 100);;
                             prodVO.setActcode(prizeEntity.getActcode() + "");
                         } else {
                             prodVO.setSdate(sdate);
@@ -1503,34 +1492,59 @@ public class ProdModule {
                         }
                     }
                 }
-            } else {
-                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
-                if (prizeEntity != null) {
-                    prodVO.setMinprize(prizeEntity.getMinactprize());
-                    prodVO.setMaxprize(prizeEntity.getMaxactprize());
-                    prodVO.setActcode(prizeEntity.getActcode() + "");
-                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
-                    // 代表值存在一个活动
-                    if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
-                        List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
-                        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
-                        String sdate = getEffectiveTimeByActCode.getSdate();
-                        String edate = getEffectiveTimeByActCode.getEdate();
+            }
 
-                        if (StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate) || surplusStock <= 0) { // // 表示搜索的商品不在活动时间内
-                            prodVO.setRulestatus(0);
-                            prodVO.setActprod(false);
-                            prodVO.setMutiact(false);
-                        }
-                    } else if (prizeEntity.getActcode() == 0) { // 没有活动
-                        prodVO.setRulestatus(0);
-                        prodVO.setActprod(false);
-                        prodVO.setMutiact(false);
-                    }
+//            else {
+//                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
+//                if (prizeEntity != null) {
+//                    prodVO.setMinprize(prizeEntity.getMinactprize());
+//                    prodVO.setMaxprize(prizeEntity.getMaxactprize());
+//                    prodVO.setActcode(prizeEntity.getActcode() + "");
+//                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), prizeEntity.getActcode());
+//                    // 代表值存在一个活动
+//                    if (prizeEntity.getActcode() > 0 && bits.size() == 1) {
+//                        List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
+//                        GetEffectiveTimeByActCode getEffectiveTimeByActCode = new GetEffectiveTimeByActCode(times).invoke();
+//                        String sdate = getEffectiveTimeByActCode.getSdate();
+//                        String edate = getEffectiveTimeByActCode.getEdate();
+//
+//                        if (StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate) || surplusStock <= 0) { // // 表示搜索的商品不在活动时间内
+//                            prodVO.setRulestatus(0);
+//                            prodVO.setActprod(false);
+//                            prodVO.setMutiact(false);
+//                        }
+//                    } else if (prizeEntity.getActcode() == 0) { // 没有活动
+//                        prodVO.setRulestatus(0);
+//                        prodVO.setActprod(false);
+//                        prodVO.setMutiact(false);
+//                    }
+//
+//                }
+//            }
+        }
 
-                }
+        if (context.isAnonymous()) {//无权限价格不可见
+            prodVO.setVatp(-1);
+            prodVO.setMp(-1);
+            prodVO.setRrp(-1);
+            prodVO.setActprize(-1);
+            prodVO.setPurchaseprice(-1);
+        } else {
+            int controlCode = context.getUserSession() != null ? context.getUserSession().comp.controlCode : 0;
+            if ((prodVO.getConsell() & controlCode) == prodVO.getConsell()) {
+                prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
+                prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
+                prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+                prodVO.setPurchaseprice(purchaseprice);
+            } else {//控销商品未签约价格不可见
+                prodVO.setVatp(-2);
+                prodVO.setMp(-2);
+                prodVO.setRrp(-2);
+                prodVO.setActprize(-2);
+                prodVO.setPurchaseprice(-2);
             }
         }
+
         try {
             DictStore.translate(prodVO);
         } catch (Exception e) {
