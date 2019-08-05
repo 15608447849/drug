@@ -927,9 +927,11 @@ public class CouponRevModule {
                             value = (int) (currPayamt * currLadoff.getOffer());
                         }
 
-                        bal = bal + value;
-                        coupSqlList.add(INSERT_GLBCOUPONREV_SQL);
-                        coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,2110,"全局现金券",1,5,0,value});
+                        if (value > 0) {
+                            bal = bal + value;
+                            coupSqlList.add(INSERT_GLBCOUPONREV_SQL);
+                            coupParams.add(new Object[]{GenIdUtil.getUnqId(),couponResult.getCoupno(),compid,2110,"全局现金券",1,5,0,value});
+                        }
                     }
 
                 }else{

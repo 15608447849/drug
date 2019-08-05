@@ -138,12 +138,11 @@ public class ShoppingCartModule {
             return result.fail("查询商品失败");
         }
 
-        if (!appContext.isSignControlAgree()) {
-            int consell = Integer.parseInt(queryInvRet.get(0)[4].toString());
+        int controlCode = appContext.getUserSession().comp.controlCode;
+        int resultConsell = Integer.parseInt(queryInvRet.get(0)[4].toString());
 
-            if ((consell&1) > 0) {
-                return result.fail("此为控销商品，您无权加入购物车！");
-            }
+        if ((resultConsell & controlCode) != resultConsell) {
+            return result.fail("此为控销商品，您无权加入购物车！");
         }
 
         int prodScope = Integer.parseInt(queryInvRet.get(0)[3].toString());
@@ -904,8 +903,9 @@ public class ShoppingCartModule {
                                 JSON.toJSONString(activity));
 
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
+                        shoppingCartVO.setExActivity(activity.isExActivity());
 
-                        if (pList.size() == 1) {
+                        if (pList.size() == 1 || activity.isExActivity()) {
                             shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
                             shoppingCartVO.addNextLadDesc(brule, activity.getNextLadoffDesc());
                         }

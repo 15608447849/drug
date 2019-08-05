@@ -114,6 +114,16 @@ public class ShoppingCartVO {
 
     private boolean isExCoupon;
 
+    private boolean exActivity;
+
+    public boolean isExActivity() {
+        return exActivity;
+    }
+
+    public void setExActivity(boolean exActivity) {
+        this.exActivity = exActivity;
+    }
+
     public boolean isExCoupon() {
         return isExCoupon;
     }
