@@ -53,6 +53,8 @@ public class GoodsVO {
 
     private int priceType;
 
+    private int pkgprodnum;
+
     public double getPrice() {
         return price;
     }
@@ -180,5 +182,13 @@ public class GoodsVO {
 
     public void setPriceType(int priceType) {
         this.priceType = priceType;
+    }
+
+    public int getPkgprodnum() {
+        return pkgprodnum;
+    }
+
+    public void setPkgprodnum(int pkgprodnum) {
+        this.pkgprodnum = pkgprodnum;
     }
 }
