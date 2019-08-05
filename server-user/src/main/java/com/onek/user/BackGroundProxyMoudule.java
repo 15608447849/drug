@@ -1591,6 +1591,10 @@ public class BackGroundProxyMoudule {
                     }
                 }
             }
+            int oldControl = getCompInfo(compId).getControl();
+            if (compInfoVO.getControl() == 3 && (oldControl&1) == 0) {
+                return result.fail("需签订控销协议，才能签订强控销协议！");
+            }
             //判断必填资质是否都有
 //            String checkStr = checkAptInfo(storetype, aTypeList);
 //            if (checkStr != null) {
@@ -1637,9 +1641,6 @@ public class BackGroundProxyMoudule {
         //修改门店类型
         String updCompSQL = "update {{?" + DSMConst.TB_COMP + "}} set storetype=?,control=? "
                 + " where cstatus&1=0 and cid=?";
-        if (control == 3) {//强控销
-            updCompSQL = updCompSQL + " and control&1>0";
-        }
         params.add(new Object[]{storetype, control, compId});
         return !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{optInvSQL, updCompSQL}, params));
     }
