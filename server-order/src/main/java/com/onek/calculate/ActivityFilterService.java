@@ -57,7 +57,7 @@ public class ActivityFilterService extends BaseDiscountFilterService {
                     + " AND act.sdate <= CURRENT_DATE "
                     + " AND CURRENT_DATE <= act.edate"
                     // 全局通用， 品类，商品
-                    + " AND (ass.menucode = ? OR ass.gcode = 0)) "
+                    + " AND (ass.menucode = ? OR (ass.gcode = 0 AND act.incpriority = 0 ))) "
                     + " INNER JOIN {{?" + DSMConst.TD_PROM_TIME + "}} time "
                     + " ON time.cstatus&1 = 0 "
                     + " AND time.actcode = act.unqid "
