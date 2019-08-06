@@ -423,6 +423,9 @@ public class TranOrderOptModule {
         });
         DiscountResult discountResult = CalculateUtil.calculate(tranOrder.getCusno(), tempProds, coupon);
 
+        if (discountResult.isPkgExpired()) {
+            throw new IllegalArgumentException("含有过期/非法套餐，请重新选择！");
+        }
 
         // 保存返利信息
         if (!discountResult.getGiftList().isEmpty()) {
