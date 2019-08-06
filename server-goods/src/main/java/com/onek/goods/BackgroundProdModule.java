@@ -531,9 +531,6 @@ public class BackgroundProdModule {
 
 
 
-
-        JSONObject jo = JSON.parseObject(JSON.toJSONString(result));
-
         /*
          * 是否登陆
          * 如果登陆成功则存在UserSession 获取其中compid企业码
@@ -561,10 +558,14 @@ public class BackgroundProdModule {
                         new PriorityFilter(),
                         new StoreFilter(),})
                 .getCurrentActivities(products);
-
+        appContext.logger.print("活动价格 = " + p.getCurrentPrice());
         //设置毛利润
-        result.setGrossProfit(result.getRrp(),p.getCurrentPrice());
-
+        if(discounts == null || discounts.size()<=0){
+            result.setGrossProfit(result.getRrp(), result.getVatp());
+        }else {
+            result.setGrossProfit(result.getRrp(), p.getCurrentPrice());
+        }
+        JSONObject jo = JSON.parseObject(JSON.toJSONString(result));
         if(discounts == null || discounts.size()<=0){
             jo.put("appLimitnum",0);
         }else{
