@@ -66,6 +66,8 @@ public class ProdVO {
 
     private double purchaseprice;
 
+    private int pkgprodnum;
+
     public int getGrossProfit() {
         return grossProfit;
     }
@@ -446,5 +448,13 @@ public class ProdVO {
 
     public void setPurchaseprice(double purchaseprice) {
         this.purchaseprice = purchaseprice;
+    }
+
+    public int getPkgprodnum() {
+        return pkgprodnum;
+    }
+
+    public void setPkgprodnum(int pkgprodnum) {
+        this.pkgprodnum = pkgprodnum;
     }
 }
