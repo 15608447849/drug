@@ -14,7 +14,6 @@ import util.StringUtils;
 
 import java.util.List;
 
-import static com.onek.goods.entities.BGWishListVO._QUERY_WISHLIST;
 
 /**
  * @Author: leeping
@@ -22,6 +21,25 @@ import static com.onek.goods.entities.BGWishListVO._QUERY_WISHLIST;
  */
 public class WishListModule {
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
+    /**运营后台查询心愿单详情*/
+    private static  String _QUERY_WISHLIST = "SELECT" +
+            "wl.cid cid,"+
+            "comp.cname cname," +
+            "wl.prodname prodname," +
+            "wl.manuname manuname," +
+            "wl.spec spec," +
+            "wl.num num," +
+            "wl.dtaile dtaile," +
+            "wl.price/100 price," +
+            "CONCAT( wl.submitdate, ' ', wl.submittime ) submitdate," +
+            "CONCAT( wl.auditdate, ' ', wl.audittime ) auditdate," +
+            "su.urealname auditname ," +
+            "wl.cstatus cstatus, " +
+            "wl.auditid auditid" +
+            "FROM" +
+            "{{?" + DSMConst.TD_WISH_LIST + "}} wl" +
+            "LEFT JOIN {{? " + DSMConst.TB_COMP + " }} comp ON wl.cid = comp.cid" +
+            "LEFT JOIN {{? " + DSMConst.TB_SYSTEM_USER + " }} su ON wl.auditid = su.uid";
     /**
      * @auther lz
      * 查询心愿单List
