@@ -529,8 +529,8 @@ public class BackgroundProdModule {
             }
         }
 
-        //设置毛利润
-        result.setGrossProfit(result.getRrp(),result.getVatp());
+
+
 
         JSONObject jo = JSON.parseObject(JSON.toJSONString(result));
 
@@ -561,6 +561,9 @@ public class BackgroundProdModule {
                         new PriorityFilter(),
                         new StoreFilter(),})
                 .getCurrentActivities(products);
+
+        //设置毛利润
+        result.setGrossProfit(result.getRrp(),p.getCurrentPrice());
 
         if(discounts == null || discounts.size()<=0){
             jo.put("appLimitnum",0);
