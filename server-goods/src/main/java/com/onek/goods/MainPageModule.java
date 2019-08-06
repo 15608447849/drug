@@ -352,7 +352,7 @@ public class MainPageModule {
             skuList.add(Long.valueOf(String.valueOf(qResult[0])));
             dataMap.put(Long.valueOf(String.valueOf(qResult[0])),
                     new String[]{String.valueOf(qResult[1]), String.valueOf(qResult[2]),
-                            String.valueOf(qResult[3]), String.valueOf(qResult[4]), String.valueOf(qResult[5])});
+                            String.valueOf(qResult[3]), String.valueOf(qResult[4]), String.valueOf(qResult[5]),"0"});
         });
         //ES数据组装
         if (onlySpecActivity) {
@@ -507,6 +507,7 @@ public class MainPageModule {
                     double price = dataMap.get(sku) != null ? Double.parseDouble(dataMap.get(sku)[2]) : 0;
                     int cstatus = dataMap.get(sku) != null ? Integer.parseInt(dataMap.get(sku)[3]) : 0;
                     long actCode = dataMap.get(sku) != null ? Long.parseLong(dataMap.get(sku)[4]) : 0;
+                    int pkgprodnum = dataMap.get(sku) != null ? Integer.valueOf(dataMap.get(sku)[5]) : 0;
                     int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), actCode);
                     int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), actCode);
                     prodVO.setBuynum(initStock - surplusStock);
@@ -515,6 +516,7 @@ public class MainPageModule {
                     prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
                     prodVO.setActinitstock(initStock);
                     prodVO.setSurplusstock(surplusStock);
+                    prodVO.setPkgprodnum(pkgprodnum);
                     if (ruleCode == 1113) {
                         if ((cstatus & 512) > 0) {
                             double rate = MathUtil.exactDiv(price, 100F).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
