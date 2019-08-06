@@ -95,19 +95,21 @@ public class MainPageModule {
         page.pageSize = pageNumber <= 0 ? 100 : pageNumber;
         int compId = context.getUserSession() != null ? context.getUserSession().compId : 0;
         String keyword = "", brandno = "", manuName = "", maNuNo = "0";
+        int classId = 0;
         if (jsonStr != null && !jsonStr.isEmpty()) {
             JsonObject json = new JsonParser().parse(jsonStr).getAsJsonObject();
-            keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
-            brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();
-            manuName = (json.has("manuname") ? json.get("manuname").getAsString() : "").trim();
-            maNuNo = (json.has("manuno") ? json.get("manuno").getAsString() : "0").trim();
+            keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();//关键字搜索
+            brandno = (json.has("brandno") ? json.get("brandno").getAsString() : "").trim();//品牌码
+            manuName = (json.has("manuname") ? json.get("manuname").getAsString() : "").trim();//厂家名
+            maNuNo = (json.has("manuno") ? json.get("manuno").getAsString() : "0").trim();//厂家码
+            classId =  (json.has("classid") ? json.get("classid").getAsInt() : 0);//类别码
         }
         try {
             if (bRuleCodes < 0 && bRuleCodes >= -10 && !onlySpecActivity) {
                 //非活动专区
                 if (isQuery) {
                     List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context,
-                            page, attr, keyword, brandno, manuName);
+                            page, attr, keyword, brandno, manuName,classId);
                     if (prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
@@ -525,7 +527,7 @@ public class MainPageModule {
                     } else if (ruleCode == 1114) {//套餐
                         prodVO.setActprize(NumUtil.div(price, 100));
                     }else {
-                        prodVO.setActprize(0);
+                        prodVO.setActprize(prodVO.getActprize());
                     }
                 }
 
@@ -547,8 +549,8 @@ public class MainPageModule {
      * @time  2019/6/29 14:41
      * @version 1.1.1
      **/
-    private static List<ProdVO> getFloorByState(long state, AppContext context, Page page,
-                                                 Attr attr,String keyword, String brandno,  String manuName) {
+    private static List<ProdVO> getFloorByState(long state, AppContext context, Page page, Attr attr,
+                                                String keyword, String brandno, String manuName, int classId) {
 
         Set<Integer> result = new HashSet<>();
         if (state == -1) { // 新品
@@ -578,7 +580,7 @@ public class MainPageModule {
             }};
             NumUtil.perComAdd(1024, bb1, result);
             result.add(1024);
-        } else if (state == -7) {
+        } else if (state == -7) {//诊所
             List<Integer> bb1 = new ArrayList() {{
                 add(128);
                 add(256);
@@ -587,6 +589,8 @@ public class MainPageModule {
             }};
             NumUtil.perComAdd(2048, bb1, result);
             result.add(2048);
+        } else if (state == -8) {//按类别
+            return getClassesMallFloor(page, context, classId, keyword);
         } else {//品牌专区-4 //热销专区 -5 //控销专区 -6
             return getOtherMallFloor(page, context, state, attr, keyword, brandno, manuName);
         }
@@ -594,6 +598,14 @@ public class MainPageModule {
         return (List<ProdVO>) resultMap.get("prodList");
     }
 
+    private static List<ProdVO> getClassesMallFloor(Page page, AppContext context, int classId, String keyword) {
+        SearchResponse response =  ProdESUtil.searchProdMall(keyword, classId, null, null, null,
+                0, page.pageIndex, page.pageSize);
+        page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
+        List<ProdVO> prodList = new ArrayList<>();
+        assembleData(context, response, prodList, null, null);
+        return prodList;
+    }
 
     //品牌-4 热销 -5
     private static List<ProdVO> getOtherMallFloor(Page page, AppContext context,
@@ -672,7 +684,7 @@ public class MainPageModule {
                 brandMaNuList.add(barndManu);
             }
         }
-        System.out.println(GsonUtils.javaBeanToJson(brandMaNuList));
+//        System.out.println(GsonUtils.javaBeanToJson(brandMaNuList));
         return brandMaNuList;
     }
 
