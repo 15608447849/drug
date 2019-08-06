@@ -79,7 +79,7 @@ public class WishListModule {
             sql.append(paramSql.toString());
         }
         List<Object[]> queryResult = BASE_DAO.queryNative(
-                pageHolder, page, " wl.submitdate DESC", sql.toString());
+                pageHolder, page, " CONCAT( wl.submitdate, ' ', wl.submittime ) DESC", sql.toString());
         BGWishListVO[] bgWishListVOS = new BGWishListVO[queryResult.size()];
 
         BASE_DAO.convToEntity(queryResult, bgWishListVOS, BGWishListVO.class);
