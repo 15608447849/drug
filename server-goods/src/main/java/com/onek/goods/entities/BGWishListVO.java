@@ -16,20 +16,16 @@ public class BGWishListVO {
     public int cid;//企业码
     public String cname;//企业名
     public String prodname ;//药品名
-    public String spec;//规格
     public String manuname;//生产厂家名称
+    public String spec;//规格
     public int num;//数量
     public String dtaile;//备注
-
     public double price;//价格
-
     public String submitdate;//申请时间
-
     public String auditdate;//处理时间
-
-    public int auditid;//处理人id
     public String auditname;//处理人
     public int cstatus;//状态
+    public int auditid;//处理人id
     public String useType;//操作状态
 
 }
