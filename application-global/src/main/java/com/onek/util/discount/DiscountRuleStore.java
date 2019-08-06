@@ -21,6 +21,7 @@ public class DiscountRuleStore {
         put(2130,512);
         put(1113,2048);
         put(1133,4096);
+        put(1114,8192);
     }};
 
 
@@ -37,6 +38,7 @@ public class DiscountRuleStore {
         put(2130,"折扣券");
         put(1113,"秒杀");
         put(1133,"团购");
+        put(1114,"套餐");
 
     }};
 
