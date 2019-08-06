@@ -558,9 +558,13 @@ public class BackgroundProdModule {
                         new PriorityFilter(),
                         new StoreFilter(),})
                 .getCurrentActivities(products);
+        appContext.logger.print("活动价格 = " + p.getCurrentPrice());
         //设置毛利润
-        result.setGrossProfit(result.getRrp(),result.getVatp());
-
+        if(discounts == null || discounts.size()<=0){
+            result.setGrossProfit(result.getRrp(), result.getVatp());
+        }else {
+            result.setGrossProfit(result.getRrp(), p.getCurrentPrice());
+        }
         JSONObject jo = JSON.parseObject(JSON.toJSONString(result));
         if(discounts == null || discounts.size()<=0){
             jo.put("appLimitnum",0);
