@@ -84,7 +84,7 @@ public class CouponManageModule {
     private static final String UPDATE_COUPON_SQL = "update {{?" + DSMConst.TD_PROM_COUPON + "}} set coupname=?,"
             + "glbno=?,qlfno=?,qlfval=?,coupdesc=?,periodtype=?,"
             + "periodday=?,startdate=?,enddate=?,brulecode=?,validday=?,validflag=?,actstock=?,"
-            + " cstatus= ? where cstatus&1=0 "
+            + " cstatus= ?,ckstatus = 0 where cstatus&1=0 "
             + " and unqid=?";
 
     //修改优惠券
