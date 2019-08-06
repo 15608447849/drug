@@ -62,7 +62,8 @@ public class FileInfoModule {
             assert queryParam != null;
             if (queryParam.compid > 0){
                 map.put("companyFilePath", companyFilePath(queryParam.compid));//公司路径
-                map.put("feedbackPath", companyFilePath(queryParam.compid)+"/feedback");//意见反馈路径
+                map.put("feedbackPath", feedbackPath(queryParam.compid));//意见反馈路径
+                map.put("wishListPath",wishListPath(queryParam.compid));
                 if (queryParam.orderid > 0) {
                     map.put("orderFilePath", orderFilePath(queryParam.compid,queryParam.orderid));//售后订单相关路径
                 }

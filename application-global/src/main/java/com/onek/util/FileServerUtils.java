@@ -67,12 +67,24 @@ public class FileServerUtils {
         return   "/" + EncryptUtils.encryption("image_verification_code");
     }
 
+
+
     private static final int MOD = 500;
 
     //企业码->企业相关文件路径
     public static String companyFilePath(int compid) {
         int index = compid % MOD; //取模
         return "/" +index + "/" + compid + "/"+ EncryptUtils.encryption("_company") ;
+    }
+
+    //意见反馈路径
+    public static String feedbackPath(int compid){
+        return "/" +  EncryptUtils.encryption("feedback")   +"/" + compid ;
+    }
+
+    //心愿单路径
+    public static String wishListPath(int compid){
+        return "/" + EncryptUtils.encryption("wish_list")+"/" + compid;
     }
 
     //用户码->用户相关文件路径

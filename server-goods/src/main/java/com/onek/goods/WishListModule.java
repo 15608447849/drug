@@ -75,14 +75,16 @@ public class WishListModule {
                 if (StringUtils.isEmpty(param)) {
                     continue;
                 }
-                switch (i) {
-                    case 0:
-                        paramSql.append("and comp.cname LIKE %").append(param).append("% ");
-                    case 1:
-                        paramSql.append("and wl.prodname LIKE %").append(param).append("% ");
-                    case 2:
-                        paramSql.append("and wl.cstatus = ").append(param);
-                }
+                try {
+                    switch (i) {
+                        case 0:
+                            paramSql.append("and comp.cname LIKE %").append(param).append("% ");
+                        case 1:
+                            paramSql.append("and wl.prodname LIKE %").append(param).append("% ");
+                        case 2:
+                            paramSql.append("and wl.cstatus = ").append(param);
+                    }
+                }catch (Exception ignored) {}
             }
             sql.append(paramSql.toString());
         }
