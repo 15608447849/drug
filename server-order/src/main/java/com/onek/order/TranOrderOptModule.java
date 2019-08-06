@@ -119,6 +119,11 @@ public class TranOrderOptModule {
             + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME, actcode=?,balamt=? where cstatus&1=0 and "
             + " pdno=? and compid = ? and orderno=0";
 
+    private static final String UPD_TRAN_GOODS_NEW = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set "
+            + "orderno=?, pdprice=?, distprice=?,payamt=?,coupamt=?,promtype=?,"
+            + "pkgno=?,createdate=CURRENT_DATE,createtime=CURRENT_TIME, actcode=?,balamt=?, pnum=?,cstatus=cstatus&~1 where "
+            + " pdno=? and compid = ? and orderno=0";
+
     //是否要减商品总库存 远程调用
     private static final String UPD_GOODS = "update {{?" + DSMConst.TD_PROD_SKU + "}} set "
             + "freezestore=freezestore+? where cstatus&1=0 and sku=? ";
@@ -226,6 +231,10 @@ public class TranOrderOptModule {
             goodsVO.setPayamt(goodsVO.getPnum()*goodsVO.getPdprice());
             tranOrderGoods.add(goodsVO);
         }
+   /*     String cStr = theGoodsHasChange(tranOrderGoods, tranOrder.getCusno());
+        if (cStr != null) {
+            return result.fail(cStr);
+        }*/
         tranOrder.setPdnum(pdnum);
         List<GoodsStock> goodsStockList = new ArrayList<>();
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
@@ -324,6 +333,32 @@ public class TranOrderOptModule {
             stockRecovery(goodsStockList);
             return result.fail("下单失败");
         }
+    }
+
+    private String theGoodsHasChange(List<TranOrderGoods> tranOrderGoods, int compId) {
+        StringBuilder skuBuilder = new StringBuilder();
+        for (TranOrderGoods transGoods: tranOrderGoods) {
+            skuBuilder.append(transGoods.getPdno()).append(",");
+        }
+        String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
+        String selectGoodsSQL = "select pdno, pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
+                 + " and orderno=0 and pdno in(" + skuStr + ")";
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compId, TimeUtils.getCurrentYear(), selectGoodsSQL);
+        if (queryResult == null || queryResult.isEmpty()) {
+            return "购物车商品发生改变！";
+        }
+        if (tranOrderGoods.size() != queryResult.size()) {
+            return "购物车商品发生改变！";
+        }
+        for (Object[] qr : queryResult) {
+            for (TranOrderGoods goods: tranOrderGoods) {
+                if (Long.valueOf(qr[0].toString()) == goods.getPdno()
+                        && Integer.parseInt(qr[1].toString()) != goods.getPnum()) {
+                    return "购物车商品数量发生改变！";
+                }
+            }
+        }
+        return null;
     }
 
     private void otherPlaceOrderOpt(TranOrder tranOrder, long coupon, String orderNo, List<TranOrderGoods> tranOrderGoods, double bal) {
@@ -627,6 +662,16 @@ public class TranOrderOptModule {
             params.add(new Object[]{orderNo, tranOrderGoods.getPdprice(), tranOrderGoods.getDistprice(), tranOrderGoods.getPayamt(),
                     tranOrderGoods.getCoupamt(), tranOrderGoods.getPromtype(), tranOrderGoods.getPkgno(), tranOrderGoods.getActcode(),
                     tranOrderGoods.getBalamt(),tranOrderGoods.getPdno(),tranOrderGoods.getCompid()});
+        }
+    }
+
+    private void getUpdSqlListNew(List<String> sqlList, List<Object[]> params, List<TranOrderGoods> tranOrderGoodsList,
+                               String orderNo) {
+        for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
+            sqlList.add(UPD_TRAN_GOODS_NEW);
+            params.add(new Object[]{orderNo, tranOrderGoods.getPdprice(), tranOrderGoods.getDistprice(), tranOrderGoods.getPayamt(),
+                    tranOrderGoods.getCoupamt(), tranOrderGoods.getPromtype(), tranOrderGoods.getPkgno(), tranOrderGoods.getActcode(),
+                    tranOrderGoods.getBalamt(),tranOrderGoods.getPnum(),tranOrderGoods.getPdno(),tranOrderGoods.getCompid()});
         }
     }
 

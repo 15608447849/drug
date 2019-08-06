@@ -404,7 +404,9 @@ public class MainPageModule {
             prodVO.setLadOffDesc(ProdActPriceUtil.getLoadOffBySku(prodVO.getSku()));
 
             double purchaseprice = NumUtil.div(prodVO.getVatp(), 100);
-            if (dataMap == null && (ruleStatus & 2048) > 0) {
+            if (prodVO.getActprize() != 0) {
+                purchaseprice = prodVO.getActprize();
+            } else if ((ruleStatus&2048) > 0){
                 ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), purchaseprice);
                 if (prizeEntity != null) {
                     purchaseprice = prizeEntity.getMinactprize();
@@ -521,7 +523,7 @@ public class MainPageModule {
                     } else if (ruleCode == 1114) {//套餐
                         prodVO.setActprize(NumUtil.div(price, 100));
                     }else {
-                        prodVO.setActprize(NumUtil.div(prodVO.getVatp(), 100));
+                        prodVO.setActprize(0);
                     }
                 }
 
