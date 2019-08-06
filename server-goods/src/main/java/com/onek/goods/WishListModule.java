@@ -5,7 +5,6 @@ import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.BGWishListVO;
-import com.onek.goods.entities.BgProdVO;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.GsonUtils;
@@ -75,9 +74,7 @@ public class WishListModule {
                         case 2:
                             paramSql.append("and wl.cstatus = ").append(param);
                     }
-                }catch (Exception e) {
-                    continue;
-                }
+                }catch (Exception ignored) {}
             }
             sql.append(paramSql.toString());
         }
