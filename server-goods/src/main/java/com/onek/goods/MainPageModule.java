@@ -439,6 +439,8 @@ public class MainPageModule {
                     prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
                     prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
                     prodVO.setPurchaseprice(purchaseprice);
+                    //设置优惠价格毛利润
+                    prodVO.setGrossProfit(prodVO.getRrp(),prodVO.getPurchaseprice());
                 } else {//控销商品未签约价格不可见
                     prodVO.setVatp(-2);
                     prodVO.setMp(-2);
