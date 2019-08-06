@@ -219,9 +219,10 @@ public class PackageModule {
                 //menucode, gcode, pkgprodnum, price,actstock,limitnum,actcode,cstatus
                 menuInfos.forEach(qResult -> {
                     long sku = Long.valueOf(String.valueOf(qResult[1]));//sku
+                    int pkgprodnum =  Integer.valueOf(String.valueOf(qResult[2]));//套餐数量
                     skuList.add(sku);//sku
                     dataMap.put(sku, new String[]{String.valueOf(qResult[4]),String.valueOf(qResult[5]), String.valueOf(qResult[3]),
-                                    String.valueOf(qResult[7]), String.valueOf(qResult[6])});
+                                    String.valueOf(qResult[7]), String.valueOf(qResult[6]), pkgprodnum + ""});
                     Set<Long> skuSet = new HashSet<>();
                     int menucode = Integer.valueOf(String.valueOf(qResult[0]));//套餐码
                     if (menuMap.containsKey(menucode)) {
