@@ -136,7 +136,6 @@ public class WishListModule {
         List<Object[]> result = BaseDAO.getBaseDAO().queryNative(sql.toString(),wsId);
         BGWishListVO[] bgWishListVOS = new BGWishListVO[result.size()];
         BASE_DAO.convToEntity(result, bgWishListVOS, BGWishListVO.class,new String[]{"cstatus"});
-        System.out.println("bgWishListVOS[0].cstatus&4 = " + bgWishListVOS[0].cstatus);
         int statu ;
         if("shipped".equals(useType)){
             if((bgWishListVOS[0].cstatus&4) == 4){
