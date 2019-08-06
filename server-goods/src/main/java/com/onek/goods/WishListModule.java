@@ -52,12 +52,12 @@ public class WishListModule {
         page.pageSize = appContext.param.pageNumber;
 
         PageHolder pageHolder = new PageHolder(page);
-
+        StringBuilder sql = new StringBuilder(_QUERY_WISHLIST);
         //查询条件
         String[] params = appContext.param.arrays;
         String param = null;
         if(params.length<=0){
-            _QUERY_WISHLIST = _QUERY_WISHLIST.replace("{{$var}}","");
+//            _QUERY_WISHLIST = _QUERY_WISHLIST
         }else{
             StringBuilder paramSql = new StringBuilder();
             paramSql.append("WHERE 1=1 ");
@@ -79,11 +79,11 @@ public class WishListModule {
                     continue;
                 }
             }
-            _QUERY_WISHLIST = _QUERY_WISHLIST.replace("{{$var}}",paramSql.toString());
+            sql.append(paramSql.toString());
         }
 
         List<Object[]> queryResult = BASE_DAO.queryNative(
-                pageHolder, page, " wl.submitdate DESC", _QUERY_WISHLIST,new String[]{});
+                pageHolder, page, " wl.submitdate DESC", sql.toString());
 
         BGWishListVO[] bgWishListVOS = new BGWishListVO[queryResult.size()];
 
