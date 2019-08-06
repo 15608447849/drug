@@ -1731,6 +1731,9 @@ public class ActivityManageModule {
             } catch (ParseException e) {
                 e.printStackTrace();
             }
+            if(type == 1){
+                noticeActUpdate(actcode);
+            }
         }
 
         return ret > 0 ? result.success("操作成功") : result.fail("操作失败");
