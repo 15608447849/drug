@@ -44,7 +44,7 @@ public class WishListModule {
             "LEFT JOIN {{?" + DSMConst.TB_COMP + "}} comp ON wl.cid = comp.cid " +
             "LEFT JOIN {{?" + DSMConst.TB_SYSTEM_USER + "}} su ON wl.auditid = su.uid where 1=1 ";
 
-    private static String _UPDATE_WISHLIST_STATUS = "update {{?" + DSMConst.TD_WISH_LIST + "}} set cstatus = ? where oid = ?";
+    private static String _UPDATE_WISHLIST_STATUS = "update {{?" + DSMConst.TD_WISH_LIST + "}} set cstatus = ?,auditdate = CURRENT_DATE,audittime = CURRENT_TIME,auditid=? where oid = ?";
     /**
      * @auther lz
      * 查询心愿单List
@@ -129,6 +129,7 @@ public class WishListModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int wsId = jsonObject.get("wsId").getAsInt();
         String useType = jsonObject.get("useType").getAsString();
+        int userId = jsonObject.get("userId").getAsInt();
         if(wsId<=0){
             return new Result().fail("当前心愿单不存在");
         }
@@ -148,7 +149,7 @@ public class WishListModule {
             }
             statu = 2;
         }
-        int row = BASE_DAO.updateNative(_UPDATE_WISHLIST_STATUS,statu,wsId);
+        int row = BASE_DAO.updateNative(_UPDATE_WISHLIST_STATUS,statu,userId,wsId);
 
         if(row>0){
             return new Result().success("状态更新成功","操作成功");
