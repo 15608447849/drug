@@ -22,7 +22,8 @@ import java.util.List;
 public class WishListModule {
     private static final BaseDAO BASE_DAO = BaseDAO.getBaseDAO();
     /**运营后台查询心愿单详情*/
-    private static  String _QUERY_WISHLIST = "SELECT" +
+    private static String _QUERY_WISHLIST = "SELECT" +
+            "wl.oid oid,"+
             "wl.cid cid,"+
             "comp.cname cname," +
             "wl.prodname prodname," +
@@ -40,6 +41,8 @@ public class WishListModule {
             "{{?" + DSMConst.TD_WISH_LIST + "}} wl" +
             "LEFT JOIN {{? " + DSMConst.TB_COMP + " }} comp ON wl.cid = comp.cid" +
             "LEFT JOIN {{? " + DSMConst.TB_SYSTEM_USER + " }} su ON wl.auditid = su.uid";
+
+    private static String _UPDATE_WISHLIST_STATUS = "update {{?" + DSMConst.TD_WISH_LIST + "}} set cstatus = ? where oid = ?";
     /**
      * @auther lz
      * 查询心愿单List
@@ -57,8 +60,14 @@ public class WishListModule {
         String[] params = appContext.param.arrays;
         String param = null;
         if(params.length<=0){
-//            _QUERY_WISHLIST = _QUERY_WISHLIST
+            //app query param
+            int compid = appContext.getUserSession().compId;
+            if(compid<=0){
+                return new Result().fail("用户未登录！");
+            }
+            sql.append("wl.cid = "+compid);
         }else{
+            //pc query param
             StringBuilder paramSql = new StringBuilder();
             paramSql.append("WHERE 1=1 ");
             for (int i = 0; i < params.length; i++) {
@@ -66,17 +75,13 @@ public class WishListModule {
                 if (StringUtils.isEmpty(param)) {
                     continue;
                 }
-                try {
-                    switch (i) {
-                        case 0:
-                            paramSql.append("and comp.cname LIKE %").append(param).append("% ");
-                        case 1:
-                            paramSql.append("and wl.prodname LIKE %").append(param).append("% ");
-                        case 2:
-                            paramSql.append("and wl.cstatus = ").append(param);
-                    }
-                }catch (Exception e) {
-                    continue;
+                switch (i) {
+                    case 0:
+                        paramSql.append("and comp.cname LIKE %").append(param).append("% ");
+                    case 1:
+                        paramSql.append("and wl.prodname LIKE %").append(param).append("% ");
+                    case 2:
+                        paramSql.append("and wl.cstatus = ").append(param);
                 }
             }
             sql.append(paramSql.toString());
@@ -93,6 +98,44 @@ public class WishListModule {
     }
 
 
+    /**
+     * 修改心愿单状态
+     * @param appContext
+     * @return
+     */
+    public Result updateWishList(AppContext appContext){
+
+        int compid = appContext.getUserSession().compId;
+        if (compid == 0) return new Result().fail("请登录后在操作!");
+        String json = appContext.param.json;
+        BGWishListVO bgWishListVO = GsonUtils.jsonToJavaBean(json,BGWishListVO.class);
+        if(bgWishListVO == null){
+            return new Result().fail("操作失败");
+        }
+        StringBuilder sql = new StringBuilder("select * from {{?"+ DSMConst.TD_WISH_LIST+"}} where oid = ?");
+        List<Object[]> result = BaseDAO.getBaseDAO().queryNative(sql.toString(),bgWishListVO.oid);
+        BGWishListVO[] bgWishListVOS = new BGWishListVO[result.size()];
+        BASE_DAO.convToEntity(result, bgWishListVOS, BGWishListVO.class);
+        int statu ;
+        if("shipped".equals(bgWishListVO.useType)){
+            if((bgWishListVOS[0].cstatus&4) == 4){
+                return new Result().fail("心愿单状态已在到货状态！无法再次修改");
+            }
+            statu = 4;
+        }else{
+            if((bgWishListVOS[0].cstatus&2) == 2){
+                return new Result().fail("心愿单状态无法改变！");
+            }
+            statu = 2;
+        }
+        int row = BASE_DAO.updateNative(_UPDATE_WISHLIST_STATUS,statu,bgWishListVO.oid);
+
+        if(row>0){
+            return new Result().success("状态更新成功","操作成功");
+        }else{
+            return new Result().fail("操作失败");
+        }
+    }
 
 
     private static class Param{
