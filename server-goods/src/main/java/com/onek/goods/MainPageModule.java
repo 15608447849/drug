@@ -19,6 +19,7 @@ import com.onek.server.infimp.IceDebug;
 import com.onek.util.FileServerUtils;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
+import com.onek.util.prod.ProdPriceEntity;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -203,6 +204,7 @@ public class MainPageModule {
         StringBuilder actCodeSB = new StringBuilder();
         String[] otherArr = {String.valueOf(queryResult.get(0)[1]), "0", compId + ""};
         for (Object[] qResult : queryResult) {
+            double minOff = 0;
             int qualcode = Integer.parseInt(String.valueOf(qResult[2]));
             long qualvalue = Integer.parseInt(String.valueOf(qResult[3]));
             if (QualJudge.hasPermission(compId, qualcode, qualvalue)) {
@@ -219,11 +221,11 @@ public class MainPageModule {
                     actObj.addProperty("now", TimeUtils.date_yMd_Hms_2String(new Date()));
                     if (bRuleCode == 1133) {//团购
                         JsonArray ladOffArray = new JsonArray();
-                        double minOff = getMinOff(actCode, ladOffArray);
-                        otherArr = new String[]{String.valueOf(queryResult.get(0)[1]), minOff + "",  compId + ""};
+                        minOff = getMinOff(actCode, ladOffArray);
                         actObj.add("ladoffArray", ladOffArray);
                         actObj.addProperty("currNums", getGroupCount(actCode));
                     }
+                    otherArr = new String[]{String.valueOf(qResult[1]), minOff + "",  compId + ""};
                     attr.actObj = actObj;
                 }
             }
@@ -401,22 +403,48 @@ public class MainPageModule {
             //商品参加活动描述
             prodVO.setLadOffDesc(ProdActPriceUtil.getLoadOffBySku(prodVO.getSku()));
 
+            double purchaseprice = NumUtil.div(prodVO.getVatp(), 100);
+            if (prodVO.getActprize() != 0) {
+                purchaseprice = prodVO.getActprize();
+            } else if ((ruleStatus&2048) > 0){
+                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), purchaseprice);
+                if (prizeEntity != null) {
+                    purchaseprice = prizeEntity.getMinactprize();
+                    // 代表值存在一个活动
+                    if (prizeEntity.getActcode() > 0) {
+                        List<String[]> times = ProdActPriceUtil.getTimesByActcode(prizeEntity.getActcode());
+                        ProdModule.GetEffectiveTimeByActCode getEffectiveTimeByActCode = new ProdModule.GetEffectiveTimeByActCode(times).invoke();
+                        String sdate = getEffectiveTimeByActCode.getSdate();
+                        String edate = getEffectiveTimeByActCode.getEdate();
+
+                        if (StringUtils.isEmpty(sdate) || StringUtils.isEmpty(edate)) { // // 表示搜索的商品不在活动时间内
+                            prodVO.setRulestatus(0);
+                            purchaseprice = NumUtil.div(prodVO.getVatp(), 100);
+                        }
+                    }
+                }
+            }
+/*            LogUtil.getDefaultLogger().info("---》》 " + prodVO.getPopname() + "  原价:" + prodVO.getVatp());
+            LogUtil.getDefaultLogger().info("---》》 " + prodVO.getPopname() + "  活动价:" + prodVO.getActprize());*/
             if (context.isAnonymous()) {//无权限价格不可见
                 prodVO.setVatp(-1);
                 prodVO.setMp(-1);
                 prodVO.setRrp(-1);
                 prodVO.setActprize(-1);
+                prodVO.setPurchaseprice(-1);
             } else {
                 int controlCode = context.getUserSession() != null ? context.getUserSession().comp.controlCode : 0;
                 if ((prodVO.getConsell() & controlCode) == prodVO.getConsell()) {
                     prodVO.setVatp(NumUtil.div(prodVO.getVatp(), 100));
                     prodVO.setMp(NumUtil.div(prodVO.getMp(), 100));
                     prodVO.setRrp(NumUtil.div(prodVO.getRrp(), 100));
+                    prodVO.setPurchaseprice(purchaseprice);
                 } else {//控销商品未签约价格不可见
                     prodVO.setVatp(-2);
                     prodVO.setMp(-2);
                     prodVO.setRrp(-2);
                     prodVO.setActprize(-2);
+                    prodVO.setPurchaseprice(-2);
                 }
             }
             prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
@@ -495,7 +523,7 @@ public class MainPageModule {
                     } else if (ruleCode == 1114) {//套餐
                         prodVO.setActprize(NumUtil.div(price, 100));
                     }else {
-                        prodVO.setActprize(NumUtil.div(prodVO.getVatp(), 100));
+                        prodVO.setActprize(0);
                     }
                 }
 

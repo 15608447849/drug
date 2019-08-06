@@ -1591,6 +1591,10 @@ public class BackGroundProxyMoudule {
                     }
                 }
             }
+            int oldControl = getCompInfo(compId).getControl();
+            if (compInfoVO.getControl() == 3 && (oldControl&1) == 0) {
+                return result.fail("需签订控销协议，才能签订强控销协议！");
+            }
             //判断必填资质是否都有
 //            String checkStr = checkAptInfo(storetype, aTypeList);
 //            if (checkStr != null) {

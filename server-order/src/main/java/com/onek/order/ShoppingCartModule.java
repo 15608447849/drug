@@ -1065,11 +1065,13 @@ public class ShoppingCartModule {
         List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
         //TODO 获取活动匹配
 
-        if (!appContext.isSignControlAgree()) {
-            for (ShoppingCartVO shoppingCartVO : shopCart) {
-                if ((shoppingCartVO.getConsell()&1) > 0) {
-                    return new Result().fail("存在控销商品，您无权购买！");
-                }
+        int controlCode = appContext.getUserSession().comp.controlCode;
+
+        for (ShoppingCartVO shoppingCartVO : shopCart) {
+            int resultConsell = shoppingCartVO.getConsell();
+
+            if ((resultConsell & controlCode) != resultConsell) {
+                return result.fail("存在控销商品，您无权购买！");
             }
         }
 
@@ -1241,6 +1243,10 @@ public class ShoppingCartModule {
             }
 
             if(currLadoff == null && nextLadoff == null){
+                continue;
+            }
+
+            if (activity.isExActivity()) {
                 continue;
             }
 
