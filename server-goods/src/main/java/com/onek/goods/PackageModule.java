@@ -194,7 +194,7 @@ public class PackageModule {
         Result result = new Result();
         Map<Integer, List<ProdVO>> menuProdMap = new HashMap<>();
         try {
-            int compId = appContext.getUserSession().compId;
+            int compId = appContext.getUserSession() != null ? appContext.getUserSession().compId : 0;
             StringBuilder actCodeSB = new StringBuilder();
             String mmdd = TimeUtils.date_Md_2String(new Date());
             List<Object[]> queryResult = BASE_DAO.queryNative(SELECT_PACK_SQL,mmdd);
