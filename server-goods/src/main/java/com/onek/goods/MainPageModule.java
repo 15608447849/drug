@@ -428,7 +428,7 @@ public class MainPageModule {
             }
 
             //设置优惠价格毛利润
-            prodVO.setGrossProfit(prodVO.getRrp(),prodVO.getPurchaseprice());
+            prodVO.setGrossProfit(prodVO.getRrp(),purchaseprice);
 /*            LogUtil.getDefaultLogger().info("---》》 " + prodVO.getPopname() + "  原价:" + prodVO.getVatp());
             LogUtil.getDefaultLogger().info("---》》 " + prodVO.getPopname() + "  活动价:" + prodVO.getActprize());*/
             if (context.isAnonymous()) {//无权限价格不可见
