@@ -511,7 +511,7 @@ public class BackgroundProdModule {
 
         BgProdVO result = getProd(params[0]);
         //设置有效期时判断该商品是否未近效商品
-        result.setIsneareffect(result.getVaildsdate());
+        result.setIsneareffects(result.getVaildsdate());
 //        LogUtil.getDefaultLogger().info("当前商品有效开始日期："+ result.getVaildsdate() +"有效期移至六月之后的日期："+ TimeUtils.str2Ymd_After_Mouth(result.getVaildsdate(),6) +" 是否未近效商品："+result.getIsneareffect());
         if (result == null) {
             return new Result().fail("无此商品");

@@ -231,10 +231,6 @@ public class TranOrderOptModule {
             goodsVO.setPayamt(goodsVO.getPnum()*goodsVO.getPdprice());
             tranOrderGoods.add(goodsVO);
         }
-        String cStr = theGoodsHasChange(tranOrderGoods, tranOrder.getCusno());
-        if (cStr != null) {
-            return result.fail(cStr);
-        }
         tranOrder.setPdnum(pdnum);
         List<GoodsStock> goodsStockList = new ArrayList<>();
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成
@@ -248,6 +244,16 @@ public class TranOrderOptModule {
             e.printStackTrace();
             LogUtil.getDefaultLogger().info("print by cyq placeOrder -----------下单操作计算价格失败");
             return result.fail("下单失败");
+        }
+
+        String cStr = null;
+        try {
+            cStr = theGoodsHasChange(tranOrderGoods, tranOrder.getCusno(), placeType);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        if (cStr != null) {
+            return result.fail(cStr);
         }
         if (orderType == 0) {
             //库存判断
@@ -335,24 +341,26 @@ public class TranOrderOptModule {
         }
     }
 
-    private String theGoodsHasChange(List<TranOrderGoods> tranOrderGoods, int compId) {
+    private String theGoodsHasChange(List<TranOrderGoods> tranOrderGoods, int compId, int placeType) {
+        if (placeType == 1) return null;
         StringBuilder skuBuilder = new StringBuilder();
         for (TranOrderGoods transGoods: tranOrderGoods) {
             skuBuilder.append(transGoods.getPdno()).append(",");
         }
         String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
-        String selectGoodsSQL = "select pdno, pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
-                 + " and orderno=0 and pdno in(" + skuStr + ")";
+        String selectGoodsSQL = "select pdno, pnum, pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
+                 + " and orderno=0 and pdno in(" + skuStr + ") and compid=" + compId;
         List<Object[]> queryResult = baseDao.queryNativeSharding(compId, TimeUtils.getCurrentYear(), selectGoodsSQL);
         if (queryResult == null || queryResult.isEmpty()) {
-            return "购物车商品发生改变！";
+            return "下单商品信息错误！";
         }
         if (tranOrderGoods.size() != queryResult.size()) {
             return "购物车商品发生改变！";
         }
         for (Object[] qr : queryResult) {
             for (TranOrderGoods goods: tranOrderGoods) {
-                if (Long.valueOf(qr[0].toString()) == goods.getPdno()
+                int pkgNo = qr[2] != null && !qr[2].toString().isEmpty() ? Integer.valueOf(qr[2].toString()) : 0;
+                if (Long.valueOf(qr[0].toString()) == goods.getPdno() && goods.getPkgno() == pkgNo
                         && Integer.parseInt(qr[1].toString()) != goods.getPnum()) {
                     return "购物车商品数量发生改变！";
                 }

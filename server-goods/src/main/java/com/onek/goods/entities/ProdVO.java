@@ -1,6 +1,7 @@
 package com.onek.goods.entities;
 
 import redis.annation.DictCacheField;
+import util.StringUtils;
 import util.TimeUtils;
 
 import java.math.BigDecimal;
@@ -76,18 +77,22 @@ public class ProdVO {
     public boolean getIsneareffect() {
         return isneareffect;
     }
-
-    public void setIsneareffect(String sDate) {
+    public void setIsneareffect(boolean isneareffect){
+        this.isneareffect = isneareffect;
+    }
+    public void setIsneareffects(String sDate) {
         String nowTime = TimeUtils.str2Ymd_After_Mouth(TimeUtils.getCurrentDate(),6);
         long nowTimes = TimeUtils.str_yMd_2Date(nowTime).getTime();
-
-        long vailTimes = TimeUtils.str_yMd_2Date(sDate).getTime();
-        if(nowTimes>=vailTimes){
-            this.isneareffect = true;
-        }else{
+        if(StringUtils.isEmpty(sDate)) {
             this.isneareffect = false;
+        }else {
+            long vailTimes = TimeUtils.str_yMd_2Date(sDate).getTime();
+            if (nowTimes >= vailTimes) {
+                this.isneareffect = true;
+            } else {
+                this.isneareffect = false;
+            }
         }
-
     }
 
     public int getGrossProfit() {
