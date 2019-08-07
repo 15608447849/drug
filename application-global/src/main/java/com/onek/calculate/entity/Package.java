@@ -24,13 +24,17 @@ public class Package extends AccurateMath implements IProduct {
             return 0;
         }
 
+        return MathUtil.exactDiv(getTotalNums(), this.nums).intValue();
+    }
+
+    public int getTotalNums() {
         int result = 0;
 
         for (Product product : productList) {
             result += product.getNums();
         }
 
-        return MathUtil.exactDiv(result, this.nums).intValue();
+        return result;
     }
 
     public long getPackageId() {

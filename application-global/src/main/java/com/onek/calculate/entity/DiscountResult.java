@@ -73,7 +73,11 @@ public class DiscountResult {
         int result = 0;
 
         for (IProduct product : products) {
-            result += product.getNums();
+            if (product instanceof Package) {
+                result += ((Package) product).getTotalNums();
+            } else {
+                result += product.getNums();
+            }
         }
 
         return result;

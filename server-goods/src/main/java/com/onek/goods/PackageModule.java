@@ -9,6 +9,7 @@ import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.ProdVO;
 import com.onek.goods.util.ProdESUtil;
+import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import elasticsearch.ElasticSearchClientFactory;
@@ -24,6 +25,7 @@ import org.elasticsearch.search.aggregations.AggregationBuilder;
 import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHits;
+import org.hyrdpf.util.LogUtil;
 import util.GsonUtils;
 import util.TimeUtils;
 
@@ -214,15 +216,17 @@ public class PackageModule {
                 }
                 Map<Long, String[]> dataMap = new HashMap<>();
                 Map<Integer, Set<Long>> menuMap = new HashMap<>();
+                Map<Integer, Long> menuActMap = new HashMap<>();
                 List<Long> skuList = new ArrayList<>();
                 String[] otherArr = {"1114", "0", compId + ""};
                 //menucode, gcode, pkgprodnum, price,actstock,limitnum,actcode,cstatus
                 menuInfos.forEach(qResult -> {
                     long sku = Long.valueOf(String.valueOf(qResult[1]));//sku
+                    String actCode = String.valueOf(qResult[6]);
                     int pkgprodnum =  Integer.valueOf(String.valueOf(qResult[2]));//套餐数量
                     skuList.add(sku);//sku
                     dataMap.put(sku, new String[]{String.valueOf(qResult[4]),String.valueOf(qResult[5]), String.valueOf(qResult[3]),
-                                    String.valueOf(qResult[7]), String.valueOf(qResult[6]), pkgprodnum + ""});
+                                    String.valueOf(qResult[7]), actCode, pkgprodnum + ""});
                     Set<Long> skuSet = new HashSet<>();
                     int menucode = Integer.valueOf(String.valueOf(qResult[0]));//套餐码
                     if (menuMap.containsKey(menucode)) {
@@ -230,41 +234,61 @@ public class PackageModule {
                     }
                     skuSet.add(sku);
                     menuMap.put(menucode,skuSet);
+                    menuActMap.put(menucode, Long.valueOf(actCode));
                 });
                 List<ProdVO> prodVOList = new ArrayList<>();
-
-//                LogUtil.getDefaultLogger().info("new ArrayList<>(skuList) 1111111111111111  " + GsonUtils.javaBeanToJson(new ArrayList<>(skuList)));
                 SearchResponse response = ProdESUtil.searchProdBySpuList(new ArrayList<>(skuList), "", 1, skuList.size());
                 assembleData(appContext, response, prodVOList, dataMap, otherArr);
-                menuProdMap = assMenuData(menuMap, prodVOList);
+                menuProdMap = assMenuData(menuMap, prodVOList, menuActMap);
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
+//        LogUtil.getDefaultLogger().info("menuProdMap 1111111111111111----->>>>>>>..  " + GsonUtils.javaBeanToJson(menuProdMap));
         return result.success(menuProdMap);
     }
 
 
-    private static Map<Integer, List<ProdVO>> assMenuData( Map<Integer, Set<Long>> menuMap, List<ProdVO> prodVOList) {
+    private static Map<Integer, List<ProdVO>> assMenuData( Map<Integer, Set<Long>> menuMap, List<ProdVO> prodVOList,
+                                                           Map<Integer, Long> menuActMap) {
         Map<Integer, List<ProdVO>> menuProdMap = new HashMap<>();
-//        LogUtil.getDefaultLogger().info("prodVOList00000000000000  " + GsonUtils.javaBeanToJson(prodVOList));
+
+        List<ProdVO> newProdList = new ArrayList<>();
         for(Map.Entry<Integer, Set<Long>> entry : menuMap.entrySet()){
+            long actCode = menuActMap.get(entry.getKey());
             List<ProdVO> menuProdList = new ArrayList<>();
             if (menuProdMap.containsKey(entry.getKey())) {
                 menuProdList = menuProdMap.get(entry.getKey());
             }
-//            LogUtil.getDefaultLogger().info("menuProdList 2222222222  " + GsonUtils.javaBeanToJson(menuProdList));
-            Set<Long> skuList = entry.getValue();
-            for (ProdVO prodVO : prodVOList) {
-                if (skuList.contains(prodVO.getSku())) {
-                    menuProdList.add(prodVO);
-                    menuProdMap.put(entry.getKey(), menuProdList);
+            for (long sku : entry.getValue()) {
+                for (ProdVO prodDTO : prodVOList) {
+                    if (prodDTO.getSku() == sku) {
+                        prodDTO.setSku(sku);
+                        prodDTO.setActinitstock(RedisStockUtil.getActInitStock(sku, actCode));
+                        prodDTO.setSurplusstock(RedisStockUtil.getActStockBySkuAndActno(sku, actCode));
+                        prodDTO.setBuynum(prodDTO.getActinitstock() - prodDTO.getSurplusstock());
+                        menuProdList.add(prodDTO);
+                        menuProdMap.put(entry.getKey(), menuProdList);
+                        newProdList.add(prodDTO);
+                    }
                 }
             }
         }
-//        LogUtil.getDefaultLogger().info("menuProdMap 33333333333333  " + GsonUtils.javaBeanToJson(menuProdMap));
+        for(Map.Entry<Integer, List<ProdVO>> menuProd : menuProdMap.entrySet()){
+            menuProd.getValue().forEach(prod -> {
+                prod.setPkgUnEnough(pkgUnEnough(menuProd.getValue()));
+            });
+        }
         return menuProdMap;
     }
+
+    private static boolean pkgUnEnough(List<ProdVO> prodVOList) {
+        for (ProdVO prod : prodVOList) {
+            return prod.getStore() < prod.getPkgprodnum();
+        }
+        return false;
+    }
+
 
 
     static {
