@@ -732,7 +732,7 @@ public class MainPageModule {
         if (StringUtils.isEmpty(json)){
             map = new HashMap<>();
             try {
-                String sql = "SELECT uiname,uimodel,uioption,codes,seq,attr,temp,extlink FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0";
+                String sql = "SELECT uiname,uimodel,uioption,codes,seq,attr,temp,extlink FROM {{?" + TB_UI_PAGE + "}} WHERE cstatus&1 = 0 ORDER BY uimodel,seq";
                 List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql);
                 if (lines.size() > 0) {
                     for (Object[] rows : lines) {
