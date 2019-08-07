@@ -270,7 +270,7 @@ public class PackageModule {
 
     private static boolean pkgUnEnough(List<ProdVO> prodVOList) {
         for (ProdVO prod : prodVOList) {
-            return prod.getStore() < prod.getPkgprodnum();
+            return prod.getSurplusstock() < prod.getPkgprodnum();
         }
         return false;
     }
