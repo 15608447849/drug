@@ -110,7 +110,7 @@ public class MainPageModule {
                 if (isQuery) {
                     List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context,
                             page, attr, keyword, brandno, manuName,classId);
-                    if (prodVOS.size() > 0) {
+                    if (prodVOS != null && prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
                         page.totalPageCount = page.totalItems%page.pageSize > 0 ?
@@ -590,7 +590,10 @@ public class MainPageModule {
             }};
             NumUtil.perComAdd(2048, bb1, result);
             result.add(2048);
-        } else if (state == -8) {//按类别
+        } else if (state == -8 ) {//按类别
+            if (classId <= 0) {
+                return null;
+            }
             return getClassesMallFloor(page, context, classId, keyword);
         } else {//品牌专区-4 //热销专区 -5 //控销专区 -6
             return getOtherMallFloor(page, context, state, attr, keyword, brandno, manuName);
