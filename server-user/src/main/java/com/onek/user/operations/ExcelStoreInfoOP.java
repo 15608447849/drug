@@ -105,7 +105,7 @@ public class ExcelStoreInfoOP {
         //是否已签控销协议
         createCell(style,row,8,compInfo.getControl()>0 ? "是" : "否");
         //客服专员
-        createCell(style,row,9,compInfo.getBdmn());
+        createCell(style,row,9,compInfo.getCursorName());
         //药店状态
         createCell(style,row,10,getCompStatus(compInfo.getStatus()));
     }
