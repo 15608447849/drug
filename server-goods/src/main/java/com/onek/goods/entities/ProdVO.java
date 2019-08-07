@@ -71,6 +71,8 @@ public class ProdVO {
 
     private boolean isneareffect;//是否未近效商品
 
+    private boolean pkgUnEnough;
+
     public boolean getIsneareffect() {
         return isneareffect;
     }
@@ -476,5 +478,13 @@ public class ProdVO {
 
     public void setPkgprodnum(int pkgprodnum) {
         this.pkgprodnum = pkgprodnum;
+    }
+
+    public boolean isPkgUnEnough() {
+        return pkgUnEnough;
+    }
+
+    public void setPkgUnEnough(boolean pkgUnEnough) {
+        this.pkgUnEnough = pkgUnEnough;
     }
 }
