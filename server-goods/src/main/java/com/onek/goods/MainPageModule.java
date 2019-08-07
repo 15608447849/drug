@@ -614,7 +614,7 @@ public class MainPageModule {
         SearchResponse response = null;
         if (state == -4) {//品牌 - 多厂商
 //           List<ProdBrandVO> prodBarnds = getBrandInfo();
-            if (!StringUtils.isEmpty(manuName)){
+            if (!StringUtils.isEmpty(brandno)){
 //                LogUtil.getDefaultLogger().info("品牌-厂家-查询关键字: "+manuName );
                 if (isMainList){
                     response = ProdESUtil.searchProdGroupByNo(Long.parseLong(brandno), 0, page.pageIndex, page.pageSize);
@@ -622,8 +622,6 @@ public class MainPageModule {
                     //厂家码
                     response = ProdESUtil.searchProdHasBrand(null, keyword, brandno, manuName, page.pageIndex, page.pageSize);
                 }
-
-
             }else{
                 attr.actObj = selectAllBarnd(null);
             }
