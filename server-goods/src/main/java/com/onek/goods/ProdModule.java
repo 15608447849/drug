@@ -443,7 +443,7 @@ public class ProdModule {
                 }
 
                 //设置优惠价格毛利润
-                prodVO.setGrossProfit(prodVO.getRrp(),purchaseprice);
+                prodVO.setGrossProfit(NumUtil.div(prodVO.getRrp(), 100),purchaseprice);
 //            else {
 //                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
 //                if (prizeEntity != null) {
@@ -649,7 +649,7 @@ public class ProdModule {
         }
 
         //设置优惠价格毛利润
-        prodVO.setGrossProfit(prodVO.getRrp(),purchaseprice);
+        prodVO.setGrossProfit(NumUtil.div(prodVO.getRrp(), 100),purchaseprice);
         if (context.isAnonymous()) {//无权限价格不可见
             prodVO.setVatp(-1);
             prodVO.setMp(-1);
