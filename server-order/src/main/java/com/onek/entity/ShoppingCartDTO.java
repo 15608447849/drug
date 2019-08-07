@@ -32,6 +32,16 @@ public class ShoppingCartDTO {
 
     private double pdprice;
 
+    private String pkgno;
+
+    public String getPkgno() {
+        return pkgno;
+    }
+
+    public void setPkgno(String pkgno) {
+        this.pkgno = pkgno;
+    }
+
     public double getPdprice() {
         return pdprice;
     }
