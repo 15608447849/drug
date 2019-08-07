@@ -124,7 +124,6 @@ public class PackageModule {
                 brandMap.put(brandNo, brandName);
             }
         }
-        System.out.println("品牌列表---->>>>>>>>.. " + GsonUtils.javaBeanToJson(brandMap));
     }
 
     @UserPermission(ignore = true)
@@ -177,7 +176,6 @@ public class PackageModule {
 
             }
         }
-        System.out.println("品牌列表---->>>>>>>>.. " + GsonUtils.javaBeanToJson(brandMap));
     }
 
 
@@ -247,13 +245,11 @@ public class PackageModule {
 
     private static Map<Integer, List<ProdVO>> assMenuData( Map<Integer, Set<Long>> menuMap, List<ProdVO> prodVOList) {
         Map<Integer, List<ProdVO>> menuProdMap = new HashMap<>();
-//        LogUtil.getDefaultLogger().info("prodVOList00000000000000  " + GsonUtils.javaBeanToJson(prodVOList));
         for(Map.Entry<Integer, Set<Long>> entry : menuMap.entrySet()){
             List<ProdVO> menuProdList = new ArrayList<>();
             if (menuProdMap.containsKey(entry.getKey())) {
                 menuProdList = menuProdMap.get(entry.getKey());
             }
-//            LogUtil.getDefaultLogger().info("menuProdList 2222222222  " + GsonUtils.javaBeanToJson(menuProdList));
             Set<Long> skuList = entry.getValue();
             for (ProdVO prodVO : prodVOList) {
                 if (skuList.contains(prodVO.getSku())) {
@@ -262,10 +258,22 @@ public class PackageModule {
                 }
             }
         }
-//        LogUtil.getDefaultLogger().info("menuProdMap 33333333333333  " + GsonUtils.javaBeanToJson(menuProdMap));
+
+        for(Map.Entry<Integer, List<ProdVO>> menuProd : menuProdMap.entrySet()){
+            menuProd.getValue().forEach(prod -> {
+                prod.setPkgUnEnough(pkgUnEnough(menuProd.getValue()));
+            });
+        }
         return menuProdMap;
     }
 
+
+    private static boolean pkgUnEnough(List<ProdVO> prodVOList) {
+        for (ProdVO prod : prodVOList) {
+            return prod.getStore() < prod.getPkgprodnum();
+        }
+        return false;
+    }
 
     static {
 //        ElasticSearchClientFactory.init();
