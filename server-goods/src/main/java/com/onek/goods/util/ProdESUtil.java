@@ -804,6 +804,31 @@ public class ProdESUtil {
     }
 
 
+    public static SearchResponse searchProdGroupByNo(long brandNo, long maNuNo, int pagenum,int pagesize) {
+        BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+        if(brandNo > 0){
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_BRANDNO, brandNo);
+            boolQuery.must(builder);
+        }
+        if (maNuNo > 0) {
+            TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNO, maNuNo);
+            boolQuery.must(builder);
+        }
+        MatchQueryBuilder pBuilder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
+        boolQuery.must(pBuilder);
+        FieldSortBuilder sortBuilder = SortBuilders.fieldSort(ESConstant.PROD_COLUMN_SALES).order(SortOrder.DESC);
+        int from = pagenum * pagesize - pagesize;
+        TransportClient client = ElasticSearchClientFactory.getClientInstance();
+        SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX)
+                .setQuery(boolQuery)
+                .setFrom(from)
+                .setSize(pagesize);
+        if(sortBuilder != null){
+            requestBuilder.addSort(sortBuilder);
+        }
+        return requestBuilder.execute().actionGet();
+    }
+
     private static SearchResponse searchProdGroupByCol(String col, BoolQueryBuilder boolQuery) {
         TransportClient client = ElasticSearchClientFactory.getClientInstance();
         SearchRequestBuilder requestBuilder = client.prepareSearch(ESConstant.PROD_INDEX).setQuery(boolQuery);
