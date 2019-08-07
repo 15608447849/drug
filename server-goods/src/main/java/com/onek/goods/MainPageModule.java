@@ -15,7 +15,6 @@ import com.onek.goods.mainpagebean.Attr;
 import com.onek.goods.mainpagebean.UiElement;
 import com.onek.goods.util.ProdActPriceUtil;
 import com.onek.goods.util.ProdESUtil;
-import com.onek.server.infimp.IceDebug;
 import com.onek.util.FileServerUtils;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.dict.DictStore;
@@ -70,12 +69,7 @@ public class MainPageModule {
             "and spu.cstatus&1 = 0 and sku.cstatus&1 = 0 and sku.prodstatus = 1 and b.brandno = spu.brandno and spu.spu = sku.spu group by b.brandno, b.brandname";
 
 
-    @UserPermission(ignore = true)
-    public void getDataSource(AppContext appContext) {
-        long sss = System.currentTimeMillis();
-        long br = Long.parseLong(appContext.param.arrays[0]);
-        Attr attr = dataSource(br, false, false,appContext.param.pageIndex, 6, appContext, "");
-    }
+
 
     private static long getGroupCount(long actCode) {
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(COUNT_GROUP_NUM, actCode);
@@ -86,7 +80,7 @@ public class MainPageModule {
      * 通过活动码 获取 活动属性 及 商品信息
      **/
     private static Attr dataSource(long bRuleCodes, boolean isQuery, boolean onlySpecActivity,int pageIndex, int pageNumber,
-                                   AppContext context, String jsonStr) {
+                                   AppContext context, String jsonStr,boolean isMainList) {
 
 //        LogUtil.getDefaultLogger().info("品牌参数111111111111---------0000000000000000000 " + jsonStr);
         Attr attr = new Attr();
@@ -109,7 +103,7 @@ public class MainPageModule {
                 //非活动专区
                 if (isQuery) {
                     List<ProdVO> prodVOS = getFloorByState(bRuleCodes, context,
-                            page, attr, keyword, brandno, manuName,classId);
+                            page, attr, keyword, brandno, manuName,classId,isMainList);
                     if (prodVOS != null && prodVOS.size() > 0) {
                         remoteQueryShopCartNumBySku(compId, prodVOS, context.isAnonymous());
                         attr.list = prodVOS;
@@ -551,7 +545,7 @@ public class MainPageModule {
      * @version 1.1.1
      **/
     private static List<ProdVO> getFloorByState(long state, AppContext context, Page page, Attr attr,
-                                                String keyword, String brandno, String manuName, int classId) {
+                                                String keyword, String brandno, String manuName, int classId,boolean isMainList) {
 
         Set<Integer> result = new HashSet<>();
         if (state == -1) { // 新品
@@ -596,7 +590,7 @@ public class MainPageModule {
             }
             return getClassesMallFloor(page, context, classId, keyword);
         } else {//品牌专区-4 //热销专区 -5 //控销专区 -6
-            return getOtherMallFloor(page, context, state, attr, keyword, brandno, manuName);
+            return getOtherMallFloor(page, context, state, attr, keyword, brandno, manuName,isMainList);
         }
         Map<String, Object> resultMap = getFilterProdsCommon(context, result, keyword, 1, page);
         return (List<ProdVO>) resultMap.get("prodList");
@@ -613,15 +607,20 @@ public class MainPageModule {
 
     //品牌-4 热销 -5
     private static List<ProdVO> getOtherMallFloor(Page page, AppContext context,
-                                                  long state, Attr attr, String keyword, String brandno, String manuName) {
+                                                  long state, Attr attr, String keyword, String brandno, String manuName,boolean isMainList) {
 
         SearchResponse response = null;
         if (state == -4) {//品牌 - 多厂商
 //           List<ProdBrandVO> prodBarnds = getBrandInfo();
             if (!StringUtils.isEmpty(manuName)){
 //                LogUtil.getDefaultLogger().info("品牌-厂家-查询关键字: "+manuName );
-                //厂家码
-                response = ProdESUtil.searchProdHasBrand(null, keyword, brandno, manuName, page.pageIndex, page.pageSize);
+                if (isMainList){
+
+                }else{
+                    //厂家码
+                    response = ProdESUtil.searchProdHasBrand(null, keyword, brandno, manuName, page.pageIndex, page.pageSize);
+                }
+
 
             }else{
                 attr.actObj = selectAllBarnd(null);
@@ -721,20 +720,6 @@ public class MainPageModule {
     }
 
 
-    /**
-     * @接口摘要 客户端首页展示
-     * @业务场景
-     * @传参类型 json
-     * @传参列表 {setup = 1-获取首页楼层  }
-     * @返回列表
-     */
-    @IceDebug
-    @UserPermission(ignore = true)
-    public Result pageInfo() {
-
-        return null;
-    }
-
     private static class Param {
         long identity; //活动叠加码
         int limit = -1;//楼层商品限制数
@@ -818,21 +803,26 @@ public class MainPageModule {
         }else{
             if (param.limit > 0) {
                 //获取指定活动的商品信息
-                return new Result().success(dataSource(param.identity, true, param.onlyActivity,1, param.limit, context, param.jsonStr));
+                return new Result().success(dataSource(param.identity, true, param.onlyActivity,1, param.limit, context, param.jsonStr,true));
             }
             if (param.limit == -1) {
-                return new Result().success(dataSource(param.identity, true, param.onlyActivity,context.param.pageIndex, context.param.pageNumber, context, param.jsonStr));
+                return new Result().success(dataSource(param.identity, true, param.onlyActivity,context.param.pageIndex, context.param.pageNumber, context, param.jsonStr,false));
             }
         }
         return new Result().fail("参数异常");
     }
-
+   /* @UserPermission(ignore = true)
+    public void getDataSource(AppContext appContext) {
+        long sss = System.currentTimeMillis();
+        long br = Long.parseLong(appContext.param.arrays[0]);
+        Attr attr = dataSource(br, false, false,appContext.param.pageIndex, 6, appContext, "");
+    }
     @UserPermission(ignore = true)
     public int insert(AppContext appContext) {
         String sql = "insert into {{?" + DSMConst.TD_PROM_RULE +"}}1 "
                 + " (`rulecode`, `brulecode`, `rulename`, `desc`, `cstatus`)"
                 + " values(?,?,?,?,?)";
         return BaseDAO.getBaseDAO().updateNative(sql,1,1,"哈哈呵呵","dasdad",0);
-    }
+    }*/
 
 }
