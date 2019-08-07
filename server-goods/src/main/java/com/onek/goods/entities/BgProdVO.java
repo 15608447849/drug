@@ -88,7 +88,7 @@ public class BgProdVO implements Cloneable{
     public void setIsneareffect(String sDate) {
         String nowTime = TimeUtils.str2Ymd_After_Mouth(TimeUtils.getCurrentDate(),6);
         long nowTimes = TimeUtils.str_yMd_2Date(nowTime).getTime();
-        if(StringUtils.isEmpty()) {
+        if(StringUtils.isEmpty(sDate)) {
             this.isneareffect = false;
         }else {
             long vailTimes = TimeUtils.str_yMd_2Date(sDate).getTime();
