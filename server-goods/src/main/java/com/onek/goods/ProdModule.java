@@ -443,7 +443,7 @@ public class ProdModule {
                 }
 
                 //设置优惠价格毛利润
-                prodVO.setGrossProfit(prodVO.getRrp(),purchaseprice);
+                prodVO.setGrossProfit(NumUtil.div(prodVO.getRrp(), 100),purchaseprice);
 //            else {
 //                ProdPriceEntity prizeEntity = ProdActPriceUtil.getActIntervalPrizeBySku(prodVO.getSku(), prodVO.getVatp());
 //                if (prizeEntity != null) {
@@ -537,9 +537,8 @@ public class ProdModule {
 
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
                 prodVO.setConsell(sourceMap.get("consell") != null ?  Integer.parseInt(detail.get("consell").toString()) : 0);
-
-                //设置毛利润
-                prodVO.setGrossProfit(prodVO.getRrp(),prodVO.getVatp());
+                //设置是否未近效商品
+                prodVO.setIsNearEffect(prodVO.getVaildsdate());
             }
         } catch (Exception e) {
             // e.printStackTrace();
@@ -649,7 +648,7 @@ public class ProdModule {
         }
 
         //设置优惠价格毛利润
-        prodVO.setGrossProfit(prodVO.getRrp(),purchaseprice);
+        prodVO.setGrossProfit(NumUtil.div(prodVO.getRrp(), 100),purchaseprice);
         if (context.isAnonymous()) {//无权限价格不可见
             prodVO.setVatp(-1);
             prodVO.setMp(-1);

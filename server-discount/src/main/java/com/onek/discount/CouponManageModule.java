@@ -1440,8 +1440,9 @@ public class CouponManageModule {
      //   GoodsVO[] goodsVOS = new GoodsVO[queryResult.size()];
 
         baseDao.convToEntity(queryResult, goodsVOS, GoodsVO.class,
-                new String[]{"unqid","actcode","spec","gcode","limitnum",
-                        "manuname","standarno","prodname","classname","price","actstock","cstatus"});
+                "unqid","actcode","spec","gcode","limitnum",
+                "manuname","standarno","prodname","classname","price",
+                "actstock","cstatus");
 
         for (GoodsVO goodsVO : goodsVOS) {
             if ((goodsVO.getCstatus() & 512) > 0) {

@@ -3,6 +3,7 @@ package com.onek.goods.entities;
 import redis.annation.DictCacheField;
 import redis.annation.GetDictWay;
 import util.StringUtils;
+import util.TimeUtils;
 
 import java.math.BigDecimal;
 
@@ -78,6 +79,24 @@ public class BgProdVO implements Cloneable{
 
     private int grossProfit;//毛利润
 
+    private boolean isneareffect;//是否未近效商品
+
+    public boolean getIsneareffect() {
+        return isneareffect;
+    }
+
+    public void setIsneareffect(String sDate) {
+        String nowTime = TimeUtils.str2Ymd_After_Mouth(TimeUtils.getCurrentDate(),6);
+        long nowTimes = TimeUtils.str_yMd_2Date(nowTime).getTime();
+
+        long vailTimes = TimeUtils.str_yMd_2Date(sDate).getTime();
+        if(nowTimes>=vailTimes){
+            this.isneareffect = true;
+        }else{
+            this.isneareffect = false;
+        }
+
+    }
     public int getGrossProfit() {
         return grossProfit;
     }
