@@ -538,8 +538,6 @@ public class ProdModule {
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
                 prodVO.setConsell(sourceMap.get("consell") != null ?  Integer.parseInt(detail.get("consell").toString()) : 0);
 
-                //设置毛利润
-                prodVO.setGrossProfit(prodVO.getRrp(),prodVO.getVatp());
             }
         } catch (Exception e) {
             // e.printStackTrace();
