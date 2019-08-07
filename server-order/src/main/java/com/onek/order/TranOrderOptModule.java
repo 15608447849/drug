@@ -248,7 +248,7 @@ public class TranOrderOptModule {
 
         String cStr = null;
         try {
-            cStr = theGoodsHasChange(tranOrderGoods, tranOrder.getCusno());
+            cStr = theGoodsHasChange(tranOrderGoods, tranOrder.getCusno(), placeType);
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -341,7 +341,8 @@ public class TranOrderOptModule {
         }
     }
 
-    private String theGoodsHasChange(List<TranOrderGoods> tranOrderGoods, int compId) {
+    private String theGoodsHasChange(List<TranOrderGoods> tranOrderGoods, int compId, int placeType) {
+        if (placeType == 1) return null;
         StringBuilder skuBuilder = new StringBuilder();
         for (TranOrderGoods transGoods: tranOrderGoods) {
             skuBuilder.append(transGoods.getPdno()).append(",");
