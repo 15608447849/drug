@@ -68,6 +68,8 @@ public class ProdVO {
 
     private int pkgprodnum;
 
+    private boolean pkgUnEnough;//套餐库存不足
+
     public int getGrossProfit() {
         return grossProfit;
     }
@@ -456,5 +458,13 @@ public class ProdVO {
 
     public void setPkgprodnum(int pkgprodnum) {
         this.pkgprodnum = pkgprodnum;
+    }
+
+    public boolean isPkgUnEnough() {
+        return pkgUnEnough;
+    }
+
+    public void setPkgUnEnough(boolean pkgUnEnough) {
+        this.pkgUnEnough = pkgUnEnough;
     }
 }
