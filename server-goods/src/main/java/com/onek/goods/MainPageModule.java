@@ -617,7 +617,7 @@ public class MainPageModule {
             if (!StringUtils.isEmpty(brandno)){
 //                LogUtil.getDefaultLogger().info("品牌-厂家-查询关键字: "+manuName );
                 if (isMainList){
-                    response = ProdESUtil.searchProdGroupByNo(Long.parseLong(brandno), 0, page.pageIndex, page.pageSize);
+                    response = ProdESUtil.searchProdGroupByNo(brandno, "", page.pageIndex, page.pageSize);
                 }else{
                     //厂家码
                     response = ProdESUtil.searchProdHasBrand(null, keyword, brandno, manuName, page.pageIndex, page.pageSize);

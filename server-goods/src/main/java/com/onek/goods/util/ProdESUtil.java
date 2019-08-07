@@ -804,13 +804,13 @@ public class ProdESUtil {
     }
 
 
-    public static SearchResponse searchProdGroupByNo(long brandNo, long maNuNo, int pagenum,int pagesize) {
+    public static SearchResponse searchProdGroupByNo(String brandNo, String maNuNo, int pagenum,int pagesize) {
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
-        if(brandNo > 0){
+        if(!StringUtils.isEmpty(brandNo) && Long.parseLong(brandNo) > 0){
             TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_BRANDNO, brandNo);
             boolQuery.must(builder);
         }
-        if (maNuNo > 0) {
+        if (!StringUtils.isEmpty(maNuNo) && Long.parseLong(maNuNo) > 0) {
             TermsQueryBuilder builder = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_MANUNO, maNuNo);
             boolQuery.must(builder);
         }
