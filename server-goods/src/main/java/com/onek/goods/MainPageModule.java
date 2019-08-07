@@ -614,18 +614,14 @@ public class MainPageModule {
         SearchResponse response = null;
         if (state == -4) {//品牌 - 多厂商
 //           List<ProdBrandVO> prodBarnds = getBrandInfo();
-            if (!StringUtils.isEmpty(brandno)){
-//                LogUtil.getDefaultLogger().info("品牌-厂家-查询关键字: "+manuName );
-                if (isMainList){
-                    response = ProdESUtil.searchProdGroupByNo(brandno, "", page.pageIndex, page.pageSize);
-                }else{
-                    //厂家码
-                    response = ProdESUtil.searchProdHasBrand(null, keyword, brandno, manuName, page.pageIndex, page.pageSize);
-                }
+            if (isMainList) response = ProdESUtil.searchProdGroupByNo(brandno, "", page.pageIndex, page.pageSize);
+//           List<ProdBrandVO> prodBarnds = getBrandInfo();
+            if (!StringUtils.isEmpty(manuName)){
+                //厂家码
+                response = ProdESUtil.searchProdHasBrand(null, keyword, brandno, manuName, page.pageIndex, page.pageSize);
             }else{
                 attr.actObj = selectAllBarnd(null);
             }
-
         } else if (state == -5) { //热销
             response = ProdESUtil.searchHotProd(0, keyword, page.pageIndex, page.pageSize);
         } else {//控销专区
