@@ -315,16 +315,4 @@ public class TimeUtils {
 
     }
 
-    /**
-     * 计算时间在几月之后
-     * @param date 时间点 agter 推迟月数
-     * @return 6月之后时间点
-     */
-    public static String str2Ymd_After_Mouth(String date,int after){
-        Calendar cal = Calendar.getInstance();
-        cal.setTime(TimeUtils.str_yMd_2Date(date));
-        cal.add(Calendar.MONTH,after);
-        return TimeUtils.date_yMd_2String(cal.getTime());
-    }
-
 }
