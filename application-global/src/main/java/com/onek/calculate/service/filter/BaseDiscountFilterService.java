@@ -67,20 +67,11 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
 
                 if (activity.getBRule() == 1114 && product instanceof Package) {
                     Package p = (Package) product;
-
                     activity.setDiscounted(MathUtil.exactSub(
                             p.getCurrentPrice(),
                             activity.getActionPrice(p.getSKU())
                                     * p.getNums()).setScale(2, RoundingMode.HALF_UP).doubleValue());
-
-//                    p.setCurrentPrice(activity.getActionPrice(p.getSKU()) * p.getNums());
-
                     p.updateCurrentPrice();
-                    //                    p.addDiscounted(
-                    //                            MathUtil.exactSub(
-                    //                                    p.getOriginalPrice() * p.getNums(),
-                    //                                    p.getCurrentPrice()).setScale(2, RoundingMode.HALF_UP).doubleValue());
-
                     p.setExpireFlag(0);
                 }
 
