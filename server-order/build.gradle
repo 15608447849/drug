@@ -2,7 +2,6 @@
 dependencies {
     implementation project(':application-global')
     compile 'com.google.guava:guava:27.0.1-jre'
-    compile group: 'com.lmax', name: 'disruptor', version: '3.4.2'
 }
 shadowJar {
     baseName = 'order'
