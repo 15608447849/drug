@@ -428,7 +428,7 @@ public class MainPageModule {
             }
 
             //设置优惠价格毛利润
-            prodVO.setGrossProfit(prodVO.getRrp(),purchaseprice);
+            prodVO.setGrossProfit(NumUtil.div(prodVO.getRrp(), 100),purchaseprice);
             LogUtil.getDefaultLogger().info("===> 零售: "+prodVO.getRrp() + "===>显示价格："+purchaseprice + "===>毛利润："+prodVO.getGrossProfit());
 /*            LogUtil.getDefaultLogger().info("---》》 " + prodVO.getPopname() + "  原价:" + prodVO.getVatp());
             LogUtil.getDefaultLogger().info("---》》 " + prodVO.getPopname() + "  活动价:" + prodVO.getActprize());*/
