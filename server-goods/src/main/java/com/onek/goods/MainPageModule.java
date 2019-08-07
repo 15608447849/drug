@@ -429,6 +429,7 @@ public class MainPageModule {
 
             //设置优惠价格毛利润
             prodVO.setGrossProfit(prodVO.getRrp(),purchaseprice);
+            LogUtil.getDefaultLogger().info("===> 零售: "+prodVO.getRrp() + "===>显示价格："+purchaseprice + "===>毛利润："+prodVO.getGrossProfit());
 /*            LogUtil.getDefaultLogger().info("---》》 " + prodVO.getPopname() + "  原价:" + prodVO.getVatp());
             LogUtil.getDefaultLogger().info("---》》 " + prodVO.getPopname() + "  活动价:" + prodVO.getActprize());*/
             if (context.isAnonymous()) {//无权限价格不可见
@@ -495,9 +496,6 @@ public class MainPageModule {
 
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
                 prodVO.setConsell(sourceMap.get("consell") != null ?  Integer.parseInt(detail.get("consell").toString()) : 0);
-
-                //设置毛利润
-                prodVO.setGrossProfit(prodVO.getRrp(),prodVO.getVatp());
 
                 if (dataMap != null && otherArr != null) {
                     int ruleCode = Integer.parseInt(otherArr[0]);//规则码
