@@ -89,6 +89,10 @@ public class RedisGlobalKeys {
     // 重建es开关
     public static final String RECREATE_ES_SWITCH = "RECREATE_ES_SWITCH";
 
+
+    //套餐码
+    public static final String ACT_MENU_ID = "ACT_MENU_ID";
+
     /**
      * 获取用户ID
      */
@@ -148,5 +152,12 @@ public class RedisGlobalKeys {
         Format f1 = new DecimalFormat("000");
         int val = Math.toIntExact( RedisUtil.getStringProvide().increase(orderno, 1));
         return orderno + f1.format(val);
+    }
+
+    /**
+     * 获取套餐码
+     */
+    public static int getMenuCode(){
+        return   Math.toIntExact(getCurrentYear()+getCurrentDate_Md()+RedisUtil.getStringProvide().increase(ACT_MENU_ID));
     }
 }

@@ -14,10 +14,18 @@ import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.delete.DeleteResponse;
 import org.elasticsearch.action.get.GetResponse;
 import org.elasticsearch.action.index.IndexResponse;
+import org.elasticsearch.action.search.SearchResponse;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.elasticsearch.index.query.BoolQueryBuilder;
+import org.elasticsearch.index.query.MatchQueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.index.query.TermsQueryBuilder;
+import org.elasticsearch.search.SearchHit;
+import org.elasticsearch.search.aggregations.AggregationBuilder;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
 import org.hyrdpf.util.LogUtil;
 
 /**
@@ -261,5 +269,28 @@ public class ElasticSearchProvider {
         }
 
     }
+
+
+    /* *
+     * @description 判断是否存在下架商品
+     * @params [skuList]
+     * @return boolean
+     * @exception
+     * @author 11842
+     * @time  2019/7/20 19:08
+     * @version 1.1.1
+     **/
+    public static boolean checkProdsContainOff(List<Long> skuList) {
+		BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
+		TermsQueryBuilder skuBuilder = QueryBuilders.termsQuery("sku", skuList);
+		boolQuery.must(skuBuilder);
+		MatchQueryBuilder builder = QueryBuilders.matchQuery("prodstatus", "0");
+		boolQuery.must(builder);
+		TransportClient client = ElasticSearchClientFactory.getClientInstance();
+		SearchResponse response = client.prepareSearch("prod")
+				.setQuery(boolQuery)
+				.execute().actionGet();
+		return response != null && response.getHits().totalHits > 0;
+	}
 
 }

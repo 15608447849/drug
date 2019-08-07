@@ -231,10 +231,10 @@ public class TranOrderOptModule {
             goodsVO.setPayamt(goodsVO.getPnum()*goodsVO.getPdprice());
             tranOrderGoods.add(goodsVO);
         }
-   /*     String cStr = theGoodsHasChange(tranOrderGoods, tranOrder.getCusno());
+        String cStr = theGoodsHasChange(tranOrderGoods, tranOrder.getCusno());
         if (cStr != null) {
             return result.fail(cStr);
-        }*/
+        }
         tranOrder.setPdnum(pdnum);
         List<GoodsStock> goodsStockList = new ArrayList<>();
         String orderNo = GenIdUtil.getOrderId(tranOrder.getCusno());//订单号生成

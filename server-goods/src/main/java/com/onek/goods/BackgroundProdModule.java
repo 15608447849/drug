@@ -510,7 +510,9 @@ public class BackgroundProdModule {
 
 
         BgProdVO result = getProd(params[0]);
-
+        //设置有效期时判断该商品是否未近效商品
+        result.setIsneareffect(result.getVaildsdate());
+//        LogUtil.getDefaultLogger().info("当前商品有效开始日期："+ result.getVaildsdate() +"有效期移至六月之后的日期："+ TimeUtils.str2Ymd_After_Mouth(result.getVaildsdate(),6) +" 是否未近效商品："+result.getIsneareffect());
         if (result == null) {
             return new Result().fail("无此商品");
         }
@@ -558,7 +560,7 @@ public class BackgroundProdModule {
                         new PriorityFilter(),
                         new StoreFilter(),})
                 .getCurrentActivities(products);
-        appContext.logger.print("活动价格 = " + p.getCurrentPrice());
+//        appContext.logger.print("活动价格 = " + p.getCurrentPrice());
         //设置毛利润
         if(discounts == null || discounts.size()<=0){
             result.setGrossProfit(result.getRrp(), result.getVatp());
