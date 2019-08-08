@@ -863,7 +863,7 @@ public class PayModule {
         params.add(new Object[]{GenIdUtil.getUnqId(), compid, orderno, 0, refbal, 0, 0, -3, GenIdUtil.getUnqId(),
                     0,dateStr[0],dateStr[1],dateStr[0],dateStr[1],0});
         sqlList.add(INSERT_TRAN_PAYREC);//新增支付记录
-        String evtInfo = "{'remark':"+remark+"}";
+        String evtInfo = "{'remark':'"+remark+"'}";
         params.add(new Object[]{GenIdUtil.getUnqId(),compid, 0, evtInfo, "{}", dateStr[0], dateStr[1]});
         int year = Integer.parseInt("20" + orderno.substring(0,2));
         String[] sqlNative = new String[sqlList.size()];
