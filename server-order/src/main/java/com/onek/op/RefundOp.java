@@ -8,10 +8,7 @@ import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import util.MathUtil;
-import util.ModelUtil;
-import util.StringUtils;
-import util.TimeUtils;
+import util.*;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -77,6 +74,13 @@ public class RefundOp implements IOperation<AppContext> {
         asnoList.clear();
         return r;
     }
+
+    private static class BackResult{
+         int code = 0;
+         Object data;
+         String message;
+    }
+
 
     private Result startRefund() {
         //判断售后订单是否在退款中
@@ -208,8 +212,12 @@ public class RefundOp implements IOperation<AppContext> {
        if (retpay >= 0) {
            //只需要退款线上支付
            long refundno = GenIdUtil.getUnqId();
-          HashMap<String,Object> map =  refund(typeStr, refundno+"",otherNo ,realrefamt ,_payTotal,isApp);
-           isOk = map.containsKey("code") && 2.0 == Double.parseDouble(map.get("code").toString());
+        HashMap<String,Object> map =  refund(typeStr, refundno+"",otherNo ,realrefamt ,_payTotal,isApp);
+           String json = GsonUtils.javaBeanToJson(map);
+           log.print("退款结果："+json);
+           BackResult r = GsonUtils.jsonToJavaBean(json,BackResult.class);
+           isOk = r.code == 2;
+
            if (isOk) {
 //               //插入退款成功数据
                params.add(new Object[]{
@@ -223,7 +231,11 @@ public class RefundOp implements IOperation<AppContext> {
                long refundno = GenIdUtil.getUnqId();
                //先退线上(全额), 剩余部分退余额
                HashMap<String,Object> map  = refund(typeStr, GenIdUtil.getUnqId()+"",otherNo ,_pay ,_payTotal,isApp);
-               isOk = map.containsKey("code") && 2.0 == Double.parseDouble(map.get("code").toString());
+               String json = GsonUtils.javaBeanToJson(map);
+               log.print("退款结果："+json);
+               BackResult r = GsonUtils.jsonToJavaBean(json,BackResult.class);
+               isOk = r.code == 2;
+
                if (isOk) {
 //               //插入退款成功数据
                    params.add(new Object[]{
