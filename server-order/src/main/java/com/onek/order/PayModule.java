@@ -280,6 +280,7 @@ public class PayModule {
         String tradeDate = arrays[4];
         double money = Double.parseDouble(arrays[5]);
         int compid = Integer.parseInt(arrays[6]);
+        int source = arrays.length > 7 ? Integer.parseInt(arrays[7]) : 0;
 
         int paychannel = -1;
         if(PAY_TYPE_ALI.equals(paytype)){
@@ -299,11 +300,11 @@ public class PayModule {
         if("1".equals(tradeStatus)){
             String tdate = TimeUtils.date_yMd_2String(date);
             String time = TimeUtils.date_Hms_2String(date);
-            result = successOpt(orderno, payno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+            result = successOpt(orderno,source, payno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }else if("2".equals(tradeStatus)){
             String tdate = TimeUtils.date_yMd_2String(date);
             String time = TimeUtils.date_Hms_2String(date);
-            result = failOpt(orderno, payno,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+            result = failOpt(orderno, source, payno,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
 
         if(result != 2)  OrderUtil.sendMsg(orderno, tradeStatus ,money, compid, tradeDate);
@@ -346,6 +347,7 @@ public class PayModule {
             String tradeDate = arrays[4];
             double money = Double.parseDouble(arrays[5]);
             int compid = Integer.parseInt(arrays[6]);
+            int source = arrays.length > 7 ? Integer.parseInt(arrays[7]) : 0;
 
             int paychannel = -1;
             if(PAY_TYPE_ALI.equals(paytype)){
@@ -358,12 +360,12 @@ public class PayModule {
             if("1".equals(tradeStatus)){
                 String tdate = TimeUtils.date_yMd_2String(date);
                 String time = TimeUtils.date_Hms_2String(date);
-                result = successFeeOpt(afsano,payno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+                result = successFeeOpt(afsano,source,payno, paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
 
             }else if("2".equals(tradeStatus)){
                 String tdate = TimeUtils.date_yMd_2String(date);
                 String time = TimeUtils.date_Hms_2String(date);
-                result = failOpt(afsano, afsano,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
+                result = failOpt(afsano,source, afsano,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
             }
 
             if(result != 2) OrderUtil.sendMsg(afsano, tradeStatus ,money, compid, tradeDate);
@@ -495,8 +497,7 @@ public class PayModule {
      * @time  2019/4/18 20:56
      * @version 1.1.1
      **/
-    private int successOpt(String orderno, String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
-        int paysource = 0;
+    private int successOpt(String orderno, int paysource ,String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
@@ -630,9 +631,7 @@ public class PayModule {
      * @time  2019/4/18 20:37
      * @version 1.1.1
      **/
-    private int failOpt(String orderno, String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
-
-        int paysource = 0;
+    private int failOpt(String orderno,int paysource, String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
@@ -666,8 +665,7 @@ public class PayModule {
      * @time  2019/4/25 15:56
      * @version 1.1.1
      **/
-    private int successFeeOpt(String afsano,String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
-        int paysource = 0;
+    private int successFeeOpt(String afsano, int paysource,String payno,int paytype,String thirdPayNo,String tradeStatus,String tradeDate,String tradeTime,int compid,double price) {
 
         List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, afsano, compid);
         if(trans != null && trans.size() > 0) {
