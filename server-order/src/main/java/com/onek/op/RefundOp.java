@@ -289,7 +289,7 @@ public class RefundOp implements IOperation<AppContext> {
         params.add(new Object[]{-3, queryRet.get(0)[0], -2});
         params.add(new Object[]{200, queryRet.get(0)[2], 3, queryRet.get(0)[0], queryRet.get(0)[1]});
 
-
+        log.print("售后订单："+ asno +"即将更新状态至 200！");
         baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_CK_FINISH_SQL, new Object[]{200, asno});
         int row  = baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPDATE_ORDER_REFAMT, new Object[]{realrefamt * 100, asno});
         log.print("影响行数：" + row + "实际退款金额:"+realrefamt);
