@@ -1,5 +1,7 @@
 package com.onek.goods;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -27,6 +29,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.aggregations.metrics.tophits.TopHits;
 import org.hyrdpf.util.LogUtil;
 import util.GsonUtils;
+import util.MathUtil;
 import util.TimeUtils;
 
 import java.util.*;
@@ -216,7 +219,7 @@ public class PackageModule {
                 }
                 Map<Long, String[]> dataMap = new HashMap<>();
                 Map<Integer, Set<Long>> menuMap = new HashMap<>();
-                Map<Integer, Long> menuActMap = new HashMap<>();
+                Map<Integer, Object[]> menuActMap = new HashMap<>();
                 List<Long> skuList = new ArrayList<>();
                 String[] otherArr = {"1114", "0", compId + ""};
                 //menucode, gcode, pkgprodnum, price,actstock,limitnum,actcode,cstatus
@@ -224,8 +227,9 @@ public class PackageModule {
                     long sku = Long.valueOf(String.valueOf(qResult[1]));//sku
                     String actCode = String.valueOf(qResult[6]);
                     int pkgprodnum =  Integer.valueOf(String.valueOf(qResult[2]));//套餐数量
+                    String price = String.valueOf(qResult[3]);
                     skuList.add(sku);//sku
-                    dataMap.put(sku, new String[]{String.valueOf(qResult[4]),String.valueOf(qResult[5]), String.valueOf(qResult[3]),
+                    dataMap.put(sku, new String[]{String.valueOf(qResult[4]),String.valueOf(qResult[5]), price,
                                     String.valueOf(qResult[7]), actCode, pkgprodnum + ""});
                     Set<Long> skuSet = new HashSet<>();
                     int menucode = Integer.valueOf(String.valueOf(qResult[0]));//套餐码
@@ -234,7 +238,7 @@ public class PackageModule {
                     }
                     skuSet.add(sku);
                     menuMap.put(menucode,skuSet);
-                    menuActMap.put(menucode, Long.valueOf(actCode));
+                    menuActMap.put(menucode, new Object[]{Long.valueOf(actCode),price});
                 });
                 List<ProdVO> prodVOList = new ArrayList<>();
                 SearchResponse response = ProdESUtil.searchProdBySpuList(new ArrayList<>(skuList), "", 1, skuList.size());
@@ -244,18 +248,16 @@ public class PackageModule {
         } catch (Exception e) {
             e.printStackTrace();
         }
-//        LogUtil.getDefaultLogger().info("menuProdMap 1111111111111111----->>>>>>>..  " + GsonUtils.javaBeanToJson(menuProdMap));
         return result.success(menuProdMap);
     }
 
 
     private static Map<Integer, List<ProdVO>> assMenuData( Map<Integer, Set<Long>> menuMap, List<ProdVO> prodVOList,
-                                                           Map<Integer, Long> menuActMap) {
+                                                           Map<Integer, Object[]> menuActMap) {
         Map<Integer, List<ProdVO>> menuProdMap = new HashMap<>();
-
-        List<ProdVO> newProdList = new ArrayList<>();
         for(Map.Entry<Integer, Set<Long>> entry : menuMap.entrySet()){
-            long actCode = menuActMap.get(entry.getKey());
+            long actCode = Long.valueOf(menuActMap.get(entry.getKey())[0].toString());
+            String price = menuActMap.get(entry.getKey())[1].toString();
             List<ProdVO> menuProdList = new ArrayList<>();
             if (menuProdMap.containsKey(entry.getKey())) {
                 menuProdList = menuProdMap.get(entry.getKey());
@@ -263,22 +265,34 @@ public class PackageModule {
             for (long sku : entry.getValue()) {
                 for (ProdVO prodDTO : prodVOList) {
                     if (prodDTO.getSku() == sku) {
-                        prodDTO.setSku(sku);
-                        prodDTO.setActinitstock(RedisStockUtil.getActInitStock(sku, actCode));
-                        prodDTO.setSurplusstock(RedisStockUtil.getActStockBySkuAndActno(sku, actCode));
-                        prodDTO.setBuynum(prodDTO.getActinitstock() - prodDTO.getSurplusstock());
-                        menuProdList.add(prodDTO);
+                        ProdVO prodVO = JSON.parseObject(JSON.toJSONString(prodDTO), ProdVO.class);
+                        prodVO.setActinitstock(RedisStockUtil.getActInitStock(sku, actCode));
+                        prodVO.setSurplusstock(RedisStockUtil.getActStockBySkuAndActno(sku, actCode));
+                        prodVO.setBuynum(prodVO.getActinitstock() - prodVO.getSurplusstock());
+                        prodVO.setActprize(MathUtil.exactDiv(Double.parseDouble(price), 100).doubleValue());
+                        menuProdList.add(prodVO);
                         menuProdMap.put(entry.getKey(), menuProdList);
-                        newProdList.add(prodDTO);
                     }
                 }
             }
         }
         for(Map.Entry<Integer, List<ProdVO>> menuProd : menuProdMap.entrySet()){
-            menuProd.getValue().forEach(prod -> {
+            double pkgOrgPrice = 0;
+            double vatp = pkgPrice(menuProd.getValue());
+            for (ProdVO prod : menuProd.getValue()) {
                 prod.setPkgUnEnough(pkgUnEnough(menuProd.getValue()));
-            });
+                if (vatp < 0) {
+                    prod.setActprize(vatp);
+                    prod.setPkgOrgPrice(vatp);//控销药价格不可见 未登录价格不可见
+                } else {
+                    pkgOrgPrice = MathUtil.exactAdd(pkgOrgPrice,
+                            MathUtil.exactMul(prod.getVatp(), prod.getPkgprodnum()).doubleValue()).doubleValue();
+                }
+            }
+            if (vatp == 1) menuProd.getValue().get(0).setPkgOrgPrice(pkgOrgPrice);
+
         }
+//        LogUtil.getDefaultLogger().info("newProdList----111111111111---------->>> " + GsonUtils.javaBeanToJson(menuProdMap));
         return menuProdMap;
     }
 
@@ -287,6 +301,16 @@ public class PackageModule {
             return prod.getStore() < prod.getPkgprodnum();
         }
         return false;
+    }
+
+    private static double pkgPrice(List<ProdVO> prodVOList) {
+        for (ProdVO prod : prodVOList) {
+           if (prod.getVatp() == -2 || prod.getVatp() == -1) {
+               prod.setActprize(prod.getVatp());
+               return prod.getVatp();
+           }
+        }
+        return 1;
     }
 
 
