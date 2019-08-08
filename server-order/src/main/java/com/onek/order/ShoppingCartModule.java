@@ -88,7 +88,7 @@ public class ShoppingCartModule {
     //远程调用
     private static final String QUERY_PROD_BASE =
             " SELECT ifnull(spu.prodname,'') ptitle,ifnull(m.manuname,'') verdor," +
-                    "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildedate,'%Y-%m-%d') vperiod," +
+                    "sku.sku pdno, convert(sku.vatp/100,decimal(10,2)) pdprice, DATE_FORMAT(sku.vaildsdate,'%Y-%m-%d') vperiod," +
                     "sku.store-sku.freezestore inventory,ifnull(sku.spec,'') spec, sku.prodstatus,spu.spu,sku.limits,ifnull(brandname,'') brand,medpacknum,unit," +
                     "convert(mp/100,decimal(10,2)) mp, IFNULL(spu.busscope, 0), IFNULL(sku.consell, 0) "
                     + " FROM ({{?" + DSMConst.TD_PROD_SPU + "}} spu "

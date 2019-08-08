@@ -249,7 +249,7 @@ public class OrderOptModule {
             return res > 0 ? result.success(asOrderId) : result.fail("申请失败");
 //            }
         }
-        return b ? result.success("您的售后已提交，小药会为您尽快处理！","申请成功") : result.fail("申请失败");
+        return b ? result.success("您的售后已提交，客服会为您尽快处理！","申请成功") : result.fail("申请失败");
     }
 
     private boolean doApply(List<AsAppVO> asAppVOS, String orderNo, int asType) {
