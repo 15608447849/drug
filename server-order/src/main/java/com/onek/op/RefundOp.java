@@ -209,13 +209,15 @@ public class RefundOp implements IOperation<AppContext> {
 
         boolean isOk;
 
+        BackResult r = null;
+
        if (retpay >= 0) {
            //只需要退款线上支付
            long refundno = GenIdUtil.getUnqId();
         HashMap<String,Object> map =  refund(typeStr, refundno+"",otherNo ,realrefamt ,_payTotal,isApp);
            String json = GsonUtils.javaBeanToJson(map);
            log.print("退款结果："+json);
-           BackResult r = GsonUtils.jsonToJavaBean(json,BackResult.class);
+           r = GsonUtils.jsonToJavaBean(json,BackResult.class);
            isOk = r.code == 2;
 
            if (isOk) {
@@ -233,9 +235,8 @@ public class RefundOp implements IOperation<AppContext> {
                HashMap<String,Object> map  = refund(typeStr, GenIdUtil.getUnqId()+"",otherNo ,_pay ,_payTotal,isApp);
                String json = GsonUtils.javaBeanToJson(map);
                log.print("退款结果："+json);
-               BackResult r = GsonUtils.jsonToJavaBean(json,BackResult.class);
+               r = GsonUtils.jsonToJavaBean(json,BackResult.class);
                isOk = r.code == 2;
-
                if (isOk) {
 //               //插入退款成功数据
                    params.add(new Object[]{
@@ -261,13 +262,16 @@ public class RefundOp implements IOperation<AppContext> {
            baseDao.updateBatchNativeSharding(compid, year,insertSql, params, params.size());
        }
 
+       String message = isOk ? "退款成功" : r.message;
+
        if (isOk) {
            if (onilePayType <= 3) {
                isOk = afterSaleFinish(asno,realrefamt);
+               if (!isOk) message+=" ,订单修改失败";
            }
        }
 
-       return isOk ? new Result().success("退款成功") : new Result().fail("退款失败");
+       return isOk ? new Result().success(message) : new Result().fail(message);
     }
 
     /**
@@ -289,9 +293,9 @@ public class RefundOp implements IOperation<AppContext> {
         params.add(new Object[]{-3, queryRet.get(0)[0], -2});
         params.add(new Object[]{200, queryRet.get(0)[2], 3, queryRet.get(0)[0], queryRet.get(0)[1]});
 
-
-        baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_CK_FINISH_SQL, new Object[]{200, asno});
-        int row  = baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPDATE_ORDER_REFAMT, new Object[]{realrefamt * 100, asno});
+        log.print("售后订单："+ asno +"即将更新状态至 200！");
+        baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_CK_FINISH_SQL, 200, asno);
+        int row  = baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPDATE_ORDER_REFAMT, realrefamt * 100, asno);
         log.print("影响行数：" + row + "实际退款金额:"+realrefamt);
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()), year,
                 new String[]{UPD_ORDER_CK_SQL, UPD_ORDER_GOODS_CK_SQL}, params));
