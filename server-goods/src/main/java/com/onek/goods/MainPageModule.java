@@ -48,11 +48,11 @@ public class MainPageModule {
 
     private static final String SELECT_ACT_SQL = "select unqid,brulecode,qualcode,qualvalue,cpriority from {{?"
             + DSMConst.TD_PROM_ACT + "}}  where cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 "
-            + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
+            + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0  and brulecode<>1114 ";
 
     private static final String SELECT_SQL = "select unqid from {{?"
             + DSMConst.TD_PROM_ACT + "}}  where unqid=actcode and cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 "
-            + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 ";
+            + " and fun_prom_cycle(unqid, acttype, actcycle, ?, 1) > 0 and brulecode<>1114 ";
 
     private final static String COUNT_GROUP_NUM =
             " SELECT COUNT(DISTINCT compid) "
@@ -337,7 +337,11 @@ public class MainPageModule {
             sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode FROM ("
                     + selectClassSQL + " UNION ALL " + selectGoodsSQL +
                     " UNION ALL " + selectAllSQL + ") ua group by sku";
-            queryResult = BASE_DAO.queryNativeC(pageHolder, page, sqlBuilder);
+            if (StringUtils.isEmpty(params[0])) {
+                queryResult = BASE_DAO.queryNativeC(pageHolder, page, sqlBuilder);
+            } else {
+                queryResult = BASE_DAO.queryNative(sqlBuilder);
+            }
         }
         if (queryResult == null || queryResult.isEmpty()) {
             return;
@@ -351,25 +355,22 @@ public class MainPageModule {
         //ES数据组装
         if (onlySpecActivity) {
             if (!StringUtils.isEmpty(params[2])) {
-                response = ProdESUtil.searchProdHasBrand(skuList, params[0], params[1], params[2], 1, 100);
+                response = ProdESUtil.searchProdHasBrand(skuList, params[0], params[1], params[2], 1, page.pageSize);
             } else {
-//                LogUtil.getDefaultLogger().info("skuList-------------11111111111 " + skuList.size());
                 attr.actObj = selectAllBarnd(skuList);
-//                LogUtil.getDefaultLogger().info("brandList-------------222222222 " + GsonUtils.javaBeanToJson(attr.actObj));
                 return;
             }
         } else {
-            response = ProdESUtil.searchProdBySpuList(skuList, params[0], 1, 100);
+            response = ProdESUtil.searchProdBySpuList(skuList, params[0], 1, page.pageSize);
         }
         if (response != null && response.getHits().totalHits > 0) {
-            assembleData(context, response, prodVOList, dataMap, otherArr);
             page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
-        }
-        if (prodVOList.size() > 0) {
+            assembleData(context, response, prodVOList, dataMap, otherArr);
             remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, context.isAnonymous());
             attr.list = prodVOList;
-            if(onlySpecActivity && StringUtils.isEmpty(params[2])) {
-                page.totalItems = response != null && response.getHits() != null ? (int) response.getHits().totalHits : 0;
+            if(onlySpecActivity && StringUtils.isEmpty(params[2]) || !StringUtils.isEmpty(params[0]) ) {
+                page.totalPageCount = page.totalItems%page.pageSize > 0 ?
+                        page.totalItems/page.pageSize+1 :page.totalItems/page.pageSize;
                 attr.page = new PageHolder(page);
             } else {
                 attr.page = pageHolder;
@@ -379,9 +380,6 @@ public class MainPageModule {
 
     public static void assembleData(AppContext context, SearchResponse response, List<ProdVO> prodList,
                                      Map<Long, String[]> dataMap, String[] otherArr) {
-        if (response == null || response.getHits().totalHits <= 0) {
-            return;
-        }
         for (SearchHit searchHit : response.getHits()) {
             ProdVO prodVO = new ProdVO();
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
@@ -502,14 +500,16 @@ public class MainPageModule {
                     int cstatus = dataMap.get(sku) != null ? Integer.parseInt(dataMap.get(sku)[3]) : 0;
                     long actCode = dataMap.get(sku) != null ? Long.parseLong(dataMap.get(sku)[4]) : 0;
                     int pkgprodnum = dataMap.get(sku) != null ? Integer.valueOf(dataMap.get(sku)[5]) : 0;
-                    int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), actCode);
-                    int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), actCode);
-                    prodVO.setBuynum(initStock - surplusStock);
+                    if (ruleCode != 1114) {
+                        int initStock = RedisStockUtil.getActInitStock(prodVO.getSku(), actCode);
+                        int surplusStock = RedisStockUtil.getActStockBySkuAndActno(prodVO.getSku(), actCode);
+                        prodVO.setBuynum(initStock - surplusStock);
+                        prodVO.setActinitstock(initStock);
+                        prodVO.setSurplusstock(surplusStock);
+                    }
                     prodVO.setStartnum(prodVO.getMedpacknum());
                     prodVO.setActlimit(dataMap.containsKey(prodVO.getSku()) ? limitNum : 0);
                     prodVO.setStore(RedisStockUtil.getStock(prodVO.getSku()));
-                    prodVO.setActinitstock(initStock);
-                    prodVO.setSurplusstock(surplusStock);
                     prodVO.setPkgprodnum(pkgprodnum);
                     if (ruleCode == 1113) {
                         if ((cstatus & 512) > 0) {
