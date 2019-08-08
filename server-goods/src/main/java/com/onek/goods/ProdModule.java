@@ -537,7 +537,8 @@ public class ProdModule {
 
                 prodVO.setSkuCstatus(sourceMap.get("skuCstatus") != null ? Integer.parseInt(sourceMap.get("skuCstatus").toString()) : 0);
                 prodVO.setConsell(sourceMap.get("consell") != null ?  Integer.parseInt(detail.get("consell").toString()) : 0);
-
+                //设置是否未近效商品
+                prodVO.setIsneareffects(prodVO.getVaildsdate());
             }
         } catch (Exception e) {
             // e.printStackTrace();

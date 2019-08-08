@@ -51,6 +51,10 @@ public class ShoppingCartModule {
     private static final String SELECT_SHOPCART_SQL_EXT = "select unqid,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
 
+    //查询订单再次购买
+    private static final String SELECT_SHOPCART_ORDER = " select unqid,pdno,compid,pnum,pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+            + " where orderno = ? and cstatus & 1 = 0";
+
     //新增数量
     private final String UPDATE_SHOPCART_SQL_EXT_ADD = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set pnum = pnum + ? " +
             " where unqid = ? ";
@@ -69,6 +73,11 @@ public class ShoppingCartModule {
 
     //删除购物车信息
     private final String DEL_SHOPCART_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set cstatus=cstatus|1 "
+            + " where cstatus&1=0 and unqid=? and orderno=0 ";
+
+
+    //删除购物车信息
+    private final String REAL_DEL_SHOPCART_SQL = "delete  from {{?" + DSMConst.TD_TRAN_GOODS + "}}  "
             + " where cstatus&1=0 and unqid=? and orderno=0 ";
 
 
@@ -362,28 +371,42 @@ public class ShoppingCartModule {
     @UserPermission(ignore = true)
     public Result againShopCart(AppContext appContext) {
         String json = appContext.param.json;
-        Result result = new Result();
+      //  Result result = new Result();
 
+       // String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
-        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+        Result result = new Result();
+        JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
+        if(!jsonObject.has("compid")
+                || !jsonObject.has("orderno")){
+            return result.fail("添加失败");
+        }
 
-        if (jsonArray.size() == 0) {
+        int compid = jsonObject.get("compid").getAsInt();
+        String orderno = jsonObject.get("orderno").getAsString();
+
+        List<Object[]> orderRet = baseDao.queryNativeSharding(compid,
+                TimeUtils.getCurrentYear(), SELECT_SHOPCART_ORDER,
+                new Object[]{orderno});
+
+        if(orderRet == null || orderRet.isEmpty()){
             return new Result().fail("商品为空！");
         }
 
-        List<ShoppingCartDTO> shoppingCartDTOS = new ArrayList<>();
-        Gson gson = new Gson();
+        ShoppingCartDTO [] shoppingCartDTOArray = new ShoppingCartDTO[orderRet.size()];
+        baseDao.convToEntity(orderRet,shoppingCartDTOArray,ShoppingCartDTO.class,
+                new String[]{"unqid","pdno","compid","pnum","pkgno"});
+
+
+        //List<ShoppingCartDTO> shoppingCartDTOS = new ArrayList<>();
         List<Object[]> updateParm = new ArrayList<>();
         List<Object[]> insertParm = new ArrayList<>();
         StringBuilder parmSql = new StringBuilder();
-        for (JsonElement shopVO : jsonArray) {
-            ShoppingCartDTO shoppingCartDTO = gson.fromJson(shopVO, ShoppingCartDTO.class);
+        for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOArray) {
             if (shoppingCartDTO != null) {
                 parmSql.append(shoppingCartDTO.getPdno()).append(",");
             }
-            shoppingCartDTOS.add(shoppingCartDTO);
         }
-        int compid = shoppingCartDTOS.get(0).getCompid();
         String skuStr = parmSql.toString().substring(0, parmSql.toString().length() - 1);
 
         String querySql = " select unqid,pdno,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
@@ -403,9 +426,9 @@ public class ShoppingCartModule {
 
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
                 querySql);
-            convtShopCartDTO(compid,querySkuRet,shoppingCartDTOS,queryRet);
+            convtShopCartDTO(compid,querySkuRet,shoppingCartDTOArray,queryRet);
             boolean flag = true;
-            for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
+            for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOArray) {
                 if (queryRet != null && !queryRet.isEmpty()) {
                     for (Object[] objects : queryRet) {
                         if (shoppingCartDTO.getPdno() == Long.parseLong(objects[1].toString())) {
@@ -436,7 +459,7 @@ public class ShoppingCartModule {
 
     public void convtShopCartDTO(int compid,
                                  List<Object[]> querySkuRet,
-                                 List<ShoppingCartDTO> shoppingCartDTOS,
+                                 ShoppingCartDTO[] shoppingCartDTOS,
                                  List<Object[]> queryRet){
 
         List<Product> productList = new ArrayList<>();
@@ -1005,16 +1028,14 @@ public class ShoppingCartModule {
 
 
     private boolean delShoppingCart(String[] idList,int compid) {
-
         List<Object[]> shopParm = new ArrayList<>();
         for (String unqid : idList) {
             if(StringUtils.isInteger(unqid)){
                 shopParm.add(new Object[]{Long.parseLong(unqid)});
             }
-
         }
         int[] result = baseDao.updateBatchNativeSharding(compid,
-                TimeUtils.getCurrentYear(), DEL_SHOPCART_SQL,shopParm,shopParm.size());
+                TimeUtils.getCurrentYear(), REAL_DEL_SHOPCART_SQL,shopParm,shopParm.size());
         return !ModelUtil.updateTransEmpty(result);
     }
 
