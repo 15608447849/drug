@@ -74,6 +74,8 @@ public class ProdVO {
 
     private boolean pkgUnEnough;
 
+    private double pkgOrgPrice;
+
     public boolean getIsneareffect() {
         return isneareffect;
     }
@@ -491,5 +493,17 @@ public class ProdVO {
 
     public void setPkgUnEnough(boolean pkgUnEnough) {
         this.pkgUnEnough = pkgUnEnough;
+    }
+
+    public boolean isIsneareffect() {
+        return isneareffect;
+    }
+
+    public double getPkgOrgPrice() {
+        return pkgOrgPrice;
+    }
+
+    public void setPkgOrgPrice(double pkgOrgPrice) {
+        this.pkgOrgPrice = pkgOrgPrice;
     }
 }
