@@ -359,13 +359,13 @@ public class MainPageModule {
         //ES数据组装
         if (onlySpecActivity) {
             if (!StringUtils.isEmpty(params[2])) {
-                response = ProdESUtil.searchProdHasBrand(skuList, params[0], params[1], params[2], 1, page.pageSize);
+                response = ProdESUtil.searchProdHasBrand(skuList, params[0], params[1], params[2], page.pageIndex, page.pageSize);
             } else {
                 attr.actObj = selectAllBarnd(skuList);
                 return;
             }
         } else {
-            response = ProdESUtil.searchProdBySpuList(skuList, params[0], 1, page.pageSize);
+            response = ProdESUtil.searchProdBySpuList(skuList, params[0], page.pageIndex, page.pageSize);
         }
         if (response != null && response.getHits().totalHits > 0) {
             page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
