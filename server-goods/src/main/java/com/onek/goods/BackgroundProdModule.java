@@ -1296,6 +1296,13 @@ public class BackgroundProdModule {
                 vaildsdate, vaildedate, prodsdate, prodedate,
                 erpcode);
 
+        bgProd.setVaildsdate(vaildsdate);
+        bgProd.setVaildedate(vaildedate);
+        bgProd.setProdsdate(prodsdate);
+        bgProd.setProdedate(prodedate);
+
+        ProdESUtil.updateProdDocument(bgProd, bgProd.getProdstatus());
+
         return new Result().success();
     }
 
