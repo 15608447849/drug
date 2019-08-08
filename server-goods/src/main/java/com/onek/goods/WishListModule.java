@@ -204,7 +204,7 @@ public class WishListModule {
         //查询是否存在相同心愿单
         String sql = "SELECT * FROM {{?"+ DSMConst.TD_WISH_LIST+"}} WHERE prodname=? AND spec=? AND manuname=?";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql,p.prodname,p.spec,p.manuname);
-        if (lines.size() > 0) return new Result().success("已存在此心愿单");
+        if (lines.size() > 0) return new Result().success("已存在此心愿单","已存在此心愿单");
         //添加-存储数据
         String insertSql = "INSERT INTO {{?"+ DSMConst.TD_WISH_LIST +"}} " +
                 "(cid,prodname,prodnameh,spec,manuname,manunameh,num,price,dtaile, submitdate,submittime) " +
@@ -213,7 +213,7 @@ public class WishListModule {
         int price = MathUtil.exactMul(p._price,100.0f).intValue();
         int i = BaseDAO.getBaseDAO().updateNative(insertSql,cid,p.prodname,p.prodname,p.spec,p.manuname,p.manuname,p._num,price,p.detail);
         if (i <= 0)return new Result().fail("提交心愿单失败,无法保存数据");
-        return new Result().success("已提交心愿单");
+        return new Result().success("已提交心愿单","已提交心愿单");
     }
 
 }

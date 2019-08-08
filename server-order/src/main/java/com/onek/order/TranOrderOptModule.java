@@ -1017,22 +1017,27 @@ public class TranOrderOptModule {
                         HashMap<String, Object> refundResult = FileServerUtils.refund(
                                 "1".equals(payWay) ? "wxpay" : "alipay", refundno,
                                 tppno, MathUtil.exactDiv(payPrice, 100.0).doubleValue(), MathUtil.exactDiv(payPrice, 100.0).doubleValue(), "1".equals(paySource));
-
+                        boolean r = false;
                         try {
-                            boolean r = refundResult.containsKey("code")
+                            r = refundResult.containsKey("code")
                                     && 2.0 == Double.parseDouble(refundResult.get("code").toString());
 
                             baseDao.updateNativeSharding(cusno, year, " UPDATE {{?" + DSMConst.TD_TRAN_TRANS + "}} "
                                     + " SET paystatus = ?, completedate = CURRENT_DATE, completetime = CURRENT_TIME "
                                     + " WHERE unqid = ? ", r ? 1 : -2, payUnq);
 
+                        } catch (Exception e) {
+                            e.printStackTrace();
                             if (!r) {
                                 throw new Exception(refundResult.getOrDefault("message", "").toString());
                             }
-                        } catch (Exception e) {
-                            e.printStackTrace();
                             return result.success("确认退款成功, 但退款状态未改变！");
                         }
+
+                        if (!r) {
+                            throw new Exception(refundResult.getOrDefault("message", "").toString());
+                        }
+
                     } catch (Exception e) {
                         baseDao.updateNativeSharding(cusno, year, updSQL, 1, orderNo, -4, -1);
 
