@@ -230,7 +230,11 @@ public class MainPageModule {
         if (actCodeSB.toString().contains(",")) {
             actCodeStr = actCodeSB.toString().substring(0, actCodeSB.toString().length() - 1);
             //获取活动下的商品
-            getActGoods(attr, page, context,actCodeStr, otherArr, onlySpecActivity, params);
+            try {
+                getActGoods(attr, page, context,actCodeStr, otherArr, onlySpecActivity, params);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -380,6 +384,9 @@ public class MainPageModule {
 
     public static void assembleData(AppContext context, SearchResponse response, List<ProdVO> prodList,
                                      Map<Long, String[]> dataMap, String[] otherArr) {
+        if (response == null || response.getHits().totalHits <= 0) {
+            return;
+        }
         for (SearchHit searchHit : response.getHits()) {
             ProdVO prodVO = new ProdVO();
             Map<String, Object> sourceMap = searchHit.getSourceAsMap();
