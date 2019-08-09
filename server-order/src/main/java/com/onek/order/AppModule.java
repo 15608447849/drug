@@ -19,6 +19,8 @@ public class AppModule {
     private static class BeanGop{
         long sku;//商品唯一标识
         int number;//加入采购车数量
+        String pkgno = "0";//套餐码
+        int pkgnum; //套餐数量
     }
     /**
      * 对一件商品进行 + - 操作
@@ -32,7 +34,16 @@ public class AppModule {
 
         BeanGop beanGop = GsonUtils.jsonToJavaBean(context.param.json,BeanGop.class);
 
+
         if (beanGop == null) return new Result().fail("数据不正确",0);
+
+        //判断加入购物车的商品为套餐
+        if(beanGop.sku<=0 && Long.parseLong(beanGop.pkgno)>0){
+            if(beanGop.number<=0){
+                return new Result().fail("套餐添加数量不能小于0",0);
+            }
+            return writePkgToShopCat(compid,beanGop.pkgno,beanGop.pkgnum,context);
+        }
 
         //获取商品的购物车数量
         int current = queryShopCartNumBySku(compid,beanGop.sku);
@@ -98,4 +109,13 @@ public class AppModule {
 
     }
 
+    //添加套餐至购物车
+    private static Result writePkgToShopCat(int compid,String pkgno,int pkgnum,AppContext appContext){
+        HashMap map = new HashMap();
+        map.put("pkgno",pkgno);
+        map.put("pkgnum",pkgnum);
+        map.put("compid",compid);
+        appContext.param.json = GsonUtils.javaBeanToJson(map);
+        return new ShoppingCartModule().saveShopCart(appContext);
+    }
 }
