@@ -192,7 +192,7 @@ public class ShoppingCartModule {
                 e.printStackTrace();
             }
             if(ret == 0){
-                return new Result().success();
+                return new Result().success("加入采购单成功","新增成功");
             } else if (ret == -1) {
                 return new Result().fail("该套餐已失效");
             } else if (ret == -2) {
@@ -1016,6 +1016,7 @@ public class ShoppingCartModule {
                                             setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
                                     pkgProduct.setPdprice(pdprice);
                                     pkgProduct.setOpdprice(product.getOriginalPrice());
+                                    pkgProduct.setApdprice(product.getCurrentPrice());
                                     pkgProduct.setPtitle(spcvo.getPtitle());
                                     pkgProduct.setSpec(spcvo.getSpec());
                                     pkgProduct.setVerdor(spcvo.getVerdor());
@@ -1638,6 +1639,7 @@ public class ShoppingCartModule {
                                     double pdprice = MathUtil.exactDiv(pkgProductdt.getCurrentPrice(),pkgProductdt.getNums()).
                                             setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
                                     pkgProduct.setPdprice(pdprice);
+                                    pkgProduct.setApdprice(pkgProductdt.getCurrentPrice());
                                 }
                             }
                         }
