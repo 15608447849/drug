@@ -1,6 +1,9 @@
 package com.onek.order;
 
+import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.onek.context.AppContext;
+import com.onek.entity.ShoppingCartDTO;
 import com.onek.entitys.Result;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.prod.ProdEntity;
@@ -16,11 +19,11 @@ import static com.onek.order.ShoppingCartModule.queryShopCartNumBySku;
  */
 public class AppModule {
 
+
     private static class BeanGop{
         long sku;//商品唯一标识
         int number;//加入采购车数量
         String pkgno = "0";//套餐码
-        int pkgnum; //套餐数量
     }
     /**
      * 对一件商品进行 + - 操作
@@ -39,10 +42,33 @@ public class AppModule {
 
         //判断加入购物车的商品为套餐
         if(beanGop.sku<=0 && Long.parseLong(beanGop.pkgno)>0){
-            if(beanGop.pkgnum<=0){
-                return new Result().fail("套餐添加数量不能小于0",0);
+            int pkgnum = 0; //购物车数量
+            String arr = ShoppingCartModule.queryPkgShopCartNum(compid,beanGop.pkgno);
+            context.logger.print("当前购物车数量参数 = " + arr);
+            if (arr != null && !arr.isEmpty()) {
+                JSONArray goodsArr = JSON.parseArray(arr);
+                int pkgNo = goodsArr.getJSONObject(0).getInteger("pkgno");
+                int num = goodsArr.getJSONObject(0).getInteger("pnum");
+                long sku = goodsArr.getJSONObject(0).getLong("sku");
+                ProdEntity info = IceRemoteUtil.getProdBySku(sku);
+                if (info == null) return new Result().fail("当前购物车套餐数量为0",0);
+
+                //获取到当前购物车套餐数量
+                pkgnum = num/info.getMedpacknum();
             }
-            return writePkgToShopCat(compid,beanGop.pkgno,beanGop.pkgnum,context);
+            context.logger.print("当前购物车套餐数量 = " + pkgnum);
+            if(beanGop.number == -2){//加
+                beanGop.number = 1;
+            }else if(beanGop.number == -1){ //减
+                beanGop.number = -1;
+            }else{//手动输入
+                beanGop.number = beanGop.number - pkgnum;
+            }
+            context.logger.print("最终添加购物车套餐数量 = " + beanGop.number);
+            Result res =  writePkgToShopCat(compid,beanGop.pkgno,beanGop.number,context);
+
+            context.logger.print("修改套餐数量返回参数 = " + GsonUtils.javaBeanToJson(res));
+            return res;
         }
 
         //获取商品的购物车数量
@@ -115,7 +141,7 @@ public class AppModule {
         map.put("pkgno",pkgno);
         map.put("pkgnum",pkgnum);
         map.put("compid",compid);
-        map.put("checked",0);
+        map.put("checked",1);
         appContext.param.json = GsonUtils.javaBeanToJson(map);
         return new ShoppingCartModule().saveShopCart(appContext);
     }
