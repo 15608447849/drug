@@ -50,7 +50,7 @@ public class ShoppingCartModule {
 
     //新增购物车
     private static final String SELECT_SHOPCART_SQL_EXT = "select unqid,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
-            + " where orderno = 0 and compid = ? and  pdno = ? and cstatus&1=0";
+            + " where orderno = 0 and compid = ? and  pdno = ? and pkgno = 0 and cstatus&1=0";
 
     //新增数量
     private final String UPDATE_SHOPCART_SQL_EXT_ADD = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set pnum = pnum + ? " +
@@ -231,9 +231,9 @@ public class ShoppingCartModule {
                 }
             }
             //临时注释
-//            if (outOfScope) {
-//                return new Result().fail("非经营范围内的商品不可加入购物车！");
-//            }
+            if (outOfScope) {
+                return new Result().fail("非经营范围内的商品不可加入购物车！");
+            }
         }
 
 
