@@ -138,6 +138,7 @@ public class ShoppingCartModule {
             + "(unqid,orderno,pdno,pnum,createdate,createtime,compid,cstatus,pkgno) "
             + "values (?,?,?,?,CURRENT_DATE,CURRENT_TIME,?,?,?)";
 
+
     //查询订单再次购买
     private static final String SELECT_SHOPCART_ORDER = " select unqid,pdno,compid,pnum,pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
             + " where orderno = ? and cstatus & 1 = 0";
@@ -252,8 +253,8 @@ public class ShoppingCartModule {
             product.autoSetCurrentPrice(pdprice,shopVO.getPnum());
             productList.add(product);
             ret = baseDao.updateNativeSharding(compid,TimeUtils.getCurrentYear(),
-                    INSERT_SHOPCART_SQL, GenIdUtil.getUnqId(),0,
-                    shopVO.getPdno(),getSkuInv(compid,productList,inventory),compid,0);
+                    INSERT_SHOPCART_PKG_SQL, GenIdUtil.getUnqId(),0,
+                    shopVO.getPdno(),getSkuInv(compid,productList,inventory),compid,0,0);
         }else{
             long unqid = Long.parseLong(queryRet.get(0)[0].toString());
             int pnum = Integer.parseInt(queryRet.get(0)[1].toString());
@@ -569,7 +570,7 @@ public class ShoppingCartModule {
             }
             if (flag) {
                 insertParm.add(new Object[]{GenIdUtil.getUnqId(), 0,
-                        shoppingCartDTO.getPdno(), shoppingCartDTO.getPnum(), compid, 0});
+                        shoppingCartDTO.getPdno(), shoppingCartDTO.getPnum(), compid, 0,0});
                 flag = true;
             }
         }
@@ -578,7 +579,7 @@ public class ShoppingCartModule {
                 UPDATE_SHOPCART_SQL_EXT, updateParm, updateParm.size());
 
         int[] iret = baseDao.updateBatchNativeSharding(compid, TimeUtils.getCurrentYear(),
-                INSERT_SHOPCART_SQL, insertParm, insertParm.size());
+                INSERT_SHOPCART_PKG_SQL, insertParm, insertParm.size());
 
         if (!ModelUtil.updateTransEmpty(uret) || !ModelUtil.updateTransEmpty(iret)) {
             return result.success("添加成功");
