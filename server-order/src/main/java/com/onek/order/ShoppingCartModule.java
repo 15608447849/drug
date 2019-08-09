@@ -107,6 +107,12 @@ public class ShoppingCartModule {
                     + " where spu.cstatus & 1 = 0 AND sku.spu = spu.spu "
                     + " AND sku.sku =? and sku.cstatus & 1 = 0 ";
 
+    private static final String QUERY_ONE_PKG_INV_BUSSCOPE =
+            "SELECT  IFNULL(spu.busscope, 0), IFNULL(sku.consell, 0) "
+                    + " from {{?" + DSMConst.TD_PROD_SKU + "}} sku, {{?" + DSMConst.TD_PROD_SPU + "}} spu "
+                    + " where spu.cstatus & 1 = 0 AND sku.spu = spu.spu "
+                    + " and sku.cstatus & 1 = 0 ";
+
 
     //查询购物车商品数量
     private static final String SELECT_SKUNUM_SQL = "select pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
@@ -180,7 +186,7 @@ public class ShoppingCartModule {
 
             int ret = -3;
             try {
-                ret = optGoodsPkg(productList, compid, opflag);
+                ret = optGoodsPkg(productList, compid, opflag,appContext);
             } catch (Exception e) {
                 LogUtil.getDefaultLogger().debug("套餐加入购物车失败");
                 e.printStackTrace();
@@ -1357,35 +1363,43 @@ public class ShoppingCartModule {
             shoppingCartVO.setActcode(actCodeList);
         }
 
-        DiscountResult discountResult
-                = CalculateUtil.calculate(compid, ckProduct, Long.parseLong(shoppingCartList.get(0).getConpno()));
-
-        for (ShoppingCartVO shoppingCartVO : shoppingCartList) {
-            for (IProduct product : ckProduct) {
-                if (shoppingCartVO.getChecked() == 1) {
-                    Package pkg = null;
-                    if (product instanceof Package) {
-                        pkg = (Package) product;
-                    }
-                    if ((product instanceof Product && shoppingCartVO.getPdno() == product.getSKU())
-                            || (pkg != null && pkg.getPackageId() == Long.parseLong(shoppingCartVO.getPkgno()))) {
-                        shoppingCartVO.setSubtotal(product.getCurrentPrice());
-                        shoppingCartVO.setDiscount(product.getDiscounted());
-                        shoppingCartVO.setAmt(discountResult.getTotalDiscount());
-                        shoppingCartVO.setAcamt(discountResult.getTotalCurrentPrice());
-                        shoppingCartVO.setCounpon(discountResult.getCouponValue());
-                        shoppingCartVO.setFreepost(discountResult.isFreeShipping());
-                        shoppingCartVO.setOflag(discountResult.isExCoupon());
-                        shoppingCartVO.setTotalamt(result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-                        shoppingCartVO.setoSubtotal(MathUtil.exactMul(product.getOriginalPrice(), product.getNums()).
-                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-                        if (shoppingCartVO.getAreano() > 0 && !discountResult.isFreeShipping()) {
-                            shoppingCartVO.setFreight(AreaFeeUtil.getFee(shoppingCartVO.getAreano()));
-                        }
-                    }
-                }
+        for(IProduct product : ckProduct){
+            if (product instanceof Package) {
+                ((Package) product).getPacageProdList().clear();
             }
         }
+
+
+        DiscountResult discountResult
+                = CalculateUtil.calculate(compid, ckProduct,
+                Long.parseLong(shoppingCartList.get(0).getConpno()));
+
+//        for (ShoppingCartVO shoppingCartVO : shoppingCartList) {
+//            for (IProduct product : ckProduct) {
+//                if (shoppingCartVO.getChecked() == 1) {
+//                    Package pkg = null;
+//                    if (product instanceof Package) {
+//                        pkg = (Package) product;
+//                    }
+//                    if ((product instanceof Product && shoppingCartVO.getPdno() == product.getSKU())
+//                            || (pkg != null && pkg.getPackageId() == Long.parseLong(shoppingCartVO.getPkgno()))) {
+//                        shoppingCartVO.setSubtotal(product.getCurrentPrice());
+//                        shoppingCartVO.setDiscount(product.getDiscounted());
+//                        shoppingCartVO.setAmt(discountResult.getTotalDiscount());
+//                        shoppingCartVO.setAcamt(discountResult.getTotalCurrentPrice());
+//                        shoppingCartVO.setCounpon(discountResult.getCouponValue());
+//                        shoppingCartVO.setFreepost(discountResult.isFreeShipping());
+//                        shoppingCartVO.setOflag(discountResult.isExCoupon());
+//                        shoppingCartVO.setTotalamt(result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+//                        shoppingCartVO.setoSubtotal(MathUtil.exactMul(product.getOriginalPrice(), product.getNums()).
+//                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+//                        if (shoppingCartVO.getAreano() > 0 && !discountResult.isFreeShipping()) {
+//                            shoppingCartVO.setFreight(AreaFeeUtil.getFee(shoppingCartVO.getAreano()));
+//                        }
+//                    }
+//                }
+//            }
+//        }
 
         return discountResult.getGiftList();
     }
@@ -1658,6 +1672,9 @@ public class ShoppingCartModule {
         if (pkgidList != null && pkgidList.length > 0) {
             for (String unqid : pkgidList) {
                 if (StringUtils.isInteger(unqid)) {
+                    if(Long.parseLong(unqid) == 0){
+                        continue;
+                    }
                     shopParm.add(new Object[]{Long.parseLong(unqid), compid});
                     sqlList.add(DEL_SHOPCART_PKG_SQL);
                 }
@@ -2013,7 +2030,7 @@ public class ShoppingCartModule {
     }
 
 
-    public int optGoodsPkg(List<IProduct> pkgNoList, int cid, int opflag) {
+    public int optGoodsPkg(List<IProduct> pkgNoList, int cid, int opflag,AppContext appContext) {
         List<IProduct> tempPkgNoList = new ArrayList<>(pkgNoList);
 
         DiscountResult discountResult
@@ -2095,7 +2112,39 @@ public class ShoppingCartModule {
                     return -2;
                 }
             }
+
+//            StringBuilder skuIds = new StringBuilder();
+//            for (IProduct iProduct : iDiscount.getProductList()) {
+//                if (iProduct instanceof Package) {
+//                    Package pkg = (Package) iProduct;
+//                    List<Product> pacageProdList = pkg.getPacageProdList();
+//                    for(Product product: pacageProdList){
+//                        skuIds.append(product.getSku()).append(",");
+//                    }
+//                 }
+//            }
+//
+//            String skuIdsStr = skuIds.toString();
+//            if(skuIdsStr.endsWith(",")){
+//                skuIdsStr = skuIdsStr.substring(0,skuIdsStr.length() -1);
+//            }
+
+
+            //skuIdsStr
+
+
+
+
+
+
+//            for (IProduct iProduct : iDiscount.getProductList()) {
+//                List<IProduct> productList = activity.getProductList();
+//                for (int i = 0; i < productList.size(); i++) {
+//                    if (productList.get(i) instanceof Package) {
+//            }
         }
+
+
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> parmObj = new ArrayList<>();
@@ -2121,6 +2170,8 @@ public class ShoppingCartModule {
                 }
             }
         }
+
+
 
         String[] sqlArray = new String[sqlList.size()];
         if (sqlArray.length > 0) {
@@ -2246,9 +2297,13 @@ public class ShoppingCartModule {
 //                        - RedisOrderUtil.getActBuyNum(compid, product.getSku(),
 //                        activity.getUnqid());
 
+            int actStock =  RedisStockUtil
+                    .getActStockBySkuAndActno(product.getSku(),
+                            activity.getUnqid());
+
             int tminStock = RedisStockUtil.getStock(product.getSku());
             int skuUnitNum = product.getNums() / pkg.getNums();
-            //Math.min(tsubStock, tminStock)
+            tminStock = Math.min(actStock, tminStock);
             stockMap.put(product.getSku(), tminStock / skuUnitNum);
         }
 
