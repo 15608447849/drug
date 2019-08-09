@@ -1990,7 +1990,7 @@ public class ShoppingCartModule {
      */
     public static String queryShopCartNumBySkus(int compid ,String skus){
         String sql = "select pdno,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
-                + " where orderno = 0 and compid = ? and cstatus&1=0 and  pdno in(" +skus+ ") ";
+                + " where orderno = 0 and pkgno=0 and compid = ? and cstatus&1=0 and  pdno in(" +skus+ ") ";
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), sql, compid);
         if(queryRet == null || queryRet.isEmpty()) return "";
         JsonArray jsonArray = new JsonArray();
