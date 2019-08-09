@@ -30,9 +30,17 @@ public class PkgProduct {
     //数量
     private int num;
 
-    //private String unqid;
-
     private double opdprice;
+
+    private double apdprice;
+
+    public double getApdprice() {
+        return apdprice;
+    }
+
+    public void setApdprice(double apdprice) {
+        this.apdprice = apdprice;
+    }
 
     public double getOpdprice() {
         return opdprice;

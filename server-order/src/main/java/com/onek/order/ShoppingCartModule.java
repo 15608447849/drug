@@ -192,7 +192,7 @@ public class ShoppingCartModule {
                 e.printStackTrace();
             }
             if(ret == 0){
-                return new Result().success();
+                return new Result().success("加入采购单成功","新增成功");
             } else if (ret == -1) {
                 return new Result().fail("该套餐已失效");
             } else if (ret == -2) {
@@ -880,18 +880,7 @@ public class ShoppingCartModule {
                                 RedisStockUtil.getActStockBySkuAndActno(shoppingCartVO.getPdno(),
                                         discount.getDiscountNo()), actStock);
 
-                        if(activity.getLimits(shoppingCartVO.getPdno()) == 0){
-                            break;
-                        }
 
-                        subStock = Math.min
-                                (activity.getLimits(shoppingCartVO.getPdno())
-                                        - RedisOrderUtil.getActBuyNum(compid, shoppingCartVO.getPdno(),
-                                        activity.getUnqid()),subStock);
-
-                        minLimit = Math.min
-                                (activity.getLimits(shoppingCartVO.getPdno())
-                                        ,minLimit);
 
                         skuStock = shoppingCartVO.getInventory();
                         try{
@@ -906,6 +895,20 @@ public class ShoppingCartModule {
                         shoppingCartVO.setLimitsub(subStock);
                         shoppingCartVO.setInventory(skuStock);
                         shoppingCartVO.setActstock(actStock);
+
+                        if(activity.getLimits(shoppingCartVO.getPdno()) == 0){
+                            break;
+                        }
+
+                        subStock = Math.min
+                                (activity.getLimits(shoppingCartVO.getPdno())
+                                        - RedisOrderUtil.getActBuyNum(compid, shoppingCartVO.getPdno(),
+                                        activity.getUnqid()),subStock);
+
+                        minLimit = Math.min
+                                (activity.getLimits(shoppingCartVO.getPdno())
+                                        ,minLimit);
+
                     }
                 }
             }
@@ -1013,6 +1016,7 @@ public class ShoppingCartModule {
                                             setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
                                     pkgProduct.setPdprice(pdprice);
                                     pkgProduct.setOpdprice(product.getOriginalPrice());
+                                    pkgProduct.setApdprice(product.getCurrentPrice());
                                     pkgProduct.setPtitle(spcvo.getPtitle());
                                     pkgProduct.setSpec(spcvo.getSpec());
                                     pkgProduct.setVerdor(spcvo.getVerdor());
@@ -1467,13 +1471,17 @@ public class ShoppingCartModule {
                     if(product instanceof Package
                             && Long.parseLong(shoppingCartVO.getPkgno()) == ((Package) product).getPackageId()){
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
-
+                        actCodeList.add(activity.getUnqid()+"");
                         //判断库存
                         if(((Package) product).getExpireFlag() < 0){
                             shoppingCartVO.setStatus(3);
                         }
+                        DiscountRule discountRule = new DiscountRule();
+                        discountRule.setRulecode(brule);
+                        discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
 
                         pkgStock = Math.min(getPkgInv((Package) product,activity,compid),pkgStock);
+                        shoppingCartVO.setInventory(pkgStock);
                         if(activity.getLimits(Long.parseLong(shoppingCartVO.getPkgno())) == 0){
                             break;
                         }
@@ -1482,8 +1490,6 @@ public class ShoppingCartModule {
                                 (activity.getLimits(((Package) product).getPackageId())
                                         ,minLimit);
 
-
-                        shoppingCartVO.setInventory(pkgStock);
                     }
 
                     if(product instanceof Product
@@ -1633,6 +1639,7 @@ public class ShoppingCartModule {
                                     double pdprice = MathUtil.exactDiv(pkgProductdt.getCurrentPrice(),pkgProductdt.getNums()).
                                             setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
                                     pkgProduct.setPdprice(pdprice);
+                                    pkgProduct.setApdprice(pkgProductdt.getCurrentPrice());
                                 }
                             }
                         }
