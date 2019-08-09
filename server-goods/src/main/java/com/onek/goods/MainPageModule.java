@@ -86,7 +86,7 @@ public class MainPageModule {
         Attr attr = new Attr();
         Page page = new Page();
         page.pageIndex = pageIndex <= 0 ? 1 : pageIndex;
-        page.pageSize = pageNumber <= 0 ? 100 : pageNumber;
+        page.pageSize = pageNumber <= 0 ? 10 : pageNumber;
         int compId = context.getUserSession() != null ? context.getUserSession().compId : 0;
         String keyword = "", brandno = "", manuName = "", maNuNo = "0";
         int classId = 0;
@@ -365,7 +365,7 @@ public class MainPageModule {
                 return;
             }
         } else {
-            response = ProdESUtil.searchProdBySpuList(skuList, params[0], StringUtils.isEmpty(params[0]) ? 1 : page.pageIndex, page.pageSize);
+            response = ProdESUtil.searchProdBySpuList(skuList, params[0], StringUtils.isEmpty(params[0]) ? 1 :page.pageIndex, page.pageSize);
         }
         if (response != null && response.getHits().totalHits > 0) {
             page.totalItems =  response.getHits() != null ? (int) response.getHits().totalHits : 0;
@@ -373,12 +373,11 @@ public class MainPageModule {
             remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, context.isAnonymous());
             attr.list = prodVOList;
             if(onlySpecActivity && StringUtils.isEmpty(params[2]) || !StringUtils.isEmpty(params[0]) ) {
-                page.totalPageCount = page.totalItems%page.pageSize > 0 ?
-                        page.totalItems/page.pageSize+1 :page.totalItems/page.pageSize;
                 attr.page = new PageHolder(page);
             } else {
                 attr.page = pageHolder;
             }
+            LogUtil.getDefaultLogger().info("11111111111111--------2222222222222222------------    " +   GsonUtils.javaBeanToJson(attr.page));
         }
     }
 

@@ -1348,4 +1348,19 @@ public class ShoppingCartModule {
         }
             return 0;
     }
+
+    /**
+     * 根据SKU查询购物车套餐现有数量
+     */
+    public static String queryPkgShopCartNum(int compid ,String pkgnos){
+        String sql = "select pdno,pnum,pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+                + " where orderno = 0 and cstatus&1=0 and compid=? and pkgno in(" + pkgnos +")";
+        List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), sql, compid);
+        if(queryRet == null || queryRet.isEmpty()) return "";
+        JSONObject object = new JSONObject();
+        object.put("sku",Long.parseLong(queryRet.get(0)[0].toString()));
+        object.put("pnum",Integer.parseInt(queryRet.get(0)[1].toString()));
+        object.put("pkgno",Integer.parseInt(queryRet.get(0)[2].toString()));
+        return object.toJSONString();
+    }
 }
