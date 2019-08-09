@@ -20,7 +20,7 @@ public class AppModule {
         long sku;//商品唯一标识
         int number;//加入采购车数量
         String pkgno = "0";//套餐码
-//        int pkgnum; //套餐数量
+        int pkgnum; //套餐数量
     }
     /**
      * 对一件商品进行 + - 操作
@@ -42,7 +42,7 @@ public class AppModule {
             if(beanGop.number<=0){
                 return new Result().fail("套餐添加数量不能小于0",0);
             }
-            return writePkgToShopCat(compid,beanGop.pkgno,beanGop.number,context);
+            return writePkgToShopCat(compid,beanGop.pkgno,beanGop.pkgnum,context);
         }
 
         //获取商品的购物车数量
