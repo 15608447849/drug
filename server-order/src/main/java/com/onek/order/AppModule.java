@@ -39,7 +39,7 @@ public class AppModule {
 
         //判断加入购物车的商品为套餐
         if(beanGop.sku<=0 && Long.parseLong(beanGop.pkgno)>0){
-            if(beanGop.number<=0){
+            if(beanGop.pkgnum<=0){
                 return new Result().fail("套餐添加数量不能小于0",0);
             }
             return writePkgToShopCat(compid,beanGop.pkgno,beanGop.pkgnum,context);
