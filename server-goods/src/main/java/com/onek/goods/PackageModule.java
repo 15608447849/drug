@@ -1,7 +1,9 @@
 package com.onek.goods;
 
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.onek.annotation.UserPermission;
@@ -11,6 +13,7 @@ import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.goods.entities.ProdVO;
 import com.onek.goods.util.ProdESUtil;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -222,6 +225,7 @@ public class PackageModule {
                 Map<Integer, Object[]> menuActMap = new HashMap<>();
                 List<Long> skuList = new ArrayList<>();
                 String[] otherArr = {"1114", "0", compId + ""};
+                StringBuilder menuCodeSB = new StringBuilder();
                 //menucode, gcode, pkgprodnum, price,actstock,limitnum,actcode,cstatus
                 menuInfos.forEach(qResult -> {
                     long sku = Long.valueOf(String.valueOf(qResult[1]));//sku
@@ -233,6 +237,7 @@ public class PackageModule {
                                     String.valueOf(qResult[7]), actCode, pkgprodnum + ""});
                     Set<Long> skuSet = new HashSet<>();
                     int menucode = Integer.valueOf(String.valueOf(qResult[0]));//套餐码
+                    menuCodeSB.append(menucode).append(",");
                     if (menuMap.containsKey(menucode)) {
                         skuSet = menuMap.get(menucode);
                     }
@@ -243,7 +248,8 @@ public class PackageModule {
                 List<ProdVO> prodVOList = new ArrayList<>();
                 SearchResponse response = ProdESUtil.searchProdBySpuList(new ArrayList<>(skuList), "", 1, skuList.size());
                 assembleData(appContext, response, prodVOList, dataMap, otherArr);
-                menuProdMap = assMenuData(menuMap, prodVOList, menuActMap);
+                menuProdMap = assMenuData(menuMap, prodVOList, menuActMap, menuCodeSB);
+                remoteQueryPkgShopCartNum(compId,menuCodeSB, menuProdMap, appContext.isAnonymous());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -253,7 +259,7 @@ public class PackageModule {
 
 
     private static Map<Integer, List<ProdVO>> assMenuData( Map<Integer, Set<Long>> menuMap, List<ProdVO> prodVOList,
-                                                           Map<Integer, Object[]> menuActMap) {
+                                                           Map<Integer, Object[]> menuActMap,StringBuilder menuCodeSB) {
         Map<Integer, List<ProdVO>> menuProdMap = new HashMap<>();
         for(Map.Entry<Integer, Set<Long>> entry : menuMap.entrySet()){
             long actCode = Long.valueOf(menuActMap.get(entry.getKey())[0].toString());
@@ -290,7 +296,6 @@ public class PackageModule {
                 }
             }
             if (vatp == 1) menuProd.getValue().get(0).setPkgOrgPrice(pkgOrgPrice);
-
         }
 //        LogUtil.getDefaultLogger().info("newProdList----111111111111---------->>> " + GsonUtils.javaBeanToJson(menuProdMap));
         return menuProdMap;
@@ -313,7 +318,29 @@ public class PackageModule {
         return 1;
     }
 
-
+    private static void remoteQueryPkgShopCartNum(int compId, StringBuilder menuCodeSB, Map<Integer,
+            List<ProdVO>> menuProdMap, boolean isAnonymous) {
+        if (compId <= 0 || isAnonymous) return;
+        if (menuCodeSB.toString().contains(",")) {
+            String menuCodeStr = menuCodeSB.toString().substring(0, menuCodeSB.toString().length() - 1);
+            String numArr = IceRemoteUtil.queryPkgShopCartNum(compId, menuCodeStr);
+            if (numArr != null && !numArr.isEmpty()) {
+                JSONArray goodsArr = JSON.parseArray(numArr);
+                for (int i = 0; i < goodsArr.size(); i++) {
+                    int pkgNo = goodsArr.getJSONObject(i).getInteger("pkgno");
+                    int num = goodsArr.getJSONObject(i).getInteger("pnum");
+                    long sku = goodsArr.getJSONObject(i).getLong("sku");
+                    if (menuProdMap.containsKey(pkgNo)) {
+                        menuProdMap.get(pkgNo).forEach(prodVO -> {
+                            if (prodVO.getSku() == sku) {
+                                menuProdMap.get(pkgNo).get(0).cart = num/prodVO.getPkgprodnum();
+                            }
+                        });
+                    }
+                }
+            }
+        }
+    }
 
     static {
 //        ElasticSearchClientFactory.init();

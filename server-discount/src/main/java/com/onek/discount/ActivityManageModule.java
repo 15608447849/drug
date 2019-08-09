@@ -18,10 +18,7 @@ import com.onek.propagation.prod.ProdCurrentActPriceObserver;
 import com.onek.propagation.prod.ProdDiscountObserver;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
-import com.onek.util.GenIdUtil;
-import com.onek.util.IceRemoteUtil;
-import com.onek.util.SmsTempNo;
-import com.onek.util.SmsUtil;
+import com.onek.util.*;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -75,8 +72,8 @@ public class ActivityManageModule {
 
     //新增活动商品
     private static final String INSERT_ASS_DRUG_SQL = "insert into {{?" + DSMConst.TD_PROM_ASSDRUG + "}} "
-            + "(unqid,actcode,gcode,menucode,actstock,limitnum,price,cstatus) "
-            + " values(?,?,?,?,?,?,?,?)";
+            + "(unqid,actcode,gcode,menucode,actstock,limitnum,price,cstatus, pkgprodnum) "
+            + " values(?,?,?,?,?,?,?,?,?)";
 
     private static final String DEL_ASS_DRUG_SQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
             + " where cstatus&1=0 and actcode=?";
@@ -149,7 +146,7 @@ public class ActivityManageModule {
 
         String selectSQL = "select a.unqid,actname,incpriority,cpriority," +
                 "qualcode,qualvalue,actdesc,excdiscount,acttype," +
-                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename,(ckstatus & ~32) ckstatus," +
+                "actcycle,sdate,edate,a.brulecode,a.cstatus,rulename, (ckstatus & ~32) ckstatus," +
                 "case when fun_prom_cycle(unqid,acttype,actcycle,?,1) = 1 and " +
                 " a.cstatus & 2048 > 0 and a.cstatus & 1 = 0 and ckstatus & 32 = 0  then 1 " +
                 " when ckstatus & 32 > 0 then -1 else 0 end actstatus " +
@@ -272,7 +269,8 @@ public class ActivityManageModule {
                 insertTimes(activityVO.getTimeVOS(), actCode);
             }
             //新增阶梯
-            if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty() && bruleCode != 1113) {
+            if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty() && bruleCode != 1113
+                   && bruleCode != 1114) {
                 insertLadOff(activityVO.getLadderVOS(), bruleCode, rCode, actCode);
             }
             //新增活动商品
@@ -329,7 +327,8 @@ public class ActivityManageModule {
                 }
             }
             //新增阶梯
-            if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty() && bRuleCode != 1113) {
+            if (activityVO.getLadderVOS() != null && !activityVO.getLadderVOS().isEmpty() && bRuleCode != 1113
+                    && bRuleCode != 1114) {
                 if (delRelaAndLadder(actCode)) {
                     insertLadOff(activityVO.getLadderVOS(), bRuleCode, rCode, actCode);
                 }
@@ -478,10 +477,22 @@ public class ActivityManageModule {
      * @time  2019/4/2 16:23
      * @version 1.1.1
      **/
-    private void relationAssDrug(List<GoodsVO> insertDrugVOS, List<GoodsVO> updDrugVOS, List<Long> delGoodsGCode, long actCode) {
+    private void relationAssDrug(List<GoodsVO> insertDrugVOS, List<GoodsVO> updDrugVOS, List<Long> delGoodsGCode,
+                                 long actCode, int rulecode) {
         List<Object[]> insertDrugParams = new ArrayList<>();
         List<Object[]> updateDrugParams = new ArrayList<>();
         StringBuilder gCodeSb = new StringBuilder();
+        long menuCode = 0;
+        if (rulecode == 1114) {
+            String selectSQL = "select menucode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
+                    + " and  actcode=" + actCode + " limit 1";
+            List<Object[]> qResult = baseDao.queryNative(selectSQL);
+            if (qResult == null ||  qResult.isEmpty()) {
+                menuCode = RedisGlobalKeys.getMenuCode();
+            } else {
+                menuCode = Long.parseLong(String.valueOf(qResult.get(0)[0]));
+            }
+        }
         if (delGoodsGCode.size() > 0) {
             for (long gCode : delGoodsGCode) {
                 gCodeSb.append(gCode).append(",");
@@ -492,16 +503,15 @@ public class ActivityManageModule {
             baseDao.updateNative(delSql);
         }
         String updateSql = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set actstock=?,limitnum=?, price=?, "
-                + "cstatus=? where cstatus&1=0 and gcode=? and actcode=?";
-
+                + "cstatus=?,pkgprodnum=? where cstatus&1=0 and gcode=? and actcode=?";
         for (GoodsVO insGoodsVO : insertDrugVOS) {
             insertDrugParams.add(new Object[]{GenIdUtil.getUnqId(), actCode, insGoodsVO.getGcode(),
-                    insGoodsVO.getMenucode(), insGoodsVO.getActstock(), insGoodsVO.getLimitnum(),
-                    insGoodsVO.getPrice(), insGoodsVO.getCstatus()});
+                    menuCode, insGoodsVO.getActstock(), insGoodsVO.getLimitnum(),
+                    insGoodsVO.getPrice(), insGoodsVO.getCstatus(), insGoodsVO.getPkgprodnum()});
         }
         for (GoodsVO updateGoodsVO : updDrugVOS) {
             updateDrugParams.add(new Object[]{updateGoodsVO.getActstock(), updateGoodsVO.getLimitnum(),
-                    updateGoodsVO.getPrice(), updateGoodsVO.getCstatus(),
+                    updateGoodsVO.getPrice(), updateGoodsVO.getCstatus(),updateGoodsVO.getPkgprodnum(),
                     updateGoodsVO.getGcode(), actCode});
         }
         baseDao.updateBatchNative(INSERT_ASS_DRUG_SQL, insertDrugParams, insertDrugVOS.size());
@@ -731,13 +741,13 @@ public class ActivityManageModule {
                     cstatus, actCode);
         } else if (gcodeList.size() == 0) {
             result = baseDao.updateNative(INSERT_ASS_DRUG_SQL, GenIdUtil.getUnqId(), actCode, 0, 0,
-                    actstock, limitnum, price, cstatus);
+                    actstock, limitnum, price, cstatus,0);
         } else {
             skus = gcodeList;
             String updateAssDrug = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
                     + " where cstatus&1=0 and  actcode=? ";
             params.add(new Object[]{actCode});
-            params.add(new Object[]{GenIdUtil.getUnqId(), actCode, 0, 0, actstock, limitnum, price, cstatus});
+            params.add(new Object[]{GenIdUtil.getUnqId(), actCode, 0, 0, actstock, limitnum, price, cstatus,0});
             result = !ModelUtil.updateTransEmpty(baseDao.updateTransNative(new String[]{updateAssDrug,
                     INSERT_ASS_DRUG_SQL}, params)) ? 1 : 0;
 
@@ -774,7 +784,7 @@ public class ActivityManageModule {
         String selectSQL = "select sku, systore,notused as minunused from (select sku,systore, sum(used) as uused, " +
                 " (systore-sum(used)) as notused from ( select sku,systore, used  from ( " +
                 "SELECT sku,gcode,(store-freezestore) as systore, " +
-                "  ceil(IF( ua.cstatus & 256 > 0, 0, sum( actstock ) ) * 0.01 * ( store - freezestore ) + IF " +
+                "  ceil(IF( ua.cstatus & 256 > 0 and actstock <100 and actstock>0, sum( actstock ), 0 ) * 0.01 * ( store - freezestore ) + IF " +
                 "  ( ua.cstatus & 256 = 0, sum( actstock ), 0 ) ) AS used FROM   " +
                 "  (SELECT " +
                 "  spu,sku,gcode,store,freezestore,actstock,a.cstatus  " +
@@ -987,7 +997,7 @@ public class ActivityManageModule {
                     insertGoodsVOS.add(goodsVO);
                 }
             }
-            relationAssDrug(insertGoodsVOS, updateGoodsVOS, delGoodsGCode, actCode);
+            relationAssDrug(insertGoodsVOS, updateGoodsVOS, delGoodsGCode, actCode, rulecode);
             //通知notice
             List<GoodsVO> delGoods = new ArrayList<>();
             for (long sku : delGoodsGCode) {
@@ -1213,7 +1223,6 @@ public class ActivityManageModule {
         }
         return null;
     }
-
     /* *
      * @description 获取商品可售库存
      * @params [skuStr, stockMap]
@@ -1434,7 +1443,7 @@ public class ActivityManageModule {
                     insertGoodsVOS.add(goodsVO);
                 }
             }
-            relationAssDrug(insertGoodsVOS, updateGoodsVOS, delGoodsGCode, actCode);
+            relationAssDrug(insertGoodsVOS, updateGoodsVOS, delGoodsGCode, actCode, rulecode);
             //通知notice
             List<GoodsVO> delGoods = new ArrayList<>();
             for (long sku : delGoodsGCode) {
@@ -1839,7 +1848,6 @@ public class ActivityManageModule {
         //更新审批状态
         String updateCkSql = " UPDATE {{?" + DSMConst.TD_PROM_ACT + "}}"
                 + " SET cstatus = cstatus&~2048 WHERE unqid = ? and cstatus&1=0";
-
         //  if(ctype == 0){
         List<Object[]> assRet = baseDao.queryNative(assDugSql, actcode);
         if (assRet == null || assRet.isEmpty()) {

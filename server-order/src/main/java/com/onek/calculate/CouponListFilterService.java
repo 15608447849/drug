@@ -60,7 +60,7 @@ public class CouponListFilterService extends BaseDiscountFilterService {
     }
 
 
-    public List<CouponPubVO> getCurrentDiscounts(List<Product> skus) {
+    public List<CouponPubVO> getCurrentDiscounts(List<IProduct> skus) {
         // 判定优惠券阶段
         List<CouponPubVO> checkCoupon = getCouents();
 
@@ -93,27 +93,27 @@ public class CouponListFilterService extends BaseDiscountFilterService {
         return checkCoupon;
     }
 
-    private boolean checkSKU(List<Product> skus,CouponPubVO couent) {
+    private boolean checkSKU(List<IProduct> skus,CouponPubVO couent) {
         //远程调用
         List<Object[]> check = IceRemoteUtil.queryNative(getSkusSql(skus), couent.getCoupno());
         return StringUtils.isBiggerZero(check.get(0)[0].toString());
     }
 
 
-    private String getSkusSql(List<Product> skus){
+    private String getSkusSql(List<IProduct> skus){
         StringBuilder sbSql = new StringBuilder(CHECK_SKU);
         sbSql.append(" and gcode in (");
         for(int i = 0; i < skus.size(); i++){
             if(skus.get(i).getSKU() > 0){
                 if(i == (skus.size() -1)){
-                    Arrays.stream(getProductCode(skus.get(i).getSku()))
+                    Arrays.stream(getProductCode(skus.get(i).getSKU()))
                             .forEach(str -> sbSql.append(str).append(","));
-                    sbSql.append(skus.get(i).getSku());
+                    sbSql.append(skus.get(i).getSKU());
 //                    sbSql.append(getProductCode(skus.get(i).getSku())).append(",").append(skus.get(i).getSku());
                 }else{
-                    Arrays.stream(getProductCode(skus.get(i).getSku()))
+                    Arrays.stream(getProductCode(skus.get(i).getSKU()))
                             .forEach(str -> sbSql.append(str).append(","));
-                    sbSql.append(skus.get(i).getSku()).append(",");
+                    sbSql.append(skus.get(i).getSKU()).append(",");
                 }
             }
         }

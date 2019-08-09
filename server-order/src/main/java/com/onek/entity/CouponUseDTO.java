@@ -27,6 +27,26 @@ public class CouponUseDTO {
 
     private double skprice;
 
+    private String pkgno = "0";
+
+    private int pkgnum;
+
+    public String getPkgno() {
+        return pkgno;
+    }
+
+    public void setPkgno(String pkgno) {
+        this.pkgno = pkgno;
+    }
+
+    public int getPkgnum() {
+        return pkgnum;
+    }
+
+    public void setPkgnum(int pkgnum) {
+        this.pkgnum = pkgnum;
+    }
+
     public double getSkprice() {
         return skprice;
     }
