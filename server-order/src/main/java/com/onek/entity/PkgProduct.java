@@ -30,6 +30,18 @@ public class PkgProduct {
     //数量
     private int num;
 
+    //private String unqid;
+
+    private double opdprice;
+
+    public double getOpdprice() {
+        return opdprice;
+    }
+
+    public void setOpdprice(double opdprice) {
+        this.opdprice = opdprice;
+    }
+
     public long getPdno() {
         return pdno;
     }

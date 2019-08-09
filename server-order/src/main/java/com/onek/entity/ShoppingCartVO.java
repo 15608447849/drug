@@ -116,6 +116,26 @@ public class ShoppingCartVO {
 
     private boolean exActivity;
 
+    private double oSubtotal;
+
+    private double pkgprice;
+
+    public double getPkgprice() {
+        return pkgprice;
+    }
+
+    public void setPkgprice(double pkgprice) {
+        this.pkgprice = pkgprice;
+    }
+
+    public double getoSubtotal() {
+        return oSubtotal;
+    }
+
+    public void setoSubtotal(double oSubtotal) {
+        this.oSubtotal = oSubtotal;
+    }
+
     public boolean isExActivity() {
         return exActivity;
     }
