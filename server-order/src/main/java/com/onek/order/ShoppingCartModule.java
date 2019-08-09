@@ -3,6 +3,7 @@ package com.onek.order;
 import Ice.Application;
 import Ice.Logger;
 import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson.JSONArray;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
@@ -2262,18 +2263,33 @@ public class ShoppingCartModule {
         return stockMap.get(minSku);
     }
 
+    @UserPermission(ignore = true)
+    public String queryPkgShopCartNum(AppContext context){
+        try{
+            return queryPkgShopCartNum(Integer.parseInt(context.param.arrays[0]),context.param.arrays[1]);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     /**
      * 根据SKU查询购物车套餐现有数量
      */
     public static String queryPkgShopCartNum(int compid ,String pkgnos) {
         String sql = "select pdno,pnum,pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
-                + " where orderno = 0 and cstatus&1=0 and compid=? and pkgno in(" + pkgnos + ")";
+                + " where orderno = 0 and pkgno>0 and cstatus&1=0 and compid=? and pkgno in(" + pkgnos + ")";
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), sql, compid);
         if (queryRet == null || queryRet.isEmpty()) return "";
-        JSONObject object = new JSONObject();
-        object.put("sku", Long.parseLong(queryRet.get(0)[0].toString()));
-        object.put("pnum", Integer.parseInt(queryRet.get(0)[1].toString()));
-        object.put("pkgno", Integer.parseInt(queryRet.get(0)[2].toString()));
-        return object.toJSONString();
+        JSONArray array = new JSONArray();
+        queryRet.forEach(qr -> {
+            JSONObject object = new JSONObject();
+            object.put("sku", Long.parseLong(qr[0].toString()));
+            object.put("pnum", Integer.parseInt(qr[1].toString()));
+            object.put("pkgno", Integer.parseInt(qr[2].toString()));
+            array.add(object);
+        });
+        LogUtil.getDefaultLogger().info("222222222----------4444444444----     " + array.toJSONString());
+        return array.toJSONString();
     }
 }

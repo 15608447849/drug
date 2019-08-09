@@ -225,7 +225,7 @@ public class PackageModule {
                 Map<Integer, Object[]> menuActMap = new HashMap<>();
                 List<Long> skuList = new ArrayList<>();
                 String[] otherArr = {"1114", "0", compId + ""};
-                StringBuilder menuCodeSB = new StringBuilder();
+                Set<String> menuCodeList = new HashSet<>();
                 //menucode, gcode, pkgprodnum, price,actstock,limitnum,actcode,cstatus
                 menuInfos.forEach(qResult -> {
                     long sku = Long.valueOf(String.valueOf(qResult[1]));//sku
@@ -237,7 +237,7 @@ public class PackageModule {
                                     String.valueOf(qResult[7]), actCode, pkgprodnum + ""});
                     Set<Long> skuSet = new HashSet<>();
                     int menucode = Integer.valueOf(String.valueOf(qResult[0]));//套餐码
-                    menuCodeSB.append(menucode).append(",");
+                    menuCodeList.add(menucode+"");
                     if (menuMap.containsKey(menucode)) {
                         skuSet = menuMap.get(menucode);
                     }
@@ -248,8 +248,8 @@ public class PackageModule {
                 List<ProdVO> prodVOList = new ArrayList<>();
                 SearchResponse response = ProdESUtil.searchProdBySpuList(new ArrayList<>(skuList), "", 1, skuList.size());
                 assembleData(appContext, response, prodVOList, dataMap, otherArr);
-                menuProdMap = assMenuData(menuMap, prodVOList, menuActMap, menuCodeSB);
-                remoteQueryPkgShopCartNum(compId,menuCodeSB, menuProdMap, appContext.isAnonymous());
+                menuProdMap = assMenuData(menuMap, prodVOList, menuActMap);
+                remoteQueryPkgShopCartNum(compId,menuCodeList, menuProdMap, appContext.isAnonymous());
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -259,7 +259,7 @@ public class PackageModule {
 
 
     private static Map<Integer, List<ProdVO>> assMenuData( Map<Integer, Set<Long>> menuMap, List<ProdVO> prodVOList,
-                                                           Map<Integer, Object[]> menuActMap,StringBuilder menuCodeSB) {
+                                                           Map<Integer, Object[]> menuActMap) {
         Map<Integer, List<ProdVO>> menuProdMap = new HashMap<>();
         for(Map.Entry<Integer, Set<Long>> entry : menuMap.entrySet()){
             long actCode = Long.valueOf(menuActMap.get(entry.getKey())[0].toString());
@@ -318,12 +318,11 @@ public class PackageModule {
         return 1;
     }
 
-    private static void remoteQueryPkgShopCartNum(int compId, StringBuilder menuCodeSB, Map<Integer,
+    private static void remoteQueryPkgShopCartNum(int compId,Set<String> menuCodeList, Map<Integer,
             List<ProdVO>> menuProdMap, boolean isAnonymous) {
         if (compId <= 0 || isAnonymous) return;
-        if (menuCodeSB.toString().contains(",")) {
-            String menuCodeStr = menuCodeSB.toString().substring(0, menuCodeSB.toString().length() - 1);
-            String numArr = IceRemoteUtil.queryPkgShopCartNum(compId, menuCodeStr);
+        if (menuCodeList.size() > 0) {
+            String numArr = IceRemoteUtil.queryPkgShopCartNum(compId, String.join(",",  menuCodeList.toArray(new String[0])));
             if (numArr != null && !numArr.isEmpty()) {
                 JSONArray goodsArr = JSON.parseArray(numArr);
                 for (int i = 0; i < goodsArr.size(); i++) {
@@ -331,11 +330,12 @@ public class PackageModule {
                     int num = goodsArr.getJSONObject(i).getInteger("pnum");
                     long sku = goodsArr.getJSONObject(i).getLong("sku");
                     if (menuProdMap.containsKey(pkgNo)) {
-                        menuProdMap.get(pkgNo).forEach(prodVO -> {
+                        for (ProdVO prodVO : menuProdMap.get(pkgNo)) {
                             if (prodVO.getSku() == sku) {
                                 menuProdMap.get(pkgNo).get(0).cart = num/prodVO.getPkgprodnum();
+                                break;
                             }
-                        });
+                        }
                     }
                 }
             }
