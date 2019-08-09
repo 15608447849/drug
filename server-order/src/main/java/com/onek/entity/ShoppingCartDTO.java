@@ -32,14 +32,26 @@ public class ShoppingCartDTO {
 
     private double pdprice;
 
-    private String pkgno;
+    private String pkgno = "0";
 
-    public String getPkgno() {
-        return pkgno;
+    private int pkgnum;
+
+    private double opdprice;
+
+    public double getOpdprice() {
+        return opdprice;
     }
 
-    public void setPkgno(String pkgno) {
-        this.pkgno = pkgno;
+    public void setOpdprice(double opdprice) {
+        this.opdprice = opdprice;
+    }
+
+    public int getPkgnum() {
+        return pkgnum;
+    }
+
+    public void setPkgnum(int pkgnum) {
+        this.pkgnum = pkgnum;
     }
 
     public double getPdprice() {
@@ -112,5 +124,13 @@ public class ShoppingCartDTO {
 
     public void setUnqid(String unqid) {
         this.unqid = unqid;
+    }
+
+    public String getPkgno() {
+        return pkgno;
+    }
+
+    public void setPkgno(String pkgno) {
+        this.pkgno = pkgno;
     }
 }
