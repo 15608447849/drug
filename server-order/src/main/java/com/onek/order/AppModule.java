@@ -115,6 +115,7 @@ public class AppModule {
         map.put("pkgno",pkgno);
         map.put("pkgnum",pkgnum);
         map.put("compid",compid);
+        map.put("checked",0);
         appContext.param.json = GsonUtils.javaBeanToJson(map);
         return new ShoppingCartModule().saveShopCart(appContext);
     }
