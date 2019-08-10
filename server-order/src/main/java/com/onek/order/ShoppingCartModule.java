@@ -169,7 +169,6 @@ public class ShoppingCartModule {
         }
 
         int compid = appContext.getUserSession().compId;
-
         //判断当前加入购物车是否为套餐
         if (Long.parseLong(shopVO.getPkgno()) > 0) {
             List<IProduct> productList = new ArrayList<>();
@@ -199,6 +198,8 @@ public class ShoppingCartModule {
                 return new Result().fail("超过限购量");
             } else if(ret == -4){
                 return new Result().fail("活动库存不足");
+            } else if(ret == -5){
+                return new Result().fail("此为控销商品，您无权加入购物车！");
             }
             return new Result().fail("加入购物车失败");
         }
@@ -956,6 +957,9 @@ public class ShoppingCartModule {
             //套餐商品明细总数量换算套餐件数
             for (IDiscount discount : discountResult.getActivityList()) {
                 Activity activity = (Activity) discount;
+                if(activity.isGlobalActivity()){
+                    break;
+                }
                 List<IProduct> productList = activity.getProductList();
                 for (int i = 0; i < productList.size(); i++) {
                     if (productList.get(i) instanceof Package) {
@@ -985,6 +989,9 @@ public class ShoppingCartModule {
             //套餐计算总数量换算成件数
             for (IDiscount discount : discountResult.getActivityList()) {
                 Activity activity = (Activity) discount;
+                if(activity.isGlobalActivity()){
+                    break;
+                }
                 List<IProduct> productList = activity.getProductList();
                 for (int i = 0; i < productList.size(); i++) {
                     if (productList.get(i) instanceof Package) {
@@ -1101,7 +1108,7 @@ public class ShoppingCartModule {
 
         List<ShoppingCartVO> shopCart = getShopCart(cnvShoppingCartDtos(pkgDTOList, shoppingCartDTOS));
         return result.success(convResult(shopCart,
-                shoppingCartDTOS.get(0).getCompid()));
+                shoppingCartDTOS.get(0).getCompid(),shoppingCartDTOS.get(0).getAreano()));
     }
 
     private List<ShoppingCartDTO> cnvShoppingCartDtos
@@ -1404,7 +1411,7 @@ public class ShoppingCartModule {
         return discountResult.getGiftList();
     }
 
-    private List<ShoppingCartVO> convResult(List<ShoppingCartVO> shopCart, int compid) {
+    private List<ShoppingCartVO> convResult(List<ShoppingCartVO> shopCart, int compid,long areano) {
         List<ShoppingCartVO> shopCartGoodsList = new ArrayList<>();
         Set<String> pkgnoSet = new HashSet<>();
         for (ShoppingCartVO shoppingCartVO : shopCart) {
@@ -1584,6 +1591,7 @@ public class ShoppingCartModule {
         DiscountResult discountResult
                 = CalculateUtil.calculate(compid, ckProduct, Long.parseLong(shopCart.get(0).getConpno()));
 
+
         for (ShoppingCartVO shoppingCartVO : shopCart) {
             for (IProduct product : ckProduct) {
                 if (shoppingCartVO.getChecked() == 1) {
@@ -1603,18 +1611,20 @@ public class ShoppingCartModule {
                         shoppingCartVO.setTotalamt(result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
                         shoppingCartVO.setoSubtotal(MathUtil.exactMul(product.getOriginalPrice(), product.getNums()).
                                 setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-                        if (shoppingCartVO.getAreano() > 0 && !discountResult.isFreeShipping()) {
-                            shoppingCartVO.setFreight(AreaFeeUtil.getFee(shoppingCartVO.getAreano()));
+                        if (areano > 0 && !discountResult.isFreeShipping()) {
+                            shoppingCartVO.setFreight(AreaFeeUtil.getFee(areano));
                         }
                     }
                 }
             }
         }
 
-
         //套餐赋值
         for (ShoppingCartVO shoppingCartVO : shopCart) {
             for (IDiscount discount : prdDiscountResult.getActivityList()) {
+                if(((Activity)discount).isGlobalActivity()){
+                    break;
+                }
                 List<IProduct> pList = discount.getProductList();
                 for (IProduct product : pList) {
                     if (product instanceof Package
@@ -1735,10 +1745,6 @@ public class ShoppingCartModule {
             ShoppingCartDTO shoppingCartDTO = gson.fromJson(shopVO, ShoppingCartDTO.class);
             shoppingCartDTOS.add(shoppingCartDTO);
         }
-        //更新购物车数量
-        // baseDao.updateBatchNativeSharding(shoppingCartDTOS.get(0).getCompid(),TimeUtils.getCurrentYear(),UPDATE_SHOPCART_SQL_NUM, updateParm, updateParm.size());
-        // List<ShoppingCartVO> shopCart = getShopCart(shoppingCartDTOS);
-        //TODO 获取活动匹配
 
         int controlCode = appContext.getUserSession().comp.controlCode;
 
@@ -1759,7 +1765,7 @@ public class ShoppingCartModule {
 //                shoppingCartDTOS.get(0).getCompid()));
 
         shopCart = convResult(shopCart,
-                shoppingCartDTOS.get(0).getCompid());
+                shoppingCartDTOS.get(0).getCompid(),shoppingCartDTOS.get(0).getAreano());
 
         // 获取活动范围外
         List<ShoppingCartVO> outOfScope = getOutOfScope(shopCart, compid);
@@ -2101,10 +2107,13 @@ public class ShoppingCartModule {
             }
         }
 
+        clearPkg(pkgNoList);
+
         discountResult
                 = CalculateUtil.calculate(cid, pkgNoList,
                 0);
 
+        StringBuilder skuIds = new StringBuilder();
         for (IDiscount iDiscount : discountResult.getActivityList()) {
             for (IProduct iProduct : iDiscount.getProductList()) {
                 if (iDiscount.getLimits(iProduct.getSKU()) > 0
@@ -2113,48 +2122,69 @@ public class ShoppingCartModule {
                 }
             }
 
-//            StringBuilder skuIds = new StringBuilder();
-//            for (IProduct iProduct : iDiscount.getProductList()) {
-//                if (iProduct instanceof Package) {
-//                    Package pkg = (Package) iProduct;
-//                    List<Product> pacageProdList = pkg.getPacageProdList();
-//                    for(Product product: pacageProdList){
-//                        skuIds.append(product.getSku()).append(",");
-//                    }
-//                 }
-//            }
-//
-//            String skuIdsStr = skuIds.toString();
-//            if(skuIdsStr.endsWith(",")){
-//                skuIdsStr = skuIdsStr.substring(0,skuIdsStr.length() -1);
-//            }
+            if(((Activity)iDiscount).isGlobalActivity()){
+                continue;
+            }
 
-
-            //skuIdsStr
-
-
-
-
-
-
-//            for (IProduct iProduct : iDiscount.getProductList()) {
-//                List<IProduct> productList = activity.getProductList();
-//                for (int i = 0; i < productList.size(); i++) {
-//                    if (productList.get(i) instanceof Package) {
-//            }
+            for (IProduct iProduct : iDiscount.getProductList()) {
+                if (iProduct instanceof Package) {
+                    Package pkg = (Package) iProduct;
+                    List<Product> pacageProdList = pkg.getPacageProdList();
+                    for(Product product: pacageProdList){
+                        skuIds.append(product.getSku()).append(",");
+                    }
+                 }
+            }
         }
 
+        String skuIdsStr = skuIds.toString();
+        if(skuIdsStr.endsWith(",")){
+            skuIdsStr = skuIdsStr.substring(0,skuIdsStr.length() -1);
+        }
+
+        //远程调用
+        if(!StringUtils.isEmpty(skuIdsStr)){
+            StringBuilder sqlSb = new StringBuilder(QUERY_ONE_PKG_INV_BUSSCOPE);
+            sqlSb.append(" and sku in (").append(skuIdsStr).append(")");
+            List<Object[]> queryInvRet = IceRemoteUtil.queryNative(sqlSb.toString());
+            if (queryInvRet == null || queryInvRet.isEmpty()) {
+                return -2;
+            }
+
+            if (!appContext.isSignControlAgree()) {
+                for(int i = 0; i <queryInvRet.size(); i++){
+                    int consell = Integer.parseInt(queryInvRet.get(i)[1].toString());
+                    if ((consell & 1) > 0) {
+                        return -5;
+                    }
+                }
+            }
+        }
+
+
+        if (discountResult.getActivityList() == null
+                || discountResult.getActivityList().isEmpty()) {
+            return -4;
+        }
 
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> parmObj = new ArrayList<>();
         for (IDiscount discount : discountResult.getActivityList()) {
             Activity activity = (Activity) discount;
+            if(activity.isGlobalActivity()){
+                break;
+            }
+            LogUtil.getDefaultLogger().debug("====ActivityList_size===="+discountResult.getActivityList().size());
+            LogUtil.getDefaultLogger().debug("====ActivityList_uid===="+activity.getUnqid());
+
             List<IProduct> productList = activity.getProductList();
+            LogUtil.getDefaultLogger().debug("====productList_size===="+productList.size());
             for (int i = 0; i < productList.size(); i++) {
                 if (productList.get(i) instanceof Package) {
                     Package pkg = (Package) productList.get(i);
                     List<Product> pacageProdList = pkg.getPacageProdList();
+                    LogUtil.getDefaultLogger().debug(pkg.getPackageId()+"===pacageProdList_size==="+pacageProdList.size());
                     for (int j = 0; j < pacageProdList.size(); j++) {
                         if (pkgMap.containsKey(pkg.getPackageId())) {
                             sqlList.add(UPDATE_SHOPCART_PKG_SQL_EXT);
@@ -2176,6 +2206,7 @@ public class ShoppingCartModule {
         String[] sqlArray = new String[sqlList.size()];
         if (sqlArray.length > 0) {
             sqlArray = sqlList.toArray(sqlArray);
+            LogUtil.getDefaultLogger().debug("执行SQL :"+Arrays.toString(sqlArray));
             int[] rets = baseDao.updateTransNativeSharding(cid, TimeUtils.getCurrentYear(), sqlArray, parmObj);
             if (!ModelUtil.updateTransEmpty(rets)) {
                 return 0;
@@ -2245,6 +2276,9 @@ public class ShoppingCartModule {
 
         for (IDiscount discount : discountResult.getActivityList()) {
             Activity activity = (Activity) discount;
+            if(activity.isGlobalActivity()){
+                break;
+            }
             List<IProduct> productList = activity.getProductList();
             for (int i = 0; i < productList.size(); i++) {
                 if (productList.get(i) instanceof Package) {
@@ -2266,6 +2300,7 @@ public class ShoppingCartModule {
                         sdto.setCompid(shoppingCartDTOS.get(0).getCompid());
                         sdto.setPkgnum(pkg.getNums());
                         sdto.setPnum(pacageProdList.get(j).getNums());
+                        sdto.setAreano(shoppingCartDTOS.get(0).getAreano());
 
                         double pdprice = MathUtil.exactDiv(pacageProdList.get(j).getCurrentPrice(), pacageProdList.get(j).getNums()).
                                 setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
@@ -2346,6 +2381,14 @@ public class ShoppingCartModule {
         });
         LogUtil.getDefaultLogger().info("222222222----------4444444444----     " + array.toJSONString());
         return array.toJSONString();
+    }
+
+
+    public void clearPkg(List<IProduct> pkgList){
+        for (IProduct product : pkgList){
+            Package pkg = (Package)product;
+            pkg.getPacageProdList().clear();
+        }
     }
 
     public static void main(String[] args) {
