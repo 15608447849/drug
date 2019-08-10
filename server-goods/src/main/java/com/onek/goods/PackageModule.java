@@ -207,8 +207,8 @@ public class PackageModule {
             String mmdd = TimeUtils.date_Md_2String(new Date());
             List<Object[]> queryResult = BASE_DAO.queryNative(SELECT_PACK_SQL,mmdd);
             for (Object[] qResult : queryResult) {
-                int qualcode = Integer.parseInt(String.valueOf(qResult[2]));
-                long qualvalue = Integer.parseInt(String.valueOf(qResult[3]));
+                int qualcode = Integer.parseInt(String.valueOf(qResult[1]));
+                long qualvalue = Integer.parseInt(String.valueOf(qResult[2]));
                 if (QualJudge.hasPermission(compId, qualcode, qualvalue)) {
                     long actCode = Long.parseLong(String.valueOf(qResult[0]));
                     actCodeSB.append(actCode).append(",");
