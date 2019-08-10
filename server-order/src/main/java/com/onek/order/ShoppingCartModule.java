@@ -1660,6 +1660,7 @@ public class ShoppingCartModule {
                     }
                 }
             }
+            shopCart.get(0).setAmt(discountResult.getTotalDiscount());
         }
         return shopCart;
     }
