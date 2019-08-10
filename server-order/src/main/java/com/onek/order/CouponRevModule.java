@@ -602,19 +602,29 @@ public class CouponRevModule {
         int compid = couponUseDTOS.get(0).getCompid();
         DiscountResult calculate = CalculateUtil.calculate(compid,
                 productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
+        BigDecimal pgkDiscount = BigDecimal.ZERO;
+        for(IProduct product:productList){
+            if(product instanceof Package){
+                pgkDiscount.add(BigDecimal.valueOf(product.getDiscounted()));
+                subCalRet = subCalRet.add(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()));
+            }
+        }
+
         List<IDiscount> activityList = calculate.getActivityList();
         long sku;
-        BigDecimal pgkDiscount = BigDecimal.ZERO;
+
         for(IDiscount discount :activityList){
-            if(discount instanceof Activity && ((Activity)discount).isGlobalActivity()){
-                continue;
-            }
-            for(IProduct product : discount.getProductList()){
-                if(product instanceof Package){
-                    pgkDiscount.add(BigDecimal.valueOf(product.getDiscounted()));
-                    subCalRet = subCalRet.add(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()));
-                }
-            }
+//            if(discount instanceof Activity && ((Activity)discount).isGlobalActivity()
+//                    || discount instanceof Couent){
+//                continue;
+//            }
+
+//            for(IProduct product : discount.getProductList()){
+//                if(product instanceof Package){
+//                    pgkDiscount.add(BigDecimal.valueOf(product.getDiscounted()));
+//                    subCalRet = subCalRet.add(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()));
+//                }
+//            }
 
             for(CouponUseDTO couponUseDTO: couponUseDTOS){
                 //判断
@@ -758,21 +768,32 @@ public class CouponRevModule {
         Map resultMap = new HashMap();
         List<CouponUseDTO> couponUseDTOS = new ArrayList<>();
         Gson gson = new Gson();
-        List<Product> productList = new ArrayList<>();
+        List<IProduct> productList = new ArrayList<>();
         BigDecimal subCalRet = BigDecimal.ZERO;
+        List<Product> skuList = new ArrayList<>();
         for (JsonElement coupn : jsonArray) {
             CouponUseDTO couponUseDTO = gson.fromJson(coupn, CouponUseDTO.class);
             if (couponUseDTO != null) {
                 couponUseDTOS.add(couponUseDTO);
-                Product product = new Product();
-                product.setSku(couponUseDTO.getPdno());
-                if(couponUseDTO.getSkprice() > 0){
-                    product.autoSetCurrentPrice(couponUseDTO.getSkprice(),couponUseDTO.getPnum());
+                if(Long.parseLong(couponUseDTO.getPkgno()) > 0){
+                    Package pkg = new Package();
+                    pkg.setPackageId(Long.parseLong(couponUseDTO.getPkgno()));
+                    pkg.setNums(couponUseDTO.getPkgnum());
+                    productList.add(pkg);
+
+                    //subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
                 }else{
-                    product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                    Product product = new Product();
+                    product.setSku(couponUseDTO.getPdno());
+                    if(couponUseDTO.getSkprice() > 0){
+                        product.autoSetCurrentPrice(couponUseDTO.getSkprice(),couponUseDTO.getPnum());
+                    }else{
+                        product.autoSetCurrentPrice(couponUseDTO.getPrice(),couponUseDTO.getPnum());
+                    }
+                    subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
+                    productList.add(product);
+                    skuList.add(product);
                 }
-                subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
-                productList.add(product);
             }
         }
 
@@ -785,18 +806,40 @@ public class CouponRevModule {
         }
 
         Map<String, String> verifyResult
-                = verifyCoupon(productList, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
+                = verifyCoupon(skuList, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
 
         resultMap.put("code",verifyResult.get("code"));
         resultMap.put("msg",verifyResult.get("msg"));
 
         DiscountResult calculate = CalculateUtil.calculate(compid,
                 productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
+        BigDecimal pgkDiscount = BigDecimal.ZERO;
+        for(IProduct product:productList){
+            if(product instanceof Package){
+                pgkDiscount.add(BigDecimal.valueOf(product.getDiscounted()));
+                subCalRet = subCalRet.add(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()));
+            }
+        }
 
         List<IDiscount> activityList = calculate.getActivityList();
         long sku;
+      //  BigDecimal pgkDiscount = BigDecimal.ZERO;
         for(IDiscount discount :activityList){
+//            if(discount instanceof Activity && ((Activity)discount).isGlobalActivity()){
+//                continue;
+//            }
+
+//            for(IProduct product : discount.getProductList()){
+//                if(product instanceof Package){
+//                    pgkDiscount.add(BigDecimal.valueOf(product.getDiscounted()));
+//                    subCalRet = subCalRet.add(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()));
+//                }
+//            }
+
             for(CouponUseDTO couponUseDTO: couponUseDTOS){
+                if(Long.parseLong(couponUseDTO.getPkgno()) > 0 ) {
+                    continue;
+                }
                 sku = couponUseDTO.getPdno();
                 int limits = discount.getLimits(sku);
                 int buyed = RedisOrderUtil.getActBuyNum(compid,sku,discount.getDiscountNo());
@@ -1307,6 +1350,10 @@ public class CouponRevModule {
             return result.success("领取成功");
         }
         return result.fail("领取失败");
+    }
+
+    public static void main(String[] args) {
+
     }
 
 }
