@@ -221,13 +221,14 @@ public class PackageModule {
                     return result.success("暂无套餐！", "");
                 }
                 Map<Long, String[]> dataMap = new HashMap<>();
-                Map<Integer, Set<Long>> menuMap = new HashMap<>();
+                Map<Integer, Set<Object[]>> menuMap = new HashMap<>();
                 Map<Integer, Object[]> menuActMap = new HashMap<>();
                 List<Long> skuList = new ArrayList<>();
                 String[] otherArr = {"1114", "0", compId + ""};
                 Set<String> menuCodeList = new HashSet<>();
                 //menucode, gcode, pkgprodnum, price,actstock,limitnum,actcode,cstatus
                 menuInfos.forEach(qResult -> {
+                    int menucode = Integer.valueOf(String.valueOf(qResult[0]));//套餐码
                     long sku = Long.valueOf(String.valueOf(qResult[1]));//sku
                     String actCode = String.valueOf(qResult[6]);
                     int pkgprodnum =  Integer.valueOf(String.valueOf(qResult[2]));//套餐数量
@@ -235,13 +236,12 @@ public class PackageModule {
                     skuList.add(sku);//sku
                     dataMap.put(sku, new String[]{String.valueOf(qResult[4]),String.valueOf(qResult[5]), price,
                                     String.valueOf(qResult[7]), actCode, pkgprodnum + ""});
-                    Set<Long> skuSet = new HashSet<>();
-                    int menucode = Integer.valueOf(String.valueOf(qResult[0]));//套餐码
+                    Set<Object[]> skuSet = new HashSet<>();
                     menuCodeList.add(menucode+"");
                     if (menuMap.containsKey(menucode)) {
                         skuSet = menuMap.get(menucode);
                     }
-                    skuSet.add(sku);
+                    skuSet.add(new Object[]{sku, pkgprodnum});
                     menuMap.put(menucode,skuSet);
                     menuActMap.put(menucode, new Object[]{Long.valueOf(actCode),price});
                 });
@@ -258,24 +258,26 @@ public class PackageModule {
     }
 
 
-    private static Map<Integer, List<ProdVO>> assMenuData( Map<Integer, Set<Long>> menuMap, List<ProdVO> prodVOList,
+    private static Map<Integer, List<ProdVO>> assMenuData( Map<Integer, Set<Object[]>> menuMap, List<ProdVO> prodVOList,
                                                            Map<Integer, Object[]> menuActMap) {
         Map<Integer, List<ProdVO>> menuProdMap = new HashMap<>();
-        for(Map.Entry<Integer, Set<Long>> entry : menuMap.entrySet()){
+        for(Map.Entry<Integer, Set<Object[]>> entry : menuMap.entrySet()){
             long actCode = Long.valueOf(menuActMap.get(entry.getKey())[0].toString());
             String price = menuActMap.get(entry.getKey())[1].toString();
             List<ProdVO> menuProdList = new ArrayList<>();
             if (menuProdMap.containsKey(entry.getKey())) {
                 menuProdList = menuProdMap.get(entry.getKey());
             }
-            for (long sku : entry.getValue()) {
+            for (Object[] menuObj : entry.getValue()) {
                 for (ProdVO prodDTO : prodVOList) {
-                    if (prodDTO.getSku() == sku) {
+                    if (prodDTO.getSku() == Long.valueOf(menuObj[0].toString())) {
+                        int pkgprodnum = Integer.valueOf(menuObj[1].toString());
                         ProdVO prodVO = JSON.parseObject(JSON.toJSONString(prodDTO), ProdVO.class);
-                        prodVO.setActinitstock(RedisStockUtil.getActInitStock(sku, actCode));
-                        prodVO.setSurplusstock(RedisStockUtil.getActStockBySkuAndActno(sku, actCode));
+                        prodVO.setActinitstock(RedisStockUtil.getActInitStock(Long.valueOf(menuObj[0].toString()), actCode));
+                        prodVO.setSurplusstock(RedisStockUtil.getActStockBySkuAndActno(Long.valueOf(menuObj[0].toString()), actCode));
                         prodVO.setBuynum(prodVO.getActinitstock() - prodVO.getSurplusstock());
                         prodVO.setActprize(MathUtil.exactDiv(Double.parseDouble(price), 100).doubleValue());
+                        prodVO.setPkgprodnum(pkgprodnum);
                         menuProdList.add(prodVO);
                         menuProdMap.put(entry.getKey(), menuProdList);
                     }
@@ -303,7 +305,9 @@ public class PackageModule {
 
     private static boolean pkgUnEnough(List<ProdVO> prodVOList) {
         for (ProdVO prod : prodVOList) {
-            return prod.getSurplusstock() < prod.getPkgprodnum();
+           if (prod.getSurplusstock() < prod.getPkgprodnum()) {
+               return true;
+           }
         }
         return false;
     }
