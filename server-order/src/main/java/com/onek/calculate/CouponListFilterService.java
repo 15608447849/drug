@@ -6,6 +6,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
 import com.onek.calculate.entity.IDiscount;
 import com.onek.calculate.entity.IProduct;
+import com.onek.calculate.entity.Package;
 import com.onek.calculate.entity.Product;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import com.onek.calculate.util.DiscountUtil;
@@ -69,9 +70,17 @@ public class CouponListFilterService extends BaseDiscountFilterService {
         }
         // 过滤SKU
         Iterator<CouponPubVO> couentIterator = checkCoupon.iterator();
+
+        List<Product> prdList = new ArrayList<>();
+        for (IProduct prd: skus){
+            if(prd instanceof Product){
+                prdList.add((Product) prd);
+            }
+        }
         while(couentIterator.hasNext()){
             CouponPubVO couponPubVO = couentIterator.next();
-            if (couponPubVO.getGoods() > 0 && !checkSKU(skus,couponPubVO)) {
+
+            if (couponPubVO.getGoods() > 0 && !checkSKU(prdList,couponPubVO)) {
                 couentIterator.remove();
             }
         }
@@ -93,14 +102,14 @@ public class CouponListFilterService extends BaseDiscountFilterService {
         return checkCoupon;
     }
 
-    private boolean checkSKU(List<IProduct> skus,CouponPubVO couent) {
+    private boolean checkSKU(List<Product> skus,CouponPubVO couent) {
         //远程调用
         List<Object[]> check = IceRemoteUtil.queryNative(getSkusSql(skus), couent.getCoupno());
         return StringUtils.isBiggerZero(check.get(0)[0].toString());
     }
 
 
-    private String getSkusSql(List<IProduct> skus){
+    private String getSkusSql(List<Product> skus){
         StringBuilder sbSql = new StringBuilder(CHECK_SKU);
         sbSql.append(" and gcode in (");
         for(int i = 0; i < skus.size(); i++){

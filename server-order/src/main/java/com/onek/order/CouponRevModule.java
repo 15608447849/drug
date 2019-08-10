@@ -606,9 +606,13 @@ public class CouponRevModule {
         long sku;
         BigDecimal pgkDiscount = BigDecimal.ZERO;
         for(IDiscount discount :activityList){
+            if(((Activity)discount).isGlobalActivity()){
+                continue;
+            }
             for(IProduct product : discount.getProductList()){
                 if(product instanceof Package){
                     pgkDiscount.add(BigDecimal.valueOf(product.getDiscounted()));
+                    //LogUtil.getDefaultLogger("套餐计算==="+)
                     subCalRet = subCalRet.add(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()));
                 }
             }

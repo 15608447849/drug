@@ -958,7 +958,7 @@ public class ShoppingCartModule {
             for (IDiscount discount : discountResult.getActivityList()) {
                 Activity activity = (Activity) discount;
                 if(activity.isGlobalActivity()){
-                    break;
+                   continue;
                 }
                 List<IProduct> productList = activity.getProductList();
                 for (int i = 0; i < productList.size(); i++) {
@@ -990,7 +990,7 @@ public class ShoppingCartModule {
             for (IDiscount discount : discountResult.getActivityList()) {
                 Activity activity = (Activity) discount;
                 if(activity.isGlobalActivity()){
-                    break;
+                    continue;
                 }
                 List<IProduct> productList = activity.getProductList();
                 for (int i = 0; i < productList.size(); i++) {
@@ -1454,11 +1454,8 @@ public class ShoppingCartModule {
             }
 
             if (shoppingCartVO.getChecked() == 1) {
-                if (pkg != null) {
-                    result.add(BigDecimal.valueOf(pkg.getCurrentPrice()));
-                }
                 if (product != null) {
-                    result.add(BigDecimal.valueOf(product.getCurrentPrice()));
+                    result = result.add(BigDecimal.valueOf(product.getCurrentPrice()));
                 }
             }
         }
@@ -1483,6 +1480,7 @@ public class ShoppingCartModule {
                     if (product instanceof Package
                             && Long.parseLong(shoppingCartVO.getPkgno()) == ((Package) product).getPackageId()) {
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
+                        //添加活动码
                         actCodeList.add(activity.getUnqid() + "");
                         //判断库存
                         if (((Package) product).getExpireFlag() < 0) {
@@ -1519,6 +1517,7 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
+                        //加入活动码
                         actCodeList.add(activity.getUnqid() + "");
                         if (activity.getLimits(product.getSKU()) < minLimit) {
                             minLimit = activity.getLimits(product.getSKU());
@@ -1569,7 +1568,7 @@ public class ShoppingCartModule {
             if (minLimit == Integer.MAX_VALUE) {
                 shoppingCartVO.setLimitnum(0);
             }
-
+            shoppingCartVO.setActcode(actCodeList);
             shoppingCartVO.setRule(ruleList);
         }
 
@@ -1598,6 +1597,7 @@ public class ShoppingCartModule {
                     Package pkg = null;
                     if (product instanceof Package) {
                         pkg = (Package) product;
+                        result = result.add(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()));
                     }
                     if ((product instanceof Product && shoppingCartVO.getPdno() == product.getSKU())
                             || (pkg != null && pkg.getPackageId() == Long.parseLong(shoppingCartVO.getPkgno()))) {
@@ -1608,7 +1608,6 @@ public class ShoppingCartModule {
                         shoppingCartVO.setCounpon(discountResult.getCouponValue());
                         shoppingCartVO.setFreepost(discountResult.isFreeShipping());
                         shoppingCartVO.setOflag(discountResult.isExCoupon());
-                        shoppingCartVO.setTotalamt(result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
                         shoppingCartVO.setoSubtotal(MathUtil.exactMul(product.getOriginalPrice(), product.getNums()).
                                 setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
                         if (areano > 0 && !discountResult.isFreeShipping()) {
@@ -1619,11 +1618,12 @@ public class ShoppingCartModule {
             }
         }
 
+        shopCart.get(0).setTotalamt(result.setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
         //套餐赋值
         for (ShoppingCartVO shoppingCartVO : shopCart) {
             for (IDiscount discount : prdDiscountResult.getActivityList()) {
                 if(((Activity)discount).isGlobalActivity()){
-                    break;
+                    continue;
                 }
                 List<IProduct> pList = discount.getProductList();
                 for (IProduct product : pList) {
@@ -2173,7 +2173,7 @@ public class ShoppingCartModule {
         for (IDiscount discount : discountResult.getActivityList()) {
             Activity activity = (Activity) discount;
             if(activity.isGlobalActivity()){
-                break;
+                continue;
             }
             LogUtil.getDefaultLogger().debug("====ActivityList_size===="+discountResult.getActivityList().size());
             LogUtil.getDefaultLogger().debug("====ActivityList_uid===="+activity.getUnqid());
@@ -2277,7 +2277,7 @@ public class ShoppingCartModule {
         for (IDiscount discount : discountResult.getActivityList()) {
             Activity activity = (Activity) discount;
             if(activity.isGlobalActivity()){
-                break;
+                continue;
             }
             List<IProduct> productList = activity.getProductList();
             for (int i = 0; i < productList.size(); i++) {
