@@ -4,14 +4,13 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
-import com.onek.calculate.entity.IDiscount;
-import com.onek.calculate.entity.IProduct;
+import com.onek.calculate.entity.*;
 import com.onek.calculate.entity.Package;
-import com.onek.calculate.entity.Product;
 import com.onek.calculate.service.filter.BaseDiscountFilterService;
 import com.onek.calculate.util.DiscountUtil;
 import com.onek.entity.CouponPubLadderVO;
 import com.onek.entity.CouponPubVO;
+import com.onek.util.CalculateUtil;
 import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -88,8 +87,12 @@ public class CouponListFilterService extends BaseDiscountFilterService {
             return null;
         }
 
-        double priceTotal = DiscountUtil.getCurrentPriceTotal(skus);
+        DiscountResult prdDiscountResult
+                = CalculateUtil.calculate(compid, skus, 0);
 
+
+        //double priceTotal = DiscountUtil.getCurrentPriceTotal(skus);
+        double priceTotal = prdDiscountResult.getTotalCurrentPrice();
         //过滤阶梯优惠券
         Iterator<CouponPubVO> couentLadderIterator = checkCoupon.iterator();
         while(couentLadderIterator.hasNext()){
@@ -104,6 +107,10 @@ public class CouponListFilterService extends BaseDiscountFilterService {
 
     private boolean checkSKU(List<Product> skus,CouponPubVO couent) {
         //远程调用
+        String skuSQL = getSkusSql(skus);
+        if(StringUtils.isEmpty(skuSQL)){
+            return false;
+        }
         List<Object[]> check = IceRemoteUtil.queryNative(getSkusSql(skus), couent.getCoupno());
         return StringUtils.isBiggerZero(check.get(0)[0].toString());
     }
@@ -111,6 +118,9 @@ public class CouponListFilterService extends BaseDiscountFilterService {
 
     private String getSkusSql(List<Product> skus){
         StringBuilder sbSql = new StringBuilder(CHECK_SKU);
+        if(skus.size() == 0){
+            return "";
+        }
         sbSql.append(" and gcode in (");
         for(int i = 0; i < skus.size(); i++){
             if(skus.get(i).getSKU() > 0){

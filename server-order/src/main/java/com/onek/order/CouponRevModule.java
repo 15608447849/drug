@@ -532,7 +532,7 @@ public class CouponRevModule {
                 if(Long.parseLong(couponUseDTO.getPkgno()) > 0){
                     Package pkg = new Package();
                     pkg.setPackageId(Long.parseLong(couponUseDTO.getPkgno()));
-                    pkg.setNums(pkg.getNums());
+                    pkg.setNums(couponUseDTO.getPkgnum());
                     productList.add(pkg);
                 }else{
                     Product product = new Product();
@@ -606,13 +606,12 @@ public class CouponRevModule {
         long sku;
         BigDecimal pgkDiscount = BigDecimal.ZERO;
         for(IDiscount discount :activityList){
-            if(((Activity)discount).isGlobalActivity()){
+            if(discount instanceof Activity && ((Activity)discount).isGlobalActivity()){
                 continue;
             }
             for(IProduct product : discount.getProductList()){
                 if(product instanceof Package){
                     pgkDiscount.add(BigDecimal.valueOf(product.getDiscounted()));
-                    //LogUtil.getDefaultLogger("套餐计算==="+)
                     subCalRet = subCalRet.add(MathUtil.exactMul(product.getOriginalPrice(),product.getNums()));
                 }
             }
