@@ -337,7 +337,7 @@ public class OrderInfoModule {
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrderGoods.class);
 
-        convTranGoods(result);
+        result = convTranGoods(result);
 
         Map<Long, List<TranOrderGoods>> returnResult = new HashMap<>();
         List<TranOrderGoods> s;
@@ -367,16 +367,28 @@ public class OrderInfoModule {
 
         BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrderGoods.class);
 
-        convTranGoods(result);
+        result = convTranGoods(result);
 
         List<TranOrderGoods> resultList = new ArrayList<>(Arrays.asList(result));
 
         return resultList;
     }
 
-    private void convTranGoods(TranOrderGoods[] result) {
+    private TranOrderGoods[] convTranGoods(TranOrderGoods[] result) {
+        List<TranOrderGoods> returnResult = new ArrayList<>();
+        Map<Integer, List<TranOrderGoods>> pkgStore = new HashMap<>();
         ProdEntity prod;
         for (TranOrderGoods tranOrderGoods : result) {
+            if (tranOrderGoods.getPkgno() > 0) {
+                if (!pkgStore.containsKey(tranOrderGoods.getPkgno())) {
+                    pkgStore.put(tranOrderGoods.getPkgno(), new ArrayList<>());
+                }
+
+                pkgStore.get(tranOrderGoods.getPkgno()).add(tranOrderGoods);
+            } else {
+                returnResult.add(tranOrderGoods);
+            }
+
             try {
                 prod = ProdInfoStore.getProdBySku(tranOrderGoods.getPdno());
             } catch (Exception e) { prod=null; }
@@ -400,6 +412,39 @@ public class OrderInfoModule {
                 tranOrderGoods.setBrandn(prod.getBrandName());
             }
         }
+
+        Iterator<Map.Entry<Integer, List<TranOrderGoods>>> it = pkgStore.entrySet().iterator();
+        Map.Entry<Integer, List<TranOrderGoods>> entry;
+        TranOrderGoods added;
+        while (it.hasNext()) {
+            entry = it.next();
+            added = new TranOrderGoods();
+            added.setOrderno(entry.getValue().get(0).getOrderno());
+            added.setPkgno(entry.getKey());
+            added.setPkgGoods(entry.getValue());
+            double[] balamt = new double[entry.getValue().size()];
+            double[] distprice = new double[entry.getValue().size()];
+            double[] payamt = new double[entry.getValue().size()];
+            double[] pdprice = new double[entry.getValue().size()];
+
+            int index = 0;
+            for (TranOrderGoods tranOrderGoods : entry.getValue()) {
+                balamt[index] = tranOrderGoods.getBalamt();
+                distprice[index] = tranOrderGoods.getDistprice();
+                payamt[index] = tranOrderGoods.getPayamt();
+                pdprice[index] = tranOrderGoods.getPdprice() * tranOrderGoods.getPnum();
+                index ++;
+            }
+
+            added.setPdprice(Arrays.stream(pdprice).sum());
+            added.setPayamt(Arrays.stream(payamt).sum());
+            added.setBalamt(Arrays.stream(balamt).sum());
+            added.setDistprice(Arrays.stream(distprice).sum());
+
+            returnResult.add(added);
+        }
+
+        return returnResult.toArray(new TranOrderGoods[0]);
     }
 
     /**

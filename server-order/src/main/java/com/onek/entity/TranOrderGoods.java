@@ -1,5 +1,8 @@
 package com.onek.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * @author 11842
  * @version 1.1.1
@@ -36,6 +39,15 @@ public class TranOrderGoods {
     private double rrp;
 
     private boolean isGift;
+    private List<TranOrderGoods> pkgGoods;
+
+    public void setPkgGoods(List<TranOrderGoods> pkgGoods) {
+        this.pkgGoods = pkgGoods;
+    }
+
+    public List<TranOrderGoods> getPkgGoods() {
+        return pkgGoods;
+    }
 
     public boolean isGift() {
         return isGift;
