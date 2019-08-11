@@ -529,17 +529,21 @@ public class ShoppingCartModule {
 
 
         //List<ShoppingCartDTO> shoppingCartDTOS = new ArrayList<>();
+        HashSet<Long> pkgnoSet = new HashSet<>();
         List<Object[]> updateParm = new ArrayList<>();
         List<Object[]> insertParm = new ArrayList<>();
         StringBuilder parmSql = new StringBuilder();
         for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOArray) {
             if (shoppingCartDTO != null) {
                 parmSql.append(shoppingCartDTO.getPdno()).append(",");
+                if(Long.parseLong(shoppingCartDTO.getPkgno()) > 0){
+                    pkgnoSet.add(Long.parseLong(shoppingCartDTO.getPkgno()));
+                }
             }
         }
         String skuStr = parmSql.toString().substring(0, parmSql.toString().length() - 1);
 
-        String querySql = " select unqid,pdno,pnum from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+        String querySql = " select unqid,pdno,pnum,pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
                 + " where orderno = 0 and cstatus&1 = 0 and compid = " + compid;
         querySql = querySql + " and pdno in (" + skuStr + ")";
 
@@ -556,12 +560,16 @@ public class ShoppingCartModule {
 
         List<Object[]> queryRet = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(),
                 querySql);
-        convtShopCartDTO(compid, querySkuRet, shoppingCartDTOArray, queryRet);
+        convtShopCartDTO(compid, querySkuRet, shoppingCartDTOArray, queryRet,pkgnoSet);
         boolean flag = true;
         for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOArray) {
+            if(shoppingCartDTO.getCstatus() == 3){
+                continue;
+            }
             if (queryRet != null && !queryRet.isEmpty()) {
                 for (Object[] objects : queryRet) {
-                    if (shoppingCartDTO.getPdno() == Long.parseLong(objects[1].toString())) {
+                    if (shoppingCartDTO.getPdno() == Long.parseLong(objects[1].toString())
+                             && Long.parseLong(shoppingCartDTO.getPkgno()) == Long.parseLong(objects[3].toString()) ) {
                         updateParm.add(new Object[]{shoppingCartDTO.getPnum(), objects[0]});
                         flag = false;
                         break;
@@ -570,9 +578,11 @@ public class ShoppingCartModule {
             }
             if (flag) {
                 insertParm.add(new Object[]{GenIdUtil.getUnqId(), 0,
-                        shoppingCartDTO.getPdno(), shoppingCartDTO.getPnum(), compid, 0, 0});
+                        shoppingCartDTO.getPdno(), shoppingCartDTO.getPnum(), compid, 0, shoppingCartDTO.getPkgno()});
                 flag = true;
             }
+
+
         }
 
         int[] uret = baseDao.updateBatchNativeSharding(compid, TimeUtils.getCurrentYear(),
@@ -590,84 +600,153 @@ public class ShoppingCartModule {
     public void convtShopCartDTO(int compid,
                                  List<Object[]> querySkuRet,
                                  ShoppingCartDTO[] shoppingCartDTOS,
-                                 List<Object[]> queryRet) {
+                                 List<Object[]> queryRet,
+                                 HashSet<Long> pkgnoSet) {
 
         List<IProduct> productList = new ArrayList<>();
         HashMap<Long, List<Integer>> invMap = new HashMap();
+        List<IProduct> pkgList = new ArrayList<>();
+        for (Long pkgno : pkgnoSet) {
+            Package pkg = new Package();
+            pkg.setNums(1);
+            pkg.setPackageId(pkgno);
+            pkgList.add(pkg);
+        }
+
+        getActivityList(compid, pkgList);
+
+
         for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
-            Product product = new Product();
-            product.setNums(shoppingCartDTO.getPnum());
-            List<Integer> stockList = new ArrayList<>();
-            invMap.put(shoppingCartDTO.getPdno(), stockList);
-            for (Object[] objects : querySkuRet) {
-                if (shoppingCartDTO.getPdno() == Long.parseLong(objects[3].toString())) {
+            if (Long.parseLong(shoppingCartDTO.getPkgno()) == 0) {
+                Product product = new Product();
+                List<Integer> stockList = new ArrayList<>();
+                invMap.put(shoppingCartDTO.getPdno(), stockList);
 
-                    int stock = Integer.parseInt(objects[0].toString());
-                    try {
-                        stock = RedisStockUtil.getStock(shoppingCartDTO.getPdno());
-                    } catch (Exception e) {
-                        e.printStackTrace();
+
+                for (Object[] objects : querySkuRet) {
+                    if (shoppingCartDTO.getPdno() == Long.parseLong(objects[3].toString())
+                            && Long.parseLong(shoppingCartDTO.getPkgno()) == 0) {
+                        int stock = Integer.parseInt(objects[0].toString());
+                        try {
+                            stock = RedisStockUtil.getStock(shoppingCartDTO.getPdno());
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                        invMap.get(shoppingCartDTO.getPdno()).
+                                add(stock);
+                        product.setOriginalPrice(Double.parseDouble(objects[2].toString()));
                     }
-                    invMap.get(shoppingCartDTO.getPdno()).
-                            add(stock);
-                    product.setOriginalPrice(Double.parseDouble(objects[2].toString()));
+                }
+
+
+                for (Object[] objects : queryRet) {
+                    //判断
+                    if (Long.parseLong(shoppingCartDTO.getPkgno()) == 0 &&
+                            shoppingCartDTO.getPdno() == Long.parseLong(objects[1].toString())
+                            && Long.parseLong(shoppingCartDTO.getPkgno()) == Long.parseLong(objects[3].toString())) {
+
+                        shoppingCartDTO.setPnum(shoppingCartDTO.getPnum()
+                                + Integer.parseInt(objects[2].toString()));
+
+                        product.setNums(shoppingCartDTO.getPnum()
+                                + Integer.parseInt(objects[2].toString()));
+                    }
+                    product.setNums(shoppingCartDTO.getPnum());
+                    product.autoSetCurrentPrice(product.getOriginalPrice(), product.getNums());
+                    product.setSku(shoppingCartDTO.getPdno());
+                    productList.add(product);
+                }
+            } else {
+                for (Object[] objects : queryRet) {
+                    if (Long.parseLong(shoppingCartDTO.getPkgno()) > 0
+                            && shoppingCartDTO.getPdno() == Long.parseLong(objects[1].toString())
+                            && Long.parseLong(shoppingCartDTO.getPkgno()) == Long.parseLong(objects[3].toString())) {
+
+                        shoppingCartDTO.setPnum(shoppingCartDTO.getPnum()
+                                + Integer.parseInt(objects[2].toString()));
+                    }
+                }
+            }
+        }
+
+        //计算套餐数量
+        for (Long pkgno : pkgnoSet) {
+            int pkgDtoNum = 0;
+            int pkgnum = 0;
+            for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
+                if (pkgno == Long.parseLong(shoppingCartDTO.getPkgno())) {
+                    pkgDtoNum = pkgDtoNum + shoppingCartDTO.getPnum();
                 }
             }
 
-            for (Object[] objects : queryRet) {
-                if (shoppingCartDTO.getPdno() == Long.parseLong(objects[1].toString())) {
-                    shoppingCartDTO.setPnum(shoppingCartDTO.getPnum()
-                            + Integer.parseInt(objects[2].toString()));
-
-                    product.setNums(shoppingCartDTO.getPnum()
-                            + Integer.parseInt(objects[2].toString()));
+            for (IProduct product : pkgList) {
+                //计算当前套餐总件数
+                Package pkg = (Package) product;
+                if (pkgno == pkg.getPackageId()) {
+                    pkgnum = pkgDtoNum
+                            / ((Package) product).singleProdsCount();
                 }
             }
-            product.autoSetCurrentPrice(product.getOriginalPrice(), product.getNums());
-            product.setSku(shoppingCartDTO.getPdno());
-            productList.add(product);
+            Package pkg = new Package();
+            pkg.setPackageId(pkgno);
+            pkg.setNums(pkgnum);
+            productList.add(pkg);
+        }
 
-            List<IDiscount> discountList = getActivityList(compid, productList);
+        List<IDiscount> discountList = getActivityList(compid, productList);
 
+
+        for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
             int subStock = Integer.MAX_VALUE;
             int actStock = Integer.MAX_VALUE;
-
             if (discountList != null && !discountList.isEmpty()) {
                 for (IDiscount discount : discountList) {
                     Activity activity = (Activity) discount;
                     for (IProduct prdt : activity.getProductList()) {
-                        if (prdt.getSKU() == shoppingCartDTO.getPdno()) {
-
-
-                            actStock = Math.min(
-                                    RedisStockUtil
-                                            .getActStockBySkuAndActno(shoppingCartDTO.getPdno(),
-                                                    discount.getDiscountNo()),
-                                    actStock);
-
-                            if (activity.getLimits(shoppingCartDTO.getPdno()) == 0) {
-                                break;
+                        if (prdt instanceof Package
+                                && Long.parseLong(shoppingCartDTO.getPkgno()) == ((Package) prdt).getPackageId()){
+                            if (((Package) prdt).getExpireFlag() < 0) {
+                                shoppingCartDTO.setCstatus(3);
                             }
+                        }
 
-                            subStock = Math.min
-                                    (activity.getLimits(shoppingCartDTO.getPdno())
-                                            - RedisOrderUtil.getActBuyNum(compid, shoppingCartDTO.getPdno(),
-                                            activity.getUnqid()), subStock);
+
+                        if (prdt instanceof Product
+                                && prdt.getSKU() == shoppingCartDTO.getPdno()) {
+                                actStock = Math.min(
+                                        RedisStockUtil
+                                                .getActStockBySkuAndActno(shoppingCartDTO.getPdno(),
+                                                        discount.getDiscountNo()),
+                                        actStock);
+
+                                if (activity.getLimits(shoppingCartDTO.getPdno()) == 0) {
+                                    break;
+                                }
+
+                                subStock = Math.min
+                                        (activity.getLimits(shoppingCartDTO.getPdno())
+                                                - RedisOrderUtil.getActBuyNum(compid, shoppingCartDTO.getPdno(),
+                                                activity.getUnqid()), subStock);
 
                         }
                     }
                 }
             }
 
-            invMap.get(shoppingCartDTO.getPdno()).
-                    add(subStock);
+            if(Long.parseLong(shoppingCartDTO.getPkgno()) == 0){
+                invMap.get(shoppingCartDTO.getPdno()).
+                        add(subStock);
 
-            invMap.get(shoppingCartDTO.getPdno()).
-                    add(actStock);
+                invMap.get(shoppingCartDTO.getPdno()).
+                        add(actStock);
+
+            }
+
         }
 
         for (ShoppingCartDTO shoppingCartDTO : shoppingCartDTOS) {
-            if (invMap.containsKey(shoppingCartDTO.getPdno())) {
+            if (invMap.containsKey(shoppingCartDTO.getPdno())
+                    && Long.parseLong(shoppingCartDTO.getPkgno()) == 0) {
                 List<Integer> stockList = invMap.get(shoppingCartDTO.getPdno());
                 if (!stockList.isEmpty()) {
                     int minStock = Collections.min(stockList);
@@ -819,6 +898,7 @@ public class ShoppingCartModule {
             for (IDiscount discount : discountResult.getActivityList()) {
                 Activity activity = (Activity) discount;
                 int brule = (int) discount.getBRule();
+                actCodeList.add(activity.getUnqid() + "");
                 List<IProduct> pList = discount.getProductList();
                 // long codno;
                 for (IProduct product : pList) {
@@ -836,7 +916,7 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
-                        actCodeList.add(activity.getUnqid() + "");
+
                         //shoppingCartVO.setLimitsub(subStock);
                        // shoppingCartVO.setInventory(skuStock);
                         //shoppingCartVO.setActstock(actStock);
@@ -891,7 +971,7 @@ public class ShoppingCartModule {
                         if (skuStock == 0) {
                             shoppingCartVO.setStatus(3);
                         }
-                        actCodeList.add(activity.getUnqid() + "");
+                        //actCodeList.add(activity.getUnqid() + "");
                         shoppingCartVO.setLimitsub(subStock);
                         shoppingCartVO.setInventory(skuStock);
                         shoppingCartVO.setActstock(actStock);
@@ -1278,6 +1358,7 @@ public class ShoppingCartModule {
             for (IDiscount discount : discountList) {
                 Activity activity = (Activity) discount;
                 int brule = (int) discount.getBRule();
+                actCodeList.add(activity.getUnqid() + "");
                 List<IProduct> pList = discount.getProductList();
                 for (IProduct product : pList) {
                     if (product instanceof Package
@@ -1313,7 +1394,6 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
-                        actCodeList.add(activity.getUnqid() + "");
                         if (activity.getLimits(product.getSKU()) < minLimit) {
                             minLimit = activity.getLimits(product.getSKU());
                         }
@@ -1476,12 +1556,13 @@ public class ShoppingCartModule {
                 Activity activity = (Activity) discount;
                 int brule = (int) discount.getBRule();
                 List<IProduct> pList = discount.getProductList();
+                actCodeList.add(activity.getUnqid() + "");
                 for (IProduct product : pList) {
                     if (product instanceof Package
                             && Long.parseLong(shoppingCartVO.getPkgno()) == ((Package) product).getPackageId()) {
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
                         //添加活动码
-                        actCodeList.add(activity.getUnqid() + "");
+                       // actCodeList.add(activity.getUnqid() + "");
                         //判断库存
                         if (((Package) product).getExpireFlag() < 0) {
                             shoppingCartVO.setStatus(3);
@@ -1518,7 +1599,7 @@ public class ShoppingCartModule {
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
                         //加入活动码
-                        actCodeList.add(activity.getUnqid() + "");
+                        //actCodeList.add(activity.getUnqid() + "");
                         if (activity.getLimits(product.getSKU()) < minLimit) {
                             minLimit = activity.getLimits(product.getSKU());
                         }
