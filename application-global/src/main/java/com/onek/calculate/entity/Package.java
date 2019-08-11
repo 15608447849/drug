@@ -6,8 +6,7 @@ import org.apache.poi.ss.formula.functions.T;
 import util.MathUtil;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.function.Consumer;
 
 public class Package extends AccurateMath implements IProduct {
@@ -18,7 +17,7 @@ public class Package extends AccurateMath implements IProduct {
     private double discounted;
     private List<Product> productList = new ArrayList<>();
     private int expireFlag = -2;  // -2：套餐被过滤； -1：无此套餐； 0：正常
-    private List<String> activityCodes = new ArrayList<>();
+    private Set<String> activityCodes = new HashSet<>();
 
     public int singleProdsCount() {
         if (this.nums == 0) {
@@ -126,7 +125,7 @@ public class Package extends AccurateMath implements IProduct {
     }
 
     @Override
-    public List<String> getActivityCodes() {
+    public Collection<String> getActivityCodes() {
         return activityCodes;
     }
 

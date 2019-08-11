@@ -1,12 +1,8 @@
 package com.onek.calculate.entity;
 
 import com.onek.calculate.service.AccurateMath;
-import util.MathUtil;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Product extends AccurateMath implements IProduct {
     private long sku;
@@ -14,7 +10,7 @@ public class Product extends AccurateMath implements IProduct {
     private double originalPrice;
     private double currentPrice;
     private double discounted;
-    private List<String> activityCodes = new ArrayList<>();
+    private Set<String> activityCodes = new HashSet<>();
 
     public long getSku() {
         return sku;
@@ -77,7 +73,7 @@ public class Product extends AccurateMath implements IProduct {
     }
 
     @Override
-    public List<String> getActivityCodes() {
+    public Collection<String> getActivityCodes() {
         return activityCodes;
     }
 

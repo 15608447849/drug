@@ -1,6 +1,6 @@
 package com.onek.calculate.entity;
 
-import java.util.List;
+import java.util.Collection;
 
 public interface IProduct {
     long getSKU();
@@ -16,5 +16,5 @@ public interface IProduct {
     double getDiscounted();
     void updateCurrentPrice();
     void addActivityCode(String actCode);
-    List<String> getActivityCodes();
+    Collection<String> getActivityCodes();
 }
