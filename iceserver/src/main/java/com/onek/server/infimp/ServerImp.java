@@ -183,6 +183,7 @@ public class ServerImp extends IMServerImps {
                 if (timePrint) logger.print("调用耗时: " + (System.currentTimeMillis() - time) +" ms\n");
             }
         } catch (Exception e) {
+            e.printStackTrace();
             Throwable targetEx = e;
             if (e instanceof InvocationTargetException) {
                 targetEx =((InvocationTargetException)e).getTargetException();
