@@ -18,6 +18,7 @@ public class Package extends AccurateMath implements IProduct {
     private double discounted;
     private List<Product> productList = new ArrayList<>();
     private int expireFlag = -2;  // -2：套餐被过滤； -1：无此套餐； 0：正常
+    private List<String> activityCodes = new ArrayList<>();
 
     public int singleProdsCount() {
         if (this.nums == 0) {
@@ -110,6 +111,23 @@ public class Package extends AccurateMath implements IProduct {
                 mul(this.originalPrice, this.nums), this.discounted);
 
         this.getPacageProdList().forEach(product -> product.updateCurrentPrice());
+    }
+
+    @Override
+    public void addActivityCode(String actCode) {
+        activityCodes.add(actCode);
+
+        productList.forEach(new Consumer<Product>() {
+            @Override
+            public void accept(Product product) {
+                product.addActivityCode(actCode);
+            }
+        });
+    }
+
+    @Override
+    public List<String> getActivityCodes() {
+        return activityCodes;
     }
 
     public void addPacageProd(Product p) {

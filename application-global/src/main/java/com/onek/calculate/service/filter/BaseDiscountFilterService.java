@@ -45,6 +45,7 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
 
             for (IDiscount activity : temp) {
                 index = result.indexOf(activity);
+                product.addActivityCode(String.valueOf(activity.getDiscountNo()));
 
                 if (index == -1) {
                     activity.addProduct(product);

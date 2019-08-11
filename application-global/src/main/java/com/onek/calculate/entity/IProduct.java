@@ -15,4 +15,6 @@ public interface IProduct {
     void addDiscounted(double discounted);
     double getDiscounted();
     void updateCurrentPrice();
+    void addActivityCode(String actCode);
+    List<String> getActivityCodes();
 }
