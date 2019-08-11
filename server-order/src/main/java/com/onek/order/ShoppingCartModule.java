@@ -898,7 +898,7 @@ public class ShoppingCartModule {
             for (IDiscount discount : discountResult.getActivityList()) {
                 Activity activity = (Activity) discount;
                 int brule = (int) discount.getBRule();
-                actCodeList.add(activity.getUnqid() + "");
+              //  actCodeList.add(activity.getUnqid() + "");
                 List<IProduct> pList = discount.getProductList();
                 // long codno;
                 for (IProduct product : pList) {
@@ -908,7 +908,7 @@ public class ShoppingCartModule {
                         if (((Package) product).getExpireFlag() < 0) {
                             shoppingCartVO.setStatus(3);
                         }
-
+                       // shoppingCartVO.setActcode(listCntRemove(product.getActivityCodes()));
                         pkgStock = Math.min(getPkgInv((Package) product, activity, compid), pkgStock);
 
                         shoppingCartVO.setInventory(pkgStock);
@@ -941,7 +941,7 @@ public class ShoppingCartModule {
                             shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
                             shoppingCartVO.addNextLadDesc(brule, activity.getNextLadoffDesc());
                         }
-
+                       // shoppingCartVO.setActcode(listCntRemove(product.getActivityCodes()));
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
@@ -990,13 +990,15 @@ public class ShoppingCartModule {
                                         , minLimit);
 
                     }
+
                 }
+
             }
             shoppingCartVO.setLimitnum(minLimit);
             if (minLimit == Integer.MAX_VALUE) {
                 shoppingCartVO.setLimitnum(0);
             }
-            shoppingCartVO.setActcode(actCodeList);
+
             shoppingCartVO.setRule(ruleList);
         }
         return shopCart;
@@ -1358,24 +1360,26 @@ public class ShoppingCartModule {
             for (IDiscount discount : discountList) {
                 Activity activity = (Activity) discount;
                 int brule = (int) discount.getBRule();
-                actCodeList.add(activity.getUnqid() + "");
+               // actCodeList.add(activity.getUnqid() + "");
                 List<IProduct> pList = discount.getProductList();
                 for (IProduct product : pList) {
                     if (product instanceof Package
                             && Long.parseLong(shoppingCartVO.getPkgno()) == ((Package) product).getPackageId()) {
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
-
+                       // actCodeList.add(activity.getUnqid() + "");
                         //判断库存
                         if (((Package) product).getExpireFlag() < 0) {
                             shoppingCartVO.setStatus(3);
                         }
-
+                        shoppingCartVO.setActcode(new ArrayList<>(product.getActivityCodes()));
                         minLimit = Math.min
                                 (activity.getLimits(((Package) product).getPackageId())
                                         , minLimit);
                         stock = Math.min(getPkgInv((Package) product, activity, compid), stock);
 
                         shoppingCartVO.setInventory(stock);
+
+
                     }
 
                     if (product instanceof Product
@@ -1384,8 +1388,9 @@ public class ShoppingCartModule {
                                 "PNO -> " + product.getSKU() + "\n" +
                                         JSON.toJSONString(activity));
 
+                        shoppingCartVO.setActcode(new ArrayList<>(product.getActivityCodes()));
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
-
+                       // actCodeList.add(activity.getUnqid() + "");
                         if (pList.size() == 1) {
                             shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
                             shoppingCartVO.addNextLadDesc(brule, activity.getNextLadoffDesc());
@@ -1447,7 +1452,7 @@ public class ShoppingCartModule {
                 shoppingCartVO.setLimitnum(0);
             }
             shoppingCartVO.setRule(ruleList);
-            shoppingCartVO.setActcode(actCodeList);
+           // shoppingCartVO.setActcode(actCodeList);
         }
 
         for(IProduct product : ckProduct){
@@ -1556,13 +1561,14 @@ public class ShoppingCartModule {
                 Activity activity = (Activity) discount;
                 int brule = (int) discount.getBRule();
                 List<IProduct> pList = discount.getProductList();
-                actCodeList.add(activity.getUnqid() + "");
+                //actCodeList.add(activity.getUnqid() + "");
                 for (IProduct product : pList) {
                     if (product instanceof Package
                             && Long.parseLong(shoppingCartVO.getPkgno()) == ((Package) product).getPackageId()) {
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
                         //添加活动码
-                       // actCodeList.add(activity.getUnqid() + "");
+                     //   actCodeList.add(activity.getUnqid() + "");
+                       // shoppingCartVO.setActcode(listCntRemove(product.getActivityCodes()));
                         //判断库存
                         if (((Package) product).getExpireFlag() < 0) {
                             shoppingCartVO.setStatus(3);
@@ -1570,7 +1576,6 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
-
                         pkgStock = Math.min(getPkgInv((Package) product, activity, compid), pkgStock);
                         shoppingCartVO.setInventory(pkgStock);
                         if (activity.getLimits(Long.parseLong(shoppingCartVO.getPkgno())) == 0) {
@@ -1588,8 +1593,9 @@ public class ShoppingCartModule {
                         LogUtil.getDefaultLogger().info(
                                 "PNO -> " + product.getSKU() + "\n" +
                                         JSON.toJSONString(activity));
-
+                       // shoppingCartVO.setActcode(product.getActivityCodes());
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
+                       // shoppingCartVO.setActcode(listCntRemove(product.getActivityCodes()));
                         if (pList.size() == 1) {
                             shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
                             shoppingCartVO.addNextLadDesc(brule, activity.getNextLadoffDesc());
@@ -1599,7 +1605,7 @@ public class ShoppingCartModule {
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
                         //加入活动码
-                        //actCodeList.add(activity.getUnqid() + "");
+                     //   actCodeList.add(activity.getUnqid() + "");
                         if (activity.getLimits(product.getSKU()) < minLimit) {
                             minLimit = activity.getLimits(product.getSKU());
                         }
@@ -1643,13 +1649,13 @@ public class ShoppingCartModule {
                                 (activity.getLimits(shoppingCartVO.getPdno())
                                         , minLimit);
                     }
+
                 }
             }
             shoppingCartVO.setLimitnum(minLimit);
             if (minLimit == Integer.MAX_VALUE) {
                 shoppingCartVO.setLimitnum(0);
             }
-            shoppingCartVO.setActcode(actCodeList);
             shoppingCartVO.setRule(ruleList);
         }
 
@@ -2471,6 +2477,16 @@ public class ShoppingCartModule {
             Package pkg = (Package)product;
             pkg.getPacageProdList().clear();
         }
+    }
+
+
+    private static List<String> listCntRemove(List<String> actlist)
+    {
+        LinkedHashSet<String> tmpSet = new LinkedHashSet<String>(actlist.size());
+        tmpSet.addAll(actlist);
+        actlist.clear();
+        actlist.addAll(tmpSet);
+        return actlist;
     }
 
     public static void main(String[] args) {
