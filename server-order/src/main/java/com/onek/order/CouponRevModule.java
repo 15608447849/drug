@@ -920,7 +920,7 @@ public class CouponRevModule {
     public static int getPayamtByAct(long orderno, int compid, long actcode) {
         List<Object[]> result = baseDao.queryNativeSharding(compid,
                 TimeUtils.getYearByOrderno(orderno + ""),
-                " SELECT SUM(payamt) "
+                " SELECT IFNULL(SUM(payamt), 0) "
                 + " FROM {{?" + DSMConst.TD_TRAN_GOODS + "}} "
                 + " WHERE cstatus&1 = 0 AND orderno = ? "
                 + " AND JSON_SEARCH(actcode, 'one', ?) IS NOT NULL ", orderno, actcode);

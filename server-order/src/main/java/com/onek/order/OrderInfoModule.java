@@ -376,15 +376,21 @@ public class OrderInfoModule {
 
     private TranOrderGoods[] convTranGoods(TranOrderGoods[] result) {
         List<TranOrderGoods> returnResult = new ArrayList<>();
-        Map<Integer, List<TranOrderGoods>> pkgStore = new HashMap<>();
+        Map<String, Map<Integer, List<TranOrderGoods>>> pkgStore = new HashMap<>();
+        Map<Integer, List<TranOrderGoods>> pkg2Goods;
         ProdEntity prod;
         for (TranOrderGoods tranOrderGoods : result) {
             if (tranOrderGoods.getPkgno() > 0) {
-                if (!pkgStore.containsKey(tranOrderGoods.getPkgno())) {
-                    pkgStore.put(tranOrderGoods.getPkgno(), new ArrayList<>());
+                pkg2Goods = pkgStore.get(tranOrderGoods.getOrderno());
+                if (pkg2Goods == null) {
+                    pkgStore.put(tranOrderGoods.getOrderno(), pkg2Goods = new HashMap<>());
                 }
 
-                pkgStore.get(tranOrderGoods.getPkgno()).add(tranOrderGoods);
+                if (!pkg2Goods.containsKey(tranOrderGoods.getPkgno())) {
+                    pkg2Goods.put(tranOrderGoods.getPkgno(), new ArrayList<>());
+                }
+
+                pkg2Goods.get(tranOrderGoods.getPkgno()).add(tranOrderGoods);
             } else {
                 returnResult.add(tranOrderGoods);
             }
@@ -413,37 +419,42 @@ public class OrderInfoModule {
             }
         }
 
-        Iterator<Map.Entry<Integer, List<TranOrderGoods>>> it = pkgStore.entrySet().iterator();
-        Map.Entry<Integer, List<TranOrderGoods>> entry;
-        TranOrderGoods added;
-        while (it.hasNext()) {
-            entry = it.next();
-            added = new TranOrderGoods();
-            added.setOrderno(entry.getValue().get(0).getOrderno());
-            added.setPkgno(entry.getKey());
-            added.setPkgGoods(entry.getValue());
-            double[] balamt = new double[entry.getValue().size()];
-            double[] distprice = new double[entry.getValue().size()];
-            double[] payamt = new double[entry.getValue().size()];
-            double[] pdprice = new double[entry.getValue().size()];
+        for (String s : pkgStore.keySet()) {
+            Iterator<Map.Entry<Integer, List<TranOrderGoods>>> it = pkgStore.get(s).entrySet().iterator();
+            Map.Entry<Integer, List<TranOrderGoods>> entry;
+            TranOrderGoods added;
+            while (it.hasNext()) {
+                entry = it.next();
+                added = new TranOrderGoods();
+                added.setOrderno(s);
+                added.setPkgno(entry.getKey());
+                added.setPkgGoods(entry.getValue());
+                double[] balamt = new double[entry.getValue().size()];
+                double[] distprice = new double[entry.getValue().size()];
+                double[] payamt = new double[entry.getValue().size()];
+                double[] pdprice = new double[entry.getValue().size()];
+                int[] nums = new int[entry.getValue().size()];
 
-            int index = 0;
-            for (TranOrderGoods tranOrderGoods : entry.getValue()) {
-                balamt[index] = tranOrderGoods.getBalamt();
-                distprice[index] = tranOrderGoods.getDistprice();
-                payamt[index] = tranOrderGoods.getPayamt();
-                pdprice[index] = tranOrderGoods.getPdprice() * tranOrderGoods.getPnum();
-                index ++;
+                int index = 0;
+                for (TranOrderGoods tranOrderGoods : entry.getValue()) {
+                    balamt[index] = tranOrderGoods.getBalamt();
+                    distprice[index] = tranOrderGoods.getDistprice();
+                    payamt[index] = tranOrderGoods.getPayamt();
+                    pdprice[index] = tranOrderGoods.getPdprice() * tranOrderGoods.getPnum();
+                    nums[index] = tranOrderGoods.getPnum();
+                    index ++;
+                }
+
+                added.setPdprice(new BigDecimal(Arrays.stream(pdprice).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                added.setPayamt(new BigDecimal(Arrays.stream(payamt).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                added.setBalamt(new BigDecimal(Arrays.stream(balamt).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                added.setDistprice(new BigDecimal(Arrays.stream(distprice).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                added.setPnum(Arrays.stream(nums).sum());
+
+                returnResult.add(added);
             }
-
-            added.setPdprice(new BigDecimal(Arrays.stream(pdprice).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-            added.setPayamt(new BigDecimal(Arrays.stream(payamt).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-            added.setBalamt(new BigDecimal(Arrays.stream(balamt).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-            added.setDistprice(new BigDecimal(Arrays.stream(distprice).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-
-            returnResult.add(added);
         }
-
+        
         return returnResult.toArray(new TranOrderGoods[0]);
     }
 
