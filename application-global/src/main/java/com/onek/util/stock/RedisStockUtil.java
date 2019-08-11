@@ -108,7 +108,7 @@ public class RedisStockUtil {
                 if(ALL.equals(currentStock)){ // 活动库存为ALL,不需要判断活动库存
                     continue;
                 }
-                if (StringUtils.isEmpty(currentStock) && Integer.parseInt(currentStock) <= 0) {
+                if (StringUtils.isEmpty(currentStock) || Integer.parseInt(currentStock) <= 0) {
                     return false;
                 }
                 if ((Integer.parseInt(currentStock) - stock) < 0) {

@@ -264,6 +264,8 @@ public class TranOrderOptModule {
                 }
             } catch (Exception e) {
                 e.printStackTrace();
+                LogUtil.getDefaultLogger().info("print by placeOrder--------->>>>redis库存扣减库存失败！");
+                return  result.fail("下单减库存失败！");
             }
         } else if (orderType == 1) { // 秒杀
             //库存判断
@@ -638,6 +640,7 @@ public class TranOrderOptModule {
                     setGoodsStock(tranOrderGoods, 0L, goodsStockList);
                 }
             } else {
+
                 if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
                         tranOrderGoods.getPnum(), list)) {
                     return true;
