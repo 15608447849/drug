@@ -255,11 +255,15 @@ public class TranOrderOptModule {
         }
         if (orderType == 0) {
             //库存判断
-            boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
-            if (b) {
-                //库存不足处理
-                stockRecovery(goodsStockList);
-                return result.fail("商品库存发生改变！");
+            try {
+                boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
+                if (b) {
+                    //库存不足处理
+                    stockRecovery(goodsStockList);
+                    return result.fail("商品库存发生改变！");
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
         } else if (orderType == 1) { // 秒杀
             //库存判断
@@ -634,24 +638,6 @@ public class TranOrderOptModule {
                     setGoodsStock(tranOrderGoods, 0L, goodsStockList);
                 }
             } else {
-//                for (Long aList : list) {
-//                    if (aList > 0) {
-//                        if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
-//                                tranOrderGoods.getPnum(), aList)) {
-//                            result = true;
-//                        } else {
-//                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
-//                        }
-//                    } else {
-//                        if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
-//                                tranOrderGoods.getPnum()) != 2) {
-//                            result = true;
-//                        } else {
-//                            setGoodsStock(tranOrderGoods, aList, goodsStockList);
-//                        }
-//                    }
-//                }
-
                 if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
                         tranOrderGoods.getPnum(), list)) {
                     return true;
