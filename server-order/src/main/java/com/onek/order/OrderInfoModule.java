@@ -17,10 +17,10 @@ import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
-import redis.util.RedisUtil;
 import util.*;
 import util.http.HttpRequestUtil;
 
+import java.math.BigDecimal;
 import java.util.*;
 
 public class OrderInfoModule {
@@ -436,10 +436,10 @@ public class OrderInfoModule {
                 index ++;
             }
 
-            added.setPdprice(Arrays.stream(pdprice).sum());
-            added.setPayamt(Arrays.stream(payamt).sum());
-            added.setBalamt(Arrays.stream(balamt).sum());
-            added.setDistprice(Arrays.stream(distprice).sum());
+            added.setPdprice(new BigDecimal(Arrays.stream(pdprice).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            added.setPayamt(new BigDecimal(Arrays.stream(payamt).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            added.setBalamt(new BigDecimal(Arrays.stream(balamt).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+            added.setDistprice(new BigDecimal(Arrays.stream(distprice).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
 
             returnResult.add(added);
         }
