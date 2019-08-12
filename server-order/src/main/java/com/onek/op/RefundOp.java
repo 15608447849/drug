@@ -36,10 +36,10 @@ public class RefundOp implements IOperation<AppContext> {
 
     //更新订单相关商品售后状态
     private static final String UPD_ORDER_GOODS_CK_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
-            + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=? and compid  = ? ";
+            + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=? and compid  = ? and pkgno = ?";
 
     //更新退款金额
-    private static final String UPDATE_ORDER_REFAMT = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set realrefamt = ? where asno = ?";
+    private static final String UPDATE_ORDER_REFAMT = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set realrefamt = ? where cstatus&1=0 and asno = ?";
 
     private static List<Long> asnoList = new ArrayList<Long>();
 
@@ -282,7 +282,7 @@ public class RefundOp implements IOperation<AppContext> {
      * @返回列表 200 成功 -1 失败
      */
     public boolean afterSaleFinish(long asno,double realrefamt) {
-        String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+        String queryOrderno = "select orderno,compid,pdno,pkgno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
         List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
         if (queryRet == null || queryRet.isEmpty()) {
             return false;
@@ -291,7 +291,7 @@ public class RefundOp implements IOperation<AppContext> {
         int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
         List<Object[]> params = new ArrayList<>();
         params.add(new Object[]{-3, queryRet.get(0)[0], -2});
-        params.add(new Object[]{200, queryRet.get(0)[2], 3, queryRet.get(0)[0], queryRet.get(0)[1]});
+        params.add(new Object[]{200, queryRet.get(0)[2], 3, queryRet.get(0)[0], queryRet.get(0)[1],queryRet.get(0)[3]});
 
         log.print("售后订单："+ asno +"即将更新状态至 200！");
         baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_CK_FINISH_SQL, 200, asno);
