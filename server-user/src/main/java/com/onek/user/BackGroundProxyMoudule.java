@@ -1010,9 +1010,9 @@ public class BackGroundProxyMoudule {
 
         if((roleCode & (RoleCodeCons._PROXY_PARTNER +RoleCodeCons._PROXY_MGR)) > 0
                 && (roleid & RoleCodeCons._DBM) > 0){
-            String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? ";
+            String selectSQL = " select uid,urealname from {{?" + DSMConst.TB_SYSTEM_USER + "}} where roleid & ? > 0 and cstatus & 1 = 0 and cid = ? and belong = ?";
                    // "and uid in (select distinct uid from {{?" +DSMConst.TB_PROXY_UAREA+"}} where areac = ? and cstatus & 1 = 0)";
-            queryResult = baseDao.queryNative(selectSQL,roleid,cid,areac);
+            queryResult = baseDao.queryNative(selectSQL,roleid,cid,uid);
             if (queryResult == null || queryResult.isEmpty()) return result.success(null);
             return  result.success(convBdList(queryResult));
         }
@@ -1022,7 +1022,7 @@ public class BackGroundProxyMoudule {
                     " and cstatus & 1 = 0 and belong = ? or uid = ? ";
                    // +
            // "and uid in (select distinct uid from {{?" +DSMConst.TB_PROXY_UAREA+"}} where areac = ? and cstatus & 1 = 0)";
-            queryResult = baseDao.queryNative(selectSQL,roleid,uid,uid,areac);
+            queryResult = baseDao.queryNative(selectSQL,roleid,uid,uid);
             if (queryResult == null || queryResult.isEmpty()) return result.success(null);
             return  result.success(convBdList(queryResult));
         }
