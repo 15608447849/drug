@@ -1121,13 +1121,13 @@ public class TranOrderOptModule {
     }
 
     static TranOrderGoods[] getGoodsArr(String orderNo, int cusno) {
-        String selectGoodsSql = "select pdno, pnum, payamt,actcode from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
+        String selectGoodsSql = "select pdno, pnum, payamt,actcode, pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
                 + " and orderno=" + orderNo;
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         List<Object[]> queryResult = baseDao.queryNativeSharding(cusno, year, selectGoodsSql);
         TranOrderGoods[] tranOrderGoods = new TranOrderGoods[queryResult.size()];
         baseDao.convToEntity(queryResult, tranOrderGoods, TranOrderGoods.class, new String[]{
-                "pdno", "pnum", "payamt", "actcode"
+                "pdno", "pnum", "payamt", "actcode", "pkgno"
         });
         return tranOrderGoods;
     }
