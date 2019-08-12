@@ -13,6 +13,7 @@ import com.onek.entity.TranTransVO;
 import com.onek.entitys.Result;
 import com.onek.queue.delay.DelayedHandler;
 import com.onek.queue.delay.RedisDelayedHandler;
+import com.onek.server.infimp.IceDebug;
 import com.onek.util.*;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.FileServerUtils;
@@ -113,6 +114,7 @@ public class PayModule {
      * @传参列表 orderno=订单号 compid=企业码
      * @返回列表 code=200 date=结果信息 date.payamt=付款金额 date.odate=订单日期
      */
+    @IceDebug(outPrint = true)
     @UserPermission(ignore = true)
     public Result showPayInfo(AppContext appContext){
         String json = appContext.param.json;
@@ -161,6 +163,7 @@ public class PayModule {
      * @传参列表 orderno=订单号 compid=企业码
      * @返回列表 code=200 date=结果信息 date.payamt=运费金额
      */
+    @IceDebug(outPrint = true)
     @UserPermission(ignore = true)
     public Result showFeePayInfo(AppContext appContext){
         String json = appContext.param.json;
@@ -200,6 +203,7 @@ public class PayModule {
      * @传参列表 rderno=订单号 afsano=售后单号(售后需要填写) paytype=付款方式 flag 客户端类型
      * @返回列表 ccode=200 date=付款二维码地址(web),可支付的JSON信息(app)
      */
+    @IceDebug(outPrint = true)
     public Result prePay(AppContext appContext){
         int compid = appContext.getUserSession().compId;
         if (compid == 0)  return new Result().fail("异常用户,拒绝服务");
@@ -268,6 +272,7 @@ public class PayModule {
      *            array[5]=付款金额 array[6]=企业码
      * @返回列表 ccode=200
      */
+    @IceDebug(outPrint = true)
     @UserPermission(ignore = true)
     public Result payCallBack(AppContext appContext){
 
@@ -334,6 +339,7 @@ public class PayModule {
      *            array[5]=付款金额 array[6]=企业码
      * @返回列表 ccode=200
      */
+    @IceDebug(outPrint = true)
     @UserPermission(ignore = true)
     public Result payFeeCallBack(AppContext appContext){
 
@@ -395,6 +401,7 @@ public class PayModule {
      *             date.address=收款具体地址
      * @返回列表 ccode=200
      */
+    @IceDebug(outPrint = true)
     @UserPermission(ignore = true)
     public Result getPayResult(AppContext appContext){
         String json = appContext.param.json;
@@ -464,6 +471,7 @@ public class PayModule {
      * @传参列表 orderno=订单号 compid=企业码
      * @返回列表 code=200 date=结果信息 date.paystatus=支付状态
      */
+    @IceDebug(outPrint = true)
     @UserPermission(ignore = true)
     public Result getFeePayResult(AppContext appContext) {
         String json = appContext.param.json;
@@ -746,6 +754,7 @@ public class PayModule {
      * @time  2019/6/11 15:37
      * @version 1.1.1
      **/
+    @IceDebug(outPrint = true)
     @UserPermission(ignore = false)
     public Result offlinePay(AppContext appContext) {
         int result;
@@ -803,6 +812,7 @@ public class PayModule {
         return 0;
     }
 
+    @IceDebug(outPrint = true)
     @UserPermission(ignore = true)
     public Result balAllPay(AppContext appContext) {
         String json = appContext.param.json;
