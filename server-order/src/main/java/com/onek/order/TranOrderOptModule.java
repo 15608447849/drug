@@ -641,8 +641,11 @@ public class TranOrderOptModule {
      **/
     private boolean stockIsEnough(List<GoodsStock> goodsStockList, List<TranOrderGoods> tranOrderGoodsList) {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
+            List<Long> list = new ArrayList<>();
             String actCodeStr = tranOrderGoods.getActcode();
-            List<Long> list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
+            if (!StringUtils.isEmpty(actCodeStr)) {
+                list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
+            }
             if (list.size() == 0) {//无活动码
                 if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
                         tranOrderGoods.getPnum()) != 2) {

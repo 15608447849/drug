@@ -29,6 +29,7 @@ public class AsAppVO {
     private String checkern; //审核人
     private String compn; //公司名
     private int invoicetype; //发票类型
+    private int pkgno; //套餐码
 
     /* goods */
     private double pdprice;
@@ -342,5 +343,13 @@ public class AsAppVO {
 
     public void setInvoicetype(int invoicetype) {
         this.invoicetype = invoicetype;
+    }
+
+    public int getPkgno() {
+        return pkgno;
+    }
+
+    public void setPkgno(int pkgno) {
+        this.pkgno = pkgno;
     }
 }

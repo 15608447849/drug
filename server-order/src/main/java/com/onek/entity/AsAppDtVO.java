@@ -44,6 +44,15 @@ public class AsAppDtVO {
     private int invoicetype; //发票类型
 
     private double realrefamt;//实际退款金额
+    private int pkgno;
+
+    public int getPkgno() {
+        return pkgno;
+    }
+
+    public void setPkgno(int pkgno) {
+        this.pkgno = pkgno;
+    }
 
     public double getRealrefamt() {
         return realrefamt;

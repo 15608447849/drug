@@ -56,10 +56,10 @@ public class OrderOptModule {
     //售后申请
     private static final String INSERT_ASAPP_SQL = "insert into {{?" + DSMConst.TD_TRAN_ASAPP + "}} "
             + "(orderno,pdno,asno,compid,astype,gstatus,reason,ckstatus,"
-            + "ckdesc,invoice,cstatus,apdata,aptime,apdesc,refamt,asnum,invoicetype) "
+            + "ckdesc,invoice,cstatus,apdata,aptime,apdesc,refamt,asnum,invoicetype, pkgno) "
             + " values(?,?,?,?,?,"
             + "?,?,?,?,?,"
-            + "?,CURRENT_DATE,CURRENT_TIME,?,?,?,?)";
+            + "?,CURRENT_DATE,CURRENT_TIME,?,?,?,?,?)";
 
     //更新订单售后状态
     private static final String UPD_ORDER_SQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=? "
@@ -68,7 +68,7 @@ public class OrderOptModule {
 
     //更新订单相关商品售后状态
     private static final String UPD_ORDER_GOODS_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
-            + " where cstatus&1=0 and pdno=? and asstatus=? and orderno=? and compid = ? ";
+            + " where cstatus&1=0 and pdno=? and asstatus=? and orderno=? and compid = ? and pkgno = ? ";
 
     //更新售后表售后状态
     private static final String UPD_ASAPP_SQL = "update {{?" + DSMConst.TD_TRAN_ASAPP + "}} set ckstatus=?,"
@@ -85,19 +85,19 @@ public class OrderOptModule {
     private static final String QUERY_ASAPP_INFO_SQL = " select asapp.orderno,asapp.compid,asapp.asno,asapp.pdno," +
             "asapp.asnum,goods.pdprice/100 spdprice," +
             "goods.payamt/100 spayamt,distprice/100 sdistprice,goods.pnum,astype,reason,apdesc,refamt/100 refamt,realrefamt/100 realrefamt," +
-            "ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,goods.balamt/100 balamt " +
+            "ckstatus,ckdesc,gstatus,ckdate,cktime,apdata,aptime,asapp.cstatus,goods.balamt/100 balamt, asapp.pkgno " +
             " from {{?" + DSMConst.TD_TRAN_ASAPP + "}} asapp inner join {{?" +
             TD_BK_TRAN_GOODS + "}} goods on asapp.orderno = goods.orderno and " +
-            " asapp.pdno = goods.pdno where asapp.asno = ? and asno != 0 ";
+            " asapp.pdno = goods.pdno and asapp.pkgno = goods.pkgno where asapp.asno = ? and asno != 0 ";
 
 
     //查询售后列表
     private static final String QUERY_ASAPP_LIST_SQL =
             "  select distinct asapp.orderno,asapp.compid,asapp.asno,astype," +
-                    "ckstatus,gstatus,apdata,aptime,checkern,contact,address,refamt/100 refamt,compn from " +
+                    "ckstatus,gstatus,apdata,aptime,checkern,contact,address,refamt/100 refamt,compn,asapp.pkgno from " +
                     " {{?" + DSMConst.TD_TRAN_ASAPP + "}} asapp inner join {{?" +
                     TD_BK_TRAN_GOODS + "}} goods on asapp.orderno = goods.orderno and " +
-                    " asapp.pdno = goods.pdno and asapp.compid = goods.compid " +
+                    " asapp.pdno = goods.pdno and asapp.compid = goods.compid and asapp.pkgno = goods.pkgno " +
                     " inner join {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} orders" +
                     " on orders.orderno = goods.orderno where asapp.cstatus & 1 = 0 and asno != 0 ";
 
@@ -135,12 +135,12 @@ public class OrderOptModule {
 
     //更新订单相关商品售后状态
     private static final String UPD_ORDER_GOODS_CK_SQL = "update {{?" + DSMConst.TD_TRAN_GOODS + "}} set asstatus=? "
-            + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=? and compid  = ? ";
+            + " where cstatus&1=0 and pdno=? and asstatus= ? and orderno=? and compid  = ? and pkgno = ? ";
 
 
     //查询分摊余额
     private static final String QUERY_ORDER_GOODS_BAL_SQL = "select balamt from {{?" + DSMConst.TD_TRAN_GOODS + "}}   "
-            + " where cstatus&1=0 and orderno = ? and pdno = ? and compid = ? ";
+            + " where cstatus&1=0 and orderno = ? and pdno = ? and compid = ? and pkgno = ? ";
 
 
     private static final String UPD_ASAPP_CK_FINISH_SQL =
@@ -242,7 +242,7 @@ public class OrderOptModule {
                     asAppVOS.get(0).getCompid(), asAppVOS.get(0).getAstype(), asAppVOS.get(0).getGstatus(), asAppVOS.get(0).getReason(),
                     asAppVOS.get(0).getCkstatus(), asAppVOS.get(0).getCkdesc(), asAppVOS.get(0).getInvoice(),
                     invoType == 1 ? 0 : 1, asAppVOS.get(0).getApdesc(),
-                    asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum(), invoType};
+                    asAppVOS.get(0).getRefamt() * 100, asAppVOS.get(0).getAsnum(), invoType, asAppVOS.get(0).getPkgno()};
 
             int res = baseDao.updateNativeSharding(0, localDateTime.getYear(), INSERT_ASAPP_SQL, pramsObj);
 
@@ -264,10 +264,27 @@ public class OrderOptModule {
                 skuBuilder.append(asAppVO.getPdno()).append(",");
             }
             String pdnoStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
-            sql = "select count(*) from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1=0 "
-                    + " and orderno=" + orderNo + " and ckstatus in(0,1) and astype not in(3,4) and pdno "
-                    + "in(" + pdnoStr + ")";
+            sql = "select pdno, pkgno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1=0 "
+                    + " and orderno=" + orderNo + " and ckstatus in(0,1) and astype not in(3,4) "
+                    + " and pdno in(" + pdnoStr + ")";
+            List<Object[]> queryResult = baseDao.queryNativeSharding(0, localDateTime.getYear(), sql);
+
+            int pkgno;
+            long pdno;
+            for (Object[] objects : queryResult) {
+                pkgno = Integer.parseInt(objects[1].toString());
+                pdno  = Long.valueOf(objects[0].toString());
+                for (AsAppVO asAppVO : asAppVOS) {
+                    if (asAppVO.getPkgno() == pkgno
+                            && asAppVO.getPdno() == pdno) {
+                        return true;
+                    }
+                }
+            }
+
+            return false;
         }
+
         List<Object[]> queryResult = baseDao.queryNativeSharding(0, localDateTime.getYear(), sql);
         return (long) queryResult.get(0)[0] > 0;
 
@@ -288,10 +305,11 @@ public class OrderOptModule {
         TranOrderGoods[] tranOrderGoods = TranOrderOptModule.getGoodsArr(orderNo, compid);
         for (AsAppVO asAppVO : asAppVOS) {
             for (TranOrderGoods tranOrderGoods1 : tranOrderGoods) {
-                if (asAppVO.getPdno() == tranOrderGoods1.getPdno()) {
+                if (asAppVO.getPdno() == tranOrderGoods1.getPdno()
+                && asAppVO.getPkgno() == tranOrderGoods1.getPkgno()) {
                     int year = Integer.parseInt("20" + orderNo.substring(0, 2));
                     List<Object[]> ret = baseDao.queryNativeSharding(compid, year,
-                            QUERY_ORDER_GOODS_BAL_SQL, new Object[]{orderNo, asAppVO.getPdno(), compid});
+                            QUERY_ORDER_GOODS_BAL_SQL, new Object[]{orderNo, asAppVO.getPdno(), compid, asAppVO.getPkgno()});
                     double bal = 0;
                     if (ret != null && !ret.isEmpty()) {
                         bal = Double.parseDouble(ret.get(0)[0].toString());
@@ -338,13 +356,13 @@ public class OrderOptModule {
         if (skuList.size() == tranOrderGoods.length) {
             for (TranOrderGoods tog : tranOrderGoods) {
                 sqlList.add(UPD_ORDER_GOODS_SQL);
-                params.add(new Object[]{1, tog.getPdno(), 0, orderNo, compid});
+                params.add(new Object[]{1, tog.getPdno(), 0, orderNo, compid, tog.getPkgno()});
             }
         } else {
             for (AsAppVO asAppVO : asAppVOS) {
                 long sku = asAppVO.getPdno();
                 sqlList.add(UPD_ORDER_GOODS_SQL);
-                params.add(new Object[]{1, sku, 0, orderNo, compid});
+                params.add(new Object[]{1, sku, 0, orderNo, compid, asAppVO.getPkgno()});
             }
         }
     }
@@ -363,7 +381,7 @@ public class OrderOptModule {
             paramsInsert.add(new Object[]{asAppVO.getOrderno(), asAppVO.getPdno(), GenIdUtil.getAsOrderId(),
                     asAppVO.getCompid(), asAppVO.getAstype(), asAppVO.getGstatus(), asAppVO.getReason(),
                     asAppVO.getCkstatus(), asAppVO.getCkdesc(), asAppVO.getInvoice(), 0,
-                    asAppVO.getApdesc(), asAppVO.getRefamt() * 100, asAppVO.getAsnum(), asAppVO.getInvoicetype()});
+                    asAppVO.getApdesc(), asAppVO.getRefamt() * 100, asAppVO.getAsnum(), asAppVO.getInvoicetype(), asAppVO.getPkgno()});
         }
     }
 
@@ -459,7 +477,7 @@ public class OrderOptModule {
         double refamt = jsonObject.get("refamt").getAsDouble();
         //double realrefamt = jsonObject.get("realrefamt").getAsDouble();
 
-        String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+        String queryOrderno = "select orderno,compid,pdno,pkgno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
 
 
         List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
@@ -627,7 +645,7 @@ public class OrderOptModule {
             sqls.addFirst(updateOrderNew);
             params.addFirst(new Object[]{ostatus, asstatus, queryRet.get(0)[0], -1});
             sqls.add(UPD_ORDER_GOODS_CK_SQL);
-            params.add(new Object[]{gstatus, queryRet.get(0)[2], 1, queryRet.get(0)[0], queryRet.get(0)[1]});
+            params.add(new Object[]{gstatus, queryRet.get(0)[2], 1, queryRet.get(0)[0], queryRet.get(0)[1], queryRet.get(0)[3]});
 
             baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()), year,
                     sqls.toArray(new String[]{}), params);
@@ -736,7 +754,7 @@ public class OrderOptModule {
                 new String[]{"orderno", "compid", "asno", "pdno", "asnum",
                         "spdprice", "spayamt", "sdistprice", "pnum",
                         "astype", "reason", "apdesc", "refamt","realrefamt", "ckstatus", "ckdesc", "gstatus",
-                        "ckdate", "cktime", "apdata", "aptime", "cstatus", "balamt"});
+                        "ckdate", "cktime", "apdata", "aptime", "cstatus", "balamt", "pkgno"});
 
         AsAppDtVO asAppDtVO = asAppDtVOs[0];
         if (asAppDtVO != null) {
@@ -927,7 +945,7 @@ public class OrderOptModule {
         baseDao.convToEntity(queryResult, asAppDtListVOS, AsAppDtListVO.class,
                 new String[]{"orderno", "compid", "asno", "astype", "ckstatus",
                         "gstatus", "apdata", "aptime", "checkern",
-                        "contact", "address", "refamt", "compn"});
+                        "contact", "address", "refamt", "compn", "pkgno"});
 
         for (AsAppDtListVO asAppDtListVO : asAppDtListVOS) {
             String compStr = RedisUtil.getStringProvide()
@@ -1109,7 +1127,7 @@ public class OrderOptModule {
 
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         long asno = jsonObject.get("asno").getAsLong();
-        String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+        String queryOrderno = "select orderno,compid,pdno,pkgno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
         List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
         if (queryRet == null || queryRet.isEmpty()) {
             return result.fail("操作失败");
@@ -1118,7 +1136,7 @@ public class OrderOptModule {
         int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
         List<Object[]> params = new ArrayList<>();
         params.add(new Object[]{-3, queryRet.get(0)[0], -2});
-        params.add(new Object[]{200, queryRet.get(0)[2], 3, queryRet.get(0)[0], queryRet.get(0)[1]});
+        params.add(new Object[]{200, queryRet.get(0)[2], 3, queryRet.get(0)[0], queryRet.get(0)[1], queryRet.get(0)[3]});
 
 
         baseDao.updateNativeSharding(0, TimeUtils.getCurrentYear(), UPD_ASAPP_CK_FINISH_SQL, new Object[]{200, asno});
@@ -1253,7 +1271,7 @@ public class OrderOptModule {
         double refamt = jsonObject.get("refamt").getAsDouble();
         double realrefamt = jsonObject.get("realrefamt").getAsDouble();
 
-        String queryOrderno = "select orderno,compid,pdno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
+        String queryOrderno = "select orderno,compid,pdno,pkgno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where asno = ? ";
 
         List<Object[]> queryRet = baseDao.queryNativeSharding(0, TimeUtils.getCurrentYear(), queryOrderno, asno);
 
@@ -1307,7 +1325,7 @@ public class OrderOptModule {
             int year = Integer.parseInt("20" + queryRet.get(0)[0].toString().substring(0, 2));
             List<Object[]> params = new ArrayList<>();
             params.add(new Object[]{ostatus, asstatus, queryRet.get(0)[0],-1});
-            params.add(new Object[]{gstatus, queryRet.get(0)[2],1,queryRet.get(0)[0],queryRet.get(0)[1]});
+            params.add(new Object[]{gstatus, queryRet.get(0)[2],1,queryRet.get(0)[0],queryRet.get(0)[1], queryRet.get(0)[3]});
             baseDao.updateTransNativeSharding(Integer.parseInt(queryRet.get(0)[1].toString()),year,
                     new String[]{updateOrderNew,UPD_ORDER_GOODS_CK_SQL},params);
         }

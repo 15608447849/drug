@@ -26,25 +26,25 @@ import java.util.*;
 public class OrderInfoModule {
     private static final String QUERY_TRAN_ORDER_PARAMS =
             " ord.orderno, ord.tradeno, ord.cusno, ord.busno, ord.ostatus, "
-          + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
-          + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
-          + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
-          + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway, ord.remarks, ord.invoicetype ";
+                    + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
+                    + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
+                    + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
+                    + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway, ord.remarks, ord.invoicetype ";
 
     private static final String QUERY_TRAN_TRANS_PARAMS =
             " trans.payno, trans.payprice, "
-          + " trans.payway, trans.paysource, trans.paystatus, trans.payorderno, trans.tppno, "
-          + " trans.paydate, trans.paytime, trans.completedate, trans.completetime, trans.cstatus ";
+                    + " trans.payway, trans.paysource, trans.paystatus, trans.payorderno, trans.tppno, "
+                    + " trans.paydate, trans.paytime, trans.completedate, trans.completetime, trans.cstatus ";
 
     private static final String QUERY_TRAN_GOODS_PARAMS =
             " goods.unqid, goods.orderno, goods.compid, goods.pdno, goods.pdprice, "
-          + " goods.distprice, goods.payamt, goods.coupamt, goods.promtype, goods.pkgno,  "
-          + " goods.asstatus, goods.createdate, goods.createtime, goods.cstatus, goods.pnum,"
-          + " goods.actcode, goods.balamt ";
+                    + " goods.distprice, goods.payamt, goods.coupamt, goods.promtype, goods.pkgno,  "
+                    + " goods.asstatus, goods.createdate, goods.createtime, goods.cstatus, goods.pnum,"
+                    + " goods.actcode, goods.balamt ";
 
     private static final String QUERY_TRAN_APPRAISE_PARAMS =
             " app.level, app.descmatch, app.logisticssrv, "
-          + " app.content, app.createtdate, app.createtime, app.cstatus ";
+                    + " app.content, app.createtdate, app.createtime, app.cstatus ";
 
 
     private static final String FROM_ORDER = " {{?" + DSMConst.TD_TRAN_ORDER + "}} ord ";
@@ -54,47 +54,47 @@ public class OrderInfoModule {
 
     private static final String QUERY_ORDER_BASE =
             " SELECT " + QUERY_TRAN_ORDER_PARAMS
-            + " FROM " + FROM_ORDER
-            + " WHERE ord.cstatus&1 = 0 ";
+                    + " FROM " + FROM_ORDER
+                    + " WHERE ord.cstatus&1 = 0 ";
 
     private static final String QUERY_ORDER_GOODS =
             " SELECT " + QUERY_TRAN_GOODS_PARAMS
-            + " FROM " + FROM_GOODS
-            + " WHERE goods.cstatus&1 = 0 AND goods.orderno = ? ";
+                    + " FROM " + FROM_GOODS
+                    + " WHERE goods.cstatus&1 = 0 AND goods.orderno = ? ";
 
     private static final String QUERY_ORDER_DETAIL =
             " SELECT " + QUERY_TRAN_ORDER_PARAMS
                     + ", " + QUERY_TRAN_TRANS_PARAMS
                     + ", " + QUERY_TRAN_APPRAISE_PARAMS
-            + " FROM " + FROM_ORDER
+                    + " FROM " + FROM_ORDER
                     + " LEFT JOIN " + FROM_TRANS
                     + " ON trans.paystatus = 1 AND trans.orderno = ord.orderno AND trans.cstatus&1024=0 "
                     + " LEFT JOIN " + FROM_APPRAISE
                     + " ON  app.cstatus&1 = 0 "
                     + " AND app.orderno = ord.orderno "
-            + " WHERE ord.orderno = ?"
-            + " LIMIT 1 ";
+                    + " WHERE ord.orderno = ?"
+                    + " LIMIT 1 ";
 
     private static final String QUERY_COMP_ORDER_INFO_BASE =
             "SELECT COUNT(ostatus = 0 OR NULL), COUNT(ostatus = 1 OR NULL),"
-                + " COUNT(ostatus = 2 OR NULL), COUNT(ostatus = 3 OR NULL),"
-                + " COUNT(ostatus IN (-2, -3) OR NULL) "
-                + " FROM {{?" + DSMConst.TD_TRAN_ORDER + "}} "
-                + " WHERE cstatus&1 = 0 AND cusno = ? ";
+                    + " COUNT(ostatus = 2 OR NULL), COUNT(ostatus = 3 OR NULL),"
+                    + " COUNT(ostatus IN (-2, -3) OR NULL) "
+                    + " FROM {{?" + DSMConst.TD_TRAN_ORDER + "}} "
+                    + " WHERE cstatus&1 = 0 AND cusno = ? ";
 
 
     private static final String QUERY_ASAPP_BASE =
             " SELECT ap.orderno, ap.pdno, ap.asno, ap.compid, ap.astype, "
                     + " ap.gstatus, ap.reason, ap.ckstatus, ap.ckdate, ap.cktime, "
                     + " ap.ckdesc, ap.invoice, ap.cstatus, ap.apdata, ap.aptime, "
-                    + " ap.apdesc, ap.refamt,ap.realrefamt, ap.asnum, ap.checkern, ap.compn, ap.invoicetype, "
+                    + " ap.apdesc, ap.refamt,ap.realrefamt, ap.asnum, ap.checkern, ap.compn, ap.invoicetype, ap.pkgno, "
                     + " goods.pdprice, goods.distprice, goods.payamt, goods.coupamt, "
                     + " goods.asstatus, goods.createdate, goods.createtime, goods.pnum, "
                     + " goods.balamt "
                     + " FROM {{?" + DSMConst.TD_TRAN_ASAPP + "}} ap "
                     + " LEFT JOIN {{?" + DSMConst.TD_BK_TRAN_GOODS + "}} goods "
                     + " ON goods.cstatus&1 = 0 "
-                    + " AND goods.orderno = ap.orderno AND ap.pdno = goods.pdno "
+                    + " AND goods.orderno = ap.orderno AND ap.pkgno = goods.pkgno AND ap.pdno = goods.pdno "
                     + " WHERE ap.cstatus&1 = 0 AND ap.compid = ? ";
 
     private final static String QUERY_INVOICE_BASE =
@@ -113,11 +113,11 @@ public class OrderInfoModule {
      * @传参类型 arrays
      * @传参列表 [compid, orderno]
      * @返回列表 JSONObject:
-     *              goods 订单详情
-     *              gifts 赠品列表
+     * goods 订单详情
+     * gifts 赠品列表
      */
 
-    @UserPermission(ignore =true)
+    @UserPermission(ignore = true)
     public Result getOrderDetail(AppContext appContext) {
         String[] params = appContext.param.arrays;
 
@@ -235,7 +235,7 @@ public class OrderInfoModule {
     }
 
     public TranOrder[] queryOrders(String[] params, int compid, int year,
-                                    PageHolder pageHolder, Page page) {
+                                   PageHolder pageHolder, Page page) {
         if (year == 0) {
             year = TimeUtils.getCurrentYear();
         }
@@ -397,7 +397,9 @@ public class OrderInfoModule {
 
             try {
                 prod = ProdInfoStore.getProdBySku(tranOrderGoods.getPdno());
-            } catch (Exception e) { prod=null; }
+            } catch (Exception e) {
+                prod = null;
+            }
             tranOrderGoods.setPayamt(MathUtil.exactDiv(tranOrderGoods.getPayamt(), 100).doubleValue());
             tranOrderGoods.setPdprice(MathUtil.exactDiv(tranOrderGoods.getPdprice(), 100).doubleValue());
             tranOrderGoods.setDistprice(MathUtil.exactDiv(tranOrderGoods.getDistprice(), 100).doubleValue());
@@ -442,7 +444,7 @@ public class OrderInfoModule {
                     payamt[index] = tranOrderGoods.getPayamt();
                     pdprice[index] = tranOrderGoods.getPdprice() * tranOrderGoods.getPnum();
                     nums[index] = tranOrderGoods.getPnum();
-                    index ++;
+                    index++;
                 }
 
                 added.setPdprice(new BigDecimal(Arrays.stream(pdprice).sum()).setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
@@ -454,7 +456,7 @@ public class OrderInfoModule {
                 returnResult.add(added);
             }
         }
-        
+
         return returnResult.toArray(new TranOrderGoods[0]);
     }
 
@@ -475,8 +477,8 @@ public class OrderInfoModule {
         }
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
-                                        compid, TimeUtils.getCurrentYear(),
-                                        QUERY_COMP_ORDER_INFO_BASE, compid);
+                compid, TimeUtils.getCurrentYear(),
+                QUERY_COMP_ORDER_INFO_BASE, compid);
 
         int couponCount = new CouponRevModule().couponRevCount(compid);
         int pointsCount = MemberStore.getIntegralByCompid(compid);
@@ -509,6 +511,7 @@ public class OrderInfoModule {
 //
 //
 //    }
+
     /**
      * @接口摘要 查询售后列表
      * @业务场景 查询售后列表
@@ -627,7 +630,8 @@ public class OrderInfoModule {
 
             try {
                 asAppVO.setReasonName(DictStore.getDictById(asAppVO.getReason()).getText());
-            } catch (Exception e) {}
+            } catch (Exception e) {
+            }
 
             if (asAppVO.getPdno() == 0) {
                 prod = null;
@@ -635,7 +639,9 @@ public class OrderInfoModule {
             } else {
                 try {
                     prod = ProdInfoStore.getProdBySku(asAppVO.getPdno());
-                } catch (Exception e) { prod=null; }
+                } catch (Exception e) {
+                    prod = null;
+                }
             }
 
             if (prod != null) {
@@ -656,11 +662,12 @@ public class OrderInfoModule {
     /**
      * app端调用，查询企业门店信息，门店积分，门店优惠券，门店余额信息
      * add by liaoz 2019年6月11日
+     *
      * @param appContext 参入参数， 获取session.getCompId ,当前企业码查询
      * @return （200==成功，对象object[]对象size=7 [优惠券数量,积分余额，待付数量，待发货数量，待收货数量，待评价数量，退货数量]）
      * 内部复用countCompInfo方法。
      */
-    public Result appCountCompInfo(AppContext appContext){
+    public Result appCountCompInfo(AppContext appContext) {
         return countCompInfo(appContext);
     }
 

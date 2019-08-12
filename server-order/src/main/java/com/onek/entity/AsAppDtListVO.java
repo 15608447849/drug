@@ -25,6 +25,15 @@ public class AsAppDtListVO {
     private String compn; //门店
     private double refamt; //退款金额
     private int invoicetype; //退款金额
+    private int pkgno;
+
+    public int getPkgno() {
+        return pkgno;
+    }
+
+    public void setPkgno(int pkgno) {
+        this.pkgno = pkgno;
+    }
 
     public int getInvoicetype() {
         return invoicetype;
