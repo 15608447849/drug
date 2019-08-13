@@ -185,7 +185,7 @@ public class CouponManageModule {
     private final String QUERY_PROM_LAD_SQL = "select unqid,convert(ladamt/100,decimal(10,2)) ladamt,ladnum,convert(offer/100,decimal(10,2)),offercode from {{?" + DSMConst.TD_PROM_LADOFF+"}} where cstatus&1=0 ";
 
     private final String QUERY_PROM_GOODS_SQL = "select pdrug.unqid,pdrug.actcode,`spec`,gcode,limitnum,manuname,standarno,prodname,classname," +
-            "convert(pdrug.price/100,decimal(10,2)) price,actstock,pdrug.cstatus,pdrug.pkgprodnum " +
+            "convert(pdrug.price/100,decimal(10,2)) price,actstock,pdrug.cstatus,pdrug.pkgprodnum, psku.medpacknum" +
             " from {{?" + DSMConst.TD_PROM_ASSDRUG+"}} pdrug" +
             " left join {{?" + DSMConst.TD_PROD_SKU+"}} psku on pdrug.gcode = psku.sku " +
             " left join {{?" + DSMConst.TD_PROD_SPU+"}} pspu on psku.spu = pspu.spu "+
@@ -605,54 +605,6 @@ public class CouponManageModule {
         String offerCode = ladderVOS[0].getOffercode() + "";
         couponVO.setRulecomp(Integer.parseInt(offerCode.substring(4,5)));
         return Arrays.asList(ladderVOS);
-    }
-
-//    /**
-//     * 查询阶梯
-//     * @param rulecode
-//     * @return
-//     */
-//    private List<LadderVO> getCoupLadder(CouponVO couponVO,int rulecode){
-//        StringBuilder sb = new StringBuilder(QUERY_PROM_LAD_SQL);
-//        sb.append(" and offercode like '").append(rulecode).append("%'");
-//        List<Object[]> result = baseDao.queryNative(sb.toString());
-//
-//        if(result == null || result.isEmpty()){
-//            return null;
-//        }
-//
-//        LadderVO[] ladderVOS = new LadderVO[result.size()];
-//        baseDao.convToEntity(result, ladderVOS, LadderVO.class,
-//                new String[]{"unqid","ladamt","ladnum","offer","offercode"});
-//
-//        String offerCode = ladderVOS[0].getOffercode() + "";
-//        couponVO.setRulecomp(Integer.parseInt(offerCode.substring(4,5)));
-//        return Arrays.asList(ladderVOS);
-//    }
-
-
-
-
-    /**
-     * 查询优惠券关联商品
-     * @param actcode
-     * @return
-     */
-    public List<GoodsVO> getCoupGoods(long actcode){
-
-        List<Object[]> result = baseDao.queryNative(QUERY_PROM_GOODS_SQL, actcode);
-
-        if(result == null || result.isEmpty()){
-            return null;
-        }
-
-        GoodsVO[] goodsVOS = new GoodsVO[result.size()];
-
-
-        baseDao.convToEntity(result, goodsVOS, GoodsVO.class,
-                new String[]{"spec","gcode","limitnum",
-                        "manuname","standarno","prodname","classname","price", "cstatus"});
-        return Arrays.asList(goodsVOS);
     }
 
 
@@ -1442,7 +1394,7 @@ public class CouponManageModule {
         baseDao.convToEntity(queryResult, goodsVOS, GoodsVO.class,
                 "unqid","actcode","spec","gcode","limitnum",
                 "manuname","standarno","prodname","classname","price",
-                "actstock","cstatus", "pkgprodnum");
+                "actstock","cstatus", "pkgprodnum", "medpacknum");
 
         for (GoodsVO goodsVO : goodsVOS) {
             if ((goodsVO.getCstatus() & 512) > 0) {

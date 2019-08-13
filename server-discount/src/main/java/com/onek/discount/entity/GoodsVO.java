@@ -55,6 +55,8 @@ public class GoodsVO {
 
     private int pkgprodnum;
 
+    private int medpacknum;
+
     public double getPrice() {
         return price;
     }
@@ -190,5 +192,13 @@ public class GoodsVO {
 
     public void setPkgprodnum(int pkgprodnum) {
         this.pkgprodnum = pkgprodnum;
+    }
+
+    public int getMedpacknum() {
+        return medpacknum;
+    }
+
+    public void setMedpacknum(int medpacknum) {
+        this.medpacknum = medpacknum;
     }
 }

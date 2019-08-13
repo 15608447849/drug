@@ -76,6 +76,8 @@ public class ProdVO {
 
     private double pkgOrgPrice;
 
+    private double pkgActUPrice;
+
     public boolean getIsneareffect() {
         return isneareffect;
     }
@@ -505,5 +507,13 @@ public class ProdVO {
 
     public void setPkgOrgPrice(double pkgOrgPrice) {
         this.pkgOrgPrice = pkgOrgPrice;
+    }
+
+    public double getPkgActUPrice() {
+        return pkgActUPrice;
+    }
+
+    public void setPkgActUPrice(double pkgActUPrice) {
+        this.pkgActUPrice = pkgActUPrice;
     }
 }
