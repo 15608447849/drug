@@ -1,12 +1,11 @@
 package com.onek.calculate.service.filter;
 
-import com.onek.calculate.entity.IDiscount;
-import com.onek.calculate.entity.IProduct;
+import com.onek.calculate.entity.*;
 import com.onek.calculate.entity.Package;
-import com.onek.calculate.entity.Product;
 import com.onek.calculate.filter.ActivitiesFilter;
 import util.MathUtil;
 
+import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
@@ -68,10 +67,22 @@ public abstract class BaseDiscountFilterService implements IDiscountFilterServic
 
                 if (activity.getBRule() == 1114 && product instanceof Package) {
                     Package p = (Package) product;
-                    activity.setDiscounted(MathUtil.exactSub(
-                            p.getCurrentPrice(),
-                            activity.getActionPrice(p.getSKU())
-                                    * p.getNums()).setScale(2, RoundingMode.HALF_UP).doubleValue());
+
+                    List<Product> prodList = p.getPacageProdList();
+                    BigDecimal totalDiscounted = BigDecimal.ZERO;
+                    double discounted;
+                    for (Product product1 : prodList) {
+                        discounted = MathUtil.exactSub(
+                                product1.getCurrentPrice(),
+                                activity.getActionPrice(product1.getSKU())
+                                        * product1.getNums()).setScale(2, RoundingMode.HALF_UP).doubleValue();
+
+                        totalDiscounted = totalDiscounted.add(BigDecimal.valueOf(discounted));
+                        product1.addDiscounted(discounted);
+                    }
+                    discounted = totalDiscounted.setScale(2, RoundingMode.HALF_UP).doubleValue();
+                    ((Activity) activity).setDiscountedOnly(discounted);
+                    p.setDiscounted(discounted);
                     p.updateCurrentPrice();
                     p.setExpireFlag(0);
                 }

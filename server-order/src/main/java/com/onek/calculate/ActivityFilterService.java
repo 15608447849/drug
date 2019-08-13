@@ -80,11 +80,11 @@ public class ActivityFilterService extends BaseDiscountFilterService {
     }
 
     private List<IDiscount> getFromPackage(Package pkg) {
-        long sku = pkg.getSKU();
+        long pkgno = pkg.getSKU();
 
         //远程调用
         List<Object[]> queryResult = IceRemoteUtil.queryNative(
-                GET_ACTIVITIES_BY_PKG, sku);
+                GET_ACTIVITIES_BY_PKG, pkgno);
 
         if (queryResult.isEmpty()) {
             return Collections.emptyList();
@@ -116,21 +116,25 @@ public class ActivityFilterService extends BaseDiscountFilterService {
 
         Activity a;
         for (IDiscount discount : activitySet) {
-            a = (Activity) discount;
-            discount.setLimits(sku, a.getLimitnum());
+            for (Activity activity : activities) {
+                if (discount.getDiscountNo() == activity.getDiscountNo()) {
+                    a = (Activity) discount;
+                    discount.setLimits(pkgno, activity.getLimitnum());
 
-            if (a.getActPrice() <= 0) {
-                continue;
+                    if (activity.getActPrice() <= 0) {
+                        continue;
+                    }
+
+                    a.setActPrice(
+                            (activity.getAssCstatus() & 512) == 0
+                                    ? MathUtil.exactDiv(activity.getActPrice(), 100).doubleValue()
+                                    : MathUtil.exactDiv(activity.getActPrice(), 100)
+                                    .multiply(BigDecimal.valueOf(pkg.getOriginalPrice()))
+                                    .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+
+                    discount.setActionPrice(activity.getActivityGcode(), a.getActPrice());
+                }
             }
-
-            a.setActPrice(
-                    (a.getAssCstatus() & 512) == 0
-                            ? MathUtil.exactDiv(a.getActPrice(), 100).doubleValue()
-                            : MathUtil.exactDiv(a.getActPrice(), 100)
-                            .multiply(BigDecimal.valueOf(pkg.getOriginalPrice()))
-                            .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
-
-            discount.setActionPrice(sku, a.getActPrice());
         }
 
         return new ArrayList<>(activitySet);
