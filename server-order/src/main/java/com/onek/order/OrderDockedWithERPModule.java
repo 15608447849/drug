@@ -133,14 +133,16 @@ public class OrderDockedWithERPModule {
             JsonArray rebateArr = new JsonParser().parse(String.valueOf(qResult[1])).getAsJsonArray();
             for (int i = 0; i < rebateArr.size(); i++) {
                 JsonObject jsonObject = rebateArr.get(i).getAsJsonObject();
-                ERPGoodsVO erpGoodsVO = new ERPGoodsVO();
-                erpGoodsVO.setUnqid(String.valueOf(qResult[0]));
-                erpGoodsVO.setErpsku(jsonObject.get("id").getAsString());
-                erpGoodsVO.setNum(jsonObject.get("totalNums").getAsString());
-                erpGoodsVO.setPayamt("0");
-                erpGoodsVO.setPdprice("0");
-                erpGoodsVO.setOrderno(String.valueOf(qResult[2]));
-                erpGoodsVOList.add(erpGoodsVO);
+                if (jsonObject.has("type") && jsonObject.get("type").getAsInt() == 3) {
+                    ERPGoodsVO erpGoodsVO = new ERPGoodsVO();
+                    erpGoodsVO.setUnqid(String.valueOf(qResult[0]));
+                    erpGoodsVO.setErpsku(jsonObject.get("id").getAsString());
+                    erpGoodsVO.setNum(jsonObject.get("totalNums").getAsString());
+                    erpGoodsVO.setPayamt("0");
+                    erpGoodsVO.setPdprice("0");
+                    erpGoodsVO.setOrderno(String.valueOf(qResult[2]));
+                    erpGoodsVOList.add(erpGoodsVO);
+                }
             }
 
         });
