@@ -53,7 +53,7 @@ public class ProdDiscountObserver implements ProdObserver {
                             result = RedisStockUtil.setActStock(Long.parseLong(gcode), actcode, ns, limitnum);
                             actStockMap.put(gcode+"", ns+"");
                         }else{
-                            RedisStockUtil.setSpecActStock(Long.parseLong(gcode), actcode, limitnum);
+                            result = RedisStockUtil.setSpecActStock(Long.parseLong(gcode), actcode, limitnum);
                             actStockMap.put(gcode+"", "ALL");
                         }
                     } else {

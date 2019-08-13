@@ -241,7 +241,7 @@ public class PackageModule {
                     if (menuMap.containsKey(menucode)) {
                         skuSet = menuMap.get(menucode);
                     }
-                    skuSet.add(new Object[]{sku, pkgprodnum});
+                    skuSet.add(new Object[]{sku, pkgprodnum, price});
                     menuMap.put(menucode,skuSet);
                     menuActMap.put(menucode, new Object[]{Long.valueOf(actCode),price});
                 });
@@ -263,7 +263,6 @@ public class PackageModule {
         Map<Integer, List<ProdVO>> menuProdMap = new HashMap<>();
         for(Map.Entry<Integer, Set<Object[]>> entry : menuMap.entrySet()){
             long actCode = Long.valueOf(menuActMap.get(entry.getKey())[0].toString());
-            String price = menuActMap.get(entry.getKey())[1].toString();
             List<ProdVO> menuProdList = new ArrayList<>();
             if (menuProdMap.containsKey(entry.getKey())) {
                 menuProdList = menuProdMap.get(entry.getKey());
@@ -272,11 +271,12 @@ public class PackageModule {
                 for (ProdVO prodDTO : prodVOList) {
                     if (prodDTO.getSku() == Long.valueOf(menuObj[0].toString())) {
                         int pkgprodnum = Integer.valueOf(menuObj[1].toString());
+                        String price = menuObj[2].toString();
                         ProdVO prodVO = JSON.parseObject(JSON.toJSONString(prodDTO), ProdVO.class);
                         prodVO.setActinitstock(RedisStockUtil.getActInitStock(Long.valueOf(menuObj[0].toString()), actCode));
                         prodVO.setSurplusstock(RedisStockUtil.getActStockBySkuAndActno(Long.valueOf(menuObj[0].toString()), actCode));
                         prodVO.setBuynum(prodVO.getActinitstock() - prodVO.getSurplusstock());
-                        prodVO.setActprize(MathUtil.exactDiv(Double.parseDouble(price), 100).doubleValue());
+                        prodVO.setPkgActUPrice(MathUtil.exactDiv(Double.parseDouble(price), 100).doubleValue());
                         prodVO.setPkgprodnum(pkgprodnum);
                         menuProdList.add(prodVO);
                         menuProdMap.put(entry.getKey(), menuProdList);
@@ -285,19 +285,26 @@ public class PackageModule {
             }
         }
         for(Map.Entry<Integer, List<ProdVO>> menuProd : menuProdMap.entrySet()){
-            double pkgOrgPrice = 0;
+            double pkgOrgPrice = 0, actPrice = 0;
             double vatp = pkgPrice(menuProd.getValue());
+//            double actPrice = setActPrice(menuProd.getValue());
             for (ProdVO prod : menuProd.getValue()) {
                 prod.setPkgUnEnough(pkgUnEnough(menuProd.getValue()));
+                prod.setActprize(actPrice);
                 if (vatp < 0) {
                     prod.setActprize(vatp);
                     prod.setPkgOrgPrice(vatp);//控销药价格不可见 未登录价格不可见
                 } else {
                     pkgOrgPrice = MathUtil.exactAdd(pkgOrgPrice,
                             MathUtil.exactMul(prod.getVatp(), prod.getPkgprodnum()).doubleValue()).doubleValue();
+                    actPrice = MathUtil.exactAdd(actPrice,
+                            MathUtil.exactMul(prod.getPkgActUPrice(), prod.getPkgprodnum()).doubleValue()).doubleValue();
                 }
             }
-            if (vatp == 1) menuProd.getValue().get(0).setPkgOrgPrice(pkgOrgPrice);
+            if (vatp == 1) {
+                menuProd.getValue().get(0).setPkgOrgPrice(pkgOrgPrice);
+                menuProd.getValue().get(0).setActprize(actPrice);
+            }
         }
 //        LogUtil.getDefaultLogger().info("newProdList----111111111111---------->>> " + GsonUtils.javaBeanToJson(menuProdMap));
         return menuProdMap;
@@ -310,6 +317,15 @@ public class PackageModule {
            }
         }
         return false;
+    }
+
+    private static double setActPrice(List<ProdVO> prodVOList) {
+        double actPrice = 0;
+        for (ProdVO prod : prodVOList) {
+            actPrice = MathUtil.exactAdd(actPrice,
+                    MathUtil.exactMul(prod.getPkgActUPrice(), prod.getPkgprodnum()).doubleValue()).doubleValue();
+        }
+        return actPrice;
     }
 
     private static double pkgPrice(List<ProdVO> prodVOList) {
