@@ -682,7 +682,8 @@ public class ShoppingCartModule {
             for (IProduct product : pkgList) {
                 //计算当前套餐总件数
                 Package pkg = (Package) product;
-                if (pkgno == pkg.getPackageId()) {
+                if (pkgno == pkg.getPackageId() && pkg.getExpireFlag() >= 0
+                        &&  ((Package) product).singleProdsCount() > 0) {
                     pkgnum = pkgDtoNum
                             / ((Package) product).singleProdsCount();
                 }

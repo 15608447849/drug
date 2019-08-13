@@ -2,6 +2,7 @@ package com.onek.discount;
 
 import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
+import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
@@ -484,14 +485,15 @@ public class ActivityManageModule {
         StringBuilder gCodeSb = new StringBuilder();
         long menuCode = 0;
         if (rulecode == 1114) {
-            String selectSQL = "select menucode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
+            menuCode = RedisGlobalKeys.getMenuCode();
+            /*String selectSQL = "select menucode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0 "
                     + " and  actcode=" + actCode + " limit 1";
             List<Object[]> qResult = baseDao.queryNative(selectSQL);
             if (qResult == null ||  qResult.isEmpty()) {
                 menuCode = RedisGlobalKeys.getMenuCode();
             } else {
                 menuCode = Long.parseLong(String.valueOf(qResult.get(0)[0]));
-            }
+            }*/
         }
         if (delGoodsGCode.size() > 0) {
             for (long gCode : delGoodsGCode) {
@@ -819,6 +821,24 @@ public class ActivityManageModule {
         return (long) queryResult.get(0)[0];
     }
 
+    private boolean thePkgActHasGoods(JsonObject jsonObject, long actCode) {
+        String selectSQL = "select gcode from {{?" + DSMConst.TD_PROM_ASSDRUG + "}} where cstatus&1=0" +
+                " and actcode=? ";
+        List<Object[]> queryResult = baseDao.queryNative(selectSQL, actCode);
+        if (queryResult == null || queryResult.isEmpty()) return true;
+        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        if (queryResult.size() != goodsArr.size()) return true;
+        Set<Long> backGCode = new HashSet<>();
+        queryResult.forEach(qr -> {
+            backGCode.add(Long.valueOf(qr[0].toString()));
+        });
+        for (int i = 0; i < goodsArr.size(); i++) {
+            if (!backGCode.contains(goodsArr.get(i).getAsJsonObject().get("gcode").getAsLong())){
+                return true;
+            }
+        }
+        return false;
+    }
 
     /**
      * @接口摘要 活动关联商品
@@ -837,6 +857,7 @@ public class ActivityManageModule {
         int type = jsonObject.get("type").getAsInt();//1:全部商品  3部分商品  2 部分类别
         long actCode = jsonObject.get("actCode").getAsLong();
         int ruleCode = jsonObject.get("rulecode").getAsInt();
+
         //判断活动是否在进行中。。。
 //        if (theActInProgress(actCode)) {
 //            return result.fail("活动正在进行中，无法修改！");
@@ -861,6 +882,9 @@ public class ActivityManageModule {
                 }
                 return result.fail(codeStr.get("message").getAsString());
             default://商品关联
+                if (ruleCode == 1114 && theActInProgress(actCode)) {
+                    return result.fail("套餐活动正在进行中，无法修改！");
+                }
                 List<Long> gcodeList = selectGoodsByAct(actCode);
                 String skuStr = getActStockBySkus1(jsonObject, actCode);
                 if (skuStr != null) {
@@ -870,11 +894,13 @@ public class ActivityManageModule {
                 if (re < 0) {
                     return result.fail("关联商品失败");
                 }
-                int a = relationGoods(jsonObject, actCode, ruleCode, gcodeList);
-                if (a == -1) {
-                    return result.fail("活动正在进行中，无法修改！");
+                int codes = 0;
+                if (ruleCode == 1114) {
+                    codes = relationPkgGoods(jsonObject, actCode, ruleCode, gcodeList);
+                } else {
+                    codes = relationGoods(jsonObject, actCode, ruleCode, gcodeList);
                 }
-                return result.success("关联商品成功");
+                return codes > 0 ? result.success("关联商品成功","") : result.fail("关联商品失败");
         }
     }
 
@@ -1256,7 +1282,7 @@ public class ActivityManageModule {
      **/
     private boolean theActInProgress(long actCode) {
         String selectTypeSQL = "select acttype,actcycle,brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} "
-                + " where cstatus&1=0 and cstatus&2048>0 and unqid=" + actCode;
+                + " where cstatus&1=0 and cstatus&2048>0 and ckstatus&32=0 and unqid=" + actCode;
 /*        String selectTypeSQL = "select acttype,actcycle,brulecode from {{?" + DSMConst.TD_PROM_ACT + "}} "
                 + " where cstatus&1=0 and unqid=" + actCode;*/
         List<Object[]> qTResult = baseDao.queryNative(selectTypeSQL);
@@ -1329,6 +1355,20 @@ public class ActivityManageModule {
             activityManageServer.registerObserver(new ProdDiscountObserver());
             activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
             List<String> proList = new ArrayList<>();
+            if (delGoods != null && delGoods.size() > 0) {
+                LogUtil.getDefaultLogger().info("####### 1259 line: delGoods-->" + JSON.toJSONString(delGoods));
+                for (GoodsVO goodsVO : delGoods) {
+                    JSONObject jsonObject = new JSONObject();
+                    jsonObject.put("discount", 1);
+                    jsonObject.put("gcode", goodsVO.getGcode());
+                    jsonObject.put("cstatus", 1);
+                    jsonObject.put("rulecode", rulecode);
+                    jsonObject.put("actcode", actCode);
+                    jsonObject.put("stock", 0);
+                    jsonObject.put("limitnum", 0);
+                    proList.add(jsonObject.toJSONString());
+                }
+            }
             if (type == 1) {//全部商品
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("discount", 1);
@@ -1352,20 +1392,6 @@ public class ActivityManageModule {
                         jsonObject.put("limitnum", goodsVO.getLimitnum());
                         proList.add(jsonObject.toJSONString());
                     }
-                }
-            }
-            if (delGoods != null && delGoods.size() > 0) {
-                //LogUtil.getDefaultLogger().info("####### 1259 line: delGoods-->"+delGoods);
-                for (GoodsVO goodsVO : delGoods) {
-                    JSONObject jsonObject = new JSONObject();
-                    jsonObject.put("discount", 1);
-                    jsonObject.put("gcode", goodsVO.getGcode());
-                    jsonObject.put("cstatus", 1);
-                    jsonObject.put("rulecode", rulecode);
-                    jsonObject.put("actcode", actCode);
-                    jsonObject.put("stock", 0);
-                    jsonObject.put("limitnum", 0);
-                    proList.add(jsonObject.toJSONString());
                 }
             }
             activityManageServer.setProd(proList);
@@ -1447,6 +1473,35 @@ public class ActivityManageModule {
             //通知notice
             List<GoodsVO> delGoods = new ArrayList<>();
             for (long sku : delGoodsGCode) {
+                GoodsVO goodsVO1 = new GoodsVO();
+                goodsVO1.setActcode(actCode + "");
+                goodsVO1.setGcode(sku);
+                delGoods.add(goodsVO1);
+            }
+            noticeGoodsUpd(2, goodsVOS, delGoods, rulecode, actCode);
+        }
+        return 1;
+    }
+
+    private int relationPkgGoods(JsonObject jsonObject, long actCode, int rulecode, List<Long> gcodeList) {
+        //关联活动商品
+        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        List<GoodsVO> goodsVOS = new ArrayList<>();
+        List<GoodsVO> updateGoodsVOS = new ArrayList<>();
+        if (goodsArr != null && !goodsArr.toString().isEmpty()) {
+            for (int i = 0; i < goodsArr.size(); i++) {
+                GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
+                if (goodsVO != null) {
+                    if ((goodsVO.getCstatus() & 512) == 0) {
+                        goodsVO.setPrice(goodsVO.getPrice() * 100);
+                    }
+                    goodsVOS.add(goodsVO);
+                }
+            }
+            relationAssDrug(goodsVOS, updateGoodsVOS, gcodeList, actCode, rulecode);
+            //通知notice
+            List<GoodsVO> delGoods = new ArrayList<>();
+            for (long sku : gcodeList) {
                 GoodsVO goodsVO1 = new GoodsVO();
                 goodsVO1.setActcode(actCode + "");
                 goodsVO1.setGcode(sku);

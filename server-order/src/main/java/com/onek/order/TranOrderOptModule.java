@@ -349,22 +349,15 @@ public class TranOrderOptModule {
     private String theGoodsHasChange(List<TranOrderGoods> tranOrderGoods, int compId, int placeType) {
         if (placeType == 1) return null;
         StringBuilder skuBuilder = new StringBuilder();
-        List<Integer> pkNoList = new ArrayList<>();//套餐码
+        Set<String> pkgNoSet = new HashSet<>();
         for (TranOrderGoods transGoods: tranOrderGoods) {
             skuBuilder.append(transGoods.getPdno()).append(",");
-            if (transGoods.getPkgno() > 0) {
-                pkNoList.add(transGoods.getPkgno());
-            }
+            pkgNoSet.add(transGoods.getPkgno() + "");
         }
         String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
         String selectGoodsSQL = "select pdno, pnum, pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
-                 + " and orderno=0 and pdno in(" + skuStr + ") and compid=" + compId;
-        if (pkNoList.size() == tranOrderGoods.size() && pkNoList.size() > 0) {
-            selectGoodsSQL = selectGoodsSQL + " and pkgno>0 ";
-        }
-        if (pkNoList.size() == 0) {
-            selectGoodsSQL = selectGoodsSQL + " and pkgno=0 ";
-        }
+                 + " and orderno=0 and pdno in(" + skuStr + ") and compid=" + compId + " and pkgno in("+
+                String.join(",",pkgNoSet.toArray(new String[0])) +")";
         List<Object[]> queryResult = baseDao.queryNativeSharding(compId, TimeUtils.getCurrentYear(), selectGoodsSQL);
         if (queryResult == null || queryResult.isEmpty()) {
             return "下单商品信息错误！";
