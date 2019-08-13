@@ -911,8 +911,9 @@ public class ShoppingCartModule {
 
 
                        // shoppingCartVO.setActcode(listCntRemove(product.getActivityCodes()));
-                        pkgStock = Math.min(getPkgInv((Package) product, activity, compid), pkgStock);
-
+                        if(activity.getBRule() == 1114){
+                            pkgStock = Math.min(getPkgInv((Package) product, activity, compid), pkgStock);
+                        }
 
                         shoppingCartVO.setInventory(pkgStock);
                         LogUtil.getDefaultLogger().debug(((Package) product).getPackageId()+"最新套餐库存："+pkgStock);
@@ -1369,19 +1370,18 @@ public class ShoppingCartModule {
                     if (product instanceof Package
                             && Long.parseLong(shoppingCartVO.getPkgno()) == ((Package) product).getPackageId()) {
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
-                       // actCodeList.add(activity.getUnqid() + "");
                         //判断库存
                         if (((Package) product).getExpireFlag() < 0) {
                             shoppingCartVO.setStatus(3);
                         }
                         shoppingCartVO.setActcode(new ArrayList<>(product.getActivityCodes()));
+                        if(activity.getBRule() == 1114){
+                            stock = Math.min(getPkgInv((Package) product, activity, compid), stock);
+                        }
+                        shoppingCartVO.setInventory(stock);
                         minLimit = Math.min
                                 (activity.getLimits(((Package) product).getPackageId())
                                         , minLimit);
-                        stock = Math.min(getPkgInv((Package) product, activity, compid), stock);
-
-                        shoppingCartVO.setInventory(stock);
-
 
                     }
 
@@ -1393,7 +1393,6 @@ public class ShoppingCartModule {
 
                         shoppingCartVO.setActcode(new ArrayList<>(product.getActivityCodes()));
                         shoppingCartVO.setExCoupon(shoppingCartVO.isExCoupon() || activity.getExCoupon());
-                       // actCodeList.add(activity.getUnqid() + "");
                         if (pList.size() == 1) {
                             shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
                             shoppingCartVO.addNextLadDesc(brule, activity.getNextLadoffDesc());
@@ -1446,7 +1445,6 @@ public class ShoppingCartModule {
                         shoppingCartVO.setLimitsub(subStock);
                         shoppingCartVO.setInventory(stock);
                         shoppingCartVO.setActstock(actStock);
-                        // shoppingCartVO.setActcode(actCodeList);
                     }
                 }
             }
@@ -1455,7 +1453,6 @@ public class ShoppingCartModule {
                 shoppingCartVO.setLimitnum(0);
             }
             shoppingCartVO.setRule(ruleList);
-           // shoppingCartVO.setActcode(actCodeList);
         }
 
         for(IProduct product : ckProduct){
@@ -1579,7 +1576,11 @@ public class ShoppingCartModule {
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
-                        pkgStock = Math.min(getPkgInv((Package) product, activity, compid), pkgStock);
+
+                        if(activity.getBRule() == 1114){
+                            pkgStock = Math.min(getPkgInv((Package) product, activity, compid), pkgStock);
+                        }
+                        //pkgStock = Math.min(getPkgInv((Package) product, activity, compid), pkgStock);
                         shoppingCartVO.setInventory(pkgStock);
                         if (activity.getLimits(Long.parseLong(shoppingCartVO.getPkgno())) == 0) {
                             break;
