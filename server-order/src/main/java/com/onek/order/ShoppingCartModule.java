@@ -908,18 +908,21 @@ public class ShoppingCartModule {
                         if (((Package) product).getExpireFlag() < 0) {
                             shoppingCartVO.setStatus(3);
                         }
+
+
                        // shoppingCartVO.setActcode(listCntRemove(product.getActivityCodes()));
                         pkgStock = Math.min(getPkgInv((Package) product, activity, compid), pkgStock);
 
-                        shoppingCartVO.setInventory(pkgStock);
 
+                        shoppingCartVO.setInventory(pkgStock);
+                        LogUtil.getDefaultLogger().debug(((Package) product).getPackageId()+"最新套餐库存："+pkgStock);
                         DiscountRule discountRule = new DiscountRule();
                         discountRule.setRulecode(brule);
                         discountRule.setRulename(DiscountRuleStore.getRuleByName(brule));
 
                         //shoppingCartVO.setLimitsub(subStock);
                        // shoppingCartVO.setInventory(skuStock);
-                        //shoppingCartVO.setActstock(actStock);
+                       // shoppingCartVO.setActstock(actStock);
 
                         if (activity.getLimits(Long.parseLong(shoppingCartVO.getPkgno())) == 0) {
                             break;
@@ -2423,11 +2426,16 @@ public class ShoppingCartModule {
             int actStock =  RedisStockUtil
                     .getActStockBySkuAndActno(product.getSku(),
                             activity.getUnqid());
-
+            LogUtil.getDefaultLogger().debug("===获取套餐库存===："+pkg.getPackageId());
+            LogUtil.getDefaultLogger().debug("活动码："+activity.getUnqid());
             int tminStock = RedisStockUtil.getStock(product.getSku());
+            LogUtil.getDefaultLogger().debug("套餐："+pkg.getPackageId()+" SKU："+product.getSku()
+                    + " 活动库存："+actStock+" 真实库存："+tminStock);
             int skuUnitNum = product.getNums() / pkg.getNums();
             tminStock = Math.min(actStock, tminStock);
+            LogUtil.getDefaultLogger().debug("套餐换算库存："+pkg.getPackageId()+"  "+tminStock / skuUnitNum);
             stockMap.put(product.getSku(), tminStock / skuUnitNum);
+
         }
 
         int minSkuNum = Integer.MAX_VALUE;
@@ -2438,6 +2446,9 @@ public class ShoppingCartModule {
                 minSkuNum = invnum;
             }
         }
+
+        LogUtil.getDefaultLogger().debug("最终返回库存："+pkg.getPackageId()+"  "+stockMap.get(minSku));
+
         return stockMap.get(minSku);
     }
 
