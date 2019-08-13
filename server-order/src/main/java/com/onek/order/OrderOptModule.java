@@ -265,8 +265,11 @@ public class OrderOptModule {
             }
             String pdnoStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
             sql = "select pdno, pkgno from {{?" + DSMConst.TD_TRAN_ASAPP + "}} where cstatus&1=0 "
-                    + " and orderno=" + orderNo + " and ckstatus in(0,1) and astype not in(3,4) "
+                    + " and orderno=" + orderNo
+//                    + " and ckstatus in(0,1) "
+                    + " and astype not in(3,4) "
                     + " and pdno in(" + pdnoStr + ")";
+
             List<Object[]> queryResult = baseDao.queryNativeSharding(0, localDateTime.getYear(), sql);
 
             int pkgno;
