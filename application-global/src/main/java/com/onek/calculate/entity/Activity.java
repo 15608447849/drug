@@ -75,6 +75,10 @@ public class Activity extends AccurateMath implements IDiscount {
         return this.incpriority * 10 + this.cpriority;
     }
 
+    public void setDiscountedOnly(double discount) {
+        this.discounted = discount;
+    }
+
     @Override
     public void setDiscounted(double discount) {
         if (discount <= 0) {

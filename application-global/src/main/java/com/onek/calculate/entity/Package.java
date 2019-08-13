@@ -59,6 +59,10 @@ public class Package extends AccurateMath implements IProduct {
         this.setCurrentPrice(this.originalPrice * nums);
     }
 
+    public void setDiscounted(double discounted) {
+        this.discounted = discounted;
+    }
+
     public double getDiscounted() {
         return discounted;
     }
