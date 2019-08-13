@@ -64,6 +64,9 @@ public class AppModule {
             }else{//手动输入
                 beanGop.number = beanGop.number - pkgnum;
             }
+            if(beanGop.number <= 0 ){
+                return new Result().success("加入购物车成功","调用成功");
+            }
             context.logger.print("最终添加购物车套餐数量 = " + beanGop.number);
             Result res =  writePkgToShopCat(compid,beanGop.pkgno,beanGop.number,context);
 
