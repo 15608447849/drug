@@ -27,6 +27,7 @@ import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
@@ -711,7 +712,7 @@ public class CouponRevModule {
         resultMap.put("acpay",payamt);
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
-        resultMap.put("rebeatp", MathUtil.exactDiv(rebeatTotal, 100.0).doubleValue());
+        resultMap.put("rebeatp", BigDecimal.valueOf(rebeatTotal / 100.0).setScale(2, RoundingMode.DOWN).doubleValue());
         resultMap.put("usebal",useBal);
         if(couponUseDTOS.get(0).getBalway() > 0 && bal > 0){
             resultMap.put("bal",bal);
