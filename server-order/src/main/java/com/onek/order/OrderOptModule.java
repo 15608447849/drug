@@ -1107,8 +1107,21 @@ public class OrderOptModule {
         //更新订单状态为交易完成
         String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=4 "
                 + " where cstatus&1=0 and orderno=" + orderNo + " and ostatus=3";
-        return baseDao.updateNativeSharding(cusno, year, updSQL) > 0;
 
+        int result = baseDao.updateNativeSharding(cusno, year, updSQL);
+
+        if (result <= 0) {
+            return false;
+        }
+
+        try{
+            //满赠赠优惠券
+            CouponRevModule.revGiftCoupon(Long.parseLong(orderNo), cusno);
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return true;
     }
 
 

@@ -6,8 +6,8 @@ import com.alibaba.fastjson.JSON;
 import com.google.gson.*;
 import com.onek.annotation.UserPermission;
 import com.onek.calculate.CouponListFilterService;
-import com.onek.calculate.entity.*;
 import com.onek.calculate.entity.Package;
+import com.onek.calculate.entity.*;
 import com.onek.calculate.util.DiscountUtil;
 import com.onek.consts.CSTATUS;
 import com.onek.consts.IntegralConstant;
@@ -15,7 +15,6 @@ import com.onek.context.AppContext;
 import com.onek.entity.CouponPubLadderVO;
 import com.onek.entity.CouponPubVO;
 import com.onek.entity.CouponUseDTO;
-import com.onek.entity.TranOrderGoods;
 import com.onek.entitys.Result;
 import com.onek.util.CalculateUtil;
 import com.onek.util.GenIdUtil;
@@ -28,7 +27,6 @@ import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
@@ -947,13 +945,16 @@ public class CouponRevModule {
 
 
 
-    public static int getPayamtByAct(long orderno, int compid, long actcode) {
-        List<Object[]> result = baseDao.queryNativeSharding(compid,
+    public static int getPayamtByAct(long orderno, long actcode) {
+        List<Object[]> result = baseDao.queryNativeSharding(0,
                 TimeUtils.getYearByOrderno(orderno + ""),
-                " SELECT IFNULL(SUM(payamt), 0) "
-                + " FROM {{?" + DSMConst.TD_TRAN_GOODS + "}} "
-                + " WHERE cstatus&1 = 0 AND orderno = ? "
-                + " AND JSON_SEARCH(actcode, 'one', ?) IS NOT NULL ", orderno, actcode);
+                " SELECT IFNULL(SUM(g.payamt), 0) - SUM(IFNULL(a.realrefamt, 0)) "
+                + " FROM {{?" + DSMConst.TD_BK_TRAN_GOODS + "}} g "
+                + " LEFT JOIN {{?" + DSMConst.TD_TRAN_ASAPP + "}} a "
+                + " ON g.orderno = a.orderno AND g.pdno = a.pdno "
+                + " AND a.cstatus&1 = 0 AND a.ckstatus = 200 "
+                + " WHERE g.cstatus&1 = 0 AND g.orderno = ? "
+                + " AND JSON_SEARCH(g.actcode, 'one', ?) IS NOT NULL ", orderno, actcode);
 
         if (result.isEmpty()) {
             return 0;
@@ -1028,7 +1029,7 @@ public class CouponRevModule {
                         int value = (int) (currLadoff.getOffer() * 100);
 
                         if (currLadoff.isPercentage()) {
-                            int currPayamt = getPayamtByAct(orderno, compid, gift.getActivityCode());
+                            int currPayamt = getPayamtByAct(orderno, gift.getActivityCode());
                             value = (int) (currPayamt * currLadoff.getOffer());
                         }
 

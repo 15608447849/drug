@@ -562,12 +562,12 @@ public class PayModule {
                 DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
             }
 
-            try{
-                //满赠赠优惠券
-                CouponRevModule.revGiftCoupon(Long.parseLong(orderno),compid);
-            }catch (Exception e){
-                e.printStackTrace();
-            }
+//            try{
+//                //满赠赠优惠券
+//                CouponRevModule.revGiftCoupon(Long.parseLong(orderno),compid);
+//            }catch (Exception e){
+//                e.printStackTrace();
+//            }
         }
         return b ?1 : -1;
     }
