@@ -1398,13 +1398,13 @@ public class TranOrderOptModule {
     public static void apportionBal(List<TranOrderGoods> tranOrderGoodsList,double bal,double payment,double freight){
         double[] dprice = new double[tranOrderGoodsList.size()];
         double afterDiscountPrice = .0;
-
+        bal = MathUtil.exactDiv(bal, 100.0).doubleValue();
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
-            dprice[i] = tranOrderGoodsList.get(i).getPayamt();
+            dprice[i] = MathUtil.exactDiv(tranOrderGoodsList.get(i).getPayamt(), 100.0).doubleValue();
 
             afterDiscountPrice =
-                    MathUtil.exactAdd(afterDiscountPrice, tranOrderGoodsList.get(i).getPayamt())
+                    MathUtil.exactAdd(afterDiscountPrice, dprice[i])
                             .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
 
@@ -1414,19 +1414,19 @@ public class TranOrderOptModule {
         double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
-//            if(payment == 0){
-//                tranOrderGoodsList.get(i).setPayamt(0);
-//            }
-
-
-            tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i]).
-                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i])
+                    .setScale(2,BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue());
 
             tranOrderGoodsList.get(i).setPayamt(MathUtil.exactSub(tranOrderGoodsList.get(i).getPayamt(),
                     tranOrderGoodsList.get(i).getBalamt()).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
-           //
         }
+
+//        LogUtil.getDefaultLogger().info("---- bal " + bal);
+//        LogUtil.getDefaultLogger().info("---- dprice " + Arrays.toString(dprice));
+//        LogUtil.getDefaultLogger().info("---- cdprice " + Arrays.toString(cdprice));
+//        LogUtil.getDefaultLogger().info("---- afterDiscountPrice " + afterDiscountPrice);
+
     }
 
 
