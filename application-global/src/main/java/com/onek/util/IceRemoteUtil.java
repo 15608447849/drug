@@ -872,6 +872,23 @@ public class IceRemoteUtil {
         }
         return "";
     }
+
+    /**
+     * 获取余额抵扣率
+     * @return
+     */
+    public static String getUseBal(String key){
+        try {
+            String result = ic.setServerAndRequest("userServer","BackgroundUserModule","getUseBal")
+                    .setArrayParams(key)
+                    .execute();
+            return result;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return "";
+    }
+
     public static void main(String[] args) {
         HashMap map = new HashMap();
             map.put("identity",-4);
