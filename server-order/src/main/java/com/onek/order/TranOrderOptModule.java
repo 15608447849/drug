@@ -1400,7 +1400,6 @@ public class TranOrderOptModule {
         double afterDiscountPrice = .0;
         bal = MathUtil.exactDiv(bal, 100.0).doubleValue();
 
-
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
             dprice[i] = MathUtil.exactDiv(tranOrderGoodsList.get(i).getPayamt(), 100.0).doubleValue();
 
@@ -1415,26 +1414,18 @@ public class TranOrderOptModule {
         double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
-//            if(payment == 0){
-//                tranOrderGoodsList.get(i).setPayamt(0);
-//            }
-
-
             tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i])
                     .setScale(2,BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue());
-
-            LogUtil.getDefaultLogger().info(tranOrderGoodsList.get(i).getBalamt());
 
             tranOrderGoodsList.get(i).setPayamt(MathUtil.exactSub(tranOrderGoodsList.get(i).getPayamt(),
                     tranOrderGoodsList.get(i).getBalamt()).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
-           //
         }
 
-        LogUtil.getDefaultLogger().info("---- bal " + bal);
-        LogUtil.getDefaultLogger().info("---- dprice " + Arrays.toString(dprice));
-        LogUtil.getDefaultLogger().info("---- cdprice " + Arrays.toString(cdprice));
-        LogUtil.getDefaultLogger().info("---- afterDiscountPrice " + afterDiscountPrice);
+//        LogUtil.getDefaultLogger().info("---- bal " + bal);
+//        LogUtil.getDefaultLogger().info("---- dprice " + Arrays.toString(dprice));
+//        LogUtil.getDefaultLogger().info("---- cdprice " + Arrays.toString(cdprice));
+//        LogUtil.getDefaultLogger().info("---- afterDiscountPrice " + afterDiscountPrice);
 
     }
 
