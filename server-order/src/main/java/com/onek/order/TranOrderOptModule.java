@@ -1422,11 +1422,19 @@ public class TranOrderOptModule {
             tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i]).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
 
+            LogUtil.getDefaultLogger().info(tranOrderGoodsList.get(i).getBalamt());
+
             tranOrderGoodsList.get(i).setPayamt(MathUtil.exactSub(tranOrderGoodsList.get(i).getPayamt(),
                     tranOrderGoodsList.get(i).getBalamt()).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
            //
         }
+
+        LogUtil.getDefaultLogger().info("---- bal " + bal);
+        LogUtil.getDefaultLogger().info("---- dprice " + Arrays.toString(dprice));
+        LogUtil.getDefaultLogger().info("---- cdprice " + Arrays.toString(cdprice));
+        LogUtil.getDefaultLogger().info("---- afterDiscountPrice " + afterDiscountPrice);
+
     }
 
 
