@@ -1398,13 +1398,14 @@ public class TranOrderOptModule {
     public static void apportionBal(List<TranOrderGoods> tranOrderGoodsList,double bal,double payment,double freight){
         double[] dprice = new double[tranOrderGoodsList.size()];
         double afterDiscountPrice = .0;
+        bal = MathUtil.exactDiv(bal, 100.0).doubleValue();
 
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
-            dprice[i] = tranOrderGoodsList.get(i).getPayamt();
+            dprice[i] = MathUtil.exactDiv(tranOrderGoodsList.get(i).getPayamt(), 100.0).doubleValue();
 
             afterDiscountPrice =
-                    MathUtil.exactAdd(afterDiscountPrice, tranOrderGoodsList.get(i).getPayamt())
+                    MathUtil.exactAdd(afterDiscountPrice, dprice[i])
                             .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
 
@@ -1419,8 +1420,8 @@ public class TranOrderOptModule {
 //            }
 
 
-            tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i]).
-                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i])
+                    .setScale(2,BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue());
 
             LogUtil.getDefaultLogger().info(tranOrderGoodsList.get(i).getBalamt());
 
