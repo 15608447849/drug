@@ -474,5 +474,21 @@ public class BackgroundUserModule {
         return new Result().success(result);
     }
 
+    /**
+     * 获取余额抵扣百分比
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public String getUseBal(AppContext appContext) {
+        String key = appContext.param.arrays[0];
 
+        if(key.isEmpty()){
+            key = "BALANCE_DEDUCTION";
+        }
+        String sql = "select conf.value from {{?"+DSMConst.TB_SYSTEM_CONFIG+"}} conf where conf.varname = ? and conf.cstatus & 1 =0";
+        List<Object[]> vlist = baseDao.queryNative(sql,key);
+        System.out.println("余额抵扣百分比："+vlist.get(0)[0].toString());
+        return vlist.get(0)[0].toString();
+    }
 }

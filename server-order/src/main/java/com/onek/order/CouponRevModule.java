@@ -708,18 +708,48 @@ public class CouponRevModule {
         resultMap.put("rebeatp", MathUtil.exactDiv(rebeatTotal, 100.0).doubleValue());
         if(couponUseDTOS.get(0).getBalway() > 0 && bal > 0){
             resultMap.put("bal",bal);
-            if(bal >= payamt){
-                resultMap.put("debal",payamt);
-                resultMap.put("acpay",0);
-                resultMap.put("payflag",1);
-            }else{
-                resultMap.put("debal",bal);
-                resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
-                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            //可抵扣余额
+            double useBal = getUseBal(payamt,resultMap);
+            if(useBal>0){
+                resultMap.put("usebal",useBal);
+                if(bal >= useBal){
+                    appContext.logger.print("可抵扣余额："+useBal);
+                    resultMap.put("debal",useBal);
+                    resultMap.put("acpay",MathUtil.exactSub(payamt,useBal).
+                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+                }else{
+                    resultMap.put("debal",bal);
+                    resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
+                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+                }
             }
+
         }
 
         return result.success(resultMap);
+    }
+
+    /**
+     * 获取可抵扣的余额总额
+     * @return
+     */
+    public static double getUseBal(double payamt,Map resultMap){
+        double bal = 0.0;
+        try{
+
+            String baldeduction = IceRemoteUtil.getUseBal("BALANCE_DEDUCTION");
+            if(baldeduction.length()>0){
+                resultMap.put("baldeduction",baldeduction);
+                double balDeductionPe =  MathUtil.exactDiv(Double.parseDouble(baldeduction),100).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+                System.out.println("余额抵扣百分比："+balDeductionPe);
+                bal = MathUtil.exactMul(payamt,balDeductionPe).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+            }
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return bal;
     }
 
     public static double[] apportionBal(List<IProduct> tranOrderGoodsList, double bal) {
