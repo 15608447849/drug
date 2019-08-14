@@ -297,14 +297,14 @@ public class TranOrderOptModule {
             }
             if(balway > 0){
                 bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
-                //可抵扣余额
-                double useBal = CouponRevModule.getUseBal(payamt,new HashMap());
                 double psum = payamt;
                 if(tranOrder.getFreight()>0){
                     psum = MathUtil.exactAdd(psum, tranOrder.getFreight()).
                             setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
                 }
 
+                //可抵扣余额
+                double useBal = CouponRevModule.getUseBal(psum,new HashMap());
                 appContext.logger.print("线上支付金额："+ psum);
                 appContext.logger.print("余额支付金额："+ bal);
                 appContext.logger.print("最高可抵扣余额：" + useBal) ;
