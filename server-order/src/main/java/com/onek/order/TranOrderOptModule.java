@@ -300,9 +300,9 @@ public class TranOrderOptModule {
 
                 //可抵扣余额
                 int useBal = MathUtil.exactSub(CouponRevModule.getUseBal(payamt,new HashMap()), 0).intValue();
-                appContext.logger.print("线上支付金额："+ payamt);
-                appContext.logger.print("余额支付金额："+ bal);
-                appContext.logger.print("最高可抵扣余额：" + useBal) ;
+//                appContext.logger.print("线上支付金额："+ payamt);
+//                appContext.logger.print("余额支付金额："+ bal);
+//                appContext.logger.print("最高可抵扣余额：" + useBal) ;
                 if(useBal>0) {
                     if (bal >= useBal) { //余额大于可抵扣余额
                         payamt = MathUtil.exactSub(payamt, useBal).
@@ -317,7 +317,7 @@ public class TranOrderOptModule {
                             setScale(2, RoundingMode.DOWN).intValue();
                 }
                 bal = Math.max(bal, 0);
-                appContext.logger.print("end线上支付金额："+ payamt);
+//                appContext.logger.print("end线上支付金额："+ payamt);
             }
         }catch (Exception e){
             e.printStackTrace();

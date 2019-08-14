@@ -718,7 +718,7 @@ public class CouponRevModule {
             resultMap.put("bal",bal);
             if(useBal>0){
                 if(bal >= useBal){
-                    appContext.logger.print("可抵扣余额："+useBal);
+//                    appContext.logger.print("可抵扣余额："+useBal);
                     resultMap.put("debal",useBal);
                     resultMap.put("acpay",MathUtil.exactSub(payamt,useBal).
                             setScale(2,RoundingMode.DOWN).doubleValue());
@@ -751,7 +751,7 @@ public class CouponRevModule {
                 resultMap.put("baldeduction",baldeduction);
                 double balDeductionPe =  MathUtil.exactDiv(Double.parseDouble(baldeduction),100).
                         setScale(2,RoundingMode.DOWN).doubleValue();
-                System.out.println("余额抵扣百分比："+balDeductionPe);
+//                System.out.println("余额抵扣百分比："+balDeductionPe);
                 bal = MathUtil.exactMul(payamt,balDeductionPe).
                         setScale(2,RoundingMode.DOWN).doubleValue();
 //                if(bal<0.1){
