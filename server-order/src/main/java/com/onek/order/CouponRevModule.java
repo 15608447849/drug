@@ -655,14 +655,22 @@ public class CouponRevModule {
         }
 
         double bal = IceRemoteUtil.queryCompBal(compid);
+
+
         bal = MathUtil.exactDiv(bal,100L).
                 setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+        //可抵扣余额
+        double useBal = getUseBal(payamt,resultMap);
+        double flBal = bal;
+        if(flBal>=useBal){
+            flBal = useBal;
+        }
 
         double rebeatTotal = 0;
         Map<Long, Integer> balMap = new HashMap<>();
 
         double[] r = apportionBal(productList,
-                couponUseDTOS.get(0).getBalway() > 0 ? bal : 0);
+                couponUseDTOS.get(0).getBalway() > 0 ? flBal : 0);
 
         for(int i = 0; i < r.length; i++) {
             balMap.put(productList.get(i).getSKU(), (int) (r[i] * 100));
@@ -704,8 +712,6 @@ public class CouponRevModule {
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
         resultMap.put("rebeatp", MathUtil.exactDiv(rebeatTotal, 100.0).doubleValue());
-        //可抵扣余额
-        double useBal = getUseBal(payamt,resultMap);
         resultMap.put("usebal",useBal);
         if(couponUseDTOS.get(0).getBalway() > 0 && bal > 0){
             resultMap.put("bal",bal);
