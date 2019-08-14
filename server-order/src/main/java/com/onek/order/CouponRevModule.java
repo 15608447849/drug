@@ -754,9 +754,9 @@ public class CouponRevModule {
                 System.out.println("余额抵扣百分比："+balDeductionPe);
                 bal = MathUtil.exactMul(payamt,balDeductionPe).
                         setScale(2,RoundingMode.DOWN).doubleValue();
-                if(bal<0.1){
-                    bal = 0.01;
-                }
+//                if(bal<0.1){
+//                    bal = 0.01;
+//                }
             }
         }catch (Exception e){
             e.printStackTrace();
