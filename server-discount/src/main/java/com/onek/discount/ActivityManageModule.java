@@ -849,7 +849,7 @@ public class ActivityManageModule {
      */
     @UserPermission(ignore = true)
     public Result relationGoods(AppContext appContext) {
-        int re = 0;
+        int re;
         Result result = new Result();
         String json = appContext.param.json;
         JsonParser jsonParser = new JsonParser();
@@ -857,7 +857,10 @@ public class ActivityManageModule {
         int type = jsonObject.get("type").getAsInt();//1:全部商品  3部分商品  2 部分类别
         long actCode = jsonObject.get("actCode").getAsLong();
         int ruleCode = jsonObject.get("rulecode").getAsInt();
-
+        String ckCodeStr = checkParams(jsonObject, ruleCode);
+        if (ckCodeStr != null) {
+            return result.fail(ckCodeStr);
+        }
         //判断活动是否在进行中。。。
 //        if (theActInProgress(actCode)) {
 //            return result.fail("活动正在进行中，无法修改！");
@@ -903,6 +906,29 @@ public class ActivityManageModule {
                 return codes > 0 ? result.success("关联商品成功","") : result.fail("关联商品失败");
         }
     }
+
+    private String checkParams(JsonObject jsonObject, int bRuleCode) {
+        JsonArray goodsArr = jsonObject.get("goodsArr").getAsJsonArray();
+        if (goodsArr != null && !goodsArr.toString().isEmpty()) {
+            for (int i = 0; i < goodsArr.size(); i++) {
+                GoodsVO goodsVO = GsonUtils.jsonToJavaBean(goodsArr.get(i).toString(), GoodsVO.class);
+                if (goodsVO == null) return "商品有误！";
+                if (bRuleCode == 1114 && goodsVO.getPkgprodnum() <= 0 || String.valueOf(goodsVO.getPkgprodnum()).length() > 7) {
+                    return "套餐商品数量有误！";
+                }
+                if (goodsVO.getPrice() < 0 || goodsVO.getPrice() > 10000000){
+                    return "商品价格有误！";
+                }
+                if (goodsVO.getLimitnum() < 0 || String.valueOf(goodsVO.getLimitnum()).length() > 7) {
+                    return "套餐限购数量有误！";
+                }
+            }
+        } else {
+            return "请选择商品！";
+        }
+        return null;
+    }
+
 
     private int updateAssByActcode(int type, long actCode) {
         String updateSQL = "update {{?" + DSMConst.TD_PROM_ASSDRUG + "}} set cstatus=cstatus|1 "
@@ -1335,7 +1361,7 @@ public class ActivityManageModule {
     }
 
     public static void main(String[] args) {
-        LocalDateTime localDateTime = LocalDateTime.now();
+//        System.out.println(GenIdUtil.getUnqId());
     }
 
 
