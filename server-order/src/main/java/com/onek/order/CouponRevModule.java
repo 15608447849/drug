@@ -706,12 +706,12 @@ public class CouponRevModule {
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
         resultMap.put("rebeatp", MathUtil.exactDiv(rebeatTotal, 100.0).doubleValue());
+        //可抵扣余额
+        double useBal = getUseBal(payamt,resultMap);
+        resultMap.put("usebal",useBal);
         if(couponUseDTOS.get(0).getBalway() > 0 && bal > 0){
             resultMap.put("bal",bal);
-            //可抵扣余额
-            double useBal = getUseBal(payamt,resultMap);
             if(useBal>0){
-                resultMap.put("usebal",useBal);
                 if(bal >= useBal){
                     appContext.logger.print("可抵扣余额："+useBal);
                     resultMap.put("debal",useBal);
