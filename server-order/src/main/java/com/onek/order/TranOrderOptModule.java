@@ -299,7 +299,7 @@ public class TranOrderOptModule {
                 bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
 
                 //可抵扣余额
-                double useBal = CouponRevModule.getUseBal(payamt,new HashMap());
+                int useBal = Integer.parseInt(String.valueOf(CouponRevModule.getUseBal(payamt,new HashMap())));
                 appContext.logger.print("线上支付金额："+ payamt);
                 appContext.logger.print("余额支付金额："+ bal);
                 appContext.logger.print("最高可抵扣余额：" + useBal) ;
@@ -307,7 +307,7 @@ public class TranOrderOptModule {
                     if (bal >= useBal) { //余额大于可抵扣余额
                         payamt = MathUtil.exactSub(payamt, useBal).
                                 setScale(2, RoundingMode.DOWN).doubleValue(); //支付金额-可抵扣余额=支付金额
-                        bal = useBal;//余额抵扣为可抵扣余额
+                        bal = payamt;//余额抵扣为可抵扣余额
                     } else {//余额小于可抵扣余额
                         payamt = MathUtil.exactSub(payamt, bal).
                                 setScale(2, RoundingMode.DOWN).doubleValue(); //支付金额-当前用户拥有余额=支付金额
