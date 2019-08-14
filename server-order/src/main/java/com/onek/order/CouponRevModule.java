@@ -922,16 +922,16 @@ public class CouponRevModule {
                     appContext.logger.print("可抵扣余额："+useBal);
                     resultMap.put("debal",useBal);
                     resultMap.put("acpay",MathUtil.exactSub(payamt,useBal).
-                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+                            setScale(2,RoundingMode.DOWN).doubleValue());
                 }else{
                     resultMap.put("debal",bal);
                     resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
-                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+                            setScale(2,RoundingMode.DOWN).doubleValue());
                 }
             }else{
                 resultMap.put("debal",bal);
                 resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
-                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+                        setScale(2,RoundingMode.DOWN).doubleValue());
             }
             /*
             if(bal >= payamt){
