@@ -594,7 +594,7 @@ public class ShoppingCartModule {
         if (!ModelUtil.updateTransEmpty(uret) || !ModelUtil.updateTransEmpty(iret)) {
             return result.success("添加成功");
         }
-        return result.fail("添加失败");
+        return result.fail("添加失败，该订单存在已下架商品！");
     }
 
     public void convtShopCartDTO(int compid,
