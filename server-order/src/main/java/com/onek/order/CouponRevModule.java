@@ -720,6 +720,10 @@ public class CouponRevModule {
                     resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
                             setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
                 }
+            }else{
+                resultMap.put("debal",bal);
+                resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }
 
         }
