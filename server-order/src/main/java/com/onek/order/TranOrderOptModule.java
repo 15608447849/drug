@@ -348,16 +348,28 @@ public class TranOrderOptModule {
 
     private String theGoodsHasChange(List<TranOrderGoods> tranOrderGoods, int compId, int placeType) {
         if (placeType == 1) return null;
-        StringBuilder skuBuilder = new StringBuilder();
         Set<String> pkgNoSet = new HashSet<>();
+        Set<String> zeroNoSet = new HashSet<>();
         for (TranOrderGoods transGoods: tranOrderGoods) {
-            skuBuilder.append(transGoods.getPdno()).append(",");
-            pkgNoSet.add(transGoods.getPkgno() + "");
+            if (transGoods.getPkgno() > 0) {
+                pkgNoSet.add(transGoods.getPkgno() + "");
+            } else {
+                zeroNoSet.add(transGoods.getPdno() + "");
+            }
         }
-        String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
         String selectGoodsSQL = "select pdno, pnum, pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
-                 + " and orderno=0 and pdno in(" + skuStr + ") and compid=" + compId + " and pkgno in("+
-                String.join(",",pkgNoSet.toArray(new String[0])) +")";
+                 + " and orderno=0 and compid=" + compId ;
+        String pdNoStr = " (pdno in(" + String.join(",",zeroNoSet.toArray(new String[0])) + ") and pkgno=0) ";
+        String pkgNoStr = " pkgno in(" + String.join(",",pkgNoSet.toArray(new String[0])) + ") ";
+        if (zeroNoSet.size() > 0 && pkgNoSet.size() == 0) {
+            selectGoodsSQL = selectGoodsSQL + " and " + pdNoStr;
+        }
+        if (pkgNoSet.size() > 0 && zeroNoSet.size() == 0) {
+            selectGoodsSQL = selectGoodsSQL + " and " + pkgNoStr;
+        }
+        if (pkgNoSet.size() > 0 && zeroNoSet.size() > 0) {
+            selectGoodsSQL = selectGoodsSQL + "  and  (" + pdNoStr + " or " + pkgNoStr + ")";
+        }
         List<Object[]> queryResult = baseDao.queryNativeSharding(compId, TimeUtils.getCurrentYear(), selectGoodsSQL);
         if (queryResult == null || queryResult.isEmpty()) {
             return "下单商品信息错误！";
@@ -647,7 +659,6 @@ public class TranOrderOptModule {
                     setGoodsStock(tranOrderGoods, 0L, goodsStockList);
                 }
             } else {
-
                 if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
                         tranOrderGoods.getPnum(), list)) {
                     return true;
