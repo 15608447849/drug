@@ -296,12 +296,20 @@ public class TranOrderOptModule {
             }
             if(balway > 0){
                 bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
-                if(bal >= payamt){
-                    payamt = 0;
-                    bal = tranOrder.getPayamt();
+                //可抵扣余额
+                double useBal = CouponRevModule.getUseBal(payamt,new HashMap());
+                if(useBal>0) {
+                    if (bal >= useBal) { //余额大于可抵扣余额
+                        payamt = MathUtil.exactSub(payamt, useBal).
+                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue(); //支付金额-可抵扣余额=支付金额
+                        bal = useBal;//余额抵扣为可抵扣余额
+                    } else {//余额小于可抵扣余额
+                        payamt = MathUtil.exactSub(payamt, bal).
+                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue(); //支付金额-当前用户拥有余额=支付金额
+                    }
                 }else{
-                    payamt = MathUtil.exactSub(payamt,bal).
-                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+                    payamt = MathUtil.exactSub(payamt, bal).
+                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                 }
                 bal = Math.max(bal, 0);
             }
