@@ -857,9 +857,11 @@ public class ActivityManageModule {
         int type = jsonObject.get("type").getAsInt();//1:全部商品  3部分商品  2 部分类别
         long actCode = jsonObject.get("actCode").getAsLong();
         int ruleCode = jsonObject.get("rulecode").getAsInt();
-        String ckCodeStr = checkParams(jsonObject, ruleCode);
-        if (ckCodeStr != null) {
-            return result.fail(ckCodeStr);
+        if (type != 1) {
+            String ckCodeStr = checkParams(jsonObject, ruleCode);
+            if (ckCodeStr != null) {
+                return result.fail(ckCodeStr);
+            }
         }
         //判断活动是否在进行中。。。
 //        if (theActInProgress(actCode)) {
