@@ -312,9 +312,6 @@ public class TranOrderOptModule {
                         payamt = MathUtil.exactSub(payamt, bal).
                                 setScale(2, RoundingMode.DOWN).intValue(); //支付金额-当前用户拥有余额=支付金额
                     }
-                }else{
-                    payamt = MathUtil.exactSub(payamt, bal).
-                            setScale(2, RoundingMode.DOWN).intValue();
                 }
                 bal = Math.max(bal, 0);
 //                appContext.logger.print("end线上支付金额："+ payamt);

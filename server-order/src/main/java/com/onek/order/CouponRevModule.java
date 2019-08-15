@@ -727,10 +727,6 @@ public class CouponRevModule {
                     resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
                             setScale(2,RoundingMode.DOWN).doubleValue());
                 }
-            }else{
-                resultMap.put("debal",bal);
-                resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
-                        setScale(2,RoundingMode.DOWN).doubleValue());
             }
 
         }
@@ -928,10 +924,6 @@ public class CouponRevModule {
                     resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
                             setScale(2,RoundingMode.DOWN).doubleValue());
                 }
-            }else{
-                resultMap.put("debal",bal);
-                resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
-                        setScale(2,RoundingMode.DOWN).doubleValue());
             }
             /*
             if(bal >= payamt){
