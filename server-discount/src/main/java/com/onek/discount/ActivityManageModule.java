@@ -1384,7 +1384,7 @@ public class ActivityManageModule {
             activityManageServer.registerObserver(new ProdCurrentActPriceObserver());
             List<String> proList = new ArrayList<>();
             if (delGoods != null && delGoods.size() > 0) {
-                LogUtil.getDefaultLogger().info("####### 1259 line: delGoods-->" + JSON.toJSONString(delGoods));
+//                LogUtil.getDefaultLogger().info("####### 1259 line: delGoods-->" + JSON.toJSONString(delGoods));
                 for (GoodsVO goodsVO : delGoods) {
                     JSONObject jsonObject = new JSONObject();
                     jsonObject.put("discount", 1);
@@ -1397,7 +1397,7 @@ public class ActivityManageModule {
                     proList.add(jsonObject.toJSONString());
                 }
             }
-            if (type == 1) {//全部商品
+            if (type == 1 && goodsVOS != null) {//全部商品
                 JSONObject jsonObject = new JSONObject();
                 jsonObject.put("discount", 1);
                 jsonObject.put("gcode", 0);
@@ -1955,7 +1955,7 @@ public class ActivityManageModule {
             type = 1;
         }
         try {
-            noticeGoodsUpd(type, goodsVOList, goodsVOList, brulecode, Long.parseLong(actcode));
+            noticeGoodsUpd(type, null, goodsVOList, brulecode, Long.parseLong(actcode));
             List<Object[]> parm = new ArrayList<>();
             parm.add(new Object[]{actcode});
             parm.add(new Object[]{actcode});
