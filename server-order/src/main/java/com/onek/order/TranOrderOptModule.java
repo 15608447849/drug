@@ -210,6 +210,10 @@ public class TranOrderOptModule {
         }
         TranOrder tranOrder = JSON.parseObject(orderObj.toJSONString(), TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
+        if(StringUtils.isEmpty(tranOrder.getConsignee()) || StringUtils.isEmpty(tranOrder.getContact())
+                || Long.valueOf(tranOrder.getContact()) <= 0) {
+            return result.fail("请填写收货人信息");
+        }
         if (!jsonObject.getString("unqid").isEmpty()) {
             unqid = jsonObject.getLong("unqid");
         }
