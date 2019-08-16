@@ -33,6 +33,7 @@ import util.http.HttpRequestUtil;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 import static com.onek.order.PayModule.*;
@@ -209,6 +210,10 @@ public class TranOrderOptModule {
         }
         TranOrder tranOrder = JSON.parseObject(orderObj.toJSONString(), TranOrder.class);
         if (tranOrder == null) return result.fail("订单信息有误");
+        if(StringUtils.isEmpty(tranOrder.getConsignee()) || StringUtils.isEmpty(tranOrder.getContact())
+                || Long.valueOf(tranOrder.getContact()) <= 0) {
+            return result.fail("请填写收货人信息");
+        }
         if (!jsonObject.getString("unqid").isEmpty()) {
             unqid = jsonObject.getLong("unqid");
         }
@@ -296,22 +301,24 @@ public class TranOrderOptModule {
             }
             if(balway > 0){
                 bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
+
                 //可抵扣余额
-                double useBal = CouponRevModule.getUseBal(payamt,new HashMap());
+                int useBal = MathUtil.exactSub(CouponRevModule.getUseBal(payamt,new HashMap()), 0).intValue();
+//                appContext.logger.print("线上支付金额："+ payamt);
+//                appContext.logger.print("余额支付金额："+ bal);
+//                appContext.logger.print("最高可抵扣余额：" + useBal) ;
                 if(useBal>0) {
                     if (bal >= useBal) { //余额大于可抵扣余额
                         payamt = MathUtil.exactSub(payamt, useBal).
-                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue(); //支付金额-可抵扣余额=支付金额
+                                setScale(2, RoundingMode.DOWN).intValue(); //支付金额-可抵扣余额=支付金额
                         bal = useBal;//余额抵扣为可抵扣余额
                     } else {//余额小于可抵扣余额
                         payamt = MathUtil.exactSub(payamt, bal).
-                                setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue(); //支付金额-当前用户拥有余额=支付金额
+                                setScale(2, RoundingMode.DOWN).intValue(); //支付金额-当前用户拥有余额=支付金额
                     }
-                }else{
-                    payamt = MathUtil.exactSub(payamt, bal).
-                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
                 }
                 bal = Math.max(bal, 0);
+//                appContext.logger.print("end线上支付金额："+ payamt);
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -1392,13 +1399,13 @@ public class TranOrderOptModule {
     public static void apportionBal(List<TranOrderGoods> tranOrderGoodsList,double bal,double payment,double freight){
         double[] dprice = new double[tranOrderGoodsList.size()];
         double afterDiscountPrice = .0;
-
+        bal = MathUtil.exactDiv(bal, 100.0).doubleValue();
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
-            dprice[i] = tranOrderGoodsList.get(i).getPayamt();
+            dprice[i] = MathUtil.exactDiv(tranOrderGoodsList.get(i).getPayamt(), 100.0).doubleValue();
 
             afterDiscountPrice =
-                    MathUtil.exactAdd(afterDiscountPrice, tranOrderGoodsList.get(i).getPayamt())
+                    MathUtil.exactAdd(afterDiscountPrice, dprice[i])
                             .setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue();
         }
 
@@ -1408,19 +1415,19 @@ public class TranOrderOptModule {
         double[] cdprice = DiscountUtil.shareDiscount(dprice, bal);
 
         for (int i = 0; i < tranOrderGoodsList.size(); i++){
-//            if(payment == 0){
-//                tranOrderGoodsList.get(i).setPayamt(0);
-//            }
-
-
-            tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i]).
-                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            tranOrderGoodsList.get(i).setBalamt(MathUtil.exactSub(dprice[i],cdprice[i])
+                    .setScale(2,BigDecimal.ROUND_HALF_UP).multiply(BigDecimal.valueOf(100)).doubleValue());
 
             tranOrderGoodsList.get(i).setPayamt(MathUtil.exactSub(tranOrderGoodsList.get(i).getPayamt(),
                     tranOrderGoodsList.get(i).getBalamt()).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
-           //
         }
+
+//        LogUtil.getDefaultLogger().info("---- bal " + bal);
+//        LogUtil.getDefaultLogger().info("---- dprice " + Arrays.toString(dprice));
+//        LogUtil.getDefaultLogger().info("---- cdprice " + Arrays.toString(cdprice));
+//        LogUtil.getDefaultLogger().info("---- afterDiscountPrice " + afterDiscountPrice);
+
     }
 
 

@@ -27,6 +27,7 @@ import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.time.LocalDate;
 import java.util.*;
@@ -655,14 +656,22 @@ public class CouponRevModule {
         }
 
         double bal = IceRemoteUtil.queryCompBal(compid);
+
+
         bal = MathUtil.exactDiv(bal,100L).
                 setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+        //可抵扣余额
+        double useBal = getUseBal(payamt,resultMap);
+        double flBal = bal;
+        if(flBal>=useBal){
+            flBal = useBal;
+        }
 
         double rebeatTotal = 0;
         Map<Long, Integer> balMap = new HashMap<>();
 
         double[] r = apportionBal(productList,
-                couponUseDTOS.get(0).getBalway() > 0 ? bal : 0);
+                couponUseDTOS.get(0).getBalway() > 0 ? flBal : 0);
 
         for(int i = 0; i < r.length; i++) {
             balMap.put(productList.get(i).getSKU(), (int) (r[i] * 100));
@@ -703,27 +712,21 @@ public class CouponRevModule {
         resultMap.put("acpay",payamt);
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
-        resultMap.put("rebeatp", MathUtil.exactDiv(rebeatTotal, 100.0).doubleValue());
-        //可抵扣余额
-        double useBal = getUseBal(payamt,resultMap);
+        resultMap.put("rebeatp", BigDecimal.valueOf(rebeatTotal / 100.0).setScale(2, RoundingMode.DOWN).doubleValue());
         resultMap.put("usebal",useBal);
         if(couponUseDTOS.get(0).getBalway() > 0 && bal > 0){
             resultMap.put("bal",bal);
             if(useBal>0){
                 if(bal >= useBal){
-                    appContext.logger.print("可抵扣余额："+useBal);
+//                    appContext.logger.print("可抵扣余额："+useBal);
                     resultMap.put("debal",useBal);
                     resultMap.put("acpay",MathUtil.exactSub(payamt,useBal).
-                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+                            setScale(2,RoundingMode.DOWN).doubleValue());
                 }else{
                     resultMap.put("debal",bal);
                     resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
-                            setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+                            setScale(2,RoundingMode.DOWN).doubleValue());
                 }
-            }else{
-                resultMap.put("debal",bal);
-                resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
-                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }
 
         }
@@ -743,10 +746,13 @@ public class CouponRevModule {
             if(baldeduction.length()>0){
                 resultMap.put("baldeduction",baldeduction);
                 double balDeductionPe =  MathUtil.exactDiv(Double.parseDouble(baldeduction),100).
-                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
-                System.out.println("余额抵扣百分比："+balDeductionPe);
+                        setScale(2,RoundingMode.DOWN).doubleValue();
+//                System.out.println("余额抵扣百分比："+balDeductionPe);
                 bal = MathUtil.exactMul(payamt,balDeductionPe).
-                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+                        setScale(2,RoundingMode.DOWN).doubleValue();
+//                if(bal<0.1){
+//                    bal = 0.01;
+//                }
             }
         }catch (Exception e){
             e.printStackTrace();
@@ -899,13 +905,27 @@ public class CouponRevModule {
         double bal = IceRemoteUtil.queryCompBal(compid);
         bal = MathUtil.exactDiv(bal,100L).
                 setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
-
+        //可抵扣余额
+        double useBal = getUseBal(payamt,resultMap);
         resultMap.put("bal",bal);
         resultMap.put("debal",0);
         resultMap.put("acpay",payamt);
         resultMap.put("payamt",payamt);
         resultMap.put("payflag",0);
         if(couponUseDTOS.get(0).getBalway() > 0){
+            if(useBal>0){
+                if(bal >= useBal){
+                    appContext.logger.print("可抵扣余额："+useBal);
+                    resultMap.put("debal",useBal);
+                    resultMap.put("acpay",MathUtil.exactSub(payamt,useBal).
+                            setScale(2,RoundingMode.DOWN).doubleValue());
+                }else{
+                    resultMap.put("debal",bal);
+                    resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
+                            setScale(2,RoundingMode.DOWN).doubleValue());
+                }
+            }
+            /*
             if(bal >= payamt){
                 resultMap.put("debal",payamt);
                 resultMap.put("acpay",0);
@@ -915,6 +935,7 @@ public class CouponRevModule {
                 resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }
+            */
         }
         return result.success(resultMap);
     }

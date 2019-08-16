@@ -5,6 +5,7 @@ import com.onek.calculate.entity.IProduct;
 import util.MathUtil;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.*;
 
 public class DiscountUtil {
@@ -18,7 +19,13 @@ public class DiscountUtil {
         }
 
         double[] result = new double[prices.length];
-        double total = Arrays.stream(prices).sum();
+        BigDecimal totalExtra = BigDecimal.ZERO;
+
+        for (double price : prices) {
+            totalExtra = totalExtra.add(BigDecimal.valueOf(price));
+        }
+
+        double total = totalExtra.setScale(2, RoundingMode.HALF_UP).doubleValue();
         double realDiscountTotal = .0;
         double turlyDiscountTotal;
         double proportion;
