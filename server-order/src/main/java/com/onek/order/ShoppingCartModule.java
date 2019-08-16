@@ -779,7 +779,12 @@ public class ShoppingCartModule {
         JsonObject jsonObject = jsonParser.parse(json).getAsJsonObject();
         int compid = jsonObject.get("compid").getAsInt();
         String ids = jsonObject.get("ids").getAsString();
-        String pkgids = jsonObject.get("pkgids").getAsString();
+
+        String pkgids = "";
+        if(jsonObject.has("pkgids")){
+            pkgids = jsonObject.get("pkgids").getAsString();
+        }
+
         if (StringUtils.isEmpty(ids) && StringUtils.isEmpty(pkgids)) {
             return result.fail("操作失败");
         }
