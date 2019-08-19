@@ -2379,7 +2379,7 @@ public class CouponManageModule {
             int ret [] = baseDao.updateBatchNative(courdSql,parm,parm.size());
             if(!ModelUtil.updateTransEmpty(ret)){
                 try{
-                    int code = IceRemoteUtil.insertNewComerCoups(compid,
+                    int code = IceRemoteUtil.insertHBComerCoups(compid,
                             GsonUtils.javaBeanToJson(couponPubVOList));
                     if(code>0){
                         baseDao.updateBatchNative(UPDATE_COUPON_STOCK,updateStock,updateStock.size());
