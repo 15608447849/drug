@@ -57,6 +57,9 @@ public class AppModule {
                 pkgnum = num/info.getMedpacknum();
             }
             context.logger.print("当前购物车套餐数量 = " + pkgnum);
+            if(beanGop.number == -1 && pkgnum<=0){
+                return new Result().fail("套餐数量不能再减少了",0);
+            }
             if(beanGop.number == -2){//加
                 beanGop.number = 1;
             }else if(beanGop.number == -1){ //减
@@ -70,7 +73,14 @@ public class AppModule {
             context.logger.print("最终添加购物车套餐数量 = " + beanGop.number);
             Result res =  writePkgToShopCat(compid,beanGop.pkgno,beanGop.number,context);
 
-            context.logger.print("修改套餐数量返回参数 = " + GsonUtils.javaBeanToJson(res));
+
+            int updateNum = beanGop.number+pkgnum;
+
+            context.logger.print("购物车中存在的套餐数量：=="+updateNum);
+            if(res.code == 200){
+                if(updateNum<=0)
+                    res =  removePkgToShopCat(compid,beanGop.pkgno,context).success("购物车更新成功","调用成功");
+            }
             return res;
         }
 
@@ -147,5 +157,17 @@ public class AppModule {
         map.put("checked",1);
         appContext.param.json = GsonUtils.javaBeanToJson(map);
         return new ShoppingCartModule().saveShopCart(appContext);
+    }
+
+
+    //当购物车套餐数量为时移除当前套餐
+
+    private static Result removePkgToShopCat(int compid,String pkgno,AppContext appContext){
+        HashMap map = new HashMap();
+        map.put("pkgids",pkgno);
+        map.put("ids","");
+        map.put("compid",compid);
+        appContext.param.json = GsonUtils.javaBeanToJson(map);
+        return new ShoppingCartModule().clearShopCart(appContext);
     }
 }
