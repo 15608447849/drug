@@ -81,7 +81,7 @@ public class ShoppingCartModule {
 
     //删除购物车信息
     private final String REAL_DEL_SHOPCART_SQL = "delete  from {{?" + DSMConst.TD_TRAN_GOODS + "}}  "
-            + " where cstatus&1=0 and unqid=? and orderno=0 ";
+            + " where cstatus&1=0 and unqid=? or pdno=? and orderno=0 ";
 
     //远程调用
     private static final String QUERY_PROD_BASE =
@@ -1770,7 +1770,7 @@ public class ShoppingCartModule {
         if (idList != null && idList.length > 0) {
             for (String unqid : idList) {
                 if (StringUtils.isInteger(unqid)) {
-                    shopParm.add(new Object[]{Long.parseLong(unqid)});
+                    shopParm.add(new Object[]{Long.parseLong(unqid),Long.parseLong(unqid)});
                     sqlList.add(REAL_DEL_SHOPCART_SQL);
                 }
             }

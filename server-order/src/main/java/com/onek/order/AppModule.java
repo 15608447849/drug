@@ -79,7 +79,7 @@ public class AppModule {
             context.logger.print("购物车中存在的套餐数量：=="+updateNum);
             if(res.code == 200){
                 if(updateNum<=0)
-                    res =  removePkgToShopCat(compid,beanGop.pkgno,context).success("购物车更新成功","调用成功");
+                    res =  removePkgToShopCat(compid,beanGop.pkgno,"",context).success("购物车更新成功","调用成功");
             }
             return res;
         }
@@ -131,6 +131,10 @@ public class AppModule {
         current = queryShopCartNumBySku(compid,beanGop.sku);
 
 
+        if(flag){
+            if(temp<=0)
+                flag = removePkgToShopCat(compid,"",String.valueOf(beanGop.sku),context).isSuccess();
+        }
         context.logger.print("最终结果数量: " + temp);
 
         return flag ? new Result().success("已加入购物车",current) : new Result().fail(result.message,current);
@@ -162,10 +166,10 @@ public class AppModule {
 
     //当购物车套餐数量为时移除当前套餐
 
-    private static Result removePkgToShopCat(int compid,String pkgno,AppContext appContext){
+    private static Result removePkgToShopCat(int compid,String pkgno,String ids,AppContext appContext){
         HashMap map = new HashMap();
         map.put("pkgids",pkgno);
-        map.put("ids","");
+        map.put("ids",ids);
         map.put("compid",compid);
         appContext.param.json = GsonUtils.javaBeanToJson(map);
         return new ShoppingCartModule().clearShopCart(appContext);
