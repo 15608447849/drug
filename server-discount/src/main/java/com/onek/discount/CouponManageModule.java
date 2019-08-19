@@ -2290,16 +2290,21 @@ public class CouponManageModule {
         Result result = new Result();
         int compid = appContext.getUserSession().compId;
         String selectType = appContext.param.arrays[0];
-        appContext.logger.print("--------------前端操作 = " + selectType);
         if(compid<=0){
             return result.fail("请登陆之后领取红包！");
         }
         //查询是否活动已经开始
         List<Object[]> coupRet = baseDao.queryNative(QUERY_LOGIN_COUPON,new Object[]{"SYS_HB"});
         appContext.logger.print("--------------该优惠券领取获取开始则大于0 反之==0：" + coupRet.size());
+        if(coupRet.size()<=0){
+            Map map = new HashMap();
+            map.put("isStart",false);
+            map.put("isRevCoupon",false);
+            map.put("eStock",0);
+            return result.success("调用成功",GsonUtils.javaBeanToJson(map));
+        }
         //获取是否领取
         String isRev = RedisUtil.getStringProvide().get(compid+"-temp-flag");
-        appContext.logger.print("当前用户是否已经领取优惠券："+isRev);
 
         //查询当前优惠券库存适量
         String selectLoginRev = "select actstock from {{?"+DSMConst.TD_PROM_COUPON+"}} where coupdesc = ?";
@@ -2312,7 +2317,6 @@ public class CouponManageModule {
             map.put("isStart",coupRet.size()>0);
             map.put("isRevCoupon",!StringUtils.isEmpty(isRev) && "1".equals(isRev));
             map.put("eStock",eStock);
-            appContext.logger.print("=========查询返回参数为："+GsonUtils.javaBeanToJson(map));
             return result.success("调用成功",GsonUtils.javaBeanToJson(map));
         }else { //领取优惠券
 
