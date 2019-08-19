@@ -2337,7 +2337,7 @@ public class CouponManageModule {
             }
 
             if(Integer.parseInt(rlist.get(0)[0].toString())<=0){
-                return result.fail("优惠券库存不足！");
+                return result.fail("红包已领取完！");
             }
             CouponPubVO[] couponPubVOS = new CouponPubVO[coupRet.size()];
             baseDao.convToEntity(coupRet, couponPubVOS, CouponPubVO.class,
