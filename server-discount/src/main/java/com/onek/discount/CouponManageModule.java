@@ -56,6 +56,8 @@ public class CouponManageModule {
 
     private static BaseDAO baseDao = BaseDAO.getBaseDAO();
 
+    private static int REDIS_TIME = 432000;
+
     private final static char[] letter = { 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'J',
             'K', 'L', 'M', 'N', 'P','Q', 'R', 'S', 'T', 'U', 'V',
             'W', 'X', 'Y', 'Z'};
@@ -2369,7 +2371,9 @@ public class CouponManageModule {
                             GsonUtils.javaBeanToJson(couponPubVOList));
                     if(code>0){
                         baseDao.updateBatchNative(UPDATE_COUPON_STOCK,updateStock,updateStock.size());
-                        RedisUtil.getStringProvide().set(compid+"-temp-flag","1");
+                        String key = compid+"-temp-flag";
+                        RedisUtil.getStringProvide().set(key,"1");
+                        RedisUtil.getStringProvide().expire(key, REDIS_TIME);
                         return result.success("红包领取成功！","领取成功");
                     }else{
                         return result.fail("领取失败");
