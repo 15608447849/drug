@@ -2300,7 +2300,7 @@ public class CouponManageModule {
         Result result = new Result();
 
         if(appContext.isAnonymous()){
-            return result.fail("请认证之后领取红包！",hmap);
+            return result.success("请认证之后领取红包！",hmap);
         }
 
         int compid = appContext.getUserSession().compId;
