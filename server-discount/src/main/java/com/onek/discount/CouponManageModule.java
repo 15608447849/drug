@@ -2291,13 +2291,18 @@ public class CouponManageModule {
     public Result revLoginenVelope(AppContext appContext){
         //查询是否活动已经开始
         List<Object[]> coupRet = baseDao.queryNative(QUERY_LOGIN_COUPON,new Object[]{"SYS_HB"});
+        Map hmap = new HashMap();
+        hmap.put("isStart",coupRet.size()>0);
 
         if (appContext.getUserSession() == null){
-            Map map = new HashMap();
-            map.put("isStart",coupRet.size()>0);
-            return new Result().success("暂未登陆，无法参与抢红包活动！",map);
+            return new Result().success("暂未登陆，无法参与抢红包活动！",hmap);
         }
         Result result = new Result();
+
+        if(appContext.isAnonymous()){
+            return result.fail("请认证之后领取红包！",hmap);
+        }
+
         int compid = appContext.getUserSession().compId;
         String selectType = appContext.param.arrays[0];
         if(compid<=0){
