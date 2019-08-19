@@ -37,8 +37,6 @@ import java.math.BigDecimal;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -2282,21 +2280,30 @@ public class CouponManageModule {
             " and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 and tpcp.cstatus & 2048 > 0 and tpcp.coupdesc =? and " +
             " 1 = fun_prom_cycle(tpcp.unqid,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) ";
 
+
+
     /**
      * 登陆领取大红包
      * @param ['selectType'="是否为查询操作"]
      * @return
      */
-    @UserPermission(ignore=false,needAuthenticated = true)
+    @UserPermission(ignore = true)
     public Result revLoginenVelope(AppContext appContext){
+        //查询是否活动已经开始
+        List<Object[]> coupRet = baseDao.queryNative(QUERY_LOGIN_COUPON,new Object[]{"SYS_HB"});
+
+        if (appContext.getUserSession() == null){
+            Map map = new HashMap();
+            map.put("isStart",coupRet.size()>0);
+            return new Result().success(map);
+        }
         Result result = new Result();
         int compid = appContext.getUserSession().compId;
         String selectType = appContext.param.arrays[0];
         if(compid<=0){
             return result.fail("请登陆之后领取红包！");
         }
-        //查询是否活动已经开始
-        List<Object[]> coupRet = baseDao.queryNative(QUERY_LOGIN_COUPON,new Object[]{"SYS_HB"});
+
         appContext.logger.print("--------------该优惠券领取获取开始则大于0 反之==0：" + coupRet.size());
 
         //获取是否领取
