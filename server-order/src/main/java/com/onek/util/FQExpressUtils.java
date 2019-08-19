@@ -45,7 +45,7 @@ public class FQExpressUtils {
             if (!StringUtils.isEmpty(result)) {
                 JSONObject jo = JSONObject.parseObject(result);
 
-                if (jo.getInteger("code") == 200) {
+                if (jo.containsKey("code") && jo.getInteger("code") == 200) {
                     return jo.getString("loginsno");
                 }
 
@@ -63,7 +63,7 @@ public class FQExpressUtils {
     }
 
     public static void main(String[] args) {
-        System.out.println(getRouteInfo("262798837939"));
+        System.out.println(getRouteInfo(getTravingCode("1908190000217807")));
     }
 
     public static String getRouteInfo(String code, RESULT_TYPE type) {
