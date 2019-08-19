@@ -2270,4 +2270,118 @@ public class CouponManageModule {
 
 
     }
+
+
+    private static String QUERY_LOGIN_COUPON = "select tpcp.unqid coupno,tpcp.brulecode,rulename,validday,validflag," +
+            "glbno,0 goods,qlfno,qlfval from {{?"+DSMConst.TD_PROM_COUPON+"}} tpcp inner join " +
+            "{{?" + DSMConst.TD_PROM_RULE + "}} tpcr on tpcp.brulecode = tpcr.brulecode inner join " +
+            "{{?" + DSMConst.TD_PROM_ASSDRUG+ "}} assd on assd.actcode = tpcp.unqid "+
+            " where assd.gcode = 0  and tpcp.cstatus & 64 > 0 and tpcp.cstatus & 33 = 0 and tpcp.glbno = 1 "+
+            " and tpcr.cstatus & 33 = 0 and assd.cstatus & 33 = 0 and tpcp.cstatus & 2048 > 0 and tpcp.coupname like '%?%' and " +
+            " 1 = fun_prom_cycle(tpcp.unqid,periodtype,periodday,DATE_FORMAT(NOW(),'%m%d'),0) ";
+
+    /**
+     * 登陆领取大红包
+     * @param [selectType="是否为查询操作"]
+     * @return
+     */
+    @UserPermission(ignore=false,needAuthenticated = true)
+    public Result revLoginenVelope(AppContext appContext){
+        Result result = new Result();
+        int compid = appContext.getUserSession().compId;
+        String selectType = appContext.param.arrays[0];
+        appContext.logger.print("--------------前端操作 = " + selectType);
+        if(compid<=0){
+            result.fail("请登陆之后领取红包！");
+        }
+        //查询是否活动已经开始
+        List<Object[]> coupRet = baseDao.queryNative(QUERY_LOGIN_COUPON,new Object[]{"红包券"});
+        appContext.logger.print("--------------该优惠券领取获取开始则大于0 反之==0：" + coupRet.size());
+        //获取是否领取
+        String isRev = RedisUtil.getStringProvide().get(compid+"-temp-flag");
+        appContext.logger.print("当前用户是否已经领取优惠券："+isRev);
+
+        //查询当前优惠券库存适量
+        String selectLoginRev = "select actstock from {{?"+DSMConst.TD_PROM_COUPON+"}} where coupname like '%?%'";
+        List<Object[]> rlist = baseDao.queryNative(selectLoginRev,"红包券");
+
+        if("query".equals(selectType)){//查询优惠券数量
+            Map map = new HashMap();
+
+            int eStock = Integer.parseInt(rlist.get(0)[0].toString());
+            map.put("isStart",coupRet.size()>0);
+            map.put("isRevCoupon",StringUtils.isEmpty(isRev) && "1".equals(isRev));
+            map.put("eStock",eStock);
+            appContext.logger.print("=========查询返回参数为："+GsonUtils.javaBeanToJson(map));
+            result.success("调用成功",GsonUtils.javaBeanToJson(map));
+        }else { //领取优惠券
+
+            if("1".equals(isRev))
+                result.fail("您已经领取过大红包，不可再次领取！");
+
+            if(coupRet == null || coupRet.isEmpty()){
+                return result.fail("大红包活动未开始！");
+            }
+            if(Integer.parseInt(rlist.get(0)[0].toString())<=0){
+                return result.fail("优惠券库存不足！");
+            }
+            CouponPubVO[] couponPubVOS = new CouponPubVO[coupRet.size()];
+            baseDao.convToEntity(coupRet, couponPubVOS, CouponPubVO.class,
+                    new String[]{"coupno","brulecode","rulename",
+                            "validday","validflag","glbno","goods","qlfno","qlfval"});
+
+            List<CouponPubVO> couponPubVOList = new ArrayList(Arrays.asList(couponPubVOS));
+            for (CouponPubVO couponPubVO:couponPubVOList){
+                String selectSQL = "select a.unqid,ladamt,ladnum,offercode,offer from {{?" + DSMConst.TD_PROM_RELA
+                        + "}} a left join {{?" + DSMConst.TD_PROM_LADOFF + "}} b on a.ladid=b.unqid where a.cstatus&1=0 "
+                        + " and a.actcode=" + couponPubVO.getCoupno() + " order by ladamt desc ";
+                List<Object[]> queryRet = baseDao.queryNative(selectSQL);
+                CouponPubLadderVO[] ladderVOS = new CouponPubLadderVO[queryRet.size()];
+                baseDao.convToEntity(queryRet, ladderVOS, CouponPubLadderVO.class,
+                        new String[]{"unqid","ladamt","ladnum","offercode","offer"});
+                for (CouponPubLadderVO ladderVO:ladderVOS) {
+                    ladderVO.setLadamt(MathUtil.exactDiv(ladderVO.getLadamt(),100L).
+                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                    ladderVO.setOffer(MathUtil.exactDiv(ladderVO.getOffer(),100L).
+                            setScale(2, BigDecimal.ROUND_HALF_UP).doubleValue());
+                }
+                couponPubVO.setLadderVOS(Arrays.asList(ladderVOS));
+                couponPubVO.setCompid(compid);
+            }
+
+            //增加领取记录表
+            List<Object[]> parm = new ArrayList<>();
+            String courdSql = "insert into {{?" + DSMConst.TD_PROM_COURCD + "}}" +
+                    " (unqid,coupno,compid,offercode,gettime,cstatus) values (?,?,?,?,now(),?)";
+
+            List<Object[]> updateStock = new ArrayList<>();
+
+            for (Object[] objects : coupRet){
+                long rcdid = GenIdUtil.getUnqId();
+                parm.add(new Object[]{rcdid,objects[0],
+                        compid,0,128});
+                updateStock.add(new Object[]{objects[0]});
+            }
+            int ret [] = baseDao.updateBatchNative(courdSql,parm,parm.size());
+            if(!ModelUtil.updateTransEmpty(ret)){
+                try{
+                    int code = IceRemoteUtil.insertNewComerCoups(compid,
+                            GsonUtils.javaBeanToJson(couponPubVOList));
+                    if(code>0){
+                        baseDao.updateNative(UPDATE_COUPON_STOCK,updateStock,updateStock.size());
+                        RedisUtil.getStringProvide().set(compid+"-temp-flag","1");
+                        result.success("红包领取成功！","领取成功");
+                    }else{
+                        result.fail("领取失败");
+                    }
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }else{
+                result.fail("领取失败");
+            }
+        }
+
+        return result;
+    }
 }
