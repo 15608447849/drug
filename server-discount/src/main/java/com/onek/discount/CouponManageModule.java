@@ -2295,7 +2295,7 @@ public class CouponManageModule {
         if (appContext.getUserSession() == null){
             Map map = new HashMap();
             map.put("isStart",coupRet.size()>0);
-            return new Result().success(map);
+            return new Result().success("请登陆后领取！",map);
         }
         Result result = new Result();
         int compid = appContext.getUserSession().compId;
