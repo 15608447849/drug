@@ -23,6 +23,7 @@ import com.onek.util.prod.ProdEntity;
 import com.onek.util.prod.ProdInfoStore;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.dom4j.Element;
 import org.hyrdpf.util.LogUtil;
 import org.joda.time.LocalDate;
 import redis.util.RedisUtil;
@@ -31,10 +32,7 @@ import util.*;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -1214,16 +1212,17 @@ public class OrderOptModule {
                 break;
             case 2://出库
                 jsonObject.put("des", "您的订单在仓库发货完成，准备运输");
-                jsonObject.put("date", "已发货");
+                jsonObject.put("status", "已发货");
                 break;
             case 3://在途
-                jsonObject.put("des", "您的订单正在运输中，请耐心等待收货");
-                ;
-                jsonObject.put("date", "运输中");
+                jsonObject.put("des", "");
+//                jsonObject.put("des", "您的订单正在运输中，请耐心等待收货");
+                jsonObject.put("status", "运输中");
                 break;
             default://签收
-                jsonObject.put("des", "您的订单已签收，感谢您本次采购，欢迎再次购买");
-                jsonObject.put("date", "已签收");
+                jsonObject.put("des", "");
+//                jsonObject.put("des", "您的订单已签收，感谢您本次采购，欢迎再次购买");
+                jsonObject.put("status", "已签收");
                 break;
         }
         jsonObject.put("date", LocalDate.now().toString());
@@ -1244,9 +1243,64 @@ public class OrderOptModule {
         }
         String selectSQL = "select node from {{?" + DSMConst.TD_TRAN_AFTERSALES + "}} "
                 + " where cstatus&1=0 and orderno=? and afsatype=3 and afsano=0 ";
+
         List<Object[]> queryResult = baseDao.queryNativeSharding(compId, TimeUtils.getYearByOrderno(orderNo), selectSQL, orderNo);
+
         if (queryResult == null || queryResult.isEmpty()) return result.success(null);
-        return result.success(String.valueOf(queryResult.get(0)[0]));
+
+        JSONArray jsonResult = JSONArray.parseArray(queryResult.get(0)[0].toString());
+
+        JSONArray returnResult = new JSONArray();
+        JSONObject jo;
+
+        for (int i = 0; i < jsonResult.size(); i++) {
+            jo = new JSONObject();
+            jo.put("status", jsonResult.getJSONObject(i).remove("status"));
+            JSONArray tempJa = new JSONArray();
+            tempJa.add(jsonResult.getJSONObject(i));
+            jo.put("info", tempJa);
+            returnResult.add(jo);
+        }
+
+        if (jsonResult.size() > 2) {
+            returnResult.remove(2);
+
+            String routeInfo = FQExpressUtils.getRouteInfo(FQExpressUtils.getTravingCode(orderNo));
+
+            if (StringUtils.isEmpty(routeInfo)) {
+                return result.success(returnResult.toJSONString());
+            }
+
+            Element root = XMLUtils.loadXML(routeInfo).getRootElement();
+
+            if (!root.element("Head").getTextTrim().equalsIgnoreCase("OK")) {
+                return result.success(returnResult.toJSONString());
+            }
+
+            Element routeResponse = root.element("Body").element("RouteResponse");
+
+            Iterator it = routeResponse.elementIterator("Route");
+            Element e;
+            JSONArray tempJa = new JSONArray();
+            jo = new JSONObject();
+            jo.put("info", tempJa);
+            jo.put("status", "运输中");
+            returnResult.add(2, jo);
+            while (it.hasNext()) {
+                e = (Element) it.next();
+                JSONObject tempJo = new JSONObject();
+                tempJa.add(tempJo);
+
+                String[] date_time = e.attributeValue("accept_time").split(" ");
+                tempJo.put("date", date_time[0]);
+                tempJo.put("time", date_time[1]);
+                tempJo.put("des",
+                        "【" + e.attributeValue("accept_address") + "】"
+                             + e.attributeValue("remark"));
+            }
+        }
+
+        return result.success(returnResult.toJSONString());
     }
 
 
