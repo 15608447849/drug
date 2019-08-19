@@ -2312,7 +2312,7 @@ public class CouponManageModule {
             map.put("isStart",coupRet.size()>0);
             map.put("isRevCoupon",!StringUtils.isEmpty(isRev) && "1".equals(isRev));
             map.put("eStock",eStock);
-            return result.success("调用成功",GsonUtils.javaBeanToJson(map));
+            return result.success("调用成功",map);
         }else { //领取优惠券
 
             if("1".equals(isRev))
@@ -2321,7 +2321,7 @@ public class CouponManageModule {
             if(coupRet == null || coupRet.isEmpty()){
                 return result.fail("领取红包失败！");
             }
-            
+
             if(Integer.parseInt(rlist.get(0)[0].toString())<=0){
                 return result.fail("优惠券库存不足！");
             }
