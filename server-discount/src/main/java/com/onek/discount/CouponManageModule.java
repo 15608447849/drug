@@ -2296,13 +2296,7 @@ public class CouponManageModule {
         //查询是否活动已经开始
         List<Object[]> coupRet = baseDao.queryNative(QUERY_LOGIN_COUPON,new Object[]{"SYS_HB"});
         appContext.logger.print("--------------该优惠券领取获取开始则大于0 反之==0：" + coupRet.size());
-        if(coupRet.size()<=0){
-            Map map = new HashMap();
-            map.put("isStart",false);
-            map.put("isRevCoupon",false);
-            map.put("eStock",0);
-            return result.success("调用成功",GsonUtils.javaBeanToJson(map));
-        }
+
         //获取是否领取
         String isRev = RedisUtil.getStringProvide().get(compid+"-temp-flag");
 
@@ -2312,8 +2306,9 @@ public class CouponManageModule {
 
         if("query".equals(selectType)){//查询优惠券数量
             Map map = new HashMap();
-
-            int eStock = Integer.parseInt(rlist.get(0)[0].toString());
+            int eStock =0;
+            if(coupRet.size()>0)
+                eStock = Integer.parseInt(rlist.get(0)[0].toString());
             map.put("isStart",coupRet.size()>0);
             map.put("isRevCoupon",!StringUtils.isEmpty(isRev) && "1".equals(isRev));
             map.put("eStock",eStock);
@@ -2321,11 +2316,12 @@ public class CouponManageModule {
         }else { //领取优惠券
 
             if("1".equals(isRev))
-                return result.fail("您已经领取过大红包，不可再次领取！");
+                return result.fail("您已经领取该红包，不可再次领取！");
 
             if(coupRet == null || coupRet.isEmpty()){
-                return result.fail("大红包活动未开始！");
+                return result.fail("领取红包失败！");
             }
+            
             if(Integer.parseInt(rlist.get(0)[0].toString())<=0){
                 return result.fail("优惠券库存不足！");
             }
