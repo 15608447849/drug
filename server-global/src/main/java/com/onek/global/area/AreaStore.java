@@ -153,6 +153,30 @@ public class AreaStore {
         return ArrayUtil.concat(returnResult, spResult);
     }
 
+    /**
+     *
+     * 功能: 获取所有城市(市级别) (特殊地：四大直辖和自治区直辖县级行政区划为特殊值 注意区分)
+     * 参数类型:
+     * 参数集:
+     * 返回值:
+     * 详情说明:
+     * 日期: 2019/6/6 14:47
+     * 作者: Helena Rubinstein
+     */
 
+    public static AreaEntity[] getAllArea() {
+
+        String sqls = AREA_SELECT_BASE + FROMS[0]
+                + " WHERE cstatus&1 = 0 "
+                + " AND areac NOT IN (110100000000, 120100000000, 310100000000, 500100000000) ";
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(sqls);
+
+        AreaEntity[] returnResult = new AreaEntity[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, returnResult, AreaEntity.class);
+
+        return returnResult;
+    }
 
 }
