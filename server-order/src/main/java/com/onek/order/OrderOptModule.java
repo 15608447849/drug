@@ -1262,8 +1262,10 @@ public class OrderOptModule {
             returnResult.add(jo);
         }
 
-        if (jsonResult.size() > 2) {
-            returnResult.remove(2);
+        if (jsonResult.size() >= 2) {
+            if (returnResult.size() > 2) {
+                returnResult.remove(2);
+            }
 
             String routeInfo = FQExpressUtils.getRouteInfo(FQExpressUtils.getTravingCode(orderNo));
 
@@ -1284,8 +1286,8 @@ public class OrderOptModule {
             JSONArray tempJa = new JSONArray();
             jo = new JSONObject();
             jo.put("info", tempJa);
-            jo.put("status", "运输中");
             returnResult.add(2, jo);
+            String status = "运输中";
             while (it.hasNext()) {
                 e = (Element) it.next();
                 JSONObject tempJo = new JSONObject();
@@ -1297,7 +1299,15 @@ public class OrderOptModule {
                 tempJo.put("des",
                         "【" + e.attributeValue("accept_address") + "】"
                              + e.attributeValue("remark"));
+
+//                switch (Integer.parseInt(e.attributeValue("opcode"))) {
+//                    case 50:
+//                        status = "已揽收";
+//                }
+
             }
+
+            jo.put("status", status);
         }
 
         return result.success(returnResult.toJSONString());

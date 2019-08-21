@@ -3,7 +3,6 @@ package com.onek.order;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.JSONArray;
 import com.onek.context.AppContext;
-import com.onek.entity.ShoppingCartDTO;
 import com.onek.entitys.Result;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.prod.ProdEntity;
@@ -120,7 +119,7 @@ public class AppModule {
 
         context.logger.print("limit = " + limit+" , unit = "+ unit +" , cur =" + current +" , 请求购买总数量: " + temp);
 
-        if (temp > limit) return new Result().fail("超过商品限制数",current);
+        if (temp > limit) return new Result().fail("商品库存不足!",current);
 
         //写入商品购物车数量
         Result result = writeNumberBySku(compid,beanGop.number,beanGop.sku,context);
