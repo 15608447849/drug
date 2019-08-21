@@ -268,7 +268,7 @@ public class TranOrderOptModule {
                     return result.fail("商品库存不足！");
                 }
             } catch (Exception e) {
-//                LogUtil.getDefaultLogger().info(Arrays.toString(e.getStackTrace()));
+                LogUtil.getDefaultLogger().info(Arrays.toString(e.getStackTrace()));
                 e.printStackTrace();
                 LogUtil.getDefaultLogger().info("print by placeOrder--------->>>>redis库存扣减库存失败！");
                 return  result.fail("下单减库存失败！");
