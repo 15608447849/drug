@@ -269,8 +269,8 @@ public class TranOrderOptModule {
                     return result.fail("【" + ProdInfoStore.getProdBySku(sku).getProdname()+ "】库存不足！");
                 }
             } catch (Exception e) {
-//                LogUtil.getDefaultLogger().info(Arrays.toString(e.getStackTrace()));
-//                e.printStackTrace();
+              /*  LogUtil.getDefaultLogger().info(Arrays.toString(e.getStackTrace()));
+                e.printStackTrace();*/
                 LogUtil.getDefaultLogger().info("print by placeOrder--------->>>>redis库存扣减库存失败！");
                 return  result.fail("下单减库存失败！");
             }
@@ -664,7 +664,7 @@ public class TranOrderOptModule {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             List<Long> list = new ArrayList<>();
             String actCodeStr = tranOrderGoods.getActcode();
-            LogUtil.getDefaultLogger().info("actCodeStr11111111111111122222222222222222 " + actCodeStr);
+//            LogUtil.getDefaultLogger().info("actCodeStr11111111111111122222222222222222 " + actCodeStr);
             if (!StringUtils.isEmpty(actCodeStr)) {
                 list = JSON.parseArray(actCodeStr).toJavaList(Long.class);
             }
