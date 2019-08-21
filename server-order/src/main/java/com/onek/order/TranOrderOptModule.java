@@ -24,6 +24,7 @@ import com.onek.util.*;
 import com.onek.util.area.AreaFeeUtil;
 import com.onek.util.discount.DiscountRuleStore;
 import com.onek.util.order.RedisOrderUtil;
+import com.onek.util.prod.ProdInfoStore;
 import com.onek.util.stock.RedisStockUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -261,14 +262,14 @@ public class TranOrderOptModule {
         if (orderType == 0) {
             //库存判断
             try {
-                boolean b = stockIsEnough(goodsStockList,tranOrderGoods);
-                if (b) {
+                long sku = stockIsEnough(goodsStockList,tranOrderGoods);
+                if (sku > 0) {
                     //库存不足处理
                     stockRecovery(goodsStockList);
-                    return result.fail("商品库存不足！");
+                    return result.fail("【" + ProdInfoStore.getProdBySku(sku).getProdname()+ "】库存不足！");
                 }
             } catch (Exception e) {
-//                LogUtil.getDefaultLogger().info(Arrays.toString(e.getStackTrace()));
+                LogUtil.getDefaultLogger().info(Arrays.toString(e.getStackTrace()));
                 e.printStackTrace();
                 LogUtil.getDefaultLogger().info("print by placeOrder--------->>>>redis库存扣减库存失败！");
                 return  result.fail("下单减库存失败！");
@@ -659,7 +660,7 @@ public class TranOrderOptModule {
      * @time 2019/4/17 11:49
      * @version 1.1.1
      **/
-    private boolean stockIsEnough(List<GoodsStock> goodsStockList, List<TranOrderGoods> tranOrderGoodsList) {
+    private long stockIsEnough(List<GoodsStock> goodsStockList, List<TranOrderGoods> tranOrderGoodsList) {
         for (TranOrderGoods tranOrderGoods : tranOrderGoodsList) {
             List<Long> list = new ArrayList<>();
             String actCodeStr = tranOrderGoods.getActcode();
@@ -669,14 +670,14 @@ public class TranOrderOptModule {
             if (list.size() == 0) {//无活动码
                 if (RedisStockUtil.deductionStock(tranOrderGoods.getPdno(),
                         tranOrderGoods.getPnum()) != 2) {
-                    return true;
+                    return tranOrderGoods.getPdno();
                 } else {
                     setGoodsStock(tranOrderGoods, 0L, goodsStockList);
                 }
             } else {
                 if (!RedisStockUtil.deductionActStock(tranOrderGoods.getPdno(),
                         tranOrderGoods.getPnum(), list)) {
-                    return true;
+                    return tranOrderGoods.getPdno();
                 } else {
                     for (Long aList : list) {
                         setGoodsStock(tranOrderGoods, aList, goodsStockList);
@@ -684,7 +685,7 @@ public class TranOrderOptModule {
                 }
             }
         }
-        return false;
+        return 0;
     }
 
     private List<GoodsStock> setGoodsStock(TranOrderGoods tranOrderGoods, Long aList, List<GoodsStock> goodsStockList) {
