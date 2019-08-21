@@ -265,7 +265,7 @@ public class TranOrderOptModule {
                 if (b) {
                     //库存不足处理
                     stockRecovery(goodsStockList);
-                    return result.fail("商品库存发生改变！");
+                    return result.fail("商品库存不足！");
                 }
             } catch (Exception e) {
 //                LogUtil.getDefaultLogger().info(Arrays.toString(e.getStackTrace()));
@@ -283,7 +283,7 @@ public class TranOrderOptModule {
             if (goodsList.size() != tranOrderGoods.size()) {
                 //库存不足处理
                 secKillStockRecovery(actcode, goodsList);
-                return result.fail("秒杀商品库存发生改变！");
+                return result.fail("商品库存不足！");
             }
             int num = RedisOrderUtil.getActBuyNum(tranOrder.getCusno(), tranOrderGoods.get(0).getPdno() ,actcode);
             int limitNum = RedisOrderUtil.getActLimit(tranOrderGoods.get(0).getPdno(), actcode);
@@ -387,7 +387,7 @@ public class TranOrderOptModule {
         }
         List<Object[]> queryResult = baseDao.queryNativeSharding(compId, TimeUtils.getCurrentYear(), selectGoodsSQL);
         if (queryResult == null || queryResult.isEmpty()) {
-            return "下单商品信息错误！";
+            return "购物车商品发生改变";
         }
         if (tranOrderGoods.size() != queryResult.size()) {
             return "购物车商品发生改变！";
