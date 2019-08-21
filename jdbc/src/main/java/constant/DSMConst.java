@@ -90,6 +90,7 @@ public interface DSMConst extends UDAConst {
             {"td_bk_tran_rebate"},//72同步运营平台返利记录表
             {"td_tran_aftersales"},//73节点信息
             {"td_wish_list"},//74 心愿单
+            {"tb_user_rela"},//75 用户-用户关联表
 
     };
 
@@ -173,6 +174,7 @@ public interface DSMConst extends UDAConst {
     public final static int TD_BK_TRAN_REBATE = 72;
     public final static int TD_TRAN_AFTERSALES = 73;
     public final static int TD_WISH_LIST = 74;
+    public final static int TB_USER_RELA = 75;
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步,4 同步到运营平台
     // 索引必须同_DB_TABLES里的索引对应
@@ -192,7 +194,7 @@ public interface DSMConst extends UDAConst {
             0, 4, 4, 4, 4,//60-64
             0, 0, 0, 0, 0,//65-69
             2, 0, 4, 1, 2,//70-74
-            0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0,//75-79
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0};
 }
