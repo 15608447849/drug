@@ -1408,6 +1408,72 @@ public class CouponRevModule {
         return result.fail("领取失败");
     }
 
+
+    /**
+     * 注册有礼
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result revHBCoupons(AppContext appContext) {
+        Result result = new Result();
+        String json = appContext.param.json;
+        LogUtil.getDefaultLogger().debug(json);
+        JsonParser jsonParser = new JsonParser();
+        JsonArray jsonArray = jsonParser.parse(json).getAsJsonArray();
+
+        List<CouponPubVO> couponPubVOList = new ArrayList<>();
+        Gson gson = new Gson();
+        for (JsonElement coupn : jsonArray) {
+            CouponPubVO couponPubVO = gson.fromJson(coupn, CouponPubVO.class);
+            if (couponPubVO != null) {
+                if(couponPubVO.getQlfno() == 1){
+                    couponPubVO.setCtype(4);
+                }
+                couponPubVOList.add(couponPubVO);
+            }
+        }
+
+        if (insertHBCoupons(couponPubVOList)) {
+            return result.success("领取成功");
+        }
+        return result.fail("领取失败");
+    }
+
+    public boolean insertHBCoupons(List<CouponPubVO> couponPubVOS){
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd");
+        Date curDate = new Date();
+        List<Object[]> parmList = new ArrayList<>();
+        for(CouponPubVO couponPubVO :couponPubVOS){
+            String startDate = dateFormat.format(curDate);
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(curDate);
+
+            calendar.add(Calendar.DATE, couponPubVO.getValidday());
+            String endDate = dateFormat.format(calendar.getTime());
+            if(couponPubVO.getValidflag() == 1){
+                calendar.setTime(curDate);
+                calendar.add(Calendar.DATE, 1);
+                startDate = dateFormat.format(calendar.getTime());
+                calendar.add(Calendar.DATE, couponPubVO.getValidday());
+                endDate = dateFormat.format(calendar.getTime());
+            }
+            String ladderJson =  GsonUtils.javaBeanToJson(couponPubVO.getLadderVOS());
+            parmList.add( new Object[]{GenIdUtil.getUnqId(),couponPubVO.getCoupno(),
+                    couponPubVO.getCompid(),startDate,"00:00:00",
+                    "2019-08-25","23:59:59",couponPubVO.getBrulecode(),
+                    couponPubVO.getRulename(),couponPubVO.getGoods(),
+                    ladderJson,couponPubVO.getGlbno(),0,couponPubVO.getCtype()});
+        }
+        int result[] = baseDao.updateBatchNativeSharding(couponPubVOS.get(0).getCompid(),
+                TimeUtils.getCurrentYear(),INSERT_COUPONREV_CSQL,parmList,parmList.size());
+
+        // IceRemoteUtil.updateTransNative()
+
+        return !ModelUtil.updateTransEmpty(result);
+
+    }
+
     public static void main(String[] args) {
 
     }
