@@ -7,11 +7,16 @@ import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.server.infimp.IceDebug;
 import com.onek.user.operations.*;
+import com.onek.util.IceRemoteUtil;
 import dao.BaseDAO;
 import util.GsonUtils;
+import util.StringUtils;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import static com.onek.user.operations.StoreBasicInfoOp.*;
-import static constant.DSMConst.TB_SYSTEM_USER;
+import static constant.DSMConst.*;
 
 /**
  * 登陆 / 注册 模块
@@ -265,4 +270,77 @@ public class LoginRegistrationModule {
     public Result checkStoreLoginStatus(AppContext appContext){
         return new Result().success(appContext.getUserSession() != null);
     }
+
+
+    private static class RelationBean{
+        String uid;
+        String cid;
+        String uphone;
+        String upw;
+        String cname;
+        String caddrcode;
+        String caddrcodeStr;
+        String caddr;
+        boolean isCurrent;
+    }
+    /***
+     * @接口摘要 查询关联用户
+     * @业务场景
+     * @传参类型 JSON/ARRAY
+     * @传参列表
+     * @返回列表
+     */
+    public Result queryRelationUser(AppContext appContext){
+        UserSession userSession = appContext.getUserSession();
+        String uid =String.valueOf(userSession.userId);
+        String sql = "SELECT relacode FROM {{?"+TB_USER_RELA+"}} WHERE uid=?";
+        String sql2 = "SELECT uid FROM {{?"+TB_USER_RELA+"}} WHERE relacode = ("+sql+")";
+        String sql3 = "SELECT u.uid,u.cid,u.uphone,u.upw,c.cname,c.caddrcode,c.caddr FROM {{?"+TB_SYSTEM_USER+"}} AS u INNER JOIN {{?"+TB_COMP+"}} AS c ON u.cid=c.cid IN("+sql2+")";
+        List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql3,uid);
+        List<RelationBean> list = new ArrayList<>();
+        if (lines.size() > 0){
+            for (Object[] rows : lines){
+                RelationBean b  = new RelationBean();
+                b.uid = StringUtils.obj2Str(rows[0]);
+                b.cid = StringUtils.obj2Str(rows[1]);
+                b.uphone = StringUtils.obj2Str(rows[2]);
+                b.upw = StringUtils.obj2Str(rows[3]);
+                b.cname = StringUtils.obj2Str(rows[4]);
+                b.caddrcode = StringUtils.obj2Str(rows[5]);
+                b.caddr = StringUtils.obj2Str(rows[6]);
+
+                try{
+                    b.caddrcodeStr = IceRemoteUtil.getArean(Long.parseLong(b.caddrcode));
+                    b.isCurrent = b.uid.equals(uid);
+                }catch (Exception ignored){ }
+
+                list.add(b);
+
+            }
+        }
+        return new Result().success(list);
+    }
+
+    public Result tryRelationUser(AppContext appContext){
+        try{
+            RelationBean b = GsonUtils.jsonToJavaBean(appContext.param.json,RelationBean.class) ;
+            if (b == null || StringUtils.isEmpty(b.uphone,b.upw)) new Result().fail("请输入需要关联账户的用户名/密码");
+            //判断手机号码/密码是否有效且角色是否为用户
+            String selectSql = "SELECT upw,roleid" +
+                    "FROM {{?" + TB_SYSTEM_USER + "}} " +
+                    "WHERE cstatus&1=0 AND uphone=?";
+            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,b.uphone);
+            if (lines.size()!=1) return new Result().fail("无法关联此用户,账号或密码不正确");
+            String pwd = StringUtils.obj2Str(lines.get(0)[0]);
+            if (!pwd.equalsIgnoreCase(b.upw))  return new Result().fail("无法关联此用户,账号或密码不正确");
+            int roleid = StringUtils.checkObjectNull(lines.get(0)[1],0);
+            if ( (roleid & 2 )== 0)  return new Result().fail("无法关联此用户,不匹配的角色");
+            //retrun 陈玉琼的方法
+        }catch (Exception e){
+            e.printStackTrace();
+        }
+        return new Result().fail("关联失败");
+    }
+
+
 }
