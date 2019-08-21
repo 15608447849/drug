@@ -157,6 +157,9 @@ public class WebAppModule {
                     for (AreaEntityByApp areaEntityByApp4 : list) {
                         String value4 = String.valueOf(areaEntityByApp4.value);
                         String label4 = areaEntityByApp4.label;
+                        if("500200000000".equals(value4)){
+                            break;
+                        }
                         if (value4.startsWith(value.substring(0,2))) {
                             Matcher citym = cityp.matcher(value4);
                             if (citym.find()) {
@@ -169,6 +172,9 @@ public class WebAppModule {
                                 for (AreaEntityByApp areaEntityByApp5 : list) {
                                     String value5 = String.valueOf(areaEntityByApp5.value);
                                     String label5 = areaEntityByApp5.label;
+                                    if("500200000000".equals(value5)){
+                                        break;
+                                    }
                                     if (value4.equals(value5)) {
                                         continue;
                                     }
