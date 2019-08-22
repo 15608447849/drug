@@ -854,7 +854,7 @@ public class TranOrderOptModule {
             for (Long actcode: list) {
                 if (actcode > 0) {
                     RedisStockUtil.addActStock(tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
-                    RedisOrderUtil.subtractActBuyNum(tranOrderGood.getCompid(), tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
+                    RedisOrderUtil.subtractActBuyNum(cusno, tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
                 }
             }
             RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
