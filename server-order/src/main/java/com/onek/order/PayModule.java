@@ -59,8 +59,7 @@ public class PayModule {
 
     private static final String GET_PAY_SQL = "select payamt,odate,otime,pdamt,freight,coupamt,distamt,rvaddno,balamt,orderno,IFNULL(address,'') address,pdnum,IFNULL(consignee,'') consignee,IFNULL(contact,'') contact from {{?" + DSMConst.TD_TRAN_ORDER + "}} where orderno=? and cusno = ?";
 
-    private static final String QUERY_ORDER_GOODS = "select g.pdno,g.pnum,g.promtype,g.actcode from {{?" + DSMConst.TD_TRAN_ORDER + "}} o,{{?" + DSMConst.TD_TRAN_GOODS + "}} g" +
-            " where g.orderno = o.orderno and o.orderno = ? and o.cusno = ?";
+    private static final String QUERY_ORDER = "select ostatus from {{?" + DSMConst.TD_TRAN_ORDER + "}} o where o.orderno = ? and o.cusno = ?";
 
     private static final String GET_TRAN_TRANS_SQL = "select payprice,payway,payno,orderno,paysource,paystatus,paydate,paytime,completedate,completetime "
             + " from {{?" + DSMConst.TD_TRAN_TRANS + "}} "
@@ -312,7 +311,7 @@ public class PayModule {
             result = failOpt(orderno, source, payno,paychannel, thirdPayNo, tradeStatus, tdate, time, compid, money);
         }
 
-        if(result != 2)  OrderUtil.sendMsg(orderno, tradeStatus ,money, compid, tradeDate);
+        if(result != 2 && result !=3)  OrderUtil.sendMsg(orderno, tradeStatus ,money, compid, tradeDate);
         if(result ==1 && "1".equals(tradeStatus)) {
             OrderUtil.generateLccOrder(compid, orderno);
             OrderUtil.updateSales(compid, orderno);
@@ -325,6 +324,8 @@ public class PayModule {
             return new Result().success(null);
         } else if (result == 2) {
             return new Result().success("已支付", null);
+        } else if (result == 3) {
+            return new Result().success("已取消", 1);
         } else {
             return new Result().fail(null);
         }
@@ -509,6 +510,14 @@ public class PayModule {
 
         List<String> sqlList = new ArrayList<>();
         List<Object[]> params = new ArrayList<>();
+
+        List<Object[]> orders = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), QUERY_ORDER, orderno, compid);
+        if(orders != null && orders.size() > 0){
+            int ostatus = Integer.parseInt(orders.get(0)[0].toString());
+            if(ostatus == -4){
+                return 3;
+            }
+        }
 
         List<Object[]> trans = baseDao.queryNativeSharding(compid, TimeUtils.getCurrentYear(), GET_TRAN_TRANS_SQL, orderno, compid);
         if(trans != null && trans.size() > 0) {
