@@ -297,9 +297,9 @@ public class LoginRegistrationModule {
     public Result queryRelationUser(AppContext appContext){
         UserSession userSession = appContext.getUserSession();
         String uid =String.valueOf(userSession.userId);
-        String sql = "SELECT relacode FROM {{?"+TB_USER_RELA+"}} WHERE uid=?";
-        String sql2 = "SELECT uid FROM {{?"+TB_USER_RELA+"}} WHERE relacode = ("+sql+")";
-        String sql3 = "SELECT u.uid,u.cid,u.uphone,u.upw,c.cname,c.caddrcode,c.caddr FROM {{?"+TB_SYSTEM_USER+"}} AS u INNER JOIN {{?"+TB_COMP+"}} AS c ON u.cid=c.cid WHERE u.uid IN("+sql2+")";
+        String sql = "SELECT relacode FROM {{?"+TB_USER_RELA+"}} WHERE cstatus&1=0 and uid=? ";
+        String sql2 = "SELECT uid FROM {{?"+TB_USER_RELA+"}} WHERE cstatus&1=0 and relacode = ("+sql+")";
+        String sql3 = "SELECT u.uid,u.cid,u.uphone,u.upw,c.cname,c.caddrcode,c.caddr FROM {{?" +TB_SYSTEM_USER+"}} AS u INNER JOIN {{?"+TB_COMP+"}} AS c ON u.cid=c.cid WHERE u.uid IN("+sql2+")";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql3,uid);
         List<RelationBean> list = new ArrayList<>();
         if (lines.size() > 0){
@@ -339,20 +339,21 @@ public class LoginRegistrationModule {
                 RelationBean b = GsonUtils.jsonToJavaBean(appContext.param.json,RelationBean.class) ;
                 if (b == null || StringUtils.isEmpty(b.uphone,b.upw)) new Result().fail("请输入需要关联账户的用户名/密码");
                 //判断手机号码/密码是否有效且角色是否为用户
-                String selectSql = "SELECT upw,roleid" +
-                        "FROM {{?" + TB_SYSTEM_USER + "}} " +
-                        "WHERE cstatus&1=0 AND uphone=?";
+                String selectSql = "SELECT upw,roleid,uid " +
+                        " FROM {{?" + TB_SYSTEM_USER + "}} " +
+                        " WHERE cstatus&1=0 AND uphone=?";
                 List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,b.uphone);
                 if (lines.size()!=1) return new Result().fail("无法关联此用户,账号或密码不正确");
                 String pwd = StringUtils.obj2Str(lines.get(0)[0]);
                 if (!pwd.equalsIgnoreCase(b.upw))  return new Result().fail("无法关联此用户,账号或密码不正确");
                 int roleid = StringUtils.checkObjectNull(lines.get(0)[1],0);
-                if ( (roleid & 2 )== 0)  return new Result().fail("无法关联此用户,不匹配的角色");
+                if ((roleid & 2 )== 0)  return new Result().fail("无法关联此用户,不匹配的角色");
                 //绑定
                 int bindUid = Integer.valueOf(lines.get(0)[2].toString());//要绑定的用户
+                if (bindUid == loginUid) return new Result().fail("该账号已绑定");
                 int code = bindUser(bindUid, loginUid);
                 if (code > 0) return  new Result().success("关联用户成功", "保存成功");
-                if (code == -1) return new Result().fail("已绑定用户");}
+                if (code == -1) return new Result().fail("该账号已绑定");}
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -368,7 +369,7 @@ public class LoginRegistrationModule {
      */
     private int bindUser(int bindUid, int loginUid) {
         int code, relCode;
-        String selectSQL = "select count(0), uid, relacode from {{?" + DSMConst.TB_USER_RELA + "}} "
+        String selectSQL = "select uid, relacode from {{?" + DSMConst.TB_USER_RELA + "}} "
                 + " where cstatus&1=0 and (uid="+bindUid + " or uid="+loginUid + ")";
         String insertSQL = "insert into {{?" + DSMConst.TB_USER_RELA + "}}(unqid,uid,relacode)"
                 + " values(?,?,?)";
@@ -376,23 +377,22 @@ public class LoginRegistrationModule {
                 + " where cstatus&1=0 and relacode=?";
         List<Object[]> params = new ArrayList<>();
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(selectSQL);
-        long count = Long.valueOf(queryResult.get(0)[0].toString());
-        if (count == 0) {//没数据直接插入
+        if (queryResult == null || queryResult.size() == 0) {//没数据直接插入
             relCode = RedisGlobalKeys.getShipId();
             params.add(new Object[]{GenIdUtil.getUnqId(), loginUid, relCode});
             params.add(new Object[]{GenIdUtil.getUnqId(), bindUid, relCode});
             code = !ModelUtil.updateTransEmpty(BaseDAO.getBaseDAO().updateBatchNative(insertSQL, params, params.size())) ? 1: 0;
-        } else if (count == 1){
-            relCode = Integer.valueOf(queryResult.get(0)[2].toString());
-            if (Integer.valueOf(queryResult.get(0)[1].toString()) == loginUid) {
+        } else if (queryResult.size() == 1){
+            relCode = Integer.valueOf(queryResult.get(0)[1].toString());
+            if (Integer.valueOf(queryResult.get(0)[0].toString()) == loginUid) {
                 code = BaseDAO.getBaseDAO().updateNative(insertSQL,GenIdUtil.getUnqId(),bindUid, relCode);
             } else {
                 code = BaseDAO.getBaseDAO().updateNative(insertSQL,GenIdUtil.getUnqId(),loginUid, relCode);
             }
         } else {
-            int uid0 = Integer.valueOf(queryResult.get(0)[1].toString());
-            int code0 = Integer.valueOf(queryResult.get(0)[2].toString());
-            int code1 = Integer.valueOf(queryResult.get(1)[2].toString());
+            int uid0 = Integer.valueOf(queryResult.get(0)[0].toString());
+            int code0 = Integer.valueOf(queryResult.get(0)[1].toString());
+            int code1 = Integer.valueOf(queryResult.get(1)[1].toString());
             if (code0 == code1) {
                 return -1;//已绑定用户
             } else {
