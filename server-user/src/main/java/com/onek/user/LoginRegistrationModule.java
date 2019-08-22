@@ -318,10 +318,14 @@ public class LoginRegistrationModule {
                 try{
                     b.caddrcodeStr = IceRemoteUtil.getArean(Long.parseLong(b.caddrcode));
                     b.isCurrent = b.uid.equals(uid);
-                    current = b;
+
                 }catch (Exception ignored){ }
 
-                if (!b.isCurrent) list.add(b);
+                if (!b.isCurrent) {
+                    list.add(b);
+                }else{
+                    current = b;
+                }
             }
             if (current!=null) list.add(0,current);
         }
