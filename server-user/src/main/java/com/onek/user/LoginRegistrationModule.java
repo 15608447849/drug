@@ -326,23 +326,33 @@ public class LoginRegistrationModule {
 
     public Result tryRelationUser(AppContext appContext){
         try{
-            RelationBean b = GsonUtils.jsonToJavaBean(appContext.param.json,RelationBean.class) ;
-            if (b == null || StringUtils.isEmpty(b.uphone,b.upw)) new Result().fail("请输入需要关联账户的用户名/密码");
-            //判断手机号码/密码是否有效且角色是否为用户
-            String selectSql = "SELECT upw,roleid,uid " +
-                    "FROM {{?" + TB_SYSTEM_USER + "}} " +
-                    "WHERE cstatus&1=0 AND uphone=?";
-            List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,b.uphone);
-            if (lines.size()!=1) return new Result().fail("无法关联此用户,账号或密码不正确");
-            String pwd = StringUtils.obj2Str(lines.get(0)[0]);
-            if (!pwd.equalsIgnoreCase(b.upw))  return new Result().fail("无法关联此用户,账号或密码不正确");
-            int roleid = StringUtils.checkObjectNull(lines.get(0)[1],0);
-            if ( (roleid & 2 )== 0)  return new Result().fail("无法关联此用户,不匹配的角色");
-            //retrun 陈玉琼的方法
-            int bindUid = Integer.valueOf(lines.get(0)[2].toString());//要绑定的用户
-            int code = bindUser(bindUid, appContext.getUserSession().userId);
-            if (code > 0) return  new Result().success("关联用户成功", "保存成功");
-            if (code == -1) return new Result().fail("已绑定用户");
+            int loginUid = appContext.getUserSession() != null ? appContext.getUserSession().userId : 0;
+            if (loginUid <= 0) return new Result().fail("用户未登录");
+            if (appContext.param.arrays.length == 1){
+                //删除
+                int delUid = Integer.valueOf(appContext.param.arrays[0]);
+                int result = delRel(loginUid, delUid);
+                if (result == -1) return new Result().fail("未找到该关联", "删除失败");
+                return new Result().success("解除用户关联成功", "删除成功");
+            }else{
+                //关联
+                RelationBean b = GsonUtils.jsonToJavaBean(appContext.param.json,RelationBean.class) ;
+                if (b == null || StringUtils.isEmpty(b.uphone,b.upw)) new Result().fail("请输入需要关联账户的用户名/密码");
+                //判断手机号码/密码是否有效且角色是否为用户
+                String selectSql = "SELECT upw,roleid" +
+                        "FROM {{?" + TB_SYSTEM_USER + "}} " +
+                        "WHERE cstatus&1=0 AND uphone=?";
+                List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,b.uphone);
+                if (lines.size()!=1) return new Result().fail("无法关联此用户,账号或密码不正确");
+                String pwd = StringUtils.obj2Str(lines.get(0)[0]);
+                if (!pwd.equalsIgnoreCase(b.upw))  return new Result().fail("无法关联此用户,账号或密码不正确");
+                int roleid = StringUtils.checkObjectNull(lines.get(0)[1],0);
+                if ( (roleid & 2 )== 0)  return new Result().fail("无法关联此用户,不匹配的角色");
+                //绑定
+                int bindUid = Integer.valueOf(lines.get(0)[2].toString());//要绑定的用户
+                int code = bindUser(bindUid, loginUid);
+                if (code > 0) return  new Result().success("关联用户成功", "保存成功");
+                if (code == -1) return new Result().fail("已绑定用户");}
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -396,6 +406,15 @@ public class LoginRegistrationModule {
         return code;
     }
 
-
+    private int delRel(int loginUid, int delUid) {
+        String selectSQL = "select relacode from {{?" + DSMConst.TB_USER_RELA + "}} where "
+                + " cstatus&1=0 and uid=?";
+        String updSQL = "update {{?" + DSMConst.TB_USER_RELA + "}} set cstatus=cstatus|1 "
+                + " where cstatus&1=0 and uid=? and relacode=?";
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(selectSQL, loginUid);
+        if (queryResult == null || queryResult.isEmpty()) return -1;
+        int relCode = Integer.valueOf(queryResult.get(0)[0].toString());
+        return BaseDAO.getBaseDAO().updateNative(updSQL, delUid, relCode);
+    }
 
 }
