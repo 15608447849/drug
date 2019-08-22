@@ -7,9 +7,13 @@ import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.server.infimp.IceDebug;
 import com.onek.user.operations.*;
+import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.RedisGlobalKeys;
+import constant.DSMConst;
 import dao.BaseDAO;
 import util.GsonUtils;
+import util.ModelUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
@@ -326,7 +330,7 @@ public class LoginRegistrationModule {
             RelationBean b = GsonUtils.jsonToJavaBean(appContext.param.json,RelationBean.class) ;
             if (b == null || StringUtils.isEmpty(b.uphone,b.upw)) new Result().fail("请输入需要关联账户的用户名/密码");
             //判断手机号码/密码是否有效且角色是否为用户
-            String selectSql = "SELECT upw,roleid" +
+            String selectSql = "SELECT upw,roleid,uid " +
                     "FROM {{?" + TB_SYSTEM_USER + "}} " +
                     "WHERE cstatus&1=0 AND uphone=?";
             List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,b.uphone);
@@ -336,11 +340,63 @@ public class LoginRegistrationModule {
             int roleid = StringUtils.checkObjectNull(lines.get(0)[1],0);
             if ( (roleid & 2 )== 0)  return new Result().fail("无法关联此用户,不匹配的角色");
             //retrun 陈玉琼的方法
+            int bindUid = Integer.valueOf(lines.get(0)[2].toString());//要绑定的用户
+            int code = bindUser(bindUid, appContext.getUserSession().userId);
+            if (code > 0) return  new Result().success("关联用户成功", "保存成功");
+            if (code == -1) return new Result().fail("已绑定用户");
         }catch (Exception e){
             e.printStackTrace();
         }
         return new Result().fail("关联失败");
     }
+
+    /***
+     * @接口摘要 关联用户
+     * @业务场景
+     * @传参类型 bindUid 需要关联的用户id   loginUid 当前登录的用户id
+     * @传参列表
+     * @返回列表
+     */
+    private int bindUser(int bindUid, int loginUid) {
+        int code, relCode;
+        String selectSQL = "select count(0), uid, relacode from {{?" + DSMConst.TB_USER_RELA + "}} "
+                + " where cstatus&1=0 and (uid="+bindUid + " or uid="+loginUid + ")";
+        String insertSQL = "insert into {{?" + DSMConst.TB_USER_RELA + "}}(unqid,uid,relacode)"
+                + " values(?,?,?)";
+        String updateSQL = "update {{?" + DSMConst.TB_USER_RELA + "}} set relacode=? "
+                + " where cstatus&1=0 and relacode=?";
+        List<Object[]> params = new ArrayList<>();
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(selectSQL);
+        long count = Long.valueOf(queryResult.get(0)[0].toString());
+        if (count == 0) {//没数据直接插入
+            relCode = RedisGlobalKeys.getShipId();
+            params.add(new Object[]{GenIdUtil.getUnqId(), loginUid, relCode});
+            params.add(new Object[]{GenIdUtil.getUnqId(), bindUid, relCode});
+            code = !ModelUtil.updateTransEmpty(BaseDAO.getBaseDAO().updateBatchNative(insertSQL, params, params.size())) ? 1: 0;
+        } else if (count == 1){
+            relCode = Integer.valueOf(queryResult.get(0)[2].toString());
+            if (Integer.valueOf(queryResult.get(0)[1].toString()) == loginUid) {
+                code = BaseDAO.getBaseDAO().updateNative(insertSQL,GenIdUtil.getUnqId(),bindUid, relCode);
+            } else {
+                code = BaseDAO.getBaseDAO().updateNative(insertSQL,GenIdUtil.getUnqId(),loginUid, relCode);
+            }
+        } else {
+            int uid0 = Integer.valueOf(queryResult.get(0)[1].toString());
+            int code0 = Integer.valueOf(queryResult.get(0)[2].toString());
+            int code1 = Integer.valueOf(queryResult.get(1)[2].toString());
+            if (code0 == code1) {
+                return -1;//已绑定用户
+            } else {
+                if (uid0 == loginUid) {
+                    code = BaseDAO.getBaseDAO().updateNative(updateSQL,code0, code1);
+                } else {
+                    code = BaseDAO.getBaseDAO().updateNative(updateSQL,code1, code0);
+                }
+            }
+        }
+        return code;
+    }
+
 
 
 }
