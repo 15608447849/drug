@@ -199,7 +199,7 @@ public class PayModule {
      * @接口摘要 预支付
      * @业务场景
      * @传参类型 json
-     * @传参列表 rderno=订单号 afsano=售后单号(售后需要填写) paytype=付款方式 flag 客户端类型
+     * @传参列表 rderno=订单号 afsano=售后单号(售后需要填写) paytype=付款方式 flag 客户端类型, openid-微信公众号支付
      * @返回列表 ccode=200 date=付款二维码地址(web),可支付的JSON信息(app)
      */
     @IceDebug(outPrint = true)
@@ -214,6 +214,7 @@ public class PayModule {
 
         String paytype = jsonObject.get("paytype").getAsString();
         int flag = jsonObject.has("flag") ? jsonObject.get("flag").getAsInt() : 0;
+        String openid = jsonObject.has("openid")?jsonObject.get("openid").getAsString() : null;
 
         String afsano = null;
         try{ afsano  = jsonObject.get("afsano").getAsString(); }catch (Exception ignored){}
@@ -248,9 +249,15 @@ public class PayModule {
                 String callbackFunName = isOrderPayOp ? "payCallBack" : "payFeeCallBack" ;
                 Object res;
                 if(flag == 0){
-                    //web
-                    res = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, payno,
-                            "orderServer" + getOrderServerNo(compid), "PayModule", callbackFunName, compid + "");
+                    if (openid!=null){
+                        //公众号
+                        res = FileServerUtils.getWXJSPayInfo(openid,paytype, "一块医药", payamt, payno,
+                                "orderServer" + getOrderServerNo(compid), "PayModule", callbackFunName, compid + "");
+                    }else{
+                        //web
+                        res = FileServerUtils.getPayQrImageLink(paytype, "一块医药", payamt, payno,
+                                "orderServer" + getOrderServerNo(compid), "PayModule", callbackFunName, compid + "");
+                    }
                 }else{
                     //app
                     res = FileServerUtils.getAppPayInfo(paytype, "一块医药", payamt, payno,
