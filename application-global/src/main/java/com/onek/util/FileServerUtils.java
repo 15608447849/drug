@@ -165,20 +165,25 @@ public class FileServerUtils {
         return GsonUtils.string2Map(json);
     }
 
-    /**
-     * @return 付款二维码图片链接
-     */
+    /** 付款二维码图片链接 */
     public static String getPayQrImageLink(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr) {
         HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, false);
         assert rmap != null;
         return rmap.get("data") == null ? null : rmap.get("data").toString();
     }
-
+    /** 移动端支付 */
     public static Map getAppPayInfo(String type, String subject, double price, String orderNo, String serverName, String callback_clazz, String callback_method, String attr){
         HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, true);
         assert rmap != null;
         return rmap.get("data") == null ? null : (Map)rmap.get("data");
     }
+    /** wx公众号支付 */
+    public static Map getWXJSPayInfo(String openid,String type, String subject, double price, String orderNo, String serverName, String callback_clazz, String callback_method, String attr){
+        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, false);
+        assert rmap != null;
+        return rmap.get("data") == null ? null : (Map)rmap.get("data");
+    }
+
     /**
      * 查询一个订单支付状态
      * @return 0-待支付 1已支付 -2异常
