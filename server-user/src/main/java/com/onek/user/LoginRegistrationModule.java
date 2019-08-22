@@ -7,9 +7,13 @@ import com.onek.context.UserSession;
 import com.onek.entitys.Result;
 import com.onek.server.infimp.IceDebug;
 import com.onek.user.operations.*;
+import com.onek.util.GenIdUtil;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.RedisGlobalKeys;
+import constant.DSMConst;
 import dao.BaseDAO;
 import util.GsonUtils;
+import util.ModelUtil;
 import util.StringUtils;
 
 import java.util.ArrayList;
@@ -293,9 +297,9 @@ public class LoginRegistrationModule {
     public Result queryRelationUser(AppContext appContext){
         UserSession userSession = appContext.getUserSession();
         String uid =String.valueOf(userSession.userId);
-        String sql = "SELECT relacode FROM {{?"+TB_USER_RELA+"}} WHERE uid=?";
-        String sql2 = "SELECT uid FROM {{?"+TB_USER_RELA+"}} WHERE relacode = ("+sql+")";
-        String sql3 = "SELECT u.uid,u.cid,u.uphone,u.upw,c.cname,c.caddrcode,c.caddr FROM {{?"+TB_SYSTEM_USER+"}} AS u INNER JOIN {{?"+TB_COMP+"}} AS c ON u.cid=c.cid WHERE u.uid IN("+sql2+")";
+        String sql = "SELECT relacode FROM {{?"+TB_USER_RELA+"}} WHERE cstatus&1=0 and uid=? ";
+        String sql2 = "SELECT uid FROM {{?"+TB_USER_RELA+"}} WHERE cstatus&1=0 and relacode = ("+sql+")";
+        String sql3 = "SELECT u.uid,u.cid,u.uphone,u.upw,c.cname,c.caddrcode,c.caddr FROM {{?" +TB_SYSTEM_USER+"}} AS u INNER JOIN {{?"+TB_COMP+"}} AS c ON u.cid=c.cid WHERE u.uid IN("+sql2+")";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql3,uid);
         List<RelationBean> list = new ArrayList<>();
         if (lines.size() > 0){
@@ -322,31 +326,95 @@ public class LoginRegistrationModule {
 
     public Result tryRelationUser(AppContext appContext){
         try{
+            int loginUid = appContext.getUserSession() != null ? appContext.getUserSession().userId : 0;
+            if (loginUid <= 0) return new Result().fail("用户未登录");
             if (appContext.param.arrays.length == 1){
                 //删除
-
+                int delUid = Integer.valueOf(appContext.param.arrays[0]);
+                int result = delRel(loginUid, delUid);
+                if (result == -1) return new Result().fail("未找到该关联", "删除失败");
+                return new Result().success("解除用户关联成功", "删除成功");
             }else{
                 //关联
                 RelationBean b = GsonUtils.jsonToJavaBean(appContext.param.json,RelationBean.class) ;
                 if (b == null || StringUtils.isEmpty(b.uphone,b.upw)) new Result().fail("请输入需要关联账户的用户名/密码");
                 //判断手机号码/密码是否有效且角色是否为用户
-                String selectSql = "SELECT upw,roleid" +
-                        "FROM {{?" + TB_SYSTEM_USER + "}} " +
-                        "WHERE cstatus&1=0 AND uphone=?";
+                String selectSql = "SELECT upw,roleid,uid " +
+                        " FROM {{?" + TB_SYSTEM_USER + "}} " +
+                        " WHERE cstatus&1=0 AND uphone=?";
                 List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(selectSql,b.uphone);
                 if (lines.size()!=1) return new Result().fail("无法关联此用户,账号或密码不正确");
                 String pwd = StringUtils.obj2Str(lines.get(0)[0]);
                 if (!pwd.equalsIgnoreCase(b.upw))  return new Result().fail("无法关联此用户,账号或密码不正确");
                 int roleid = StringUtils.checkObjectNull(lines.get(0)[1],0);
-                if ( (roleid & 2 )== 0)  return new Result().fail("无法关联此用户,不匹配的角色");
-                //retrun 陈玉琼的方法
-            }
-
+                if ((roleid & 2 )== 0)  return new Result().fail("无法关联此用户,不匹配的角色");
+                //绑定
+                int bindUid = Integer.valueOf(lines.get(0)[2].toString());//要绑定的用户
+                if (bindUid == loginUid) return new Result().fail("该账号已绑定");
+                int code = bindUser(bindUid, loginUid);
+                if (code > 0) return  new Result().success("关联用户成功", "保存成功");
+                if (code == -1) return new Result().fail("该账号已绑定");}
         }catch (Exception e){
             e.printStackTrace();
         }
         return new Result().fail("关联失败");
     }
 
+    /***
+     * @接口摘要 关联用户
+     * @业务场景
+     * @传参类型 bindUid 需要关联的用户id   loginUid 当前登录的用户id
+     * @传参列表
+     * @返回列表
+     */
+    private int bindUser(int bindUid, int loginUid) {
+        int code, relCode;
+        String selectSQL = "select uid, relacode from {{?" + DSMConst.TB_USER_RELA + "}} "
+                + " where cstatus&1=0 and (uid="+bindUid + " or uid="+loginUid + ")";
+        String insertSQL = "insert into {{?" + DSMConst.TB_USER_RELA + "}}(unqid,uid,relacode)"
+                + " values(?,?,?)";
+        String updateSQL = "update {{?" + DSMConst.TB_USER_RELA + "}} set relacode=? "
+                + " where cstatus&1=0 and relacode=?";
+        List<Object[]> params = new ArrayList<>();
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(selectSQL);
+        if (queryResult == null || queryResult.size() == 0) {//没数据直接插入
+            relCode = RedisGlobalKeys.getShipId();
+            params.add(new Object[]{GenIdUtil.getUnqId(), loginUid, relCode});
+            params.add(new Object[]{GenIdUtil.getUnqId(), bindUid, relCode});
+            code = !ModelUtil.updateTransEmpty(BaseDAO.getBaseDAO().updateBatchNative(insertSQL, params, params.size())) ? 1: 0;
+        } else if (queryResult.size() == 1){
+            relCode = Integer.valueOf(queryResult.get(0)[1].toString());
+            if (Integer.valueOf(queryResult.get(0)[0].toString()) == loginUid) {
+                code = BaseDAO.getBaseDAO().updateNative(insertSQL,GenIdUtil.getUnqId(),bindUid, relCode);
+            } else {
+                code = BaseDAO.getBaseDAO().updateNative(insertSQL,GenIdUtil.getUnqId(),loginUid, relCode);
+            }
+        } else {
+            int uid0 = Integer.valueOf(queryResult.get(0)[0].toString());
+            int code0 = Integer.valueOf(queryResult.get(0)[1].toString());
+            int code1 = Integer.valueOf(queryResult.get(1)[1].toString());
+            if (code0 == code1) {
+                return -1;//已绑定用户
+            } else {
+                if (uid0 == loginUid) {
+                    code = BaseDAO.getBaseDAO().updateNative(updateSQL,code0, code1);
+                } else {
+                    code = BaseDAO.getBaseDAO().updateNative(updateSQL,code1, code0);
+                }
+            }
+        }
+        return code;
+    }
+
+    private int delRel(int loginUid, int delUid) {
+        String selectSQL = "select relacode from {{?" + DSMConst.TB_USER_RELA + "}} where "
+                + " cstatus&1=0 and uid=?";
+        String updSQL = "update {{?" + DSMConst.TB_USER_RELA + "}} set cstatus=cstatus|1 "
+                + " where cstatus&1=0 and uid=? and relacode=?";
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(selectSQL, loginUid);
+        if (queryResult == null || queryResult.isEmpty()) return -1;
+        int relCode = Integer.valueOf(queryResult.get(0)[0].toString());
+        return BaseDAO.getBaseDAO().updateNative(updSQL, delUid, relCode);
+    }
 
 }
