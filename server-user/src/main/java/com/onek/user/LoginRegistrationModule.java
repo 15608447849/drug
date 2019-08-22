@@ -295,7 +295,7 @@ public class LoginRegistrationModule {
         String uid =String.valueOf(userSession.userId);
         String sql = "SELECT relacode FROM {{?"+TB_USER_RELA+"}} WHERE uid=?";
         String sql2 = "SELECT uid FROM {{?"+TB_USER_RELA+"}} WHERE relacode = ("+sql+")";
-        String sql3 = "SELECT u.uid,u.cid,u.uphone,u.upw,c.cname,c.caddrcode,c.caddr FROM {{?"+TB_SYSTEM_USER+"}} AS u INNER JOIN {{?"+TB_COMP+"}} AS c ON u.cid=c.cid IN("+sql2+")";
+        String sql3 = "SELECT u.uid,u.cid,u.uphone,u.upw,c.cname,c.caddrcode,c.caddr FROM {{?"+TB_SYSTEM_USER+"}} AS u INNER JOIN {{?"+TB_COMP+"}} AS c ON u.cid=c.cid WHERE u.uid IN("+sql2+")";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql3,uid);
         List<RelationBean> list = new ArrayList<>();
         if (lines.size() > 0){
@@ -315,7 +315,6 @@ public class LoginRegistrationModule {
                 }catch (Exception ignored){ }
 
                 list.add(b);
-
             }
         }
         return new Result().success(list);
