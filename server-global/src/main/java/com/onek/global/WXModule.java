@@ -1,12 +1,19 @@
 package com.onek.global;
 
+import com.google.gson.reflect.TypeToken;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.util.FileServerUtils;
 import redis.util.RedisUtil;
 import util.GsonUtils;
+import util.http.HttpRequest;
 import util.http.HttpUtil;
 
+import javax.net.ssl.HttpsURLConnection;
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -42,6 +49,10 @@ public class WXModule {
      */
     private static final String OPEN_ID_URL = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+APPID+"&secret="+SECRET+"&code=%s&grant_type=authorization_code";
 
+    /**
+     * 获取图片等媒体文件
+     */
+    public final static String GET_MEDIA_URL = "https://api.weixin.qq.com/cgi-bin/media/get?access_token=%s&media_id=%s";
 
 
 
@@ -127,18 +138,13 @@ public class WXModule {
         return ret;
     }
 
-
-
-    public static void main(String[] args) {
-        String url = "http://app.onek56.com/wx/?code=0019QzD20NwlVJ1q2aE20LYND209QzDB&state=1";
-        Map<String,String> map = sign(url);
-        System.out.println(map);
-    }
-
-
     private static class Param{
         String url;
         String code;
+
+        String mediaId;
+        String savePath;
+        String fileName;
     }
 
     @UserPermission(ignore = true)
@@ -156,5 +162,40 @@ public class WXModule {
         }
         return new Result().fail("获取微信信息失败");
     }
+
+    @UserPermission(ignore = true)
+    public Result downloadImage(AppContext context){
+        try {
+            Param p = GsonUtils.jsonToJavaBean(context.param.json,Param.class);
+            assert p!=null;
+            String token = getAccessToken();
+            String url = String.format(GET_MEDIA_URL,token,p.mediaId);
+
+            HttpsURLConnection httpUrlConn = null;
+            InputStream in = null;
+            try{
+                httpUrlConn = (HttpsURLConnection) new URL(url).openConnection();
+                httpUrlConn.setRequestMethod("GET");
+                httpUrlConn.connect();
+                in = httpUrlConn.getInputStream();
+                //上传图片
+                String json = new HttpRequest().addStream(in, p.savePath,  p.fileName)
+                        .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
+                        .getRespondContent();
+                HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
+                return new Result().success(maps);
+            }catch (Exception e){
+                throw e;
+            }finally {
+                if (in!=null) try { in.close(); } catch (IOException ignored) { }
+                if (httpUrlConn!=null )try { httpUrlConn.disconnect(); } catch (Exception ignored) { }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new Result().fail("图片无法获取");
+    }
+
+
 
 }
