@@ -720,12 +720,10 @@ public class CouponRevModule {
                 if(bal >= useBal){
 //                    appContext.logger.print("可抵扣余额："+useBal);
                     resultMap.put("debal",useBal);
-                    resultMap.put("acpay",MathUtil.exactSub(payamt,useBal).
-                            setScale(2,RoundingMode.DOWN).doubleValue());
+                    resultMap.put("acpay",MathUtil.exactSub(payamt,useBal));
                 }else{
                     resultMap.put("debal",bal);
-                    resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
-                            setScale(2,RoundingMode.DOWN).doubleValue());
+                    resultMap.put("acpay",MathUtil.exactSub(payamt,bal));
                 }
             }
 
@@ -748,8 +746,9 @@ public class CouponRevModule {
                 double balDeductionPe =  MathUtil.exactDiv(Double.parseDouble(baldeduction),100).
                         setScale(2,RoundingMode.DOWN).doubleValue();
 //                System.out.println("余额抵扣百分比："+balDeductionPe);
-                bal = MathUtil.exactMul(payamt,balDeductionPe).
+                bal = new BigDecimal(payamt).multiply(new BigDecimal(balDeductionPe)).
                         setScale(2,RoundingMode.DOWN).doubleValue();
+                System.out.println("余额抵扣百分比："+balDeductionPe);
 //                if(bal<0.1){
 //                    bal = 0.01;
 //                }
@@ -917,12 +916,10 @@ public class CouponRevModule {
                 if(bal >= useBal){
                     appContext.logger.print("可抵扣余额："+useBal);
                     resultMap.put("debal",useBal);
-                    resultMap.put("acpay",MathUtil.exactSub(payamt,useBal).
-                            setScale(2,RoundingMode.DOWN).doubleValue());
+                    resultMap.put("acpay",MathUtil.exactSub(payamt,useBal));
                 }else{
                     resultMap.put("debal",bal);
-                    resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
-                            setScale(2,RoundingMode.DOWN).doubleValue());
+                    resultMap.put("acpay",MathUtil.exactSub(payamt,bal));
                 }
             }
             /*

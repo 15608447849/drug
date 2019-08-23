@@ -305,6 +305,7 @@ public class TranOrderOptModule {
 
                 //可抵扣余额
                 int useBal = MathUtil.exactSub(CouponRevModule.getUseBal(payamt,new HashMap()), 0).intValue();
+               // useBal = new BigDecimal(CouponRevModule.getUseBal(payamt,new HashMap())).subtract(new BigDecimal(0)).intValue();
 //                appContext.logger.print("线上支付金额："+ payamt);
 //                appContext.logger.print("余额支付金额："+ bal);
 //                appContext.logger.print("最高可抵扣余额：" + useBal) ;
