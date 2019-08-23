@@ -561,7 +561,7 @@ public class SyncCustomerInfoModule {
 
     private boolean batchUpdSyncCState(List<Long> unqids) {
         String updSQL = "update {{?" + DSMConst.TD_SYNC_ERROR + "}} set cstatus=cstatus|1 where "
-                + " cstatus&1=0 and unqid=? and syncfrom=1";
+                + " cstatus&1=0 and syncid=? and syncfrom=1";
         List<Object[]> params = new ArrayList<>();
         for (long unqid : unqids) {
             params.add(new Object[]{ unqid});
