@@ -720,11 +720,11 @@ public class CouponRevModule {
                 if(bal >= useBal){
 //                    appContext.logger.print("可抵扣余额："+useBal);
                     resultMap.put("debal",useBal);
-                    resultMap.put("acpay",MathUtil.exactSub(payamt,useBal).
+                    resultMap.put("acpay",new BigDecimal(payamt).subtract(new BigDecimal(useBal)).
                             setScale(2,RoundingMode.DOWN).doubleValue());
                 }else{
                     resultMap.put("debal",bal);
-                    resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
+                    resultMap.put("acpay",new BigDecimal(payamt).subtract(new BigDecimal(bal)).
                             setScale(2,RoundingMode.DOWN).doubleValue());
                 }
             }
@@ -918,11 +918,11 @@ public class CouponRevModule {
                 if(bal >= useBal){
                     appContext.logger.print("可抵扣余额："+useBal);
                     resultMap.put("debal",useBal);
-                    resultMap.put("acpay",MathUtil.exactSub(payamt,useBal).
+                    resultMap.put("acpay",new BigDecimal(payamt).subtract(new BigDecimal(useBal)).
                             setScale(2,RoundingMode.DOWN).doubleValue());
                 }else{
                     resultMap.put("debal",bal);
-                    resultMap.put("acpay",MathUtil.exactSub(payamt,bal).
+                    resultMap.put("acpay",new BigDecimal(payamt).subtract(new BigDecimal(bal)).
                             setScale(2,RoundingMode.DOWN).doubleValue());
                 }
             }
