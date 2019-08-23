@@ -2,6 +2,7 @@ package util;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -100,7 +101,7 @@ public class MathUtil {
         BigDecimal a1 = BigDecimal.valueOf(a);
         BigDecimal b1 = BigDecimal.valueOf(b);
         
-        return a1.add(b1);
+        return a1.add(b1).setScale(2, RoundingMode.HALF_UP);
     }
     
     
@@ -112,7 +113,7 @@ public class MathUtil {
         BigDecimal a1 = BigDecimal.valueOf(a);
         BigDecimal b1 = BigDecimal.valueOf(b);
         
-        return a1.subtract(b1);
+        return a1.subtract(b1).setScale(2, RoundingMode.HALF_UP);
     }
     
 
@@ -125,7 +126,7 @@ public class MathUtil {
         BigDecimal a1 = BigDecimal.valueOf(a);
         BigDecimal b1 = BigDecimal.valueOf(b);
         
-        return a1.multiply(b1);
+        return a1.multiply(b1).setScale(2, RoundingMode.HALF_UP);
     }
 
     /**
@@ -136,7 +137,7 @@ public class MathUtil {
         BigDecimal a1 = BigDecimal.valueOf(a);
         BigDecimal b1 = BigDecimal.valueOf(b);
 
-        return a1.multiply(b1);
+        return a1.multiply(b1).setScale(2, RoundingMode.HALF_UP);
     }
 
 
