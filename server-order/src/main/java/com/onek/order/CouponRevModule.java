@@ -746,7 +746,7 @@ public class CouponRevModule {
                 double balDeductionPe =  MathUtil.exactDiv(Double.parseDouble(baldeduction),100).
                         setScale(2,RoundingMode.DOWN).doubleValue();
 //                System.out.println("余额抵扣百分比："+balDeductionPe);
-                bal = new BigDecimal(payamt).multiply(new BigDecimal(balDeductionPe)).
+                bal = new BigDecimal(payamt).multiply(new BigDecimal(String.valueOf(balDeductionPe))).
                         setScale(2,RoundingMode.DOWN).doubleValue();
                 System.out.println("余额抵扣百分比："+balDeductionPe);
 //                if(bal<0.1){
