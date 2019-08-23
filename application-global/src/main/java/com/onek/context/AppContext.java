@@ -3,6 +3,7 @@ package com.onek.context;
 import Ice.Current;
 import com.onek.server.inf.IRequest;
 import com.onek.server.infimp.IceContext;
+import com.onek.util.IceRemoteUtil;
 import redis.util.RedisUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
@@ -126,6 +127,8 @@ public class AppContext extends IceContext {
     public boolean clearTokenByUserSession(){
         if (userSession!=null){
             int compid =userSession.compId;
+            //向当前登出用户发送登出消息
+            IceRemoteUtil.sendMessageToClient(compid,"logout:"+ GsonUtils.javaBeanToJson(userSession));
             //移除当前客户端对应的用户信息
             RedisUtil.getStringProvide().delete(genUKey());
             //移除多端登陆信息

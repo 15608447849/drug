@@ -860,7 +860,7 @@ public class TranOrderOptModule {
             for (Long actcode: list) {
                 if (actcode > 0) {
                     RedisStockUtil.addActStock(tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
-                    RedisOrderUtil.subtractActBuyNum(tranOrderGood.getCompid(), tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
+                    RedisOrderUtil.subtractActBuyNum(cusno, tranOrderGood.getPdno(), actcode, tranOrderGood.getPnum());
                 }
             }
             RedisStockUtil.addStock(tranOrderGood.getPdno(), tranOrderGood.getPnum());//恢复redis库存
@@ -1386,7 +1386,7 @@ public class TranOrderOptModule {
         }
         if (b) {
             //订单生成到ERP(异步执行)
-            OrderDockedWithERPModule.generationOrder2ERP(orderNo);
+            OrderDockedWithERPModule.generationOrder2ERP(orderNo, compid);
         }
 
         return b ? new Result().success("操作成功") : new Result().fail("操作失败");

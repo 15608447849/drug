@@ -32,12 +32,12 @@ public class OrderDockedWithERPModule {
     private static final BaseDAO baseDao = BaseDAO.getBaseDAO();
 
 
-    public static void generationOrder2ERP(String orderNo) {
+    public static void generationOrder2ERP(String orderNo, int compId) {
         ExecutorService executorService = Executors.newSingleThreadExecutor();
         try {
             Object future = executorService.submit((Callable<Object>) () -> {
                 if (IceRemoteUtil.systemConfigOpen("ORDER_SYNC")) {
-                    return generateOrder(orderNo, 0);
+                    return generateOrder(orderNo, 0, compId);
                 } else {
                     LogUtil.getDefaultLogger().info("订单order信息同步开关未开启>>>>>>>>>>>>>>>");
                 }
@@ -54,17 +54,18 @@ public class OrderDockedWithERPModule {
         }
     }
 
-    private static int generateOrder(String orderNo, int type) {
+
+    private static int generateOrder(String orderNo, int type, int compId) {
         String selectOrderSQL = "select orderno,cusno,payamt,remarks,invoicetype,rvaddno,address,"
-                + " consignee,contact,freight from {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} where cstatus&1=0 and "
+                + " consignee,contact,freight from {{?" + DSMConst.TD_TRAN_ORDER + "}} where cstatus&1=0 and "
                 + " orderno=?";
         int year = TimeUtils.getYearByOrderno(orderNo + "");
-        List<Object[]> queryResult = baseDao.queryNativeSharding(0, year, selectOrderSQL, orderNo);
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compId, year, selectOrderSQL, orderNo);
         TranOrder[] tranOrders = new TranOrder[queryResult.size()];
         baseDao.convToEntity(queryResult, tranOrders, TranOrder.class, "orderno", "cusno", "payamt", "remarks", "invoicetype", "rvaddno",
                 "address", "consignee", "contact", "freight");
-        List<ERPGoodsVO> oGoodsList = getOrderGoods(orderNo);
-        List<ERPGoodsVO> oGiftList = getOrderGift(orderNo);
+        List<ERPGoodsVO> oGoodsList = getOrderGoodsPO(orderNo, compId);
+        List<ERPGoodsVO> oGiftList = getOrderGiftPO(orderNo, compId);
         if (oGiftList != null) {
             oGoodsList.addAll(oGiftList);
         }
@@ -149,6 +150,68 @@ public class OrderDockedWithERPModule {
         return erpGoodsVOList;
     }
 
+    private static List<ERPGoodsVO> getOrderGiftPO(String orderNo, int compId) {
+        String selectRebSQL = "select unqid,rebate,orderno from {{?" + DSMConst.TD_TRAN_REBATE + "}} where "
+                + " cstatus&1=0 and orderno="+ orderNo
+                + " and JSON_CONTAINS(rebate->'$[*].type', '3', '$') ";
+        int year = TimeUtils.getYearByOrderno(orderNo);
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compId, year, selectRebSQL);
+        if (queryResult == null || queryResult.isEmpty()) return null;
+        List<ERPGoodsVO> erpGoodsVOList = new ArrayList<>();
+        queryResult.forEach(qResult -> {
+            JsonArray rebateArr = new JsonParser().parse(String.valueOf(qResult[1])).getAsJsonArray();
+            for (int i = 0; i < rebateArr.size(); i++) {
+                JsonObject jsonObject = rebateArr.get(i).getAsJsonObject();
+                if (jsonObject.has("type") && jsonObject.get("type").getAsInt() == 3) {
+                    ERPGoodsVO erpGoodsVO = new ERPGoodsVO();
+                    erpGoodsVO.setUnqid(String.valueOf(qResult[0]));
+                    erpGoodsVO.setErpsku(jsonObject.get("id").getAsString());
+                    erpGoodsVO.setNum(jsonObject.get("totalNums").getAsString());
+                    erpGoodsVO.setPayamt("0");
+                    erpGoodsVO.setPdprice("0");
+                    erpGoodsVO.setOrderno(String.valueOf(qResult[2]));
+                    erpGoodsVOList.add(erpGoodsVO);
+                }
+            }
+
+        });
+        return erpGoodsVOList;
+    }
+
+    private static List<ERPGoodsVO> getOrderGoodsPO(String orderNo, int compId) {
+        String selectGoodsSQL = "select orderno,unqid,pdno,pnum,pdprice,payamt from {{?" + DSMConst.TD_TRAN_GOODS + "}} "
+                + " where cstatus&1=0 and orderno=" + orderNo;
+        int year = TimeUtils.getYearByOrderno(orderNo);
+        List<Object[]> queryResult = baseDao.queryNativeSharding(compId, year, selectGoodsSQL);
+        ERPGoodsVO[] erpGoodsVOS = new ERPGoodsVO[queryResult.size()];
+        baseDao.convToEntity(queryResult, erpGoodsVOS, ERPGoodsVO.class,
+                "orderno","unqid", "erpsku", "num", "pdprice", "payamt");
+        List<ERPGoodsVO> erpGoodsVOList = new ArrayList<>(Arrays.asList(erpGoodsVOS));
+        StringBuilder skuBuilder = new StringBuilder();
+        erpGoodsVOList.forEach(erpGoodsVO -> {
+            skuBuilder.append(erpGoodsVO.getErpsku()).append(",");
+        });
+        String skuStr = skuBuilder.toString().substring(0, skuBuilder.toString().length() - 1);
+        String result = IceRemoteUtil.getErpSkuBySku(skuStr);
+        if (result != null) {
+            Map<String, String> erpSkuMap = new HashMap<>();
+            JsonArray dataArr = new JsonParser().parse(result).getAsJsonObject().get("data").getAsJsonArray();
+            for (JsonElement data : dataArr) {
+                String skuS = data.getAsJsonObject().get("sku").getAsString();
+                if (!erpSkuMap.containsKey(skuS)) {
+                    erpSkuMap.put(skuS, data.getAsJsonObject().get("erpSku").getAsString());
+                }
+            }
+            erpGoodsVOList.forEach(erpGoodsVO -> {
+                if (erpSkuMap.containsKey(erpGoodsVO.getErpsku())) {
+                    erpGoodsVO.setErpsku(erpSkuMap.get(erpGoodsVO.getErpsku()));
+                }
+            });
+        }
+
+        return erpGoodsVOList;
+    }
+
     private static List<ERPGoodsVO> getOrderGoods(String orderNoStr) {
         String selectGoodsSQL = "select orderno,unqid,pdno,pnum,pdprice,payamt from {{?" + DSMConst.TD_BK_TRAN_GOODS + "}} "
                 + " where cstatus&1=0 and orderno in(" + orderNoStr + ") ";
@@ -181,43 +244,6 @@ public class OrderDockedWithERPModule {
         }
 
         return erpGoodsVOList;
-    }
-
-    /**
-     * @接口摘要 同步订单信息异常处理接口
-     * @业务场景 同步ERP异常
-     * @传参类型
-     * @传参列表
-     * @返回列表 200成功
-     */
-    @UserPermission(ignore = true)
-    public Result syncOrderErpDtOnLine(AppContext appContext) {
-        Result result = new Result();
-        String selectCompSQL = "select orderno,cusno from {{?" + DSMConst.TD_BK_TRAN_ORDER + "}} where cstatus&1=0 and "
-                + " cstatus&4096>0";
-        List<Object[]> queryResult = baseDao.queryNativeSharding(0,TimeUtils.getCurrentYear(),selectCompSQL);
-        try {
-            ExecutorService executorService = Executors.newSingleThreadExecutor();
-            Object future = executorService.submit(() -> {
-                if (queryResult != null && queryResult.size() > 0) {
-                    for (Object[] objects:queryResult) {
-                        generateOrder(String.valueOf(objects[0]), 1);
-                    }
-                }
-                return 0;
-            }).get();
-            if (future != null) {
-                executorService.shutdown();
-                if (!executorService.awaitTermination(5*1000, TimeUnit.MILLISECONDS)){
-                    executorService.shutdownNow();
-                }
-            }
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-            return result.fail("操作失败");
-        }
-        return new Result().success();
-
     }
 
     @UserPermission(ignore = true)

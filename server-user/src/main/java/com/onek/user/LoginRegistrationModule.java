@@ -302,7 +302,9 @@ public class LoginRegistrationModule {
         String sql3 = "SELECT u.uid,u.cid,u.uphone,u.upw,c.cname,c.caddrcode,c.caddr FROM {{?" +TB_SYSTEM_USER+"}} AS u INNER JOIN {{?"+TB_COMP+"}} AS c ON u.cid=c.cid WHERE u.uid IN("+sql2+")";
         List<Object[]> lines = BaseDAO.getBaseDAO().queryNative(sql3,uid);
         List<RelationBean> list = new ArrayList<>();
+
         if (lines.size() > 0){
+            RelationBean current = null;
             for (Object[] rows : lines){
                 RelationBean b  = new RelationBean();
                 b.uid = StringUtils.obj2Str(rows[0]);
@@ -316,12 +318,27 @@ public class LoginRegistrationModule {
                 try{
                     b.caddrcodeStr = IceRemoteUtil.getArean(Long.parseLong(b.caddrcode));
                     b.isCurrent = b.uid.equals(uid);
+
                 }catch (Exception ignored){ }
 
-                list.add(b);
+                if (!b.isCurrent) {
+                    list.add(b);
+                }else{
+                    current = b;
+                }
             }
+            if (current!=null) list.add(0,current);
         }
         return new Result().success(list);
+    }
+
+    public static void main(String[] args) {
+        List<Integer> list = new ArrayList<>();
+        for (int i = 0; i<5;i++){
+            list.add(i);
+        }
+        list.add(0,9);
+        System.out.println(list);
     }
 
     public Result tryRelationUser(AppContext appContext){
@@ -378,7 +395,7 @@ public class LoginRegistrationModule {
         List<Object[]> params = new ArrayList<>();
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(selectSQL);
         if (queryResult == null || queryResult.size() == 0) {//没数据直接插入
-            relCode = RedisGlobalKeys.getShipId();
+            relCode = RedisGlobalKeys.getRelCode();
             params.add(new Object[]{GenIdUtil.getUnqId(), loginUid, relCode});
             params.add(new Object[]{GenIdUtil.getUnqId(), bindUid, relCode});
             code = !ModelUtil.updateTransEmpty(BaseDAO.getBaseDAO().updateBatchNative(insertSQL, params, params.size())) ? 1: 0;

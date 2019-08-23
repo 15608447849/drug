@@ -93,6 +93,10 @@ public class RedisGlobalKeys {
     //套餐码
     public static final String ACT_MENU_ID = "ACT_MENU_ID";
 
+
+    //用户关联码
+    public static final String REL_CODE = "REL_CODE";
+
     /**
      * 获取用户ID
      */
@@ -160,4 +164,12 @@ public class RedisGlobalKeys {
     public static int getMenuCode(){
         return   Math.toIntExact(getCurrentYear()+getCurrentDate_Md()+RedisUtil.getStringProvide().increase(ACT_MENU_ID));
     }
+
+    /**
+     * 获取用户关联码
+     */
+    public static int getRelCode(){
+        return Math.toIntExact(RedisUtil.getStringProvide().increase(REL_CODE));
+    }
+
 }
