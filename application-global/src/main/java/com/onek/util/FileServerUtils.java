@@ -161,7 +161,7 @@ public class FileServerUtils {
         map.put("orderNo",orderNo);
         map.put("body",body);
         map.put("app",String.valueOf(isApp));
-        map.put("openid",openid);
+        if (openid!=null) map.put("openid",openid);
         String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/pay","POST",map);
         return GsonUtils.string2Map(json);
     }
