@@ -141,7 +141,7 @@ public class FileServerUtils {
     }
 
 
-    private static HashMap<String,Object> accessPayServer(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr,boolean isApp){
+    private static HashMap<String,Object> accessPayServer(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr,boolean isApp,String openid){
         List<String> list = new ArrayList<>();
         String[] arr = AppProperties.INSTANCE.iceServers.split(";");
         String[] iceAddr = arr[0].split(":");
@@ -161,25 +161,26 @@ public class FileServerUtils {
         map.put("orderNo",orderNo);
         map.put("body",body);
         map.put("app",String.valueOf(isApp));
+        map.put("openid",openid);
         String json = HttpUtil.formText(AppProperties.INSTANCE.payUrlPrev+"/pay","POST",map);
         return GsonUtils.string2Map(json);
     }
 
     /** 付款二维码图片链接 */
     public static String getPayQrImageLink(String type, String subject, double price,String orderNo,String serverName,String callback_clazz,String callback_method,String attr) {
-        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, false);
+        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, false,null);
         assert rmap != null;
         return rmap.get("data") == null ? null : rmap.get("data").toString();
     }
     /** 移动端支付 */
     public static Map getAppPayInfo(String type, String subject, double price, String orderNo, String serverName, String callback_clazz, String callback_method, String attr){
-        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, true);
+        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, true,null);
         assert rmap != null;
         return rmap.get("data") == null ? null : (Map)rmap.get("data");
     }
     /** wx公众号支付 */
     public static Map getWXJSPayInfo(String openid,String type, String subject, double price, String orderNo, String serverName, String callback_clazz, String callback_method, String attr){
-        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, false);
+        HashMap<String, Object> rmap = accessPayServer(type, subject, price, orderNo, serverName, callback_clazz, callback_method, attr, false,openid);
         assert rmap != null;
         return rmap.get("data") == null ? null : (Map)rmap.get("data");
     }
