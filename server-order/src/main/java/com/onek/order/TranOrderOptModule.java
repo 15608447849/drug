@@ -304,11 +304,11 @@ public class TranOrderOptModule {
                 bal = IceRemoteUtil.queryCompBal(tranOrder.getCusno());
 
                 //可抵扣余额
-                int useBal = MathUtil.exactSub(CouponRevModule.getUseBal(payamt,new HashMap()), 0).intValue();
-               // useBal = new BigDecimal(CouponRevModule.getUseBal(payamt,new HashMap())).subtract(new BigDecimal(0)).intValue();
-//                appContext.logger.print("线上支付金额："+ payamt);
-//                appContext.logger.print("余额支付金额："+ bal);
-//                appContext.logger.print("最高可抵扣余额：" + useBal) ;
+               // int useBal = MathUtil.exactSub(CouponRevModule.getUseBal(payamt,new HashMap()), 0).intValue();
+                int useBal = new BigDecimal(CouponRevModule.getUseBal(payamt,new HashMap())).subtract(new BigDecimal(0)).intValue();
+                appContext.logger.print("线上支付金额："+ payamt);
+                appContext.logger.print("余额支付金额："+ bal);
+                appContext.logger.print("最高可抵扣余额：" + useBal) ;
                 if(useBal>0) {
                     if (bal >= useBal) { //余额大于可抵扣余额
                         payamt = MathUtil.exactSub(payamt, useBal).
@@ -320,7 +320,7 @@ public class TranOrderOptModule {
                     }
                 }
                 bal = Math.max(bal, 0);
-//                appContext.logger.print("end线上支付金额："+ payamt);
+                appContext.logger.print("end线上支付金额："+ payamt);
             }
         }catch (Exception e){
             e.printStackTrace();
