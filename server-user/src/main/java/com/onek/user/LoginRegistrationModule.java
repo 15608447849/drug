@@ -395,7 +395,7 @@ public class LoginRegistrationModule {
         List<Object[]> params = new ArrayList<>();
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNative(selectSQL);
         if (queryResult == null || queryResult.size() == 0) {//没数据直接插入
-            relCode = RedisGlobalKeys.getShipId();
+            relCode = RedisGlobalKeys.getRelCode();
             params.add(new Object[]{GenIdUtil.getUnqId(), loginUid, relCode});
             params.add(new Object[]{GenIdUtil.getUnqId(), bindUid, relCode});
             code = !ModelUtil.updateTransEmpty(BaseDAO.getBaseDAO().updateBatchNative(insertSQL, params, params.size())) ? 1: 0;

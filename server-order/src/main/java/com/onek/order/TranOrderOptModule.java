@@ -1380,7 +1380,7 @@ public class TranOrderOptModule {
         }
         if (b) {
             //订单生成到ERP(异步执行)
-            OrderDockedWithERPModule.generationOrder2ERP(orderNo);
+            OrderDockedWithERPModule.generationOrder2ERP(orderNo, compid);
         }
 
         return b ? new Result().success("操作成功") : new Result().fail("操作失败");
