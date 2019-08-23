@@ -7,10 +7,10 @@ import static com.onek.user.operations.StoreBasicInfoOp.updateCompInfoToCache;
 public class UserInitialize implements IIceInitialize {
     @Override
     public void startUp(String serverName) {
-       /*
+
         //启动线程更新企业信息
         new Thread(()->{
-            while (true){
+//            while (true){
                 try {
                     try {
                         Thread.sleep(30 * 1000L);
@@ -26,9 +26,9 @@ public class UserInitialize implements IIceInitialize {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
-            }
+//            }
         }).start();
-        */
+
     }
 
     @Override
