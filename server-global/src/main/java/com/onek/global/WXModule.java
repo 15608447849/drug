@@ -21,40 +21,26 @@ import java.util.UUID;
  * 微信公众号后台处理
  */
 public class WXModule {
+    private static String APPID = "wxa0777da1f8b79bbf";
 
-//    private static Thread thread = new Thread(){
-//        @Override
-//        public void run() {
-//            while (true){
-//
-//            }
-//        }
-//    };
-//
-//    static {
-//        thread.start();
-//    }
-
-    public static String APPID = "wxa0777da1f8b79bbf";
-
-    public static String SECRET = "2f92b1e8842e9d808da261cd8b714bb8";
+    private static String SECRET = "2f92b1e8842e9d808da261cd8b714bb8";
 
     /**
      * 1.获取 ACCESS_TOKEN
      */
-    public static final String ACCESS_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+APPID+"&secret="+SECRET;
+    private static final String ACCESS_TOKEN_URL = "https://api.weixin.qq.com/cgi-bin/token?grant_type=client_credential&appid="+APPID+"&secret="+SECRET;
     private static final String ACCESS_TOKEN_KEY = "_ACCESS_TOKEN_KEY";
 
     /**
      * 2. JS API
      */
-    public final static String JS_API_TICKET_URL = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi";
-    public final static String JS_API_TICKET_KEY = "_JS_API_TICKET_KEY";
+    private final static String JS_API_TICKET_URL = "https://api.weixin.qq.com/cgi-bin/ticket/getticket?access_token=%s&type=jsapi";
+    private final static String JS_API_TICKET_KEY = "_JS_API_TICKET_KEY";
 
     /**
      * 获取OPENID
      */
-    public static final String GET_OPEN_ID = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+APPID+"&secret="+SECRET+"&code=%s&grant_type=authorization_code";
+    private static final String OPEN_ID_URL = "https://api.weixin.qq.com/sns/oauth2/access_token?appid="+APPID+"&secret="+SECRET+"&code=%s&grant_type=authorization_code";
 
 
 
@@ -150,17 +136,25 @@ public class WXModule {
     }
 
 
+    private static class Param{
+        String url;
+        String code;
+    }
+
     @UserPermission(ignore = true)
-    public Result getSingInfo(AppContext context){
+    public Result getInfo(AppContext context){
         try {
-            if (context.param.arrays.length==1){
-                String url = context.param.arrays[0];
-                return new Result().success(sign(url));
+            Param p = GsonUtils.jsonToJavaBean(context.param.json,Param.class);
+            if (p!=null && p.url!=null && p.url.length() > 0){
+                return new Result().success(sign(p.url));
+            }
+            if (p!=null && p.code !=null && p.code.length() > 0){
+                return new Result().success(_GET(String.format(OPEN_ID_URL,p.code)));
             }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return new Result().fail("获取微信签名失败");
+        return new Result().fail("获取微信信息失败");
     }
 
 }
