@@ -535,15 +535,21 @@ public class TranOrderOptModule {
         }
 
 //        if (discountResult == null) return finalTranOrderGoods;
-        tranOrder.setPdamt((discountResult.getTotalCurrentPrice() + discountResult.getTotalDiscount()) * 100);
-        tranOrder.setCoupamt((discountResult.getCouponValue() * 100));//订单使用优惠券(李康亮记得填)
+        tranOrder.setPdamt(
+                MathUtil.exactMul(MathUtil.exactAdd(discountResult.getTotalCurrentPrice(), discountResult.getTotalDiscount()).doubleValue(), 100.0).doubleValue());
+        tranOrder.setCoupamt(MathUtil.exactMul(discountResult.getCouponValue(), 100.0).doubleValue());//订单使用优惠券(李康亮记得填)
         if (discountResult.isFreeShipping()) {//免邮
             tranOrder.setFreight(0);
         } else {
-            tranOrder.setFreight(AreaFeeUtil.getFee(tranOrder.getRvaddno()) * 100);//运费(暂无)
+            tranOrder.setFreight(
+                    MathUtil.exactMul(
+                            AreaFeeUtil.getFee(tranOrder.getRvaddno()), 100.0).doubleValue());//运费(暂无)
         }
-        tranOrder.setPayamt((discountResult.getTotalCurrentPrice() * 100) + tranOrder.getFreight());
-        tranOrder.setDistamt((discountResult.getTotalDiscount() * 100));
+        tranOrder.setPayamt(
+                MathUtil.exactAdd(
+                        MathUtil.exactMul(discountResult.getTotalCurrentPrice(), 100.0).doubleValue(),
+                        tranOrder.getFreight()).doubleValue());
+        tranOrder.setDistamt(MathUtil.exactMul(discountResult.getTotalDiscount(), 100.0).doubleValue());
 
         List<IDiscount> iDiscountList = discountResult.getActivityList();
         for (IDiscount iDiscount : iDiscountList) {
@@ -599,13 +605,13 @@ public class TranOrderOptModule {
                         && goodsPrice.getPkgno() == finalGoods.getPkgno()) {
                     goodsPrice.setCompid(tranOrder.getCusno());
                     goodsPrice.setPdprice(finalGoods.getPdprice());
-                    goodsPrice.setDistprice(finalGoods.getDistprice() * 100);
+                    goodsPrice.setDistprice(MathUtil.exactMul(finalGoods.getDistprice() ,100.0).doubleValue());
                     goodsPrice.setPayamt(finalGoods.getPayamt());
                     goodsPrice.setPromtype(finalGoods.getPromtype());
                 }
             }
-            goodsPrice.setPdprice(goodsPrice.getPdprice() * 100);
-            goodsPrice.setPayamt(goodsPrice.getPayamt() * 100);
+            goodsPrice.setPdprice(MathUtil.exactMul(goodsPrice.getPdprice(), 100.0).doubleValue());
+            goodsPrice.setPayamt(MathUtil.exactMul(goodsPrice.getPayamt(), 100.0).doubleValue());
 //            if (goodsPrice.getPayamt() == 0) {
 //                goodsPrice.setPayamt(goodsPrice.getPdprice() * goodsPrice.getPnum());
 //            }
@@ -1380,7 +1386,7 @@ public class TranOrderOptModule {
         }
         if (b) {
             //订单生成到ERP(异步执行)
-            OrderDockedWithERPModule.generationOrder2ERP(orderNo);
+            OrderDockedWithERPModule.generationOrder2ERP(orderNo, compid);
         }
 
         return b ? new Result().success("操作成功") : new Result().fail("操作失败");
