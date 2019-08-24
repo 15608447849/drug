@@ -1774,7 +1774,7 @@ public class ShoppingCartModule {
         if (idList != null && idList.length > 0) {
             for (String unqid : idList) {
                 if (StringUtils.isInteger(unqid)) {
-                    shopParm.add(new Object[]{Long.parseLong(unqid),Long.parseLong(unqid)});
+                    shopParm.add(new Object[]{Long.parseLong(unqid)});
                     sqlList.add(REAL_DEL_PC_SHOPCART_SQL);
                 }
             }
