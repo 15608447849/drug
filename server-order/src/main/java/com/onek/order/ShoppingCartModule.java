@@ -81,7 +81,7 @@ public class ShoppingCartModule {
 
     //删除购物车信息
     private final String REAL_DEL_SHOPCART_SQL = "delete  from {{?" + DSMConst.TD_TRAN_GOODS + "}}  "
-            + " where cstatus&1=0 and unqid=? or pdno=? and orderno=0 and pkno=0";
+            + " where cstatus&1=0 and unqid=? or pdno=? and orderno=0 and pkgno=0";
 
     //删除购物车信息
     private final String REAL_DEL_PC_SHOPCART_SQL = "delete  from {{?" + DSMConst.TD_TRAN_GOODS + "}}  "
