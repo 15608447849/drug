@@ -367,12 +367,19 @@ public class TranOrderOptModule {
         if (placeType == 1) return null;
         Set<String> pkgNoSet = new HashSet<>();
         Set<String> zeroNoSet = new HashSet<>();
+        Set<String> pn0Set = new HashSet<>();
         for (TranOrderGoods transGoods: tranOrderGoods) {
+            if (transGoods.getPnum() <= 0 ) {
+                pn0Set.add(ProdInfoStore.getProdBySku(transGoods.getPdno()).getProdname());
+            }
             if (transGoods.getPkgno() > 0) {
                 pkgNoSet.add(transGoods.getPkgno() + "");
             } else {
                 zeroNoSet.add(transGoods.getPdno() + "");
             }
+        }
+        if (pn0Set.size() > 0) {
+            return "商品【" + String.join(",",pn0Set.toArray(new String[0])) + "】数量为0";
         }
         String selectGoodsSQL = "select pdno, pnum, pkgno from {{?" + DSMConst.TD_TRAN_GOODS + "}} where cstatus&1=0 "
                  + " and orderno=0 and compid=" + compId ;
