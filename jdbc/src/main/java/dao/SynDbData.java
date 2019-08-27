@@ -35,7 +35,7 @@ public class SynDbData implements Runnable {
     };
 
     public static boolean isSynBackDB(int tbidx){
-        if (BaseDAO.isMasterIndex == 1) return false; //不同步从库
+        if (BaseDAO.isMasterIndex .get() == 1) return false; //不同步从库
         if((DSMConst.SEG_TABLE_RULE[tbidx]  & (2+4)) > 0){
             return false;
         }

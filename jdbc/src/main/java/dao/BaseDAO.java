@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class BaseDAO {
 
 	//默认当前主库
-	private static final AtomicInteger isMasterIndex = new AtomicInteger(0);
+	static final AtomicInteger isMasterIndex = new AtomicInteger(0);
 
 	private static final long RETRY_RESTORE_INTERVAL = 5 * 1000L ; //主库尝试恢复重试时间间隔
 	private static long retryRestoreCurrentTime = 0 ; //主库尝试恢复上次记录的时间
