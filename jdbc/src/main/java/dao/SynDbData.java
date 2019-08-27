@@ -8,7 +8,6 @@ import org.hyrdpf.dao.jdbc.AbstractJdbcSessionMgr;
 import org.hyrdpf.dao.jdbc.JdbcBaseDao;
 import org.hyrdpf.dao.jdbc.JdbcTransaction;
 import org.hyrdpf.util.LogUtil;
-import threadpool.IOThreadPool;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,7 +22,7 @@ import java.util.List;
  */
 public class SynDbData implements Runnable {
 
-    private static final  IOThreadPool pool = new IOThreadPool();
+//    private static final  IOThreadPool pool = new IOThreadPool();
 
     public static SyncI syncI = new SyncI() {
         @Override
@@ -38,7 +37,11 @@ public class SynDbData implements Runnable {
 
         @Override
         public void executeSyncBean() {
-
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
         }
     };
 
@@ -73,7 +76,8 @@ public class SynDbData implements Runnable {
     }
 
     public static void post(SQLSyncBean sqlSyncBean) {
-        pool.post(new SynDbData(sqlSyncBean));
+//        pool.post();
+        new SynDbData(sqlSyncBean).run();
     }
 
     @Override
@@ -103,7 +107,12 @@ public class SynDbData implements Runnable {
         } catch (Exception e) {
           log.error(e);
           b.currentExecute++;
-          b.submit();
+          if (b.currentExecute < 3){
+              b.errorSubmit();
+          }else {
+              SynDbData.syncI.addSyncBean(b);
+              b.submit();
+          }
         }
     }
 

@@ -43,7 +43,6 @@ public class SystemInitialize implements IIceInitialize {
             public void addSyncBean(SQLSyncBean b) {
                 //添加一个同步数据任务到redis
                 try {
-//                    String json =  GsonUtils.javaBeanToJson(b);
                     Long i = RedisUtil.getListProvide().addEndElement(SQL_SYNC_LIST, GsonUtils.javaBeanToJson(b));
 //                    LogUtil.getDefaultLogger().info("向缓存存入一个任务:\n"+json+" \t结果:" + i);
                     synchronized (SQL_SYNC_LIST){
@@ -58,13 +57,12 @@ public class SystemInitialize implements IIceInitialize {
             public void errorSyncBean(SQLSyncBean sqlSyncBean) {
 
                 try {
-                    String json = GsonUtils.javaBeanToJson(sqlSyncBean);
                     File file =new File(errorLog);
                     if(!file.exists()){
                         file.createNewFile();
                     }
                     FileWriter fileWriter =new FileWriter(file, true);
-                    String info = json +System.getProperty("line.separator");
+                    String info = sqlSyncBean +System.getProperty("line.separator");
                     fileWriter.write(info);
                     fileWriter.flush();
                     fileWriter.close();

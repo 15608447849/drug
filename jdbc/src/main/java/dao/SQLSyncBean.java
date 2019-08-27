@@ -25,12 +25,6 @@ public class SQLSyncBean {
     }
 
     void submit(){
-        if (currentExecute>3){
-           SynDbData.syncI.errorSyncBean(this);
-
-        }else{
-            SynDbData.syncI.addSyncBean(this);
-        }
 
     }
 
@@ -41,5 +35,9 @@ public class SQLSyncBean {
     @Override
     public String toString() {
         return GsonUtils.javaBeanToJson(this);
+    }
+
+    void errorSubmit() {
+        SynDbData.syncI.errorSyncBean(this);
     }
 }
