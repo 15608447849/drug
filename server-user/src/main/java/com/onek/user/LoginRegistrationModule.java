@@ -45,6 +45,10 @@ public class LoginRegistrationModule {
         return op.execute(appContext);
     }
 
+
+    public Result checkPhoneExist2(AppContext appContext){
+        return null;
+    }
     /**
      * @接口摘要 门店注册
      * @业务场景

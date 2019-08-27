@@ -40,7 +40,7 @@ public class SynDbData implements Runnable {
         return true;
     }
 
-    private static Logger log = LogUtil.getDefaultLogger();
+    final static Logger log = LogUtil.getDefaultLogger();
 
     private final BaseDAO baseDao = BaseDAO.getBaseDAO();
 
@@ -81,11 +81,8 @@ public class SynDbData implements Runnable {
                     break;
             }
         } catch (Exception e) {
-//            e.printStackTrace();
-            if (b.currentExecute > 1){
-                try { Thread.sleep(1000 * b.currentExecute); } catch (InterruptedException ignored) { }
-            }
-            b.submit();
+          log.error("执行同步sql失败",  e);
+          b.submit();
         }
     }
 
@@ -166,7 +163,7 @@ public class SynDbData implements Runnable {
     //批量执行
     public void updateBatchNative() throws DAOException{
         JdbcBaseDao jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-        jdbcBaseDao.setManager(baseDao.getSessionMgr(0,DSMConst.TD_BK_TRAN_ORDER));
+        jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(b.sharding,Integer.parseInt(b.resultSQL[0])));
         int[] resultArr = jdbcBaseDao.updateBatch(b.resultSQL[1], b.params,b.batchSize);
         for (int i = 0; i <resultArr.length; i++){
             int result = resultArr[i];

@@ -61,12 +61,12 @@ public class SystemInitialize implements IIceInitialize {
                     String json = RedisUtil.getListProvide().removeHeadElement(SQL_SYNC_LIST);
                     if (json!=null){
                         SQLSyncBean b = GsonUtils.jsonToJavaBean(json,SQLSyncBean.class);
-                        LogUtil.getDefaultLogger().info("从缓存获取一个任务:\n"+b);
+                        //LogUtil.getDefaultLogger().info("从缓存获取一个任务:\n"+b);
                         if (b != null) b.execute();
                     } else{
                         synchronized (SQL_SYNC_LIST){
                             try {
-                                SQL_SYNC_LIST.wait();
+                                SQL_SYNC_LIST.wait(60000);
                             } catch (InterruptedException e) {
                                 e.printStackTrace();
                             }

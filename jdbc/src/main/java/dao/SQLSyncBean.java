@@ -1,5 +1,7 @@
 package dao;
 
+import util.GsonUtils;
+
 import java.util.Arrays;
 import java.util.List;
 
@@ -20,12 +22,14 @@ public class SQLSyncBean {
 
     int currentExecute = 0;
 
-
     SQLSyncBean(int optType) {
         this.optType = optType;
     }
 
     void submit(){
+        if (currentExecute>15){
+            SynDbData.log.warn("数据同步异常: "+ GsonUtils.javaBeanToJson(this));
+        }
         SynDbData.syncI.addSyncBean(this);
     }
 
