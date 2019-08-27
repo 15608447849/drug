@@ -28,14 +28,31 @@ public class SynDbData implements Runnable {
     public static SyncI syncI = new SyncI() {
         @Override
         public void addSyncBean(SQLSyncBean b) {
-            
+
         }
 
         @Override
         public void errorSyncBean(SQLSyncBean sqlSyncBean) {
 
         }
+
+        @Override
+        public void executeSyncBean() {
+
+        }
     };
+
+    static {
+        new Thread(){
+            @Override
+            public void run() {
+                log.info("启动数据库同步轮询");
+                while (true){
+                  syncI.executeSyncBean();
+                }
+            }
+        }.start();
+    }
 
     public static boolean isSynBackDB(int tbidx){
         if (BaseDAO.isMasterIndex .get() == 1) return false; //不同步从库
@@ -84,7 +101,7 @@ public class SynDbData implements Runnable {
                     break;
             }
         } catch (Exception e) {
-          log.error("执行同步sql失败",  e);
+          log.error(e);
           b.currentExecute++;
           b.submit();
         }

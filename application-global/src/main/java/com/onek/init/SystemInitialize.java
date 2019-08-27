@@ -5,7 +5,6 @@ import dao.SQLSyncBean;
 import dao.SynDbData;
 import dao.SyncI;
 import org.hyrdpf.ds.AppConfig;
-import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 
@@ -39,7 +38,6 @@ public class SystemInitialize implements IIceInitialize {
     private void setSynI(String listKey) {
         final String SQL_SYNC_LIST = listKey;
         final String errorLog = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParent()+"/sql_sync_err_"+SQL_SYNC_LIST+".log";
-
         SynDbData.syncI = new SyncI() {
             @Override
             public void addSyncBean(SQLSyncBean b) {
@@ -73,34 +71,27 @@ public class SystemInitialize implements IIceInitialize {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-
-
             }
-        };
 
-        new Thread(){
             @Override
-            public void run() {
-                LogUtil.getDefaultLogger().info("启动数据库同步轮询线程");
+            public void executeSyncBean() {
                 //从redis 获取一个任务执行
-                while (true){
-                    String json = RedisUtil.getListProvide().removeHeadElement(SQL_SYNC_LIST);
-                    if (json!=null){
-                        SQLSyncBean b = GsonUtils.jsonToJavaBean(json,SQLSyncBean.class);
-                        //LogUtil.getDefaultLogger().info("从缓存获取一个任务:\n"+b);
-                        if (b != null) b.execute();
-                    } else{
-                        synchronized (SQL_SYNC_LIST){
-                            try {
-                                SQL_SYNC_LIST.wait(60000);
-                            } catch (InterruptedException e) {
-                                e.printStackTrace();
-                            }
+                String json = RedisUtil.getListProvide().removeHeadElement(SQL_SYNC_LIST);
+                if (json!=null){
+                    SQLSyncBean b = GsonUtils.jsonToJavaBean(json,SQLSyncBean.class);
+                    //LogUtil.getDefaultLogger().info("从缓存获取一个任务:\n"+b);
+                    if (b != null) b.execute();
+                } else{
+                    synchronized (SQL_SYNC_LIST){
+                        try {
+                            SQL_SYNC_LIST.wait(60000);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
                         }
                     }
                 }
             }
-        }.start();
+        };
     }
 
     @Override

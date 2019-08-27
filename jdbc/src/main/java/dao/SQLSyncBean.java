@@ -2,10 +2,6 @@ package dao;
 
 import util.GsonUtils;
 
-import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -28,11 +24,8 @@ public class SQLSyncBean {
         this.optType = optType;
     }
 
-
-
     void submit(){
         if (currentExecute>3){
-            SynDbData.log.warn("数据同步异常: "+ GsonUtils.javaBeanToJson(this));
            SynDbData.syncI.errorSyncBean(this);
 
         }else{
@@ -47,15 +40,6 @@ public class SQLSyncBean {
 
     @Override
     public String toString() {
-        return "SQLSyncBean{" +
-                "optType=" + optType +
-                ", sharding=" + sharding +
-                ", tbSharding=" + tbSharding +
-                ", nativeSQL=" + Arrays.toString(nativeSQL) +
-                ", resultSQL=" + Arrays.toString(resultSQL) +
-                ", params=" + params +
-                ", param=" + Arrays.toString(param) +
-                ", batchSize=" + batchSize +
-                '}';
+        return GsonUtils.javaBeanToJson(this);
     }
 }
