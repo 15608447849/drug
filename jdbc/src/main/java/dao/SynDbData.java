@@ -28,7 +28,12 @@ public class SynDbData implements Runnable {
     public static SyncI syncI = new SyncI() {
         @Override
         public void addSyncBean(SQLSyncBean b) {
-            log.info("添加同步任务: "+ b);
+            
+        }
+
+        @Override
+        public void errorSyncBean(SQLSyncBean sqlSyncBean) {
+
         }
     };
 
