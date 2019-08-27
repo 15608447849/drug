@@ -2,6 +2,9 @@ package dao;
 
 import util.GsonUtils;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -19,22 +22,26 @@ public class SQLSyncBean {
     List<Object[]> params;//sql参数
     Object[] param; //单sql
     int batchSize;//批量执行时的参数
-
     int currentExecute = 0;
 
     SQLSyncBean(int optType) {
         this.optType = optType;
     }
 
+
+
     void submit(){
-        if (currentExecute>15){
+        if (currentExecute>3){
             SynDbData.log.warn("数据同步异常: "+ GsonUtils.javaBeanToJson(this));
+           SynDbData.syncI.errorSyncBean(this);
+
+        }else{
+            SynDbData.syncI.addSyncBean(this);
         }
-        SynDbData.syncI.addSyncBean(this);
+
     }
 
     public void execute(){
-        currentExecute++;
         SynDbData.post(this);
     }
 

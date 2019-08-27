@@ -45,6 +45,7 @@ public class SynDbData implements Runnable {
     private final BaseDAO baseDao = BaseDAO.getBaseDAO();
 
     private final SQLSyncBean b;
+
     SynDbData(SQLSyncBean b){
         this.b = b;
     }
@@ -52,9 +53,6 @@ public class SynDbData implements Runnable {
     public static void post(SQLSyncBean sqlSyncBean) {
         pool.post(new SynDbData(sqlSyncBean));
     }
-
-
-
 
     @Override
     public void run(){
@@ -82,6 +80,7 @@ public class SynDbData implements Runnable {
             }
         } catch (Exception e) {
           log.error("执行同步sql失败",  e);
+          b.currentExecute++;
           b.submit();
         }
     }

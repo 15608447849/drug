@@ -9,6 +9,10 @@ import org.hyrdpf.util.LogUtil;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
 import static Ice.Application.communicator;
 
 /**
@@ -34,13 +38,14 @@ public class SystemInitialize implements IIceInitialize {
 
     private void setSynI(String listKey) {
         final String SQL_SYNC_LIST = listKey;
+        final String errorLog = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParent()+"/sql_sync_err_"+SQL_SYNC_LIST+".log";
 
         SynDbData.syncI = new SyncI() {
             @Override
             public void addSyncBean(SQLSyncBean b) {
                 //添加一个同步数据任务到redis
                 try {
-                    String json =  GsonUtils.javaBeanToJson(b);
+//                    String json =  GsonUtils.javaBeanToJson(b);
                     Long i = RedisUtil.getListProvide().addEndElement(SQL_SYNC_LIST, GsonUtils.javaBeanToJson(b));
 //                    LogUtil.getDefaultLogger().info("向缓存存入一个任务:\n"+json+" \t结果:" + i);
                     synchronized (SQL_SYNC_LIST){
@@ -49,6 +54,27 @@ public class SystemInitialize implements IIceInitialize {
                 } catch (Exception e) {
                     e.printStackTrace();
                 }
+            }
+
+            @Override
+            public void errorSyncBean(SQLSyncBean sqlSyncBean) {
+
+                try {
+                    String json = GsonUtils.javaBeanToJson(sqlSyncBean);
+                    File file =new File(errorLog);
+                    if(!file.exists()){
+                        file.createNewFile();
+                    }
+                    FileWriter fileWriter =new FileWriter(file, true);
+                    String info = json +System.getProperty("line.separator");
+                    fileWriter.write(info);
+                    fileWriter.flush();
+                    fileWriter.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+
+
             }
         };
 
