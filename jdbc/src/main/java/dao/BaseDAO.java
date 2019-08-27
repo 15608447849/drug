@@ -365,12 +365,22 @@ public class BaseDAO {
 	 */
 	@Transaction(false)
 	public List<Object[]> queryNative(String nativeSQL,final Object... params){
-		List<Object[]> resultList;
+		List<Object[]> resultList = null;
 		String[] result = getNativeSQL(nativeSQL);
 		log.debug("【Debug】Native SQL：" + result[1]+"\n"+Arrays.toString(params));
-		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(getSessionMgr(Integer.parseInt(result[0])));
-		resultList = baseDao.query(result[1], params);
+		AbstractJdbcSessionMgr mgr = null;
+		try {
+			mgr = getSessionMgr(Integer.parseInt(result[0]));
+			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(mgr);
+
+			resultList = baseDao.query(result[1], params);
+		} catch (Exception e) {
+			log.error("queryNative,"+nativeSQL+","+Arrays.toString(params),e);
+			if (checkDBConnectionValid(mgr)){
+				return queryNative(nativeSQL,params);
+			}
+		}
 		return resultList;
 	}
 
@@ -390,9 +400,18 @@ public class BaseDAO {
 		List<Object[]> resultList = null;
 		String[] result = getNativeSQL(nativeSQL,tbSharding);
 		log.debug("【Debug】Native SQL：" + result[1]+"\n"+Arrays.toString(params));
-		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(result[0])));
-		resultList = baseDao.query(result[1], params);
+		AbstractJdbcSessionMgr mgr = null;
+		try {
+			mgr = getSessionMgr(sharding,Integer.parseInt(result[0]));
+			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(mgr);
+			resultList = baseDao.query(result[1], params);
+		} catch (Exception e) {
+			log.error("queryNativeSharding,"+sharding,tbSharding,nativeSQL+","+Arrays.toString(params),e);
+			if (checkDBConnectionValid(mgr)){
+				return queryNativeSharding(sharding,tbSharding,nativeSQL,params);
+			}
+		}
 		return resultList;
 	}
 
@@ -413,9 +432,19 @@ public class BaseDAO {
 		List<Object[]> resultList = null;
 		String[] result = getNativeSQL(nativeSQL,tbSharding);
 		log.debug("【Debug】Native SQL：" + result[1]+"\n"+Arrays.toString(params));
-		JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-		baseDao.setManager(AppConfig.getSessionManager(dbs,db));
-		resultList = baseDao.query(result[1], params);
+		AbstractJdbcSessionMgr mgr = null;
+		try {
+			mgr = AppConfig.getSessionManager(dbs,db);
+			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(mgr);
+			resultList = baseDao.query(result[1], params);
+		} catch (Exception e) {
+			log.error("queryNativeGlobal,"+tbSharding,dbs,db,nativeSQL+","+Arrays.toString(params),e);
+			if (checkDBConnectionValid(mgr)){
+				return queryNativeGlobal(tbSharding,dbs,db,nativeSQL,params);
+			}
+
+		}
 		return resultList;
 	}
 
@@ -444,7 +473,7 @@ public class BaseDAO {
 				queryResultList.addAll((List<Object[]>)future.get());
 			}
 		} catch (Exception e) {
-			log.error(getClass().getSimpleName(),e);
+			log.error("queryGlobalCollect,"+tbSharding,nativeSQL+","+Arrays.toString(params),e);
 		}
 		return queryResultList;
 	}
@@ -604,9 +633,11 @@ public class BaseDAO {
 
     protected int updateNativeInCallBKSharding(int sharding,int tbSharding,String[] resultSQL,
                                                final Object... params){
+
         JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
         log.debug("【Debug】Native BKSYN SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
-        baseDao.setManager(getSessionMgr(sharding,DSMConst.TD_BK_TRAN_ORDER));
+		AbstractJdbcSessionMgr mgr = getSessionMgr(sharding,DSMConst.TD_BK_TRAN_ORDER);
+        baseDao.setManager(mgr);
         return baseDao.update(resultSQL[1], params);
     }
 
@@ -910,7 +941,6 @@ public class BaseDAO {
 		int[] result = new int[GPKNativeSQL.length + nativeSQL.length];
         String[] resultSQL = getNativeSQL(nativeSQL[0]);
 		AbstractJdbcSessionMgr sessionMgr = null;
-
 		try {
 			sessionMgr = getSessionMgr(Integer.parseInt(resultSQL[0]));
 			FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {

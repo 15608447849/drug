@@ -23,8 +23,6 @@ import java.util.List;
  */
 public class SynDbData implements Runnable {
 
-
-
     private static final  IOThreadPool pool = new IOThreadPool();
 
     public static SyncI syncI = new SyncI() {

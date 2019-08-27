@@ -1,7 +1,5 @@
 package dao;
 
-import org.hyrdpf.ds.AppConfig;
-
 import java.util.Arrays;
 import java.util.List;
 
@@ -28,9 +26,6 @@ public class SQLSyncBean {
     }
 
     void submit(){
-        if (currentExecute > 3 ){
-            AppConfig.initialize();
-        }
         SynDbData.syncI.addSyncBean(this);
     }
 
