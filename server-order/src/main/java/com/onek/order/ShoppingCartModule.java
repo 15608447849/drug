@@ -1896,12 +1896,17 @@ public class ShoppingCartModule {
                         ? shoppingCartVO.getActcode().size() : shoppingCartVO.getActcode()) +
                         ",invnum:"+invnum+",  actnum:"+actnum+"," +
                         "limitsub:"+limitsub +",limit:"+shoppingCartVO.getLimitnum());
-                int cbuy = 0 ;
-                if(shoppingCartVO.getLimitnum() == 0){
-                    cbuy = Math.min(invnum, actnum);
-                }else{
-                    cbuy = Math.min(Math.min(invnum, actnum),limitsub);
+                int cbuy;
+                if (shoppingCartVO.getActcode() != null && shoppingCartVO.getActcode().size() > 0 ) {//有活动
+                    if(shoppingCartVO.getLimitnum() == 0){
+                        cbuy = Math.min(invnum, actnum);
+                    } else {
+                        cbuy = Math.min(Math.min(invnum, actnum),limitsub);
+                    }
+                } else {
+                    cbuy = invnum;
                 }
+
 
                 if(shoppingCartVO.getNum() > cbuy){
                     StringBuilder sb = new StringBuilder();
