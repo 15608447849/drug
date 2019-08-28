@@ -25,7 +25,7 @@ public class SQLSyncBean {
     }
 
     void submit(){
-
+        SynDbData.syncI.addSyncBean(this);
     }
 
     public void execute(){

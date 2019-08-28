@@ -57,14 +57,6 @@ public class SynDbData implements Runnable {
         }.start();
     }
 
-    public static boolean isSynBackDB(int tbidx){
-        if (BaseDAO.isMasterIndex .get() == 1) return false; //不同步从库
-        if((DSMConst.SEG_TABLE_RULE[tbidx]  & (2+4)) > 0){
-            return false;
-        }
-        return true;
-    }
-
     final static Logger log = LogUtil.getDefaultLogger();
 
     private final BaseDAO baseDao = BaseDAO.getBaseDAO();
@@ -110,7 +102,6 @@ public class SynDbData implements Runnable {
           if (b.currentExecute < 3){
               b.errorSubmit();
           }else {
-              SynDbData.syncI.addSyncBean(b);
               b.submit();
           }
         }

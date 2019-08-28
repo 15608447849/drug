@@ -34,8 +34,16 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public class BaseDAO {
 
+	private static final BaseDAO BASEDAO = new BaseDAO();
+
+	/**私有化其构造函数，防止随便乱创建此对象。*/
+	private BaseDAO(){}
+
+	public static BaseDAO getBaseDAO(){
+		return BASEDAO;
+	}
 	//默认当前主库
-	static final AtomicInteger isMasterIndex = new AtomicInteger(0);
+	private static final AtomicInteger isMasterIndex = new AtomicInteger(0);
 
 	private static final long RETRY_RESTORE_INTERVAL = 5 * 1000L ; //主库尝试恢复重试时间间隔
 	private static long retryRestoreCurrentTime = 0 ; //主库尝试恢复上次记录的时间
@@ -77,13 +85,17 @@ public class BaseDAO {
 		return sb.toString();
 	}
 
-	private static final BaseDAO BASEDAO = new BaseDAO();
 
-	/**私有化其构造函数，防止随便乱创建此对象。*/
-	private BaseDAO(){}
-
-	public static BaseDAO getBaseDAO(){
-		return BASEDAO;
+	//检查连接是个有效
+	private boolean checkDBConnectionValid(AbstractJdbcSessionMgr mgr){
+		try {
+			if (mgr == null) return false;
+			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
+			baseDao.setManager(mgr);
+			baseDao.query("SELECT 1");
+			return true;
+		} catch (Exception ignored) { }
+		return false;
 	}
 
 	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
@@ -105,20 +117,8 @@ public class BaseDAO {
 		return  AppConfig.getSessionManager(dbs,db);
 	}
 
-	private boolean checkDBConnectionValid(AbstractJdbcSessionMgr mgr){
-		try {
-			if (mgr == null) return false;
-			JdbcBaseDao baseDao = FacadeProxy.create(JdbcBaseDao.class);
-			baseDao.setManager(mgr);
-			baseDao.query("SELECT 1");
-			return true;
-		} catch (Exception ignored) { }
-		return false;
-	}
 
-	public AbstractJdbcSessionMgr getMySessionByTable(final int table){
-		return getSessionMgr(table);
-	}
+
 
 	/**多数据源实现,切分服务器与库实现，输入参数：table：是要操作那个基本表，基本表就是没有切分前的表*/
 	protected AbstractJdbcSessionMgr getSessionMgr(int sharding, final int table){
@@ -191,10 +191,14 @@ public class BaseDAO {
 		return false;
 	}
 
-
-
-
-
+	public static boolean isSynBackDB(int tbidx){
+		if (BaseDAO.isMasterIndex .get() == 1) return false; //不同步从库
+		if((DSMConst.SEG_TABLE_RULE[tbidx]  & (2+4)) > 0){
+			return false;
+		}
+		return true;
+	}
+	
 	/**切分表实现,table：是要操作那个基本表，基本表就是没有切分前的表*/
 	private String getTableName(final int table) {
 		StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
@@ -497,7 +501,7 @@ public class BaseDAO {
 			baseDao.setManager(mgr);
 			result = baseDao.update(resultSQL[1], params);
 			if (result>0){
-				if(SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+				if(isSynBackDB(Integer.parseInt(resultSQL[0]))){
 					//异步同步到备份库中
 					SQLSyncBean b = new SQLSyncBean(0);
 					b.resultSQL = resultSQL;
@@ -533,7 +537,7 @@ public class BaseDAO {
 			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
 			return baseDao.update(resultSQL[1], params);
 		}
-		if(synFlag == 1 && SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+		if(synFlag == 1 && isSynBackDB(Integer.parseInt(resultSQL[0]))){
 			baseDao.setManager(getBackupSessionMgr(0,Integer.parseInt(resultSQL[0])));
 			return baseDao.update(resultSQL[1], params);
 		}
@@ -567,7 +571,7 @@ public class BaseDAO {
 			baseDao.setManager(mgr);
 			result = baseDao.update(resultSQL[1], params);
 			if (result>0){
-				if(SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))) {
+				if(isSynBackDB(Integer.parseInt(resultSQL[0]))) {
 					//异步同步到备份库
 					SQLSyncBean b = new SQLSyncBean(0);
 					b.resultSQL = resultSQL;
@@ -618,7 +622,7 @@ public class BaseDAO {
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 			return baseDao.update(resultSQL[1], params);
 		}
-		if(synFlag == 1 && SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+		if(synFlag == 1 && isSynBackDB(Integer.parseInt(resultSQL[0]))){
 			log.debug("【Debug】Native SYN SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 			baseDao.setManager(getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 			return baseDao.update(resultSQL[1], params);
@@ -714,7 +718,7 @@ public class BaseDAO {
 			baseDao.setManager(getSessionMgr(Integer.parseInt(resultSQL[0])));
 			return baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		}
-		if(synFlag == 1 && SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+		if(synFlag == 1 && isSynBackDB(Integer.parseInt(resultSQL[0]))){
 			log.debug("【Debug】Native SYN SQL：" + resultSQL[1]+"\n"+Arrays.toString(params));
 			baseDao.setManager(getBackupSessionMgr(0,Integer.parseInt(resultSQL[0])));
 			return baseDao.updateAndGenerateKeys(resultSQL[1], params);
@@ -741,7 +745,7 @@ public class BaseDAO {
 			baseDao.setManager(getSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 			return baseDao.updateAndGenerateKeys(resultSQL[1], params);
 		}
-		if(synFlag == 1 && SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+		if(synFlag == 1 && isSynBackDB(Integer.parseInt(resultSQL[0]))){
 			log.debug("【Debug】Native SYN SQL：" + resultSQL[1] +"\n"+Arrays.toString(params));
 			baseDao.setManager(getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0])));
 			return baseDao.updateAndGenerateKeys(resultSQL[1], params);
@@ -781,7 +785,7 @@ public class BaseDAO {
 				}
 			});
 			if (checkSync(result)){
-				if(SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))) {
+				if(isSynBackDB(Integer.parseInt(resultSQL[0]))) {
 					//异步同步到备份库
 					SQLSyncBean b = new SQLSyncBean(2);
 					b.resultSQL = resultSQL;
@@ -824,7 +828,7 @@ public class BaseDAO {
 			});
 
 			if (checkSync(result)){
-				if(SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))) {
+				if(isSynBackDB(Integer.parseInt(resultSQL[0]))) {
 					//异步同步到备份库
 					SQLSyncBean b = new SQLSyncBean(2);
 					b.resultSQL = resultSQL;
@@ -1036,7 +1040,7 @@ public class BaseDAO {
 			baseDao.setManager(mgr);
 			result = baseDao.updateBatch(resultSQL[1], params, batchSize);
 			if (checkSync(result)){
-				if(SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+				if(isSynBackDB(Integer.parseInt(resultSQL[0]))){
 					//同步到备份库
 					SQLSyncBean b = new SQLSyncBean(4);
 					b.resultSQL = resultSQL;
@@ -1079,7 +1083,7 @@ public class BaseDAO {
 			baseDao.setManager(mgr);
 			result = baseDao.updateBatch(resultSQL[1], params, batchSize);
 			if (checkSync(result)){
-				if(SynDbData.isSynBackDB(Integer.parseInt(resultSQL[0]))){
+				if(isSynBackDB(Integer.parseInt(resultSQL[0]))){
 					//同步到备份
 					SQLSyncBean b = new SQLSyncBean(4);
 					b.resultSQL = resultSQL;
@@ -1484,7 +1488,7 @@ public class BaseDAO {
 			log.debug("准备切换数据库");
 			result = future.get();
 			if(result != null){
-				int[] results = SynDbData.updateTransNative
+				int[] results = updateTransNative
 						(nativeSQL,params,sharding,tbSharding,masterval,isbatch);
 				//切换数据库
 				if(BK_SWICH_FLAG == 1 && results != null && results.length > 0 && results[0] > 0){
