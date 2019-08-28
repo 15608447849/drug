@@ -391,6 +391,7 @@ public class BaseDAO {
 						b.sharding = sharding;
 						b.tbSharding = tbSharding;
 						b.nativeSQL = new String[]{nativeSQL};
+						b.toMaster = true;
 						b.submit();
 					}
 					if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
@@ -653,6 +654,7 @@ public class BaseDAO {
 					b.sharding = sharding;
 					b.tbSharding = tbSharding;
 					b.nativeSQL = new String[]{nativeSQL};
+					b.toMaster = true;
 					b.submit();
 				}
 				//异步同步到订单运营后台
