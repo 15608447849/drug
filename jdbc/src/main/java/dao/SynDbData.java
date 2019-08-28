@@ -259,7 +259,6 @@ public class SynDbData implements Runnable {
         //与主从无关 如果是运营库,则只会获取运营库的连接
         if((DSMConst.SEG_TABLE_RULE[table] & 4) > 0){
             dbs = AppConfig.getDBSNum() - BUSConst._ONE;
-            log.info("运营库: dbs = "+ dbs +" , db = "+ db);
         }
         return AppConfig.getSessionManager(dbs,db);
     }
@@ -282,14 +281,15 @@ public class SynDbData implements Runnable {
 
         AbstractJdbcSessionMgr sessionMgr = getSessionMgrBk(DSMConst.TD_BK_TRAN_ORDER);
         JdbcBaseDao dao = FacadeProxy.create(JdbcBaseDao.class);
+        dao.setManager(sessionMgr);
         FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
             @Override
             public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
                 for (int i = 0; i < bkResultSql.size(); i++) {
-                    log.debug("【同步运营】updateTransNativeBk：" +  bkResultSql.get(i)[i]+","+Arrays.toString(bkParm.get(i)));
-                    int result =  dao.update(bkResultSql.get(i)[i],bkParm.get(i));
+                    log.debug("【同步运营】updateTransNativeBk：" +  bkResultSql.get(i)[1]+","+Arrays.toString(bkParm.get(i)));
+                    int result =  dao.update(bkResultSql.get(i)[1],bkParm.get(i));
                     if (result<=0) throw new DAOException(
-                            String.format(ERROR_FORMAT, bkResultSql.get(i)[i],Arrays.toString(bkParm.get(i)),result)
+                            String.format(ERROR_FORMAT, bkResultSql.get(i)[1],Arrays.toString(bkParm.get(i)),result)
                     );
 
                 }

@@ -120,6 +120,11 @@ public class BaseDAO {
 			db = sharding % BUSConst._DMNUM  % BUSConst._MODNUM_EIGHT;
 		}
 
+		if((DSMConst.SEG_TABLE_RULE[table] & 4) > 0){
+			dbs = AppConfig.getDBSNum() - BUSConst._ONE;
+			db = 0;
+		}
+
 		if (isMasterIndex.get() == 1 && (System.currentTimeMillis()-retryRestoreCurrentTime)>RETRY_RESTORE_INTERVAL ){
 			retryRestoreCurrentTime = System.currentTimeMillis();
 			//尝试获取主连接
@@ -230,9 +235,9 @@ public class BaseDAO {
 			resultList = baseDao.query(result[1], params);
 		} catch (Exception e) {
 			log.error("queryNative,"+nativeSQL+","+Arrays.toString(params),e);
-			if (checkDBConnectionValid(mgr)){
+			if (switchSlave(mgr)){
 				return queryNative(nativeSQL,params);
-			}
+			};
 		}
 		return resultList;
 	}
@@ -259,10 +264,10 @@ public class BaseDAO {
 			baseDao.setManager(mgr);
 			resultList = baseDao.query(result[1], params);
 		} catch (Exception e) {
-			log.error("queryNativeSharding,"+sharding,tbSharding,nativeSQL+","+Arrays.toString(params),e);
-			if (checkDBConnectionValid(mgr)){
+			log.error("queryNativeSharding,"+sharding+","+tbSharding+","+nativeSQL+","+Arrays.toString(params),e);
+			if (switchSlave(mgr)){
 				return queryNativeSharding(sharding,tbSharding,nativeSQL,params);
-			}
+			};
 		}
 		return resultList;
 	}
@@ -292,10 +297,9 @@ public class BaseDAO {
 			resultList = baseDao.query(result[1], params);
 		} catch (Exception e) {
 			log.error("queryNativeGlobal,"+tbSharding,dbs,db,nativeSQL+","+Arrays.toString(params),e);
-			if (checkDBConnectionValid(mgr)){
+			if (switchSlave(mgr)){
 				return queryNativeGlobal(tbSharding,dbs,db,nativeSQL,params);
-			}
-
+			};
 		}
 		return resultList;
 	}
@@ -379,6 +383,16 @@ public class BaseDAO {
 						b.nativeSQL = new String[]{nativeSQL};
 						b.submit();
 					}
+					if (isMasterIndex.get() == 1){
+						//主库异常,从库更新了数据 , 需要等待主库恢复,更新数据到主库
+						SQLSyncBean b = new SQLSyncBean(101);
+						b.resultSQL = resultSQL;
+						b.param = params;
+						b.sharding = sharding;
+						b.tbSharding = tbSharding;
+						b.nativeSQL = new String[]{nativeSQL};
+						b.submit();
+					}
 					if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
 							|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS){
 						//同步到订单运营后台
@@ -388,16 +402,7 @@ public class BaseDAO {
 						b.sharding = sharding;
 						b.tbSharding = tbSharding;
 						b.nativeSQL = new String[]{nativeSQL};
-						b.submit();
-					}
-					if (isMasterIndex.get() == 1){
-						//主库异常,从库更新了数据 , 需要等待主库恢复,更新数据到主库
-						SQLSyncBean b = new SQLSyncBean(101);
-						b.resultSQL = resultSQL;
-						b.param = params;
-						b.sharding = sharding;
-						b.tbSharding = tbSharding;
-						b.nativeSQL = new String[]{nativeSQL};
+						b.toMaster = isMasterIndex.get() == 1;
 						b.submit();
 					}
 				}
@@ -517,20 +522,6 @@ public class BaseDAO {
 					b.tbSharding = tbSharding;
 					b.submit();
 				}
-
-				//异步同步到订单运营后台
-				if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
-						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS
-						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_BK_TRAN_REBATE){
-					SQLSyncBean b = new SQLSyncBean(6);
-					b.resultSQL = resultSQL;
-					b.nativeSQL = nativeSQL;
-					b.params = params;
-					b.sharding = sharding;
-					b.tbSharding = tbSharding;
-					b.submit();
-				}
-
 				if (isMasterIndex.get() == 1){
 					//主库异常,从库更新了数据 , 需要等待主库恢复,更新数据到主库
 					SQLSyncBean b = new SQLSyncBean(103);
@@ -542,7 +533,19 @@ public class BaseDAO {
 					b.tbSharding = tbSharding;
 					b.submit();
 				}
-
+				//异步同步到订单运营后台
+				if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
+						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS
+						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_BK_TRAN_REBATE){
+					SQLSyncBean b = new SQLSyncBean(6);
+					b.resultSQL = resultSQL;
+					b.nativeSQL = nativeSQL;
+					b.params = params;
+					b.sharding = sharding;
+					b.tbSharding = tbSharding;
+					b.toMaster = isMasterIndex.get() == 1;
+					b.submit();
+				}
 			}
 
 		} catch (DAOException e) {
@@ -641,7 +644,17 @@ public class BaseDAO {
 					b.nativeSQL = new String[]{nativeSQL};
 					b.submit();
 				}
-
+				if (isMasterIndex.get() == 1){
+					//主库异常,从库更新了数据 , 需要等待主库恢复,更新数据到主库
+					SQLSyncBean b = new SQLSyncBean(105);
+					b.resultSQL = resultSQL;
+					b.batchSize = batchSize;
+					b.params = params;
+					b.sharding = sharding;
+					b.tbSharding = tbSharding;
+					b.nativeSQL = new String[]{nativeSQL};
+					b.submit();
+				}
 				//异步同步到订单运营后台
 				if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
 						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS
@@ -654,17 +667,7 @@ public class BaseDAO {
 					b.sharding = sharding;
 					b.tbSharding = tbSharding;
 					b.nativeSQL = new String[]{nativeSQL};
-					b.submit();
-				}
-				if (isMasterIndex.get() == 1){
-					//主库异常,从库更新了数据 , 需要等待主库恢复,更新数据到主库
-					SQLSyncBean b = new SQLSyncBean(105);
-					b.resultSQL = resultSQL;
-					b.batchSize = batchSize;
-					b.params = params;
-					b.sharding = sharding;
-					b.tbSharding = tbSharding;
-					b.nativeSQL = new String[]{nativeSQL};
+					b.toMaster = isMasterIndex.get() == 1;
 					b.submit();
 				}
 			}
