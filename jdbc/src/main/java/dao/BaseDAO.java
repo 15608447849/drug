@@ -157,8 +157,10 @@ public class BaseDAO {
 	/**切分表实现,table：是要操作那个基本表，基本表就是没有切分前的表 , tbSharding 分表字段 0,不分表*/
 	private String getTableName(final int table,int tbSharding) {
 		StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
-        strSql.append(DSMConst._UNDERLINE);
-        if(tbSharding > 0) strSql.append(tbSharding);
+        if(tbSharding > 0){
+			strSql.append(DSMConst._UNDERLINE);
+			strSql.append(tbSharding);
+		}
 		return strSql.toString();
 	}
 
