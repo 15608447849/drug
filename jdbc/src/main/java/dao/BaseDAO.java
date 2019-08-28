@@ -440,7 +440,7 @@ public class BaseDAO {
 			        for (int i = 0; i < nativeSQL.length; i++) {
 						String[] _resultSQL = getNativeSQL(nativeSQL[i]);
 						Object[] _params = params.get(i);
-						log.debug("【修改-"+ masterStr() +"】updateTransNative i = "+i+" ：" + resultSQL[1]+"\n"+Arrays.toString(_params));
+						log.debug("【修改-"+ masterStr() +"】updateTransNative i = "+i+" ：" + _resultSQL[1]+"\n"+Arrays.toString(_params));
 						result[i] =  baseDao.update(_resultSQL[1], _params);
  					}
 				}
@@ -499,8 +499,8 @@ public class BaseDAO {
 					for (int i = 0; i < nativeSQL.length; i++) {
 						String[] _resultSQL = getNativeSQL(nativeSQL[i],tbSharding);
 						Object[] _params = params.get(i);
-						log.debug("updateTransNativeSharding i = "+i+" ：" + _resultSQL +"\n"+Arrays.toString(_params));
-						result[i] = baseDao.update(resultSQL[1], params);
+						log.debug("updateTransNativeSharding i = "+i+" ：" + _resultSQL[1] +"\n"+Arrays.toString(_params));
+						result[i] = baseDao.update(_resultSQL[1], _params);
 
 					}
 				}
