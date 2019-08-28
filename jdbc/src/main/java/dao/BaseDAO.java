@@ -53,12 +53,12 @@ public class BaseDAO {
 	static final StringBuffer PREFIX_REGEX_SB = new StringBuffer("\\{\\{\\?");
 	static final StringBuffer SUFFIX_REGEX_SB = new StringBuffer("\\}\\}");
 
-	static String sqlListString(String[] sqlList){
-		if (sqlList == null || sqlList.length==0 ) return null;
+	static String sqlListString(List<String[]> sqlList){
+		if (sqlList == null || sqlList.size()==0 ) return null;
 		StringBuilder sb = new StringBuilder("{");
-		for (int i = 0; i<sqlList.length;i++){
-			sb.append(sqlList);
-			if( i+1 == sqlList.length){
+		for (int i = 0; i<sqlList.size();i++){
+			sb.append(Arrays.toString(sqlList.get(i)));
+			if( i+1 == sqlList.size()){
 				sb.append("}");
 			}else{
 				sb.append(",");
@@ -465,7 +465,7 @@ public class BaseDAO {
 				}
 			}
 		} catch (DAOException e) {
-			log.error("【修改-"+ masterStr() +"】updateTransNative,"+sqlListString(nativeSQL)+","+paramListString(params),e);
+			log.error("【修改-"+ masterStr() +"】updateTransNative,"+Arrays.toString(nativeSQL)+","+paramListString(params),e);
 			if (switchSlave(mgr)){
 				return updateTransNative(isSync,nativeSQL,params);
 			};
@@ -485,7 +485,7 @@ public class BaseDAO {
 	 * 多表事务更新
 	 */
 	int[] updateTransNativeSharding(boolean isSync,int sharding,int tbSharding,String[] nativeSQL,final List<Object[]> params){
-		log.info("【修改-"+ masterStr() +"】updateTransNativeSharding：" + sqlListString(nativeSQL)+","+paramListString(params));
+		log.info("【修改-"+ masterStr() +"】updateTransNativeSharding：" + Arrays.toString(nativeSQL)+","+paramListString(params));
 		int[] result = new int[nativeSQL.length];
 		String[] resultSQL = getNativeSQL(nativeSQL[0]);
 		AbstractJdbcSessionMgr mgr = null ;
@@ -546,7 +546,7 @@ public class BaseDAO {
 			}
 
 		} catch (DAOException e) {
-			log.error("updateTransNativeSharding,"+sharding+","+tbSharding+","+sqlListString(nativeSQL)+","+paramListString(params),e);
+			log.error("updateTransNativeSharding,"+sharding+","+tbSharding+","+Arrays.toString(nativeSQL)+","+paramListString(params),e);
 			if (switchSlave(mgr)){
 				return updateTransNativeSharding(isSync,sharding,tbSharding,nativeSQL,params);
 			};
