@@ -37,14 +37,20 @@ public class SystemInitialize implements IIceInitialize {
 
     private void setSynI(String listKey) {
         final String SQL_SYNC_LIST = listKey;
-        final String errorLog = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParent()+"/sql_sync_err_"+SQL_SYNC_LIST+".log";
+        final String SQL_MASTER_RESUME = SQL_SYNC_LIST+"_m";
+        final String error_sync_Log = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParent()+"/"+listKey+"sql_sync_err.log";
+        final String error_master_Log = new File(this.getClass().getProtectionDomain().getCodeSource().getLocation().getPath()).getParent()+"/"+listKey+"sql_resume_master_err.log";
         SynDbData.syncI = new SyncI() {
             @Override
             public void addSyncBean(SQLSyncBean b) {
                 //添加一个同步数据任务到redis
                 try {
-                    Long i = RedisUtil.getListProvide().addEndElement(SQL_SYNC_LIST, GsonUtils.javaBeanToJson(b));
-//                    LogUtil.getDefaultLogger().info("向缓存存入一个任务:\n"+json+" \t结果:" + i);
+                    if (b.isToMaster()){
+                        //从库更新了,主库等待恢复的sql
+                        RedisUtil.getListProvide().addEndElement(SQL_MASTER_RESUME, GsonUtils.javaBeanToJson(b));
+                    }else{
+                        RedisUtil.getListProvide().addEndElement(SQL_SYNC_LIST, GsonUtils.javaBeanToJson(b));
+                    }
                     synchronized (SQL_SYNC_LIST){
                         SQL_SYNC_LIST.notify();
                     }
@@ -57,7 +63,7 @@ public class SystemInitialize implements IIceInitialize {
             public void errorSyncBean(SQLSyncBean sqlSyncBean) {
 
                 try {
-                    File file =new File(errorLog);
+                    File file =new File(sqlSyncBean.isToMaster() ? error_master_Log : error_sync_Log);
                     if(!file.exists()){
                         file.createNewFile();
                     }
@@ -85,6 +91,27 @@ public class SystemInitialize implements IIceInitialize {
                             SQL_SYNC_LIST.wait(60000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
+                        }
+                    }
+                }
+            }
+
+            @Override
+            public void notifyMasterActive() {
+                while (true){
+                    //从redis 获取一个任务执行
+                    String json = RedisUtil.getListProvide().removeHeadElement(SQL_SYNC_LIST);
+                    if (json!=null){
+                        SQLSyncBean b = GsonUtils.jsonToJavaBean(json,SQLSyncBean.class);
+                        //LogUtil.getDefaultLogger().info("从缓存获取一个任务:\n"+b);
+                        if (b != null) b.execute();
+                    } else{
+                        synchronized (SQL_SYNC_LIST){
+                            try {
+                                SQL_SYNC_LIST.wait(60000);
+                            } catch (InterruptedException e) {
+                                e.printStackTrace();
+                            }
                         }
                     }
                 }

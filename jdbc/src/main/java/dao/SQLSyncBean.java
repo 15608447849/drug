@@ -9,7 +9,7 @@ import java.util.List;
  * @Date: 2019/8/26 11:19
  */
 public class SQLSyncBean {
-
+    boolean toMaster = false; // 在主库异常时,被从库更新的数据
     int optType;//执行方法标识
     int sharding; //分库
     int tbSharding;//分表
@@ -19,6 +19,10 @@ public class SQLSyncBean {
     Object[] param; //单sql
     int batchSize;//批量执行时的参数
     int currentExecute = 0;
+
+    public boolean isToMaster(){
+        return toMaster;
+    }
 
     SQLSyncBean(int optType) {
         this.optType = optType;
