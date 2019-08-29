@@ -1104,7 +1104,7 @@ public class OrderOptModule {
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         //更新订单状态为交易完成
         String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=4 "
-                + " where cstatus&1=0 and orderno=" + orderNo + " and ostatus>2";
+                + " where cstatus&1=0 and orderno=" + orderNo + " and ostatus in(2,3)";
         String updateRBSQL = "update {{?" + DSMConst.TD_TRAN_REBATE + "}} set cstatus=cstatus|64"
                 + " where cstatus&1=0 and orderno=?";
 
