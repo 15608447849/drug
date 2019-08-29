@@ -32,8 +32,8 @@ public class SQLSyncBean {
         SynDbData.syncI.addSyncBean(this);
     }
 
-    public void execute(){
-        SynDbData.post(this);
+    public boolean execute(){
+        return SynDbData.post(this);
     }
 
     @Override
@@ -41,7 +41,7 @@ public class SQLSyncBean {
         return GsonUtils.javaBeanToJson(this);
     }
 
-    void errorSubmit() {
+    public void errorSubmit() {
         SynDbData.syncI.errorSyncBean(this);
     }
 }

@@ -24,9 +24,7 @@ import static dao.BaseDAO.*;
  * @Description TODO
  * @date 2019-03-11 1:44
  */
-public class SynDbData implements Runnable {
-
-//    private static final  IOThreadPool pool = new IOThreadPool();
+public class SynDbData {
 
     public static SyncI syncI = new SyncI() {
         @Override
@@ -76,16 +74,15 @@ public class SynDbData implements Runnable {
         this.b = b;
     }
 
-    public static void post(SQLSyncBean sqlSyncBean) {
+    public static boolean post(SQLSyncBean sqlSyncBean) {
 //        pool.post();
-        new SynDbData(sqlSyncBean).run();
+       return new SynDbData(sqlSyncBean).execute();
     }
 
-    @Override
-    public void run(){
+    private boolean execute(){
         try {
             //尝试执行sql
-            switch (b.optType){
+             switch (b.optType){
                 case 0:
                       updateNative();
                       break;
@@ -123,15 +120,18 @@ public class SynDbData implements Runnable {
                     baseDao.updateBatchNativeSharding(false,b.sharding,b.tbSharding,b.nativeSQL[0],b.params,b.batchSize);
                     break;
             }
+            return true;
         } catch (Exception e) {
           log.error(e);
           b.currentExecute++;
-          if (b.currentExecute < 3){
+          if (b.currentExecute > 3){
               b.errorSubmit();
-          }else {
-              b.submit();
+              return true;
+          }else{
+              execute();
           }
         }
+        return false;
     }
 
     private final String ERROR_FORMAT = "同步失败,SQL: %s, 参数: %s, 结果: %d";

@@ -73,7 +73,17 @@ public class RedisListProvide<T> extends RedisProvide {
 	public String updateElementByIndex(String colname,int index,T val) {
 		return jedisCluster.lset(colname, index, val.toString());
 	}
-	
+
+	/**
+	 * 获取索引位置的元素
+	 */
+		public String getElementByIndex(String colname,long index){
+		if (index<size(colname)){
+			return jedisCluster.lindex(colname,index);
+		}
+		return null;
+	}
+
 	/**
 	 * 根据元素值删除集合中包含该元素值所有元素
 	 * 
@@ -115,7 +125,8 @@ public class RedisListProvide<T> extends RedisProvide {
 	public List<String> getAllElements(String colname) {
 		return jedisCluster.lrange(colname, 0, -1);
 	}
-	
+
+
 	/**
 	 * 获取列表的长度
 	 * 
@@ -127,4 +138,5 @@ public class RedisListProvide<T> extends RedisProvide {
 	}
 
 
-}
+
+ }
