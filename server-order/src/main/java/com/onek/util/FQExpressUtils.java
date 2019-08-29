@@ -7,6 +7,7 @@ import com.onek.express.RouteServiceFQExpress;
 import com.onek.prop.AppProperties;
 import org.dom4j.Attribute;
 import org.dom4j.Element;
+import org.hyrdpf.util.LogUtil;
 import util.StringUtils;
 import util.XMLUtils;
 import util.http.HttpRequestUtil;
@@ -32,15 +33,15 @@ public class FQExpressUtils {
             return "";
         }
 
-        String result = "";
-
         try {
             JSONObject params = new JSONObject();
             params.put("orderno", orderno);
 
-            result = HttpRequestUtil.postJson(
+            String result = HttpRequestUtil.postJson(
                     AppProperties.INSTANCE.erpUrlPrev + "/getLogisticsNo",
                     params.toJSONString());
+
+            LogUtil.getDefaultLogger().info("The getLogisticsNo interface return value : " + result);
 
             if (!StringUtils.isEmpty(result)) {
                 JSONObject jo = JSONObject.parseObject(result);
@@ -48,14 +49,13 @@ public class FQExpressUtils {
                 if (jo.containsKey("code") && jo.getInteger("code") == 200) {
                     return jo.getString("loginsno");
                 }
-
             }
 
         } catch (IOException e) {
             e.printStackTrace();
         }
 
-        return result;
+        return "";
     }
 
     public static String getRouteInfo(String code) {
@@ -63,7 +63,8 @@ public class FQExpressUtils {
     }
 
     public static void main(String[] args) {
-        System.out.println(getRouteInfo(getTravingCode("1908190000217807")));
+        System.out.println(getRouteInfo("SF1011099703744,SF2000932309557,SF2000932309566,SF2000932309575"));
+//        System.out.println(getRouteInfo(getTravingCode("1908230000061301")));
     }
 
     public static String getRouteInfo(String code, RESULT_TYPE type) {

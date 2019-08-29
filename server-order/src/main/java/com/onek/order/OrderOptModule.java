@@ -1267,7 +1267,10 @@ public class OrderOptModule {
                 returnResult.remove(2);
             }
 
-            String routeInfo = FQExpressUtils.getRouteInfo(FQExpressUtils.getTravingCode(orderNo));
+//            String routeNo = "SF1011099703744,SF2000932309557,SF2000932309566,SF2000932309575";
+            String routeNo = FQExpressUtils.getTravingCode(orderNo);
+
+            String routeInfo = FQExpressUtils.getRouteInfo(routeNo);
 
             if (StringUtils.isEmpty(routeInfo)) {
                 return result.success(returnResult.toJSONString());
@@ -1279,31 +1282,36 @@ public class OrderOptModule {
                 return result.success(returnResult.toJSONString());
             }
 
-            Element routeResponse = root.element("Body").element("RouteResponse");
+            List<Element> routeResponseList = root.element("Body").elements("RouteResponse");
 
-            Iterator it = routeResponse.elementIterator("Route");
-            Element e;
             JSONArray tempJa = new JSONArray();
             jo = new JSONObject();
-            jo.put("info", tempJa);
             returnResult.add(2, jo);
             String status = "运输中";
-            while (it.hasNext()) {
-                e = (Element) it.next();
-                JSONObject tempJo = new JSONObject();
-                tempJa.add(tempJo);
+            jo.put("infos", tempJa);
+            String mainNo = routeNo.split(",")[0];
 
-                String[] date_time = e.attributeValue("accept_time").split(" ");
-                tempJo.put("date", date_time[0]);
-                tempJo.put("time", date_time[1]);
-                tempJo.put("des",
-                        "【" + e.attributeValue("accept_address") + "】"
-                             + e.attributeValue("remark"));
+            for (Element routeResponse : routeResponseList) {
+                List<Element> it = routeResponse.elements("Route");
+                Element e;
+                JSONObject j = new JSONObject();
+                JSONArray innerTempJa = new JSONArray();
+                j.put("mailno", routeResponse.attributeValue("mailno"));
+                j.put("info", innerTempJa);
+                j.put("isMain", mainNo.equals(routeResponse.attributeValue("mailno")));
+                tempJa.add(j);
 
-//                switch (Integer.parseInt(e.attributeValue("opcode"))) {
-//                    case 50:
-//                        status = "已揽收";
-//                }
+                for (int i = it.size() - 1; i >= 0 ; i--) {
+                    e = it.get(i);
+                    JSONObject tempJo = new JSONObject();
+                    innerTempJa.add(tempJo);
+                    String[] date_time = e.attributeValue("accept_time").split(" ");
+                    tempJo.put("date", date_time[0]);
+                    tempJo.put("time", date_time[1]);
+                    tempJo.put("des",
+                            "【" + e.attributeValue("accept_address") + "】"
+                                    + e.attributeValue("remark"));
+                }
 
             }
 
