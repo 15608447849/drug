@@ -19,6 +19,7 @@ import com.onek.goods.util.ProdESUtil;
 import com.onek.propagation.prod.ActivityManageServer;
 import com.onek.propagation.prod.ProdCurrentActPriceObserver;
 import com.onek.propagation.prod.ProdDiscountObserver;
+import com.onek.server.infimp.IceDebug;
 import com.onek.util.IceRemoteUtil;
 import com.onek.util.SmsTempNo;
 import com.onek.util.SmsUtil;
@@ -1231,6 +1232,7 @@ public class BackgroundProdModule {
      * @返回列表 code=200 data=结果信息
      */
     @UserPermission(ignore = true)
+    @IceDebug(inPrint = false)
     public Result updateStoreDateFromERP(AppContext appContext) {
         JSONObject erpProd =
                 JSON.parseObject(appContext.param.json);

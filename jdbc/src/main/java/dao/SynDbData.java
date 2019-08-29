@@ -1,18 +1,21 @@
 package dao;
 
+import constant.BUSConst;
 import constant.DSMConst;
+import org.apache.logging.log4j.Logger;
 import org.hyrdpf.dao.DAOException;
 import org.hyrdpf.dao.FacadeProxy;
 import org.hyrdpf.dao.jdbc.AbstractJdbcSessionMgr;
 import org.hyrdpf.dao.jdbc.JdbcBaseDao;
 import org.hyrdpf.dao.jdbc.JdbcTransaction;
-import org.hyrdpf.util.KV;
+import org.hyrdpf.ds.AppConfig;
 import org.hyrdpf.util.LogUtil;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+
+import static dao.BaseDAO.*;
 
 /**
  * @author Administrator
@@ -21,415 +24,304 @@ import java.util.concurrent.Future;
  * @Description TODO
  * @date 2019-03-11 1:44
  */
-public class SynDbData implements Callable<Object> {
+public class SynDbData {
 
-    private BaseDAO baseDao = BaseDAO.getBaseDAO();
+    public static SyncI syncI = new SyncI() {
+        @Override
+        public void addSyncBean(SQLSyncBean b) {
 
-    private int sharding;
-    private int tbSharding;
-    private String[] nativeSQL;
-    private List<Object[]> params;
-    private JdbcBaseDao jdbcBaseDao = null;
-    private int master;
-    private int optType;
-    private String[] GPKNativeSQL;
-    private Object[] param;
-    private String[] resultSQL;
-    private int batchSize;
-
-
-
-    public SynDbData(String[] resultSQL, Object[] param, int master, int optType){
-        this.resultSQL = resultSQL;
-        this.param = param;
-        this.master = master;
-        this.optType = optType;
-    }
-
-    public SynDbData(){
-    }
-
-    @Override
-    public Object call() throws Exception {
-        switch (optType){
-            case 0:
-                return  updateNative();
-            case 1:
-                return  updateAndGPKNative();
-            case 2:
-                return  updateTransNative();
-            case 3:
-                return updateAndGPKTransNative();
-            case 4:
-                return updateBatchNative();
-            case 5:
-                return updateNativeBk();
-            case 6:
-                return updateTransNativeBk();
-            case 7:
-                return updateBatchNativeBK();
         }
-        return null;
-    }
 
-    public String[] getResultSQL() {
-        return resultSQL;
-    }
+        @Override
+        public void errorSyncBean(SQLSyncBean sqlSyncBean) {
 
-    public void setResultSQL(String[] resultSQL) {
-        this.resultSQL = resultSQL;
-    }
+        }
 
-    public int getSharding() {
-        return sharding;
-    }
-
-    public void setSharding(int sharding) {
-        this.sharding = sharding;
-    }
-
-    public int getTbSharding() {
-        return tbSharding;
-    }
-
-    public void setTbSharding(int tbSharding) {
-        this.tbSharding = tbSharding;
-    }
-
-    public String[] getNativeSQL() {
-        return nativeSQL;
-    }
-
-    public void setNativeSQL(String[] nativeSQL) {
-        this.nativeSQL = nativeSQL;
-    }
-
-    public List<Object[]> getParams() {
-        return params;
-    }
-
-    public void setParams(List<Object[]> params) {
-        this.params = params;
-    }
-
-    public JdbcBaseDao getJdbcBaseDao() {
-        return jdbcBaseDao;
-    }
-
-    public void setJdbcBaseDao(JdbcBaseDao jdbcBaseDao) {
-        this.jdbcBaseDao = jdbcBaseDao;
-    }
-
-    public int getMaster() {
-        return master;
-    }
-
-    public void setMaster(int master) {
-        this.master = master;
-    }
-
-    public int getOptType() {
-        return optType;
-    }
-
-    public void setOptType(int optType) {
-        this.optType = optType;
-    }
-
-    public Object[] getParam() {
-        return param;
-    }
-
-    public void setParam(Object[] param) {
-        this.param = param;
-    }
-
-    public String[] getGPKNativeSQL() {
-        return GPKNativeSQL;
-    }
-
-    public void setGPKNativeSQL(String[] GPKNativeSQL) {
-        this.GPKNativeSQL = GPKNativeSQL;
-    }
-
-    public int getBatchSize() {
-        return batchSize;
-    }
-
-    public void setBatchSize(int batchSize) {
-        this.batchSize = batchSize;
-    }
-
-    public int updateNative(){
-        int result = 0;
-        LogUtil.getDefaultLogger().debug("【Debug】SYN Native SQL：" + resultSQL[1]);
-        JdbcBaseDao jdbcBaseDao = null;
-        try {
-            jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false));
-            result = jdbcBaseDao.update(resultSQL[1], param);
-        } catch (DAOException e) {
-            e.printStackTrace();
-            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
-            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
-                return 0;
-            }
-            int dbs = (master == 0 ? 1 : 0);
-            List<Object[]> paramList = new ArrayList<>();
-            paramList.add(getParam());
+        @Override
+        public void executeSyncBean() {
             try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
-            SynDbLog.updateTransNative(getNativeSQL(),paramList,sharding,tbSharding,dbs,false);
         }
-        return result;
-    }
 
+        @Override
+        public void notifyMasterActive() {
 
-
-
-
-    public KV<Integer, List<Object>> updateAndGPKNative(){
-        KV<Integer,List<Object>> keys = null;
-        LogUtil.getDefaultLogger().debug("【Debug】SYN Native SQL：" + resultSQL[1]);
-        JdbcBaseDao jdbcBaseDao = null;
-        try{
-            jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false));
-            keys = jdbcBaseDao.updateAndGenerateKeys(resultSQL[1], param);
-        }catch (DAOException e) {
-            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
-            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
-
-            e.printStackTrace();
-            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
-                return null;
-            }
-            int dbs = (master == 0 ? 1 : 0);
-            List<Object[]> paramList = new ArrayList<>();
-            paramList.add(getParam());
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
-            }
-            SynDbLog.updateTransNative(getNativeSQL(),paramList,getSharding(),getTbSharding(),dbs,false);
         }
-        return keys;
-    }
+    };
 
-
-
-
-    public int[] updateTransNative(){
-        int[] result = new int[nativeSQL.length];
-        AbstractJdbcSessionMgr sessionMgr = baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false);
-        try {
-            FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
-                @Override
-                public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
-                    for (int i = 0; i < nativeSQL.length; i++) {
-                        if(sharding != 0){
-                            result[i] = baseDao.updateNativeInCallSharding(sharding,tbSharding,nativeSQL[i],1,params.get(i));
-                        }else{
-                            result[i] = baseDao.updateNativeInCall(nativeSQL[i],1,params.get(i));
-                        }
-                    }
+    static {
+        new Thread(){
+            @Override
+            public void run() {
+                log.info("启动数据库同步轮询");
+                while (true){
+                  syncI.executeSyncBean();
                 }
-            });
-        } catch (DAOException e) {
-            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
-            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
-            e.printStackTrace();
-            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
-                return null;
             }
-            int dbs = (master == 0 ? 1 : 0);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
+        }.start();
+    }
+
+    final static Logger log = LogUtil.getDefaultLogger();
+
+    private final BaseDAO baseDao = BaseDAO.getBaseDAO();
+
+    private final SQLSyncBean b;
+
+    SynDbData(SQLSyncBean b){
+        this.b = b;
+    }
+
+    public static boolean post(SQLSyncBean sqlSyncBean) {
+//        pool.post();
+       return new SynDbData(sqlSyncBean).execute();
+    }
+
+    private boolean execute(){
+        try {
+            //尝试执行sql
+             switch (b.optType){
+                case 0:
+                      updateNative();
+                      break;
+                case 2:
+                      updateTransNative();
+                        break;
+                case 4:
+                     updateBatchNative();
+                    break;
+                case 5:
+                     updateNativeBk();
+                    break;
+                case 6:
+                     updateTransNativeBk();
+                    break;
+                case 7:
+                     updateBatchNativeBK();
+                    break;
+                case 100:
+                    baseDao.updateNative(false,b.nativeSQL[0],b.param);
+                    break;
+                case 101:
+                    baseDao.updateNativeSharding(false,b.sharding,b.tbSharding,b.nativeSQL[0],b.param);
+                    break;
+                case 102:
+                    baseDao.updateTransNative(false,b.nativeSQL,b.params);
+                    break;
+                case 103:
+                    baseDao.updateTransNativeSharding(false,b.sharding,b.tbSharding,b.nativeSQL,b.params);
+                    break;
+                case 104:
+                    baseDao.updateBatchNative(false,b.nativeSQL[0],b.params,b.batchSize);
+                    break;
+                case 105:
+                    baseDao.updateBatchNativeSharding(false,b.sharding,b.tbSharding,b.nativeSQL[0],b.params,b.batchSize);
+                    break;
             }
-            SynDbLog.updateTransNative(getNativeSQL(),getParams(),getSharding(),getTbSharding(),dbs,false);
+            return true;
+        } catch (Exception e) {
+          log.error(e);
+          b.currentExecute++;
+          if (b.currentExecute > 3){
+              b.errorSubmit();
+              return true;
+          }else{
+              execute();
+          }
         }
-        return result;
+        return false;
+    }
+
+    private final String ERROR_FORMAT = "同步失败,SQL: %s, 参数: %s, 结果: %d";
+
+
+    /***************************************************************同步到主库***************************************************************/
+    //获取备份服务器
+    private AbstractJdbcSessionMgr getBackupSessionMgr(int sharding, final int table){
+        int dbs = 1;  //只负责向从库连接
+        int db = 0;
+        if ((DSMConst.SEG_TABLE_RULE[table] & 1) > 0) { //
+            db = sharding % BUSConst._DMNUM  % BUSConst._MODNUM_EIGHT;
+        }
+        return AppConfig.getSessionManager(dbs,db);
+    }
+
+    //执行一条sql
+    public void updateNative() throws DAOException{
+        log.debug("【同步从库】updateNative：" + b.resultSQL[1] +","+ Arrays.toString( b.param));
+        JdbcBaseDao jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
+        jdbcBaseDao.setManager(getBackupSessionMgr(b.sharding,Integer.parseInt(b.resultSQL[0])));
+        int result = jdbcBaseDao.update(b.resultSQL[1], b.param);
+        if (result<=0) throw new DAOException(
+                String.format(ERROR_FORMAT,b.resultSQL[1],Arrays.toString(b.param),result)
+              );
+    }
+
+    //批量执行
+    public void updateBatchNative() throws DAOException{
+        log.debug("【同步从库】updateBatchNative：" + b.resultSQL[1] +","+ BaseDAO.paramListString(b.params)+","+b.batchSize);
+        JdbcBaseDao jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
+        jdbcBaseDao.setManager(getBackupSessionMgr(b.sharding,Integer.parseInt(b.resultSQL[0])));
+        int[] resultArr = jdbcBaseDao.updateBatch(b.resultSQL[1], b.params,b.batchSize);
+        for (int i = 0; i <resultArr.length; i++){
+            int result = resultArr[i];
+            if (result<=0) throw new DAOException(
+                    String.format(ERROR_FORMAT,b.nativeSQL[0],Arrays.toString( b.params.get(i)),result)
+            );
+        }
+    }
+
+    //执行多条sql - 事务
+    public void updateTransNative() throws DAOException{
+        AbstractJdbcSessionMgr sessionMgr = getBackupSessionMgr(b.sharding,Integer.parseInt(b.resultSQL[0]));
+        JdbcBaseDao dao = FacadeProxy.create(JdbcBaseDao.class);
+        dao.setManager(sessionMgr);
+        FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
+            @Override
+            public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
+                for (int i = 0; i < b.nativeSQL.length; i++) {
+                    String[] _resultSQL = baseDao.getNativeSQL(b.nativeSQL[i],b.tbSharding);
+                    Object[] _params = b.params.get(i);
+                    log.debug("【同步从库】updateTransNative：" +  Arrays.toString(b.resultSQL)+","+Arrays.toString(b.param));
+                    int result =  dao.update(_resultSQL[1], _params);
+                    if (result<=0) throw new DAOException(
+                            String.format(ERROR_FORMAT, Arrays.toString(b.resultSQL),Arrays.toString(b.param),result)
+                    );
+                }
+            }
+        });
+
     }
 
 
+    /**************************************************同步到运营************************************************/
 
-    public int[] updateTransNativeBk(){
-        int[] result = new int[nativeSQL.length];
-        AbstractJdbcSessionMgr sessionMgr = baseDao.getSessionMgr(0,
-                DSMConst.TD_BK_TRAN_ORDER);
-        List<Object[]> bkParm = new ArrayList<>();
-        List<String[]> bkResultSql = new ArrayList<>();
-        for (int i = 0; i < nativeSQL.length; i++){
-            String[] resultSQL = baseDao.getNativeReplaceSQL(nativeSQL[i],tbSharding);
+
+
+
+    protected String[] getNativeReplaceSQL(String nativeSQL,int tbSharding){
+        String[] result = new String[2];
+        //默认从第一个字符串开始查询指定的子字符串
+        int startIndex = 0;
+        //查询指定的子字符串终止的位置值
+        int endIndex = nativeSQL.lastIndexOf(SUFFIX_REGEX);
+
+        while (startIndex < endIndex) {
+            //查找原生态查询语句中第一个表对象固定格式的前缀所在的起始位置值。
+            startIndex = nativeSQL.indexOf(PREFIX_REGEX, startIndex);
+            //查找原生态查询语句中第一个表对象固定格式的后缀所在的起始位置值。
+            endIndex = nativeSQL.indexOf(SUFFIX_REGEX, startIndex + BUSConst._FOUR);
+            //指定第二次查找子字符串时的起始查找点的位置值
+            if(startIndex == endIndex) break;
+            //取得原生态查询语句中表对象在DSMConst.DB_TABLES常量里索引值，需要在表对象固定格式的前缀所在的起始位置值加上固定格式“{{?”三位长度。
+            result[0] = nativeSQL.substring(startIndex + BUSConst._THREE,endIndex);
+            int tableIndex = Integer.parseInt(result[0]);
+            //正则表达式
+            String regex = PREFIX_REGEX_SB.toString() + tableIndex + SUFFIX_REGEX_SB;
+            //取和数据库里真正的要查询的表名
+            nativeSQL = nativeSQL.replaceAll(regex,getReplaceTableName(tableIndex,tbSharding));
+        }
+        result[1] = nativeSQL;
+        return result;
+    }
+
+    /**切分表实现,table：是要操作那个基本表，基本表就是没有切分前的表*/
+    private String getReplaceTableName(int table,int tbSharding)
+    {
+        //替换表
+        if(table == DSMConst.TD_TRAN_ORDER){
+            table = DSMConst.TD_BK_TRAN_ORDER;
+        }
+
+        if(table == DSMConst.TD_TRAN_GOODS){
+            table = DSMConst.TD_BK_TRAN_GOODS;
+        }
+
+        if(table == DSMConst.TD_TRAN_REBATE){
+            table = DSMConst.TD_BK_TRAN_REBATE;
+        }
+
+        StringBuilder strSql = new StringBuilder(DSMConst.DB_TABLES[table][BUSConst._ZERO]);
+        //按公司模型切分表
+        if(tbSharding > 0){
+            strSql.append(DSMConst._UNDERLINE);
+            strSql.append(tbSharding);
+        }
+        return strSql.toString();
+    }
+
+    //分库分表
+    private AbstractJdbcSessionMgr getSessionMgrBk(final int table){
+        int dbs = 0;
+        int db = 0;
+        //与主从无关 如果是运营库,则只会获取运营库的连接
+        if((DSMConst.SEG_TABLE_RULE[table] & 4) > 0){
+            dbs = AppConfig.getDBSNum() - BUSConst._ONE;
+        }
+        return AppConfig.getSessionManager(dbs,db);
+    }
+
+    //同步到运营平台
+    private void updateTransNativeBk() throws DAOException{
+
+        final List<Object[]> bkParm = new ArrayList<>();
+        final List<String[]> bkResultSql = new ArrayList<>();
+        for (int i = 0; i < b.nativeSQL.length; i++){
+            String[] resultSQL = getNativeReplaceSQL(b.nativeSQL[i],b.tbSharding);
             int tabInx = Integer.parseInt(resultSQL[0]);
             if(tabInx == DSMConst.TD_TRAN_ORDER
                     || tabInx == DSMConst.TD_TRAN_GOODS
                     || tabInx == DSMConst.TD_TRAN_REBATE){
                 bkResultSql.add(resultSQL);
-                bkParm.add(params.get(i));
+                bkParm.add(b.params.get(i));
             }
         }
-        try {
-            FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
-                @Override
-                public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
-                    for (int i = 0; i < bkResultSql.size(); i++) {
-                        result[i] = baseDao.updateNativeInCallBKSharding(sharding,tbSharding,bkResultSql.get(i),bkParm.get(i));
-                    }
+
+        AbstractJdbcSessionMgr sessionMgr = getSessionMgrBk(DSMConst.TD_BK_TRAN_ORDER);
+        JdbcBaseDao dao = FacadeProxy.create(JdbcBaseDao.class);
+        dao.setManager(sessionMgr);
+        FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
+            @Override
+            public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
+                for (int i = 0; i < bkResultSql.size(); i++) {
+                    log.debug("【同步运营】updateTransNativeBk：" +  bkResultSql.get(i)[1]+","+Arrays.toString(bkParm.get(i)));
+                    int result =  dao.update(bkResultSql.get(i)[1],bkParm.get(i));
+                    if (result<=0) throw new DAOException(
+                            String.format(ERROR_FORMAT, bkResultSql.get(i)[1],Arrays.toString(bkParm.get(i)),result)
+                    );
+
                 }
-            });
-        } catch (DAOException e) {
-            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
-            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
-            e.printStackTrace();
-            int dbs = master;
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
             }
-            SynDbLog.updateTransNative(getNativeSQL(),getParams(),
-                    getSharding(),getTbSharding(),dbs,false);
-        }
-        return result;
+        });
     }
 
-
-    public int updateNativeBk(){
-        int result = 0;
-        String[] resultSQL = baseDao.getNativeReplaceSQL(nativeSQL[0],tbSharding);
-        LogUtil.getDefaultLogger().debug("【Debug】SYN Native SQL：" + resultSQL[1]);
-        JdbcBaseDao jdbcBaseDao = null;
-        try {
-            jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-            jdbcBaseDao.setManager(baseDao.getSessionMgr(0,DSMConst.TD_BK_TRAN_ORDER));
-            result = jdbcBaseDao.update(resultSQL[1], param);
-        } catch (DAOException e) {
-            LogUtil.getDefaultLogger().error("异步线程同步运营平台异常",e);
-            e.printStackTrace();
-            int dbs = master;
-            List<Object[]> paramList = new ArrayList<>();
-            paramList.add(getParam());
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
-            }
-            SynDbLog.updateTransNative(getNativeSQL(),paramList,sharding,tbSharding,dbs,false);
-        }
-        return result;
+    //同步运营后台
+    private void updateNativeBk() throws DAOException{
+        String[] resultSQL = getNativeReplaceSQL(b.nativeSQL[0],b.tbSharding);
+        JdbcBaseDao jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
+        jdbcBaseDao.setManager(getSessionMgrBk(DSMConst.TD_BK_TRAN_ORDER));
+        log.debug("【同步运营】updateNativeBk：" +  resultSQL[1]+","+Arrays.toString(b.param));
+        int result  = jdbcBaseDao.update(resultSQL[1], b.param);
+        if (result<=0) throw new DAOException(
+                String.format(ERROR_FORMAT,b.resultSQL[1],Arrays.toString(b.param),result)
+        );
     }
 
-
-    public int[] updateBatchNativeBK(){
-        String[] resultSQL = baseDao.getNativeReplaceSQL(nativeSQL[0],tbSharding);
-        LogUtil.getDefaultLogger().debug("【Debug】SYN Native SQL：" + resultSQL[1]);
-        int[] result = null;
-        JdbcBaseDao jdbcBaseDao = null;
-        try {
-            jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-            jdbcBaseDao.setManager(baseDao.getSessionMgr(0,DSMConst.TD_BK_TRAN_ORDER));
-            result = jdbcBaseDao.updateBatch(resultSQL[1], params,batchSize);
-        } catch (DAOException e) {
-            LogUtil.getDefaultLogger().error("异步线程同步运营平台异常",e);
-            e.printStackTrace();
-            int dbs = master;
-            List<Object[]> paramList = new ArrayList<>();
-            paramList.add(getParam());
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
-            }
-            SynDbLog.updateTransNative(getNativeSQL(),paramList,sharding,tbSharding,dbs,true);
+    //运营后台
+    private void updateBatchNativeBK() throws DAOException{
+        String[] resultSQL = getNativeReplaceSQL(b.nativeSQL[0],b.tbSharding);
+        JdbcBaseDao jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
+        jdbcBaseDao.setManager(getSessionMgrBk(DSMConst.TD_BK_TRAN_ORDER));
+        log.debug("【同步运营】updateBatchNativeBK：" +  resultSQL[1]+","+BaseDAO.paramListString(b.params)+","+b.batchSize);
+        int[] resultArr = jdbcBaseDao.updateBatch(resultSQL[1], b.params,b.batchSize);
+        for (int i = 0; i <resultArr.length; i++){
+            int result = resultArr[i];
+            if (result<=0) throw new DAOException(
+                    String.format(ERROR_FORMAT,b.nativeSQL[0],Arrays.toString( b.params.get(i)),result)
+            );
         }
-        return result;
     }
-
-
-
-    public  int[] updateAndGPKTransNative(){
-        int[] result = new int[GPKNativeSQL.length + nativeSQL.length];
-        AbstractJdbcSessionMgr sessionMgr = baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false);
-        try {
-            FacadeProxy.executeCustomTransaction(sessionMgr,new JdbcTransaction() {
-                @Override
-                public void execute(AbstractJdbcSessionMgr sessionMgr) throws DAOException {
-                    List<Object[]> autoGPK = new ArrayList<Object[]>();
-                    for (int i = 0; i < GPKNativeSQL.length; i++) {
-                        KV<Integer,List<Object>> keys = null;
-                        if(sharding != 0){
-                            keys = baseDao.updateAndGPKNativeInCallSharding(sharding,tbSharding,GPKNativeSQL[i],1,params.get(i));
-                        }else{
-                            keys = baseDao.updateAndGPKNativeInCall(GPKNativeSQL[i],1,params.get(i));
-                        }
-                        //返回类型为[4,5],代表插入了两行，产生了两个自增长值，分别为4和5
-                        autoGPK.add(keys.getValue().toArray());
-                        //自增值个数，也就是行数（同时插入多行记录）
-                        result[i] = keys.getKey();
-                    }
-                    Object[] paramsTrue;
-                    for (int i = 0 ; i < nativeSQL.length; i++) {
-                        paramsTrue = baseDao.getTrueParams(autoGPK,params.get(i + GPKNativeSQL.length));
-                        if(sharding != 0){
-                            result[i + GPKNativeSQL.length] = baseDao.updateNativeInCallSharding(sharding,tbSharding,nativeSQL[i],1,paramsTrue);
-                        }else{
-                            result[i + GPKNativeSQL.length] = baseDao.updateNativeInCall(nativeSQL[i],1,paramsTrue);
-                        }
-
-                    }
-                }
-            });
-        } catch (DAOException e) {
-            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
-            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
-            e.printStackTrace();
-            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
-                return null;
-            }
-            int dbs = (master == 0 ? 1 : 0);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
-            }
-            SynDbLog.updateTransNative(getNativeSQL(),getParams(),getSharding(),getTbSharding(),dbs,false);
-        }
-        return result;
-    }
-
-
-    public int[] updateBatchNative(){
-        LogUtil.getDefaultLogger().debug("【Debug】SYN Native SQL：" + resultSQL[1]);
-        int[] result = null;
-        JdbcBaseDao jdbcBaseDao = null;
-        try {
-            jdbcBaseDao = FacadeProxy.create(JdbcBaseDao.class);
-            jdbcBaseDao.setManager(baseDao.getBackupSessionMgr(sharding,Integer.parseInt(resultSQL[0]),false));
-            result = jdbcBaseDao.updateBatch(resultSQL[1], params,batchSize);
-        } catch (DAOException e) {
-            LogUtil.getDefaultLogger().debug("异步线程写入数据异常！");
-            LogUtil.getDefaultLogger().error("异步线程同步异常",e);
-            e.printStackTrace();
-            if(SynDbLog.isBaseSqlError(e.getCause().getCause())){
-                return null;
-            }
-            int dbs = (master == 0 ? 1 : 0);
-            try {
-                Thread.sleep(1000);
-            } catch (InterruptedException e1) {
-                e1.printStackTrace();
-            }
-            SynDbLog.updateTransNative(getNativeSQL(),getParams(),getSharding(),getTbSharding(),dbs,true);
-        }
-        return result;
-    }
-
 
 }

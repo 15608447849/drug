@@ -947,9 +947,6 @@ public class ShoppingCartModule {
 
                     if (product instanceof Product
                             && product.getSKU() == shoppingCartVO.getPdno()) {
-                        LogUtil.getDefaultLogger().info(
-                                "PNO -> " + product.getSKU() + "\n" +
-                                        JSON.toJSONString(activity));
                         //codno = product.getSKU();
                         if (pList.size() == 1) {
                             shoppingCartVO.addCurrLadDesc(brule, activity.getCurrentLadoffDesc());
@@ -1889,20 +1886,27 @@ public class ShoppingCartModule {
 
         List<ShoppingCartVO> giftVOS = new ArrayList<>();
 
-        //判断库存
+        //判断库存invnum:1846,  actnum:0,limitsub:0,limit:0
         for (ShoppingCartVO shoppingCartVO : shopCart){
             if(shoppingCartVO.getPdno() > 0){
                 int invnum = shoppingCartVO.getInventory();
                 int actnum = shoppingCartVO.getActstock();
                 int limitsub = shoppingCartVO.getLimitsub();
-                LogUtil.getDefaultLogger().debug("invnum:"+invnum+",  actnum:"+actnum+"," +
+                LogUtil.getDefaultLogger().debug("actCodeSize()---->>: "+ (shoppingCartVO.getActcode() != null
+                        ? shoppingCartVO.getActcode().size() : shoppingCartVO.getActcode()) +
+                        ",invnum:"+invnum+",  actnum:"+actnum+"," +
                         "limitsub:"+limitsub +",limit:"+shoppingCartVO.getLimitnum());
-                int cbuy = 0 ;
-                if(shoppingCartVO.getLimitnum() == 0){
-                    cbuy = Math.min(invnum, actnum);
-                }else{
-                    cbuy = Math.min(Math.min(invnum, actnum),limitsub);
+                int cbuy;
+                if (shoppingCartVO.getActcode() != null && shoppingCartVO.getActcode().size() > 0 ) {//有活动
+                    if(shoppingCartVO.getLimitnum() == 0){
+                        cbuy = Math.min(invnum, actnum);
+                    } else {
+                        cbuy = Math.min(Math.min(invnum, actnum),limitsub);
+                    }
+                } else {
+                    cbuy = invnum;
                 }
+
 
                 if(shoppingCartVO.getNum() > cbuy){
                     StringBuilder sb = new StringBuilder();

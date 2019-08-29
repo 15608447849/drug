@@ -58,7 +58,6 @@ public class IMServerImps extends _InterfacesDisp implements IPushMessageStore {
         pool.post(pushRunnable());//消息发送
     }
 
-
     private void createMessageStoreImps() {//创建消息存储实例
         if (StringUtils.isEmpty(IceProperties.INSTANCE.pmStoreImp)) return;
         try {
@@ -145,7 +144,6 @@ public class IMServerImps extends _InterfacesDisp implements IPushMessageStore {
             messageQueue.notify();
         }
     }
-
 
     //发送消息到客户端
     private boolean sendMessage(IPMessage message) {

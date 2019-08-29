@@ -130,7 +130,7 @@ public class QualificationInspectionInitialize extends Thread implements IIceIni
                    //判断当前是否存在记录-存在不设置定时器任务
                    if (timerIdList.contains(atype+compid+phone)) return;
                    timerIdList.add(atype+compid+phone);//添加
-                   Application.communicator().getLogger().print("添加资质判断计时器任务:"+atype+compid+phone);
+//                   Application.communicator().getLogger().print("添加资质判断计时器任务:"+atype+compid+phone);
                }finally {
                    lock.unlock();
                }

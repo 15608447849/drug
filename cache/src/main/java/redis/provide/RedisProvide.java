@@ -1,7 +1,9 @@
 package redis.provide;
 
-import IceInternal.Ex;
-import redis.clients.jedis.*;
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.JedisCluster;
+import redis.clients.jedis.JedisPool;
+import redis.clients.jedis.JedisPoolConfig;
 import redis.clients.util.JedisClusterCRC16;
 
 import java.util.*;
@@ -82,9 +84,7 @@ public class RedisProvide{
 	public Long remainingSurvivalTime(String key) {
 		return jedisCluster.ttl(key);
 	}
-	
 
-	
 	/**
 	 * 查看key所储存的值的类型
 	 * 

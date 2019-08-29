@@ -1,11 +1,11 @@
 package redis.provide;
 
-import java.util.HashSet;
-import java.util.Set;
-
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPoolConfig;
+
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * Reids集群工厂
@@ -25,7 +25,7 @@ public class JedisClusterFactory {
 
 	public JedisClusterFactory(JedisPoolConfig jedisPoolConfig,String [] hosts){    
 	    
-		Set<HostAndPort> jedisClusterNodes= new HashSet<HostAndPort>();
+		Set<HostAndPort> jedisClusterNodes= new HashSet<>();
 	    //Jedis Cluster will attempt to discover cluster nodes automatically
 		for(int i = 0; i < hosts.length; i++) {
 			String [] datas = hosts[i].split(":");

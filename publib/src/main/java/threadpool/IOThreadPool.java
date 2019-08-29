@@ -8,7 +8,7 @@ import java.util.concurrent.TimeUnit;
 
 public class IOThreadPool extends Thread implements IThreadPool {
 
-    private ConcurrentLinkedQueue<Runnable> queue = new ConcurrentLinkedQueue<>();
+    private final ConcurrentLinkedQueue<Runnable> queue = new ConcurrentLinkedQueue<>();
     private ThreadPoolExecutor executor;
     private boolean isLoop = true;
     public IOThreadPool() {
@@ -70,6 +70,9 @@ public class IOThreadPool extends Thread implements IThreadPool {
     @Override
     public void close(){
         isLoop = false;
+        synchronized (queue){
+            queue.notify();
+        }
         if (executor!=null) executor.shutdownNow();
     }
 }
