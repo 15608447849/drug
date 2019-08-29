@@ -1,11 +1,7 @@
 package dao;
 
 import com.google.gson.*;
-import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Type;
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -24,7 +20,9 @@ public class SQLSyncBean {
 
     private final static Gson builder =  new GsonBuilder()
             .setLongSerializationPolicy(LongSerializationPolicy.STRING)
-            .registerTypeAdapter(Object[].class, new JsonSerializer<Object[]>() {
+             .registerTypeAdapter(Double.class, (JsonSerializer<Double>) (src, typeOfSrc, context) -> new JsonPrimitive(src.longValue()+""))
+             .registerTypeAdapter(Integer.class,(JsonSerializer<Integer>) (src, typeOfSrc, context) -> new JsonPrimitive(src+""))
+           /* .registerTypeAdapter(Object[].class, new JsonSerializer<Object[]>() {
 
                 @Override
                 public JsonElement serialize(Object[] src, Type typeOfSrc, JsonSerializationContext context) {
@@ -39,8 +37,8 @@ public class SQLSyncBean {
 
                     return arr.length() > 2 ? new JsonPrimitive(arr) : null;
                 }
-            })
-            .registerTypeAdapter(Object[].class, new JsonDeserializer<Object[]>() {
+            })*/
+          /*  .registerTypeAdapter(Object[].class, new JsonDeserializer<Object[]>() {
                     @Override
                     public Object[] deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
 //                        System.out.println("反序列化 Object[]   :"+ json);
@@ -60,12 +58,17 @@ public class SQLSyncBean {
                        }
                        return list;
                    }
-               })
+               })*/
             .create();
 
 
     public static SQLSyncBean deserialization(String json){
-        return builder.fromJson(json,SQLSyncBean.class);
+        try {
+            return builder.fromJson(json,SQLSyncBean.class);
+        } catch (JsonSyntaxException e) {
+            e.printStackTrace();
+        }
+        return null;
     }
 
     boolean toMaster = false; // 在主库异常时,被从库更新的数据
@@ -85,13 +88,6 @@ public class SQLSyncBean {
 
     public SQLSyncBean(int optType) {
         this.optType = optType;
-//        this.param = new Object[]{26858,26858,536862882,15608447849L,15.6006,0.555f,"null","",null};
-////        this.param = new Object[]{};
-//        List<Object[]> list = new ArrayList<>();
-//        list.add(this.param);
-//        list.add(this.param);
-//        list.add(this.param);
-//        this.params = list;
     }
 
     void submit(){

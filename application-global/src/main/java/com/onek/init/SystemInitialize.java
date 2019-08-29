@@ -57,7 +57,7 @@ public class SystemInitialize implements IIceInitialize {
 
                     }
 
-                    if (i == 1){
+                    if (i > 0){
                        LogUtil.getDefaultLogger().info("持久化sql同步对象: "+b);
                     }else{
                         b.errorSubmit();
@@ -91,7 +91,7 @@ public class SystemInitialize implements IIceInitialize {
 
             @Override
             public void executeSyncBean() {
-               if (RedisUtil.getListProvide().size(SQL_MASTER_RESUME) > 0){
+               if (RedisUtil.getListProvide().size(SQL_SYNC_LIST) > 0){
                    //从redis 获取一个任务执行
                    String json = RedisUtil.getListProvide().getElementByIndex(SQL_SYNC_LIST, 0);
                    if (json!=null){
