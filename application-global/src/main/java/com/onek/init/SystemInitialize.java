@@ -54,13 +54,17 @@ public class SystemInitialize implements IIceInitialize {
                         i = RedisUtil.getListProvide().addEndElement(SQL_MASTER_RESUME, GsonUtils.javaBeanToJson(b));
                     }else{
                         i = RedisUtil.getListProvide().addEndElement(SQL_SYNC_LIST, GsonUtils.javaBeanToJson(b));
+
                     }
+
                     if (i == 1){
-                        synchronized (SQL_SYNC_LIST){
-                            SQL_SYNC_LIST.notify();
-                        }
+                       LogUtil.getDefaultLogger().info("持久化sql同步对象: "+b);
                     }else{
                         b.errorSubmit();
+                    }
+
+                    synchronized (SQL_SYNC_LIST){
+                        SQL_SYNC_LIST.notify();
                     }
 
                 } catch (Exception e) {
@@ -105,7 +109,7 @@ public class SystemInitialize implements IIceInitialize {
                } else{
                     synchronized (SQL_SYNC_LIST){
                         try {
-                            SQL_SYNC_LIST.wait();
+                            SQL_SYNC_LIST.wait(5 * 60 * 1000);
                         } catch (InterruptedException e) {
                             e.printStackTrace();
                         }
