@@ -93,12 +93,13 @@ public class SystemInitialize implements IIceInitialize {
                    if (json!=null){
                        SQLSyncBean b = SQLSyncBean.deserialization(json);
                        //LogUtil.getDefaultLogger().info("从缓存获取一个任务:\n"+b);
-                       if (b != null) b.execute();
                        if (b != null && b.execute()){
                            long s1 = RedisUtil.getListProvide().size(SQL_SYNC_LIST);
                            json = RedisUtil.getListProvide().removeHeadElement(SQL_SYNC_LIST);
                            long s2 = RedisUtil.getListProvide().size(SQL_SYNC_LIST);
                            LogUtil.getDefaultLogger().info("同步前后列表大小:"+s1+">>>"+s2+", 同步数据: "+ json);
+                       }else{
+                           RedisUtil.getListProvide().removeHeadElement(SQL_SYNC_LIST);
                        }
                    }
                } else{
