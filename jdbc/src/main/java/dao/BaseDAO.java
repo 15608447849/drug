@@ -611,7 +611,7 @@ public class BaseDAO {
 	}
 
 	public int[] updateBatchNative(String nativeSQL, List<Object[]> params, int batchSize){
-		return updateBatchNative(nativeSQL,params,batchSize);
+		return updateBatchNative(true,nativeSQL,params,batchSize);
 	}
 
 	/**

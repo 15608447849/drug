@@ -145,6 +145,11 @@ public class WXModule {
         String mediaId;
         String savePath;
         String fileName;
+
+        //图片处理
+        boolean isCompress = true;
+        boolean isLogo = true;
+        boolean isThumb = true;
     }
 
     @UserPermission(ignore = true)
@@ -181,6 +186,10 @@ public class WXModule {
                 //上传图片
                 String json = new HttpRequest().addStream(in, p.savePath,  p.fileName)
                         .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
+                        .setCompress(p.isCompress) //服务器压缩
+                        .setLogo(p.isLogo) //图片水印
+                        .setThumb(p.isThumb) //图片略缩图
+                        .setCompressLimitSieze(5*1024*1024L)
                         .getRespondContent();
                 HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
                 return new Result().success(maps);
@@ -196,6 +205,15 @@ public class WXModule {
         return new Result().fail("图片无法获取");
     }
 
-
+    @UserPermission(ignore = true)
+    public Result delImage(AppContext context){
+        try {
+            Param p = GsonUtils.jsonToJavaBean(context.param.json,Param.class);
+            return new Result().success(new HttpRequest().deleteFile(FileServerUtils.fileDeleteAddress(),p.savePath+"/"+p.fileName));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new Result().fail("移除失败");
+    }
 
 }
