@@ -1,7 +1,11 @@
 package dao;
 
-import util.GsonUtils;
+import com.google.gson.*;
+import com.google.gson.reflect.TypeToken;
 
+import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -9,6 +13,61 @@ import java.util.List;
  * @Date: 2019/8/26 11:19
  */
 public class SQLSyncBean {
+
+    private static Object[] toObject(String arrStr){
+        arrStr = arrStr.substring(1,arrStr.length()-1);
+        String[] arr = arrStr.split(",");
+        Object[] oArr = new Object[arr.length];
+        System.arraycopy(arr, 0, oArr, 0, oArr.length);
+        return oArr;
+    }
+
+    private final static Gson builder =  new GsonBuilder()
+            .setLongSerializationPolicy(LongSerializationPolicy.STRING)
+            .registerTypeAdapter(Object[].class, new JsonSerializer<Object[]>() {
+
+                @Override
+                public JsonElement serialize(Object[] src, Type typeOfSrc, JsonSerializationContext context) {
+//                    System.out.println("序列化 Object[]   :"+ Arrays.toString(src));
+//                    String[] arrays = new String[src.length];
+//                    for (int i = 0; i < src.length; i++){
+//                        arrays[i] = String.valueOf(src[i]);
+//                        System.out.println(arrays[i]);
+//                    }
+                    String arr = Arrays.toString(src);
+//                    String arr = Arrays.toString(arrays);
+
+                    return arr.length() > 2 ? new JsonPrimitive(arr) : null;
+                }
+            })
+            .registerTypeAdapter(Object[].class, new JsonDeserializer<Object[]>() {
+                    @Override
+                    public Object[] deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+//                        System.out.println("反序列化 Object[]   :"+ json);
+                        return  toObject(json.getAsString());
+                    }
+                })
+            .registerTypeAdapter(new TypeToken<List<Object[]>>(){}.getType(), new JsonDeserializer<List<Object[]>>() {
+                   @Override
+                   public List<Object[]> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+//                       System.out.println("反序列化 List<Object[]>  :"+ json);
+
+                       JsonArray array = json.getAsJsonArray();
+                       List<Object[]> list = new ArrayList<>();
+                       for (JsonElement element : array){
+                           System.out.println(element);
+                           list.add(toObject(element.getAsString()));
+                       }
+                       return list;
+                   }
+               })
+            .create();
+
+
+    public static SQLSyncBean deserialization(String json){
+        return builder.fromJson(json,SQLSyncBean.class);
+    }
+
     boolean toMaster = false; // 在主库异常时,被从库更新的数据
     int optType;//执行方法标识
     int sharding; //分库
@@ -24,8 +83,15 @@ public class SQLSyncBean {
         return toMaster;
     }
 
-    SQLSyncBean(int optType) {
+    public SQLSyncBean(int optType) {
         this.optType = optType;
+        this.param = new Object[]{26858,26858,536862882,15608447849L,15.6006,0.555f,"null","",null};
+//        this.param = new Object[]{};
+        List<Object[]> list = new ArrayList<>();
+        list.add(this.param);
+        list.add(this.param);
+        list.add(this.param);
+        this.params = list;
     }
 
     void submit(){
@@ -38,7 +104,7 @@ public class SQLSyncBean {
 
     @Override
     public String toString() {
-        return GsonUtils.javaBeanToJson(this);
+        return builder.toJson(this);
     }
 
     public void errorSubmit() {

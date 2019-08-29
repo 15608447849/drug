@@ -661,18 +661,22 @@ public class HttpUtil {
         HttpURLConnection con = null;
         try{
             StringBuilder sb = new StringBuilder();
-            for (Map.Entry<String, String> e : params.entrySet()) {
-                sb.append(e.getKey());
-                sb.append("=");
-                sb.append(URLEncoder.encode(e.getValue(),"UTF-8"));
-                sb.append("&");
-            }
-            sb.substring(0, sb.length() - 1);
+            String content = null;
+            if (params!=null){
+                for (Map.Entry<String, String> e : params.entrySet()) {
+                    sb.append(e.getKey());
+                    sb.append("=");
+                    sb.append(URLEncoder.encode(e.getValue(),"UTF-8"));
+                    sb.append("&");
+                }
+                sb.substring(0, sb.length() - 1);
 
-            String content = sb.toString();
-            if (type .equals("GET") && params.size()>0){
-                url += "?" +content ;
+                content = sb.toString();
+                if (type .equals("GET") && params.size()>0){
+                    url += "?" +content ;
+                }
             }
+
 
             con = (HttpURLConnection) new URL(url).openConnection();
             con.setRequestMethod(type);
@@ -681,7 +685,7 @@ public class HttpUtil {
             con.setUseCaches(false);
             con.setRequestProperty("Charset", "UTF-8");
             con.setRequestProperty("Content-Type", "application/x-www-form-urlencoded");
-            if (type.equals("POST")){
+            if (type.equals("POST") && content!=null){
                 OutputStreamWriter osw = new OutputStreamWriter(con.getOutputStream(), StandardCharsets.UTF_8);
                 osw.write(content);
                 osw.flush();

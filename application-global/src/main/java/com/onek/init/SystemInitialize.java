@@ -91,7 +91,7 @@ public class SystemInitialize implements IIceInitialize {
                    //从redis 获取一个任务执行
                    String json = RedisUtil.getListProvide().getElementByIndex(SQL_SYNC_LIST, 0);
                    if (json!=null){
-                       SQLSyncBean b = GsonUtils.jsonToJavaBean(json,SQLSyncBean.class);
+                       SQLSyncBean b = SQLSyncBean.deserialization(json);
                        //LogUtil.getDefaultLogger().info("从缓存获取一个任务:\n"+b);
                        if (b != null) b.execute();
                        if (b != null && b.execute()){
@@ -123,7 +123,7 @@ public class SystemInitialize implements IIceInitialize {
                                 //从redis 列表,获取一个sql任务执行
                                 String json = RedisUtil.getListProvide().getElementByIndex(SQL_MASTER_RESUME, 0);
                                 if (json == null) {
-                                    SQLSyncBean b = GsonUtils.jsonToJavaBean(json, SQLSyncBean.class);
+                                    SQLSyncBean b = SQLSyncBean.deserialization(json);
                                     if (b != null && b.execute()){
                                         long s1 = RedisUtil.getListProvide().size(SQL_MASTER_RESUME);
                                         json = RedisUtil.getListProvide().removeHeadElement(SQL_MASTER_RESUME);

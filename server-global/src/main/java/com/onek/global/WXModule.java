@@ -5,6 +5,7 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.FileServerUtils;
+import dao.SQLSyncBean;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.http.HttpRequest;
@@ -61,7 +62,6 @@ public class WXModule {
         System.out.println("访问: "+ url+"\n\t"+res);
        return res;
     }
-
 
     private static final class JsonBean{
         private String access_token;
@@ -152,6 +152,16 @@ public class WXModule {
         boolean isThumb = true;
     }
 
+    public static void main(String[] args) {
+//        String json = "{\"toMaster\":false,\"optType\":0,\"sharding\":0,\"tbSharding\":0,\"nativeSQL\":[\"update {{?38}} set accupoints \\u003d ?, balpoints \\u003d ? where compid \\u003d ?\"],\"resultSQL\":[\"38\",\"update td_member set accupoints \\u003d ?, balpoints \\u003d ? where compid \\u003d ?\"],\"param\":[26858,26858,536862882],\"batchSize\":0,\"currentExecute\":0}";
+
+//        SQLSyncBean b = GsonUtils.jsonToJavaBean(json,SQLSyncBean.class);
+        SQLSyncBean b = new SQLSyncBean(0);
+        String json = b.toString();
+        SQLSyncBean b2 = SQLSyncBean.deserialization(json);
+
+        System.out.println("*****");
+    }
     @UserPermission(ignore = true)
     public Result getInfo(AppContext context){
         try {
