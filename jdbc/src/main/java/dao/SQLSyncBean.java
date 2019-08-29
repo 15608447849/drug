@@ -85,13 +85,13 @@ public class SQLSyncBean {
 
     public SQLSyncBean(int optType) {
         this.optType = optType;
-        this.param = new Object[]{26858,26858,536862882,15608447849L,15.6006,0.555f,"null","",null};
-//        this.param = new Object[]{};
-        List<Object[]> list = new ArrayList<>();
-        list.add(this.param);
-        list.add(this.param);
-        list.add(this.param);
-        this.params = list;
+//        this.param = new Object[]{26858,26858,536862882,15608447849L,15.6006,0.555f,"null","",null};
+////        this.param = new Object[]{};
+//        List<Object[]> list = new ArrayList<>();
+//        list.add(this.param);
+//        list.add(this.param);
+//        list.add(this.param);
+//        this.params = list;
     }
 
     void submit(){
