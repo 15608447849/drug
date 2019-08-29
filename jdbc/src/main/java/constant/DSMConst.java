@@ -172,7 +172,7 @@ public interface DSMConst extends UDAConst {
     public final static int TB_UI_PAGE = 70;
     public final static int TD_SYNC_ERROR = 71;
     public final static int TD_BK_TRAN_REBATE = 72;
-    public final static int TD_TRAN_AFTERSALES = 71;
+    public final static int TD_TRAN_AFTERSALES = 73;
     public final static int TD_WISH_LIST = 74;
     public final static int TB_USER_RELA = 75;
 
