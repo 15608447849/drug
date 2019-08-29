@@ -135,7 +135,7 @@ public class CouponRevModule {
     private final static String QUERY_ORDER_GIFT =
             " SELECT rebate "
             + " FROM {{?" + DSMConst.TD_TRAN_REBATE + "}} "
-            + " WHERE cstatus&1 = 0 AND compid = ? AND orderno = ? ";
+            + " WHERE cstatus&(1|64) = 0 AND compid = ? AND orderno = ? ";
 
 
     private final static String INSERT_GLBCOUPONREV_SQL = "insert into {{?" + DSMConst.TD_PROM_COUENT + "}} "
