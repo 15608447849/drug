@@ -1116,7 +1116,7 @@ public class OrderOptModule {
         try{
             //满赠赠优惠券
             if (CouponRevModule.revGiftCoupon(Long.parseLong(orderNo), cusno)) {//若返利成功则标记为已返利
-                baseDao.queryNativeSharding(cusno, year, updateRBSQL, orderNo);
+                baseDao.updateNativeSharding(cusno, year, updateRBSQL, orderNo);
             }
 
         }catch (Exception e){
