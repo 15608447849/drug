@@ -1104,17 +1104,21 @@ public class OrderOptModule {
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         //更新订单状态为交易完成
         String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=4 "
-                + " where cstatus&1=0 and orderno=" + orderNo + " and ostatus=3";
+                + " where cstatus&1=0 and orderno=" + orderNo + " and ostatus in(2,3)";
+        String updateRBSQL = "update {{?" + DSMConst.TD_TRAN_REBATE + "}} set cstatus=cstatus|64"
+                + " where cstatus&1=0 and orderno=?";
 
         int result = baseDao.updateNativeSharding(cusno, year, updSQL);
 
         if (result <= 0) {
             return false;
         }
-
         try{
             //满赠赠优惠券
-            CouponRevModule.revGiftCoupon(Long.parseLong(orderNo), cusno);
+            if (CouponRevModule.revGiftCoupon(Long.parseLong(orderNo), cusno)) {//若返利成功则标记为已返利
+                baseDao.updateNativeSharding(cusno, year, updateRBSQL, orderNo);
+            }
+
         }catch (Exception e){
             e.printStackTrace();
         }
@@ -1267,7 +1271,10 @@ public class OrderOptModule {
                 returnResult.remove(2);
             }
 
-            String routeInfo = FQExpressUtils.getRouteInfo(FQExpressUtils.getTravingCode(orderNo));
+//            String routeNo = "SF1011099703744,SF2000932309557,SF2000932309566,SF2000932309575";
+            String routeNo = FQExpressUtils.getTravingCode(orderNo);
+
+            String routeInfo = FQExpressUtils.getRouteInfo(routeNo);
 
             if (StringUtils.isEmpty(routeInfo)) {
                 return result.success(returnResult.toJSONString());
@@ -1279,31 +1286,36 @@ public class OrderOptModule {
                 return result.success(returnResult.toJSONString());
             }
 
-            Element routeResponse = root.element("Body").element("RouteResponse");
+            List<Element> routeResponseList = root.element("Body").elements("RouteResponse");
 
-            Iterator it = routeResponse.elementIterator("Route");
-            Element e;
             JSONArray tempJa = new JSONArray();
             jo = new JSONObject();
-            jo.put("info", tempJa);
             returnResult.add(2, jo);
             String status = "运输中";
-            while (it.hasNext()) {
-                e = (Element) it.next();
-                JSONObject tempJo = new JSONObject();
-                tempJa.add(tempJo);
+            jo.put("infos", tempJa);
+            String mainNo = routeNo.split(",")[0];
 
-                String[] date_time = e.attributeValue("accept_time").split(" ");
-                tempJo.put("date", date_time[0]);
-                tempJo.put("time", date_time[1]);
-                tempJo.put("des",
-                        "【" + e.attributeValue("accept_address") + "】"
-                             + e.attributeValue("remark"));
+            for (Element routeResponse : routeResponseList) {
+                List<Element> it = routeResponse.elements("Route");
+                Element e;
+                JSONObject j = new JSONObject();
+                JSONArray innerTempJa = new JSONArray();
+                j.put("mailno", routeResponse.attributeValue("mailno"));
+                j.put("info", innerTempJa);
+                j.put("isMain", mainNo.equals(routeResponse.attributeValue("mailno")));
+                tempJa.add(j);
 
-//                switch (Integer.parseInt(e.attributeValue("opcode"))) {
-//                    case 50:
-//                        status = "已揽收";
-//                }
+                for (int i = it.size() - 1; i >= 0 ; i--) {
+                    e = it.get(i);
+                    JSONObject tempJo = new JSONObject();
+                    innerTempJa.add(tempJo);
+                    String[] date_time = e.attributeValue("accept_time").split(" ");
+                    tempJo.put("date", date_time[0]);
+                    tempJo.put("time", date_time[1]);
+                    tempJo.put("des",
+                            "【" + e.attributeValue("accept_address") + "】"
+                                    + e.attributeValue("remark"));
+                }
 
             }
 

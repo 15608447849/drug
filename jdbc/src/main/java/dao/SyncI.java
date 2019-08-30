@@ -11,4 +11,6 @@ public interface SyncI {
     void errorSyncBean(SQLSyncBean sqlSyncBean);
     //执行一个同步
     void executeSyncBean();
+    //主库已恢复运行
+    void notifyMasterActive();
 }

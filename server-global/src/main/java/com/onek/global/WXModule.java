@@ -5,6 +5,7 @@ import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
 import com.onek.util.FileServerUtils;
+import dao.SQLSyncBean;
 import redis.util.RedisUtil;
 import util.GsonUtils;
 import util.http.HttpRequest;
@@ -61,7 +62,6 @@ public class WXModule {
         System.out.println("访问: "+ url+"\n\t"+res);
        return res;
     }
-
 
     private static final class JsonBean{
         private String access_token;
@@ -145,8 +145,23 @@ public class WXModule {
         String mediaId;
         String savePath;
         String fileName;
+
+        //图片处理
+        boolean isCompress = true;
+        boolean isLogo = true;
+        boolean isThumb = true;
     }
 
+    public static void main(String[] args) {
+//        String json = "{\"toMaster\":false,\"optType\":0,\"sharding\":0,\"tbSharding\":0,\"nativeSQL\":[\"update {{?38}} set accupoints \\u003d ?, balpoints \\u003d ? where compid \\u003d ?\"],\"resultSQL\":[\"38\",\"update td_member set accupoints \\u003d ?, balpoints \\u003d ? where compid \\u003d ?\"],\"param\":[26858,26858,536862882],\"batchSize\":0,\"currentExecute\":0}";
+
+//        SQLSyncBean b = GsonUtils.jsonToJavaBean(json,SQLSyncBean.class);
+        SQLSyncBean b = new SQLSyncBean(0);
+        String json = b.toString();
+        SQLSyncBean b2 = SQLSyncBean.deserialization(json);
+
+        System.out.println("*****");
+    }
     @UserPermission(ignore = true)
     public Result getInfo(AppContext context){
         try {
@@ -181,6 +196,10 @@ public class WXModule {
                 //上传图片
                 String json = new HttpRequest().addStream(in, p.savePath,  p.fileName)
                         .fileUploadUrl(FileServerUtils.fileUploadAddress())//文件上传URL
+                        .setCompress(p.isCompress) //服务器压缩
+                        .setLogo(p.isLogo) //图片水印
+                        .setThumb(p.isThumb) //图片略缩图
+                        .setCompressLimitSieze(5*1024*1024L)
                         .getRespondContent();
                 HashMap<String,Object> maps = GsonUtils.jsonToJavaBean(json,new TypeToken<HashMap<String,Object>>(){}.getType());
                 return new Result().success(maps);
@@ -196,6 +215,15 @@ public class WXModule {
         return new Result().fail("图片无法获取");
     }
 
-
+    @UserPermission(ignore = true)
+    public Result delImage(AppContext context){
+        try {
+            Param p = GsonUtils.jsonToJavaBean(context.param.json,Param.class);
+            return new Result().success(new HttpRequest().deleteFile(FileServerUtils.fileDeleteAddress(),p.savePath+"/"+p.fileName));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return new Result().fail("移除失败");
+    }
 
 }

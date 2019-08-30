@@ -18,20 +18,57 @@ public class GsonUtils {
     private static Gson newGson(){
         return new GsonBuilder()
                 .setLongSerializationPolicy(LongSerializationPolicy.STRING)
-//                .registerTypeAdapter(Double.class, (JsonSerializer<Double>) (src, typeOfSrc, context) -> {
-////                    System.out.println("-----------double-------GSON: "+ src+" - "+src.longValue()+" ");
-////                    if (src == src.longValue())
-////                        return new JsonPrimitive(src.longValue());
-////                    return new JsonPrimitive(src);
+               /* .registerTypeAdapter(Double.class, (JsonSerializer<Double>) (src, typeOfSrc, context) -> {
+                   // System.out.println("-----------double-------GSON: "+ src +" - "+ src.longValue()+" ");
+//                    if (src == src.longValue())
+//                        return new JsonPrimitive(src.longValue());
+//                    return new JsonPrimitive(src);
 //                    return new JsonPrimitive(src.longValue()+"");
-//                })
-//                .registerTypeAdapter(Integer.class,(JsonSerializer<Integer>) (src, typeOfSrc, context) -> {
+
+//                    JsonPrimitive r =  new JsonPrimitive(src.longValue()+"");
+//                    System.out.println(r);
+                    return new JsonPrimitive(src.longValue()+"");
+                })*/
+              /*  .registerTypeAdapter(Double.class, new JsonDeserializer<Double>() {
+                    @Override
+                    public Double deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                        System.out.println(json+" "+typeOfT+" "+context);
+                        String value = json.getAsString();
+                        System.out.println("DOUBLE >> "+ value);
+                        return Double.parseDouble(value);
+                    }
+                })*/
+             /*   .registerTypeAdapter(String.class, new JsonDeserializer<String>() {
+                    @Override
+                    public String deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                        String value = json.getAsString();
+                        System.out.println("String >> "+ json);
+//                        return value;
+                        return json.getAsString();
+                    }
+                })*/
+            /*    .registerTypeAdapter(Object[].class, new JsonDeserializer<Object[]>() {
+                    @Override
+                    public Object[] deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                        System.out.println("Object[] >> "+ json);
+                        return null;
+                    }
+                })*/
+           /*     .registerTypeAdapter(new TypeToken<List<Object[]>>(){}.getType(), new JsonDeserializer<List<Object[]>>() {
+                    @Override
+                    public List<Object[]> deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+                        System.out.println("List<Object[]> >> "+ json);
+                        return null;
+                    }
+                })*/
+             /*   .registerTypeAdapter(Integer.class,(JsonSerializer<Integer>) (src, typeOfSrc, context) -> {
 //                    System.out.println("-------------int-----GSON: "+ src);
 //            if (src == src.longValue())
 //                return new JsonPrimitive(src.longValue());
 //            return new JsonPrimitive(src);
-//                    return new JsonPrimitive(src+"");
-//        })
+                    return new JsonPrimitive(src+"");
+
+        })*/
                 .create();
     }
 
