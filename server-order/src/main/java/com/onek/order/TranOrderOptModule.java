@@ -326,8 +326,12 @@ public class TranOrderOptModule {
             e.printStackTrace();
         }
         double relPtamt = tranOrder.getPdamt();
-        double relPyamt = MathUtil.exactAdd(tranOrder.getPayamt(),tranOrder.getDistamt()).
+        double relPyamt = MathUtil.exactAdd(payamt,tranOrder.getDistamt()).
                         setScale(2,RoundingMode.HALF_UP).doubleValue();
+
+//        LogUtil.getDefaultLogger().info("======================实际总金额："+relPtamt);
+//        LogUtil.getDefaultLogger().info("======================实际支付金额："+relPyamt);
+//        LogUtil.getDefaultLogger().info("======================："+(relPtamt == relPyamt));
         if(relPtamt == relPyamt){
             bal = 0;
         }
