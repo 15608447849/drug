@@ -18,26 +18,27 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class ProdActPriceUtil {
 
     public static String key = RedisGlobalKeys.ACTVERSION;
 
-    private static transient HashMap<Long, Long> versionMap = new HashMap<>();
-    private static HashMap<Long, Double> prizeMap = new HashMap<>();
+    private static transient Map<Long, Long> versionMap = new ConcurrentHashMap<>();
+    private static Map<Long, Double> prizeMap = new ConcurrentHashMap<>();
 
-    private static transient HashMap<Long, Long> versionIntervalMap = new HashMap<>();
-    private static HashMap<Long,  ProdPriceEntity> prizeIntervalMap = new HashMap<>();
+    private static transient Map<Long, Long> versionIntervalMap = new ConcurrentHashMap<>();
+    private static Map<Long,  ProdPriceEntity> prizeIntervalMap = new ConcurrentHashMap<>();
 
-    private static transient HashMap<Long, Long> versionRuleMap = new HashMap<>();
-    private static HashMap<Long,  Integer> prodRuleMap = new HashMap<>();
+    private static transient Map<Long, Long> versionRuleMap = new ConcurrentHashMap<>();
+    private static Map<Long,  Integer> prodRuleMap = new ConcurrentHashMap<>();
 
-    private static transient HashMap<Long, Long> versionTimeMap = new HashMap<>();
-    private static HashMap<Long,  List<String[]>> promTimeMap = new HashMap<>();
+    private static transient Map<Long, Long> versionTimeMap = new ConcurrentHashMap<>();
+    private static Map<Long,  List<String[]>> promTimeMap = new ConcurrentHashMap<>();
 
 
-    private static transient HashMap<Long, Long> versionLadOffMap = new HashMap<>();
-    private static HashMap<Long, List<String>> promLadOffMap = new HashMap<>();
+    private static Map<Long, Long> versionLadOffMap = new ConcurrentHashMap<>();
+    private static Map<Long, List<String>> promLadOffMap = new ConcurrentHashMap<>();
 
     private static PromTimeService timeService = new PromTimeService();
 

@@ -365,7 +365,7 @@ public class MainPageModule {
                             String.valueOf(qResult[3]), String.valueOf(qResult[4]), String.valueOf(qResult[5]),"0"});
         });
         //ES数据组装
-        if (onlySpecActivity) {
+        if (ruleCode == -4 && onlySpecActivity) {
             if (!StringUtils.isEmpty(params[2])) {
                 response = ProdESUtil.searchProdHasBrand(skuList, params[0], params[1], params[2], 1, page.pageSize);
             } else {
@@ -380,7 +380,7 @@ public class MainPageModule {
             assembleData(context, response, prodVOList, dataMap, otherArr);
             remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, context.isAnonymous());
             attr.list = prodVOList;
-            if(onlySpecActivity && StringUtils.isEmpty(params[2]) || !StringUtils.isEmpty(params[0]) ) {
+            if((ruleCode == -4 && onlySpecActivity && StringUtils.isEmpty(params[2])) || !StringUtils.isEmpty(params[0]) ) {
                 attr.page = new PageHolder(page);
             } else {
                 attr.page = pageHolder;
