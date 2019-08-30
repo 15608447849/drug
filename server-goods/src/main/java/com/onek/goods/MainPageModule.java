@@ -735,7 +735,7 @@ public class MainPageModule {
         int limit = -1;//楼层商品限制数
         boolean onlyActivity;
         String jsonStr;//其他附加参数
-
+        UiElement element;
     }
 
     private static final String MAIN_PAGE_JSON = "MAIN_PAGE_JSON";
@@ -812,6 +812,7 @@ public class MainPageModule {
             //获取全部UI元素数据
             return map.size() == 0 ? new Result().fail("没有主页元素信息,请配置界面") : new Result().success(map);
         }else{
+            filterElement(param);
             if (param.limit > 0) {
                 //获取指定活动的商品信息
                 return new Result().success(dataSource(param.identity, true, param.onlyActivity,1, param.limit, context, param.jsonStr,true));
@@ -821,6 +822,25 @@ public class MainPageModule {
             }
         }
         return new Result().fail("参数异常");
+    }
+    //过滤元素
+    private void filterElement(Param p) {
+        if (p.element == null) return;
+        UiElement e = p.element;
+        //针对满减满赠的通过规则码的情况, 使用 attr, 如果有值,需要对值进行过滤
+        switch (e.option){
+            case 102: handlerSpecialArea(p,e); //处理模板
+            break;
+        }
+
+    }
+
+    private void handlerSpecialArea(Param p,UiElement e) {
+        switch (e.template){
+            case 201:
+                p.onlyActivity = e.route != null && e.route.length() > 0; //过滤'全部商品'的活动
+                break;
+        }
     }
    /* @UserPermission(ignore = true)
     public void getDataSource(AppContext appContext) {
