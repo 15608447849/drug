@@ -559,6 +559,19 @@ public class TranOrderOptModule {
                         tranOrder.getFreight()).doubleValue());
         tranOrder.setDistamt(MathUtil.exactMul(discountResult.getTotalDiscount(), 100.0).doubleValue());
 
+        System.out.println("=======================应付总金额："+tranOrder.getPayamt());
+        System.out.println("||||||||||||||||||||||||||||||||||||||||||||||||");
+        System.out.println("=======================优惠券优惠总金额："+tranOrder.getDistamt());
+        if(tranOrder.getPayamt()<=0){
+            tranOrder.setPayamt(MathUtil.exactAdd(tranOrder.getPayamt(), 1).
+                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            System.out.println(("=======================支付总金额为0加0.01为："+tranOrder.getPayamt()));
+
+            tranOrder.setDistamt(MathUtil.exactSub(tranOrder.getDistamt(),1).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            System.out.println("=======================优惠金额-1之后："+tranOrder.getDistamt());
+        }
+
         List<IDiscount> iDiscountList = discountResult.getActivityList();
         for (IDiscount iDiscount : iDiscountList) {
             for (int i = 0; i < iDiscount.getProductList().size(); i++) {

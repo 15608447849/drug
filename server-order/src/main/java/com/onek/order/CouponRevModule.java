@@ -661,12 +661,16 @@ public class CouponRevModule {
         appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
         appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
 
-        if(payamt<=0 && resultMap.get("tprice").equals(resultMap.get("cpvalue"))){
-            payamt = MathUtil.exactAdd(payamt, 1).
+        if(payamt<=0){
+            payamt = MathUtil.exactAdd(payamt, 0.01).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
             appContext.logger.print("=======================支付总金额为0加1为："+payamt);
-            if(calculate.getCouponValue()>0){
-                resultMap.put("cpvalue",MathUtil.exactSub(calculate.getCouponValue(),1).
+            double subReamt = Math.max(calculate.getCouponValue(),calculate.getTotalDiscount());
+            if(calculate.getCouponValue() == subReamt){
+                resultMap.put("cpvalue",MathUtil.exactSub(subReamt,0.01).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            }else{
+                resultMap.put("tdiscount",MathUtil.exactSub(subReamt,0.01).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }
             appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
@@ -920,6 +924,29 @@ public class CouponRevModule {
             payamt = MathUtil.exactAdd(calculate.getTotalCurrentPrice(), sfee).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
         }
+
+        //使用优惠券抵扣金额为0时
+        appContext.logger.print("=======================优惠之后应付总金额："+payamt);
+        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+        appContext.logger.print("=======================应付总金额："+resultMap.get("tprice"));
+        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+        appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
+
+        if(payamt<=0){
+            payamt = MathUtil.exactAdd(payamt, 0.01).
+                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
+            appContext.logger.print("=======================支付总金额为0加1为："+payamt);
+            double subReamt = Math.max(calculate.getCouponValue(),calculate.getTotalDiscount());
+            if(calculate.getCouponValue() == subReamt){
+                resultMap.put("cpvalue",MathUtil.exactSub(subReamt,0.01).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            }else{
+                resultMap.put("tdiscount",MathUtil.exactSub(subReamt,0.01).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            }
+            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
+        }
+
         double bal = IceRemoteUtil.queryCompBal(compid);
         bal = MathUtil.exactDiv(bal,100L).
                 setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
@@ -1491,7 +1518,7 @@ public class CouponRevModule {
     }
 
     public static void main(String[] args) {
-
+        System.out.println( Math.max(26.16,26.16));
     }
 
 }
