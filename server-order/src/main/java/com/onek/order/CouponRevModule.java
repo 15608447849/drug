@@ -655,25 +655,29 @@ public class CouponRevModule {
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
         }
         //使用优惠券抵扣金额为0时
-        appContext.logger.print("=======================优惠之后应付总金额："+payamt);
-        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
-        appContext.logger.print("=======================应付总金额："+resultMap.get("tprice"));
-        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
-        appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
+        //使用优惠券抵扣金额为0时
+//        appContext.logger.print("=======================优惠之后应付总金额："+payamt);
+//        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+//        appContext.logger.print("=======================应付总金额："+resultMap.get("tprice"));
+//        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+//        appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
+//        appContext.logger.print("=======================11111："+resultMap.get("tdiscount"));
 
         if(payamt<=0){
             payamt = MathUtil.exactAdd(payamt, 0.01).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
-            appContext.logger.print("=======================支付总金额为0加1为："+payamt);
-            double subReamt = Math.max(calculate.getCouponValue(),calculate.getTotalDiscount());
+//            appContext.logger.print("=======================支付总金额为0加1为："+payamt);
+            double subReamt = Math.max(calculate.getCouponValue(),acvalue);
+//            appContext.logger.print("=======================" + subReamt);
             if(calculate.getCouponValue() == subReamt){
                 resultMap.put("cpvalue",MathUtil.exactSub(subReamt,0.01).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }else{
-                resultMap.put("tdiscount",MathUtil.exactSub(subReamt,0.01).
+                resultMap.put("acvalue",MathUtil.exactSub(subReamt,0.01).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }
-            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
+//            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("acvalue"));
+//            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
         }
         double bal = IceRemoteUtil.queryCompBal(compid);
 
@@ -926,25 +930,28 @@ public class CouponRevModule {
         }
 
         //使用优惠券抵扣金额为0时
-        appContext.logger.print("=======================优惠之后应付总金额："+payamt);
-        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
-        appContext.logger.print("=======================应付总金额："+resultMap.get("tprice"));
-        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
-        appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
+//        appContext.logger.print("=======================优惠之后应付总金额："+payamt);
+//        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+//        appContext.logger.print("=======================应付总金额："+resultMap.get("tprice"));
+//        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+//        appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
+//        appContext.logger.print("=======================11111："+resultMap.get("tdiscount"));
 
         if(payamt<=0){
             payamt = MathUtil.exactAdd(payamt, 0.01).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
-            appContext.logger.print("=======================支付总金额为0加1为："+payamt);
-            double subReamt = Math.max(calculate.getCouponValue(),calculate.getTotalDiscount());
+//            appContext.logger.print("=======================支付总金额为0加1为："+payamt);
+            double subReamt = Math.max(calculate.getCouponValue(),acvalue);
+//            appContext.logger.print("=======================" + subReamt);
             if(calculate.getCouponValue() == subReamt){
                 resultMap.put("cpvalue",MathUtil.exactSub(subReamt,0.01).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }else{
-                resultMap.put("tdiscount",MathUtil.exactSub(subReamt,0.01).
+                resultMap.put("acvalue",MathUtil.exactSub(subReamt,0.01).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }
-            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
+//            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("acvalue"));
+//            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
         }
 
         double bal = IceRemoteUtil.queryCompBal(compid);
