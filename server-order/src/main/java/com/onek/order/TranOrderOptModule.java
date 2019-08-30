@@ -325,6 +325,14 @@ public class TranOrderOptModule {
         }catch (Exception e){
             e.printStackTrace();
         }
+        double relPtamt = tranOrder.getPdamt();
+        double relPyamt = MathUtil.exactAdd(tranOrder.getPayamt(),tranOrder.getDistamt()).
+                        setScale(2,RoundingMode.HALF_UP).doubleValue();
+        if(relPtamt == relPyamt){
+            bal = 0;
+        }
+        LogUtil.getDefaultLogger().info("======================最总抵扣余额："+bal);
+
         sqlList.addFirst(INSERT_TRAN_ORDER);
         params.addFirst(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
                 tranOrder.getPdamt(), tranOrder.getFreight(), payamt, tranOrder.getCoupamt(), tranOrder.getDistamt(),
