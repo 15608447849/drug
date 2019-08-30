@@ -395,7 +395,8 @@ public class BaseDAO {
 						b.submit();
 					}
 					if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
-							|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS){
+							|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS
+							|| Integer.parseInt(resultSQL[0]) ==  DSMConst.TD_TRAN_REBATE){
 						//同步到订单运营后台
 						SQLSyncBean b = new SQLSyncBean(5);
 						b.resultSQL = resultSQL;
@@ -537,7 +538,7 @@ public class BaseDAO {
 				//异步同步到订单运营后台
 				if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
 						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS
-						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_BK_TRAN_REBATE){
+						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_REBATE){
 					SQLSyncBean b = new SQLSyncBean(6);
 					b.resultSQL = resultSQL;
 					b.nativeSQL = nativeSQL;
@@ -660,7 +661,7 @@ public class BaseDAO {
 				//异步同步到订单运营后台
 				if(Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_ORDER
 						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_GOODS
-						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_BK_TRAN_REBATE){
+						|| Integer.parseInt(resultSQL[0]) == DSMConst.TD_TRAN_REBATE){
 					//同步到备份
 					SQLSyncBean b = new SQLSyncBean(7);
 					b.resultSQL = resultSQL;
