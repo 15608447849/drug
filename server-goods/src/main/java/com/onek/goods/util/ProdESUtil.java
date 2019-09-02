@@ -23,6 +23,8 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.hyrdpf.util.LogUtil;
+import util.Py4jUtils;
 import util.StringUtils;
 import util.TimeUtils;
 
@@ -65,7 +67,9 @@ public class ProdESUtil {
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()
-                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim();
+                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim()
+                    //检索商品名称
+                    + "|" + StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim());
             String spec = prodVO.getSpec();
             long spu = prodVO.getSpu();
             long manuno = prodVO.getManuNo();
@@ -136,7 +140,9 @@ public class ProdESUtil {
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()
-                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim();
+                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim()
+                    //检索商品名称
+                    + "|" + StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim());
             String spec = prodVO.getSpec();
             long spu = prodVO.getSpu();
             long manuno = prodVO.getManuNo();
