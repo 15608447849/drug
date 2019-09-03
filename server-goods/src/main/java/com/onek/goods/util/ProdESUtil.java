@@ -65,7 +65,7 @@ public class ProdESUtil {
                 prodVO.setProdedate(DEFAULT_DATE);
             }
             long sku = prodVO.getSku();
-            Logger.getAnonymousLogger().info("检索商品名称:"+StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()));
+           // Logger.getAnonymousLogger().info("检索商品名称:"+StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()));
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()
