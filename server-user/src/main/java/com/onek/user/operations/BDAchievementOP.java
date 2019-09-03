@@ -37,8 +37,10 @@ public class BDAchievementOP {
         String json = appContext.param.json;
         QueryParam param = GsonUtils.jsonToJavaBean(json,QueryParam.class);
 
+        String queryOrdParam = getOrdWhereParam(param);
+
         List<BDCompVO> compList =getCompInfo();
-        List<BDToOrderAchieveemntVO> oList = getOrderInfos();
+        List<BDToOrderAchieveemntVO> oList = getOrderInfos(queryOrdParam);
 
         String reString = bdAchievementService.getData(getBdWhereParam(param),compList,oList);
         return new Result().success(reString);
@@ -71,11 +73,20 @@ public class BDAchievementOP {
                 sdate = TimeUtils.date_yMd_2String(new Date());
                 edate = TimeUtils.date_yMd_2String(new Date());
             case 3:
-
+                //本周
+                String[] time = TimeUtils.getFirstAndLastOfWeek();
+                sdate = time[0];
+                edate = time[1];
             case 4:
+                //本月
+                String[] mouth = TimeUtils.getFirstAndLastOfMonth();
+                sdate = mouth[0];
+                edate = mouth[1];
         }
-
-        return sql.toString();
+        if(!sdate.isEmpty() && !edate.isEmpty())
+            return sql.toString().replace("${var}",sdate).replace("${var2}",edate);
+        else
+            return "";
     }
 
     /**
@@ -83,7 +94,7 @@ public class BDAchievementOP {
      * @param param
      * @return
      */
-    private static List<String> getBdWhereParam( QueryParam param){
+    private static List<String> getBdWhereParam(QueryParam param){
         List<String> reList = new ArrayList<String>();
         if(param == null){
             return new ArrayList();
@@ -107,6 +118,7 @@ public class BDAchievementOP {
         String sdate;
         String edate;
         String areac;
+        long uid;
         int dateflag;//0-自定义时间，1-昨天，2-今天，3-本周，4-本月
     }
 
@@ -129,8 +141,8 @@ public class BDAchievementOP {
      * 获取所有订单详情
      * @return
      */
-    public static List<BDToOrderAchieveemntVO> getOrderInfos(){
-        String json = IceRemoteUtil.getBDToOrderInfo();
+    public static List<BDToOrderAchieveemntVO> getOrderInfos(String ordeWhereParam){
+        String json = IceRemoteUtil.getBDToOrderInfo(ordeWhereParam);
         JSONObject jsons = JSONObject.parseObject(json);
         List<BDToOrderAchieveemntVO> list = GsonUtils.json2List(jsons.getString("data"),BDToOrderAchieveemntVO.class);
         return list;

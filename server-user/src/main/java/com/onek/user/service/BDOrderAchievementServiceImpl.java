@@ -50,9 +50,12 @@ public class BDOrderAchievementServiceImpl {
             jsonObject.put("canclordamt", "0"); //取消订单金额
             jsonObject.put("originalprice","0"); //原价交易金额
             jsonObject.put("payamt", "0"); //实付交易额
+            jsonObject.put("realrefamt", "0"); //退款金额
+            jsonObject.put("subsidyamt", "0"); //补贴金额
+            jsonObject.put("amtsum", "0"); //GMV小计金额
             jsonObject.put("maxpayamt", "0"); //最高支付金额
-            jsonObject.put("minpayamt", "0"); //最高支付金额
-            jsonObject.put("avgpayamt", "0"); //最高支付金额
+            jsonObject.put("minpayamt", "0"); //最低支付金额
+            jsonObject.put("avgpayamt", "0"); //平均支付金额
         }else {
             jsonObject.put("ocancelord", order.getCanclord()); //交易取消订单
             jsonObject.put("ocompleteord", order.getCompleteord()); //订单交易完成数
@@ -64,24 +67,56 @@ public class BDOrderAchievementServiceImpl {
             jsonObject.put("canclordamt", getDoubleValue(new BigDecimal(order.getCanclordamt()))); //取消订单金额
             jsonObject.put("originalprice",getDoubleValue(new BigDecimal(order.getOriginalprice()))); //原价交易金额
             jsonObject.put("payamt", getDoubleValue(new BigDecimal(order.getPayamt()))); //实付交易额
+            jsonObject.put("realrefamt", getDoubleValue(new BigDecimal(order.getRealrefamt()))); //退款金额
+            jsonObject.put("subsidyamt", getSubsidyAmtSum(order.getOriginalprice(),order.getPayamt())); //补贴金额
+            jsonObject.put("amtsum", getAmtSum(order.getCanclordamt(),order.getOriginalprice())); //GMV小计金额
             jsonObject.put("maxpayamt", getDoubleValue(order.getMaxpayamt())); //最高支付金额
-            jsonObject.put("minpayamt", getDoubleValue(order.getMinpayamt())); //最高支付金额
-            jsonObject.put("avgpayamt", getDoubleValue(new BigDecimal(order.getAvgpayamt()))); //最高支付金额
+            jsonObject.put("minpayamt", getDoubleValue(order.getMinpayamt())); //最低支付金额
+            jsonObject.put("avgpayamt", getDoubleValue(new BigDecimal(order.getAvgpayamt()))); //平均支付金额
         }
     }
 
+    /**
+     * 相除
+     * @param num
+     * @return
+     */
     private static double getDoubleValue(BigDecimal num) {
         return num.divide(new BigDecimal(String.valueOf(100)),2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
     private static double getDoubleValue(long num) {
         return new BigDecimal(num).divide(new BigDecimal(String.valueOf(100)),2, BigDecimal.ROUND_HALF_UP).doubleValue();
     }
-
     private static double getRate(String chd,String moter) {
         BigDecimal chrid = new BigDecimal(chd);
         BigDecimal mote = new BigDecimal(moter);
 
         return chrid.divide(mote, 2, BigDecimal.ROUND_HALF_UP).doubleValue();
+    }
+
+    /**
+     * 相加
+     * @param canclordamt
+     * @param originalprice
+     * @return
+     */
+    private static double getAmtSum(String canclordamt,String originalprice){
+        BigDecimal canclordamts = new BigDecimal(canclordamt);
+        BigDecimal originalprices = new BigDecimal(originalprice);
+
+        return canclordamts.add(originalprices).doubleValue();
+    }
+
+    /**
+     * 相减
+     * @param
+     * @return
+     */
+    private static double getSubsidyAmtSum(String originalprice,String payamt){
+        BigDecimal originalprices = new BigDecimal(originalprice);
+        BigDecimal payamts = new BigDecimal(payamt);
+
+        return originalprices.subtract(originalprices).doubleValue();
     }
 
     public static int getOrderNum(int ...ordnum) {

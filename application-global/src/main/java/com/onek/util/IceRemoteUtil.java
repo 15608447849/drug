@@ -935,9 +935,10 @@ public class IceRemoteUtil {
     }
 
 
-    public static String getBDToOrderInfo(){
+    public static String getBDToOrderInfo(String params){
+
         String str = ic.setServerAndRequest("orderServer"+ getOrderServerNo(GLOBALConst.COMP_INIT_VAR), "BackOrderInfoModule", "getBDOrderAchieveementInfo")
-                .setJsonParams("")
+                .setArrayParams(params)
                 .execute();
 
         return str;

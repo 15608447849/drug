@@ -43,9 +43,15 @@ public class BDOrderAchieveementOP {
      * @return
      */
     public static List<BDOrderAchieveemntVO> executeOrderInfos(AppContext appContext){
+
+        String[] strParam = appContext.param.arrays;
+        if(strParam.length>0){
+            _SELECT_WHERE += strParam[0];
+        }
+
         StringBuilder builder = new StringBuilder();
         builder.append(_QUERY_ORDER);
-//        builder.append(getOrdWhereParam(_SELECT_WHERE));
+        builder.append(_SELECT_WHERE);
         builder.append(_SELECT_GROUP);
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
