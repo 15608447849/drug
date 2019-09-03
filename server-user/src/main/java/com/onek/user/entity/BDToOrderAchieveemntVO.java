@@ -4,18 +4,18 @@ import java.math.BigDecimal;
 
 public class BDToOrderAchieveemntVO {
     private long inviter; //用户id
-    private BigDecimal canclord; //订单取消数
-    private BigDecimal completeord;//订单交易完成数
-    private BigDecimal returnord; //退货订单数
-    private BigDecimal afsaleord;//售后订单数
-    private BigDecimal canclordamt;//取消订单金额
-    private BigDecimal originalprice;//原价交易金额
-    private BigDecimal payamt; //实付交易额
-    private BigDecimal distamt; //优惠金额
-    private BigDecimal balamt; //使用余额金额
+    private String canclord; //订单取消数
+    private String completeord;//订单交易完成数
+    private String returnord; //退货订单数
+    private String afsaleord;//售后订单数
+    private String canclordamt;//取消订单金额
+    private String originalprice;//原价交易金额
+    private String payamt; //实付交易额
+    private String distamt; //优惠金额
+    private String balamt; //使用余额金额
     private long maxpayamt;//最高支付金额
     private long minpayamt;//最低支付金额
-    private BigDecimal avgpayamt;//完成交易订单平均订单金额
+    private String avgpayamt;//完成交易订单平均订单金额
 
     public long getInviter() {
         return inviter;
@@ -23,58 +23,58 @@ public class BDToOrderAchieveemntVO {
     public void setInviter(long inviter) {
         this.inviter = inviter;
     }
-    public BigDecimal getCanclord() {
+    public String getCanclord() {
         return canclord;
     }
-    public void setCanclord(BigDecimal canclord) {
+    public void setCanclord(String canclord) {
         this.canclord = canclord;
     }
-    public BigDecimal getCompleteord() {
+    public String getCompleteord() {
         return completeord;
     }
-    public void setCompleteord(BigDecimal completeord) {
+    public void setCompleteord(String completeord) {
         this.completeord = completeord;
     }
-    public BigDecimal getReturnord() {
+    public String getReturnord() {
         return returnord;
     }
-    public void setReturnord(BigDecimal returnord) {
+    public void setReturnord(String returnord) {
         this.returnord = returnord;
     }
-    public BigDecimal getAfsaleord() {
+    public String getAfsaleord() {
         return afsaleord;
     }
-    public void setAfsaleord(BigDecimal afsaleord) {
+    public void setAfsaleord(String afsaleord) {
         this.afsaleord = afsaleord;
     }
-    public BigDecimal getCanclordamt() {
+    public String getCanclordamt() {
         return canclordamt;
     }
-    public void setCanclordamt(BigDecimal canclordamt) {
+    public void setCanclordamt(String canclordamt) {
         this.canclordamt = canclordamt;
     }
-    public BigDecimal getOriginalprice() {
+    public String getOriginalprice() {
         return originalprice;
     }
-    public void setOriginalprice(BigDecimal originalprice) {
+    public void setOriginalprice(String originalprice) {
         this.originalprice = originalprice;
     }
-    public BigDecimal getPayamt() {
+    public String getPayamt() {
         return payamt;
     }
-    public void setPayamt(BigDecimal payamt) {
+    public void setPayamt(String payamt) {
         this.payamt = payamt;
     }
-    public BigDecimal getDistamt() {
+    public String getDistamt() {
         return distamt;
     }
-    public void setDistamt(BigDecimal distamt) {
+    public void setDistamt(String distamt) {
         this.distamt = distamt;
     }
-    public BigDecimal getBalamt() {
+    public String getBalamt() {
         return balamt;
     }
-    public void setBalamt(BigDecimal balamt) {
+    public void setBalamt(String balamt) {
         this.balamt = balamt;
     }
     public long getMaxpayamt() {
@@ -89,11 +89,12 @@ public class BDToOrderAchieveemntVO {
     public void setMinpayamt(long minpayamt) {
         this.minpayamt = minpayamt;
     }
-    public BigDecimal getAvgpayamt() {
+    public String getAvgpayamt() {
         return avgpayamt;
     }
-    public void setAvgpayamt(BigDecimal avgpayamt) {
+    public void setAvgpayamt(String avgpayamt) {
         this.avgpayamt = avgpayamt;
     }
+
 
 }
