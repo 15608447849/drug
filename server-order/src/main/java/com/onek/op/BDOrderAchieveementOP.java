@@ -14,7 +14,7 @@ import java.util.List;
 
 public class BDOrderAchieveementOP {
 
-    public static String _QUERY_ORDER = " SELECT re.inviter, sum( re.canclord ) canclord, sum( re.completeord ) completeord, sum( re.returnord ) returnord, sum( re.afsaleord ) afsaleord, "+
+    public static String _QUERY_ORDER = " SELECT IFNULL(re.inviter,0) inviter, sum( re.canclord ) canclord, sum( re.completeord ) completeord, sum( re.returnord ) returnord, sum( re.afsaleord ) afsaleord, "+
             " IFNULL(sum( re.returnordamt ),0) canclordamt, IFNULL(sum( re.originalprice ) ,0)originalprice, IFNULL(sum( re.payamt ),0) payamt, IFNULL(sum( re.distamt ),0) distamt, IFNULL(sum( re.balamt ),0) balamt, "+
             " IFNULL(max( re.payamt ),0) maxpayamt, IFNULL(min( re.payamt ),0) minpayamt, IFNULL(avg( re.payamt ),0) avgpayamt, IFNULL(sum( re.realrefamt ),0) realrefamt, re.odate "+
             "FROM ( " +
