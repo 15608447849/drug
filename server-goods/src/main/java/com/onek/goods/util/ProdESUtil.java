@@ -9,9 +9,11 @@ import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
+import org.elasticsearch.action.update.UpdateRequestBuilder;
 import org.elasticsearch.action.update.UpdateResponse;
 import org.elasticsearch.client.transport.TransportClient;
 import org.elasticsearch.index.query.*;
@@ -22,6 +24,7 @@ import org.elasticsearch.search.aggregations.bucket.terms.Terms;
 import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
+import org.hyrdpf.util.LogUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
@@ -62,7 +65,7 @@ public class ProdESUtil {
                 prodVO.setProdedate(DEFAULT_DATE);
             }
             long sku = prodVO.getSku();
-            Logger.getAnonymousLogger().info("检索商品名称:"+StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()));
+           // Logger.getAnonymousLogger().info("检索商品名称:"+StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()));
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()
@@ -105,6 +108,105 @@ public class ProdESUtil {
             e.printStackTrace();
             return -1;
         }
+    }
+
+    /**
+     * 添加商品数据到ES中
+     * @param paramList 商品SKU表
+     * @return
+     */
+    public static int batchAddProdDocument(List<BgProdVO> paramList){
+
+        try {
+            if(paramList != null && paramList.size() > 0){
+
+
+                TransportClient client = ElasticSearchClientFactory.getClientInstance();;
+                BulkRequestBuilder bulkRequest = client.prepareBulk();
+                int i = 0;
+                for(BgProdVO paramVo :paramList){
+
+                    BgProdVO prodVO = (BgProdVO) paramVo.clone();
+                    prodVO.setDetail("");
+                    if(StringUtils.isEmpty(prodVO.getOffdate())){
+                        prodVO.setOffdate(DEFAULT_DATE);
+                        prodVO.setOfftime(DEFAULT_TIME);
+                    }
+                    if(StringUtils.isEmpty(prodVO.getVaildsdate())){
+                        prodVO.setVaildsdate(DEFAULT_DATE);
+                    }
+                    if(StringUtils.isEmpty(prodVO.getVaildedate())){
+                        prodVO.setVaildedate(DEFAULT_DATE);
+                    }
+                    if(StringUtils.isEmpty(prodVO.getProdsdate())){
+                        prodVO.setProdsdate(DEFAULT_DATE);
+                    }
+                    if(StringUtils.isEmpty(prodVO.getProdedate())){
+                        prodVO.setProdedate(DEFAULT_DATE);
+                    }
+                    long sku = prodVO.getSku();
+                    Logger.getAnonymousLogger().info("检索商品名称:"+StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()));
+                    String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
+                            + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
+                            + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()
+                            + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim()
+                            //检索商品名称
+                            + "|" + StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim());
+                    String spec = prodVO.getSpec();
+                    long spu = prodVO.getSpu();
+                    long manuno = prodVO.getManuNo();
+                    String manuname = StringUtils.checkObjectNull(prodVO.getManuName(),"").trim();
+                    long brandno = prodVO.getBrandNo();
+                    String brandname = StringUtils.checkObjectNull(prodVO.getBrandName(),"").trim();
+
+                    Map<String, Object> data = new HashMap<>();
+                    data.put(ESConstant.PROD_COLUMN_SKU, sku);
+                    data.put(ESConstant.PROD_COLUMN_CONTENT, keyword);
+                    data.put(ESConstant.PROD_COLUMN_SPEC, spec);
+                    data.put(ESConstant.PROD_COLUMN_SPU, spu);
+                    data.put(ESConstant.PROD_COLUMN_MANUNO, manuno);
+                    data.put(ESConstant.PROD_COLUMN_MANUNAME, manuname);
+                    data.put(ESConstant.PROD_COLUMN_BRANDNO, brandno);
+                    data.put(ESConstant.PROD_COLUMN_BRANDNAME, brandname);
+                    data.put(ESConstant.PROD_COLUMN_PRODSTATUS, prodVO.getProdstatus());
+                    data.put(ESConstant.PROD_COLUMN_SKUCSTATUS, prodVO.getSkuCstatus());
+                    data.put(ESConstant.PROD_COLUMN_VATP, prodVO.getVatp());
+                    data.put(ESConstant.PROD_COLUMN_SALES, prodVO.getSales());
+                    data.put(ESConstant.PROD_COLUMN_RULESTATUS, 0);
+                    data.put(ESConstant.PROD_COLUMN_STORESTATUS, 0);
+                    data.put(ESConstant.PROD_COLUMN_CONSELL, prodVO.getConsell());
+                    data.put(ESConstant.PROD_COLUMN_DETAIL, JSONObject.toJSON(prodVO));
+                    data.put(ESConstant.PROD_COLUMN_TIME, TimeUtils.date_yMd_Hms_2String(new Date()));
+                    data.put(ESConstant.PROD_COLUMN_UPDATETIME, TimeUtils.date_yMd_Hms_2String(new Date()));
+                    //ElasticSearchProvider.deleteDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
+                    IndexRequestBuilder indexRequestBuilder = client.prepareIndex(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE).setSource(data).setId(sku+"");
+                    bulkRequest.add(indexRequestBuilder);
+                    // 每1000条提交一次
+                    if (i % 1000 == 0) {
+                        BulkResponse bulkRes =  bulkRequest.execute().actionGet();
+                        String info = "## response status: [" + bulkRes.status() + "]  hasFailures:["
+                                + bulkRes.hasFailures() + "] items length:[" + (bulkRes.getItems() != null
+                                ? bulkRes.getItems().length
+                                : 0) + "]";
+                        LogUtil.getDefaultLogger().info(info);
+                    }
+                    i++;
+                }
+                if (paramList.size() % 1000 != 0) {
+                    BulkResponse bulkRes = bulkRequest.execute().actionGet();
+                    String info = "## response status: [" + bulkRes.status() + "]  hasFailures:["
+                            + bulkRes.hasFailures() + "] items length:[" + (bulkRes.getItems() != null
+                            ? bulkRes.getItems().length
+                            : 0) + "]";
+                    LogUtil.getDefaultLogger().info(info);
+                }
+            }
+
+        }catch (Exception e){
+            e.printStackTrace();
+            return -1;
+        }
+        return 0;
     }
 
     /**
