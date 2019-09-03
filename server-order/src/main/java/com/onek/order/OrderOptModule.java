@@ -1104,17 +1104,21 @@ public class OrderOptModule {
         int year = Integer.parseInt("20" + orderNo.substring(0, 2));
         //更新订单状态为交易完成
         String updSQL = "update {{?" + DSMConst.TD_TRAN_ORDER + "}} set ostatus=4 "
-                + " where cstatus&1=0 and orderno=" + orderNo + " and ostatus=3";
+                + " where cstatus&1=0 and orderno=" + orderNo + " and ostatus in(2,3)";
+        String updateRBSQL = "update {{?" + DSMConst.TD_TRAN_REBATE + "}} set cstatus=cstatus|64"
+                + " where cstatus&1=0 and orderno=?";
 
         int result = baseDao.updateNativeSharding(cusno, year, updSQL);
 
         if (result <= 0) {
             return false;
         }
-
         try{
             //满赠赠优惠券
-            CouponRevModule.revGiftCoupon(Long.parseLong(orderNo), cusno);
+            if (CouponRevModule.revGiftCoupon(Long.parseLong(orderNo), cusno)) {//若返利成功则标记为已返利
+                baseDao.updateNativeSharding(cusno, year, updateRBSQL, orderNo);
+            }
+
         }catch (Exception e){
             e.printStackTrace();
         }

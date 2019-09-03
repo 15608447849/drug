@@ -325,6 +325,18 @@ public class TranOrderOptModule {
         }catch (Exception e){
             e.printStackTrace();
         }
+        double relPtamt = tranOrder.getPdamt();
+        double relPyamt = MathUtil.exactAdd(payamt,tranOrder.getDistamt()).
+                        setScale(2,RoundingMode.HALF_UP).doubleValue();
+
+//        LogUtil.getDefaultLogger().info("======================实际总金额："+relPtamt);
+//        LogUtil.getDefaultLogger().info("======================实际支付金额："+relPyamt);
+//        LogUtil.getDefaultLogger().info("======================："+(relPtamt == relPyamt));
+        if(relPtamt == relPyamt){
+            bal = 0;
+        }
+        LogUtil.getDefaultLogger().info("======================最总抵扣余额："+bal);
+
         sqlList.addFirst(INSERT_TRAN_ORDER);
         params.addFirst(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
                 tranOrder.getPdamt(), tranOrder.getFreight(), payamt, tranOrder.getCoupamt(), tranOrder.getDistamt(),
@@ -558,6 +570,19 @@ public class TranOrderOptModule {
                         MathUtil.exactMul(discountResult.getTotalCurrentPrice(), 100.0).doubleValue(),
                         tranOrder.getFreight()).doubleValue());
         tranOrder.setDistamt(MathUtil.exactMul(discountResult.getTotalDiscount(), 100.0).doubleValue());
+
+        System.out.println("=======================应付总金额："+tranOrder.getPayamt());
+        System.out.println("||||||||||||||||||||||||||||||||||||||||||||||||");
+        System.out.println("=======================优惠券优惠总金额："+tranOrder.getDistamt());
+        if(tranOrder.getPayamt()<=0){
+            tranOrder.setPayamt(MathUtil.exactAdd(tranOrder.getPayamt(), 1).
+                    setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            System.out.println(("=======================支付总金额为0加0.01为："+tranOrder.getPayamt()));
+
+            tranOrder.setDistamt(MathUtil.exactSub(tranOrder.getDistamt(),1).
+                        setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
+            System.out.println("=======================优惠金额-1之后："+tranOrder.getDistamt());
+        }
 
         List<IDiscount> iDiscountList = discountResult.getActivityList();
         for (IDiscount iDiscount : iDiscountList) {

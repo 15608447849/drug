@@ -26,6 +26,7 @@ import util.StringUtils;
 import util.TimeUtils;
 
 import java.util.*;
+import java.util.logging.Logger;
 
 import static org.elasticsearch.index.query.QueryBuilders.matchQuery;
 
@@ -61,10 +62,13 @@ public class ProdESUtil {
                 prodVO.setProdedate(DEFAULT_DATE);
             }
             long sku = prodVO.getSku();
+            Logger.getAnonymousLogger().info("检索商品名称:"+StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()));
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()
-                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim();
+                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim()
+                    //检索商品名称
+                    + "|" + StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim());
             String spec = prodVO.getSpec();
             long spu = prodVO.getSpu();
             long manuno = prodVO.getManuNo();
@@ -130,13 +134,15 @@ public class ProdESUtil {
             }
             if(StringUtils.isEmpty(prodVO.getProdedate())){
                 prodVO.setProdedate(DEFAULT_DATE);
-            }
+            }  
             long sku = prodVO.getSku();
+            Logger.getAnonymousLogger().info("检索商品名称:"+StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()));
             String keyword = StringUtils.checkObjectNull(prodVO.getBrandName(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getPopname(), "").trim()
                     + "|" + StringUtils.checkObjectNull(prodVO.getProdname(), "").trim()
-                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim();
-
+                    + "|" + StringUtils.checkObjectNull(prodVO.getManuName(), "").trim()
+                    //检索商品名称
+                    + "|" + StringUtils.converterToFirstSpell(StringUtils.checkObjectNull(prodVO.getProdname(), "").trim());
             String spec = prodVO.getSpec();
             long spu = prodVO.getSpu();
             long manuno = prodVO.getManuNo();
