@@ -1464,10 +1464,10 @@ public class TranOrderOptModule {
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
         }
 
-//        LogUtil.getDefaultLogger().info("---- bal " + bal);
-//        LogUtil.getDefaultLogger().info("---- dprice " + Arrays.toString(dprice));
-//        LogUtil.getDefaultLogger().info("---- cdprice " + Arrays.toString(cdprice));
-//        LogUtil.getDefaultLogger().info("---- afterDiscountPrice " + afterDiscountPrice);
+        LogUtil.getDefaultLogger().info("---- bal " + bal);
+        LogUtil.getDefaultLogger().info("---- dprice " + Arrays.toString(dprice));
+        LogUtil.getDefaultLogger().info("---- cdprice " + Arrays.toString(cdprice));
+        LogUtil.getDefaultLogger().info("---- afterDiscountPrice " + afterDiscountPrice);
 
     }
 
