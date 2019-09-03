@@ -6,6 +6,8 @@ import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class RecreateProdDataUtil {
@@ -40,9 +42,12 @@ public class RecreateProdDataUtil {
 
             BaseDAO.getBaseDAO().convToEntity(queryResult, returnResults, BgProdVO.class);
 
-            for(BgProdVO vo : returnResults){
-                ProdESUtil.addProdDocument(vo);
-            }
+//            for(BgProdVO vo : returnResults){
+//                ProdESUtil.addProdDocument(vo);
+//            }
+            List<BgProdVO> bgProdList = new ArrayList<>();
+            bgProdList = Arrays.asList(returnResults);
+            ProdESUtil.batchAddProdDocument(bgProdList);
 
             RedisUtil.getStringProvide().set(RedisGlobalKeys.RECREATE_ES_SWITCH, "off");
         }
