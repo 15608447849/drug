@@ -3,6 +3,7 @@ package com.onek.user.operations;
 import com.google.gson.*;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.user.entity.BDCompVO;
 import com.onek.user.entity.BDToOrderAchieveemntVO;
 import com.onek.user.service.BDAchievementServiceImpl;
 import com.onek.util.IceRemoteUtil;
@@ -35,7 +36,7 @@ public class BDAchievementOP {
         String json = appContext.param.json;
         QueryParam param = GsonUtils.jsonToJavaBean(json,QueryParam.class);
 
-        List<Comp> compList =getCompInfo();
+        List<BDCompVO> compList =getCompInfo();
         List<BDToOrderAchieveemntVO> oList = getOrderInfos();
 
         String reString = bdAchievementService.getData(getBdWhereParam(param),compList,oList);
@@ -107,29 +108,6 @@ public class BDAchievementOP {
         String areac;
         int dateflag;//0-自定义时间，1-昨天，2-今天，3-本周，4-本月
     }
-    public class Comp{
-        private long compid;
-        private long inviter;
-        private int cstatus;
-        public long getCompid() {
-            return compid;
-        }
-        public void setCompid(long compid) {
-            this.compid = compid;
-        }
-        public long getInviter() {
-            return inviter;
-        }
-        public void setInviter(long inviter) {
-            this.inviter = inviter;
-        }
-        public int getCstatus() {
-            return cstatus;
-        }
-        public void setCstatus(int cstatus) {
-            this.cstatus = cstatus;
-        }
-    }
 
     //查询出所有的企业
     private static final String _QUERY_COMP = "select cid compid,IFNULL(inviter,0) inviter,cstatus from {{?"+DSMConst.TB_COMP+"}} where ctype = 0 and inviter !=0";
@@ -138,11 +116,11 @@ public class BDAchievementOP {
      * 获取当前所有企业码
      * @return
      */
-    private static List<Comp> getCompInfo(){
+    private static List<BDCompVO> getCompInfo(){
         List<String> fList = new ArrayList<String>();
         List<Object[]> list = baseDao.queryNative(_QUERY_COMP);
-        Comp[] comps = new Comp[list.size()];
-        baseDao.convToEntity(list,comps,Comp.class);
+        BDCompVO[] comps = new BDCompVO[list.size()];
+        baseDao.convToEntity(list,comps,BDCompVO.class);
         return Arrays.asList(comps);
     }
 
