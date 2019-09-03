@@ -1,5 +1,6 @@
 package com.onek.user.operations;
 
+import com.alibaba.fastjson.JSONObject;
 import com.google.gson.*;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
@@ -130,7 +131,8 @@ public class BDAchievementOP {
      */
     public static List<BDToOrderAchieveemntVO> getOrderInfos(){
         String json = IceRemoteUtil.getBDToOrderInfo();
-        List<BDToOrderAchieveemntVO> list = GsonUtils.json2List(json,BDToOrderAchieveemntVO.class);
+        JSONObject jsons = JSONObject.parseObject(json);
+        List<BDToOrderAchieveemntVO> list = GsonUtils.json2List(jsons.getString("data"),BDToOrderAchieveemntVO.class);
         return list;
     }
 }

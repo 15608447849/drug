@@ -16,7 +16,8 @@ public class BDToOrderAchieveemntVO {
     private long maxpayamt;//最高支付金额
     private long minpayamt;//最低支付金额
     private String avgpayamt;//完成交易订单平均订单金额
-
+    private String realrefamt;//余额抵扣
+    private String odate;
     public long getInviter() {
         return inviter;
     }
@@ -96,5 +97,19 @@ public class BDToOrderAchieveemntVO {
         this.avgpayamt = avgpayamt;
     }
 
+    public String getRealrefamt() {
+        return realrefamt;
+    }
 
+    public String getOdate() {
+        return odate;
+    }
+
+    public void setRealrefamt(String realrefamt) {
+        this.realrefamt = realrefamt;
+    }
+
+    public void setOdate(String odate) {
+        this.odate = odate;
+    }
 }
