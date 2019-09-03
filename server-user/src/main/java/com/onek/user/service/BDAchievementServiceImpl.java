@@ -56,7 +56,11 @@ public class BDAchievementServiceImpl {
             setData(roleFlag, DEFAULT_QUERY_PARAM, boList, qdzjList, qdjlList, hhrList, bdmList, bdList);
         }else{
             for(String str : areaList){
+
                 long roleFlag = getUserRole(bdAchievementVOS, Long.parseLong(str));
+                if(roleFlag == Long.MAX_VALUE){
+                    continue;
+                }
                 System.out.println(roleFlag);
                 setData(roleFlag, Long.parseLong(str), boList, qdzjList, qdjlList, hhrList, bdmList, bdList);
             }
@@ -94,6 +98,7 @@ public class BDAchievementServiceImpl {
                 rolesoure = Math.min(rolesoure, role);
             }
         }
+
         return rolesoure;
     }
 
