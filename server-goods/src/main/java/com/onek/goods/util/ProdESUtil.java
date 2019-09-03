@@ -9,6 +9,7 @@ import org.elasticsearch.action.bulk.BulkItemResponse;
 import org.elasticsearch.action.bulk.BulkRequestBuilder;
 import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.get.GetResponse;
+import org.elasticsearch.action.index.IndexRequestBuilder;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.action.search.SearchRequestBuilder;
 import org.elasticsearch.action.search.SearchResponse;
@@ -178,8 +179,8 @@ public class ProdESUtil {
                     data.put(ESConstant.PROD_COLUMN_TIME, TimeUtils.date_yMd_Hms_2String(new Date()));
                     data.put(ESConstant.PROD_COLUMN_UPDATETIME, TimeUtils.date_yMd_Hms_2String(new Date()));
                     //ElasticSearchProvider.deleteDocumentById(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"");
-                    UpdateRequestBuilder updatebuilder = client.prepareUpdate(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE, sku+"").setDoc(data);
-                    bulkRequest.add(updatebuilder);
+                    IndexRequestBuilder indexRequestBuilder = client.prepareIndex(ESConstant.PROD_INDEX, ESConstant.PROD_TYPE).setSource(data).setId(sku+"");
+                    bulkRequest.add(indexRequestBuilder);
                     // 每1000条提交一次
                     if (i % 1000 == 0) {
                         BulkResponse bulkRes =  bulkRequest.execute().actionGet();
