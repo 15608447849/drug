@@ -226,7 +226,7 @@ public class BDAchievementServiceImpl {
                         if(csjluid == 0) {
                             continue;
                         }
-                        if(String.valueOf(qdjluid).equals(String.valueOf(csjlbelong)) || (csjlrole & QDJL)>0) {
+                        if(String.valueOf(qdjluid).equals(String.valueOf(csjlbelong)) || ((csjlrole & QDJL)>0 && String.valueOf(qdjluid).equals(String.valueOf(csjluid)))) {
                             JSONObject csjljson = new JSONObject();
                             csjljson.put("uid", csjluid);
                             csjljson.put("name",csjlname);
@@ -290,7 +290,7 @@ public class BDAchievementServiceImpl {
                                             bdjson1.put("roleid", bdmrole);
                                             String info = BDOrderAchievementServiceImpl.excall(bdmuid,compList,ordList);
                                             getSubtotal(bdSubtotal, info);
-                                            bdjson1.put("info", info);
+                                            bdjson1.put("info", JSONObject.parseObject(info));
                                             bds.add(bdjson1);
                                         }
                                     }
@@ -317,7 +317,7 @@ public class BDAchievementServiceImpl {
                                             bduids.add(bduid);
                                             String info = BDOrderAchievementServiceImpl.excall(bduid,compList,ordList);
                                             getSubtotal(bdSubtotal, info);
-                                            bdjson.put("info", info);
+                                            bdjson.put("info", JSONObject.parseObject(info));
                                             bds.add(bdjson);
 
                                         }
@@ -331,15 +331,15 @@ public class BDAchievementServiceImpl {
                                     bdmjson.put("children",bds);
                                 }
                             }
-                            csjljson.put("subtotal",csjlSubtotal.toString());
+                            csjljson.put("subtotal",csjlSubtotal);
                             csjljson.put("children",bdm);
                         }
                     }
-                    qdjljson.put("subtotal",qdjlSubtotal.toString());
+                    qdjljson.put("subtotal",qdjlSubtotal);
                     qdjljson.put("children", csjl);
                 }
             }
-            json.put("subtotal",qdzjSubtotal.toString());
+            json.put("subtotal",qdzjSubtotal);
             json.put("children", qdjl);
             reJson.add(json);
         }
