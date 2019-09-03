@@ -32,7 +32,7 @@ public class BDOrderAchieveementOP {
             " FROM ( "+
             " SELECT comp.cid cid, comp.inviter inviter, ord.asstatus asstatus, ord.orderno orderno, ord.cusno cusno, ord.ostatus ostatus, "+
             " ord.pdamt pdamt, ord.payamt payamt, ord.distamt distamt, ord.balamt balamt, IFNULL( asapp.realrefamt, 0 ) realrefamt, ord.odate "+
-            " FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord LEFT JOIN {{?"+DSMConst.TD_TRAN_ASAPP+"}} asapp ON ord.orderno = asapp.orderno LEFT JOIN tb_bk_comp comp ON ord.cusno = comp.cid "+
+            " FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord LEFT JOIN {{?"+DSMConst.TD_TRAN_ASAPP+"}} asapp ON ord.orderno = asapp.orderno LEFT JOIN {{?"+DSMConst.TB_BK_COMP+"}} comp ON ord.cusno = comp.cid "+
             " ) o  ) re ";
 
     private static String _SELECT_WHERE = "";

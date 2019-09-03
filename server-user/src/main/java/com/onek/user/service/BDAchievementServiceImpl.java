@@ -5,6 +5,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.google.gson.Gson;
 import com.onek.context.AppContext;
 import com.onek.user.entity.BDAchievementVO;
+import com.onek.user.entity.BDCompVO;
 import com.onek.user.entity.BDToOrderAchieveemntVO;
 import com.onek.user.operations.BDAchievementOP;
 import constant.DSMConst;
@@ -34,7 +35,7 @@ public class BDAchievementServiceImpl {
 
     private final static int DEFAULT_QUERY_PARAM = 0;
 
-    public String getData(List<String> areaList, List<BDAchievementOP.Comp> compList, List<BDToOrderAchieveemntVO> oList) {
+    public String getData(List<String> areaList, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList) {
         StringBuilder sqlb = new StringBuilder(_QUERY_SQL);
         List<Object[]> bdLists= BaseDAO.getBaseDAO().queryNative(sqlb.toString());
 
@@ -173,7 +174,7 @@ public class BDAchievementServiceImpl {
      * @param qdzjs
      * @return
      */
-    private static String contData(List<BDAchievementOP.Comp> compList, List<BDToOrderAchieveemntVO> ordList,List<BDAchievementVO> bd, List<BDAchievementVO>bdms, List<BDAchievementVO>csjls, List<BDAchievementVO>qdjls, List<BDAchievementVO>qdzjs) {
+    private static String contData(List<BDCompVO> compList, List<BDToOrderAchieveemntVO> ordList,List<BDAchievementVO> bd, List<BDAchievementVO>bdms, List<BDAchievementVO>csjls, List<BDAchievementVO>qdjls, List<BDAchievementVO>qdzjs) {
 //        List<OrderVO> ordList = getOrderInfos();
 //        List<Comp> compList = getCompInfo();
         List gl = new ArrayList();

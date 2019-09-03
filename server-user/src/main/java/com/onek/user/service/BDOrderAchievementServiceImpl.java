@@ -1,6 +1,7 @@
 package com.onek.user.service;
 
 import com.alibaba.fastjson.JSONObject;
+import com.onek.user.entity.BDCompVO;
 import com.onek.user.entity.BDToOrderAchieveemntVO;
 import com.onek.user.operations.BDAchievementOP;
 
@@ -14,7 +15,7 @@ public class BDOrderAchievementServiceImpl {
     private static final int _NOTAPPROVAL = 128;
 
 
-    public static String excall(long uid, List<BDAchievementOP.Comp> compList, List<BDToOrderAchieveemntVO> oList) {
+    public static String excall(long uid, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList) {
 
 
         JSONObject jsonObject = new JSONObject();
@@ -31,8 +32,8 @@ public class BDOrderAchievementServiceImpl {
      * @param oList
      * @param uid
      */
-    private static void getOrderInfoByCus(JSONObject jsonObject,List<BDAchievementOP.Comp> compList, List<BDToOrderAchieveemntVO> oList,long uid) {
-        List<BDAchievementOP.Comp> list = getCompInfo(compList, uid);
+    private static void getOrderInfoByCus(JSONObject jsonObject,List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,long uid) {
+        List<BDCompVO> list = getCompInfo(compList, uid);
         jsonObject.put("ccustruenum",getCustruenum(list,_APPROVAL)); //审核通过门店
         jsonObject.put("ccusfalsenum",getCustruenum(list,0)-getCustruenum(list,_APPROVAL));//审核未通过
         jsonObject.put("cregnum",getCustruenum(list,0));//总共注册门店
@@ -53,19 +54,19 @@ public class BDOrderAchievementServiceImpl {
             jsonObject.put("minpayamt", "0"); //最高支付金额
             jsonObject.put("avgpayamt", "0"); //最高支付金额
         }else {
-            jsonObject.put("ocancelord", order.getCanclord().longValue()); //交易取消订单
-            jsonObject.put("ocompleteord", order.getCompleteord().intValue()); //订单交易完成数
-            jsonObject.put("oreturnord", order.getReturnord().intValue()); //退货订单数
-            jsonObject.put("oafsaleord", order.getAfsaleord().intValue()); //售后订单数
-            jsonObject.put("osumord", getOrderNum( order.getCanclord().intValue(),order.getCompleteord().intValue(),order.getReturnord().intValue(),order.getAfsaleord().intValue() )); //小计
+            jsonObject.put("ocancelord", order.getCanclord()); //交易取消订单
+            jsonObject.put("ocompleteord", order.getCompleteord()); //订单交易完成数
+            jsonObject.put("oreturnord", order.getReturnord()); //退货订单数
+            jsonObject.put("oafsaleord", order.getAfsaleord()); //售后订单数
+            jsonObject.put("osumord", getOrderNum( Integer.parseInt(order.getCanclord()),Integer.parseInt(order.getCompleteord()),Integer.parseInt(order.getReturnord()),Integer.parseInt(order.getAfsaleord()))); //小计
 //            jsonObject.put("oreturnrate", getRate(jsonObject.getString("oreturnord"),jsonObject.getString("osumord"))); //退货率
 //            jsonObject.put("ofsalerate", getRate(jsonObject.getString("oafsaleord"),jsonObject.getString("osumord"))); //售后率
-            jsonObject.put("canclordamt", getDoubleValue(order.getCanclordamt())); //取消订单金额
-            jsonObject.put("originalprice",getDoubleValue(order.getOriginalprice())); //原价交易金额
-            jsonObject.put("payamt", getDoubleValue(order.getPayamt())); //实付交易额
+            jsonObject.put("canclordamt", getDoubleValue(new BigDecimal(order.getCanclordamt()))); //取消订单金额
+            jsonObject.put("originalprice",getDoubleValue(new BigDecimal(order.getOriginalprice()))); //原价交易金额
+            jsonObject.put("payamt", getDoubleValue(new BigDecimal(order.getPayamt()))); //实付交易额
             jsonObject.put("maxpayamt", getDoubleValue(order.getMaxpayamt())); //最高支付金额
             jsonObject.put("minpayamt", getDoubleValue(order.getMinpayamt())); //最高支付金额
-            jsonObject.put("avgpayamt", getDoubleValue(order.getAvgpayamt())); //最高支付金额
+            jsonObject.put("avgpayamt", getDoubleValue(new BigDecimal(order.getAvgpayamt()))); //最高支付金额
         }
     }
 
@@ -112,11 +113,11 @@ public class BDOrderAchievementServiceImpl {
      * status为128则查询所有未审核，未通过门店
      * @return
      */
-    private static int getCustruenum(List<BDAchievementOP.Comp> boList, int status) {
+    private static int getCustruenum(List<BDCompVO> boList, int status) {
         int result =0;
         List gl = new ArrayList();
         for (int i = 0; i < boList.size(); i++) {
-            BDAchievementOP.Comp comp = boList.get(i);
+            BDCompVO comp = boList.get(i);
             if(status>0) {
                 if((comp.getCstatus()&status) >0) {
                     result++;
@@ -137,10 +138,10 @@ public class BDOrderAchievementServiceImpl {
      * @param uid
      * @return
      */
-    private static List<BDAchievementOP.Comp> getCompInfo(List<BDAchievementOP.Comp> boList, long uid){
-        List<BDAchievementOP.Comp> list = new ArrayList<BDAchievementOP.Comp>();
+    private static List<BDCompVO> getCompInfo(List<BDCompVO> boList, long uid){
+        List<BDCompVO> list = new ArrayList<BDCompVO>();
         for (int i = 0; i < boList.size(); i++) {
-            BDAchievementOP.Comp comp = boList.get(i);
+            BDCompVO comp = boList.get(i);
             if(String.valueOf(comp.getInviter()).equals(String.valueOf(uid))) {
                 list.add(comp);
             }
