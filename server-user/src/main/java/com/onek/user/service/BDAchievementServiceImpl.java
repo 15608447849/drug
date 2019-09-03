@@ -329,7 +329,7 @@ public class BDAchievementServiceImpl {
 
                                     }
 
-                                    bdmjson.put("subtotal",bdSubtotal.toString());
+                                    bdmjson.put("subtotal",bdSubtotal);
                                     getSubtotal(csjlSubtotal, bdSubtotal.toString());
                                     getSubtotal(qdjlSubtotal, bdSubtotal.toString());
                                     getSubtotal(qdzjSubtotal, bdSubtotal.toString());
