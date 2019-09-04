@@ -1231,20 +1231,9 @@ public class TranOrderOptModule {
         if (result) {
             PayModule.DELIVERY_DELAYED.removeByKey(orderno);
             TAKE_DELAYED.add(new DelayedBase(compid, orderno));
-/*            String sql = " SELECT payway "
-                        + " FROM {{?" + DSMConst.TD_TRAN_TRANS + "}} "
-                        + " WHERE cstatus&1 = 0 AND compid = ? AND orderno = ? ";
-
-            List<Object[]> queryResult =
-                    baseDao.queryNativeSharding(compid, TimeUtils.getYearByOrderno(orderno), sql, compid, orderno);
-
-            if (!queryResult.isEmpty()) {
-                int t = Integer.parseInt(queryResult.get(0)[0].toString());
-                if (t != 4 && t != 5) {
-                    TAKE_DELAYED.add(new DelayedBase(compid, orderno));
-                }
-            }*/
-
+            //减数据库库存
+            LogUtil.getDefaultLogger().info("print by cyq onlinePay -----------线上支付订单减库存库存操作开始");
+            reduceGoodsDbStock(orderno, compid);
         }
 
         return result;

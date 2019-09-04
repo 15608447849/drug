@@ -565,25 +565,12 @@ public class PayModule {
         boolean b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, params));
         if (b) {
             //减数据库库存
-            LogUtil.getDefaultLogger().info("print by cyq onlinePay -----------线上支付订单减库存库存操作开始");
-            reduceGoodsDbStock(orderno, compid);
-//            if(paySpreadBal > 0 && paytype != 0){
-//                IceRemoteUtil.updateCompBal(compid,-paySpreadBal);
-//            }
-//            if(paytype == 0){
-//                IceRemoteUtil.updateCompBal(compid,-(MathUtil.exactMul(price, 100).intValue()));
-//            }
+/*            LogUtil.getDefaultLogger().info("print by cyq onlinePay -----------线上支付订单减库存库存操作开始");
+            reduceGoodsDbStock(orderno, compid);*/
 
             if (paytype != 4 && paytype != 5) {
-                DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
+//                DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
             }
-
-//            try{
-//                //满赠赠优惠券
-//                CouponRevModule.revGiftCoupon(Long.parseLong(orderno),compid);
-//            }catch (Exception e){
-//                e.printStackTrace();
-//            }
         }
         return b ?1 : -1;
     }
@@ -801,14 +788,13 @@ public class PayModule {
             if (result > 0) {
                 //生成订单到一块物流
                 OrderUtil.generateLccOrder(compid, orderno);
-                DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
+//                DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
             }
         }
         if (result > 0 ) {
             //线下即付减数据库库存
-            LogUtil.getDefaultLogger().info("print by cyq offlinePay -----------线下支付订单减库存库存操作开始");
-            reduceGoodsDbStock(orderno, compid);
-
+         /*   LogUtil.getDefaultLogger().info("print by cyq offlinePay -----------线下支付订单减库存库存操作开始");
+            reduceGoodsDbStock(orderno, compid);*/
             return new Result().success("订单提交成功");
         }
         return new Result().fail("订单提交失败");
@@ -931,7 +917,7 @@ public class PayModule {
             //生成订单到一块物流
             OrderUtil.generateLccOrder(compid, orderNo);
 //            CANCEL_XXJF.removeByKey(orderNo);
-            DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
+//            DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
         }
         return result > 0;
     }
