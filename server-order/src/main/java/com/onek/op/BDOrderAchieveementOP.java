@@ -45,8 +45,9 @@ public class BDOrderAchieveementOP {
     public static List<BDOrderAchieveemntVO> executeOrderInfos(AppContext appContext){
 
         String[] strParam = appContext.param.arrays;
+        appContext.logger.print("==========================时间维度："+strParam);
         if(strParam.length>0){
-            _SELECT_WHERE += strParam[0];
+            _SELECT_WHERE = strParam[0];
         }
 
         StringBuilder builder = new StringBuilder();

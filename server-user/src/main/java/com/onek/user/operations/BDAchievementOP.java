@@ -54,7 +54,7 @@ public class BDAchievementOP {
      */
     private static String getOrdWhereParam(QueryParam param){
         StringBuilder sql = new StringBuilder();
-        sql.append(" re.odate BETWEEN ${var} and ${var2} ");
+
         String sdate = "";
         String edate = "";
         if(param == null){
@@ -83,10 +83,12 @@ public class BDAchievementOP {
                 sdate = mouth[0];
                 edate = mouth[1];
         }
-        if(!sdate.isEmpty() && !edate.isEmpty())
-            return sql.toString().replace("${var}",sdate).replace("${var2}",edate);
-        else
+        if(!sdate.isEmpty() && !edate.isEmpty()) {
+            sql.append(" where re.odate BETWEEN ${var} and ${var2} ");
+            return sql.toString().replace("${var}", sdate).replace("${var2}", edate);
+        }else {
             return "";
+        }
     }
 
     /**
