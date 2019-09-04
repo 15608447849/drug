@@ -883,14 +883,18 @@ public class CouponRevModule {
             excoupon = true;
         }
 
+
+
+        DiscountResult calculate = CalculateUtil.calculate(compid,
+                productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
+
         Map<String, String> verifyResult
-                = verifyCoupon(skuList, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
+                = verifyCoupon(productList, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
 
         resultMap.put("code",verifyResult.get("code"));
         resultMap.put("msg",verifyResult.get("msg"));
 
-        DiscountResult calculate = CalculateUtil.calculate(compid,
-                productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
+
         BigDecimal pgkDiscount = BigDecimal.ZERO;
         for(IProduct product:productList){
             if(product instanceof Package){
@@ -1321,7 +1325,7 @@ public class CouponRevModule {
      * @param compid
      * @return
      */
-    public Map<String,String> verifyCoupon(List<Product> productList,boolean excoupon,
+    public Map<String,String> verifyCoupon(List<IProduct> productList,boolean excoupon,
                                            long coupid,int compid){
         Map<String,String> map = new HashMap<>();
         map.put("code","0");
