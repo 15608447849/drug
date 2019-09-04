@@ -328,7 +328,8 @@ public class BDAchievementServiceImpl {
                                             if(gl.contains(bduid)) {
                                                 continue;
                                             }
-                                            if((bdrole&CSHHR)>0){
+                                            if((bdrole & CSHHR)>0){
+                                                System.out.println("============="+bdname);
                                                 csUids.add(bduid);
                                             }
                                             bduids.add(bduid);
