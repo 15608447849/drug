@@ -60,6 +60,7 @@ public class BDAchievementOP {
         if(param == null){
             return sql.toString();
         }
+        System.out.println("=============dateflag = " + param.dateflag);
         switch (param.dateflag) {
             case 0:
                 sdate = param.sdate;
@@ -84,7 +85,7 @@ public class BDAchievementOP {
                 edate = mouth[1];
         }
         if(!sdate.isEmpty() && !edate.isEmpty()) {
-            sql.append(" where re.odate BETWEEN ${var} and ${var2} ");
+            sql.append("re.odate BETWEEN ${var} and ${var2} ");
             return sql.toString().replace("${var}", sdate).replace("${var2}", edate);
         }else {
             return "";

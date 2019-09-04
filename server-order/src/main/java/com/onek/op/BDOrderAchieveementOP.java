@@ -35,7 +35,7 @@ public class BDOrderAchieveementOP {
             " FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord LEFT JOIN {{?"+DSMConst.TD_TRAN_ASAPP+"}} asapp ON ord.orderno = asapp.orderno LEFT JOIN tb_bk_comp comp ON ord.cusno = comp.cid "+
             " ) o  ) re ";
 
-    private static String _SELECT_WHERE = "";
+    private static String _SELECT_WHERE = " HAVING ";
     private static final String _SELECT_GROUP = "  GROUP BY re.inviter  ";
 
     /**
@@ -47,13 +47,13 @@ public class BDOrderAchieveementOP {
         String[] strParam = appContext.param.arrays;
         appContext.logger.print("==========================时间维度："+strParam);
         if(strParam.length>0){
-            _SELECT_WHERE = strParam[0];
+            _SELECT_WHERE += strParam[0];
         }
 
         StringBuilder builder = new StringBuilder();
         builder.append(_QUERY_ORDER);
-        builder.append(_SELECT_WHERE);
         builder.append(_SELECT_GROUP);
+        builder.append(_SELECT_WHERE);
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
                 .queryNativeSharding(GLOBALConst.COMP_INIT_VAR, TimeUtils.getCurrentYear(), builder.toString());
