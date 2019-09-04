@@ -11,6 +11,7 @@ import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.GsonUtils;
+import util.StringUtils;
 import util.TimeUtils;
 
 import java.sql.Time;
@@ -63,7 +64,7 @@ public class BDAchievementOP {
         System.out.println("=============dateflag = " + param.dateflag);
         switch (param.dateflag) {
             case 0:
-                if(param.sdate.isEmpty() || param.edate.isEmpty()){
+                if(StringUtils.isEmpty(param.sdate) || StringUtils.isEmpty(param.edate)){
                     break;
                 }
                 sdate = param.sdate;
