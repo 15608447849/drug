@@ -1274,8 +1274,10 @@ public class TranOrderOptModule {
         }
 
         boolean result = takeDelivery(orderNo, compid);
-        //生成节点信息四同步一块物流状态
-        OrderUtil.changeYKWLOrderState(orderNo,4, compid);
+        if (result) {
+            //生成节点信息四同步一块物流状态
+            OrderUtil.changeYKWLOrderState(orderNo,4, compid);
+        }
         return result ? new Result().success("已签收") : new Result().fail("操作失败");
     }
 
@@ -1315,8 +1317,10 @@ public class TranOrderOptModule {
         }
 
         boolean result = delivery(orderNo, compid);
-        //生成节点信息二三 修改一块物流状态
-        OrderUtil.changeYKWLOrderState(orderNo,3, compid);
+        if (result) {
+            //生成节点信息二三 修改一块物流状态
+            OrderUtil.changeYKWLOrderState(orderNo,3, compid);
+        }
         return result ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 

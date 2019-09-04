@@ -25,6 +25,7 @@ import org.elasticsearch.search.sort.FieldSortBuilder;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.hyrdpf.util.LogUtil;
+import util.RegExpUtil;
 import util.StringUtils;
 import util.TimeUtils;
 
@@ -481,13 +482,21 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(!StringUtils.isEmpty(keyword)){
+                if (RegExpUtil.containsHanzi(keyword)) {
+                    MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).minimumShouldMatch("90%");
+                    boolQuery.must(matchQuery);
+                } else {
+                    MatchPhrasePrefixQueryBuilder matchQuery = QueryBuilders
+                            .matchPhrasePrefixQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).slop(1);
+                    boolQuery.must(matchQuery);
+                }
 //                TermsQueryBuilder matchQuery = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
 //                PrefixQueryBuilder matchQuery = QueryBuilders.prefixQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
-                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
+//                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
 //                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
 //                String regBase = ".*%s.*";
 //                RegexpQueryBuilder matchQuery = QueryBuilders.regexpQuery(ESConstant.PROD_COLUMN_CONTENT, String.format(regBase, keyword));
-                boolQuery.must(matchQuery);
+//                boolQuery.must(matchQuery);
             }
             MatchQueryBuilder builder = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_PRODSTATUS, "1");
             boolQuery.must(builder);

@@ -49,8 +49,27 @@ public class RegExpUtil {
         String regex = sb.toString();
         return getRegxIndex(str,regex);
 	}
-	
-	
-	
+
+	/**
+	 * 判定是不是全汉字。
+	 * @param word
+	 * @return
+	 */
+	public static boolean isHanzi(String word) {
+		if (StringUtils.isEmpty(word)) {
+			return false;
+		}
+
+		return word.matches("[\\u4E00-\\u9FA5]+");
+	}
+
+
+	public static boolean containsHanzi(String word) {
+		if (StringUtils.isEmpty(word)) {
+			return false;
+		}
+
+		return Pattern.compile("[\\u4E00-\\u9FA5]").matcher(word).find();
+	}
 	
 }
