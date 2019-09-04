@@ -482,15 +482,7 @@ public class ProdESUtil {
                 boolQuery.must(builder);
             }
             if(!StringUtils.isEmpty(keyword)){
-                if (RegExpUtil.containsHanzi(keyword)) {
-                    MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword)
-                            .minimumShouldMatch("90%").analyzer("ik_max_word");
-                    boolQuery.must(matchQuery);
-                } else {
-                    MatchPhrasePrefixQueryBuilder matchQuery = QueryBuilders
-                            .matchPhrasePrefixQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).slop(1);
-                    boolQuery.must(matchQuery);
-                }
+               matchKeyWord(boolQuery, keyword);
 //                TermsQueryBuilder matchQuery = QueryBuilders.termsQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
 //                PrefixQueryBuilder matchQuery = QueryBuilders.prefixQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
 //                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
@@ -763,15 +755,7 @@ public class ProdESUtil {
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
-            if (RegExpUtil.containsHanzi(keyword)) {
-                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword)
-                        .minimumShouldMatch("90%").analyzer("ik_max_word");
-                boolQuery.must(matchQuery);
-            } else {
-                MatchPhrasePrefixQueryBuilder matchQuery = QueryBuilders
-                        .matchPhrasePrefixQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).slop(1);
-                boolQuery.must(matchQuery);
-            }
+            matchKeyWord(boolQuery, keyword);
 //            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
 //            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
 //            boolQuery.must(matchQuery);
@@ -824,6 +808,22 @@ public class ProdESUtil {
             keys.add(bucket.getKey().toString());
         }
         return keys;
+    }
+
+    private static void matchKeyWord(BoolQueryBuilder boolQuery, String keyword) {
+        if (RegExpUtil.isHanzi(keyword)) {
+            MatchPhrasePrefixQueryBuilder matchQuery = QueryBuilders
+                    .matchPhrasePrefixQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).slop(0);
+            boolQuery.must(matchQuery);
+        } else if(RegExpUtil.containsHanzi(keyword)) {
+            MatchQueryBuilder matchQuery = QueryBuilders
+                    .matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_pinyin_analyzer").minimumShouldMatch("90%");
+            boolQuery.must(matchQuery);
+        }else {
+            MatchPhrasePrefixQueryBuilder matchQuery = QueryBuilders
+                    .matchPhrasePrefixQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).slop(1);
+            boolQuery.must(matchQuery);
+        }
     }
 
     /**
