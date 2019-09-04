@@ -247,7 +247,6 @@ public class BDAchievementServiceImpl {
 
                             JSONArray bdm = new JSONArray();
                             //csjl是否为BDM
-                            JSONObject bdjson2 = new JSONObject();
                             if((csjlrole & BDM)>0) {
 //								bdjson2.put("uid", csjluid);
 //								bdjson2.put("name",csjlname);
@@ -276,7 +275,9 @@ public class BDAchievementServiceImpl {
                                 if(bdmuid == 0) {
                                     continue;
                                 }
-
+                                if(csUids.contains(bdmuid)){
+                                    continue;
+                                }
                                 if(String.valueOf(csjluid).equals(String.valueOf(bdmbelong))) {
                                     JSONObject bdmjson = new JSONObject();
                                     bdmjson.put("uid", bdmuid);
@@ -326,9 +327,7 @@ public class BDAchievementServiceImpl {
                                             if(gl.contains(bduid)) {
                                                 continue;
                                             }
-                                            if(csUids.contains(bduid)){
-                                                continue;
-                                            }
+
                                             bduids.add(bduid);
                                             String info = BDOrderAchievementServiceImpl.excall(bduid,compList,ordList);
                                             getSubtotal(bdSubtotal, info);
