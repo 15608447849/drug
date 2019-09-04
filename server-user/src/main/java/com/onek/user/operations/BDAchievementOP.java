@@ -118,6 +118,12 @@ public class BDAchievementOP {
         if(param == null){
             return new ArrayList();
         }
+
+        if((param.roleid & 1) > 0){
+            reList.add("0");
+            return reList;
+        }
+
         if(!StringUtils.isEmpty(param.areac)){
             List<Object[]> list = baseDao.queryNative(_QUERY_AREA_USER,param.areac);
             if(list.size()>0){
@@ -154,6 +160,7 @@ public class BDAchievementOP {
         String edate;
         String areac;
         long uid;
+        long roleid;
         int dateflag;//0-自定义时间，1-昨天，2-今天，3-本周，4-本月
     }
 
