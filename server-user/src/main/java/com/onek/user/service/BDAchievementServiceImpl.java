@@ -51,12 +51,13 @@ public class BDAchievementServiceImpl {
         List<BDAchievementVO> bdList = new ArrayList<BDAchievementVO>();
 
         if(areaList.size()<=0) {//查询所有
-            long roleFlag = getUserRole(bdAchievementVOS, uid);
-            if(roleFlag == Long.MAX_VALUE){
-                return new JSONArray().toString();
-            }
-            System.out.println(roleFlag);
-            setData(roleFlag, DEFAULT_QUERY_PARAM, boList, qdzjList, qdjlList, hhrList, bdmList, bdList);
+//            long roleFlag = getUserRole(bdAchievementVOS, uid);
+//            if(roleFlag == Long.MAX_VALUE){
+//                return new JSONArray().toString();
+//            }
+//            System.out.println(roleFlag);
+//            setData(roleFlag, DEFAULT_QUERY_PARAM, boList, qdzjList, qdjlList, hhrList, bdmList, bdList);
+            return new JSONArray().toString();
         }else{
             for(String str : areaList){
 

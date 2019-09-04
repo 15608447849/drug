@@ -133,10 +133,6 @@ public class BDAchievementOP {
         }else{
             List<String> userAreaList = new ArrayList<String>();
             List<Object[]> list  = baseDao.queryNative(_QUERY_USER_BELONG,param.uid);
-            if(list.size()<=0){
-                userAreaList.add(String.valueOf(param.uid));
-                return userAreaList;
-            }
             //如果当前地区下人员包含当前登陆所属人员
             for (Object[] obj:list){
                 if(reList.contains(obj[0].toString())){
