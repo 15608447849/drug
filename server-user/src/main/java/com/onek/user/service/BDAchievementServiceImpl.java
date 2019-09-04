@@ -253,14 +253,14 @@ public class BDAchievementServiceImpl {
 //								bdjson2.put("roleid", csjlrole);
 //								bdm.put(bdjson2);
 
-//								BDAchievementVO bd2 = new BDAchievementVO();
-//								bd2.setCid(0);
-//								bd2.setUid(csjluid);
-//								bd2.setRoleid(csjlrole);
-//								bd2.setUrealname(csjlname);
-//								bd2.setBelong(csjluid);
-//								bd2.setFlag(3);
-//								bdms.add(bd2);
+								BDAchievementVO bd2 = new BDAchievementVO();
+								bd2.setCid(0);
+								bd2.setUid(csjluid);
+								bd2.setRoleid(csjlrole);
+								bd2.setUrealname(csjlname);
+								bd2.setBelong(csjluid);
+								bd2.setFlag(3);
+								bdms.add(bd2);
                                 //csjluid =
                             }
                             for (int l = 0; l < bdms.size(); l++) {
