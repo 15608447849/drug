@@ -116,7 +116,7 @@ public class BDAchievementOP {
         if(param == null){
             return new ArrayList();
         }
-        if(!param.areac.isEmpty()){
+        if(!StringUtils.isEmpty(param.areac)){
             List<Object[]> list = baseDao.queryNative(_QUERY_AREA_USER,param.areac);
             if(list.size()>0){
                 for (Object[] obj : list) {

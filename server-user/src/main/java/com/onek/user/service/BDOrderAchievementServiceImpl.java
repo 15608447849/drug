@@ -68,8 +68,8 @@ public class BDOrderAchievementServiceImpl {
             jsonObject.put("originalprice",getDoubleValue(new BigDecimal(order.getOriginalprice()))); //原价交易金额
             jsonObject.put("payamt", getDoubleValue(new BigDecimal(order.getPayamt()))); //实付交易额
             jsonObject.put("realrefamt", getDoubleValue(new BigDecimal(order.getRealrefamt()))); //退款金额
-            jsonObject.put("subsidyamt", getSubsidyAmtSum(order.getOriginalprice(),order.getPayamt())); //补贴金额
-            jsonObject.put("amtsum", getAmtSum(order.getCanclordamt(),order.getOriginalprice())); //GMV小计金额
+            jsonObject.put("subsidyamt", getDoubleValue(new BigDecimal(getSubsidyAmtSum(order.getOriginalprice(),order.getPayamt())))); //补贴金额
+            jsonObject.put("amtsum", getDoubleValue(new BigDecimal(getAmtSum(order.getCanclordamt(),order.getOriginalprice())))); //GMV小计金额
             jsonObject.put("maxpayamt", getDoubleValue(order.getMaxpayamt())); //最高支付金额
             jsonObject.put("minpayamt", getDoubleValue(order.getMinpayamt())); //最低支付金额
             jsonObject.put("avgpayamt", getDoubleValue(new BigDecimal(order.getAvgpayamt()))); //平均支付金额
