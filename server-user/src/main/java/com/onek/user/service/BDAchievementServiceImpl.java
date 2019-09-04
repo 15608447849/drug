@@ -35,7 +35,7 @@ public class BDAchievementServiceImpl {
 
     private final static int DEFAULT_QUERY_PARAM = 0;
 
-    public String getData(List<String> areaList, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList) {
+    public String getData(long uid,List<String> areaList, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList) {
         StringBuilder sqlb = new StringBuilder(_QUERY_SQL);
         List<Object[]> bdLists= BaseDAO.getBaseDAO().queryNative(sqlb.toString());
 
@@ -51,7 +51,7 @@ public class BDAchievementServiceImpl {
         List<BDAchievementVO> bdList = new ArrayList<BDAchievementVO>();
 
         if(areaList.size()<=0) {//查询所有
-            long roleFlag = getUserRole(bdAchievementVOS, DEFAULT_QUERY_PARAM);
+            long roleFlag = getUserRole(bdAchievementVOS, uid);
             if(roleFlag == Long.MAX_VALUE){
                 return new JSONArray().toString();
             }
