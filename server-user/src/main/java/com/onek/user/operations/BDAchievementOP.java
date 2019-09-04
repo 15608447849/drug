@@ -63,29 +63,39 @@ public class BDAchievementOP {
         System.out.println("=============dateflag = " + param.dateflag);
         switch (param.dateflag) {
             case 0:
+                if(param.sdate.isEmpty() || param.edate.isEmpty()){
+                    break;
+                }
                 sdate = param.sdate;
                 edate = param.edate;
+                break;
             case 1:
                 //当前时间-1天为昨天
                 sdate = TimeUtils.date_yMd_2String(TimeUtils.subtractDay(new Date(),1));
                 edate = TimeUtils.date_yMd_2String(TimeUtils.subtractDay(new Date(),1));
+                break;
             case 2:
                 //今天
                 sdate = TimeUtils.date_yMd_2String(new Date());
                 edate = TimeUtils.date_yMd_2String(new Date());
+                break;
             case 3:
                 //本周
                 String[] time = TimeUtils.getFirstAndLastOfWeek();
                 sdate = time[0];
                 edate = time[1];
+                break;
             case 4:
                 //本月
                 String[] mouth = TimeUtils.getFirstAndLastOfMonth();
                 sdate = mouth[0];
                 edate = mouth[1];
+                break;
         }
+        System.out.println("=============sdate = " + sdate);
+        System.out.println("=============edate = " + edate);
         if(!sdate.isEmpty() && !edate.isEmpty()) {
-            sql.append("re.odate BETWEEN ${var} and ${var2} ");
+            sql.append("re.odate BETWEEN '${var}' and '${var2}' ");
             return sql.toString().replace("${var}", sdate).replace("${var2}", edate);
         }else {
             return "";
