@@ -763,9 +763,18 @@ public class ProdESUtil {
 
         BoolQueryBuilder boolQuery = QueryBuilders.boolQuery();
         if(!StringUtils.isEmpty(keyword)){
-            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
+            if (RegExpUtil.containsHanzi(keyword)) {
+                MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword)
+                        .minimumShouldMatch("90%").analyzer("ik_max_word");
+                boolQuery.must(matchQuery);
+            } else {
+                MatchPhrasePrefixQueryBuilder matchQuery = QueryBuilders
+                        .matchPhrasePrefixQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).slop(1);
+                boolQuery.must(matchQuery);
+            }
+//            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword);
 //            MatchQueryBuilder matchQuery = matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).analyzer("ik_max_word");
-            boolQuery.must(matchQuery);
+//            boolQuery.must(matchQuery);
         }
 
         if(spu > 0){
