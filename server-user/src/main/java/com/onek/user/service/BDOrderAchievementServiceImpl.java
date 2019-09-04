@@ -116,7 +116,7 @@ public class BDOrderAchievementServiceImpl {
         BigDecimal originalprices = new BigDecimal(originalprice);
         BigDecimal payamts = new BigDecimal(payamt);
 
-        return originalprices.subtract(originalprices).doubleValue();
+        return originalprices.subtract(payamts).doubleValue();
     }
 
     public static int getOrderNum(int ...ordnum) {
