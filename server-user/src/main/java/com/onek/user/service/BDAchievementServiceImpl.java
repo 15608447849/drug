@@ -328,10 +328,10 @@ public class BDAchievementServiceImpl {
                                             if(gl.contains(bduid)) {
                                                 continue;
                                             }
-                                            csUids.add(bduid);
-                                            if((bdrole&CSHHR)>0) {
-                                                bduids.add(bduid);
+                                            if((bdrole&CSHHR)>0){
+                                                csUids.add(bduid);
                                             }
+                                            bduids.add(bduid);
                                             String info = BDOrderAchievementServiceImpl.excall(bduid,compList,ordList);
                                             getSubtotal(bdSubtotal, info);
                                             bdjson.put("info", JSONObject.parseObject(info));
