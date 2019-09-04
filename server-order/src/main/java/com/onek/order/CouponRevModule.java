@@ -586,6 +586,9 @@ public class CouponRevModule {
 
                     //subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
                 }else{
+                    if(couponUseDTO.getPdno() == 0){
+                        continue;
+                    }
                     Product product = new Product();
                     product.setSku(couponUseDTO.getPdno());
                     if(couponUseDTO.getSkprice() > 0){
@@ -598,6 +601,11 @@ public class CouponRevModule {
                 }
             }
         }
+
+        if(productList.size()<=0){
+            return new Result().fail("数据异常，无法计算优惠金额");
+        }
+
         int compid = couponUseDTOS.get(0).getCompid();
         DiscountResult calculate = CalculateUtil.calculate(compid,
                 productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
@@ -847,6 +855,9 @@ public class CouponRevModule {
 
                     //subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
                 }else{
+                    if(couponUseDTO.getPdno() == 0){
+                        continue;
+                    }
                     Product product = new Product();
                     product.setSku(couponUseDTO.getPdno());
                     if(couponUseDTO.getSkprice() > 0){
@@ -861,6 +872,9 @@ public class CouponRevModule {
             }
         }
 
+        if(productList.size()<=0){
+            return new Result().fail("数据异常，无法计算优惠金额");
+        }
 
         int compid = couponUseDTOS.get(0).getCompid();
 
