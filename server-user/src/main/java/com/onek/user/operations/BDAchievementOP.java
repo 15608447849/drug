@@ -29,7 +29,7 @@ public class BDAchievementOP {
     /*查询地区*/
     private static String _QUERY_AREA_USER = "select uid,areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? GROUP BY uid";
 
-    private static String _QUERY_USER_BELONG = "SLEECT uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE belong = ?";
+    private static String _QUERY_USER_BELONG = "SELECT uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE belong = ?";
 
     /**
      * 获取BD用户信息
