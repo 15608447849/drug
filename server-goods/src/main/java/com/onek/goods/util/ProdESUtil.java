@@ -483,7 +483,8 @@ public class ProdESUtil {
             }
             if(!StringUtils.isEmpty(keyword)){
                 if (RegExpUtil.containsHanzi(keyword)) {
-                    MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword).minimumShouldMatch("90%");
+                    MatchQueryBuilder matchQuery = QueryBuilders.matchQuery(ESConstant.PROD_COLUMN_CONTENT, keyword)
+                            .minimumShouldMatch("90%").analyzer("ik_max_word");
                     boolQuery.must(matchQuery);
                 } else {
                     MatchPhrasePrefixQueryBuilder matchQuery = QueryBuilders
