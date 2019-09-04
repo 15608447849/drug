@@ -274,9 +274,7 @@ public class BDAchievementServiceImpl {
                                 if(bdmuid == 0) {
                                     continue;
                                 }
-                                if(csUids.contains(bdmuid)){
-                                    continue;
-                                }
+
                                 if(String.valueOf(csjluid).equals(String.valueOf(bdmbelong))) {
                                     JSONObject bdmjson = new JSONObject();
                                     bdmjson.put("uid", bdmuid);
@@ -284,7 +282,7 @@ public class BDAchievementServiceImpl {
                                     bdmjson.put("roleid", bdmrole);
                                     bdm.add(bdmjson);
 
-                                    csUids.add(bdmuid);
+
 
                                     JSONArray bds = new JSONArray();
 //									if(!bdjson2.isEmpty()) {
@@ -318,7 +316,9 @@ public class BDAchievementServiceImpl {
                                         if(bduid == 0) {
                                             continue;
                                         }
-
+                                        if(csUids.contains(bdmuid)){
+                                            continue;
+                                        }
                                         JSONObject bdjson = new JSONObject();
                                         if(String.valueOf(bdmuid).equals(String.valueOf(bdbelong))) {
                                             bdjson.put("uid", bduid);
@@ -328,7 +328,7 @@ public class BDAchievementServiceImpl {
                                             if(gl.contains(bduid)) {
                                                 continue;
                                             }
-
+                                            csUids.add(bduid);
                                             bduids.add(bduid);
                                             String info = BDOrderAchievementServiceImpl.excall(bduid,compList,ordList);
                                             getSubtotal(bdSubtotal, info);
