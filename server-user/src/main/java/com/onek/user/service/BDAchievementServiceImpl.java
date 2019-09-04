@@ -261,7 +261,6 @@ public class BDAchievementServiceImpl {
                                     bd2.setBelong(csjluid);
                                     bd2.setFlag(3);
                                     bdms.add(bd2);
-                                    csUids.add(csjluid);
                                 }
                                 //csjluid =
                             }
@@ -284,6 +283,8 @@ public class BDAchievementServiceImpl {
                                     bdmjson.put("name",bdmname);
                                     bdmjson.put("roleid", bdmrole);
                                     bdm.add(bdmjson);
+
+                                    csUids.add(bdmuid);
 
                                     JSONArray bds = new JSONArray();
 //									if(!bdjson2.isEmpty()) {
