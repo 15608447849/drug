@@ -29,6 +29,8 @@ public class BDAchievementOP {
     /*查询地区*/
     private static String _QUERY_AREA_USER = "select uid,areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? GROUP BY uid";
 
+    private static String _QUERY_USER_BELONG = "SLEECT uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE belong = ?";
+
     /**
      * 获取BD用户信息
      * @param appContext
@@ -125,6 +127,22 @@ public class BDAchievementOP {
 
             }
         }
+        //当地区查询条件为空则只查询当前登陆用户
+        if(reList.size()<=0) {
+            reList.add(String.valueOf(param.uid));
+        }else{
+            List<String> userAreaList = new ArrayList<String>();
+            List<Object[]> list  = baseDao.queryNative(_QUERY_USER_BELONG,param.uid);
+            //如果当前地区下人员包含当前登陆所属人员
+            for (Object[] obj:list){
+                if(reList.contains(obj[0].toString())){
+                    userAreaList.add(obj[0].toString());
+
+                }
+            }
+            return userAreaList;
+        }
+
 
         return reList;
     }
