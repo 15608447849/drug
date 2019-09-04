@@ -883,17 +883,19 @@ public class CouponRevModule {
             excoupon = true;
         }
 
-
-
         DiscountResult calculate = CalculateUtil.calculate(compid,
                 productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
 
+        double beforeCouponPrice =
+                MathUtil.exactAdd(
+                        DiscountUtil.getCurrentPriceTotal(productList),
+                        calculate.getCouponValue()).doubleValue();
+
         Map<String, String> verifyResult
-                = verifyCoupon(productList, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
+                = verifyCoupon(beforeCouponPrice, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
 
         resultMap.put("code",verifyResult.get("code"));
         resultMap.put("msg",verifyResult.get("msg"));
-
 
         BigDecimal pgkDiscount = BigDecimal.ZERO;
         for(IProduct product:productList){
@@ -1319,13 +1321,13 @@ public class CouponRevModule {
 
     /**
      * 验证优惠券
-     * @param productList
+     * @param beforeCoupPrice
      * @param excoupon
      * @param coupid
      * @param compid
      * @return
      */
-    public Map<String,String> verifyCoupon(List<IProduct> productList,boolean excoupon,
+    public Map<String,String> verifyCoupon(double beforeCoupPrice,boolean excoupon,
                                            long coupid,int compid){
         Map<String,String> map = new HashMap<>();
         map.put("code","0");
@@ -1374,15 +1376,14 @@ public class CouponRevModule {
             }
         }
 
-        double priceTotal = DiscountUtil.getCurrentPriceTotal(productList);
-
         CouponPubLadderVO couponPubLadderVO
-                = CouponListFilterService.getLadoffable(ladderVOS,priceTotal);
+                = CouponListFilterService.getLadoffable(ladderVOS, beforeCoupPrice);
 
         if(couponPubLadderVO == null){
             map.put("msg","当前购买商品金额没达到 "+ladderVOS.get(0).getLadamt()+"元！");
             return map;
         }
+
         map.put("code","200");
         map.put("msg","操作成功！");
         return map;
