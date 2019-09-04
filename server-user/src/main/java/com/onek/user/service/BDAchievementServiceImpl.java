@@ -52,6 +52,9 @@ public class BDAchievementServiceImpl {
 
         if(areaList.size()<=0) {//查询所有
             long roleFlag = getUserRole(bdAchievementVOS, DEFAULT_QUERY_PARAM);
+            if(roleFlag == Long.MAX_VALUE){
+                return new JSONArray().toString();
+            }
             System.out.println(roleFlag);
             setData(roleFlag, DEFAULT_QUERY_PARAM, boList, qdzjList, qdjlList, hhrList, bdmList, bdList);
         }else{
@@ -366,7 +369,6 @@ public class BDAchievementServiceImpl {
         map.put("belong",bdbdm.getBelong());
         return map;
     }
-
 
     /**
      * list去重
