@@ -329,7 +329,9 @@ public class BDAchievementServiceImpl {
                                                 continue;
                                             }
                                             csUids.add(bduid);
-                                            bduids.add(bduid);
+                                            if((bdrole&CSHHR)>0) {
+                                                bduids.add(bduid);
+                                            }
                                             String info = BDOrderAchievementServiceImpl.excall(bduid,compList,ordList);
                                             getSubtotal(bdSubtotal, info);
                                             bdjson.put("info", JSONObject.parseObject(info));
