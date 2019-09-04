@@ -137,6 +137,7 @@ public class DiscountUtil {
         BigDecimal result = BigDecimal.ZERO;
 
         for (IProduct product: prodList) {
+            System.out.println("========================="+product.getCurrentPrice());
             result = result.add(BigDecimal.valueOf(product.getCurrentPrice()));
         }
 
