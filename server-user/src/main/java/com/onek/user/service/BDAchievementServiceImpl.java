@@ -188,6 +188,7 @@ public class BDAchievementServiceImpl {
 //        List<Comp> compList = getCompInfo();
         List gl = new ArrayList();
         List bduids = new ArrayList();
+        List csUids = new ArrayList();
         JSONArray reJson = new JSONArray();
         for (int i = 0; i < qdzjs.size(); i++) {
             JSONObject json = new JSONObject();
@@ -252,15 +253,17 @@ public class BDAchievementServiceImpl {
 //								bdjson2.put("name",csjlname);
 //								bdjson2.put("roleid", csjlrole);
 //								bdm.put(bdjson2);
-
-								BDAchievementVO bd2 = new BDAchievementVO();
-								bd2.setCid(0);
-								bd2.setUid(csjluid);
-								bd2.setRoleid(csjlrole);
-								bd2.setUrealname(csjlname);
-								bd2.setBelong(csjluid);
-								bd2.setFlag(3);
-								bdms.add(bd2);
+                                if(!csUids.contains(csjluid)) {
+                                    BDAchievementVO bd2 = new BDAchievementVO();
+                                    bd2.setCid(0);
+                                    bd2.setUid(csjluid);
+                                    bd2.setRoleid(csjlrole);
+                                    bd2.setUrealname(csjlname);
+                                    bd2.setBelong(csjluid);
+                                    bd2.setFlag(3);
+                                    bdms.add(bd2);
+                                    csUids.add(csjluid);
+                                }
                                 //csjluid =
                             }
                             for (int l = 0; l < bdms.size(); l++) {
@@ -321,6 +324,9 @@ public class BDAchievementServiceImpl {
                                             bdjson.put("roleid", bdrole);
                                             //if((bdrole&BDM) == 0 && (bdrole&BD) > 0)
                                             if(gl.contains(bduid)) {
+                                                continue;
+                                            }
+                                            if(csUids.contains(bduid)){
                                                 continue;
                                             }
                                             bduids.add(bduid);
