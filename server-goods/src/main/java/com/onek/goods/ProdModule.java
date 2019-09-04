@@ -242,7 +242,7 @@ public class ProdModule {
         JsonObject json = new JsonParser().parse(appContext.param.json).getAsJsonObject();
         String keyword = (json.has("keyword") ? json.get("keyword").getAsString() : "").trim();
 
-        List<String> contentList = new ArrayList<>();
+        Set<String> contentList = new HashSet<>();
         SearchResponse response = ProdESUtil.searchProdMall(keyword, 0, null, null, null, 1, 1, 10);
         if (response != null) {
             for (SearchHit searchHit : response.getHits()) {
