@@ -316,7 +316,7 @@ public class BDAchievementServiceImpl {
                                         if(bduid == 0) {
                                             continue;
                                         }
-                                        if(csUids.contains(bdmuid)){
+                                        if(csUids.contains(bduid)){
                                             continue;
                                         }
                                         JSONObject bdjson = new JSONObject();
