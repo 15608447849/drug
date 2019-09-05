@@ -21,7 +21,7 @@ public class BDOrderAchieveementOP {
             " SELECT o.inviter inviter, "+
             " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus =- 4 AND ord.orderno = o.orderno ) canclord, "+
             " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus >0 AND ord.orderno = o.orderno ) completeord, "+
-            " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus =-1 or ord.ostatus =-2 or ord.ostatus =-3) AND ord.orderno = o.orderno ) returnord, "+
+            " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus =-3 AND ord.orderno = o.orderno ) returnord, "+
             " ( SELECT count( DISTINCT asord.orderno ) FROM {{?"+DSMConst.TD_TRAN_ASAPP+"}} asord WHERE asord.ckstatus = 200 and asord.orderno = o.orderno ) afsaleord, "+
             " ( SELECT o.payamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus =- 4 AND ord.orderno = o.orderno ) returnordamt, "+
             " ( SELECT o.pdamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus >0 AND ord.orderno = o.orderno ) originalprice, "+
