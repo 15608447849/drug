@@ -7,10 +7,10 @@ import com.onek.util.GLOBALConst;
 import constant.DSMConst;
 import dao.BaseDAO;
 import util.ArrayUtil;
+import util.StringUtils;
 import util.TimeUtils;
 
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class BDOrderAchieveementOP {
 
@@ -20,14 +20,14 @@ public class BDOrderAchieveementOP {
             "FROM ( " +
             " SELECT o.inviter inviter, "+
             " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus =- 4 AND ord.orderno = o.orderno ) canclord, "+
-            " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus >0 AND ord.orderno = o.orderno ) completeord, "+
-            " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus =-3 AND ord.orderno = o.orderno ) returnord, "+
-            " ( SELECT count( DISTINCT asord.orderno ) FROM {{?"+DSMConst.TD_TRAN_ASAPP+"}} asord WHERE asord.ckstatus = 200 and asord.orderno = o.orderno ) afsaleord, "+
+            " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus !=-4 AND ord.orderno = o.orderno ) completeord, "+
+            " ( SELECT count( DISTINCT asord.orderno ) FROM {{?"+DSMConst.TD_TRAN_ASAPP+"}} asord WHERE asord.orderno = o.orderno and astype in(0,1,2) and ( asord.ckstatus = 1 or asord.ckstatus = 200 ) ) returnord, "+
+            " ( SELECT count( DISTINCT asord.orderno ) FROM {{?"+DSMConst.TD_TRAN_ASAPP+"}} asord WHERE asord.orderno = o.orderno AND ( asord.ckstatus = 1 or asord.ckstatus = 200 ) ) afsaleord, "+
             " ( SELECT o.payamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus =- 4 AND ord.orderno = o.orderno ) returnordamt, "+
-            " ( SELECT o.pdamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus >0 AND ord.orderno = o.orderno ) originalprice, "+
-            " ( SELECT o.payamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus >0) AND ord.orderno = o.orderno ) payamt, "+
-            " ( SELECT o.distamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus >0) AND ord.orderno = o.orderno ) distamt, "+
-            " ( SELECT o.balamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus >0) AND ord.orderno = o.orderno ) balamt, "+
+            " ( SELECT o.pdamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus !=-4 AND ord.orderno = o.orderno ) originalprice, "+
+            " ( SELECT o.payamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus !=-4) AND ord.orderno = o.orderno ) payamt, "+
+            " ( SELECT o.distamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus !=-4) AND ord.orderno = o.orderno ) distamt, "+
+            " ( SELECT o.balamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus !=-4) AND ord.orderno = o.orderno ) balamt, "+
             " o.realrefamt realrefamt, o.odate "+
             " FROM ( "+
             " SELECT comp.cid cid, comp.inviter inviter, ord.asstatus asstatus, ord.orderno orderno, ord.cusno cusno, ord.ostatus ostatus, "+
@@ -65,6 +65,29 @@ public class BDOrderAchieveementOP {
         return Arrays.asList(bdOrderAchieveemntVOS);
     }
 
+
+
+
+    private static String _QUERY_CUMULATIVE_SG = "SELECT re.inviter inviter, count( DISTINCT cid ) countnum  FROM" +
+            "( SELECT DISTINCT ( co.cid ) cid, co.inviter inviter," +
+            " co.cname cname, co.odate odate  FROM " +
+            " ( SELECT comp.cid cid, comp.inviter inviter, comp.cname cname, ord.orderno orderno," +
+            " ord.ostatus ostatus, ord.odate odate  FROM tb_bk_comp comp, {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord " +
+            " WHERE comp.cid = ord.cusno  AND ord.ostatus >= 1  ) co " +
+            "WHERE co.odate <= ?  GROUP BY co.orderno  ) re  GROUP BY re.inviter";
+
+    /**
+     * 查询当前时间门店累计首购
+     */
+    public static Map getCumulative(String param){
+        StringBuilder sb = new StringBuilder(_QUERY_CUMULATIVE_SG);
+        List<Object[]> list = BaseDAO.getBaseDAO().queryNativeSharding(GLOBALConst.COMP_INIT_VAR,TimeUtils.getCurrentYear(),sb.toString(),param);
+        Map map = new HashMap();
+        for (int i = 0;i<list.size();i++){
+            map.put(list.get(i)[0].toString(),list.get(i)[1].toString());
+        }
+        return map;
+    }
 
 
 }

@@ -7,6 +7,7 @@ import com.onek.entitys.Result;
 import com.onek.user.entity.BDCompVO;
 import com.onek.user.entity.BDToOrderAchieveemntVO;
 import com.onek.user.service.BDAchievementServiceImpl;
+import com.onek.util.GLOBALConst;
 import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
@@ -16,10 +17,7 @@ import util.TimeUtils;
 
 import java.sql.Time;
 import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
+import java.util.*;
 
 public class BDAchievementOP {
     private static BDAchievementServiceImpl bdAchievementService = new BDAchievementServiceImpl();
@@ -27,8 +25,9 @@ public class BDAchievementOP {
     private static final BaseDAO baseDao = BaseDAO.getBaseDAO();
 
     /*查询地区*/
-    private static String _QUERY_AREA_USER = "select uid,areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? and cstatus&1 = 0 and cstatus&128>0 GROUP BY uid";
-
+   // private static String _QUERY_AREA_USER = "select uid,areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? and cstatus&1 = 0 and cstatus&128>0 GROUP BY uid";
+    private static String _QUERY_AREA_USER =  "select uid,urealname,roleid from {{?"+DSMConst.TB_PROXY_UAREA+"}} where uid in (select uid from tb_proxy_uarea where areac=? and cstatus&1 = 0 and cstatus&128>0)"+
+            "and roleid & 8192 >0 and roleid != 4096";
     private static String _QUERY_USER_BELONG = "SELECT uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE belong = ?";
 
     /**
@@ -130,12 +129,12 @@ public class BDAchievementOP {
                 for (Object[] obj : list) {
                     reList.add(obj[0].toString());
                 }
-
             }
         }
         //当地区查询条件为空则只查询当前登陆用户
+        /*
         if(reList.size()<=0) {
-            reList.add(String.valueOf(param.uid));
+           // reList.add(String.valueOf(param.uid));
         }else{
             List<String> userAreaList = new ArrayList<String>();
             List<Object[]> list  = baseDao.queryNative(_QUERY_USER_BELONG,param.uid);
@@ -148,7 +147,7 @@ public class BDAchievementOP {
             }
             return userAreaList;
         }
-
+        */
 
         return reList;
     }
@@ -178,6 +177,9 @@ public class BDAchievementOP {
             }else{
                 sb.append(" and createdate BETWEEN '"+param.sdate+"' and '"+param.edate+"' ");
             }
+            if(StringUtils.isEmpty(param.areac) && "430000000000".equals(param.areac)){
+                sb.append(" and caddrcode = "+param.areac);
+            }
         }
         List<String> fList = new ArrayList<String>();
         List<Object[]> list = baseDao.queryNative(sb.toString());
@@ -195,5 +197,21 @@ public class BDAchievementOP {
         JSONObject jsons = JSONObject.parseObject(json);
         List<BDToOrderAchieveemntVO> list = GsonUtils.json2List(jsons.getString("data"),BDToOrderAchieveemntVO.class);
         return list;
+    }
+
+
+
+    public static Map getCumulative(QueryParam param) {
+        String time = "";
+        if (param == null || StringUtils.isEmpty(param.edate)) {
+            time = String.valueOf(TimeUtils.date_yMd_2String(new Date()));
+        } else {
+            time = param.edate;
+        }
+        String json = IceRemoteUtil.getBDToOrderInfo(time);
+        JSONObject jsons = JSONObject.parseObject(json);
+        Map map = GsonUtils.string2Map(jsons.getString("data"));
+
+        return map;
     }
 }
