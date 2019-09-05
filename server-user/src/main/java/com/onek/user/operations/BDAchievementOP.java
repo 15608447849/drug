@@ -123,13 +123,15 @@ public class BDAchievementOP {
             return reList;
         }
 
-        if(!StringUtils.isEmpty(param.areac)){
+        if(!StringUtils.isEmpty(param.areac) && !"430000000000".equals(param.areac)){
             List<Object[]> list = baseDao.queryNative(_QUERY_AREA_USER,param.areac);
             if(list.size()>0){
                 for (Object[] obj : list) {
                     reList.add(obj[0].toString());
                 }
             }
+        }else{
+            reList.add(String.valueOf(param.uid));
         }
         //当地区查询条件为空则只查询当前登陆用户
         /*
