@@ -1390,21 +1390,15 @@ public class TranOrderOptModule {
             b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, paramsObj));
             if (b) {
                 if (paytype == 4) {
-                    //线下转账确认收款后24小时变为已发货
-                    DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
+                    if (IceRemoteUtil.systemConfigOpen("DELIVERY_DELAYED")) {
+                        //线下转账确认收款后24小时变为已发货
+                        DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
+                    }
                     //取消线下即付一小时轮询
 //                    CANCEL_XXJF.removeByKey(orderNo);
                     //生成订单到一块物流
                     OrderUtil.generateLccOrder(compid, orderNo);
                 }
-
-//                try{
-//                    //满赠赠优惠券
-//                    CouponRevModule.revGiftCoupon(Long.parseLong(orderNo),compid);
-//                }catch (Exception e){
-//                    e.printStackTrace();
-//                }
-
                 //更新销量
                 OrderUtil.updateSales(compid, orderNo);
 
