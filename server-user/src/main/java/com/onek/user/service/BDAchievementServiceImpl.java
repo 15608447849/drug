@@ -304,6 +304,7 @@ public class BDAchievementServiceImpl {
                                             getSubtotal(bdSubtotal, info);
                                             bdjson1.put("info", JSONObject.parseObject(info));
                                             bds.add(bdjson1);
+                                            bduids.add(bdmuid);
                                         }
                                     }
                                     for (int m = 0; m < bd.size(); m++) {
