@@ -27,7 +27,7 @@ public class BDAchievementOP {
     private static final BaseDAO baseDao = BaseDAO.getBaseDAO();
 
     /*查询地区*/
-    private static String _QUERY_AREA_USER = "select uid,areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? GROUP BY uid";
+    private static String _QUERY_AREA_USER = "select uid,areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? and cstatus&1 = 0 and cstatus&128>0 GROUP BY uid";
 
     private static String _QUERY_USER_BELONG = "SELECT uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE belong = ?";
 
