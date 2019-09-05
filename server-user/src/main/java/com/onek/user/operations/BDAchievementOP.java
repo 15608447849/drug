@@ -26,7 +26,7 @@ public class BDAchievementOP {
 
     /*查询地区*/
    // private static String _QUERY_AREA_USER = "select uid,areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? and cstatus&1 = 0 and cstatus&128>0 GROUP BY uid";
-    private static String _QUERY_AREA_USER =  "select uid,urealname,roleid from {{?"+DSMConst.TB_PROXY_UAREA+"}} where uid in (select uid from tb_proxy_uarea where areac=? and cstatus&1 = 0 and cstatus&128>0)"+
+    private static String _QUERY_AREA_USER =  "select uid,urealname,roleid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid in (select uid from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? and cstatus&1 = 0 and cstatus&128>0)"+
             "and roleid & 8192 >0 and roleid != 4096";
     private static String _QUERY_USER_BELONG = "SELECT uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE belong = ?";
 
