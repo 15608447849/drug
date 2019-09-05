@@ -135,7 +135,7 @@ public class BDAchievementOP {
         }
         //当地区查询条件为空则只查询当前登陆用户
         if(reList.size()<=0) {
-            reList.add(String.valueOf(param.uid));
+            //reList.add(String.valueOf(param.uid));
         }else{
             List<String> userAreaList = new ArrayList<String>();
             List<Object[]> list  = baseDao.queryNative(_QUERY_USER_BELONG,param.uid);
