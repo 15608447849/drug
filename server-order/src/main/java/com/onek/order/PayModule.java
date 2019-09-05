@@ -568,11 +568,11 @@ public class PayModule {
 /*            LogUtil.getDefaultLogger().info("print by cyq onlinePay -----------线上支付订单减库存库存操作开始");
             reduceGoodsDbStock(orderno, compid);*/
 
-            if (paytype != 4 && paytype != 5) {
-//                DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
+            if (paytype != 4 && paytype != 5 && IceRemoteUtil.systemConfigOpen("DELIVERY_DELAYED")) {
+                DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
             }
         }
-        return b ?1 : -1;
+        return b ? 1 : -1;
     }
 
     /* *
@@ -782,13 +782,15 @@ public class PayModule {
                 CANCEL_DELAYED.removeByKey(orderno);
 //                CANCEL_XXJF.add(new DelayedBase(compid, orderno));
             }
-        } else {
+        } else {//xxdf
             result = baseDao.updateNativeSharding(compid, year, updateSQL,
                     1, paytype, orderno, 0);
             if (result > 0) {
                 //生成订单到一块物流
                 OrderUtil.generateLccOrder(compid, orderno);
-//                DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
+                if (IceRemoteUtil.systemConfigOpen("DELIVERY_DELAYED")) {
+                    DELIVERY_DELAYED.add(new DelayedBase(compid, orderno));
+                }
             }
         }
         if (result > 0 ) {
