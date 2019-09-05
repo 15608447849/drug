@@ -42,7 +42,7 @@ public class BDAchievementOP {
 
         String queryOrdParam = getOrdWhereParam(param);
 
-        List<BDCompVO> compList =getCompInfo();
+        List<BDCompVO> compList =getCompInfo(param);
         List<BDToOrderAchieveemntVO> oList = getOrderInfos(queryOrdParam);
 
         String reString = bdAchievementService.getData(param.uid,getBdWhereParam(param),compList,oList);
@@ -171,9 +171,16 @@ public class BDAchievementOP {
      * 获取当前所有企业码
      * @return
      */
-    private static List<BDCompVO> getCompInfo(){
+    private static List<BDCompVO> getCompInfo(QueryParam param){
+        StringBuilder sb = new StringBuilder(_QUERY_COMP);
+        if(param != null){
+            if(StringUtils.isEmpty(param.sdate) || StringUtils.isEmpty(param.edate)){
+            }else{
+                sb.append(" and createdate BETWEEN '"+param.sdate+"' and '"+param.edate+"' ");
+            }
+        }
         List<String> fList = new ArrayList<String>();
-        List<Object[]> list = baseDao.queryNative(_QUERY_COMP);
+        List<Object[]> list = baseDao.queryNative(sb.toString());
         BDCompVO[] comps = new BDCompVO[list.size()];
         baseDao.convToEntity(list,comps,BDCompVO.class);
         return Arrays.asList(comps);
