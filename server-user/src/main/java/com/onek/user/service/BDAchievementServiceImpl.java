@@ -35,7 +35,7 @@ public class BDAchievementServiceImpl {
 
     private final static int DEFAULT_QUERY_PARAM = 0;
 
-    public String getData(long uid,List<String> areaList, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList) {
+    public String getData(long uid,List<String> areaList, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,Map bdsum, Map bdNewAddSum ) {
         StringBuilder sqlb = new StringBuilder(_QUERY_SQL);
         List<Object[]> bdLists= BaseDAO.getBaseDAO().queryNative(sqlb.toString());
 
@@ -94,7 +94,7 @@ public class BDAchievementServiceImpl {
         }
 */
 
-        String json = contData(compList,oList,bdList, bdmList, hhrList, qdjlList, qdzjList);
+        String json = contData(compList,oList,bdList, bdmList, hhrList, qdjlList, qdzjList,bdsum,bdNewAddSum);
         return json;
     }
 
@@ -210,7 +210,7 @@ public class BDAchievementServiceImpl {
      * @param qdzjs
      * @return
      */
-    private static String contData(List<BDCompVO> compList, List<BDToOrderAchieveemntVO> ordList,List<BDAchievementVO> bd, List<BDAchievementVO>bdms, List<BDAchievementVO>csjls, List<BDAchievementVO>qdjls, List<BDAchievementVO>qdzjs) {
+    private static String contData(List<BDCompVO> compList, List<BDToOrderAchieveemntVO> ordList,List<BDAchievementVO> bd, List<BDAchievementVO>bdms, List<BDAchievementVO>csjls, List<BDAchievementVO>qdjls, List<BDAchievementVO>qdzjs,Map bdsum, Map bdNewAddSum ) {
 //        List<OrderVO> ordList = getOrderInfos();
 //        List<Comp> compList = getCompInfo();
         List gl = new ArrayList();
@@ -280,14 +280,14 @@ public class BDAchievementServiceImpl {
 //								bdjson2.put("roleid", csjlrole);
 //								bdm.put(bdjson2);
                                 //if(!csUids.contains(csjluid)) {
-                                BDAchievementVO bd2 = new BDAchievementVO();
-                                bd2.setCid(0);
-                                bd2.setUid(csjluid);
-                                bd2.setRoleid(csjlrole);
-                                bd2.setUrealname(csjlname);
-                                bd2.setBelong(csjluid);
-                                bd2.setFlag(3);
-                                bdms.add(bd2);
+//                                BDAchievementVO bd2 = new BDAchievementVO();
+//                                bd2.setCid(0);
+//                                bd2.setUid(csjluid);
+//                                bd2.setRoleid(csjlrole);
+//                                bd2.setUrealname(csjlname);
+//                                bd2.setBelong(csjluid);
+//                                bd2.setFlag(3);
+//                                bdms.add(bd2);
                                // }
                                 //csjluid =
                             }
@@ -327,7 +327,7 @@ public class BDAchievementServiceImpl {
                                             bdjson1.put("uid", bdmuid);
                                             bdjson1.put("name",bdmname);
                                             bdjson1.put("roleid", bdmrole);
-                                            String info = BDOrderAchievementServiceImpl.excall(bdmuid,compList,ordList);
+                                            String info = BDOrderAchievementServiceImpl.excall(bdmuid,compList,ordList,bdsum,bdNewAddSum);
                                             getSubtotal(bdSubtotal, info);
                                             bdjson1.put("info", JSONObject.parseObject(info));
                                             bds.add(bdjson1);
@@ -361,7 +361,7 @@ public class BDAchievementServiceImpl {
                                                 csUids.add(bduid);
                                             }
                                             bduids.add(bduid);
-                                            String info = BDOrderAchievementServiceImpl.excall(bduid,compList,ordList);
+                                            String info = BDOrderAchievementServiceImpl.excall(bduid,compList,ordList,bdsum,bdNewAddSum);
                                             getSubtotal(bdSubtotal, info);
                                             bdjson.put("info", JSONObject.parseObject(info));
                                             bds.add(bdjson);

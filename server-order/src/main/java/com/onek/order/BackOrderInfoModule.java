@@ -167,4 +167,13 @@ public class BackOrderInfoModule {
         Map map = BDOrderAchieveementOP.getCumulative(str[0]);
         return new Result().success(map);
     }
+
+
+    @UserPermission(ignore =  true)
+    public Result getNewAddCumulative(AppContext appContext){
+        String str[] = appContext.param.arrays;
+        appContext.logger.print("=====start==="+str[0]+"=========end======"+str[1]);
+        Map map = BDOrderAchieveementOP.getNewAddCumulative(str);
+        return new Result().success(map);
+    }
 }

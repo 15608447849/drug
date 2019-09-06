@@ -8,6 +8,7 @@ import com.onek.user.operations.BDAchievementOP;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class BDOrderAchievementServiceImpl {
 
@@ -15,12 +16,12 @@ public class BDOrderAchievementServiceImpl {
     private static final int _NOTAPPROVAL = 128;
 
 
-    public static String excall(long uid, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList) {
+    public static String excall(long uid, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList, Map bdsum, Map bdNewAddSum ) {
 
 
         JSONObject jsonObject = new JSONObject();
 
-        getOrderInfoByCus(jsonObject,compList,oList, uid);
+        getOrderInfoByCus(jsonObject,compList,oList, uid ,bdsum, bdNewAddSum );
         //System.out.println(jsonObject.toString());
         return jsonObject.toString();
 
@@ -32,12 +33,13 @@ public class BDOrderAchievementServiceImpl {
      * @param oList
      * @param uid
      */
-    private static void getOrderInfoByCus(JSONObject jsonObject,List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,long uid) {
+    private static void getOrderInfoByCus(JSONObject jsonObject,List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,long uid, Map bdsum, Map bdNewAddSum ) {
         List<BDCompVO> list = getCompInfo(compList, uid);
         jsonObject.put("ccustruenum",getCustruenum(list,_APPROVAL)); //审核通过门店
         jsonObject.put("ccusfalsenum",getCustruenum(list,0)-getCustruenum(list,_APPROVAL));//审核未通过
         jsonObject.put("cregnum",getCustruenum(list,0));//总共注册门店
-
+        jsonObject.put("cumulticeSum",bdsum.get(uid));
+        jsonObject.put("cumulticeNewAdd",bdNewAddSum.get(uid));
         BDToOrderAchieveemntVO order = getOrderInfo(oList,uid);
         if(order == null) {
             jsonObject.put("ocancelord", "0"); //交易取消订单

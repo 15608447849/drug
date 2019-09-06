@@ -43,8 +43,9 @@ public class BDAchievementOP {
 
         List<BDCompVO> compList =getCompInfo(param);
         List<BDToOrderAchieveemntVO> oList = getOrderInfos(queryOrdParam);
-
-        String reString = bdAchievementService.getData(param.uid,getBdWhereParam(param),compList,oList);
+        Map bdsum = getCumulative(param);
+        Map bdNewAddSum = getBDNewAddCumulative(param);
+        String reString = bdAchievementService.getData(param.uid,getBdWhereParam(param),compList,oList,bdsum,bdNewAddSum);
         return new Result().success(reString);
     }
 
@@ -245,7 +246,11 @@ public class BDAchievementOP {
     }
 
 
-
+    /**
+     * 获取累计收购门店
+     * @param param
+     * @return
+     */
     public static Map getCumulative(QueryParam param) {
         String time = "";
         if (param == null || StringUtils.isEmpty(param.edate)) {
@@ -253,10 +258,34 @@ public class BDAchievementOP {
         } else {
             time = param.edate;
         }
-        String json = IceRemoteUtil.getBDToOrderInfo(time);
+        String json = IceRemoteUtil.getBDCumultive(time);
         JSONObject jsons = JSONObject.parseObject(json);
         Map map = GsonUtils.string2Map(jsons.getString("data"));
 
         return map;
     }
+
+    /**
+     * 获取累计收购门店
+     * @param param
+     * @return
+     */
+    public static Map getBDNewAddCumulative(QueryParam param) {
+        String sdate = "";
+        String edate = "";
+        if(param ==null || StringUtils.isEmpty(param.sdate) || StringUtils.isEmpty(param.edate)){
+            sdate = String.valueOf(TimeUtils.date_yMd_2String(new Date()));
+            edate = String.valueOf(TimeUtils.date_yMd_2String(new Date()));
+        }else{
+            sdate = param.sdate;
+            edate = param.edate;
+        }
+        String json = IceRemoteUtil.getBDNewAddCumultive(sdate,edate);
+        JSONObject jsons = JSONObject.parseObject(json);
+        Map map = GsonUtils.string2Map(jsons.getString("data"));
+
+        return map;
+    }
+
+
 }

@@ -945,10 +945,24 @@ public class IceRemoteUtil {
     }
 
 
+    /**
+     * 获取累计门店数
+     * @param params
+     * @return
+     */
     public static String getBDCumultive(String params){
 
         String str = ic.setServerAndRequest("orderServer"+ getOrderServerNo(GLOBALConst.COMP_INIT_VAR), "BackOrderInfoModule", "getCumultive")
                 .setArrayParams(params)
+                .execute();
+
+        return str;
+    }
+
+    public static String getBDNewAddCumultive(String sdate,String edate){
+
+        String str = ic.setServerAndRequest("orderServer"+ getOrderServerNo(GLOBALConst.COMP_INIT_VAR), "BackOrderInfoModule", "getNewAddCumulative")
+                .setArrayParams(sdate,edate)
                 .execute();
 
         return str;
