@@ -114,7 +114,7 @@ public class MainPageModule {
                 }
             } else {
                 getActProds(bRuleCodes, isQuery, attr, context, page, compId,
-                        onlySpecActivity, new String[]{keyword, brandno, manuName,maNuNo});
+                        onlySpecActivity, new String[]{keyword, brandno, manuName,maNuNo, bRuleCodes+""});
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -307,7 +307,9 @@ public class MainPageModule {
         SearchResponse response;
         List<Object[]> queryResult;
         String selectClassSQL ,selectGoodsSQL ,selectAllSQL, sqlBuilder ;
-        if (onlySpecActivity) {//只差特殊活动（剔除全局活动）
+        long ruleCode = Long.valueOf(params[4]);
+//       new String[]{keyword, brandno, manuName,maNuNo}
+        if (ruleCode == -4 && onlySpecActivity) {//只差特殊活动（剔除全局活动）
 //            String SQL = SELECT_SQL + " and brulecode in(select brulecode from {{?" + DSMConst.TD_PROM_RULE + "}} where cstatus&1=0)";
             String mmdd = TimeUtils.date_Md_2String(new Date());
             selectGoodsSQL = "select sku,actstock,limitnum,price,a.cstatus,actcode,gcode,brandno,manuno from {{?"
@@ -338,9 +340,15 @@ public class MainPageModule {
                     + DSMConst.TD_PROM_ASSDRUG + "}} a ,{{?"
                     + DSMConst.TD_PROD_SKU + "}} s where a.cstatus&1=0 "
                     + " and gcode=0 and prodstatus=1 and  actcode in (" + actCodeStr + ") ";
-            sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode FROM ("
-                    + selectClassSQL + " UNION ALL " + selectGoodsSQL +
-                    " UNION ALL " + selectAllSQL + ") ua group by sku";
+           if (onlySpecActivity) {
+               sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode FROM ("
+                       + selectGoodsSQL + ") ua group by sku ";
+           } else {
+               sqlBuilder = "SELECT sku,max(actstock),limitnum,price,cstatus,actcode,gcode FROM ("
+                       + selectClassSQL + " UNION ALL " + selectGoodsSQL +
+                       " UNION ALL " + selectAllSQL + ") ua group by sku";
+           }
+
             if (StringUtils.isEmpty(params[0])) {
                 queryResult = BASE_DAO.queryNativeC(pageHolder, page, sqlBuilder);
             } else {
@@ -357,7 +365,7 @@ public class MainPageModule {
                             String.valueOf(qResult[3]), String.valueOf(qResult[4]), String.valueOf(qResult[5]),"0"});
         });
         //ES数据组装
-        if (onlySpecActivity) {
+        if (ruleCode == -4 && onlySpecActivity) {
             if (!StringUtils.isEmpty(params[2])) {
                 response = ProdESUtil.searchProdHasBrand(skuList, params[0], params[1], params[2], 1, page.pageSize);
             } else {
@@ -372,7 +380,7 @@ public class MainPageModule {
             assembleData(context, response, prodVOList, dataMap, otherArr);
             remoteQueryShopCartNumBySku(Integer.parseInt(otherArr[2]), prodVOList, context.isAnonymous());
             attr.list = prodVOList;
-            if(onlySpecActivity && StringUtils.isEmpty(params[2]) || !StringUtils.isEmpty(params[0]) ) {
+            if((ruleCode == -4 && onlySpecActivity && StringUtils.isEmpty(params[2])) || !StringUtils.isEmpty(params[0]) ) {
                 attr.page = new PageHolder(page);
             } else {
                 attr.page = pageHolder;
@@ -821,7 +829,7 @@ public class MainPageModule {
         UiElement e = p.element;
         //针对满减满赠的通过规则码的情况, 使用 attr, 如果有值,需要对值进行过滤
         switch (e.option){
-            case 102: handlerSpecialArea(p,e); //处理专区模板
+            case 102: handlerSpecialArea(p,e); //处理模板
             break;
         }
 

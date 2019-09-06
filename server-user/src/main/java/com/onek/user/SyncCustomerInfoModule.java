@@ -649,4 +649,28 @@ public class SyncCustomerInfoModule {
                 ? new Result().success() : new Result().fail("操作失败");
     }
 
+
+    public static void postEmail2Erp(int compId, String email) {
+        //ERP接口调用
+        String url = appProperties.erpUrlPrev + "/saveCusEmail";
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("compid", compId);
+        jsonObject.addProperty("email", email);
+        try {
+            String result = HttpRequestUtil.postJson(url, jsonObject.toString());
+            LogUtil.getDefaultLogger().info("调用ERP接口结果返回： " + result);
+            if (result != null && !result.isEmpty()) {
+                JsonObject object = new JsonParser().parse(result).getAsJsonObject();
+                int code = object.get("code").getAsInt();
+                if (code != 200) {//失败处理
+                    int errorCode = object.get("errorcode").getAsInt();
+                    LogUtil.getDefaultLogger().info("同步电子邮箱到中间件失败errorcode: " + errorCode);
+//                    optSyncErrComp(errorCode, compId);
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
 }

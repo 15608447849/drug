@@ -325,6 +325,18 @@ public class TranOrderOptModule {
         }catch (Exception e){
             e.printStackTrace();
         }
+        double relPtamt = tranOrder.getPdamt();
+        double relPyamt = MathUtil.exactAdd(payamt,tranOrder.getDistamt()).
+                        setScale(2,RoundingMode.HALF_UP).doubleValue();
+
+//        LogUtil.getDefaultLogger().info("======================实际总金额："+relPtamt);
+//        LogUtil.getDefaultLogger().info("======================实际支付金额："+relPyamt);
+//        LogUtil.getDefaultLogger().info("======================："+(relPtamt == relPyamt));
+        if(relPtamt == relPyamt){
+            bal = 0;
+        }
+        LogUtil.getDefaultLogger().info("======================最总抵扣余额："+bal);
+
         sqlList.addFirst(INSERT_TRAN_ORDER);
         params.addFirst(new Object[]{orderNo, 0, tranOrder.getCusno(), tranOrder.getBusno(), 0, 0, tranOrder.getPdnum(),
                 tranOrder.getPdamt(), tranOrder.getFreight(), payamt, tranOrder.getCoupamt(), tranOrder.getDistamt(),
@@ -1219,20 +1231,9 @@ public class TranOrderOptModule {
         if (result) {
             PayModule.DELIVERY_DELAYED.removeByKey(orderno);
             TAKE_DELAYED.add(new DelayedBase(compid, orderno));
-/*            String sql = " SELECT payway "
-                        + " FROM {{?" + DSMConst.TD_TRAN_TRANS + "}} "
-                        + " WHERE cstatus&1 = 0 AND compid = ? AND orderno = ? ";
-
-            List<Object[]> queryResult =
-                    baseDao.queryNativeSharding(compid, TimeUtils.getYearByOrderno(orderno), sql, compid, orderno);
-
-            if (!queryResult.isEmpty()) {
-                int t = Integer.parseInt(queryResult.get(0)[0].toString());
-                if (t != 4 && t != 5) {
-                    TAKE_DELAYED.add(new DelayedBase(compid, orderno));
-                }
-            }*/
-
+            //减数据库库存
+            LogUtil.getDefaultLogger().info("print by cyq onlinePay -----------线上支付订单减库存库存操作开始");
+            reduceGoodsDbStock(orderno, compid);
         }
 
         return result;
@@ -1262,8 +1263,10 @@ public class TranOrderOptModule {
         }
 
         boolean result = takeDelivery(orderNo, compid);
-        //生成节点信息四同步一块物流状态
-        OrderUtil.changeYKWLOrderState(orderNo,4, compid);
+        if (result) {
+            //生成节点信息四同步一块物流状态
+            OrderUtil.changeYKWLOrderState(orderNo,4, compid);
+        }
         return result ? new Result().success("已签收") : new Result().fail("操作失败");
     }
 
@@ -1303,8 +1306,10 @@ public class TranOrderOptModule {
         }
 
         boolean result = delivery(orderNo, compid);
-        //生成节点信息二三 修改一块物流状态
-        OrderUtil.changeYKWLOrderState(orderNo,3, compid);
+        if (result) {
+            //生成节点信息二三 修改一块物流状态
+            OrderUtil.changeYKWLOrderState(orderNo,3, compid);
+        }
         return result ? new Result().success("已发货") : new Result().fail("操作失败");
     }
 
@@ -1385,21 +1390,15 @@ public class TranOrderOptModule {
             b = !ModelUtil.updateTransEmpty(baseDao.updateTransNativeSharding(compid,year, sqlNative, paramsObj));
             if (b) {
                 if (paytype == 4) {
-                    //线下转账确认收款后24小时变为已发货
-                    DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
+                    if (IceRemoteUtil.systemConfigOpen("DELIVERY_DELAYED")) {
+                        //线下转账确认收款后24小时变为已发货
+                        DELIVERY_DELAYED.add(new DelayedBase(compid, orderNo));
+                    }
                     //取消线下即付一小时轮询
 //                    CANCEL_XXJF.removeByKey(orderNo);
                     //生成订单到一块物流
                     OrderUtil.generateLccOrder(compid, orderNo);
                 }
-
-//                try{
-//                    //满赠赠优惠券
-//                    CouponRevModule.revGiftCoupon(Long.parseLong(orderNo),compid);
-//                }catch (Exception e){
-//                    e.printStackTrace();
-//                }
-
                 //更新销量
                 OrderUtil.updateSales(compid, orderNo);
 
@@ -1452,10 +1451,10 @@ public class TranOrderOptModule {
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
         }
 
-//        LogUtil.getDefaultLogger().info("---- bal " + bal);
-//        LogUtil.getDefaultLogger().info("---- dprice " + Arrays.toString(dprice));
-//        LogUtil.getDefaultLogger().info("---- cdprice " + Arrays.toString(cdprice));
-//        LogUtil.getDefaultLogger().info("---- afterDiscountPrice " + afterDiscountPrice);
+        LogUtil.getDefaultLogger().info("---- bal " + bal);
+        LogUtil.getDefaultLogger().info("---- dprice " + Arrays.toString(dprice));
+        LogUtil.getDefaultLogger().info("---- cdprice " + Arrays.toString(cdprice));
+        LogUtil.getDefaultLogger().info("---- afterDiscountPrice " + afterDiscountPrice);
 
     }
 

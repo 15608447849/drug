@@ -1,12 +1,16 @@
 package com.onek.goods.util;
 
+import com.alibaba.fastjson.JSONObject;
 import com.onek.goods.entities.BgProdVO;
 import com.onek.util.RedisGlobalKeys;
 import constant.DSMConst;
 import dao.BaseDAO;
 import redis.util.RedisUtil;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.logging.Logger;
 
 public class RecreateProdDataUtil {
 
@@ -41,8 +45,14 @@ public class RecreateProdDataUtil {
             BaseDAO.getBaseDAO().convToEntity(queryResult, returnResults, BgProdVO.class);
 
             for(BgProdVO vo : returnResults){
-                ProdESUtil.addProdDocument(vo);
+                int status = ProdESUtil.addProdDocument(vo);
+                if(status < 0){
+                    Logger.getAnonymousLogger().info("+++++ "+ JSONObject.toJSON(vo));
+                }
             }
+//            List<BgProdVO> bgProdList = new ArrayList<>();
+//            bgProdList = Arrays.asList(returnResults);
+//            ProdESUtil.batchAddProdDocument(bgProdList);
 
             RedisUtil.getStringProvide().set(RedisGlobalKeys.RECREATE_ES_SWITCH, "off");
         }

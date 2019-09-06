@@ -4,8 +4,10 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.onek.annotation.UserPermission;
 import com.onek.context.AppContext;
+import com.onek.entity.BDOrderAchieveemntVO;
 import com.onek.entity.TranOrder;
 import com.onek.entitys.Result;
+import com.onek.op.BDOrderAchieveementOP;
 import com.onek.op.ExcelOrdersInfoOP;
 import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
@@ -147,4 +149,22 @@ public class BackOrderInfoModule {
         return new ExcelOrdersInfoOP(tranOrders).excelOrderInfo();
     }
 
+
+    /**
+     * 远程获取所有用户信息
+     * @param appContext
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result getBDOrderAchieveementInfo(AppContext appContext){
+        List<BDOrderAchieveemntVO> list = BDOrderAchieveementOP.executeOrderInfos(appContext);
+        return new Result().success(list);
+    }
+
+    @UserPermission(ignore =  true)
+    public Result getCumultive(AppContext appContext){
+        String str[] = appContext.param.arrays;
+        Map map = BDOrderAchieveementOP.getCumulative(str[0]);
+        return new Result().success(map);
+    }
 }

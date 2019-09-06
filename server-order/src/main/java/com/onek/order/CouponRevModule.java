@@ -586,6 +586,9 @@ public class CouponRevModule {
 
                     //subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
                 }else{
+                    if(couponUseDTO.getPdno() == 0){
+                        continue;
+                    }
                     Product product = new Product();
                     product.setSku(couponUseDTO.getPdno());
                     if(couponUseDTO.getSkprice() > 0){
@@ -598,6 +601,11 @@ public class CouponRevModule {
                 }
             }
         }
+
+        if(productList.size()<=0){
+            return new Result().fail("数据异常，无法计算优惠金额");
+        }
+
         int compid = couponUseDTOS.get(0).getCompid();
         DiscountResult calculate = CalculateUtil.calculate(compid,
                 productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
@@ -655,25 +663,29 @@ public class CouponRevModule {
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
         }
         //使用优惠券抵扣金额为0时
-        appContext.logger.print("=======================优惠之后应付总金额："+payamt);
-        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
-        appContext.logger.print("=======================应付总金额："+resultMap.get("tprice"));
-        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
-        appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
+        //使用优惠券抵扣金额为0时
+//        appContext.logger.print("=======================优惠之后应付总金额："+payamt);
+//        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+//        appContext.logger.print("=======================应付总金额："+resultMap.get("tprice"));
+//        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+//        appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
+//        appContext.logger.print("=======================11111："+resultMap.get("tdiscount"));
 
         if(payamt<=0){
             payamt = MathUtil.exactAdd(payamt, 0.01).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
-            appContext.logger.print("=======================支付总金额为0加1为："+payamt);
-            double subReamt = Math.max(calculate.getCouponValue(),calculate.getTotalDiscount());
+//            appContext.logger.print("=======================支付总金额为0加1为："+payamt);
+            double subReamt = Math.max(calculate.getCouponValue(),acvalue);
+//            appContext.logger.print("=======================" + subReamt);
             if(calculate.getCouponValue() == subReamt){
                 resultMap.put("cpvalue",MathUtil.exactSub(subReamt,0.01).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }else{
-                resultMap.put("tdiscount",MathUtil.exactSub(subReamt,0.01).
+                resultMap.put("acvalue",MathUtil.exactSub(subReamt,0.01).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }
-            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
+//            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("acvalue"));
+//            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
         }
         double bal = IceRemoteUtil.queryCompBal(compid);
 
@@ -843,6 +855,9 @@ public class CouponRevModule {
 
                     //subCalRet = subCalRet.add(BigDecimal.valueOf(product.getCurrentPrice()));
                 }else{
+                    if(couponUseDTO.getPdno() == 0){
+                        continue;
+                    }
                     Product product = new Product();
                     product.setSku(couponUseDTO.getPdno());
                     if(couponUseDTO.getSkprice() > 0){
@@ -857,6 +872,9 @@ public class CouponRevModule {
             }
         }
 
+        if(productList.size()<=0){
+            return new Result().fail("数据异常，无法计算优惠金额");
+        }
 
         int compid = couponUseDTOS.get(0).getCompid();
 
@@ -865,14 +883,20 @@ public class CouponRevModule {
             excoupon = true;
         }
 
+        DiscountResult calculate = CalculateUtil.calculate(compid,
+                productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
+
+        double beforeCouponPrice =
+                MathUtil.exactAdd(
+                        DiscountUtil.getCurrentPriceTotal(productList),
+                        calculate.getCouponValue()).doubleValue();
+
         Map<String, String> verifyResult
-                = verifyCoupon(skuList, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
+                = verifyCoupon(beforeCouponPrice, excoupon, Long.parseLong(couponUseDTOS.get(0).getCoupon()), compid);
 
         resultMap.put("code",verifyResult.get("code"));
         resultMap.put("msg",verifyResult.get("msg"));
 
-        DiscountResult calculate = CalculateUtil.calculate(compid,
-                productList, Long.parseLong(couponUseDTOS.get(0).getCoupon()));
         BigDecimal pgkDiscount = BigDecimal.ZERO;
         for(IProduct product:productList){
             if(product instanceof Package){
@@ -926,25 +950,28 @@ public class CouponRevModule {
         }
 
         //使用优惠券抵扣金额为0时
-        appContext.logger.print("=======================优惠之后应付总金额："+payamt);
-        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
-        appContext.logger.print("=======================应付总金额："+resultMap.get("tprice"));
-        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
-        appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
+//        appContext.logger.print("=======================优惠之后应付总金额："+payamt);
+//        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+//        appContext.logger.print("=======================应付总金额："+resultMap.get("tprice"));
+//        appContext.logger.print("||||||||||||||||||||||||||||||||||||||||||||||||");
+//        appContext.logger.print("=======================优惠券优惠总金额："+resultMap.get("cpvalue"));
+//        appContext.logger.print("=======================11111："+resultMap.get("tdiscount"));
 
         if(payamt<=0){
             payamt = MathUtil.exactAdd(payamt, 0.01).
                     setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue();
-            appContext.logger.print("=======================支付总金额为0加1为："+payamt);
-            double subReamt = Math.max(calculate.getCouponValue(),calculate.getTotalDiscount());
+//            appContext.logger.print("=======================支付总金额为0加1为："+payamt);
+            double subReamt = Math.max(calculate.getCouponValue(),acvalue);
+//            appContext.logger.print("=======================" + subReamt);
             if(calculate.getCouponValue() == subReamt){
                 resultMap.put("cpvalue",MathUtil.exactSub(subReamt,0.01).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }else{
-                resultMap.put("tdiscount",MathUtil.exactSub(subReamt,0.01).
+                resultMap.put("acvalue",MathUtil.exactSub(subReamt,0.01).
                         setScale(2,BigDecimal.ROUND_HALF_UP).doubleValue());
             }
-            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
+//            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("acvalue"));
+//            appContext.logger.print("=======================优惠券金额-1之后："+resultMap.get("cpvalue"));
         }
 
         double bal = IceRemoteUtil.queryCompBal(compid);
@@ -1294,13 +1321,13 @@ public class CouponRevModule {
 
     /**
      * 验证优惠券
-     * @param productList
+     * @param beforeCoupPrice
      * @param excoupon
      * @param coupid
      * @param compid
      * @return
      */
-    public Map<String,String> verifyCoupon(List<Product> productList,boolean excoupon,
+    public Map<String,String> verifyCoupon(double beforeCoupPrice,boolean excoupon,
                                            long coupid,int compid){
         Map<String,String> map = new HashMap<>();
         map.put("code","0");
@@ -1349,15 +1376,14 @@ public class CouponRevModule {
             }
         }
 
-        double priceTotal = DiscountUtil.getCurrentPriceTotal(productList);
-
         CouponPubLadderVO couponPubLadderVO
-                = CouponListFilterService.getLadoffable(ladderVOS,priceTotal);
+                = CouponListFilterService.getLadoffable(ladderVOS, beforeCoupPrice);
 
         if(couponPubLadderVO == null){
             map.put("msg","当前购买商品金额没达到 "+ladderVOS.get(0).getLadamt()+"元！");
             return map;
         }
+
         map.put("code","200");
         map.put("msg","操作成功！");
         return map;

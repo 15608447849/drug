@@ -43,7 +43,24 @@ public class DiscountUtil {
             return result;
         }
 
-        proportion = MathUtil.exactSub(1, discount / total).doubleValue();
+        if (discount == .01) {
+            for (int i = 0; i < result.length; i++) {
+                if (result[i] > .01) {
+                    result[i] = MathUtil.exactAdd(result[i], -.01).doubleValue();
+                    return result;
+                }
+            }
+
+            for (int i = 0; i < result.length; i++) {
+                if (result[i] >= .01) {
+                    result[i] = MathUtil.exactAdd(result[i], -.01).doubleValue();
+                    return result;
+                }
+            }
+        }
+
+//        proportion = MathUtil.exactSub(1, discount / total).doubleValue();
+        proportion = 1 - discount / total;
 
         for (int i = 0; i < prices.length; i++) {
             result[i] = BigDecimal.valueOf(proportion * prices[i])
@@ -56,6 +73,20 @@ public class DiscountUtil {
         deviation = MathUtil.exactSub(turlyDiscountTotal, realDiscountTotal).doubleValue();
 
         if (deviation != 0) {
+            for (int i = 0; i < result.length; i++) {
+                if (result[i] > Math.abs(deviation)) {
+                    result[i] = MathUtil.exactAdd(result[i], deviation).doubleValue();
+                    return result;
+                }
+            }
+
+            for (int i = 0; i < result.length; i++) {
+                if (result[i] >= Math.abs(deviation)) {
+                    result[i] = MathUtil.exactAdd(result[i], deviation).doubleValue();
+                    return result;
+                }
+            }
+
             int randomIndex = new Random().nextInt(prices.length);
 
             result[randomIndex] = MathUtil.exactAdd(result[randomIndex], deviation).doubleValue();
@@ -106,6 +137,7 @@ public class DiscountUtil {
         BigDecimal result = BigDecimal.ZERO;
 
         for (IProduct product: prodList) {
+            System.out.println("========================="+product.getCurrentPrice());
             result = result.add(BigDecimal.valueOf(product.getCurrentPrice()));
         }
 
