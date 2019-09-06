@@ -97,7 +97,7 @@ public class BDAchievementOP {
         System.out.println("=============sdate = " + sdate);
         System.out.println("=============edate = " + edate);
         if(!sdate.isEmpty() && !edate.isEmpty()) {
-            sql.append(" HAVING re.odate BETWEEN '${var}' and '${var2}' ");
+            sql.append(" HAVING ord.odate BETWEEN '${var}' and '${var2}' ");
 
             System.out.println("=============sql = " + sql.toString());
             return sql.toString().replace("${var}", sdate).replace("${var2}", edate);
