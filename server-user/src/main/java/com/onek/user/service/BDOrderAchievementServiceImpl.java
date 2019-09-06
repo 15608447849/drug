@@ -39,8 +39,6 @@ public class BDOrderAchievementServiceImpl {
         jsonObject.put("ccustruenum",getCustruenum(list,_APPROVAL)); //审核通过门店
         jsonObject.put("ccusfalsenum",getCustruenum(list,0)-getCustruenum(list,_APPROVAL));//审核未通过
         jsonObject.put("cregnum",getCustruenum(list,0));//总共注册门店
-        System.out.println(bdsum.get(String.valueOf(uid)));
-        System.out.println(bdNewAddSum.get(String.valueOf(uid)));
         if(bdsum.isEmpty()){
             jsonObject.put("cumulticeSum",0); //累计首购数
         }else{

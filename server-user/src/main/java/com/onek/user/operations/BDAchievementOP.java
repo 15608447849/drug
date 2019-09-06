@@ -63,7 +63,6 @@ public class BDAchievementOP {
         if(param == null){
             return sql.toString();
         }
-        System.out.println("=============dateflag = " + param.dateflag);
         switch (param.dateflag) {
             case 0:
                 if(StringUtils.isEmpty(param.sdate) || StringUtils.isEmpty(param.edate)){
@@ -95,12 +94,9 @@ public class BDAchievementOP {
                 edate = mouth[1];
                 break;
         }
-        System.out.println("=============sdate = " + sdate);
-        System.out.println("=============edate = " + edate);
         if(!sdate.isEmpty() && !edate.isEmpty()) {
             sql.append(" HAVING ord.odate BETWEEN '${var}' and '${var2}' ");
 
-            System.out.println("=============sql = " + sql.toString());
             return sql.toString().replace("${var}", sdate).replace("${var2}", edate);
         }else {
             return "";
@@ -169,7 +165,6 @@ public class BDAchievementOP {
             return userAreaList;
         }
         */
-        System.out.println("==================="+reList.size());
         return reList;
     }
 
@@ -260,7 +255,6 @@ public class BDAchievementOP {
         }
         String json = IceRemoteUtil.getBDCumultive(time);
         JSONObject jsons = JSONObject.parseObject(json);
-        System.out.println("====1111111"+jsons.getString("data"));
         HashMap<String,String> map = GsonUtils.string2Map(jsons.getString("data"));
 
         return map;
@@ -283,7 +277,6 @@ public class BDAchievementOP {
         }
         String json = IceRemoteUtil.getBDNewAddCumultive(sdate,edate);
         JSONObject jsons = JSONObject.parseObject(json);
-        System.out.println("====1112222"+jsons.getString("data"));
         HashMap<String,String> map = GsonUtils.string2Map(jsons.getString("data"));
 
         return map;
