@@ -41,6 +41,7 @@ public class BDAchievementServiceImpl {
 
         BDAchievementVO[] bdAchievementVOS = new BDAchievementVO[bdLists.size()];
         BaseDAO.getBaseDAO().convToEntity(bdLists,bdAchievementVOS,BDAchievementVO.class);
+        Arrays.sort(bdAchievementVOS);
 
         //循环遍历得到渠道总监-1，渠道经理-2，合伙人-3，BDM-4 , BD-5
         List<BDAchievementVO> boList = Arrays.asList(bdAchievementVOS);
@@ -93,6 +94,22 @@ public class BDAchievementServiceImpl {
             }
         }
 */
+        BDAchievementVO[] bdAchievementVOS1 = bdList.toArray(new BDAchievementVO[bdList.size()]);
+        Arrays.sort(bdAchievementVOS1);
+        BDAchievementVO[] bdAchievementVOS2 = bdmList.toArray(new BDAchievementVO[bdmList.size()]);
+        Arrays.sort(bdAchievementVOS2);
+        BDAchievementVO[] bdAchievementVOS3 = hhrList.toArray(new BDAchievementVO[hhrList.size()]);
+        Arrays.sort(bdAchievementVOS3);
+        BDAchievementVO[] bdAchievementVOS4 = qdjlList.toArray(new BDAchievementVO[qdjlList.size()]);
+        Arrays.sort(bdAchievementVOS4);
+        BDAchievementVO[] bdAchievementVOS5 = qdzjList.toArray(new BDAchievementVO[qdzjList.size()]);
+        Arrays.sort(bdAchievementVOS5);
+
+        bdList = Arrays.asList(bdAchievementVOS1);
+        bdmList = Arrays.asList(bdAchievementVOS2);
+        hhrList = Arrays.asList(bdAchievementVOS3);
+        qdjlList = Arrays.asList(bdAchievementVOS4);
+        qdzjList = Arrays.asList(bdAchievementVOS5);
 
         String json = contData(compList,oList,bdList, bdmList, hhrList, qdjlList, qdzjList);
         return json;
