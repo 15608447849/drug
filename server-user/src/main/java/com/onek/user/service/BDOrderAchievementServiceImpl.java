@@ -38,8 +38,16 @@ public class BDOrderAchievementServiceImpl {
         jsonObject.put("ccustruenum",getCustruenum(list,_APPROVAL)); //审核通过门店
         jsonObject.put("ccusfalsenum",getCustruenum(list,0)-getCustruenum(list,_APPROVAL));//审核未通过
         jsonObject.put("cregnum",getCustruenum(list,0));//总共注册门店
-        jsonObject.put("cumulticeSum",bdsum.get(uid));
-        jsonObject.put("cumulticeNewAdd",bdNewAddSum.get(uid));
+        if(bdsum==null){
+            jsonObject.put("cumulticeSum",0); //累计首购数
+        }else{
+            jsonObject.put("cumulticeSum",bdsum.get(uid)); //累计首购数
+        }
+        if(bdNewAddSum == null){
+            jsonObject.put("cumulticeNewAdd", 0);//新增首购数
+        }else {
+            jsonObject.put("cumulticeNewAdd", bdNewAddSum.get(uid));//新增首购数
+        }
         BDToOrderAchieveemntVO order = getOrderInfo(oList,uid);
         if(order == null) {
             jsonObject.put("ocancelord", "0"); //交易取消订单

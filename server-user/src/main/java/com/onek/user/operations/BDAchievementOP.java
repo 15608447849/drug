@@ -260,6 +260,7 @@ public class BDAchievementOP {
         }
         String json = IceRemoteUtil.getBDCumultive(time);
         JSONObject jsons = JSONObject.parseObject(json);
+        System.out.println("====1111111"+jsons.getString("data"));
         Map map = GsonUtils.string2Map(jsons.getString("data"));
 
         return map;
@@ -282,6 +283,7 @@ public class BDAchievementOP {
         }
         String json = IceRemoteUtil.getBDNewAddCumultive(sdate,edate);
         JSONObject jsons = JSONObject.parseObject(json);
+        System.out.println("====1112222"+jsons.getString("data"));
         Map map = GsonUtils.string2Map(jsons.getString("data"));
 
         return map;
