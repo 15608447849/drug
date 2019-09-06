@@ -34,18 +34,20 @@ public class BDOrderAchievementServiceImpl {
      * @param oList
      * @param uid
      */
-    private static void getOrderInfoByCus(JSONObject jsonObject,List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,long uid, HashMap bdsum, HashMap bdNewAddSum ) {
+    private static void getOrderInfoByCus(JSONObject jsonObject,List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,long uid, HashMap<String,String> bdsum, HashMap<String,String> bdNewAddSum ) {
         List<BDCompVO> list = getCompInfo(compList, uid);
         jsonObject.put("ccustruenum",getCustruenum(list,_APPROVAL)); //审核通过门店
         jsonObject.put("ccusfalsenum",getCustruenum(list,0)-getCustruenum(list,_APPROVAL));//审核未通过
         jsonObject.put("cregnum",getCustruenum(list,0));//总共注册门店
+        System.out.println(bdsum.get(String.valueOf(uid)));
+        System.out.println(bdNewAddSum.get(String.valueOf(uid)));
         if(bdsum.isEmpty()){
             jsonObject.put("cumulticeSum",0); //累计首购数
         }else{
             if(bdsum.get(String.valueOf(uid))==null){
                 jsonObject.put("cumulticeSum",0); //累计首购数
             }else {
-                jsonObject.put("cumulticeSum", bdsum.get(String.valueOf(uid)).toString().isEmpty() ? "0" : bdsum.get(uid).toString()); //累计首购数
+                jsonObject.put("cumulticeSum", bdsum.get(String.valueOf(uid)).isEmpty() ? "0" : bdsum.get(uid).toString()); //累计首购数
             }
         }
         if(bdNewAddSum.isEmpty()){
@@ -54,7 +56,7 @@ public class BDOrderAchievementServiceImpl {
             if(bdNewAddSum.get(String.valueOf(uid))==null){
                 jsonObject.put("cumulticeNewAdd", 0);//新增首购数
             }else {
-                jsonObject.put("cumulticeNewAdd",bdNewAddSum.get(String.valueOf(uid)).toString().isEmpty() ? "0" : bdNewAddSum.get(uid).toString());//新增首购数
+                jsonObject.put("cumulticeNewAdd",bdNewAddSum.get(String.valueOf(uid)).isEmpty() ? "0" : bdNewAddSum.get(uid).toString());//新增首购数
             }
         }
         BDToOrderAchieveemntVO order = getOrderInfo(oList,uid);
