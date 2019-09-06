@@ -27,7 +27,7 @@ public class BDAchievementOP {
     /*查询地区*/
    // private static String _QUERY_AREA_USER = "select uid,areac from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? and cstatus&1 = 0 and cstatus&128>0 GROUP BY uid";
     private static String _QUERY_AREA_USER =  "select uid,urealname,roleid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid in (select uid from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? and cstatus&1 = 0 and cstatus&128>0)"+
-            "and roleid & 8192 >0 and roleid&4096!=4096";
+            "and roleid & 8192 >0 ";//and roleid&4096!=4096";
     private static String _QUERY_USER_BELONG = "SELECT uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE belong = ?";
 
     /**
@@ -179,7 +179,7 @@ public class BDAchievementOP {
             }else{
                 sb.append(" and createdate BETWEEN '"+param.sdate+"' and '"+param.edate+"' ");
             }
-            if(StringUtils.isEmpty(param.areac) && "430000000000".equals(param.areac)){
+            if(!StringUtils.isEmpty(param.areac) && !"430000000000".equals(param.areac)){
                 sb.append(" and caddrcode = "+param.areac);
             }
         }
