@@ -433,7 +433,7 @@ public class Activity extends AccurateMath implements IDiscount {
     }
 
     public boolean isGlobalActivity() {
-        return this.incpriority == 0;
+        return this.activityGcode == 0;
     }
 
     @Override
