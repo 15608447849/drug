@@ -20,19 +20,19 @@ public class BDOrderAchieveementOP {
             "FROM ( " +
             " SELECT o.inviter inviter, "+
             " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus =- 4 AND ord.orderno = o.orderno ) canclord, "+
-            " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus !=-4 AND ord.orderno = o.orderno ) completeord, "+
+            " ( SELECT count( * ) FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus !=-4 and ord.ostatus!=0 AND ord.orderno = o.orderno ) completeord, "+
             " ( SELECT count( DISTINCT asord.orderno ) FROM {{?"+DSMConst.TD_TRAN_ASAPP+"}} asord WHERE asord.orderno = o.orderno and astype in(0,1,2) and ( asord.ckstatus = 1 or asord.ckstatus = 200 ) ) returnord, "+
             " ( SELECT count( DISTINCT asord.orderno ) FROM {{?"+DSMConst.TD_TRAN_ASAPP+"}} asord WHERE asord.orderno = o.orderno AND ( asord.ckstatus = 1 or asord.ckstatus = 200 ) ) afsaleord, "+
             " ( SELECT o.payamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus =- 4 AND ord.orderno = o.orderno ) returnordamt, "+
-            " ( SELECT o.pdamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus !=-4 AND ord.orderno = o.orderno ) originalprice, "+
-            " ( SELECT o.payamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus !=-4) AND ord.orderno = o.orderno ) payamt, "+
-            " ( SELECT o.distamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus !=-4) AND ord.orderno = o.orderno ) distamt, "+
-            " ( SELECT o.balamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus !=-4) AND ord.orderno = o.orderno ) balamt, "+
+            " ( SELECT o.pdamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE ord.ostatus !=-4 and ord.ostatus!=0 AND ord.orderno = o.orderno ) originalprice, "+
+            " ( SELECT o.payamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus !=-4 and ord.ostatus!=0 ) AND ord.orderno = o.orderno ) payamt, "+
+            " ( SELECT o.distamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus !=-4 and ord.ostatus!=0 ) AND ord.orderno = o.orderno ) distamt, "+
+            " ( SELECT o.balamt FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord WHERE (ord.ostatus !=-4 and ord.ostatus!=0 ) AND ord.orderno = o.orderno ) balamt, "+
             " o.realrefamt realrefamt, o.odate "+
             " FROM ( "+
             " SELECT comp.cid cid, comp.inviter inviter, ord.asstatus asstatus, ord.orderno orderno, ord.cusno cusno, ord.ostatus ostatus, "+
             " ord.pdamt pdamt, ord.payamt payamt, ord.distamt distamt, ord.balamt balamt, sum(IFNULL( asapp.realrefamt, 0 )) realrefamt, ord.odate "+
-            " FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord LEFT JOIN {{?"+DSMConst.TD_TRAN_ASAPP+"}} asapp ON ord.orderno = asapp.orderno LEFT JOIN tb_bk_comp comp ON ord.cusno = comp.cid GROUP BY ord.orderno "+
+            " FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord LEFT JOIN {{?"+DSMConst.TD_TRAN_ASAPP+"}} asapp ON ord.orderno = asapp.orderno LEFT JOIN tb_bk_comp comp ON ord.cusno = comp.cid GROUP BY ord.orderno ${var}"+
             " ) o  ) re ";
 
     private static final String _SELECT_GROUP = "  GROUP BY re.inviter  ";
@@ -42,21 +42,19 @@ public class BDOrderAchieveementOP {
      * @return
      */
     public static List<BDOrderAchieveemntVO> executeOrderInfos(AppContext appContext){
-
-        String[] strParam = appContext.param.arrays;
-        String param = "";
-        appContext.logger.print("==========================时间维度："+strParam[0]);
-        if(strParam.length>0){
-            param = strParam[0];
-        }
-
         StringBuilder builder = new StringBuilder();
         builder.append(_QUERY_ORDER);
         builder.append(_SELECT_GROUP);
-        builder.append(param);
+
+        String[] strParam = appContext.param.arrays;
+        String sql = builder.toString();
+        appContext.logger.print("==========================时间维度："+strParam[0]);
+        if(strParam.length>0){
+            sql = sql.replace("${var}",strParam[0]);
+        }
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
-                .queryNativeSharding(GLOBALConst.COMP_INIT_VAR, TimeUtils.getCurrentYear(), builder.toString());
+                .queryNativeSharding(GLOBALConst.COMP_INIT_VAR, TimeUtils.getCurrentYear(), sql);
         BDOrderAchieveemntVO[] bdOrderAchieveemntVOS = new BDOrderAchieveemntVO[queryResult.size()];
 
         BaseDAO.getBaseDAO().convToEntity(queryResult,bdOrderAchieveemntVOS,BDOrderAchieveemntVO.class);
