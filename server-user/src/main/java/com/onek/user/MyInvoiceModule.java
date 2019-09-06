@@ -181,6 +181,10 @@ public class MyInvoiceModule {
         int result =
                 BaseDAO.getBaseDAO().updateNative(UPDATE_EMAIL, email, compId);
 
+        if (result > 0) {
+            //电子邮箱同步到中间件
+            SyncCustomerInfoModule.postEmail2Erp(compId, email);
+        }
         return result > 0 ? new Result().success("操作成功").message("发票收件邮箱保存成功") : new Result().fail("发票收件邮箱保存失败");
     }
 
