@@ -35,7 +35,7 @@ public class BDAchievementServiceImpl {
 
     private final static int DEFAULT_QUERY_PARAM = 0;
 
-    public String getData(long uid,List<String> areaList, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,Map bdsum, Map bdNewAddSum ) {
+    public String getData(long uid,List<String> areaList, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,HashMap<String,String> bdsum, HashMap<String,String> bdNewAddSum ) {
         StringBuilder sqlb = new StringBuilder(_QUERY_SQL);
         List<Object[]> bdLists= BaseDAO.getBaseDAO().queryNative(sqlb.toString());
 
@@ -210,7 +210,7 @@ public class BDAchievementServiceImpl {
      * @param qdzjs
      * @return
      */
-    private static String contData(List<BDCompVO> compList, List<BDToOrderAchieveemntVO> ordList,List<BDAchievementVO> bd, List<BDAchievementVO>bdms, List<BDAchievementVO>csjls, List<BDAchievementVO>qdjls, List<BDAchievementVO>qdzjs,Map bdsum, Map bdNewAddSum ) {
+    private static String contData(List<BDCompVO> compList, List<BDToOrderAchieveemntVO> ordList,List<BDAchievementVO> bd, List<BDAchievementVO>bdms, List<BDAchievementVO>csjls, List<BDAchievementVO>qdjls, List<BDAchievementVO>qdzjs,HashMap<String,String> bdsum, HashMap<String,String> bdNewAddSum ) {
 //        List<OrderVO> ordList = getOrderInfos();
 //        List<Comp> compList = getCompInfo();
         List gl = new ArrayList();

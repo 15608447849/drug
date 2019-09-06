@@ -43,8 +43,8 @@ public class BDAchievementOP {
 
         List<BDCompVO> compList =getCompInfo(param);
         List<BDToOrderAchieveemntVO> oList = getOrderInfos(queryOrdParam);
-        Map bdsum = getCumulative(param);
-        Map bdNewAddSum = getBDNewAddCumulative(param);
+        HashMap<String,String> bdsum = getCumulative(param);
+        HashMap<String,String> bdNewAddSum = getBDNewAddCumulative(param);
         String reString = bdAchievementService.getData(param.uid,getBdWhereParam(param),compList,oList,bdsum,bdNewAddSum);
         return new Result().success(reString);
     }
@@ -251,7 +251,7 @@ public class BDAchievementOP {
      * @param param
      * @return
      */
-    public static Map getCumulative(QueryParam param) {
+    public static HashMap getCumulative(QueryParam param) {
         String time = "";
         if (param == null || StringUtils.isEmpty(param.edate)) {
             time = String.valueOf(TimeUtils.date_yMd_2String(new Date()));
@@ -261,7 +261,7 @@ public class BDAchievementOP {
         String json = IceRemoteUtil.getBDCumultive(time);
         JSONObject jsons = JSONObject.parseObject(json);
         System.out.println("====1111111"+jsons.getString("data"));
-        Map map = GsonUtils.string2Map(jsons.getString("data"));
+        HashMap<String,String> map = GsonUtils.string2Map(jsons.getString("data"));
 
         return map;
     }
@@ -271,7 +271,7 @@ public class BDAchievementOP {
      * @param param
      * @return
      */
-    public static Map getBDNewAddCumulative(QueryParam param) {
+    public static HashMap getBDNewAddCumulative(QueryParam param) {
         String sdate = "";
         String edate = "";
         if(param ==null || StringUtils.isEmpty(param.sdate) || StringUtils.isEmpty(param.edate)){
@@ -284,7 +284,7 @@ public class BDAchievementOP {
         String json = IceRemoteUtil.getBDNewAddCumultive(sdate,edate);
         JSONObject jsons = JSONObject.parseObject(json);
         System.out.println("====1112222"+jsons.getString("data"));
-        Map map = GsonUtils.string2Map(jsons.getString("data"));
+        HashMap<String,String> map = GsonUtils.string2Map(jsons.getString("data"));
 
         return map;
     }

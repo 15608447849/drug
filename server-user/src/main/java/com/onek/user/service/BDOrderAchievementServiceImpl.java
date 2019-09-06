@@ -7,6 +7,7 @@ import com.onek.user.operations.BDAchievementOP;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -16,7 +17,7 @@ public class BDOrderAchievementServiceImpl {
     private static final int _NOTAPPROVAL = 128;
 
 
-    public static String excall(long uid, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList, Map bdsum, Map bdNewAddSum ) {
+    public static String excall(long uid, List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList, HashMap<String,String> bdsum, HashMap<String,String> bdNewAddSum ) {
 
 
         JSONObject jsonObject = new JSONObject();
@@ -33,7 +34,7 @@ public class BDOrderAchievementServiceImpl {
      * @param oList
      * @param uid
      */
-    private static void getOrderInfoByCus(JSONObject jsonObject,List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,long uid, Map bdsum, Map bdNewAddSum ) {
+    private static void getOrderInfoByCus(JSONObject jsonObject,List<BDCompVO> compList, List<BDToOrderAchieveemntVO> oList,long uid, HashMap bdsum, HashMap bdNewAddSum ) {
         List<BDCompVO> list = getCompInfo(compList, uid);
         jsonObject.put("ccustruenum",getCustruenum(list,_APPROVAL)); //审核通过门店
         jsonObject.put("ccusfalsenum",getCustruenum(list,0)-getCustruenum(list,_APPROVAL));//审核未通过
@@ -41,19 +42,19 @@ public class BDOrderAchievementServiceImpl {
         if(bdsum.isEmpty()){
             jsonObject.put("cumulticeSum",0); //累计首购数
         }else{
-            if(bdsum.get(uid)==null){
+            if(bdsum.get(String.valueOf(uid))==null){
                 jsonObject.put("cumulticeSum",0); //累计首购数
             }else {
-                jsonObject.put("cumulticeSum", bdsum.get(uid).toString().isEmpty() ? "0" : bdsum.get(uid).toString()); //累计首购数
+                jsonObject.put("cumulticeSum", bdsum.get(String.valueOf(uid)).toString().isEmpty() ? "0" : bdsum.get(uid).toString()); //累计首购数
             }
         }
         if(bdNewAddSum.isEmpty()){
             jsonObject.put("cumulticeNewAdd", 0);//新增首购数
         }else {
-            if(bdNewAddSum.get(uid)==null){
+            if(bdNewAddSum.get(String.valueOf(uid))==null){
                 jsonObject.put("cumulticeNewAdd", 0);//新增首购数
             }else {
-                jsonObject.put("cumulticeNewAdd",bdNewAddSum.get(uid).toString().isEmpty() ? "0" : bdNewAddSum.get(uid).toString());//新增首购数
+                jsonObject.put("cumulticeNewAdd",bdNewAddSum.get(String.valueOf(uid)).toString().isEmpty() ? "0" : bdNewAddSum.get(uid).toString());//新增首购数
             }
         }
         BDToOrderAchieveemntVO order = getOrderInfo(oList,uid);
