@@ -68,7 +68,7 @@ public class BDOrderAchieveementOP {
 
 
 
-    private static String _QUERY_CUMULATIVE_SG = "SELECT re.inviter inviter, count( DISTINCT cid ) countnum  FROM" +
+    private static String _QUERY_CUMULATIVE_SG = "SELECT IFNULL(re.inviter,0) inviter, IFNULL(count( DISTINCT cid ),0) countnum  FROM" +
             "( SELECT DISTINCT ( co.cid ) cid, co.inviter inviter," +
             " co.cname cname, co.odate odate  FROM " +
             " ( SELECT comp.cid cid, comp.inviter inviter, comp.cname cname, ord.orderno orderno," +
