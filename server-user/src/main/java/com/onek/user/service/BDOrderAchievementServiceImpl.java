@@ -41,12 +41,12 @@ public class BDOrderAchievementServiceImpl {
         if(bdsum.isEmpty()){
             jsonObject.put("cumulticeSum",0); //累计首购数
         }else{
-            jsonObject.put("cumulticeSum",bdsum.get(uid)); //累计首购数
+            jsonObject.put("cumulticeSum",bdsum.get(uid).toString().isEmpty() ? "0" : bdsum.get(uid).toString()); //累计首购数
         }
         if(bdNewAddSum.isEmpty()){
             jsonObject.put("cumulticeNewAdd", 0);//新增首购数
         }else {
-            jsonObject.put("cumulticeNewAdd", bdNewAddSum.get(uid));//新增首购数
+            jsonObject.put("cumulticeNewAdd", bdNewAddSum.get(uid).toString().isEmpty() ? "0" : bdNewAddSum.get(uid).toString());//新增首购数
         }
         BDToOrderAchieveemntVO order = getOrderInfo(oList,uid);
         if(order == null) {
