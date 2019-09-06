@@ -90,4 +90,28 @@ public class BDOrderAchieveementOP {
     }
 
 
+    private static String _QUERY_NEWADD_CUMULATIVE_SQ ="SELECT DISTINCT IFNULL(co.inviter,0) inviter, IFNULL(count(DISTINCT co.cid),0) compnum" +
+            " FROM ( SELECT comp.cid cid, comp.inviter inviter, comp.cname cname, ord.orderno orderno, ord.ostatus ostatus, ord.odate odate " +
+            " FROM tb_bk_comp comp, {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord " +
+            " WHERE comp.cid = ord.cusno  AND ord.ostatus > 0  AND ord.settstatus = 1  ) co " +
+            " WHERE co.odate BETWEEN ?  AND ?  AND co.cid NOT IN (" +
+            " SELECT DISTINCT o.cid  FROM ( SELECT DISTINCT o.cusno cid " +
+            " FROM {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} o " +
+            " WHERE o.odate < ? AND o.settstatus = 1 AND o.ostatus > 0  ) r " +
+            " INNER JOIN ( SELECT DISTINCT ( co.cid ) cid " +
+            " FROM ( SELECT comp.cid cid, comp.inviter inviter, comp.cname cname, ord.orderno orderno, ord.ostatus ostatus, ord.odate odate " +
+            " FROM tb_bk_comp comp, {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord " +
+            " WHERE comp.cid = ord.cusno  AND ord.ostatus > 0  AND ord.settstatus = 1  ) co " +
+            " WHERE co.odate BETWEEN ? AND ?  ) o ON r.cid = o.cid  ) GROUP BY co.inviter";
+
+    public static Map getNewAddCumulative(String[] time){
+        StringBuilder sb = new StringBuilder(_QUERY_NEWADD_CUMULATIVE_SQ);
+        List<Object[]> list = BaseDAO.getBaseDAO().queryNativeSharding(GLOBALConst.COMP_INIT_VAR,TimeUtils.getCurrentYear(),sb.toString(),time[0],time[1],time[1],time[0],time[1]);
+        Map map = new HashMap();
+        for (int i = 0;i<list.size();i++){
+            map.put(list.get(i)[0].toString(),list.get(i)[1].toString());
+        }
+        return map;
+    }
+
 }
