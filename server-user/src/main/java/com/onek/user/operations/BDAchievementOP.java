@@ -119,7 +119,7 @@ public class BDAchievementOP {
         }
 
         if((param.roleid & 1) > 0){
-            if(!StringUtils.isEmpty(param.areac) && !"430000000000".equals(param.areac)) {
+            if(!StringUtils.isEmpty(param.areac) && "430000000000".equals(param.areac)) {
                 reList.add("0");
             }else{
                 List<Object[]> list = baseDao.queryNative(_QUERY_AREA_USER,param.areac);
