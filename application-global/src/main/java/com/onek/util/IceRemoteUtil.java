@@ -944,4 +944,14 @@ public class IceRemoteUtil {
         return str;
     }
 
+
+    public static String getBDCumultive(String params){
+
+        String str = ic.setServerAndRequest("orderServer"+ getOrderServerNo(GLOBALConst.COMP_INIT_VAR), "BackOrderInfoModule", "getCumultive")
+                .setArrayParams(params)
+                .execute();
+
+        return str;
+    }
+
 }

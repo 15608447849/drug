@@ -50,7 +50,10 @@ public class BDAchievementServiceImpl {
         List<BDAchievementVO> bdmList = new ArrayList<BDAchievementVO>();
         List<BDAchievementVO> bdList = new ArrayList<BDAchievementVO>();
 
+        System.out.println("====================11111111111 ===" + areaList.size());
+
         if(areaList.size()<=0) {//查询所有
+            System.out.println("====================11111111111 === null");
 //            long roleFlag = getUserRole(bdAchievementVOS, uid);
 //            if(roleFlag == Long.MAX_VALUE){
 //                return new JSONArray().toString();
@@ -59,6 +62,7 @@ public class BDAchievementServiceImpl {
 //            setData(roleFlag, DEFAULT_QUERY_PARAM, boList, qdzjList, qdjlList, hhrList, bdmList, bdList);
             return new JSONArray().toString();
         }else{
+            System.out.println("====================11111111111 === object");
             for(String str : areaList){
 
                 long roleFlag = getUserRole(bdAchievementVOS, Long.parseLong(str));
@@ -78,11 +82,34 @@ public class BDAchievementServiceImpl {
         hhrList = removeDuplicate(hhrList);
         qdjlList = removeDuplicate(qdjlList);
         qdzjList = removeDuplicate(qdzjList);
+/*
+        long roleFlag = getUserRole(bdAchievementVOS, uid);
+        if(roleFlag == Long.MAX_VALUE){
+            return new JSONArray().toString();
+        }else{
+            boolean flag =  isLoginUserBelong(uid,roleFlag, qdzjList, qdjlList, hhrList, bdmList, bdList);
+            if(flag){
+                return new JSONArray().toString();
+            }
+        }
+*/
 
         String json = contData(compList,oList,bdList, bdmList, hhrList, qdjlList, qdzjList);
         return json;
     }
 
+    private static boolean isLoginUserBelong(long uid,long roleFlag, List<BDAchievementVO> ...boList){
+            boolean flag = false;
+            List<BDAchievementVO> list = boList[Integer.parseInt(String.valueOf(roleFlag))];
+            for(int i =0;i<list.size();i++ ){
+                BDAchievementVO bdAchievementVO = list.get(i);
+                if(String.valueOf(uid).equals(String.valueOf(bdAchievementVO.getUid()))){
+
+                }
+            }
+
+            return flag;
+    }
 
     /**
      * 获取查询当前查询最大角色

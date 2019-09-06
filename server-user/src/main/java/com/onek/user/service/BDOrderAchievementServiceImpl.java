@@ -61,7 +61,7 @@ public class BDOrderAchievementServiceImpl {
             jsonObject.put("ocompleteord", order.getCompleteord()); //订单交易完成数
             jsonObject.put("oreturnord", order.getReturnord()); //退货订单数
             jsonObject.put("oafsaleord", order.getAfsaleord()); //售后订单数
-            jsonObject.put("osumord", getOrderNum( Integer.parseInt(order.getCanclord()),Integer.parseInt(order.getCompleteord()),Integer.parseInt(order.getReturnord()),Integer.parseInt(order.getAfsaleord()))); //小计
+            jsonObject.put("osumord", getOrderNum( Integer.parseInt(order.getCanclord()),Integer.parseInt(order.getCompleteord())));//,Integer.parseInt(order.getReturnord()),Integer.parseInt(order.getAfsaleord()))); //小计
 //            jsonObject.put("oreturnrate", getRate(jsonObject.getString("oreturnord"),jsonObject.getString("osumord"))); //退货率
 //            jsonObject.put("ofsalerate", getRate(jsonObject.getString("oafsaleord"),jsonObject.getString("osumord"))); //售后率
             jsonObject.put("canclordamt", getDoubleValue(new BigDecimal(order.getCanclordamt()))); //取消订单金额
