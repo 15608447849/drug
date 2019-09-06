@@ -32,7 +32,7 @@ public class BDOrderAchieveementOP {
             " FROM ( "+
             " SELECT comp.cid cid, comp.inviter inviter, ord.asstatus asstatus, ord.orderno orderno, ord.cusno cusno, ord.ostatus ostatus, "+
             " ord.pdamt pdamt, ord.payamt payamt, ord.distamt distamt, ord.balamt balamt, sum(IFNULL( asapp.realrefamt, 0 )) realrefamt, ord.odate "+
-            " FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord LEFT JOIN {{?"+DSMConst.TD_TRAN_ASAPP+"}} asapp ON ord.orderno = asapp.orderno LEFT JOIN tb_bk_comp comp ON ord.cusno = comp.cid GROUP BY ord.orderno ${var}"+
+            " FROM {{?"+ DSMConst.TD_BK_TRAN_ORDER +"}} ord LEFT JOIN {{?"+DSMConst.TD_TRAN_ASAPP+"}} asapp ON ord.orderno = asapp.orderno LEFT JOIN tb_bk_comp comp ON ord.cusno = comp.cid GROUP BY ord.orderno ${var} "+
             " ) o  ) re ";
 
     private static final String _SELECT_GROUP = "  GROUP BY re.inviter  ";
@@ -51,6 +51,8 @@ public class BDOrderAchieveementOP {
         appContext.logger.print("==========================时间维度："+strParam[0]);
         if(strParam.length>0){
             sql = sql.replace("${var}",strParam[0]);
+        }else{
+            sql = sql.replace("${var}","");
         }
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO()
