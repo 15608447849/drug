@@ -25,7 +25,7 @@ public class PushMessageMySqlImps implements IPushMessageStore {
     @Override
     public long storeMessageToDb(IPMessage message) {
         try {
-            if (message.content.length() > 100) return 0;
+            if (!message.content.startsWith("push:")) return 0;//不存储 系统外的信息
 
             int compid = Integer.parseInt(message.identityName);
             long unqid = getUnqId();
