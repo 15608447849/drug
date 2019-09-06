@@ -132,11 +132,20 @@ public class BDAchievementOP {
             return reList;
         }
 
+
+
+
+
         if(!StringUtils.isEmpty(param.areac) && !"430000000000".equals(param.areac)){
+            //过滤当前查询用户是否在当前用户下
+            List<String> stringList = getGLUser(param.uid,param.roleid);
+
             List<Object[]> list = baseDao.queryNative(_QUERY_AREA_USER,param.areac);
             if(list.size()>0){
                 for (Object[] obj : list) {
-                    reList.add(obj[0].toString());
+                    if(stringList.contains(obj[0].toString())) {
+                        reList.add(obj[0].toString());
+                    }
                 }
             }
         }else{
@@ -162,6 +171,31 @@ public class BDAchievementOP {
         System.out.println("==================="+reList.size());
         return reList;
     }
+
+    private static List<String> getGLUser(long uid,long roleid){
+        StringBuilder sb = new StringBuilder();
+        String sql = "";
+        if((roleid & 512)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&1024>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))))");
+        }
+        if((roleid & 1024)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)))");
+        }
+        if((roleid & 2048)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))");
+        }
+        if((roleid & 4096)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)");
+        }
+        List<Object[]> list = baseDao.queryNative(sb.toString(),uid);
+
+        List<String> sList = new ArrayList<String>();
+        for (Object[] objs: list){
+            sList.add(objs[0].toString());
+        }
+        return sList;
+    }
+
     /**
      * 查询条件
      */
