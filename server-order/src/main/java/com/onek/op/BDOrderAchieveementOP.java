@@ -1,14 +1,18 @@
 package com.onek.op;
 
 
+import cn.hy.otms.rpcproxy.comm.cstruct.Page;
+import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.onek.context.AppContext;
 import com.onek.entity.BDOrderAchieveemntVO;
+import com.onek.entity.TranOrder;
+import com.onek.entitys.Result;
+import com.onek.order.BackOrderInfoModule;
 import com.onek.util.GLOBALConst;
+import com.onek.util.IceRemoteUtil;
 import constant.DSMConst;
 import dao.BaseDAO;
-import util.ArrayUtil;
-import util.StringUtils;
-import util.TimeUtils;
+import util.*;
 
 import java.util.*;
 
@@ -112,6 +116,116 @@ public class BDOrderAchieveementOP {
             map.put(list.get(i)[0].toString(),list.get(i)[1].toString());
         }
         return map;
+    }
+
+    private class Param{
+        private int selectFlag;
+        private long uid;
+        private long roleid;
+        private String sdate;
+        private String edate;
+    }
+
+
+    private static String _QUERY_BD_INFO = "select ord.orderno, ord.tradeno, ord.cusno, ord.busno, ord.ostatus, "
+            + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
+            + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
+            + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
+            + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway, ord.remarks, ord.invoicetype ";
+
+    private static String _ASORD_TABLE = " FROM tb_bk_comp comp, td_bk_tran_order_2019 ord,td_tran_asapp_2019 asord WHERE comp.cid = ord.cusno AND ord.orderno = asord.orderno " ;
+
+    private static String _ORDER_TABLE = " FROM tb_bk_comp comp, td_bk_tran_order_2019 ord WHERE comp.cid = ord.cusno " ;
+
+    public static Result getBDUserOrderInfo(AppContext appContext){
+
+        Page page = new Page();
+        page.pageIndex = appContext.param.pageIndex;
+        page.pageSize = appContext.param.pageNumber;
+
+        PageHolder pageHolder = new PageHolder(page);
+
+        StringBuilder sb = new StringBuilder(_QUERY_BD_INFO);
+        String json = appContext.param.json;
+        Param param = GsonUtils.jsonToJavaBean(json,Param.class);
+        if(param == null){
+            return new Result().fail("查询失败");
+        }
+        if(param.selectFlag == 1 || param.selectFlag == 2){
+            sb.append(_ORDER_TABLE);
+            if(param.selectFlag == 1){ //完成订单
+                sb.append(" AND ord.ostatus !=- 4 AND ord.ostatus != 0 ");
+            }else{//取消订单
+                sb.append(" AND ord.ostatus =-4 ");
+            }
+        }else{
+            sb.append(_ASORD_TABLE);
+            if(param.selectFlag == 3){ //售后
+                sb.append(" AND ( asord.ckstatus = 1 OR asord.ckstatus = 200 ) ");
+            }else{//退货订单
+                sb.append(" AND asord.astype IN ( 0, 1, 2 ) AND ( asord.ckstatus = 1 OR asord.ckstatus = 200 ) ");
+            }
+        }
+        sb.append(" AND ord.odate BETWEEN ? and ? ");
+        sb.append(" AND comp.inviter IN ("+getGLUser(param.uid,param.roleid)+") ");
+
+        List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
+                GLOBALConst.COMP_INIT_VAR, TimeUtils.getCurrentYear(), pageHolder, page,
+                " ord.oid DESC ", sb.toString(), param.sdate,param.edate);
+
+        TranOrder[] result = new TranOrder[queryResult.size()];
+
+        BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrder.class);
+
+        Map<String, String> compMap;
+        for (TranOrder tranOrder : result) {
+            String compStr = IceRemoteUtil.getCompInfoByCacheOrSql(tranOrder.getCusno());
+
+            compMap = GsonUtils.string2Map(compStr);
+
+            if (compMap != null) {
+                tranOrder.setCusname(compMap.get("storeName"));
+            }
+
+//            tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
+            tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
+            tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
+            tranOrder.setPdamt(MathUtil.exactDiv(tranOrder.getPdamt(), 100).doubleValue());
+            tranOrder.setDistamt(MathUtil.exactDiv(tranOrder.getDistamt(), 100).doubleValue());
+            tranOrder.setCoupamt(MathUtil.exactDiv(tranOrder.getCoupamt(), 100).doubleValue());
+            tranOrder.setBalamt(MathUtil.exactDiv(tranOrder.getBalamt(), 100).doubleValue());
+        }
+
+
+        return  new Result().success(result);
+    }
+
+
+    private static String getGLUser(long uid,long roleid){
+        StringBuilder sb = new StringBuilder();
+        String sql = "";
+        if((roleid & 512)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&1024>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))))");
+        }
+        if((roleid & 1024)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)))");
+        }
+        if((roleid & 2048)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))");
+        }
+        if((roleid & 4096)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)");
+        }
+        List<Object[]> list = BaseDAO.getBaseDAO().queryNative(sb.toString(),uid);
+
+        StringBuilder param = new StringBuilder();
+        for (Object[] objs: list){
+            param.append(objs[0].toString()+",");
+        }
+
+        String params = param.toString();
+        params = params.substring(0,params.length());
+        return params;
     }
 
 }

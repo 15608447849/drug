@@ -176,4 +176,13 @@ public class BackOrderInfoModule {
         Map map = BDOrderAchieveementOP.getNewAddCumulative(str);
         return new Result().success(map);
     }
+
+    /**
+     * 查询报表明细
+     * @param appContext
+     * @return
+     */
+    public Result getBDUserOrderInfo(AppContext appContext){
+        return BDOrderAchieveementOP.getBDUserOrderInfo(appContext);
+    }
 }
