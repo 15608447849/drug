@@ -516,6 +516,7 @@ public class BackgroundUserModule {
         private long roleid; //当前用户权限id
         private String sdate; //开始时间
         private String edate; //结束时间
+        private String addrcode;//地区
     }
     /**
      * 获取BD用户信息
@@ -548,8 +549,12 @@ public class BackgroundUserModule {
         }else{//查询所有
 
         }
+
         //时间查询
         sb.append(" and cp.createdate BETWEEN ? and ? ");
+        if(!StringUtils.isEmpty(param.addrcode) && !"430000000000".equals(param.addrcode)){
+            sb.append(" AND cp.caddrcode = "+ param.addrcode );
+        }
         //分组以及排序
         sb.append(" GROUP BY cp.cid desc  ");
 

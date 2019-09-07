@@ -41,6 +41,8 @@ public class BDOrderAchieveementOP {
 
     private static final String _SELECT_GROUP = "  GROUP BY re.inviter  ";
 
+    private static String _QUERY_AREA_USER =  "select uid,urealname,roleid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid in (select uid from {{?"+DSMConst.TB_PROXY_UAREA+"}} where areac=? and cstatus&1 = 0 and cstatus&128>0)"+
+            "and roleid & 8192 >0 ";
     /**
      * 获取所有订单详情
      * @return
@@ -127,6 +129,7 @@ public class BDOrderAchieveementOP {
         private long roleid; //当前用户权限id
         private String sdate; //开始时间
         private String edate; //结束时间
+        private String addrcode;//地区
     }
 
 
@@ -175,7 +178,7 @@ public class BDOrderAchieveementOP {
             sb.append(" AND ord.ostatus != 0 ");
         }
         sb.append(" AND ord.odate BETWEEN ? and ? ");
-        String pdata = getGLUser(param.uid,param.roleid);
+        String pdata = getGLUser(param.uid,param.roleid,param.addrcode);
         if(pdata.length()<=0 || StringUtils.isEmpty(pdata)){
             return  new Result().fail("当前人员暂无订单信息！");
         }
@@ -219,7 +222,7 @@ public class BDOrderAchieveementOP {
     }
 
 
-    private static String getGLUser(long uid,long roleid){
+    private static String getGLUser(long uid,long roleid,String areac){
         StringBuilder sb = new StringBuilder();
         String sql = "";
 
@@ -260,6 +263,15 @@ public class BDOrderAchieveementOP {
             sb.append(" UNION SELECT uid, roleid, urealname  FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}}  WHERE ( roleid & 2048 > 0 and roleid&4096>0 and roleid&8192>0)  AND belong IN ( SELECT uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} WHERE ( roleid & 1024 > 0 ) AND belong = ? ) ");
             sql = sb.toString();
         }
+
+        List<String> reList = new ArrayList<String>();
+        List<Object[]> areaList = BaseDAO.getBaseDAO().queryNative(_QUERY_AREA_USER,areac);
+        if(areaList.size()>0){
+            for (Object[] obj : areaList) {
+                reList.add(obj[0].toString());
+            }
+        }
+
         List<Object[]> list;
         if((roleid & 1024)>0 || (roleid & 512)>0){
             list = BaseDAO.getBaseDAO().queryNativeSharding(GLOBALConst.COMP_INIT_VAR,0,sql,uid,uid,uid);
@@ -269,7 +281,9 @@ public class BDOrderAchieveementOP {
 
         StringBuilder param = new StringBuilder();
         for (Object[] objs: list){
-            param.append(objs[0].toString()+",");
+            if(reList.contains(objs[0].toString())) {
+                param.append(objs[0].toString() + ",");
+            }
         }
         String params = param.toString();
         if(params.length()>0) {
