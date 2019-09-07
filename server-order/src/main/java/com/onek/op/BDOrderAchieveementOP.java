@@ -130,7 +130,7 @@ public class BDOrderAchieveementOP {
     }
 
 
-    private static String _QUERY_BD_INFO = "select ord.orderno, ord.tradeno, ord.cusno, comp.cname, comp.caddrcode, u.urealname, ord.busno, ord.ostatus, "
+    private static String _QUERY_BD_INFO = "select DISTINCT ord.orderno, ord.tradeno, ord.cusno, comp.cname, comp.caddrcode, u.urealname, ord.busno, ord.ostatus, "
             + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
             + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
             + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
