@@ -122,11 +122,11 @@ public class BDOrderAchieveementOP {
     }
 
     private class Param{
-        private int selectFlag;
-        private long uid;
-        private long roleid;
-        private String sdate;
-        private String edate;
+        private int selectFlag; //查询订单类型
+        private long uid; //当前用户id
+        private long roleid; //当前用户权限id
+        private String sdate; //开始时间
+        private String edate; //结束时间
     }
 
 
@@ -219,22 +219,27 @@ public class BDOrderAchieveementOP {
         String sql = "";
 
         if((roleid & 8192) >0){ //BD
+
             sb.append("select uid ,roleid,urealname FROM "+TB_BK_SYSTEM_USER+" where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM tb_bk_system_user where uid = ? and roleid&8192>0");
+            sql = sb.toString();
         }
 
         if((roleid & 4096)>0){ //BDM
             sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM tb_bk_system_user where uid = ? and roleid&8192>0");
+            sql = sb.toString();
         }
 
         if((roleid & 2048)>0){ //城市经理
             sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&4096>0 and roleid&8192>0) and belong = ? UNION ");
             sb.append(" select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&4096>0) and belong = ?) ");
+            sql = sb.toString();
         }
 
         if((roleid & 1024)>0){ //渠道经理
             sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&2048>0) and belong = ?) UNION ");
             sb.append(" select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
             sb.append(" (roleid&2048>0) and belong = ?))");
+            sql = sb.toString();
         }
 
         if((roleid & 512)>0){ //渠道总监
@@ -242,8 +247,9 @@ public class BDOrderAchieveementOP {
             sb.append(" tb_bk_system_user where (roleid&1024>0) and belong = ?)) UNION ");
             sb.append(" select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
             sb.append(" (roleid&2048>0) and belong in (select uid FROM tb_bk_system_user where (roleid&1024>0) and belong = ?))) ");
+            sql = sb.toString();
         }
-        List<Object[]> list = BaseDAO.getBaseDAO().queryNative(sb.toString(),uid,uid);
+        List<Object[]> list = BaseDAO.getBaseDAO().queryNative(sql,uid,uid);
 
         StringBuilder param = new StringBuilder();
         for (Object[] objs: list){

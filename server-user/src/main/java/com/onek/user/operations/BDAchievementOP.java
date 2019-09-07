@@ -171,19 +171,26 @@ public class BDAchievementOP {
     private static List<String> getGLUser(long uid,long roleid){
         StringBuilder sb = new StringBuilder();
         String sql = "";
-        if((roleid & 512)>0){
-            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&1024>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))))");
-        }
-        if((roleid & 1024)>0){
-            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)))");
-        }
-        if((roleid & 2048)>0){
-            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))");
-        }
+
         if((roleid & 4096)>0){
             sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)");
+            sql = sb.toString();
         }
-        List<Object[]> list = baseDao.queryNative(sb.toString(),uid);
+
+        if((roleid & 2048)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))");
+            sql = sb.toString();
+        }
+
+        if((roleid & 1024)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)))");
+            sql = sb.toString();
+        }
+        if((roleid & 512)>0){
+            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&1024>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))))");
+            sql = sb.toString();
+        }
+        List<Object[]> list = baseDao.queryNative(sql,uid);
 
         List<String> sList = new ArrayList<String>();
         for (Object[] objs: list){
