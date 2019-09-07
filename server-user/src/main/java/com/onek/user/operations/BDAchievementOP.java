@@ -173,20 +173,24 @@ public class BDAchievementOP {
         String sql = "";
 
         if((roleid & 4096)>0){
+            sb.delete( 0, sb.length() );
             sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)");
             sql = sb.toString();
         }
 
         if((roleid & 2048)>0){
+            sb.delete( 0, sb.length() );
             sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))");
             sql = sb.toString();
         }
 
         if((roleid & 1024)>0){
+            sb.delete( 0, sb.length() );
             sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)))");
             sql = sb.toString();
         }
         if((roleid & 512)>0){
+            sb.delete( 0, sb.length() );
             sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&1024>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))))");
             sql = sb.toString();
         }

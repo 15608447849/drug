@@ -219,23 +219,26 @@ public class BDOrderAchieveementOP {
         String sql = "";
 
         if((roleid & 8192) >0){ //BD
-
+            sb.delete( 0, sb.length() );
             sb.append("select uid ,roleid,urealname FROM "+TB_BK_SYSTEM_USER+" where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM tb_bk_system_user where uid = ? and roleid&8192>0");
             sql = sb.toString();
         }
 
         if((roleid & 4096)>0){ //BDM
+            sb.delete( 0, sb.length() );
             sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM tb_bk_system_user where uid = ? and roleid&8192>0");
             sql = sb.toString();
         }
 
         if((roleid & 2048)>0){ //城市经理
+            sb.delete( 0, sb.length() );
             sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&4096>0 and roleid&8192>0) and belong = ? UNION ");
             sb.append(" select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&4096>0) and belong = ?) ");
             sql = sb.toString();
         }
 
         if((roleid & 1024)>0){ //渠道经理
+            sb.delete( 0, sb.length() );
             sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&2048>0) and belong = ?) UNION ");
             sb.append(" select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
             sb.append(" (roleid&2048>0) and belong = ?))");
@@ -243,6 +246,7 @@ public class BDOrderAchieveementOP {
         }
 
         if((roleid & 512)>0){ //渠道总监
+            sb.delete( 0, sb.length() );
             sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&2048>0) and belong in (select uid FROM ");
             sb.append(" tb_bk_system_user where (roleid&1024>0) and belong = ?)) UNION ");
             sb.append(" select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
