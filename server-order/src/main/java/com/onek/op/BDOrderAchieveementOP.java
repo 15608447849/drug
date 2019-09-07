@@ -130,7 +130,7 @@ public class BDOrderAchieveementOP {
     }
 
 
-    private static String _QUERY_BD_INFO = "select ord.orderno, ord.tradeno, ord.cusno, comp.cname, u.urealname, ord.busno, ord.ostatus, "
+    private static String _QUERY_BD_INFO = "select ord.orderno, ord.tradeno, ord.cusno, comp.cname, comp.caddrcode, u.urealname, ord.busno, ord.ostatus, "
             + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
             + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
             + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
@@ -182,7 +182,7 @@ public class BDOrderAchieveementOP {
                 " ord.oid DESC ", sb.toString(), param.sdate,param.edate);
 
         TranOrder[] result = new TranOrder[queryResult.size()];
-        String[] reParam = new String[]{"orderno","tradeno","cusno","cname","urealname",
+        String[] reParam = new String[]{"orderno","tradeno","cusno","cname","cusaddrcode","urealname",
                                         "busno","ostatus","asstatus","pdnum","pdamt","freight",
                                         "payamt","coupamt","distamt","rvaddno","shipdate","shiptime",
                                         "settstatus","settdate","setttime","otype","odate","otime",
@@ -191,9 +191,9 @@ public class BDOrderAchieveementOP {
 
         Map<String, String> compMap;
         for (TranOrder tranOrder : result) {
-            /*
-            String compStr = IceRemoteUtil.getCompInfoByCacheOrSql(tranOrder.getCusno());
 
+            String compAddr = IceRemoteUtil.getCompleteName(tranOrder.getCusaddrcode());
+            /*
             compMap = GsonUtils.string2Map(compStr);
 
             if (compMap != null) {
@@ -201,6 +201,7 @@ public class BDOrderAchieveementOP {
             }
             */
 //            tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
+            tranOrder.setCusaddr(compAddr);
             tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
             tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
             tranOrder.setPdamt(MathUtil.exactDiv(tranOrder.getPdamt(), 100).doubleValue());

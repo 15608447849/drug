@@ -52,6 +52,25 @@ public class TranOrder implements IDelayedObject {
 
     private String urealname;//所属BD名称
 
+    private String cusaddrcode;//门店地区码
+    private String cusaddr;//门店地址
+
+    public String getCusaddrcode() {
+        return cusaddrcode;
+    }
+
+    public String getCusaddr() {
+        return cusaddr;
+    }
+
+    public void setCusaddrcode(String cusaddrcode) {
+        this.cusaddrcode = cusaddrcode;
+    }
+
+    public void setCusaddr(String cusaddr) {
+        this.cusaddr = cusaddr;
+    }
+
     public String getCname() {
         return cname;
     }
