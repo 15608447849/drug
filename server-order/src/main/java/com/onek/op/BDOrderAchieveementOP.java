@@ -243,7 +243,7 @@ public class BDOrderAchieveementOP {
             sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&2048>0) and belong = ?) UNION ");
             sb.append(" select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
             sb.append(" (roleid&2048>0) and belong = ?))");
-            sb.append(" UNION SELECT uid, roleid, urealname  FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}}  WHERE ( roleid & 2048 > 0 and roleid&4096>0 and roleid&8192>0)  AND belong IN ( SELECT uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} WHERE ( roleid & 1024 > 0 ) AND belong = ? ) ");
+            sb.append(" UNION SELECT uid, roleid, urealname  FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}}  WHERE ( roleid & 2048 > 0 AND roleid & 4096 > 0 AND roleid & 8192 > 0 ) AND belong = ? ");
             sql = sb.toString();
         }
 
@@ -256,7 +256,7 @@ public class BDOrderAchieveementOP {
             sb.append(" UNION SELECT uid, roleid, urealname  FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}}  WHERE ( roleid & 2048 > 0 and roleid&4096>0 and roleid&8192>0)  AND belong IN ( SELECT uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} WHERE ( roleid & 1024 > 0 ) AND belong = ? ) ");
             sql = sb.toString();
         }
-        List<Object[]> list = null;
+        List<Object[]> list;
         if((roleid & 1024)>0 || (roleid & 512)>0){
             list = BaseDAO.getBaseDAO().queryNativeSharding(GLOBALConst.COMP_INIT_VAR,0,sql,uid,uid,uid);
         }else{
@@ -283,5 +283,11 @@ public class BDOrderAchieveementOP {
         System.out.println("==============查询条件："+params);
         return params;
     }
+
+
+    public static Result getBDUserInfo(AppContext appContext){
+        return null;
+    }
+
 
 }
