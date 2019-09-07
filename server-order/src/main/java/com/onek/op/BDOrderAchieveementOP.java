@@ -259,9 +259,19 @@ public class BDOrderAchieveementOP {
         for (Object[] objs: list){
             param.append(objs[0].toString()+",");
         }
-
         String params = param.toString();
         params = params.substring(0,params.length());
+
+        if((roleid & 8192) >0){
+            if(params.indexOf(String.valueOf(uid)) < 0 ){
+                if(params.length()>0){
+                    params += ","+uid;
+                }else{
+                    params = ""+uid;
+                }
+            }
+        }
+        System.out.println("==============查询条件："+params);
         return params;
     }
 
