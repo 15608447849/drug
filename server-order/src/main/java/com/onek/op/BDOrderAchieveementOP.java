@@ -253,7 +253,7 @@ public class BDOrderAchieveementOP {
             sb.append(" (roleid&2048>0) and belong in (select uid FROM tb_bk_system_user where (roleid&1024>0) and belong = ?))) ");
             sql = sb.toString();
         }
-        List<Object[]> list = BaseDAO.getBaseDAO().queryNative(sql,uid,uid);
+        List<Object[]> list = BaseDAO.getBaseDAO().queryNativeSharding(GLOBALConst.COMP_INIT_VAR,0,sql,uid,uid);
 
         StringBuilder param = new StringBuilder();
         for (Object[] objs: list){
