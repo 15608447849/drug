@@ -260,8 +260,9 @@ public class BDOrderAchieveementOP {
             param.append(objs[0].toString()+",");
         }
         String params = param.toString();
-        params = params.substring(0,params.length()-1);
-
+        if(params.length()>0) {
+            params = params.substring(0, params.length() - 1);
+        }
         if((roleid & 8192) >0){
             if(params.indexOf(String.valueOf(uid)) < 0 ){
                 if(params.length()>0){
