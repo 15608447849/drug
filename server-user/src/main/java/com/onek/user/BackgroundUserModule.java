@@ -555,7 +555,7 @@ public class BackgroundUserModule {
         //分组以及排序
         sb.append(" GROUP BY tu.uid DESC  ORDER BY cp.submitdate DESC, cp.submittime DESC ");
 
-        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, "cp.submitdate DESC, cp.submittime DESC", sb.toString());
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, "cp.submitdate DESC, cp.submittime DESC", sb.toString(),param.sdate,param.edate);
         ProxyStoreVO[] proxyStoreVOS = new ProxyStoreVO[queryResult.size()];
         if (queryResult == null || queryResult.isEmpty()) return new Result().setQuery(proxyStoreVOS,pageHolder);
 
