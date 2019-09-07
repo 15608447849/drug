@@ -177,6 +177,7 @@ public interface DSMConst extends UDAConst {
     public final static int TD_WISH_LIST = 74;
     public final static int TB_USER_RELA = 75;
     public final static int TB_BK_COMP = 76;
+    public final static int TB_BK_SYSTEM_USER = 77;
 
     // TODO　切分表的规则数组 ：0 代表不需要切分（默认主从同步），1 代表按公司模型切分表,2 无需要主从同步,4 同步到运营平台
     // 索引必须同_DB_TABLES里的索引对应
@@ -196,7 +197,7 @@ public interface DSMConst extends UDAConst {
             0, 4, 4, 4, 4,//60-64
             0, 0, 0, 0, 0,//65-69
             0, 0, 4, 1, 0,//70-74
-            0, 0, 0, 0, 0,//75-79
+            0, 4, 4, 0, 0,//75-79
             0, 0, 0, 0, 0,
             0, 0, 0, 0, 0};
 }
