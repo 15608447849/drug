@@ -169,11 +169,14 @@ public class BDOrderAchievementServiceImpl {
      */
     private static int getCustruenum(List<BDCompVO> boList, int status) {
         int result =0;
+        if(status == 0){
+            return boList.size();
+        }
         List gl = new ArrayList();
         for (int i = 0; i < boList.size(); i++) {
             BDCompVO comp = boList.get(i);
             if(status>0) {
-                if((comp.getCstatus()&status) >0) {
+                if((comp.getCstatus()&status)==status) {
                     result++;
                     gl.add(comp.getCompid());
                 }
@@ -184,7 +187,6 @@ public class BDOrderAchievementServiceImpl {
         }
         return result;
     }
-
 
     /**
      * 获取BD下门店
