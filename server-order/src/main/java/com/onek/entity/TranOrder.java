@@ -50,22 +50,22 @@ public class TranOrder implements IDelayedObject {
 
     private String cname;//企业名称
 
-    private String urelname;//所属BD名称
+    private String urealname;//所属BD名称
 
     public String getCname() {
         return cname;
     }
 
-    public String getUrelname() {
-        return urelname;
+    public String getUrealname() {
+        return urealname;
     }
 
     public void setCname(String cname) {
         this.cname = cname;
     }
 
-    public void setUrelname(String urelname) {
-        this.urelname = urelname;
+    public void setUrealname(String urealname) {
+        this.urealname = urealname;
     }
 
     public int getInvoicetype() {
