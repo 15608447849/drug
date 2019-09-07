@@ -306,39 +306,39 @@ public class BDAchievementOP {
 
         if((roleid & 8192) >0){ //BD
             sb.delete( 0, sb.length() );
-            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where uid = ? and roleid&8192>0");
+            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and roleid&8192>0");
             sql = sb.toString();
         }
 
         if((roleid & 4096)>0){ //BDM
             sb.delete( 0, sb.length() );
-            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where uid = ? and roleid&8192>0");
+            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ? and roleid&8192>0");
             sql = sb.toString();
         }
 
         if((roleid & 2048)>0){ //城市经理
             sb.delete( 0, sb.length() );
-            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&4096>0 and roleid&8192>0) and belong = ? UNION ");
-            sb.append(" select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&4096>0) and belong = ?) ");
+            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&4096>0 and roleid&8192>0) and belong = ? UNION ");
+            sb.append(" select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&4096>0) and belong = ?) ");
             sql = sb.toString();
         }
 
         if((roleid & 1024)>0){ //渠道经理
             sb.delete( 0, sb.length() );
-            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&2048>0) and belong = ?) UNION ");
-            sb.append(" select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
+            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&2048>0) and belong = ?) UNION ");
+            sb.append(" select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
             sb.append(" (roleid&2048>0) and belong = ?))");
-            sb.append(" UNION SELECT uid, roleid, urealname  FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}}  WHERE ( roleid & 2048 > 0 AND roleid & 4096 > 0 AND roleid & 8192 > 0 ) AND belong = ? ");
+            sb.append(" UNION SELECT uid, roleid, urealname  FROM {{?"+DSMConst.TB_SYSTEM_USER+"}}  WHERE ( roleid & 2048 > 0 AND roleid & 4096 > 0 AND roleid & 8192 > 0 ) AND belong = ? ");
             sql = sb.toString();
         }
 
         if((roleid & 512)>0){ //渠道总监
             sb.delete( 0, sb.length() );
-            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&2048>0) and belong in (select uid FROM ");
-            sb.append(" {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&1024>0) and belong = ?)) UNION ");
-            sb.append(" select uid ,roleid,urealname FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
-            sb.append(" (roleid&2048>0) and belong in (select uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} where (roleid&1024>0) and belong = ?))) ");
-            sb.append(" UNION SELECT uid, roleid, urealname  FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}}  WHERE ( roleid & 2048 > 0 and roleid&4096>0 and roleid&8192>0)  AND belong IN ( SELECT uid FROM {{?"+DSMConst.TB_BK_SYSTEM_USER+"}} WHERE ( roleid & 1024 > 0 ) AND belong = ? ) ");
+            sb.append("select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&2048>0) and belong in (select uid FROM ");
+            sb.append(" {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&1024>0) and belong = ?)) UNION ");
+            sb.append(" select uid ,roleid,urealname FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&8192>0) and belong in (select uid FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
+            sb.append(" (roleid&2048>0) and belong in (select uid FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} where (roleid&1024>0) and belong = ?))) ");
+            sb.append(" UNION SELECT uid, roleid, urealname  FROM {{?"+DSMConst.TB_SYSTEM_USER+"}}  WHERE ( roleid & 2048 > 0 and roleid&4096>0 and roleid&8192>0)  AND belong IN ( SELECT uid FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE ( roleid & 1024 > 0 ) AND belong = ? ) ");
             sql = sb.toString();
         }
         List<Object[]> list;
