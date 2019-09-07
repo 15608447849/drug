@@ -504,9 +504,8 @@ public class BackgroundUserModule {
                                                     " caddr address,cp.submitdate,cp.submittime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName, "+
                                                     " stu.uphone cursorPhone,IF ( sstu.uid IS NOT NULL AND sstu.roleid & 4096 > 0, sstu.uid, bdu.uid ) bdmid, "+
                                                     " IF ( sstu.uid IS NOT NULL AND sstu.roleid & 4096 > 0, sstu.urealname, bdu.urealname ) bdmn, "+
-                                                    " control,cp.storetype storetype  FROM {{?"+DSMConst.TB_COMP+"}} cp JOIN {{?"+DSMConst.TB_SYSTEM_USER+"}} tu ON cp.cid = tu.cid"+
-                                                    " LEFT JOIN {{?"+DSMConst.TB_SYSTEM_USER+"}} stu ON stu.uid = cp.inviter LEFT JOIN {{?"+DSMConst.TB_SYSTEM_USER+"}} sstu ON sstu.uid = stu.belong"+
-                                                    " LEFT JOIN {{?"+DSMConst.TB_SYSTEM_USER+"}} bdu ON bdu.uid = tu.belong WHERE tu.cstatus & 1 = 0 AND ctype = 0";
+                                                    " control,cp.storetype storetype  FROM {{?"+DSMConst.TB_COMP+"}} cp, {{?"+DSMConst.TB_SYSTEM_USER+"}} tu, "+
+                                                    " {{?"+DSMConst.TB_SYSTEM_USER+"}} stu WHERE tu.cstatus & 1 = 0 AND ctype = 0 and stu.uid = cp.inviter ";
 
 
     /**
@@ -553,7 +552,7 @@ public class BackgroundUserModule {
         //时间查询
         sb.append(" and cp.createdate BETWEEN ? and ? ");
         //分组以及排序
-        sb.append(" GROUP BY tu.uid DESC  ");
+        sb.append(" GROUP BY cp.cid desc  ");
 
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, "cp.submitdate DESC, cp.submittime DESC", sb.toString(),param.sdate,param.edate);
         ProxyStoreVO[] proxyStoreVOS = new ProxyStoreVO[queryResult.size()];
