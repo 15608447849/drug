@@ -108,6 +108,9 @@ public class BDOrderAchieveementOP {
             " WHERE comp.cid = ord.cusno  AND ord.ostatus > 0  AND ord.settstatus = 1  ) co " +
             " WHERE co.odate BETWEEN ? AND ?  ) o ON r.cid = o.cid  ) GROUP BY co.inviter";
 
+
+    private static final String TB_BK_SYSTEM_USER= "tb_bk_system_user";
+
     public static Map getNewAddCumulative(String[] time){
         StringBuilder sb = new StringBuilder(_QUERY_NEWADD_CUMULATIVE_SQ);
         List<Object[]> list = BaseDAO.getBaseDAO().queryNativeSharding(GLOBALConst.COMP_INIT_VAR,TimeUtils.getCurrentYear(),sb.toString(),time[0],time[1],time[1],time[0],time[1]);
@@ -127,15 +130,15 @@ public class BDOrderAchieveementOP {
     }
 
 
-    private static String _QUERY_BD_INFO = "select ord.orderno, ord.tradeno, ord.cusno, ord.busno, ord.ostatus, "
+    private static String _QUERY_BD_INFO = "select ord.orderno, ord.tradeno, ord.cusno, comp.cname, u.urealname, ord.busno, ord.ostatus, "
             + " ord.asstatus, ord.pdnum, ord.pdamt, ord.freight, ord.payamt, "
             + " ord.coupamt, ord.distamt, ord.rvaddno, ord.shipdate, ord.shiptime, "
             + " ord.settstatus, ord.settdate, ord.setttime, ord.otype, ord.odate, "
             + " ord.otime, ord.cstatus, ord.consignee, ord.contact, ord.address, ord.balamt, ord.payway, ord.remarks, ord.invoicetype ";
 
-    private static String _ASORD_TABLE = " FROM tb_bk_comp comp, td_bk_tran_order_2019 ord,td_tran_asapp_2019 asord WHERE comp.cid = ord.cusno AND ord.orderno = asord.orderno " ;
+    private static String _ASORD_TABLE = " FROM tb_bk_comp comp, tb_bk_system_user u , {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord,{{?"+DSMConst.TD_TRAN_ASAPP+"}} asord WHERE comp.cid = ord.cusno AND comp.inviter = u.uid  AND ord.orderno = asord.orderno " ;
 
-    private static String _ORDER_TABLE = " FROM tb_bk_comp comp, td_bk_tran_order_2019 ord WHERE comp.cid = ord.cusno " ;
+    private static String _ORDER_TABLE = " FROM tb_bk_comp comp, {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord, tb_bk_system_user u WHERE comp.cid = ord.cusno AND comp.inviter = u.uid  " ;
 
     public static Result getBDUserOrderInfo(AppContext appContext){
 
@@ -151,20 +154,25 @@ public class BDOrderAchieveementOP {
         if(param == null){
             return new Result().fail("查询失败");
         }
-        if(param.selectFlag == 1 || param.selectFlag == 2){
+        if(param.selectFlag == 1 || param.selectFlag == 2){ //完成订单-1  取消订单-2
             sb.append(_ORDER_TABLE);
             if(param.selectFlag == 1){ //完成订单
                 sb.append(" AND ord.ostatus !=- 4 AND ord.ostatus != 0 ");
             }else{//取消订单
                 sb.append(" AND ord.ostatus =-4 ");
             }
-        }else{
+        }else if(param.selectFlag == 3 || param.selectFlag == 4 || param.selectFlag == 5){ //售后-3   退货-4   退款-5
             sb.append(_ASORD_TABLE);
             if(param.selectFlag == 3){ //售后
                 sb.append(" AND ( asord.ckstatus = 1 OR asord.ckstatus = 200 ) ");
-            }else{//退货订单
+            }else if(param.selectFlag == 4){//退货订单
                 sb.append(" AND asord.astype IN ( 0, 1, 2 ) AND ( asord.ckstatus = 1 OR asord.ckstatus = 200 ) ");
+            }else{
+                sb.append(" AND asord.astype IN (1, 2 ) AND ( asord.ckstatus = 1 OR asord.ckstatus = 200 ) ");
             }
+        }else if(param.selectFlag == 6){ //小计-6
+            sb.append(_ORDER_TABLE);
+            sb.append(" AND ord.ostatus != 0 ");
         }
         sb.append(" AND ord.odate BETWEEN ? and ? ");
         sb.append(" AND comp.inviter IN ("+getGLUser(param.uid,param.roleid)+") ");
@@ -174,11 +182,16 @@ public class BDOrderAchieveementOP {
                 " ord.oid DESC ", sb.toString(), param.sdate,param.edate);
 
         TranOrder[] result = new TranOrder[queryResult.size()];
-
-        BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrder.class);
+        String[] reParam = new String[]{"orderno","tradeno","cusno","cname","urealname",
+                                        "busno","ostatus","asstatus","pdnum","pdamt","freight",
+                                        "payamt","coupamt","distamt","rvaddno","shipdate","shiptime",
+                                        "settstatus","settdate","setttime","otype","odate","otime",
+                                        "cstatus","consignee","contact","address","balamt","payway","remarks","invoicetype"};
+        BaseDAO.getBaseDAO().convToEntity(queryResult, result, TranOrder.class,reParam);
 
         Map<String, String> compMap;
         for (TranOrder tranOrder : result) {
+            /*
             String compStr = IceRemoteUtil.getCompInfoByCacheOrSql(tranOrder.getCusno());
 
             compMap = GsonUtils.string2Map(compStr);
@@ -186,7 +199,7 @@ public class BDOrderAchieveementOP {
             if (compMap != null) {
                 tranOrder.setCusname(compMap.get("storeName"));
             }
-
+            */
 //            tranOrder.setGoods(getOrderGoods(tranOrder.getOrderno(), compid));
             tranOrder.setPayamt(MathUtil.exactDiv(tranOrder.getPayamt(), 100).doubleValue());
             tranOrder.setFreight(MathUtil.exactDiv(tranOrder.getFreight(), 100).doubleValue());
@@ -204,19 +217,33 @@ public class BDOrderAchieveementOP {
     private static String getGLUser(long uid,long roleid){
         StringBuilder sb = new StringBuilder();
         String sql = "";
-        if((roleid & 512)>0){
-            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&1024>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))))");
+
+        if((roleid & 8192) >0){ //BD
+            sb.append("select uid ,roleid,urealname FROM "+TB_BK_SYSTEM_USER+" where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM tb_bk_system_user where uid = ? and roleid&8192>0");
         }
-        if((roleid & 1024)>0){
-            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in(select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&2048>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)))");
+
+        if((roleid & 4096)>0){ //BDM
+            sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong = ? UNION select uid ,roleid,urealname FROM tb_bk_system_user where uid = ? and roleid&8192>0");
         }
-        if((roleid & 2048)>0){
-            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&4096>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?))");
+
+        if((roleid & 2048)>0){ //城市经理
+            sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&4096>0 and roleid&8192>0) and belong = ? UNION ");
+            sb.append(" select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&4096>0) and belong = ?) ");
         }
-        if((roleid & 4096)>0){
-            sb.append("select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where roleid&8192>0 and belong in (select uid from {{?"+DSMConst.TB_SYSTEM_USER+"}} where uid = ?)");
+
+        if((roleid & 1024)>0){ //渠道经理
+            sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&2048>0) and belong = ?) UNION ");
+            sb.append(" select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
+            sb.append(" (roleid&2048>0) and belong = ?))");
         }
-        List<Object[]> list = BaseDAO.getBaseDAO().queryNative(sb.toString(),uid);
+
+        if((roleid & 512)>0){ //渠道总监
+            sb.append("select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&4096>0 and roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&2048>0) and belong in (select uid FROM ");
+            sb.append(" tb_bk_system_user where (roleid&1024>0) and belong = ?)) UNION ");
+            sb.append(" select uid ,roleid,urealname FROM tb_bk_system_user where (roleid&8192>0) and belong in (select uid FROM tb_bk_system_user where (roleid&4096>0) and belong in (select uid FROM tb_bk_system_user where ");
+            sb.append(" (roleid&2048>0) and belong in (select uid FROM tb_bk_system_user where (roleid&1024>0) and belong = ?))) ");
+        }
+        List<Object[]> list = BaseDAO.getBaseDAO().queryNative(sb.toString(),uid,uid);
 
         StringBuilder param = new StringBuilder();
         for (Object[] objs: list){

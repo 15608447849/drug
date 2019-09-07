@@ -48,6 +48,26 @@ public class TranOrder implements IDelayedObject {
 
     private List<ERPGoodsVO> erpGoodsVOS;
 
+    private String cname;//企业名称
+
+    private String urelname;//所属BD名称
+
+    public String getCname() {
+        return cname;
+    }
+
+    public String getUrelname() {
+        return urelname;
+    }
+
+    public void setCname(String cname) {
+        this.cname = cname;
+    }
+
+    public void setUrelname(String urelname) {
+        this.urelname = urelname;
+    }
+
     public int getInvoicetype() {
         return invoicetype;
     }
