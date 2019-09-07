@@ -175,7 +175,11 @@ public class BDOrderAchieveementOP {
             sb.append(" AND ord.ostatus != 0 ");
         }
         sb.append(" AND ord.odate BETWEEN ? and ? ");
-        sb.append(" AND comp.inviter IN ("+getGLUser(param.uid,param.roleid)+") ");
+        String pdata = getGLUser(param.uid,param.roleid);
+        if(pdata.length()<=0 || StringUtils.isEmpty(pdata)){
+            return  new Result().fail("当前人员暂无订单信息！");
+        }
+        sb.append(" AND comp.inviter IN ("+pdata+") ");
 
         List<Object[]> queryResult = BaseDAO.getBaseDAO().queryNativeSharding(
                 GLOBALConst.COMP_INIT_VAR, TimeUtils.getCurrentYear(), pageHolder, page,
@@ -283,11 +287,4 @@ public class BDOrderAchieveementOP {
         System.out.println("==============查询条件："+params);
         return params;
     }
-
-
-    public static Result getBDUserInfo(AppContext appContext){
-        return null;
-    }
-
-
 }

@@ -8,12 +8,18 @@ import com.onek.annotation.UserPermission;
 import com.onek.consts.CSTATUS;
 import com.onek.context.AppContext;
 import com.onek.entitys.Result;
+import com.onek.user.entity.BDAchievementVO;
+import com.onek.user.entity.ProxyStoreVO;
 import com.onek.user.entity.RoleVO;
 import com.onek.user.entity.UserInfoVo;
+import com.onek.user.operations.BDAchievementOP;
 import com.onek.util.GenIdUtil;
+import com.onek.util.IceRemoteUtil;
 import com.onek.util.RoleCodeCons;
+import com.onek.util.area.AreaEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.EncryptUtils;
 import util.GsonUtils;
 import util.ModelUtil;
@@ -491,4 +497,87 @@ public class BackgroundUserModule {
         System.out.println("余额抵扣百分比："+vlist.get(0)[0].toString());
         return vlist.get(0)[0].toString();
     }
+
+
+
+    private static final String _QUERY_BDUSER_INFO = "SELECT DISTINCT cp.cid companyId, tu.uphone phone,tu.uid,cname company,caddrcode addressCode, " +
+                                                    " caddr address,cp.submitdate,cp.submittime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName, "+
+                                                    " stu.uphone cursorPhone,IF ( sstu.uid IS NOT NULL AND sstu.roleid & 4096 > 0, sstu.uid, bdu.uid ) bdmid, "+
+                                                    " IF ( sstu.uid IS NOT NULL AND sstu.roleid & 4096 > 0, sstu.urealname, bdu.urealname ) bdmn, "+
+                                                    " control,cp.storetype storetype  FROM {{?"+DSMConst.TB_COMP+"}} cp JOIN {{?"+DSMConst.TB_SYSTEM_USER+"}} tu ON cp.cid = tu.cid"+
+                                                    " LEFT JOIN {?"+DSMConst.TB_SYSTEM_USER+"}} stu ON stu.uid = cp.inviter LEFT JOIN {?"+DSMConst.TB_SYSTEM_USER+"}} sstu ON sstu.uid = stu.belong"+
+                                                    " LEFT JOIN {?"+DSMConst.TB_SYSTEM_USER+"}} bdu ON bdu.uid = tu.belong WHERE tu.cstatus & 1 = 0 AND ctype = 0";
+
+
+    /**
+     * 内部查询门店BEAN
+     */
+    private class Param{
+        private int selectFlag; //查询门店类型 1-审核成功  2-审核失败  0-所有
+        private long uid; //当前用户id
+        private long roleid; //当前用户权限id
+        private String sdate; //开始时间
+        private String edate; //结束时间
+    }
+    /**
+     * 获取BD用户信息
+     * @param appContext
+     * @return
+     */
+    public Result getBdUserInfo(AppContext appContext){
+        Page page = new Page();
+        page.pageIndex = appContext.param.pageIndex;
+        page.pageSize = appContext.param.pageNumber;
+
+        PageHolder pageHolder = new PageHolder(page);
+
+        String json = appContext.param.json;
+        Param param = GsonUtils.jsonToJavaBean(json,Param.class);
+        StringBuilder sb = new StringBuilder(_QUERY_BDUSER_INFO);
+        if(param == null){
+            return new Result().fail("查询条件不足！");
+        }
+
+        String selectParams = BDAchievementOP.getBDUser(param.uid,param.roleid);
+        if(StringUtils.isEmpty(selectParams)){
+            return new Result().fail("当前人员暂无管理企业信息！");
+        }
+        sb.append(" and cp.inviter in ( ").append(selectParams).append(" ) ");
+        if(param.selectFlag == 1){//查询审核通过门店
+            sb.append(" and cp.cstatus&256=256 ");
+        }else if(param.selectFlag == 2){//查询审核不通过门店
+            sb.append(" and cp.cstatus&256!=256");
+        }else{//查询所有
+
+        }
+        //时间查询
+        sb.append(" and cp.createdate BETWEEN ? and ? ");
+        //分组以及排序
+        sb.append(" GROUP BY tu.uid DESC  ORDER BY cp.submitdate DESC, cp.submittime DESC ");
+
+        List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, "cp.submitdate DESC, cp.submittime DESC", sb.toString());
+        ProxyStoreVO[] proxyStoreVOS = new ProxyStoreVO[queryResult.size()];
+        if (queryResult == null || queryResult.isEmpty()) return new Result().setQuery(proxyStoreVOS,pageHolder);
+
+        baseDao.convToEntity(queryResult, proxyStoreVOS, ProxyStoreVO.class,
+                "companyId","phone","uid","company","addressCode","address","createdate",
+                "createtime","status","cursorId","cursorName","cursorPhone","bdmid","bdmn","control","storetype");
+
+        for (ProxyStoreVO proxyStoreVO : proxyStoreVOS){
+            AreaEntity[] ancestors = IceRemoteUtil.getAncestors(Long.parseLong(proxyStoreVO.getAddressCode()));
+            if(ancestors != null && ancestors.length > 0){
+                LogUtil.getDefaultLogger().debug(ancestors[0].getArean());
+                proxyStoreVO.setProvince(ancestors[0].getArean());
+                if (ancestors.length > 1) {
+                    proxyStoreVO.setCity(ancestors[1].getArean());
+                    if (ancestors.length > 2) {
+                        proxyStoreVO.setRegion(ancestors[2].getArean());
+                    }
+                }
+            }
+        }
+        return new Result().setQuery(proxyStoreVOS,pageHolder);
+    }
+
+
 }
