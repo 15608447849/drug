@@ -583,4 +583,19 @@ public class BackgroundUserModule {
     }
 
 
+    /**
+     * 获取当前地区的BDM用户
+     * @return
+     */
+    @UserPermission(ignore = true)
+    public Result getBDMByAreaCode(AppContext appContext){
+        String[] arr = appContext.param.arrays;
+        List<String> list = BDAchievementOP.getArea(arr[0]);
+        String json = "";
+        for (String str : list){
+            json += str+",";
+        }
+        return new Result().success(json.substring(0,json.length()-1));
+    }
+
 }

@@ -968,4 +968,21 @@ public class IceRemoteUtil {
         return str;
     }
 
+    public static List<String> getAreaUserUid(String addrcode){
+        String str = ic.setServerAndRequest("userServer", "BackgroundUserModule", "getBDMByAreaCode")
+                .setArrayParams(addrcode)
+                .execute();
+
+        List<String> list = new ArrayList<String>();
+        JSONObject jsons = JSONObject.parseObject(str);
+        String arr = (String) jsons.get("data");
+        System.out.println("========areac->uid = " + arr);
+        String[] arrs = arr.split(",");
+        for(String area : arrs){
+            list.add(area);
+        }
+            return list;
+    }
+
+
 }

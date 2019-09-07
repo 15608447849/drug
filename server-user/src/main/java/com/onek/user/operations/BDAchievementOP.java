@@ -104,6 +104,17 @@ public class BDAchievementOP {
 
     }
 
+    public static List<String> getArea(String addrcode){
+        List<String> reList = new ArrayList<String>();
+        List<Object[]> list = baseDao.queryNative(_QUERY_AREA_USER,addrcode);
+        if(list.size()>0){
+            for (Object[] obj : list) {
+                reList.add(obj[0].toString());
+            }
+        }
+        return reList;
+    }
+
     /**
      * 查询BD人员条件
      * @param param
