@@ -536,9 +536,12 @@ public class BackgroundUserModule {
             return new Result().fail("查询条件不足！");
         }
         //判断是否具有权限
-        boolean flag =getRole(loginroleid,param.roleid);
-        if(!flag){
-            return new Result().fail("当前用户无权限查询上级数据");
+        if((loginroleid&1)>0){ //过滤超级管理员
+        }else {
+            boolean flag = getRole(loginroleid, param.roleid);
+            if (!flag) {
+                return new Result().fail("当前用户无权限查询上级数据");
+            }
         }
 
         String selectParams = BDAchievementOP.getBDUser(param.uid,param.roleid);
