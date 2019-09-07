@@ -502,10 +502,9 @@ public class BackgroundUserModule {
 
     private static final String _QUERY_BDUSER_INFO = " select distinct cp.cid companyId, tu.uphone phone,tu.uid,cname company,caddrcode addressCode, " +
                                                     " caddr address,cp.submitdate,cp.submittime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName, "+
-                                                    " stu.uphone cursorPhone,IF ( sstu.uid IS NOT NULL AND sstu.roleid & 4096 > 0, sstu.uid, bdu.uid ) bdmid, "+
-                                                    " IF ( sstu.uid IS NOT NULL AND sstu.roleid & 4096 > 0, sstu.urealname, bdu.urealname ) bdmn, "+
+                                                    " stu.uphone cursorPhone,"+
                                                     " control,cp.storetype storetype  FROM {{?"+DSMConst.TB_COMP+"}} cp, {{?"+DSMConst.TB_SYSTEM_USER+"}} tu, "+
-                                                    " {{?"+DSMConst.TB_SYSTEM_USER+"}} stu WHERE tu.cstatus & 1 = 0 AND ctype = 0 and stu.uid = cp.inviter ";
+                                                    " {{?"+DSMConst.TB_SYSTEM_USER+"}} stu WHERE ctype = 0 and stu.uid = cp.inviter ";
 
 
     /**
@@ -560,7 +559,7 @@ public class BackgroundUserModule {
 
         baseDao.convToEntity(queryResult, proxyStoreVOS, ProxyStoreVO.class,
                 "companyId","phone","uid","company","addressCode","address","createdate",
-                "createtime","status","cursorId","cursorName","cursorPhone","bdmid","bdmn","control","storetype");
+                "createtime","status","cursorId","cursorName","cursorPhone","control","storetype");
 
         for (ProxyStoreVO proxyStoreVO : proxyStoreVOS){
             AreaEntity[] ancestors = IceRemoteUtil.getAncestors(Long.parseLong(proxyStoreVO.getAddressCode()));
