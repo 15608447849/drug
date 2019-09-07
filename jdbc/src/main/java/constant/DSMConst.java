@@ -92,6 +92,7 @@ public interface DSMConst extends UDAConst {
             {"td_wish_list"},//74 心愿单
             {"tb_user_rela"},//75 用户-用户关联表
             {"tb_bk_comp"},//76 用户-运营后台用户表
+            {"tb_bk_system_user"},//76 用户-运营后台用户表
 
     };
 
