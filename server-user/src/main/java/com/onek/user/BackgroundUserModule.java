@@ -20,10 +20,7 @@ import com.onek.util.area.AreaEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
 import org.hyrdpf.util.LogUtil;
-import util.EncryptUtils;
-import util.GsonUtils;
-import util.ModelUtil;
-import util.StringUtils;
+import util.*;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -524,6 +521,8 @@ public class BackgroundUserModule {
      * @return
      */
     public Result getBdUserInfo(AppContext appContext){
+        long loginroleid = appContext.getUserSession().roleCode;
+
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
         page.pageSize = appContext.param.pageNumber;
@@ -535,6 +534,11 @@ public class BackgroundUserModule {
         StringBuilder sb = new StringBuilder(_QUERY_BDUSER_INFO);
         if(param == null){
             return new Result().fail("查询条件不足！");
+        }
+        //判断是否具有权限
+        boolean flag =getRole(loginroleid,param.roleid);
+        if(!flag){
+            return new Result().fail("当前用户无权限查询上级数据");
         }
 
         String selectParams = BDAchievementOP.getBDUser(param.uid,param.roleid);
@@ -598,4 +602,35 @@ public class BackgroundUserModule {
         return new Result().success(json.substring(0,json.length()-1));
     }
 
+
+    /**
+     * 判断当前用户是否有权限查询上级
+     * @param loginrole 登陆用户
+     * @param nowrole //查询的用户
+     * @return
+     */
+    public static boolean getRole(long loginrole,long nowrole) {
+        int[] a = new int[]{512,1024,2048,4096,8192};
+
+        long login_maxrole = Long.MAX_VALUE;
+
+        long now_maxrole = Long.MAX_VALUE;
+        long login_roleid = loginrole;
+
+        long now_roleid = nowrole;
+        for (int i: a){
+            if((login_roleid&i)>0){
+                login_maxrole = Math.min(i,login_maxrole);
+
+            }
+            if((now_roleid&i)>0){
+                now_maxrole = Math.min(i,now_maxrole);
+            }
+        }
+        if(login_maxrole>now_maxrole){
+           return false;
+        }else{
+            return true;
+        }
+    }
 }

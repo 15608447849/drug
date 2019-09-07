@@ -143,6 +143,8 @@ public class BDOrderAchieveementOP {
 
     public static Result getBDUserOrderInfo(AppContext appContext){
 
+        long loginroleid = appContext.getUserSession().roleCode;
+
         Page page = new Page();
         page.pageIndex = appContext.param.pageIndex;
         page.pageSize = appContext.param.pageNumber;
@@ -155,6 +157,14 @@ public class BDOrderAchieveementOP {
         if(param == null){
             return new Result().fail("查询失败");
         }
+
+        //判断是否具有权限
+        boolean flag =getRole(loginroleid,param.roleid);
+        if(!flag){
+            return new Result().fail("当前用户无权限查询上级数据");
+        }
+
+
         if(param.selectFlag == 1 || param.selectFlag == 2){ //完成订单-1  取消订单-2
             sb.append(_ORDER_TABLE);
             if(param.selectFlag == 1){ //完成订单
@@ -303,5 +313,37 @@ public class BDOrderAchieveementOP {
         }
         System.out.println("==============查询条件："+params);
         return params;
+    }
+
+
+    /**
+     * 判断当前用户是否有权限查询上级
+     * @param loginrole 登陆用户
+     * @param nowrole //查询的用户
+     * @return
+     */
+    public static boolean getRole(long loginrole,long nowrole) {
+        int[] a = new int[]{512,1024,2048,4096,8192};
+
+        long login_maxrole = Long.MAX_VALUE;
+
+        long now_maxrole = Long.MAX_VALUE;
+        long login_roleid = loginrole;
+
+        long now_roleid = nowrole;
+        for (int i: a){
+            if((login_roleid&i)>0){
+                login_maxrole = Math.min(i,login_maxrole);
+
+            }
+            if((now_roleid&i)>0){
+                now_maxrole = Math.min(i,now_maxrole);
+            }
+        }
+        if(login_maxrole>now_maxrole){
+            return false;
+        }else{
+            return true;
+        }
     }
 }
