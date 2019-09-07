@@ -234,7 +234,7 @@ public class BDAchievementOP {
             }
         }
         List<String> fList = new ArrayList<String>();
-        List<Object[]> list = baseDao.queryNative(sb.toString());
+        List<Object[]> list = baseDao.queryNative(sb.toString(),param.sdate,param.edate);
         BDCompVO[] comps = new BDCompVO[list.size()];
         baseDao.convToEntity(list,comps,BDCompVO.class);
         return Arrays.asList(comps);
