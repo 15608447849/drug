@@ -500,13 +500,13 @@ public class BackgroundUserModule {
 
 
 
-    private static final String _QUERY_BDUSER_INFO = "SELECT DISTINCT cp.cid companyId, tu.uphone phone,tu.uid,cname company,caddrcode addressCode, " +
+    private static final String _QUERY_BDUSER_INFO = " select distinct cp.cid companyId, tu.uphone phone,tu.uid,cname company,caddrcode addressCode, " +
                                                     " caddr address,cp.submitdate,cp.submittime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName, "+
                                                     " stu.uphone cursorPhone,IF ( sstu.uid IS NOT NULL AND sstu.roleid & 4096 > 0, sstu.uid, bdu.uid ) bdmid, "+
                                                     " IF ( sstu.uid IS NOT NULL AND sstu.roleid & 4096 > 0, sstu.urealname, bdu.urealname ) bdmn, "+
                                                     " control,cp.storetype storetype  FROM {{?"+DSMConst.TB_COMP+"}} cp JOIN {{?"+DSMConst.TB_SYSTEM_USER+"}} tu ON cp.cid = tu.cid"+
-                                                    " LEFT JOIN {?"+DSMConst.TB_SYSTEM_USER+"}} stu ON stu.uid = cp.inviter LEFT JOIN {?"+DSMConst.TB_SYSTEM_USER+"}} sstu ON sstu.uid = stu.belong"+
-                                                    " LEFT JOIN {?"+DSMConst.TB_SYSTEM_USER+"}} bdu ON bdu.uid = tu.belong WHERE tu.cstatus & 1 = 0 AND ctype = 0";
+                                                    " LEFT JOIN {{?"+DSMConst.TB_SYSTEM_USER+"}} stu ON stu.uid = cp.inviter LEFT JOIN {{?"+DSMConst.TB_SYSTEM_USER+"}} sstu ON sstu.uid = stu.belong"+
+                                                    " LEFT JOIN {{?"+DSMConst.TB_SYSTEM_USER+"}} bdu ON bdu.uid = tu.belong WHERE tu.cstatus & 1 = 0 AND ctype = 0";
 
 
     /**
