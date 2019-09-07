@@ -553,7 +553,7 @@ public class BackgroundUserModule {
         //时间查询
         sb.append(" and cp.createdate BETWEEN ? and ? ");
         //分组以及排序
-        sb.append(" GROUP BY tu.uid DESC  ORDER BY cp.submitdate DESC, cp.submittime DESC ");
+        sb.append(" GROUP BY tu.uid DESC  ");
 
         List<Object[]> queryResult = baseDao.queryNative(pageHolder, page, "cp.submitdate DESC, cp.submittime DESC", sb.toString(),param.sdate,param.edate);
         ProxyStoreVO[] proxyStoreVOS = new ProxyStoreVO[queryResult.size()];
