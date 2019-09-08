@@ -501,7 +501,7 @@ public class BackgroundUserModule {
                                                     " caddr address,cp.submitdate,cp.submittime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName, "+
                                                     " stu.uphone cursorPhone,"+
                                                     " control,cp.storetype storetype  FROM {{?"+DSMConst.TB_COMP+"}} cp, {{?"+DSMConst.TB_SYSTEM_USER+"}} tu, "+
-                                                    " {{?"+DSMConst.TB_SYSTEM_USER+"}} stu WHERE ctype = 0 and stu.uid = cp.inviter ";
+                                                    " {{?"+DSMConst.TB_SYSTEM_USER+"}} stu WHERE ctype = 0 and tu.cid = cp.cid and stu.uid = cp.inviter ";
 
 
     /**

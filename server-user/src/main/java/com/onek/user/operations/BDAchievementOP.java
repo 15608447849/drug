@@ -238,7 +238,7 @@ public class BDAchievementOP {
         if(param != null){
             if(StringUtils.isEmpty(param.sdate) || StringUtils.isEmpty(param.edate)){
             }else{
-                sb.append(" and createdate BETWEEN '"+param.sdate+"' and '"+param.edate+"' ");
+                sb.append(" and auditdate BETWEEN '"+param.sdate+"' and '"+param.edate+"' ");
             }
             if(!StringUtils.isEmpty(param.areac) && !"430000000000".equals(param.areac)){
                 sb.append(" and caddrcode = "+param.areac);
