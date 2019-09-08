@@ -25,7 +25,7 @@ public class BDAchievementServiceImpl {
             "select uid,cid,roleid,urealname,belong,2 flag from {{?"+ DSMConst .TB_SYSTEM_USER+"}} where roleid & 1024 > 0 and cstatus =0 union "+
             "select uid,cid,roleid,urealname,belong,3 flag from {{?"+ DSMConst .TB_SYSTEM_USER+"}} where roleid & 2048 > 0 and cstatus =0 union "+
             "select uid,cid,roleid,urealname,belong,4 flag from {{?"+ DSMConst .TB_SYSTEM_USER+"}} where roleid & 4096 > 0 and roleid & 512 =0 and cstatus =0 union "+
-            "select uid,cid,roleid,urealname,belong,5 flag from {{?"+ DSMConst .TB_SYSTEM_USER+"}} where roleid & 8192 > 0 and cstatus =0 ) as a where a.uid != 2802";
+            "select uid,cid,roleid,urealname,belong,5 flag from {{?"+ DSMConst .TB_SYSTEM_USER+"}} where roleid & 8192 > 0 and cstatus =0 ) as a where a.uid != 2802 order BY a.uid desc";
 
 
     private final static int QDJL = 1024;//渠道经理
