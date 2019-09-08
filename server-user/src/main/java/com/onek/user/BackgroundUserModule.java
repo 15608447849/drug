@@ -497,11 +497,12 @@ public class BackgroundUserModule {
 
 
 
-    private static final String _QUERY_BDUSER_INFO = " select distinct cp.cid companyId, tu.uphone phone,tu.uid,cname company,caddrcode addressCode, " +
+    private static final String _QUERY_BDUSER_INFO = " select distinct cp.cid companyId, ( SELECT u.uphone FROM tb_system_user u WHERE u.cid = cp.cid ) phone," +
+                                                    " ( SELECT u.uid FROM tb_system_user u WHERE u.cid = cp.cid ) uid,cname company,caddrcode addressCode, " +
                                                     " caddr address,cp.auditdate,cp.audittime,cp.cstatus,stu.uid cursorId,stu.urealname cursorName, "+
                                                     " stu.uphone cursorPhone,"+
-                                                    " control,cp.storetype storetype  FROM {{?"+DSMConst.TB_COMP+"}} cp, {{?"+DSMConst.TB_SYSTEM_USER+"}} tu, "+
-                                                    " {{?"+DSMConst.TB_SYSTEM_USER+"}} stu WHERE ctype = 0 and tu.cid = cp.cid and stu.uid = cp.inviter ";
+                                                    " control,cp.storetype storetype  FROM {{?"+DSMConst.TB_COMP+"}} cp, "+
+                                                    " {{?"+DSMConst.TB_SYSTEM_USER+"}} stu WHERE ctype = 0 and stu.uid = cp.inviter ";
 
 
     /**
