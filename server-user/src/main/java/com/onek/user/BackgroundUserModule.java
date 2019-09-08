@@ -558,7 +558,7 @@ public class BackgroundUserModule {
         }
 
         //时间查询
-        sb.append(" and cp.createdate BETWEEN ? and ? ");
+        sb.append(" and cp.auditdate BETWEEN ? and ? ");
         if(!StringUtils.isEmpty(param.addrcode) && !"430000000000".equals(param.addrcode)){
             sb.append(" AND cp.caddrcode = "+ param.addrcode );
         }
