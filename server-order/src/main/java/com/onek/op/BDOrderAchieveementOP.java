@@ -382,6 +382,17 @@ public class BDOrderAchieveementOP {
         if(param == null){
             return new Result().fail("查询参数不可用！");
         }
+
+        long loginroleid = appContext.getUserSession().roleCode;
+
+        //判断是否具有权限
+        if((loginroleid&1)>0){ //过滤超级管理员
+        }else {
+            boolean flag = getRole(loginroleid, param.roleid);
+            if (!flag) {
+                return new Result().fail("当前用户无权限查询上级数据");
+            }
+        }
         String bdname = getGLUser(param.uid,param.roleid,"430000000000");
         if(StringUtils.isEmpty(bdname) || bdname.length()<=0){
             return  new Result().fail("当前人员暂无首购信息！");
