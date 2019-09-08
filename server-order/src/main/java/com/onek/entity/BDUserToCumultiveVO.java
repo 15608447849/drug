@@ -2,15 +2,16 @@ package com.onek.entity;
 
 public class BDUserToCumultiveVO {
 
-    public int uid; //用户码
-    public int inviter;//所属用户id
-    public String cname;//企业名
-    public String urealname;//BD名称
-    public String phone; //手机
-    public String auditdate;//审核日期
-    public String audittime;//审核时间
-    public String caddrcode;//地区码
+    private int uid; //用户码
+    private int inviter;//所属用户id
+    private String company ;//企业名
+    private String cursorName ;//BD名称
+    private String phone; //手机
+    private String createdate;//审核日期
+    private String createtime ;//审核时间
+    private String caddrcode;//地区码
     private int control;//控销协议
+    private String address;//收货地址
     public int status; //状态
 
 
@@ -18,6 +19,54 @@ public class BDUserToCumultiveVO {
     private String province; //省
     private String city; //市
     private String region; //区域
+
+    public void setCompany(String company) {
+        this.company = company;
+    }
+
+    public void setCursorName(String cursorName) {
+        this.cursorName = cursorName;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public void setCreatedate(String createdate) {
+        this.createdate = createdate;
+    }
+
+    public void setCreatetime(String createtime) {
+        this.createtime = createtime;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getCompany() {
+        return company;
+    }
+
+    public String getCursorName() {
+        return cursorName;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public String getCreatedate() {
+        return createdate;
+    }
+
+    public String getCreatetime() {
+        return createtime;
+    }
+
+    public String getAddress() {
+        return address;
+    }
 
     public void setProvince(String province) {
         this.province = province;
@@ -51,25 +100,6 @@ public class BDUserToCumultiveVO {
         return inviter;
     }
 
-    public String getCname() {
-        return cname;
-    }
-
-    public String getUrealname() {
-        return urealname;
-    }
-
-    public String getPhone() {
-        return phone;
-    }
-
-    public String getAuditdate() {
-        return auditdate;
-    }
-
-    public String getAudittime() {
-        return audittime;
-    }
 
     public String getCaddrcode() {
         return caddrcode;
@@ -91,25 +121,6 @@ public class BDUserToCumultiveVO {
         this.inviter = inviter;
     }
 
-    public void setCname(String cname) {
-        this.cname = cname;
-    }
-
-    public void setUrealname(String urealname) {
-        this.urealname = urealname;
-    }
-
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
-
-    public void setAuditdate(String auditdate) {
-        this.auditdate = auditdate;
-    }
-
-    public void setAudittime(String audittime) {
-        this.audittime = audittime;
-    }
 
     public void setCaddrcode(String caddrcode) {
         this.caddrcode = caddrcode;

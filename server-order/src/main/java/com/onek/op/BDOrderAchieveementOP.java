@@ -355,15 +355,15 @@ public class BDOrderAchieveementOP {
 
 
     private static final String _QUERY_CUMULTIVE_SUM =" SELECT DISTINCT ( co.cid ) cid, co.inviter inviter, co.cname cname, co.urealname urealname, co.phone phone, co.auditdate auditdate, co.audittime audittime,"
-                                                     +" co.caddrcode caddrcode, co.control control, co.cstatus  FROM ( SELECT comp.cid cid, comp.cstatus cstatus, comp.auditdate auditdate, comp.audittime audittime,"
-                                                     +" comp.caddrcode caddrcode, comp.inviter inviter, comp.cname cname, comp.control control, tu.uphone phone, stu.urealname urealname, ord.orderno orderno, ord.ostatus ostatus,"
+                                                     +" co.caddrcode caddrcode, co.control control,co.addr addr, co.cstatus  FROM ( SELECT comp.cid cid, comp.cstatus cstatus, comp.auditdate auditdate, comp.audittime audittime,"
+                                                     +" comp.caddrcode caddrcode, comp.inviter inviter, comp.cname cname, comp.control control,comp.caddr addr, tu.uphone phone, stu.urealname urealname, ord.orderno orderno, ord.ostatus ostatus,"
                                                      +" ord.odate odate FROM tb_bk_comp comp, tb_bk_system_user tu, tb_bk_system_user stu, {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord  WHERE comp.cid = ord.cusno  AND comp.cid = tu.cid "
                                                      +" AND comp.inviter = stu.uid AND ord.ostatus >= 1 ) co  WHERE 1=1 ";
 
 
     private static final String _QUERY_CUMULTIVE_NEW = " SELECT DISTINCT ( co.cid ) cid, co.inviter inviter, co.cname cname, co.urealname urealname, co.phone phone, co.auditdate auditdate, co.audittime audittime,"
-                                                      +" co.caddrcode caddrcode, co.control control, co.cstatus FROM ( SELECT comp.cid cid, comp.cstatus cstatus, comp.auditdate auditdate, comp.audittime audittime,"
-                                                      +" comp.caddrcode caddrcode, comp.inviter inviter, comp.cname cname, comp.control control, tu.uphone phone, stu.urealname urealname, ord.orderno orderno, ord.ostatus ostatus,"
+                                                      +" co.caddrcode caddrcode, co.control control,co.addr addr, co.cstatus FROM ( SELECT comp.cid cid, comp.cstatus cstatus, comp.auditdate auditdate, comp.audittime audittime,"
+                                                      +" comp.caddrcode caddrcode, comp.inviter inviter, comp.cname cname, comp.control control,comp.caddr addr, tu.uphone phone, stu.urealname urealname, ord.orderno orderno, ord.ostatus ostatus,"
                                                       +" ord.odate odate FROM tb_bk_comp comp, tb_bk_system_user tu, tb_bk_system_user stu, {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord  WHERE comp.cid = ord.cusno  AND comp.cid = tu.cid "
                                                       +" AND comp.inviter = stu.uid AND ord.ostatus > 0 AND ord.settstatus = 1 ) co  WHERE 1=1 ";
 

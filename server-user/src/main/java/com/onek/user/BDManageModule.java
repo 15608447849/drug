@@ -352,8 +352,28 @@ public class BDManageModule {
         } else {
             params = new Object[]{cid, belong, belong};
         }
+
+
         sqlBuilder.append(selectSQL);
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 1).append(" group by uid order by oid desc");
+        if((roleId & 1024) > 0){
+            sqlBuilder.delete(0,sqlBuilder.length());
+            selectSQL = " select  * from ( SELECT oid,uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime,u.offdate,u.offtime,u.cstatus,logindate,logintime, CONCAT(rname) as rname"+
+                    " FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} u left join {{?"+DSMConst.TB_SYSTEM_ROLE+"}} r on u.roleid&r.roleid>0 "+
+                    " WHERE ( u.roleid & 4096 > 0 AND u.roleid & 8192 > 0 )  AND belong IN ( SELECT uid FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE ( roleid & 2048 > 0 ) AND belong = ? ) GROUP BY u.uid"+
+                    " UNION SELECT oid,uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime,u.offdate,u.offtime,u.cstatus,logindate,logintime, CONCAT(rname) as rname"+
+                    " FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} u left join {{?"+DSMConst.TB_SYSTEM_ROLE+"}} r on u.roleid&r.roleid>0 "+
+                    " WHERE ( u.roleid & 8192 > 0 )  AND belong IN "+
+                    " ( SELECT uid  FROM  {{?"+DSMConst.TB_SYSTEM_USER+"}}   WHERE ( roleid & 4096 > 0 )  AND belong IN ( SELECT uid FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE ( roleid & 2048 > 0 ) AND belong = ? ) )"+
+                    " GROUP BY u.uid UNION "+
+                    " SELECT oid,uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime,u.offdate,u.offtime,u.cstatus,logindate,logintime, CONCAT(rname) as rname "+
+                    " FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} u left join {{?"+DSMConst.TB_SYSTEM_ROLE+"}} r on u.roleid&r.roleid>0 "+
+                    " WHERE ( u.roleid & 2048 > 0 AND u.roleid & 4096 > 0 AND u.roleid & 8192 > 0 )  AND belong = ? GROUP BY u.uid ) re";
+
+            params = new Object[]{belong, belong, belong};
+            sqlBuilder.append(selectSQL);
+            sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 1).append(" group by re.uid order by re.oid desc");
+        }
         List<Object[]> queryResult = baseDao.queryNativeC(pageHolder, page, sqlBuilder.toString(), params);
         if (queryResult == null || queryResult.isEmpty()) return result.success(new Object[]{});
         UserInfoVo[] userInfoVos = new UserInfoVo[queryResult.size()];
