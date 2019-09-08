@@ -185,4 +185,12 @@ public class BackOrderInfoModule {
     public Result getBDUserOrderInfo(AppContext appContext){
         return BDOrderAchieveementOP.getBDUserOrderInfo(appContext);
     }
+
+    /**
+     * 查询首购累计以及新增首购
+     * @return
+     */
+    public Result getUserSGAndXZSG(AppContext appContext){
+        return BDOrderAchieveementOP.getBDUserCumultive(appContext);
+    }
 }

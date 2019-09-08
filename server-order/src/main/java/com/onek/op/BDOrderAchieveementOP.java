@@ -5,13 +5,16 @@ import cn.hy.otms.rpcproxy.comm.cstruct.Page;
 import cn.hy.otms.rpcproxy.comm.cstruct.PageHolder;
 import com.onek.context.AppContext;
 import com.onek.entity.BDOrderAchieveemntVO;
+import com.onek.entity.BDUserToCumultiveVO;
 import com.onek.entity.TranOrder;
 import com.onek.entitys.Result;
 import com.onek.order.BackOrderInfoModule;
 import com.onek.util.GLOBALConst;
 import com.onek.util.IceRemoteUtil;
+import com.onek.util.area.AreaEntity;
 import constant.DSMConst;
 import dao.BaseDAO;
+import org.hyrdpf.util.LogUtil;
 import util.*;
 
 import java.util.*;
@@ -348,5 +351,71 @@ public class BDOrderAchieveementOP {
         }else{
             return true;
         }
+    }
+
+
+    private static final String _QUERY_CUMULTIVE_SUM =" SELECT DISTINCT ( co.cid ) cid, co.inviter inviter, co.cname cname, co.urealname urealname, co.phone phone, co.auditdate auditdate, co.audittime audittime,"
+                                                     +" co.caddrcode caddrcode, co.control control, co.cstatus  FROM ( SELECT comp.cid cid, comp.cstatus cstatus, comp.auditdate auditdate, comp.audittime audittime,"
+                                                     +" comp.caddrcode caddrcode, comp.inviter inviter, comp.cname cname, comp.control control, tu.uphone phone, stu.urealname urealname, ord.orderno orderno, ord.ostatus ostatus,"
+                                                     +" ord.odate odate FROM tb_bk_comp comp, tb_bk_system_user tu, tb_bk_system_user stu, {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord  WHERE comp.cid = ord.cusno  AND comp.cid = tu.cid "
+                                                     +" AND comp.inviter = stu.uid AND ord.ostatus >= 1 ) co  WHERE 1=1 ";
+
+
+    private static final String _QUERY_CUMULTIVE_NEW = " SELECT DISTINCT ( co.cid ) cid, co.inviter inviter, co.cname cname, co.urealname urealname, co.phone phone, co.auditdate auditdate, co.audittime audittime,"
+                                                      +" co.caddrcode caddrcode, co.control control, co.cstatus FROM ( SELECT comp.cid cid, comp.cstatus cstatus, comp.auditdate auditdate, comp.audittime audittime,"
+                                                      +" comp.caddrcode caddrcode, comp.inviter inviter, comp.cname cname, comp.control control, tu.uphone phone, stu.urealname urealname, ord.orderno orderno, ord.ostatus ostatus,"
+                                                      +" ord.odate odate FROM tb_bk_comp comp, tb_bk_system_user tu, tb_bk_system_user stu, {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord  WHERE comp.cid = ord.cusno  AND comp.cid = tu.cid "
+                                                      +" AND comp.inviter = stu.uid AND ord.ostatus > 0 AND ord.settstatus = 1 ) co  WHERE 1=1 ";
+
+    private static final String _QUERY_CUMULTIVE_NEWPARAM = "( SELECT DISTINCT o.cid  FROM ( SELECT DISTINCT o.cusno cid " +
+                                                            " FROM {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} o " +
+                                                            " WHERE o.odate < ? AND o.settstatus = 1 AND o.ostatus > 0  ) r " +
+                                                            " INNER JOIN ( SELECT DISTINCT ( co.cid ) cid " +
+                                                            " FROM ( SELECT comp.cid cid, comp.inviter inviter, comp.cname cname, ord.orderno orderno, ord.ostatus ostatus, ord.odate odate " +
+                                                            " FROM tb_bk_comp comp, {{?"+DSMConst.TD_BK_TRAN_ORDER+"}} ord " +
+                                                            " WHERE comp.cid = ord.cusno  AND ord.ostatus > 0  AND ord.settstatus = 1  ) co " +
+                                                            " WHERE co.odate BETWEEN ? AND ?  ) o ON r.cid = o.cid  )";
+    public static Result getBDUserCumultive(AppContext appContext){
+        StringBuilder sql = new StringBuilder();
+        String json = appContext.param.json;
+        Param param = GsonUtils.jsonToJavaBean(json,Param.class);
+        if(param == null){
+            return new Result().fail("查询参数不可用！");
+        }
+        String bdname = getGLUser(param.uid,param.roleid,"430000000000");
+        if(StringUtils.isEmpty(bdname) || bdname.length()<=0){
+            return  new Result().fail("当前人员暂无首购信息！");
+        }
+        List<Object[]> list;
+        if(param.selectFlag == 1){ //累计参数为1
+            sql.append(_QUERY_CUMULTIVE_SUM);
+            sql.append(" and co.odate <= ?");//追加时间条件
+            sql.append(" and co.inviter in ("+bdname+") ");
+            sql.append(" GROUP BY co.orderno ");
+            list = BaseDAO.getBaseDAO().queryNativeSharding(GLOBALConst.COMP_INIT_VAR,TimeUtils.getCurrentYear(),sql.toString(),param.edate);
+        }else{ //新增参数为0
+            sql.append(_QUERY_CUMULTIVE_NEW);
+            sql.append(" and co.odate BETWEEN ? AND ?  ");
+            sql.append(" and co.inviter in ("+bdname+") ");
+            sql.append(" AND co.cid NOT IN ").append(_QUERY_CUMULTIVE_NEWPARAM);
+            sql.append(" GROUP BY co.inviter");
+            list = BaseDAO.getBaseDAO().queryNativeSharding(GLOBALConst.COMP_INIT_VAR,TimeUtils.getCurrentYear(),sql.toString(),param.sdate,param.edate,param.edate,param.sdate,param.edate);
+        }
+        BDUserToCumultiveVO[] bdUserToCumultiveVOS = new BDUserToCumultiveVO[list.size()];
+        BaseDAO.getBaseDAO().convToEntity(list,bdUserToCumultiveVOS,BDUserToCumultiveVO.class);
+        for (BDUserToCumultiveVO bdUserToCumultiveVO : bdUserToCumultiveVOS){
+            AreaEntity[] ancestors = IceRemoteUtil.getAncestors(Long.parseLong(bdUserToCumultiveVO.getCaddrcode()));
+            if(ancestors != null && ancestors.length > 0){
+                LogUtil.getDefaultLogger().debug(ancestors[0].getArean());
+                bdUserToCumultiveVO.setProvince(ancestors[0].getArean());
+                if (ancestors.length > 1) {
+                    bdUserToCumultiveVO.setCity(ancestors[1].getArean());
+                    if (ancestors.length > 2) {
+                        bdUserToCumultiveVO.setRegion(ancestors[2].getArean());
+                    }
+                }
+            }
+        }
+        return new Result().success(bdUserToCumultiveVOS);
     }
 }
