@@ -358,7 +358,8 @@ public class BDManageModule {
         sqlBuilder = getParamsDYSQL(sqlBuilder, jsonObject, 1).append(" group by uid order by oid desc");
         if((roleId & 1024) > 0){
             sqlBuilder.delete(0,sqlBuilder.length());
-            selectSQL = " select  * from ( SELECT oid,uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime,u.offdate,u.offtime,u.cstatus,logindate,logintime, CONCAT(rname) as rname"+
+            selectSQL = " select  re.uid, re.uphone, re.uaccount, re.urealname, re.upw, re.roleid, re.adddate,re.addtime,re.offdate,re.offtime,re.cstatus,re.logindate, re.logintime, re.rname  from" +
+                    " ( SELECT oid,uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime,u.offdate,u.offtime,u.cstatus,logindate,logintime, CONCAT(rname) as rname"+
                     " FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} u left join {{?"+DSMConst.TB_SYSTEM_ROLE+"}} r on u.roleid&r.roleid>0 "+
                     " WHERE ( u.roleid & 4096 > 0 AND u.roleid & 8192 > 0 )  AND belong IN ( SELECT uid FROM {{?"+DSMConst.TB_SYSTEM_USER+"}} WHERE ( roleid & 2048 > 0 ) AND belong = ? ) GROUP BY u.uid"+
                     " UNION SELECT oid,uid,uphone,uaccount,urealname,upw,u.roleid,u.adddate,u.addtime,u.offdate,u.offtime,u.cstatus,logindate,logintime, CONCAT(rname) as rname"+
